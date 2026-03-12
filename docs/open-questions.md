@@ -43,20 +43,6 @@ The ABP schema changelog notes no migration strategy for ABPs stored under an ol
 
 ---
 
-### OQ-008 · Generation Engine quality validation
-
-**Component:** Generation Engine
-**Raised:** 2026-03-12 (Session 001, knowledge system audit)
-
-Generated ABPs are not quality-checked beyond Zod schema validation. A generated ABP can be schema-valid but semantically poor (e.g., empty instructions string, placeholder tool configurations).
-
-**Questions to resolve:**
-1. Should the Generation Engine validate content quality (e.g., minimum instruction length, non-empty tool configs)?
-2. If the generated ABP fails quality checks, should it automatically retry with a more specific prompt?
-3. What are the quality thresholds? (Is 50-word instructions acceptable? 200?)
-
----
-
 ## Resolved
 
 | # | Question | Resolution | Date |
@@ -76,3 +62,4 @@ Generated ABPs are not quality-checked beyond Zod schema validation. A generated
 | OQ-004 | Governance Validator trigger + lifecycle placement | Validation auto-runs after generation (stored in `validation_report`). Blueprint always stored. `draft → in_review` blocked on error violations. Manual re-validation via POST `/validate`. | 2026-03-12 |
 | OQ-006 | Blueprint Review UI routing and access | Separate pages: `/blueprints/[id]` = Studio; `/registry/[agentId]` = review interface (Review tab visible when `in_review`). Queue at `/review`. "Request changes" stores comment, moves `in_review → draft`. Approved ABPs can only be deprecated (no re-review). See blueprint-review-ui.md. | 2026-03-12 |
 | OQ-003 | Error handling strategy | Standard format `{ code, message, details? }` implemented in `src/lib/errors.ts`. `apiError(code, message)` + `aiError(err)` helpers cover all 15 routes. Claude API errors (rate limit, auth, timeout) produce specific `AI_RATE_LIMIT` / `AI_ERROR` codes at 429/502. Governance remediation degrades gracefully (returns violations without suggestions). No retry logic for MVP — transient failures return errors immediately. | 2026-03-12 |
+| OQ-008 | Generation Engine quality validation | No separate quality validation layer for MVP. `generateObject` + Zod `ABPContentSchema` ensures structural validity. Claude generates comprehensive ABPs from rich intake data — in practice, generated blueprints are substantive (validated against 2 real agents). Human review (Blueprint Review UI) is the quality gate. Arbitrary thresholds (min instruction length, etc.) deferred until there is evidence of generation quality failures. No auto-retry for MVP. | 2026-03-12 |

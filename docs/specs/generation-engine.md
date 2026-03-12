@@ -40,6 +40,8 @@ Claude generates only the **content sections** (identity, capabilities, constrai
 
 `generateObject` with the Zod `ABPContentSchema` enforces structural validity at the SDK level before the object is returned.
 
+**Quality validation:** No additional content quality checks beyond Zod schema validation for MVP. Human review via the Blueprint Review UI is the quality gate. Arbitrary semantic thresholds (min instruction length, non-empty tool configs, etc.) are deferred until evidence of generation failures warrants them. See OQ-008 (resolved).
+
 ### Refinement Strategy
 
 Refinement re-calls `generateObject` with:
