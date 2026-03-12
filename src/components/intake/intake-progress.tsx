@@ -8,60 +8,106 @@ interface Section {
   label: string;
   filled: boolean;
   required: boolean;
+  detail?: string;
+}
+
+function truncateList(items: string[], max = 3): string {
+  if (items.length <= max) return items.join(", ");
+  return items.slice(0, max).join(", ") + ` +${items.length - max} more`;
 }
 
 function getSections(payload: IntakePayload): Section[] {
+  const identity = payload.identity;
+  const capabilities = payload.capabilities;
+  const constraints = payload.constraints;
+  const governance = payload.governance;
+
+  const tools = capabilities?.tools ?? [];
+  const sources = capabilities?.knowledge_sources ?? [];
+  const policies = governance?.policies ?? [];
+  const domains = constraints?.allowed_domains ?? [];
+  const denied = constraints?.denied_actions ?? [];
+
   return [
     {
       key: "identity",
       label: "Agent Identity",
-      filled: !!(payload.identity?.name && payload.identity?.description),
+      filled: !!(identity?.name && identity?.description),
       required: true,
+      detail: identity?.name && identity?.description
+        ? `"${identity.name}" — ${identity.description.length > 55 ? identity.description.slice(0, 55) + "…" : identity.description}`
+        : undefined,
     },
     {
       key: "capabilities",
       label: "Tools & Capabilities",
-      filled: (payload.capabilities?.tools?.length ?? 0) > 0,
+      filled: tools.length > 0,
       required: true,
+      detail: tools.length > 0
+        ? `${tools.length} tool${tools.length > 1 ? "s" : ""}: ${truncateList(tools.map((t) => t.name))}`
+        : undefined,
     },
     {
       key: "instructions",
       label: "Behavioral Instructions",
-      filled: !!payload.capabilities?.instructions,
+      filled: !!capabilities?.instructions,
       required: false,
+      detail: capabilities?.instructions ? "Configured" : undefined,
     },
     {
       key: "knowledge",
       label: "Knowledge Sources",
-      filled: (payload.capabilities?.knowledge_sources?.length ?? 0) > 0,
+      filled: sources.length > 0,
       required: false,
+      detail: sources.length > 0
+        ? `${sources.length} source${sources.length > 1 ? "s" : ""}: ${truncateList(sources.map((s) => s.name))}`
+        : undefined,
     },
     {
       key: "constraints",
       label: "Constraints",
-      filled:
-        (payload.constraints?.allowed_domains?.length ?? 0) > 0 ||
-        (payload.constraints?.denied_actions?.length ?? 0) > 0,
+      filled: domains.length > 0 || denied.length > 0,
       required: false,
+      detail:
+        domains.length > 0 || denied.length > 0
+          ? [
+              domains.length > 0 && `${domains.length} domain${domains.length > 1 ? "s" : ""}`,
+              denied.length > 0 && `${denied.length} denied action${denied.length > 1 ? "s" : ""}`,
+            ]
+              .filter(Boolean)
+              .join(" · ")
+          : undefined,
     },
     {
       key: "governance",
       label: "Governance Policies",
-      filled: (payload.governance?.policies?.length ?? 0) > 0,
+      filled: policies.length > 0,
       required: false,
+      detail: policies.length > 0
+        ? `${policies.length} polic${policies.length > 1 ? "ies" : "y"}: ${truncateList(policies.map((p) => p.name))}`
+        : undefined,
     },
     {
       key: "audit",
       label: "Audit Configuration",
-      filled: payload.governance?.audit !== undefined,
+      filled: governance?.audit !== undefined,
       required: false,
+      detail: governance?.audit
+        ? [
+            governance.audit.log_interactions !== undefined &&
+              `Logging ${governance.audit.log_interactions ? "on" : "off"}`,
+            governance.audit.retention_days !== undefined &&
+              `${governance.audit.retention_days}-day retention`,
+          ]
+            .filter(Boolean)
+            .join(" · ") || "Configured"
+        : undefined,
     },
   ];
 }
 
 interface IntakeProgressProps {
   sessionId: string;
-  /** Trigger a re-fetch (increment to refresh) */
   refreshTick: number;
 }
 
@@ -96,7 +142,7 @@ export function IntakeProgress({ sessionId, refreshTick }: IntakeProgressProps) 
   const pct = Math.round((filled / sections.length) * 100);
 
   return (
-    <aside className="w-64 shrink-0 border-l border-gray-200 bg-white p-5 flex flex-col gap-4">
+    <aside className="w-72 shrink-0 border-l border-gray-200 bg-white p-5 flex flex-col gap-4">
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
           Blueprint Progress
@@ -106,7 +152,6 @@ export function IntakeProgress({ sessionId, refreshTick }: IntakeProgressProps) 
         )}
       </div>
 
-      {/* Progress bar */}
       <div>
         <div className="flex justify-between text-xs text-gray-500 mb-1">
           <span>{filled} of {sections.length} sections</span>
@@ -120,12 +165,11 @@ export function IntakeProgress({ sessionId, refreshTick }: IntakeProgressProps) 
         </div>
       </div>
 
-      {/* Section checklist */}
-      <ul className="flex flex-col gap-1.5">
+      <ul className="flex flex-col gap-2">
         {sections.map((section) => (
-          <li key={section.key} className="flex items-center gap-2 text-sm">
+          <li key={section.key} className="flex items-start gap-2.5">
             <span
-              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
                 section.filled
                   ? "bg-blue-500 text-white"
                   : section.required
@@ -135,25 +179,33 @@ export function IntakeProgress({ sessionId, refreshTick }: IntakeProgressProps) 
             >
               {section.filled ? "✓" : ""}
             </span>
-            <span
-              className={
-                section.filled
-                  ? "text-gray-900"
-                  : section.required
-                  ? "text-gray-500"
-                  : "text-gray-400"
-              }
-            >
-              {section.label}
-              {section.required && !section.filled && (
-                <span className="ml-1 text-[10px] text-red-400">required</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1">
+                <span
+                  className={`text-sm ${
+                    section.filled
+                      ? "text-gray-900"
+                      : section.required
+                      ? "text-gray-500"
+                      : "text-gray-400"
+                  }`}
+                >
+                  {section.label}
+                </span>
+                {section.required && !section.filled && (
+                  <span className="text-[10px] text-red-400">required</span>
+                )}
+              </div>
+              {section.detail && (
+                <p className="text-xs text-gray-400 truncate mt-0.5" title={section.detail}>
+                  {section.detail}
+                </p>
               )}
-            </span>
+            </div>
           </li>
         ))}
       </ul>
 
-      {/* Readiness indicator */}
       <div
         className={`mt-auto rounded-lg px-3 py-2 text-xs text-center ${
           requiredFilled === requiredTotal

@@ -6,7 +6,7 @@ import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { db } from "@/lib/db";
 import { intakeSessions, intakeMessages } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { INTAKE_SYSTEM_PROMPT } from "@/lib/intake/system-prompt";
+import { buildIntakeSystemPrompt } from "@/lib/intake/system-prompt";
 import { createIntakeTools } from "@/lib/intake/tools";
 import { IntakePayload } from "@/lib/types/intake";
 import { requireAuth } from "@/lib/auth/require";
@@ -107,10 +107,10 @@ export async function POST(
     // Stream response
     const result = streamText({
       model: anthropic("claude-sonnet-4-20250514"),
-      system: INTAKE_SYSTEM_PROMPT,
+      system: buildIntakeSystemPrompt(currentPayload),
       messages: modelMessages,
       tools,
-      stopWhen: stepCountIs(5),
+      stopWhen: stepCountIs(10),
       onFinish: async ({ text }) => {
         if (text) {
           await db.insert(intakeMessages).values({

@@ -2,8 +2,24 @@
 
 import { use, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import type { UIMessage } from "ai";
 import { ChatContainer } from "@/components/chat/chat-container";
 import { IntakeProgress } from "@/components/intake/intake-progress";
+
+interface DBMessage {
+  id: string;
+  role: string;
+  content: string;
+}
+
+function mapToUIMessages(dbMessages: DBMessage[]): UIMessage[] {
+  return dbMessages.map((m) => ({
+    id: m.id,
+    role: m.role as UIMessage["role"],
+    parts: [{ type: "text" as const, text: m.content }],
+    content: m.content,
+  }));
+}
 
 export default function IntakeSessionPage({
   params,
@@ -16,9 +32,33 @@ export default function IntakeSessionPage({
   const [isCompleted, setIsCompleted] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [initialMessages, setInitialMessages] = useState<UIMessage[] | undefined>(undefined);
+  const [isNewSession, setIsNewSession] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
-  // Check session status on mount and after each response completes
+  // Load session status + message history on mount
   useEffect(() => {
+    async function loadSession() {
+      try {
+        const res = await fetch(`/api/intake/sessions/${sessionId}`);
+        if (!res.ok) return;
+        const { session, messages } = await res.json();
+        if (session?.status === "completed") setIsCompleted(true);
+        const uiMessages = mapToUIMessages(messages ?? []);
+        setInitialMessages(uiMessages.length > 0 ? uiMessages : undefined);
+        setIsNewSession(uiMessages.length === 0);
+      } catch {
+        setIsNewSession(true);
+      } finally {
+        setHistoryLoaded(true);
+      }
+    }
+    loadSession();
+  }, [sessionId]);
+
+  // Re-check status after each response (for completion detection)
+  useEffect(() => {
+    if (refreshTick === 0) return;
     async function checkStatus() {
       try {
         const res = await fetch(`/api/intake/sessions/${sessionId}`);
@@ -50,7 +90,6 @@ export default function IntakeSessionPage({
         throw new Error(data.error ?? "Generation failed");
       }
       const { id, agentId, abp, validationReport } = await res.json();
-      // Pass initial ABP, agentId, and validation report to avoid redundant fetches
       const encodedAbp = btoa(JSON.stringify(abp));
       const encodedVr = validationReport ? btoa(JSON.stringify(validationReport)) : "";
       const url = `/blueprints/${id}?abp=${encodedAbp}&agentId=${agentId}${encodedVr ? `&vr=${encodedVr}` : ""}`;
@@ -79,7 +118,7 @@ export default function IntakeSessionPage({
         </div>
       </header>
 
-      {/* Completion banner with Generate Blueprint CTA */}
+      {/* Completion banner */}
       {isCompleted && (
         <div className="flex items-center justify-between border-b border-green-200 bg-green-50 px-6 py-3">
           <div className="text-sm text-green-800">
@@ -102,10 +141,14 @@ export default function IntakeSessionPage({
 
       {/* Body: chat + progress sidebar */}
       <main className="flex flex-1 overflow-hidden">
-        <ChatContainer
-          sessionId={sessionId}
-          onResponseComplete={handleResponseComplete}
-        />
+        {historyLoaded && (
+          <ChatContainer
+            sessionId={sessionId}
+            initialMessages={initialMessages}
+            showSuggestedPrompts={isNewSession}
+            onResponseComplete={handleResponseComplete}
+          />
+        )}
         <IntakeProgress sessionId={sessionId} refreshTick={refreshTick} />
       </main>
     </div>
