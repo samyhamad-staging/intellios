@@ -1,6 +1,7 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ChatContainer } from "@/components/chat/chat-container";
 import { IntakeProgress } from "@/components/intake/intake-progress";
 
@@ -10,8 +11,11 @@ export default function IntakeSessionPage({
   params: Promise<{ sessionId: string }>;
 }) {
   const { sessionId } = use(params);
+  const router = useRouter();
   const [refreshTick, setRefreshTick] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   // Check session status on mount and after each response completes
   useEffect(() => {
@@ -22,7 +26,7 @@ export default function IntakeSessionPage({
         const { session } = await res.json();
         if (session?.status === "completed") setIsCompleted(true);
       } catch {
-        // Non-critical — don't block the UI
+        // Non-critical
       }
     }
     checkStatus();
@@ -31,6 +35,29 @@ export default function IntakeSessionPage({
   function handleResponseComplete() {
     setRefreshTick((t) => t + 1);
   }
+
+  const handleGenerate = useCallback(async () => {
+    setGenerating(true);
+    setGenerateError(null);
+    try {
+      const res = await fetch("/api/blueprints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "Generation failed");
+      }
+      const { id, abp } = await res.json();
+      // Pass initial ABP to the blueprint page to avoid a redundant fetch
+      const encoded = btoa(JSON.stringify(abp));
+      router.push(`/blueprints/${id}?abp=${encoded}`);
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : "Generation failed");
+      setGenerating(false);
+    }
+  }, [sessionId, router]);
 
   return (
     <div className="flex h-screen flex-col">
@@ -50,10 +77,24 @@ export default function IntakeSessionPage({
         </div>
       </header>
 
-      {/* Completion banner */}
+      {/* Completion banner with Generate Blueprint CTA */}
       {isCompleted && (
-        <div className="border-b border-green-200 bg-green-50 px-6 py-3 text-sm text-green-800">
-          <strong>Intake complete.</strong> The agent blueprint has been captured and is ready for the Generation Engine.
+        <div className="flex items-center justify-between border-b border-green-200 bg-green-50 px-6 py-3">
+          <div className="text-sm text-green-800">
+            <strong>Intake complete.</strong> All requirements captured. Ready to generate the blueprint.
+          </div>
+          <div className="flex items-center gap-3">
+            {generateError && (
+              <span className="text-xs text-red-600">{generateError}</span>
+            )}
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="rounded-lg bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-50"
+            >
+              {generating ? "Generating..." : "Generate Blueprint →"}
+            </button>
+          </div>
         </div>
       )}
 

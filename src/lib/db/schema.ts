@@ -26,6 +26,22 @@ export const intakeMessages = pgTable(
   (table) => [index("idx_intake_messages_session").on(table.sessionId, table.createdAt)]
 );
 
+export const agentBlueprints = pgTable(
+  "agent_blueprints",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => intakeSessions.id, { onDelete: "cascade" }),
+    abp: jsonb("abp").notNull(), // full ABP document (JSON)
+    status: text("status").notNull().default("draft"), // draft | in_review | approved | rejected | deprecated
+    refinementCount: text("refinement_count").notNull().default("0"), // how many times refined
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("idx_agent_blueprints_session").on(table.sessionId)]
+);
+
 export const governancePolicies = pgTable("governance_policies", {
   id: uuid("id").primaryKey().defaultRandom(),
   enterpriseId: text("enterprise_id"),
