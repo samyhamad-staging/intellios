@@ -4,17 +4,19 @@ import { agentBlueprints } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { getRequestId } from "@/lib/request-id";
 
 /**
  * GET /api/registry/[agentId]
  * Returns the latest version of an agent plus its full version history.
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ agentId: string }> }
 ) {
   const { error } = await requireAuth();
   if (error) return error;
+  const requestId = getRequestId(request);
   try {
     const { agentId } = await params;
 
@@ -32,7 +34,7 @@ export async function GET(
 
     return NextResponse.json({ agent: latest, versions });
   } catch (error) {
-    console.error("Failed to fetch agent:", error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch agent");
+    console.error(`[${requestId}] Failed to fetch agent:`, error);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch agent", undefined, requestId);
   }
 }

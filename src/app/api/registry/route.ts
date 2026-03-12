@@ -1,18 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { getRequestId } from "@/lib/request-id";
 
 /**
  * GET /api/registry
  * Returns all registered agents — latest version per agentId.
  * In MVP, each agentId has exactly one version row.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   const { error } = await requireAuth();
   if (error) return error;
+  const requestId = getRequestId(request);
   try {
     // Fetch all blueprints; DISTINCT ON agentId ordered by created_at desc gives latest per agent
     const agents = await db
@@ -38,7 +40,7 @@ export async function GET() {
 
     return NextResponse.json({ agents });
   } catch (error) {
-    console.error("Failed to list registry agents:", error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to list agents");
+    console.error(`[${requestId}] Failed to list registry agents:`, error);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to list agents", undefined, requestId);
   }
 }

@@ -6,6 +6,7 @@ import { ABP } from "@/lib/types/abp";
 import { validateBlueprint } from "@/lib/governance/validator";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { getRequestId } from "@/lib/request-id";
 
 /**
  * POST /api/blueprints/[id]/validate
@@ -13,11 +14,12 @@ import { requireAuth } from "@/lib/auth/require";
  * Stores the report in agent_blueprints.validation_report and returns it.
  */
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await requireAuth(["designer", "admin"]);
   if (error) return error;
+  const requestId = getRequestId(request);
   try {
     const { id } = await params;
 
@@ -48,7 +50,7 @@ export async function POST(
 
     return NextResponse.json({ report });
   } catch (error) {
-    console.error("Failed to validate blueprint:", error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to run validation");
+    console.error(`[${requestId}] Failed to validate blueprint:`, error);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to run validation", undefined, requestId);
   }
 }

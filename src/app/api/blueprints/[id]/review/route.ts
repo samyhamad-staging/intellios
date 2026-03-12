@@ -4,6 +4,7 @@ import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { getRequestId } from "@/lib/request-id";
 import { writeAuditLog } from "@/lib/audit/log";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
@@ -33,6 +34,7 @@ export async function POST(
 ) {
   const { session: authSession, error } = await requireAuth(["reviewer"]);
   if (error) return error;
+  const requestId = getRequestId(request);
 
   const { data: body, error: bodyError } = await parseBody(request, ReviewBody);
   if (bodyError) return bodyError;
@@ -90,7 +92,7 @@ export async function POST(
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Failed to submit review:", error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to submit review");
+    console.error(`[${requestId}] Failed to submit review:`, error);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to submit review", undefined, requestId);
   }
 }

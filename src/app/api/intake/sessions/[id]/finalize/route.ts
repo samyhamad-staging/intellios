@@ -5,14 +5,16 @@ import { eq } from "drizzle-orm";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { getRequestId } from "@/lib/request-id";
 import { writeAuditLog } from "@/lib/audit/log";
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { session: authSession, error } = await requireAuth(["designer", "admin"]);
   if (error) return error;
+  const requestId = getRequestId(request);
   try {
     const { id } = await params;
 
@@ -61,7 +63,7 @@ export async function POST(
 
     return NextResponse.json({ session: updated, payload });
   } catch (error) {
-    console.error("Failed to finalize intake session:", error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to finalize session");
+    console.error(`[${requestId}] Failed to finalize intake session:`, error);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to finalize session", undefined, requestId);
   }
 }

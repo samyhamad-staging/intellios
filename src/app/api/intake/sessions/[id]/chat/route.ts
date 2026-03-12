@@ -10,6 +10,7 @@ import { INTAKE_SYSTEM_PROMPT } from "@/lib/intake/system-prompt";
 import { createIntakeTools } from "@/lib/intake/tools";
 import { IntakePayload } from "@/lib/types/intake";
 import { requireAuth } from "@/lib/auth/require";
+import { getRequestId } from "@/lib/request-id";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
@@ -32,6 +33,7 @@ export async function POST(
 ) {
   const { session: authSession, error } = await requireAuth(["designer", "admin"]);
   if (error) return error;
+  const requestId = getRequestId(request);
 
   const rateLimitResponse = rateLimit(authSession.user.email!, {
     endpoint: "chat",
@@ -122,7 +124,7 @@ export async function POST(
 
     return result.toUIMessageStreamResponse();
   } catch (error) {
-    console.error("Failed to process intake chat:", error);
-    return aiError(error);
+    console.error(`[${requestId}] Failed to process intake chat:`, error);
+    return aiError(error, requestId);
   }
 }

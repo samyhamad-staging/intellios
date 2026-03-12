@@ -7,6 +7,7 @@ import { validateBlueprint } from "@/lib/governance/validator";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { getRequestId } from "@/lib/request-id";
 import { writeAuditLog } from "@/lib/audit/log";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
@@ -19,6 +20,7 @@ const GenerateBody = z.object({
 export async function POST(request: NextRequest) {
   const { session: authSession, error } = await requireAuth(["designer", "admin"]);
   if (error) return error;
+  const requestId = getRequestId(request);
 
   const rateLimitResponse = rateLimit(authSession.user.email!, {
     endpoint: "generate",
@@ -52,8 +54,8 @@ export async function POST(request: NextRequest) {
     try {
       abp = await generateBlueprint(intake, sessionId);
     } catch (err) {
-      console.error("Claude generateBlueprint failed:", err);
-      return aiError(err);
+      console.error(`[${requestId}] Claude generateBlueprint failed:`, err);
+      return aiError(err, requestId);
     }
 
     // Denormalize searchable fields from the ABP for the registry
@@ -86,7 +88,7 @@ export async function POST(request: NextRequest) {
       validationReport,
     });
   } catch (error) {
-    console.error("Failed to generate blueprint:", error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to generate blueprint");
+    console.error(`[${requestId}] Failed to generate blueprint:`, error);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to generate blueprint", undefined, requestId);
   }
 }

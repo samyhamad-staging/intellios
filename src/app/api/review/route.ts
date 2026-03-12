@@ -1,17 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { getRequestId } from "@/lib/request-id";
 
 /**
  * GET /api/review
  * Returns all blueprints currently in the `in_review` status (the review queue).
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   const { error } = await requireAuth(["reviewer", "compliance_officer", "admin"]);
   if (error) return error;
+  const requestId = getRequestId(request);
   try {
     const rows = await db
       .select({
@@ -33,7 +35,7 @@ export async function GET() {
 
     return NextResponse.json({ blueprints: rows });
   } catch (error) {
-    console.error("Failed to fetch review queue:", error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch review queue");
+    console.error(`[${requestId}] Failed to fetch review queue:`, error);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch review queue", undefined, requestId);
   }
 }

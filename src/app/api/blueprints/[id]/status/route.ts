@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { ValidationReport } from "@/lib/governance/types";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { getRequestId } from "@/lib/request-id";
 import { writeAuditLog } from "@/lib/audit/log";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
@@ -36,6 +37,7 @@ export async function PATCH(
 ) {
   const { session: authSession, error } = await requireAuth(["designer", "reviewer", "admin"]);
   if (error) return error;
+  const requestId = getRequestId(request);
 
   const { data: body, error: bodyError } = await parseBody(request, StatusBody);
   if (bodyError) return bodyError;
@@ -107,7 +109,7 @@ export async function PATCH(
 
     return NextResponse.json({ id: updated.id, status: updated.status });
   } catch (error) {
-    console.error("Failed to update blueprint status:", error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to update status");
+    console.error(`[${requestId}] Failed to update blueprint status:`, error);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to update status", undefined, requestId);
   }
 }

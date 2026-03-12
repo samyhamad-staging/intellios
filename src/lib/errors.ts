@@ -29,33 +29,42 @@ const STATUS: Record<ErrorCode, number> = {
 export interface ApiErrorBody {
   code: ErrorCode;
   message: string;
+  requestId?: string;
   details?: unknown;
 }
 
 export function apiError(
   code: ErrorCode,
   message: string,
-  details?: unknown
+  details?: unknown,
+  requestId?: string
 ): NextResponse<ApiErrorBody> {
-  return NextResponse.json({ code, message, ...(details ? { details } : {}) }, { status: STATUS[code] });
+  const body: ApiErrorBody = {
+    code,
+    message,
+    ...(requestId ? { requestId } : {}),
+    ...(details ? { details } : {}),
+  };
+  const headers = requestId ? { "x-request-id": requestId } : undefined;
+  return NextResponse.json(body, { status: STATUS[code], headers });
 }
 
 /** Inspect an unknown thrown value and return the appropriate AI error response. */
-export function aiError(error: unknown): NextResponse<ApiErrorBody> {
+export function aiError(error: unknown, requestId?: string): NextResponse<ApiErrorBody> {
   const message = error instanceof Error ? error.message : String(error);
 
   // Anthropic SDK surfaces rate limits as 429 status errors
   if (message.includes("429") || message.toLowerCase().includes("rate limit")) {
-    return apiError(ErrorCode.AI_RATE_LIMIT, "Claude API rate limit reached. Please try again shortly.");
+    return apiError(ErrorCode.AI_RATE_LIMIT, "Claude API rate limit reached. Please try again shortly.", undefined, requestId);
   }
   // Auth / key errors
   if (message.includes("401") || message.toLowerCase().includes("authentication")) {
-    return apiError(ErrorCode.AI_ERROR, "Claude API authentication failed. Check ANTHROPIC_API_KEY.");
+    return apiError(ErrorCode.AI_ERROR, "Claude API authentication failed. Check ANTHROPIC_API_KEY.", undefined, requestId);
   }
   // Timeout / network
   if (message.toLowerCase().includes("timeout") || message.toLowerCase().includes("network")) {
-    return apiError(ErrorCode.AI_ERROR, "Claude API request timed out. Please try again.");
+    return apiError(ErrorCode.AI_ERROR, "Claude API request timed out. Please try again.", undefined, requestId);
   }
 
-  return apiError(ErrorCode.AI_ERROR, "Claude API request failed.", message);
+  return apiError(ErrorCode.AI_ERROR, "Claude API request failed.", message, requestId);
 }

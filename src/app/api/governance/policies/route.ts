@@ -4,6 +4,7 @@ import { governancePolicies } from "@/lib/db/schema";
 import { isNull } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
 
@@ -21,9 +22,10 @@ const CreatePolicyBody = z.object({
  * GET /api/governance/policies
  * Returns all global governance policies (enterprise_id IS NULL).
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   const { error: authError } = await requireAuth();
   if (authError) return authError;
+  const requestId = getRequestId(request);
 
   try {
     const policies = await db
@@ -33,8 +35,8 @@ export async function GET() {
 
     return NextResponse.json({ policies });
   } catch (error) {
-    console.error("Failed to list policies:", error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to list policies");
+    console.error(`[${requestId}] Failed to list policies:`, error);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to list policies", undefined, requestId);
   }
 }
 
@@ -50,6 +52,7 @@ export async function POST(request: NextRequest) {
   const { data: body, error: bodyError } = await parseBody(request, CreatePolicyBody);
   if (bodyError) return bodyError;
 
+  const requestId = getRequestId(request);
   try {
     const [policy] = await db
       .insert(governancePolicies)
@@ -64,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ policy }, { status: 201 });
   } catch (error) {
-    console.error("Failed to create policy:", error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to create policy");
+    console.error(`[${requestId}] Failed to create policy:`, error);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to create policy", undefined, requestId);
   }
 }

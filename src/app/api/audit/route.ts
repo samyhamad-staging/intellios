@@ -4,6 +4,7 @@ import { auditLog } from "@/lib/db/schema";
 import { and, gte, lte, eq, desc } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { getRequestId } from "@/lib/request-id";
 
 /**
  * GET /api/audit
@@ -20,6 +21,7 @@ import { requireAuth } from "@/lib/auth/require";
 export async function GET(request: NextRequest) {
   const { error } = await requireAuth(["compliance_officer", "admin"]);
   if (error) return error;
+  const requestId = getRequestId(request);
 
   try {
     const { searchParams } = new URL(request.url);
@@ -46,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ entries, count: entries.length });
   } catch (error) {
-    console.error("Failed to fetch audit log:", error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch audit log");
+    console.error(`[${requestId}] Failed to fetch audit log:`, error);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch audit log", undefined, requestId);
   }
 }

@@ -7,6 +7,7 @@ import { ABP } from "@/lib/types/abp";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { getRequestId } from "@/lib/request-id";
 import { writeAuditLog } from "@/lib/audit/log";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
@@ -22,6 +23,7 @@ export async function POST(
 ) {
   const { session: authSession, error } = await requireAuth(["designer", "admin"]);
   if (error) return error;
+  const requestId = getRequestId(request);
 
   const rateLimitResponse = rateLimit(authSession.user.email!, {
     endpoint: "generate",
@@ -62,8 +64,8 @@ export async function POST(
     try {
       updatedAbp = await refineBlueprint(currentAbp, change.trim(), intake);
     } catch (err) {
-      console.error("Claude refineBlueprint failed:", err);
-      return aiError(err);
+      console.error(`[${requestId}] Claude refineBlueprint failed:`, err);
+      return aiError(err, requestId);
     }
     const newCount = String(parseInt(blueprint.refinementCount ?? "0", 10) + 1);
 
@@ -94,7 +96,7 @@ export async function POST(
       refinementCount: newCount,
     });
   } catch (error) {
-    console.error("Failed to refine blueprint:", error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to refine blueprint");
+    console.error(`[${requestId}] Failed to refine blueprint:`, error);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to refine blueprint", undefined, requestId);
   }
 }
