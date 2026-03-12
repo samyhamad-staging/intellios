@@ -26,8 +26,8 @@ Provides a human-facing interface for reviewing, approving, or requesting change
 5. Capture review comments.
 6. Update ABP status in the Agent Registry based on review decisions.
 
-## Open Questions
+## Resolved Decisions
 
-- What technology stack for the UI? (web app, embedded panel, CLI)
-- Should reviewers be able to edit blueprints directly, or only request changes?
-- How are reviewer roles and permissions managed?
+- **Technology stack:** Next.js (full-stack React with SSR). See ADR-002.
+- **Editing:** Request changes only. Reviewers can approve, reject, or request changes with comments. Changes go back through the generation/validation loop. See ADR-003.
+- **Roles and permissions:** Deferred to a future phase. MVP assumes a single reviewer role. See ADR-003.

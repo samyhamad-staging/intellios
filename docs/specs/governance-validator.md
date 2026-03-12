@@ -29,8 +29,8 @@ Validates an Agent Blueprint Package against enterprise policies, compliance rul
 4. Return a structured validation report.
 5. Block storage/approval if any `error`-severity violations exist.
 
-## Open Questions
+## Resolved Decisions
 
-- Where are governance policies stored and how are they managed?
-- Should validation be synchronous or async?
-- Should the validator suggest auto-fixes for common violations?
+- **Policy storage:** Governance policies are stored in PostgreSQL alongside the Agent Registry. See ADR-002.
+- **Sync vs. async:** Synchronous for MVP. Validation runs inline before storage. See ADR-003.
+- **Auto-fix suggestions:** Yes. The validator returns violations with Claude-powered suggested remediations. See ADR-003.

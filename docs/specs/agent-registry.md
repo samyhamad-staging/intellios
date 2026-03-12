@@ -26,8 +26,8 @@ Stores, versions, and manages Agent Blueprint Packages. Provides the canonical c
 5. Provide lookup by ID, search by name/tags, and filter by status.
 6. Enforce uniqueness of agent IDs.
 
-## Open Questions
+## Resolved Decisions
 
-- What is the storage backend? (database, file system, object store)
-- How is versioning implemented? (semantic versioning, auto-increment)
-- Should the registry support soft-delete or only deprecation?
+- **Storage backend:** PostgreSQL. See ADR-002.
+- **Versioning:** Semantic versioning for ABP revisions. See ADR-003.
+- **Deletion:** Deprecation only for MVP. No hard or soft delete. See ADR-003.

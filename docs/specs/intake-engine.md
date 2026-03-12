@@ -9,7 +9,7 @@ Captures enterprise requirements, constraints, and preferences for agent creatio
 
 ## Inputs
 
-- Enterprise user interaction (form, conversational, or API)
+- Enterprise user interaction via **conversational UI** (chat-based, powered by Claude)
 - Enterprise policies (referenced from governance system)
 
 ## Outputs
@@ -28,8 +28,8 @@ Captures enterprise requirements, constraints, and preferences for agent creatio
 3. Resolve references to enterprise policies from the Control Plane.
 4. Produce a structured intake payload for the Generation Engine.
 
-## Open Questions
+## Resolved Decisions
 
-- What is the intake format? (Conversational UI vs. structured form vs. both)
-- How are enterprise policies discovered and pre-populated?
-- Should intake support templates for common agent types?
+- **Intake format:** Conversational UI (chat-based, powered by Claude). See ADR-002.
+- **Policy discovery:** Policies are fetched from the Control Plane (PostgreSQL) at intake time. See ADR-003.
+- **Templates:** No templates for MVP. Every agent starts from scratch. See ADR-003.
