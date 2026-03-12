@@ -6,25 +6,7 @@ Live tracker of unresolved questions that must be answered before or during impl
 
 ## Critical — Blocks Implementation
 
----
-
-### OQ-002 · Authentication and multi-tenancy model
-
-**Component:** All (cross-cutting)
-**Blocks:** Any production-readiness work; shapes database schema for tenant isolation
-**Raised:** 2026-03-12 (Session 001, knowledge system audit)
-
-The current implementation has no authentication. `enterprise_id` is stored in `intake_sessions` and `governance_policies` as a plain text field with no enforcement. There is no concept of users, roles, or session ownership.
-
-**Questions to resolve:**
-1. Authentication method for MVP: NextAuth.js, Clerk, Supabase Auth, or custom?
-2. Multi-tenancy model: row-level security (RLS) in PostgreSQL, or application-level filtering?
-3. For MVP: single enterprise (no multi-tenancy) or must multiple enterprises be isolated?
-4. User roles: single reviewer role (per ADR-003) is decided for Blueprint Review UI — does the same apply to intake and generation?
-
-**Decision needed from:** Samy (scope call — is auth in or out of MVP?)
-
----
+_None. MVP is complete._
 
 ---
 
@@ -63,3 +45,4 @@ The ABP schema changelog notes no migration strategy for ABPs stored under an ol
 | OQ-006 | Blueprint Review UI routing and access | Separate pages: `/blueprints/[id]` = Studio; `/registry/[agentId]` = review interface (Review tab visible when `in_review`). Queue at `/review`. "Request changes" stores comment, moves `in_review → draft`. Approved ABPs can only be deprecated (no re-review). See blueprint-review-ui.md. | 2026-03-12 |
 | OQ-003 | Error handling strategy | Standard format `{ code, message, details? }` implemented in `src/lib/errors.ts`. `apiError(code, message)` + `aiError(err)` helpers cover all 15 routes. Claude API errors (rate limit, auth, timeout) produce specific `AI_RATE_LIMIT` / `AI_ERROR` codes at 429/502. Governance remediation degrades gracefully (returns violations without suggestions). No retry logic for MVP — transient failures return errors immediately. | 2026-03-12 |
 | OQ-008 | Generation Engine quality validation | No separate quality validation layer for MVP. `generateObject` + Zod `ABPContentSchema` ensures structural validity. Claude generates comprehensive ABPs from rich intake data — in practice, generated blueprints are substantive (validated against 2 real agents). Human review (Blueprint Review UI) is the quality gate. Arbitrary thresholds (min instruction length, etc.) deferred until there is evidence of generation quality failures. No auto-retry for MVP. | 2026-03-12 |
+| OQ-002 | Authentication and multi-tenancy | Explicitly deferred post-MVP. Auth is not part of the MVP scope — the goal was to validate the core pipeline loop (intake → generate → govern → review), which is complete. `enterprise_id` in `intake_sessions` and `governance_policies` is a placeholder for future tenant isolation. Authentication method, multi-tenancy model, and role structure are the first design decisions for Post-MVP Phase 1. | 2026-03-12 |
