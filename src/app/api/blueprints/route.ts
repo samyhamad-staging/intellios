@@ -8,10 +8,18 @@ import { IntakePayload } from "@/lib/types/intake";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { writeAuditLog } from "@/lib/audit/log";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   const { session: authSession, error } = await requireAuth(["designer", "admin"]);
   if (error) return error;
+
+  const rateLimitResponse = rateLimit(authSession.user.email!, {
+    endpoint: "generate",
+    max: 10,
+    windowMs: 60_000,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
 
   try {
     const { sessionId } = (await request.json()) as { sessionId: string };

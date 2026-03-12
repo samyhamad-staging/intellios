@@ -10,6 +10,7 @@ import { INTAKE_SYSTEM_PROMPT } from "@/lib/intake/system-prompt";
 import { createIntakeTools } from "@/lib/intake/tools";
 import { IntakePayload } from "@/lib/types/intake";
 import { requireAuth } from "@/lib/auth/require";
+import { rateLimit } from "@/lib/rate-limit";
 
 function extractTextContent(message: UIMessage): string {
   const textParts = message.parts
@@ -22,8 +23,15 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
   if (error) return error;
+
+  const rateLimitResponse = rateLimit(authSession.user.email!, {
+    endpoint: "chat",
+    max: 30,
+    windowMs: 60_000,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
 
   try {
     const { id: sessionId } = await params;
