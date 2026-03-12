@@ -70,6 +70,12 @@ export async function POST(
             .where(eq(intakeSessions.id, sessionId));
         });
         return updateQueue;
+      },
+      async () => {
+        await db
+          .update(intakeSessions)
+          .set({ status: "completed", updatedAt: new Date() })
+          .where(eq(intakeSessions.id, sessionId));
       }
     );
 

@@ -2,17 +2,19 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo, useCallback } from "react";
 import { MessageBubble } from "./message-bubble";
 import { ToolCallDisplay } from "./tool-call-display";
 import { ChatInput } from "./chat-input";
 
 interface ChatContainerProps {
   sessionId: string;
+  onResponseComplete?: () => void;
 }
 
-export function ChatContainer({ sessionId }: ChatContainerProps) {
+export function ChatContainer({ sessionId, onResponseComplete }: ChatContainerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const prevStatus = useRef<string | null>(null);
 
   const transport = useMemo(
     () => new DefaultChatTransport({ api: `/api/intake/sessions/${sessionId}/chat` }),
@@ -26,6 +28,17 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
 
   const isStreaming = status === "streaming" || status === "submitted";
 
+  // Notify parent when a streaming response finishes
+  useEffect(() => {
+    const wasStreaming =
+      prevStatus.current === "streaming" || prevStatus.current === "submitted";
+    const isDone = !isStreaming;
+    if (wasStreaming && isDone) {
+      onResponseComplete?.();
+    }
+    prevStatus.current = status;
+  }, [status, isStreaming, onResponseComplete]);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -33,12 +46,15 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
     });
   }, [messages]);
 
-  function handleSend(text: string) {
-    sendMessage({ text });
-  }
+  const handleSend = useCallback(
+    (text: string) => {
+      sendMessage({ text });
+    },
+    [sendMessage]
+  );
 
   // Extract text from message parts
-  function getMessageText(parts: typeof messages[0]["parts"]): string {
+  function getMessageText(parts: (typeof messages)[0]["parts"]): string {
     return parts
       .filter((p): p is { type: "text"; text: string } => p.type === "text")
       .map((p) => p.text)
@@ -46,7 +62,7 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-1 flex-col">
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
@@ -60,10 +76,10 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
             <div key={msg.id}>
               {/* Show tool invocations */}
               {msg.parts.map((part, i) => {
-                // Handle tool parts (type starts with "tool-" for static tools)
                 if (part.type.startsWith("tool-") && "toolCallId" in part) {
                   const toolName = part.type.replace("tool-", "");
-                  const args = "input" in part ? (part.input as Record<string, unknown>) : {};
+                  const args =
+                    "input" in part ? (part.input as Record<string, unknown>) : {};
                   return (
                     <div key={i} className="mb-2">
                       <ToolCallDisplay toolName={toolName} args={args} />
@@ -83,9 +99,18 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
           <div className="flex justify-start">
             <div className="rounded-2xl bg-white border border-gray-200 px-4 py-3">
               <div className="flex gap-1">
-                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "0ms" }} />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "150ms" }} />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "300ms" }} />
+                <span
+                  className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                  style={{ animationDelay: "0ms" }}
+                />
+                <span
+                  className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                  style={{ animationDelay: "150ms" }}
+                />
+                <span
+                  className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                  style={{ animationDelay: "300ms" }}
+                />
               </div>
             </div>
           </div>

@@ -6,12 +6,20 @@ import { useState } from "react";
 export default function Home() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function startNewSession() {
     setLoading(true);
-    const res = await fetch("/api/intake/sessions", { method: "POST" });
-    const session = await res.json();
-    router.push(`/intake/${session.id}`);
+    setError(null);
+    try {
+      const res = await fetch("/api/intake/sessions", { method: "POST" });
+      if (!res.ok) throw new Error("Failed to create session");
+      const session = await res.json();
+      router.push(`/intake/${session.id}`);
+    } catch {
+      setError("Could not start a session. Is the server running?");
+      setLoading(false);
+    }
   }
 
   return (
@@ -26,6 +34,9 @@ export default function Home() {
         >
           {loading ? "Creating session..." : "Design a New Agent"}
         </button>
+        {error && (
+          <p className="mt-4 text-sm text-red-600">{error}</p>
+        )}
       </div>
     </div>
   );

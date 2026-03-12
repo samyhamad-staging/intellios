@@ -4,7 +4,8 @@ import { IntakePayload } from "@/lib/types/intake";
 
 export function createIntakeTools(
   getPayload: () => IntakePayload,
-  updatePayload: (updater: (current: IntakePayload) => IntakePayload) => Promise<void>
+  updatePayload: (updater: (current: IntakePayload) => IntakePayload) => Promise<void>,
+  finalizeSession: () => Promise<void>
 ) {
   return {
     set_agent_identity: tool({
@@ -223,6 +224,7 @@ export function createIntakeTools(
         if (!payload.capabilities?.tools?.length) {
           return { success: false, error: "At least one capability/tool is required before finalizing." };
         }
+        await finalizeSession();
         return { success: true, message: "Intake marked as complete.", confirmation };
       },
     }),
