@@ -96,20 +96,55 @@ Tracks resource consumption per session for post-project cost estimation.
 | Estimated engaged time | ~2–3 hours |
 | Engagement character | Primarily direction-setting and approval; minimal correction needed |
 
+## Session 001 (continued) — 2026-03-12
+
+**Duration:** Continuation of same calendar day (context limit hit; session resumed)
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Knowledge system audit + improvements | project-journal.md, open-questions.md, Known Unknowns sections, CLAUDE.md 8-point checklist | ~15K in / ~8K out |
+| Agent Registry | OQ-005 resolution, schema changes, 6 API routes, 2 UI pages, status badge, lifecycle controls | ~35K in / ~18K out |
+| Governance Validator | ADR-005, schema v1.1.0, types/evaluate/remediate/validator, migration + seeds, 3 API routes, ValidationReportView | ~45K in / ~22K out |
+| Blueprint Review UI | OQ-006 resolution, schema fields, migration, 2 API routes, ReviewPanel, review queue page, registry detail update | ~30K in / ~15K out |
+| Documentation maintenance | spec updates, roadmap, open-questions, session log, project journal | ~12K in / ~8K out |
+| Doc audit + fixes | control-plane.md, abp-spec.md, CLAUDE.md layout, glossary, governance schema changelog | ~8K in / ~5K out |
+| **Session total (est.)** | | **~145K in / ~76K out** |
+
+**Estimated cost (continuation):** Sonnet ~145K in x $3/1M + ~76K out x $15/1M = **$0.44 + $1.14 = ~$1.58**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 14 | Request conversation summary | Operational | Context limit hit |
+| 15 | Proceed with next best action | D-Approve | Knowledge system improvements |
+| 16 | Proceed with next best action | D-Approve | Agent Registry implementation |
+| 17 | Carefully and diligently proceed | D-Approve | Governance Validator implementation |
+| 18 | Request conversation summary | Operational | Context limit hit again |
+| 19 | Proceed with next best action | D-Approve | Blueprint Review UI — completed MVP |
+| 20 | Is the effort log up to date? | D-Correct | Doc audit; caught 7 stale or missing files |
+
+**Totals (continuation):** 7 messages · 4 D-Approve · 1 D-Correct · ~1 hr
+
+---
+
 ---
 
 ## Running Totals
 
 | Metric | Session 001 | Total |
 |---|---|---|
-| Est. Claude input tokens | ~143K | ~143K |
-| Est. Claude output tokens | ~79K | ~79K |
-| Est. Claude cost | ~$2.20 | ~$2.20 |
-| Samy messages | 13 | 13 |
-| Samy decisions | 26 | 26 |
-| Samy est. time | ~2–3 hrs | ~2–3 hrs |
-| Code shipped | 2 MVP components (Intake Engine + Generation Engine) | — |
-| Files created/modified | ~50 | — |
+| Est. Claude input tokens | ~143K | ~288K |
+| Est. Claude output tokens | ~79K | ~155K |
+| Est. Claude cost | ~$2.20 | ~$3.78 |
+| Samy messages | 13 | 20 |
+| Samy decisions | 26 | 31 |
+| Samy est. time | ~2–3 hrs | ~3–4 hrs |
+| Code shipped | Intake Engine + Generation Engine | All 5 MVP components complete |
+| Files created/modified | ~50 | ~130 |
 
 ---
 

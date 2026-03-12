@@ -26,25 +26,29 @@ An ABP contains these top-level sections:
 ## Lifecycle States
 
 ```
-draft → in_review → approved → (deployed) → deprecated
-                  ↘ rejected
+draft → in_review → approved → deprecated
+      ↑          ↘ rejected → deprecated
+      └─── (request changes returns to draft)
 ```
 
-- **draft** — Initial state after generation.
-- **in_review** — Submitted for human review.
-- **approved** — Passed review and governance validation.
-- **rejected** — Failed review.
-- **deprecated** — No longer active.
+- **draft** — Initial state after generation. Designer can refine.
+- **in_review** — Submitted for human review. Requires no error-severity governance violations to enter.
+- **approved** — Passed human review.
+- **rejected** — Failed human review. Terminal state (can only deprecate).
+- **deprecated** — No longer active. Terminal state.
+
+Note: `in_review → draft` is the "request changes" path — a reviewer sends it back for revision.
 
 ## Versioning
 
 - Each ABP has a unique `metadata.id`.
 - Revisions to an ABP create new versions in the Agent Registry.
 - The `version` field refers to the **schema version**, not the blueprint revision.
-- Blueprint revision tracking is managed by the Agent Registry.
+- Blueprint revision tracking is managed by the Agent Registry using an `agent_id` UUID that groups all versions of the same logical agent.
 
 ## Validation
 
-Before an ABP is stored or approved, it must:
-1. Conform to the JSON Schema at `docs/schemas/abp/`.
-2. Pass governance validation via the Governance Validator.
+After an ABP is generated and stored, the Governance Validator runs automatically:
+1. The ABP must conform to the JSON Schema at `docs/schemas/abp/` (enforced by the Generation Engine at generation time via Zod).
+2. The Governance Validator evaluates enterprise policy rules and stores a Validation Report with the blueprint.
+3. If the report contains any error-severity violations, the `draft → in_review` transition is blocked until violations are resolved and the blueprint is re-validated.

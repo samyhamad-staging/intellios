@@ -22,3 +22,10 @@ Canonical definitions for all project terms. Use these exact terms in all docume
 | **Policy** | A set of rules defined by an enterprise that constrain agent behavior, capabilities, or data access. |
 | **Lifecycle** | The stages an agent passes through: design, generation, review, approval, deployment, monitoring, retirement. |
 | **ADR** | Architectural Decision Record. A document that captures a significant technical or architectural decision. |
+| **Validation Report** | The output of the Governance Validator for a given ABP. Contains valid (bool), violations (list), policyCount, and generatedAt. Stored in agent_blueprints.validation_report. |
+| **Violation** | A single policy rule failure in a Validation Report. Contains the policy name, rule ID, field path, severity (error/warning), message, and an optional Claude-generated remediation suggestion. |
+| **Intake Session** | A database record representing one intake conversation between a designer and the Intake Engine. Stores the progressive intake_payload and all messages. |
+| **Lifecycle State Machine** | The set of valid status transitions for an ABP: draft to in_review to approved/rejected to deprecated. in_review to draft is also valid (request changes). |
+| **Review Queue** | The list of ABPs currently in in_review status, accessible at /review. Entry point for human reviewers. |
+| **Studio** | Shorthand for the Blueprint Studio — the /blueprints/[id] page where designers preview and refine a generated ABP before submitting for review. |
+| **OQ** | Open Question. A tracked unresolved decision recorded in docs/open-questions.md with an OQ-NNN identifier. |

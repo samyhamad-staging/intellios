@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Control Plane is responsible for governance, storage, and lifecycle management of Agent Blueprint Packages. It ensures that agents meet enterprise policies before they can be approved.
+The Control Plane is responsible for governance, storage, and lifecycle management of Agent Blueprint Packages. It ensures that agents meet enterprise policies before they can be submitted for human review.
 
 ## Components
 
@@ -18,24 +18,31 @@ The Control Plane is responsible for governance, storage, and lifecycle manageme
 ABP (from Design Studio)
       │
       ▼
+┌──────────────────┐
+│  Agent Registry   │  ← ABP is always stored here (draft status)
+│  (store + version)│
+└────────┬─────────┘
+         │
+         ▼
 ┌─────────────────────┐
-│ Governance Validator │
-│ (validate against    │
-│  enterprise policies)│
+│ Governance Validator │  ← Runs automatically after storage
+│ (validate against    │    Stores report in agent_blueprints
+│  enterprise policies)│    Violations gate draft → in_review
 └──────────┬──────────┘
            │
      Pass / Fail + Report
            │
-           ▼
-┌──────────────────┐       ┌──────────────────┐
-│  Agent Registry   │◀─────▶│ Blueprint Review  │
-│  (store + version)│       │       UI          │
-└──────────────────┘       └──────────────────┘
+           ▼ (only if no error violations)
+┌──────────────────────┐
+│ Blueprint Review UI   │  ← Reviewer: approve / reject / request changes
+│ (in_review status)    │
+└──────────────────────┘
 ```
 
 ## Boundaries
 
 - The Control Plane **receives** ABPs from the Design Studio but does not generate them.
-- The Governance Validator is a **gate** — ABPs with error-severity violations cannot proceed to storage.
+- The Agent Registry **always stores** the ABP — storage is never blocked.
+- The Governance Validator runs **after storage** and its report is stored with the blueprint. Error-severity violations gate the `draft → in_review` lifecycle transition, not the storage step.
 - The Agent Registry is the **single source of truth** for all blueprint versions.
-- The Blueprint Review UI is a **read/decide** interface — it does not modify ABPs directly.
+- The Blueprint Review UI is a **read/decide** interface — it does not modify ABPs directly. "Request changes" moves the blueprint back to `draft` for the designer to refine.

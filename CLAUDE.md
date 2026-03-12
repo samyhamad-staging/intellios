@@ -19,15 +19,28 @@ docs/
   project-journal.md   ← Narrative evolution record (one entry per session)
   roadmap.md           ← Current phase, MVP scope, priorities
 src/                   ← Application source code
-  app/                 ← Next.js App Router (pages + API routes)
-    api/intake/        ← Intake Engine REST API endpoints
+  app/
+    api/
+      intake/          ← Intake Engine API routes
+      blueprints/      ← Blueprint generation, refinement, validation, status, review
+      registry/        ← Agent Registry API routes
+      review/          ← Review queue API route
+      governance/      ← Governance policy API routes
     intake/            ← Intake session UI pages
-  components/          ← React UI components
-    chat/              ← Chat UI: container, bubbles, input, tool display
+    blueprints/        ← Blueprint Studio UI pages
+    registry/          ← Agent Registry UI pages
+    review/            ← Review queue UI page
+  components/
+    chat/              ← Chat UI: container, bubbles, input, tool display, streaming
+    blueprint/         ← Blueprint view component
+    governance/        ← Validation report component
+    registry/          ← Status badge, lifecycle controls
+    review/            ← Review panel component
   lib/
-    db/                ← Drizzle ORM: schema, client
-    intake/            ← Intake Engine logic: system prompt, tool definitions
-    types/             ← Shared TypeScript interfaces (IntakePayload, etc.)
+    db/                ← Drizzle ORM: schema, client, migrations
+    intake/            ← Intake Engine logic: system prompt, tool definitions, handlers
+    governance/        ← Governance Validator: types, evaluator, remediator, validator
+    types/             ← Shared TypeScript types (ABP, intake payload)
   drizzle.config.ts    ← Drizzle ORM configuration
   next.config.ts       ← Next.js configuration
   package.json         ← Dependencies (Next.js 16, AI SDK v5, Drizzle, Zod)
