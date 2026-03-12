@@ -93,20 +93,6 @@ ADR-003 states validation is synchronous and runs "before storage." But the curr
 
 ---
 
-### OQ-005 · Agent Registry scope vs. current agent_blueprints table
-
-**Component:** Agent Registry
-**Blocks:** Agent Registry implementation
-**Raised:** 2026-03-12 (Session 001, knowledge system audit)
-
-The `agent_blueprints` table created during Generation Engine implementation is a minimal storage table. The Agent Registry spec describes a richer set of behaviors: full version history, lifecycle state machine, search by name/tags, uniqueness enforcement.
-
-**Questions to resolve:**
-1. Is `agent_blueprints` the Agent Registry table, or will the Agent Registry be a separate system that wraps it?
-2. Should ABP versions be stored as separate rows or as a version array in JSONB?
-3. What does "search by name/tags" require — PostgreSQL full-text search, or an additional index?
-4. What makes an agent "unique" — agent name within an enterprise? A system-assigned ID?
-
 ---
 
 ### OQ-006 · Blueprint Review UI routing and access
@@ -168,3 +154,4 @@ Generated ABPs are not quality-checked beyond Zod schema validation. A generated
 | — | Frontend framework | Next.js App Router (ADR-004) | 2026-03-12 |
 | — | ORM | Drizzle (ADR-004) | 2026-03-12 |
 | — | AI SDK | Vercel AI SDK v5 (ADR-004) | 2026-03-12 |
+| OQ-005 | Agent Registry: table relationship, version model, uniqueness | `agent_blueprints` is the registry. Separate rows per version. `agent_id` UUID is the logical agent key (uniqueness by UUID, not name). See agent-registry.md Implementation. | 2026-03-12 |

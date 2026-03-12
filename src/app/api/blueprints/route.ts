@@ -36,13 +36,17 @@ export async function POST(request: NextRequest) {
     // Generate the ABP via Claude
     const abp = await generateBlueprint(intake, sessionId);
 
-    // Persist the blueprint
+    // Denormalize searchable fields from the ABP for the registry
+    const name = abp.identity.name ?? null;
+    const tags = (abp.metadata.tags ?? []) as string[];
+
+    // Persist — agentId defaults to a new UUID (first version of a new agent)
     const [blueprint] = await db
       .insert(agentBlueprints)
-      .values({ sessionId, abp })
+      .values({ sessionId, abp, name, tags })
       .returning();
 
-    return NextResponse.json({ id: blueprint.id, abp });
+    return NextResponse.json({ id: blueprint.id, agentId: blueprint.agentId, abp });
   } catch (error) {
     console.error("Failed to generate blueprint:", error);
     return NextResponse.json(

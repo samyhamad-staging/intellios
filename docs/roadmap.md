@@ -11,7 +11,7 @@
 | Intake Engine | Complete | P0 |
 | Generation Engine | Complete | P0 |
 | Governance Validator | Not started | P0 |
-| Agent Registry | Not started | P0 |
+| Agent Registry | Complete | P0 |
 | Blueprint Review UI | Not started | P0 |
 | ABP Schema v1.0.0 | Defined | P0 |
 

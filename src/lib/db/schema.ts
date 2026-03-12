@@ -30,6 +30,12 @@ export const agentBlueprints = pgTable(
   "agent_blueprints",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    // Agent Registry fields
+    agentId: uuid("agent_id").notNull().defaultRandom(), // logical agent; all versions of same agent share this
+    version: text("version").notNull().default("1.0.0"),  // semver
+    name: text("name"),                                    // denormalized from abp.identity.name for search
+    tags: jsonb("tags").notNull().default([]),             // denormalized from abp.tags for search
+    // Core fields
     sessionId: uuid("session_id")
       .notNull()
       .references(() => intakeSessions.id, { onDelete: "cascade" }),
@@ -39,7 +45,11 @@ export const agentBlueprints = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("idx_agent_blueprints_session").on(table.sessionId)]
+  (table) => [
+    index("idx_agent_blueprints_session").on(table.sessionId),
+    index("idx_agent_blueprints_agent_id").on(table.agentId),
+    index("idx_agent_blueprints_status").on(table.status),
+  ]
 );
 
 export const governancePolicies = pgTable("governance_policies", {

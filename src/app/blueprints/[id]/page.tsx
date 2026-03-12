@@ -1,19 +1,20 @@
 "use client";
 
 import { use, useState, useCallback } from "react";
+import Link from "next/link";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
 import { ABP } from "@/lib/types/abp";
 
 interface BlueprintPageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ abp?: string }>;
+  searchParams: Promise<{ abp?: string; agentId?: string }>;
 }
 
 export default function BlueprintPage({ params, searchParams }: BlueprintPageProps) {
   const { id } = use(params);
   // The generating page passes the initial ABP as a URL search param (base64 JSON)
   // so we can render immediately without a round-trip. Falls back to fetching.
-  const { abp: encodedAbp } = use(searchParams);
+  const { abp: encodedAbp, agentId } = use(searchParams);
 
   const [abp, setAbp] = useState<ABP | null>(() => {
     if (encodedAbp) {
@@ -90,6 +91,14 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             draft
           </span>
           <div className="text-xs text-gray-400 font-mono">{id.slice(0, 8)}</div>
+          {agentId && (
+            <Link
+              href={`/registry/${agentId}`}
+              className="rounded-lg border border-gray-200 px-2.5 py-0.5 text-xs text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+            >
+              View in Registry →
+            </Link>
+          )}
         </div>
       </header>
 

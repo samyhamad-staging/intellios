@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function Home() {
   const router = useRouter();
@@ -37,6 +38,11 @@ export default function Home() {
         {error && (
           <p className="mt-4 text-sm text-red-600">{error}</p>
         )}
+        <div className="mt-6">
+          <Link href="/registry" className="text-sm text-gray-500 hover:text-gray-900 underline">
+            View Agent Registry
+          </Link>
+        </div>
       </div>
     </div>
   );

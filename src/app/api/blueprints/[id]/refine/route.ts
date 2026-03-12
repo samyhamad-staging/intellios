@@ -51,18 +51,23 @@ export async function POST(
     const updatedAbp = await refineBlueprint(currentAbp, change.trim(), intake);
     const newCount = String(parseInt(blueprint.refinementCount ?? "0", 10) + 1);
 
-    // Persist the refined version
+    // Re-sync denormalized registry fields in case identity or tags changed
+    const name = updatedAbp.identity.name ?? null;
+    const tags = (updatedAbp.metadata.tags ?? []) as string[];
+
+    // Persist the refined version (update-in-place for MVP)
     const [updated] = await db
       .update(agentBlueprints)
-      .set({
-        abp: updatedAbp,
-        refinementCount: newCount,
-        updatedAt: new Date(),
-      })
+      .set({ abp: updatedAbp, name, tags, refinementCount: newCount, updatedAt: new Date() })
       .where(eq(agentBlueprints.id, id))
       .returning();
 
-    return NextResponse.json({ id: updated.id, abp: updatedAbp, refinementCount: newCount });
+    return NextResponse.json({
+      id: updated.id,
+      agentId: updated.agentId,
+      abp: updatedAbp,
+      refinementCount: newCount,
+    });
   } catch (error) {
     console.error("Failed to refine blueprint:", error);
     return NextResponse.json(
