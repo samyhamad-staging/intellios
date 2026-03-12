@@ -43,6 +43,8 @@ export const agentBlueprints = pgTable(
     status: text("status").notNull().default("draft"), // draft | in_review | approved | rejected | deprecated
     refinementCount: text("refinement_count").notNull().default("0"), // how many times refined
     validationReport: jsonb("validation_report"),    // ValidationReport — null until first validation runs
+    reviewComment: text("review_comment"),            // last reviewer comment (request changes, approve, reject)
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }), // when last review action was taken
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

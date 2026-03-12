@@ -38,9 +38,12 @@ export default function Home() {
         {error && (
           <p className="mt-4 text-sm text-red-600">{error}</p>
         )}
-        <div className="mt-6">
+        <div className="mt-6 flex items-center justify-center gap-6">
           <Link href="/registry" className="text-sm text-gray-500 hover:text-gray-900 underline">
             View Agent Registry
+          </Link>
+          <Link href="/review" className="text-sm text-gray-500 hover:text-gray-900 underline">
+            Review Queue
           </Link>
         </div>
       </div>

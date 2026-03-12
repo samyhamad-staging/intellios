@@ -1,0 +1,38 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { agentBlueprints } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+
+/**
+ * GET /api/review
+ * Returns all blueprints currently in the `in_review` status (the review queue).
+ */
+export async function GET() {
+  try {
+    const rows = await db
+      .select({
+        id: agentBlueprints.id,
+        agentId: agentBlueprints.agentId,
+        version: agentBlueprints.version,
+        name: agentBlueprints.name,
+        tags: agentBlueprints.tags,
+        status: agentBlueprints.status,
+        validationReport: agentBlueprints.validationReport,
+        reviewComment: agentBlueprints.reviewComment,
+        reviewedAt: agentBlueprints.reviewedAt,
+        createdAt: agentBlueprints.createdAt,
+        updatedAt: agentBlueprints.updatedAt,
+      })
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.status, "in_review"))
+      .orderBy(agentBlueprints.updatedAt);
+
+    return NextResponse.json({ blueprints: rows });
+  } catch (error) {
+    console.error("Failed to fetch review queue:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch review queue" },
+      { status: 500 }
+    );
+  }
+}

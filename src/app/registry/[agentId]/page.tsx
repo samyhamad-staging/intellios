@@ -2,10 +2,14 @@
 
 import { use, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { LifecycleControls } from "@/components/registry/lifecycle-controls";
+import { ValidationReportView } from "@/components/governance/validation-report";
+import { ReviewPanel } from "@/components/review/review-panel";
 import { ABP } from "@/lib/types/abp";
+import { ValidationReport } from "@/lib/governance/types";
 
 interface BlueprintVersion {
   id: string;
@@ -14,12 +18,16 @@ interface BlueprintVersion {
   name: string | null;
   status: string;
   refinementCount: string;
+  validationReport: ValidationReport | null;
+  reviewComment: string | null;
+  reviewedAt: string | null;
   createdAt: string;
   updatedAt: string;
   abp: ABP;
 }
 
 type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated";
+type Tab = "blueprint" | "governance" | "review" | "versions";
 
 export default function AgentDetailPage({
   params,
@@ -27,12 +35,17 @@ export default function AgentDetailPage({
   params: Promise<{ agentId: string }>;
 }) {
   const { agentId } = use(params);
+  const searchParams = useSearchParams();
 
   const [latest, setLatest] = useState<BlueprintVersion | null>(null);
   const [versions, setVersions] = useState<BlueprintVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"blueprint" | "versions">("blueprint");
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "review" || tab === "governance" || tab === "versions") return tab;
+    return "blueprint";
+  });
 
   const load = useCallback(async () => {
     try {
@@ -60,7 +73,18 @@ export default function AgentDetailPage({
     setVersions((prev) =>
       prev.map((v) => (v.id === latest?.id ? { ...v, status: newStatus } : v))
     );
+    if (newStatus !== "in_review") {
+      setActiveTab("blueprint");
+    }
   }, [latest?.id]);
+
+  const handleReviewComplete = useCallback((newStatus: string) => {
+    handleStatusChange(newStatus as Status);
+  }, [handleStatusChange]);
+
+  const handleRevalidate = useCallback((report: ValidationReport) => {
+    setLatest((prev) => prev ? { ...prev, validationReport: report } : prev);
+  }, []);
 
   if (loading) {
     return (
@@ -80,6 +104,15 @@ export default function AgentDetailPage({
       </div>
     );
   }
+
+  const isInReview = latest.status === "in_review";
+
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "blueprint", label: "Blueprint" },
+    { id: "governance", label: "Governance" },
+    ...(isInReview ? [{ id: "review" as Tab, label: "Review" }] : []),
+    { id: "versions", label: `Versions (${versions.length})` },
+  ];
 
   return (
     <div className="flex h-screen flex-col">
@@ -122,17 +155,24 @@ export default function AgentDetailPage({
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200 bg-white px-6">
-        {(["blueprint", "versions"] as const).map((tab) => (
+        {tabs.map((tab) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
             className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === tab
+              activeTab === tab.id
                 ? "border-gray-900 text-gray-900"
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
-            {tab === "blueprint" ? "Blueprint" : `Versions (${versions.length})`}
+            {tab.id === "review" && activeTab !== "review" ? (
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2 w-2 rounded-full bg-amber-400"></span>
+                {tab.label}
+              </span>
+            ) : (
+              tab.label
+            )}
           </button>
         ))}
       </div>
@@ -142,6 +182,49 @@ export default function AgentDetailPage({
         {activeTab === "blueprint" && (
           <div className="p-6">
             <BlueprintView abp={latest.abp} />
+          </div>
+        )}
+
+        {activeTab === "governance" && (
+          <div className="p-6 max-w-2xl">
+            {latest.validationReport ? (
+              <ValidationReportView
+                report={latest.validationReport}
+                blueprintId={latest.id}
+                onRevalidate={handleRevalidate}
+              />
+            ) : (
+              <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
+                <p className="text-sm text-gray-500">No validation report yet.</p>
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`/api/blueprints/${latest.id}/validate`, {
+                        method: "POST",
+                      });
+                      const data = await res.json();
+                      if (data.report) handleRevalidate(data.report as ValidationReport);
+                    } catch { /* non-critical */ }
+                  }}
+                  className="mt-3 text-sm text-gray-900 underline"
+                >
+                  Run validation
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "review" && isInReview && (
+          <div className="p-6 max-w-2xl">
+            <ReviewPanel
+              blueprintId={latest.id}
+              agentName={latest.name}
+              version={latest.version}
+              submittedAt={latest.updatedAt}
+              previousComment={latest.reviewComment}
+              onReviewComplete={handleReviewComplete}
+            />
           </div>
         )}
 

@@ -50,22 +50,6 @@ No spec defines error handling behavior. Currently:
 
 ---
 
-### OQ-006 · Blueprint Review UI routing and access
-
-**Component:** Blueprint Review UI
-**Blocks:** Blueprint Review UI implementation
-**Raised:** 2026-03-12 (Session 001, knowledge system audit)
-
-The current `src/app/blueprints/[id]/page.tsx` serves as a preview immediately after generation. It is not a formal review interface.
-
-**Questions to resolve:**
-1. Is the generation preview (`/blueprints/[id]`) the same as the review interface, or are they separate pages with different permissions?
-2. How does a reviewer discover ABPs pending review — a queue page, a notification, a direct link?
-3. What does "request changes" result in: a new intake session, a refinement pass, or a free-text comment for the generator to act on?
-4. Is the review decision (approve/reject) the terminal state, or can an approved ABP be revoked?
-
----
-
 ## Medium — Nice to Resolve Early
 
 ### OQ-007 · ABP schema evolution strategy
@@ -112,3 +96,4 @@ Generated ABPs are not quality-checked beyond Zod schema validation. A generated
 | OQ-005 | Agent Registry: table relationship, version model, uniqueness | `agent_blueprints` is the registry. Separate rows per version. `agent_id` UUID is the logical agent key (uniqueness by UUID, not name). See agent-registry.md Implementation. | 2026-03-12 |
 | OQ-001 | Governance policy expression language | Structured `{ field, operator, value, severity, message }` rules. 11 operators. `condition` field dropped. Policy schema advances to v1.1.0. See ADR-005. | 2026-03-12 |
 | OQ-004 | Governance Validator trigger + lifecycle placement | Validation auto-runs after generation (stored in `validation_report`). Blueprint always stored. `draft → in_review` blocked on error violations. Manual re-validation via POST `/validate`. | 2026-03-12 |
+| OQ-006 | Blueprint Review UI routing and access | Separate pages: `/blueprints/[id]` = Studio; `/registry/[agentId]` = review interface (Review tab visible when `in_review`). Queue at `/review`. "Request changes" stores comment, moves `in_review → draft`. Approved ABPs can only be deprecated (no re-review). See blueprint-review-ui.md. | 2026-03-12 |
