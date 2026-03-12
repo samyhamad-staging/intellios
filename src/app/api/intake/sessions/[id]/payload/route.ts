@@ -7,15 +7,23 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  try {
+    const { id } = await params;
 
-  const session = await db.query.intakeSessions.findFirst({
-    where: eq(intakeSessions.id, id),
-  });
+    const session = await db.query.intakeSessions.findFirst({
+      where: eq(intakeSessions.id, id),
+    });
 
-  if (!session) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    if (!session) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(session.intakePayload);
+  } catch (error) {
+    console.error("Failed to fetch intake payload:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch payload" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json(session.intakePayload);
 }

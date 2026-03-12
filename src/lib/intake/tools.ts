@@ -51,6 +51,20 @@ export function createIntakeTools(
         description: z.string().optional().describe("What this tool does"),
       })),
       execute: async (newTool) => {
+        const existing = getPayload().capabilities?.tools ?? [];
+        if (existing.some((t) => t.name === newTool.name)) {
+          // Update existing tool with same name instead of duplicating
+          await updatePayload((p) => ({
+            ...p,
+            capabilities: {
+              ...p.capabilities,
+              tools: (p.capabilities?.tools ?? []).map((t) =>
+                t.name === newTool.name ? newTool : t
+              ),
+            },
+          }));
+          return { success: true, updated: newTool };
+        }
         await updatePayload((p) => ({
           ...p,
           capabilities: {
@@ -86,6 +100,19 @@ export function createIntakeTools(
         uri: z.string().optional().describe("URI or path to the source"),
       })),
       execute: async (source) => {
+        const existing = getPayload().capabilities?.knowledge_sources ?? [];
+        if (existing.some((s) => s.name === source.name)) {
+          await updatePayload((p) => ({
+            ...p,
+            capabilities: {
+              ...p.capabilities,
+              knowledge_sources: (p.capabilities?.knowledge_sources ?? []).map((s) =>
+                s.name === source.name ? source : s
+              ),
+            },
+          }));
+          return { success: true, updated: source };
+        }
         await updatePayload((p) => ({
           ...p,
           capabilities: {
@@ -124,6 +151,19 @@ export function createIntakeTools(
         rules: z.array(z.string()).optional().describe("Specific rules within this policy"),
       })),
       execute: async (policy) => {
+        const existing = getPayload().governance?.policies ?? [];
+        if (existing.some((p) => p.name === policy.name)) {
+          await updatePayload((p) => ({
+            ...p,
+            governance: {
+              ...p.governance,
+              policies: (p.governance?.policies ?? []).map((p) =>
+                p.name === policy.name ? policy : p
+              ),
+            },
+          }));
+          return { success: true, updated: policy };
+        }
         await updatePayload((p) => ({
           ...p,
           governance: {

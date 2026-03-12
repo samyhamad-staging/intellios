@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { streamText, convertToModelMessages, stepCountIs } from "ai";
 import type { UIMessage } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
@@ -20,66 +20,86 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: sessionId } = await params;
-  const { messages } = (await request.json()) as { messages: UIMessage[] };
+  try {
+    const { id: sessionId } = await params;
+    const { messages } = (await request.json()) as { messages: UIMessage[] };
 
-  // Fetch session
-  const session = await db.query.intakeSessions.findFirst({
-    where: eq(intakeSessions.id, sessionId),
-  });
+    // Fetch session
+    const session = await db.query.intakeSessions.findFirst({
+      where: eq(intakeSessions.id, sessionId),
+    });
 
-  if (!session) {
-    return new Response("Session not found", { status: 404 });
-  }
-
-  // Save the latest user message to DB
-  const lastMessage = messages[messages.length - 1];
-  if (lastMessage?.role === "user") {
-    const text = extractTextContent(lastMessage);
-    if (text) {
-      await db.insert(intakeMessages).values({
-        sessionId,
-        role: "user",
-        content: text,
-      });
+    if (!session) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
-  }
 
-  // Current payload state
-  let currentPayload = (session.intakePayload as IntakePayload) ?? {};
-
-  // Create tools with payload access
-  const tools = createIntakeTools(
-    () => currentPayload,
-    async (updater) => {
-      currentPayload = updater(currentPayload);
-      await db
-        .update(intakeSessions)
-        .set({ intakePayload: currentPayload, updatedAt: new Date() })
-        .where(eq(intakeSessions.id, sessionId));
+    if (session.status === "completed") {
+      return NextResponse.json(
+        { error: "Session is already finalized" },
+        { status: 409 }
+      );
     }
-  );
 
-  // Convert UI messages to model messages for Claude
-  const modelMessages = await convertToModelMessages(messages);
-
-  // Stream response
-  const result = streamText({
-    model: anthropic("claude-sonnet-4-20250514"),
-    system: INTAKE_SYSTEM_PROMPT,
-    messages: modelMessages,
-    tools,
-    stopWhen: stepCountIs(5),
-    onFinish: async ({ text }) => {
+    // Save the latest user message to DB
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === "user") {
+      const text = extractTextContent(lastMessage);
       if (text) {
         await db.insert(intakeMessages).values({
           sessionId,
-          role: "assistant",
+          role: "user",
           content: text,
         });
       }
-    },
-  });
+    }
 
-  return result.toUIMessageStreamResponse();
+    // Current payload state — serialized to prevent race conditions when
+    // Claude calls multiple tools in the same step (parallel execution).
+    let currentPayload = (session.intakePayload as IntakePayload) ?? {};
+    let updateQueue = Promise.resolve();
+
+    // Create tools with payload access
+    const tools = createIntakeTools(
+      () => currentPayload,
+      (updater) => {
+        updateQueue = updateQueue.then(async () => {
+          currentPayload = updater(currentPayload);
+          await db
+            .update(intakeSessions)
+            .set({ intakePayload: currentPayload, updatedAt: new Date() })
+            .where(eq(intakeSessions.id, sessionId));
+        });
+        return updateQueue;
+      }
+    );
+
+    // Convert UI messages to model messages for Claude
+    const modelMessages = await convertToModelMessages(messages);
+
+    // Stream response
+    const result = streamText({
+      model: anthropic("claude-sonnet-4-20250514"),
+      system: INTAKE_SYSTEM_PROMPT,
+      messages: modelMessages,
+      tools,
+      stopWhen: stepCountIs(5),
+      onFinish: async ({ text }) => {
+        if (text) {
+          await db.insert(intakeMessages).values({
+            sessionId,
+            role: "assistant",
+            content: text,
+          });
+        }
+      },
+    });
+
+    return result.toUIMessageStreamResponse();
+  } catch (error) {
+    console.error("Failed to process intake chat:", error);
+    return NextResponse.json(
+      { error: "Failed to process chat message" },
+      { status: 500 }
+    );
+  }
 }
