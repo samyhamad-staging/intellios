@@ -16,14 +16,26 @@ The pipeline was walked through in full: a customer support agent ("TechCorp Sup
 
 One runtime bug was found and fixed during the run: `ToolCallDisplay` crashed with `Cannot convert undefined or null to object` when Claude called `mark_intake_complete` (which has no args). The fix was a single null-safe fallback: `Object.entries(args ?? {})`. The component had never been exercised with an argless tool call before this run.
 
+### All Reviewer Branches Exercised
+
+The happy path was only one of five lifecycle branches. A second agent — "OnboardBot" (Acme Corp HR onboarding) — was used to walk every remaining reviewer path:
+
+- **Request Changes** (`in_review → draft`): reviewer comment stored, status reverted, Review tab disappeared, "Submit for Review" restored. The designer can iterate and resubmit.
+- **Resubmit** (`draft → in_review`): one-click, Review tab re-appears.
+- **Reject** (`in_review → rejected`): terminal state. Review tab gone, only "Deprecate" available. Cannot be re-submitted.
+- **Review Queue empty state**: `/review` correctly shows no items after OnboardBot moves to `rejected`.
+- **Registry dual-status**: `/registry` shows both agents with correct status badges (Approved / Rejected).
+
+No bugs were found. The lifecycle state machine is airtight across all branches.
+
 ### What This Session Established
 
-The MVP is not just built — it is demonstrably working. The first full agent lifecycle was recorded in the database:
-- 1 intake session (completed)
-- 1 agent blueprint (status: approved)
+The MVP is not just built and not just running — every reviewable branch of the lifecycle has been exercised against a real database. The system behaves correctly at every transition. Two full agent lifecycles are in the database:
+- 2 intake sessions (completed)
+- 2 agent blueprints (1 approved, 1 rejected)
 - 4 governance policies (all passing)
 
-**Session cost:** ~$0.43 for 1 user message and full autonomous execution.
+**Session cost:** ~$0.56 for 2 user messages and full autonomous execution across both context windows.
 
 ---
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
+import { apiError, ErrorCode } from "@/lib/errors";
 
 /**
  * GET /api/registry
@@ -35,9 +36,6 @@ export async function GET() {
     return NextResponse.json({ agents });
   } catch (error) {
     console.error("Failed to list registry agents:", error);
-    return NextResponse.json(
-      { error: "Failed to list agents" },
-      { status: 500 }
-    );
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to list agents");
   }
 }

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { ValidationReport } from "@/lib/governance/types";
+import { apiError, ErrorCode } from "@/lib/errors";
 
 type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated";
 
@@ -37,10 +38,7 @@ export async function PATCH(
       "deprecated",
     ];
     if (!validStatuses.includes(newStatus)) {
-      return NextResponse.json(
-        { error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` },
-        { status: 400 }
-      );
+      return apiError(ErrorCode.BAD_REQUEST, `Invalid status. Must be one of: ${validStatuses.join(", ")}`);
     }
 
     const blueprint = await db.query.agentBlueprints.findFirst({
@@ -48,28 +46,20 @@ export async function PATCH(
     });
 
     if (!blueprint) {
-      return NextResponse.json(
-        { error: "Blueprint not found" },
-        { status: 404 }
-      );
+      return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }
 
     const currentStatus = blueprint.status as Status;
 
     if (currentStatus === newStatus) {
-      return NextResponse.json(
-        { error: `Blueprint is already ${newStatus}` },
-        { status: 409 }
-      );
+      return apiError(ErrorCode.CONFLICT, `Blueprint is already ${newStatus}`);
     }
 
     const allowed = VALID_TRANSITIONS[currentStatus];
     if (!allowed.includes(newStatus)) {
-      return NextResponse.json(
-        {
-          error: `Cannot transition from ${currentStatus} to ${newStatus}. Allowed: ${allowed.join(", ") || "none"}`,
-        },
-        { status: 422 }
+      return apiError(
+        ErrorCode.INVALID_STATE,
+        `Cannot transition from ${currentStatus} to ${newStatus}. Allowed: ${allowed.join(", ") || "none"}`
       );
     }
 
@@ -79,12 +69,10 @@ export async function PATCH(
       if (report) {
         const errorViolations = report.violations.filter((v) => v.severity === "error");
         if (errorViolations.length > 0) {
-          return NextResponse.json(
-            {
-              error: `Cannot submit for review: ${errorViolations.length} error-severity governance violation${errorViolations.length === 1 ? "" : "s"} must be resolved first. Re-validate after refining the blueprint.`,
-              violations: errorViolations,
-            },
-            { status: 422 }
+          return apiError(
+            ErrorCode.INVALID_STATE,
+            `Cannot submit for review: ${errorViolations.length} error-severity governance violation${errorViolations.length === 1 ? "" : "s"} must be resolved first. Re-validate after refining the blueprint.`,
+            { violations: errorViolations }
           );
         }
       }
@@ -99,9 +87,6 @@ export async function PATCH(
     return NextResponse.json({ id: updated.id, status: updated.status });
   } catch (error) {
     console.error("Failed to update blueprint status:", error);
-    return NextResponse.json(
-      { error: "Failed to update status" },
-      { status: 500 }
-    );
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to update status");
   }
 }

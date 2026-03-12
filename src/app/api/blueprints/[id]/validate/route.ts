@@ -4,6 +4,7 @@ import { agentBlueprints, intakeSessions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { ABP } from "@/lib/types/abp";
 import { validateBlueprint } from "@/lib/governance/validator";
+import { apiError, ErrorCode } from "@/lib/errors";
 
 /**
  * POST /api/blueprints/[id]/validate
@@ -22,10 +23,7 @@ export async function POST(
     });
 
     if (!blueprint) {
-      return NextResponse.json(
-        { error: "Blueprint not found" },
-        { status: 404 }
-      );
+      return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }
 
     const abp = blueprint.abp as ABP;
@@ -48,9 +46,6 @@ export async function POST(
     return NextResponse.json({ report });
   } catch (error) {
     console.error("Failed to validate blueprint:", error);
-    return NextResponse.json(
-      { error: "Failed to run validation" },
-      { status: 500 }
-    );
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to run validation");
   }
 }

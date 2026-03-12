@@ -26,28 +26,6 @@ The current implementation has no authentication. `enterprise_id` is stored in `
 
 ---
 
-## High — Should Resolve Before Building the Affected Component
-
-### OQ-003 · Error handling strategy
-
-**Component:** All (cross-cutting)
-**Blocks:** Production-grade implementation of any component
-**Raised:** 2026-03-12 (Session 001, knowledge system audit)
-
-No spec defines error handling behavior. Currently:
-- API routes return generic 500 errors with `{ error: "..." }` messages
-- No error codes that the UI can act on programmatically
-- No distinction between user errors (4xx) and system errors (5xx)
-- No retry guidance for transient failures (e.g., Claude API timeouts)
-
-**Questions to resolve:**
-1. Standard error response format? (e.g., `{ code: string, message: string, details?: object }`)
-2. Which errors should be surfaced to the end user vs. logged silently?
-3. Retry behavior for Claude API calls: exponential backoff? How many retries?
-4. How are partial failures handled (e.g., tool handler fails mid-intake)?
-
----
-
 ---
 
 ## Medium — Nice to Resolve Early
@@ -97,3 +75,4 @@ Generated ABPs are not quality-checked beyond Zod schema validation. A generated
 | OQ-001 | Governance policy expression language | Structured `{ field, operator, value, severity, message }` rules. 11 operators. `condition` field dropped. Policy schema advances to v1.1.0. See ADR-005. | 2026-03-12 |
 | OQ-004 | Governance Validator trigger + lifecycle placement | Validation auto-runs after generation (stored in `validation_report`). Blueprint always stored. `draft → in_review` blocked on error violations. Manual re-validation via POST `/validate`. | 2026-03-12 |
 | OQ-006 | Blueprint Review UI routing and access | Separate pages: `/blueprints/[id]` = Studio; `/registry/[agentId]` = review interface (Review tab visible when `in_review`). Queue at `/review`. "Request changes" stores comment, moves `in_review → draft`. Approved ABPs can only be deprecated (no re-review). See blueprint-review-ui.md. | 2026-03-12 |
+| OQ-003 | Error handling strategy | Standard format `{ code, message, details? }` implemented in `src/lib/errors.ts`. `apiError(code, message)` + `aiError(err)` helpers cover all 15 routes. Claude API errors (rate limit, auth, timeout) produce specific `AI_RATE_LIMIT` / `AI_ERROR` codes at 429/502. Governance remediation degrades gracefully (returns violations without suggestions). No retry logic for MVP — transient failures return errors immediately. | 2026-03-12 |

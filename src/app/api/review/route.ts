@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { apiError, ErrorCode } from "@/lib/errors";
 
 /**
  * GET /api/review
@@ -30,9 +31,6 @@ export async function GET() {
     return NextResponse.json({ blueprints: rows });
   } catch (error) {
     console.error("Failed to fetch review queue:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch review queue" },
-      { status: 500 }
-    );
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch review queue");
   }
 }

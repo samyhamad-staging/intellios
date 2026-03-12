@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { apiError, ErrorCode } from "@/lib/errors";
 
 type ReviewAction = "approve" | "reject" | "request_changes";
 
@@ -30,17 +31,11 @@ export async function POST(
 
     const validActions: ReviewAction[] = ["approve", "reject", "request_changes"];
     if (!validActions.includes(action)) {
-      return NextResponse.json(
-        { error: `Invalid action. Must be one of: ${validActions.join(", ")}` },
-        { status: 400 }
-      );
+      return apiError(ErrorCode.BAD_REQUEST, `Invalid action. Must be one of: ${validActions.join(", ")}`);
     }
 
     if (action === "request_changes" && !comment?.trim()) {
-      return NextResponse.json(
-        { error: "A comment is required when requesting changes." },
-        { status: 400 }
-      );
+      return apiError(ErrorCode.BAD_REQUEST, "A comment is required when requesting changes.");
     }
 
     const blueprint = await db.query.agentBlueprints.findFirst({
@@ -48,14 +43,11 @@ export async function POST(
     });
 
     if (!blueprint) {
-      return NextResponse.json({ error: "Blueprint not found" }, { status: 404 });
+      return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }
 
     if (blueprint.status !== "in_review") {
-      return NextResponse.json(
-        { error: `Blueprint is not in review. Current status: ${blueprint.status}` },
-        { status: 422 }
-      );
+      return apiError(ErrorCode.INVALID_STATE, `Blueprint is not in review. Current status: ${blueprint.status}`);
     }
 
     const newStatus = ACTION_STATUS[action];
@@ -80,9 +72,6 @@ export async function POST(
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Failed to submit review:", error);
-    return NextResponse.json(
-      { error: "Failed to submit review" },
-      { status: 500 }
-    );
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to submit review");
   }
 }

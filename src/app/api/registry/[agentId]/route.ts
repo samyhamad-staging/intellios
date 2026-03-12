@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { apiError, ErrorCode } from "@/lib/errors";
 
 /**
  * GET /api/registry/[agentId]
@@ -21,7 +22,7 @@ export async function GET(
       .orderBy(desc(agentBlueprints.createdAt));
 
     if (versions.length === 0) {
-      return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+      return apiError(ErrorCode.NOT_FOUND, "Agent not found");
     }
 
     const latest = versions[0];
@@ -29,9 +30,6 @@ export async function GET(
     return NextResponse.json({ agent: latest, versions });
   } catch (error) {
     console.error("Failed to fetch agent:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch agent" },
-      { status: 500 }
-    );
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch agent");
   }
 }

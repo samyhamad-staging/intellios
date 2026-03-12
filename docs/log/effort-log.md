@@ -146,17 +146,23 @@ Tracks resource consumption per session for post-project cost estimation.
 | End-to-end test run | Full pipeline walkthrough: intake → generate → govern → review → approve | ~10K in / ~4K out |
 | Bug fix | tool-call-display.tsx null args crash | ~3K in / ~1K out |
 | Session logging | Session log, effort log, _index.md | ~5K in / ~3K out |
-| **Session total (est.)** | | **~44K in / ~20K out** |
+| Reviewer flow testing | OnboardBot agent: intake → generate → submit → request_changes → resubmit → reject | ~8K in / ~4K out |
+| Documentation updates | project-journal.md, effort-log.md, session-002 log | ~4K in / ~2K out |
+| **Session total (est.)** | | **~56K in / ~26K out** |
 
-**Estimated session cost:** Sonnet ~44K in × $3/1M + ~20K out × $15/1M = **$0.13 + $0.30 = ~$0.43**
+**Estimated session cost:** Sonnet ~56K in × $3/1M + ~26K out × $15/1M = **$0.17 + $0.39 = ~$0.56**
 
 ### Samy Effort
 
 | # | Message / Decision | Type | Notes |
 |---|---|---|---|
 | 21 | Proceed with end-to-end run (delegated) | D-Approve | Full ownership delegation — no further guidance needed |
+| 22 | Is all of the required documentation up to date? | D-Correct | Doc audit; 3 gaps found and fixed |
+| 23 | What has been successfully tested? | Operational | Coverage inventory request |
+| 24 | Proceed with the next best action | D-Approve | Triggered reviewer flow testing (all branches) |
+| 25 | Proceed with the next best action | D-Approve | Triggered journal + effort log update |
 
-**Totals:** 1 message · 1 D-Approve · ~5 min
+**Totals:** 5 messages · 3 D-Approve · 1 D-Correct · ~15 min
 
 ---
 
@@ -164,14 +170,14 @@ Tracks resource consumption per session for post-project cost estimation.
 
 | Metric | Session 001 | Session 002 | Total |
 |---|---|---|---|
-| Est. Claude input tokens | ~288K | ~44K | ~332K |
-| Est. Claude output tokens | ~155K | ~20K | ~175K |
-| Est. Claude cost | ~$3.78 | ~$0.43 | ~$4.21 |
-| Samy messages | 20 | 1 | 21 |
-| Samy decisions | 31 | 1 | 32 |
-| Samy est. time | ~3–4 hrs | ~5 min | ~3–4 hrs |
-| Code shipped | All 5 MVP components | 1 bug fix | MVP live + validated |
-| Files created/modified | ~130 | ~5 | ~135 |
+| Est. Claude input tokens | ~288K | ~56K | ~344K |
+| Est. Claude output tokens | ~155K | ~26K | ~181K |
+| Est. Claude cost | ~$3.78 | ~$0.56 | ~$4.34 |
+| Samy messages | 20 | 5 | 25 |
+| Samy decisions | 31 | 4 | 35 |
+| Samy est. time | ~3–4 hrs | ~15 min | ~3.5–4.5 hrs |
+| Code shipped | All 5 MVP components | 1 bug fix | MVP live + fully validated |
+| Files created/modified | ~130 | ~8 | ~138 |
 
 ---
 

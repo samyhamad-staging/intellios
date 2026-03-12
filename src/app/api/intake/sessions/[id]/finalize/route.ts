@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { intakeSessions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { IntakePayload } from "@/lib/types/intake";
+import { apiError, ErrorCode } from "@/lib/errors";
 
 export async function POST(
   _request: NextRequest,
@@ -16,14 +17,11 @@ export async function POST(
     });
 
     if (!session) {
-      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+      return apiError(ErrorCode.NOT_FOUND, "Session not found");
     }
 
     if (session.status === "completed") {
-      return NextResponse.json(
-        { error: "Session is already finalized" },
-        { status: 409 }
-      );
+      return apiError(ErrorCode.CONFLICT, "Session is already finalized");
     }
 
     const payload = session.intakePayload as IntakePayload;
@@ -36,10 +34,7 @@ export async function POST(
       errors.push("At least one tool/capability is required");
 
     if (errors.length > 0) {
-      return NextResponse.json(
-        { error: "Validation failed", details: errors },
-        { status: 400 }
-      );
+      return apiError(ErrorCode.BAD_REQUEST, "Validation failed", errors);
     }
 
     // Mark session as completed
@@ -52,9 +47,6 @@ export async function POST(
     return NextResponse.json({ session: updated, payload });
   } catch (error) {
     console.error("Failed to finalize intake session:", error);
-    return NextResponse.json(
-      { error: "Failed to finalize session" },
-      { status: 500 }
-    );
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to finalize session");
   }
 }

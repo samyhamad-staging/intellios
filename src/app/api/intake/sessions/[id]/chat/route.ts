@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { streamText, convertToModelMessages, stepCountIs } from "ai";
 import type { UIMessage } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
+import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { db } from "@/lib/db";
 import { intakeSessions, intakeMessages } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -30,14 +31,11 @@ export async function POST(
     });
 
     if (!session) {
-      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+      return apiError(ErrorCode.NOT_FOUND, "Session not found");
     }
 
     if (session.status === "completed") {
-      return NextResponse.json(
-        { error: "Session is already finalized" },
-        { status: 409 }
-      );
+      return apiError(ErrorCode.CONFLICT, "Session is already finalized");
     }
 
     // Save the latest user message to DB
@@ -103,9 +101,6 @@ export async function POST(
     return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error("Failed to process intake chat:", error);
-    return NextResponse.json(
-      { error: "Failed to process chat message" },
-      { status: 500 }
-    );
+    return aiError(error);
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { governancePolicies } from "@/lib/db/schema";
 import { isNull } from "drizzle-orm";
+import { apiError, ErrorCode } from "@/lib/errors";
 
 /**
  * GET /api/governance/policies
@@ -17,10 +18,7 @@ export async function GET() {
     return NextResponse.json({ policies });
   } catch (error) {
     console.error("Failed to list policies:", error);
-    return NextResponse.json(
-      { error: "Failed to list policies" },
-      { status: 500 }
-    );
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to list policies");
   }
 }
 
@@ -40,10 +38,7 @@ export async function POST(request: NextRequest) {
     };
 
     if (!body.name || !body.type || !Array.isArray(body.rules)) {
-      return NextResponse.json(
-        { error: "name, type, and rules are required" },
-        { status: 400 }
-      );
+      return apiError(ErrorCode.BAD_REQUEST, "name, type, and rules are required");
     }
 
     const [policy] = await db
@@ -60,9 +55,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ policy }, { status: 201 });
   } catch (error) {
     console.error("Failed to create policy:", error);
-    return NextResponse.json(
-      { error: "Failed to create policy" },
-      { status: 500 }
-    );
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to create policy");
   }
 }

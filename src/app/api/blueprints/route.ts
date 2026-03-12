@@ -5,16 +5,14 @@ import { eq } from "drizzle-orm";
 import { generateBlueprint } from "@/lib/generation/generate";
 import { validateBlueprint } from "@/lib/governance/validator";
 import { IntakePayload } from "@/lib/types/intake";
+import { apiError, aiError, ErrorCode } from "@/lib/errors";
 
 export async function POST(request: NextRequest) {
   try {
     const { sessionId } = (await request.json()) as { sessionId: string };
 
     if (!sessionId) {
-      return NextResponse.json(
-        { error: "sessionId is required" },
-        { status: 400 }
-      );
+      return apiError(ErrorCode.BAD_REQUEST, "sessionId is required");
     }
 
     const session = await db.query.intakeSessions.findFirst({
@@ -22,20 +20,23 @@ export async function POST(request: NextRequest) {
     });
 
     if (!session) {
-      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+      return apiError(ErrorCode.NOT_FOUND, "Session not found");
     }
 
     if (session.status !== "completed") {
-      return NextResponse.json(
-        { error: "Intake session must be completed before generating a blueprint" },
-        { status: 422 }
-      );
+      return apiError(ErrorCode.INVALID_STATE, "Intake session must be completed before generating a blueprint");
     }
 
     const intake = session.intakePayload as IntakePayload;
 
     // Generate the ABP via Claude
-    const abp = await generateBlueprint(intake, sessionId);
+    let abp;
+    try {
+      abp = await generateBlueprint(intake, sessionId);
+    } catch (err) {
+      console.error("Claude generateBlueprint failed:", err);
+      return aiError(err);
+    }
 
     // Denormalize searchable fields from the ABP for the registry
     const name = abp.identity.name ?? null;
@@ -58,9 +59,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Failed to generate blueprint:", error);
-    return NextResponse.json(
-      { error: "Failed to generate blueprint" },
-      { status: 500 }
-    );
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to generate blueprint");
   }
 }

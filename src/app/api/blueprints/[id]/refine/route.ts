@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { refineBlueprint } from "@/lib/generation/generate";
 import { ABP } from "@/lib/types/abp";
 import { IntakePayload } from "@/lib/types/intake";
+import { apiError, aiError, ErrorCode } from "@/lib/errors";
 
 export async function POST(
   request: NextRequest,
@@ -15,10 +16,7 @@ export async function POST(
     const { change } = (await request.json()) as { change: string };
 
     if (!change?.trim()) {
-      return NextResponse.json(
-        { error: "change is required" },
-        { status: 400 }
-      );
+      return apiError(ErrorCode.BAD_REQUEST, "change is required");
     }
 
     const blueprint = await db.query.agentBlueprints.findFirst({
@@ -26,17 +24,11 @@ export async function POST(
     });
 
     if (!blueprint) {
-      return NextResponse.json(
-        { error: "Blueprint not found" },
-        { status: 404 }
-      );
+      return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }
 
     if (blueprint.status === "approved") {
-      return NextResponse.json(
-        { error: "Approved blueprints cannot be refined" },
-        { status: 409 }
-      );
+      return apiError(ErrorCode.CONFLICT, "Approved blueprints cannot be refined");
     }
 
     // Fetch original intake for context
@@ -48,7 +40,13 @@ export async function POST(
     const currentAbp = blueprint.abp as ABP;
 
     // Refine via Claude
-    const updatedAbp = await refineBlueprint(currentAbp, change.trim(), intake);
+    let updatedAbp: ABP;
+    try {
+      updatedAbp = await refineBlueprint(currentAbp, change.trim(), intake);
+    } catch (err) {
+      console.error("Claude refineBlueprint failed:", err);
+      return aiError(err);
+    }
     const newCount = String(parseInt(blueprint.refinementCount ?? "0", 10) + 1);
 
     // Re-sync denormalized registry fields in case identity or tags changed
@@ -70,9 +68,6 @@ export async function POST(
     });
   } catch (error) {
     console.error("Failed to refine blueprint:", error);
-    return NextResponse.json(
-      { error: "Failed to refine blueprint" },
-      { status: 500 }
-    );
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to refine blueprint");
   }
 }
