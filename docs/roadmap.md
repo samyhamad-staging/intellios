@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Post-MVP Phase 1 (not yet started)
+## Current Phase: Post-MVP Phase 1 (in progress — hardening complete, multi-tenancy and deployment remain)
 
 ---
 
@@ -31,17 +31,25 @@ All criteria validated end-to-end on 2026-03-12 (Session 002) against PostgreSQL
 
 ---
 
-## Post-MVP Phase 1 — Production Readiness (not yet scoped)
+## Post-MVP Phase 1 — Production Readiness
 
 Prerequisite work before Intellios can serve real enterprise users.
 
-| Item | Priority | Notes |
-|---|---|---|
-| Authentication | P0 | Method TBD (NextAuth.js / Clerk / Supabase Auth). See OQ-002 (resolved: deferred). |
-| Multi-tenancy | P0 | Row-level security or application-level filtering. Tied to auth model. |
-| User roles | P1 | At minimum: intake user + reviewer. Scope from ADR-003 single-reviewer model. |
-| ABP schema evolution strategy | P1 | Migration strategy needed before v1.1.0. See OQ-007. |
-| Deployment pipeline | P2 | Package approved ABPs for delivery to target runtime environments. |
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| Authentication | P0 | ✓ Complete (Session 003) | NextAuth v5 credentials provider, bcrypt, 8-hour JWT sessions |
+| User roles + RBAC | P1 | ✓ Complete (Session 003) | 4 roles: designer, reviewer, compliance_officer, admin. SOD enforced on review. |
+| Audit log | P0 | ✓ Complete (Session 003) | Append-only `audit_log` table; wired into all lifecycle events |
+| Rate limiting | P1 | ✓ Complete (Session 003) | Sliding-window in-memory; chat 30/min, generate+refine 10/min |
+| Input validation | P1 | ✓ Complete (Session 003) | Zod on all POST/PATCH routes via `parseBody()` helper |
+| Security headers | P1 | ✓ Complete (Session 003) | CSP, X-Frame-Options, HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy |
+| Request correlation IDs | P1 | ✓ Complete (Session 003) | `X-Request-Id` injected by middleware, threaded through all routes and error responses |
+| Environment variable validation | P1 | ✓ Complete (Session 003) | `src/lib/env.ts` validates DATABASE_URL, ANTHROPIC_API_KEY, AUTH_SECRET at startup |
+| Intake Engine UX | P1 | ✓ Complete (Session 003) | Dynamic system prompt, markdown rendering, suggested prompts, session history, sidebar detail |
+| Multi-tenancy | P0 | Not started | Row-level security or application-level `enterprise_id` filtering. Schema columns exist. |
+| ABP schema evolution strategy | P1 | Not started | Migration strategy needed before v1.1.0. See OQ-007. |
+| Deployment pipeline | P2 | Not started | Package approved ABPs for delivery to target runtime environments. |
+| Distributed rate limiting | P2 | Not started | Current in-memory limiter does not work across multiple server instances. Replace with Redis. |
 
 ---
 

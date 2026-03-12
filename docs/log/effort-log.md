@@ -166,18 +166,58 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 003 — 2026-03-12
+
+**Duration:** Same calendar day, fourth context window
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Request correlation ID fixes | 3 TypeScript errors fixed, patch scripts deleted, TypeScript clean check | ~8K in / ~3K out |
+| Env var validation | `src/lib/env.ts`, `db/index.ts` update, `.env.example` update | ~6K in / ~3K out |
+| Intake system prompt analysis | Read all intake files, evaluate 6 accuracy/UX problems, write plan | ~20K in / ~5K out |
+| Dynamic system prompt | `buildIntakeSystemPrompt()` with payload state injection | ~8K in / ~4K out |
+| Markdown rendering | react-markdown install, MessageBubble rewrite with component Tailwind classes | ~6K in / ~3K out |
+| Tool call display rewrite | Per-tool icons + `buildSummary()` function for each tool type | ~8K in / ~4K out |
+| Sidebar enhancement | `getSections()` with `detail` field, truncateList helper | ~8K in / ~4K out |
+| ChatContainer + page | Suggested prompts, initialMessages, history loading, UIMessage mapping | ~12K in / ~6K out |
+| TypeScript debugging | AI SDK v6 `ChatInit.messages` discovery, sed fix | ~5K in / ~2K out |
+| Browser verification | Sign-in flow, session creation, chip interaction, tool pills, sidebar | ~10K in / ~3K out |
+| Documentation | Session log, _index.md, roadmap, effort log | ~6K in / ~4K out |
+| **Session total (est.)** | | **~97K in / ~41K out** |
+
+**Estimated session cost:** Sonnet ~97K in × $3/1M + ~41K out × $15/1M = **$0.29 + $0.62 = ~$0.91**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 26 | [Implicit continuation] — resume from prior context, fix TypeScript errors | D-Approve | Session picked up mid-task |
+| 27 | "What is the next best action" | D-Approve | Delegated; Claude recommended env var validation |
+| 28 | "yes" — proceed with env var validation | D-Approve | — |
+| 29 | "Help me understand the intake process…" | Operational | Knowledge request; no code changes |
+| 30 | "Carefully evaluate ways to optimize accuracy, effectiveness, efficiency. UX must be modern, guided" | D-Scope | High-value direction-setting; scoped 7-change optimization |
+| 31 | "yes" — approve plan and proceed | D-Approve | — |
+| 32 | "Update all documentation and logs before ending today's session" | D-Scope | Session close instruction |
+
+**Totals:** 7 messages · 4 D-Approve · 1 D-Scope · 1 Operational · ~45 min
+
+---
+
 ## Running Totals
 
-| Metric | Session 001 | Session 002 | Total |
-|---|---|---|---|
-| Est. Claude input tokens | ~288K | ~56K | ~344K |
-| Est. Claude output tokens | ~155K | ~26K | ~181K |
-| Est. Claude cost | ~$3.78 | ~$0.56 | ~$4.34 |
-| Samy messages | 20 | 5 | 25 |
-| Samy decisions | 31 | 4 | 35 |
-| Samy est. time | ~3–4 hrs | ~15 min | ~3.5–4.5 hrs |
-| Code shipped | All 5 MVP components | 1 bug fix | MVP live + fully validated |
-| Files created/modified | ~130 | ~8 | ~138 |
+| Metric | Session 001 | Session 002 | Session 003 | Total |
+|---|---|---|---|---|
+| Est. Claude input tokens | ~288K | ~56K | ~97K | ~441K |
+| Est. Claude output tokens | ~155K | ~26K | ~41K | ~222K |
+| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$5.25 |
+| Samy messages | 20 | 5 | 7 | 32 |
+| Samy decisions | 31 | 4 | 6 | 41 |
+| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~4.5–5.5 hrs |
+| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Full app + hardened |
+| Files created/modified | ~130 | ~8 | ~25 | ~163 |
 
 ---
 
