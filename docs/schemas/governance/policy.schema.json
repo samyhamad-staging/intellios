@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intellios.dev/schemas/governance/policy/v1.0.0",
+  "title": "Governance Policy",
+  "description": "Defines a governance policy that can be applied to Agent Blueprint Packages.",
+  "type": "object",
+  "required": ["name", "type", "rules"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the policy."
+    },
+    "type": {
+      "type": "string",
+      "enum": ["safety", "compliance", "data_handling", "access_control", "audit"],
+      "description": "Category of governance this policy addresses."
+    },
+    "description": {
+      "type": "string",
+      "description": "What this policy enforces and why."
+    },
+    "enterprise_id": {
+      "type": "string",
+      "description": "Enterprise this policy belongs to. Omit for global policies."
+    },
+    "rules": {
+      "type": "array",
+      "description": "Individual rules within this policy.",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "severity"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique rule identifier within this policy."
+          },
+          "description": {
+            "type": "string",
+            "description": "What this rule checks."
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning"],
+            "description": "error = blocks approval, warning = informational."
+          },
+          "condition": {
+            "type": "string",
+            "description": "Machine-readable condition expression (format TBD)."
+          }
+        }
+      }
+    }
+  }
+}
