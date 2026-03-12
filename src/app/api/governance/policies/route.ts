@@ -3,12 +3,16 @@ import { db } from "@/lib/db";
 import { governancePolicies } from "@/lib/db/schema";
 import { isNull } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
+import { requireAuth } from "@/lib/auth/require";
 
 /**
  * GET /api/governance/policies
  * Returns all global governance policies (enterprise_id IS NULL).
  */
 export async function GET() {
+  const { error: authError } = await requireAuth();
+  if (authError) return authError;
+
   try {
     const policies = await db
       .select()
@@ -28,6 +32,9 @@ export async function GET() {
  * Body: { name, type, description?, rules, enterprise_id? }
  */
 export async function POST(request: NextRequest) {
+  const { error: authError } = await requireAuth(["admin"]);
+  if (authError) return authError;
+
   try {
     const body = (await request.json()) as {
       name: string;

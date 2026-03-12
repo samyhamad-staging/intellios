@@ -4,11 +4,14 @@ import { intakeSessions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, ErrorCode } from "@/lib/errors";
+import { requireAuth } from "@/lib/auth/require";
 
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { error } = await requireAuth(["designer", "admin"]);
+  if (error) return error;
   try {
     const { id } = await params;
 

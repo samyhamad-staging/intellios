@@ -6,8 +6,12 @@ import { generateBlueprint } from "@/lib/generation/generate";
 import { validateBlueprint } from "@/lib/governance/validator";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
+import { requireAuth } from "@/lib/auth/require";
 
 export async function POST(request: NextRequest) {
+  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  if (error) return error;
+
   try {
     const { sessionId } = (await request.json()) as { sessionId: string };
 
@@ -48,7 +52,7 @@ export async function POST(request: NextRequest) {
     // Persist — agentId defaults to a new UUID (first version of a new agent)
     const [blueprint] = await db
       .insert(agentBlueprints)
-      .values({ sessionId, abp, name, tags, validationReport })
+      .values({ sessionId, abp, name, tags, validationReport, createdBy: authSession.user.email ?? null })
       .returning();
 
     return NextResponse.json({

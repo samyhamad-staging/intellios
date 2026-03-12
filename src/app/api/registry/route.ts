@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
+import { requireAuth } from "@/lib/auth/require";
 
 /**
  * GET /api/registry
@@ -10,6 +11,8 @@ import { apiError, ErrorCode } from "@/lib/errors";
  * In MVP, each agentId has exactly one version row.
  */
 export async function GET() {
+  const { error } = await requireAuth();
+  if (error) return error;
   try {
     // Fetch all blueprints; DISTINCT ON agentId ordered by created_at desc gives latest per agent
     const agents = await db

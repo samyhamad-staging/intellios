@@ -4,6 +4,7 @@ import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { ValidationReport } from "@/lib/governance/types";
 import { apiError, ErrorCode } from "@/lib/errors";
+import { requireAuth } from "@/lib/auth/require";
 
 type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated";
 
@@ -26,6 +27,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { session: authSession, error } = await requireAuth(["designer", "reviewer", "admin"]);
+  if (error) return error;
+
   try {
     const { id } = await params;
     const { status: newStatus } = (await request.json()) as { status: Status };
@@ -56,6 +60,14 @@ export async function PATCH(
     }
 
     const allowed = VALID_TRANSITIONS[currentStatus];
+    // Role-based transition enforcement (SOD: designers submit, reviewers decide)
+    if (newStatus === "in_review" && authSession.user.role !== "designer" && authSession.user.role !== "admin") {
+      return apiError(ErrorCode.FORBIDDEN, "Only designers can submit blueprints for review");
+    }
+    if (newStatus === "deprecated" && authSession.user.role !== "reviewer" && authSession.user.role !== "admin") {
+      return apiError(ErrorCode.FORBIDDEN, "Only reviewers and administrators can deprecate blueprints");
+    }
+
     if (!allowed.includes(newStatus)) {
       return apiError(
         ErrorCode.INVALID_STATE,

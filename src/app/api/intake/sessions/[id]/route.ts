@@ -3,11 +3,15 @@ import { db } from "@/lib/db";
 import { intakeSessions, intakeMessages } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
+import { requireAuth } from "@/lib/auth/require";
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { error } = await requireAuth();
+  if (error) return error;
+
   try {
     const { id } = await params;
 

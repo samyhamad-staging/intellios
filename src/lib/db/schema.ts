@@ -1,8 +1,22 @@
 import { pgTable, uuid, text, jsonb, timestamp, index } from "drizzle-orm/pg-core";
 
+// ─── Users ───────────────────────────────────────────────────────────────────
+
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  role: text("role").notNull(), // designer | reviewer | compliance_officer | admin
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Intake ───────────────────────────────────────────────────────────────────
+
 export const intakeSessions = pgTable("intake_sessions", {
   id: uuid("id").primaryKey().defaultRandom(),
   enterpriseId: text("enterprise_id"),
+  createdBy: text("created_by"), // user email — nullable for rows created before auth
   status: text("status").notNull().default("active"), // active | completed | abandoned
   intakePayload: jsonb("intake_payload").notNull().default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -45,6 +59,8 @@ export const agentBlueprints = pgTable(
     validationReport: jsonb("validation_report"),    // ValidationReport — null until first validation runs
     reviewComment: text("review_comment"),            // last reviewer comment (request changes, approve, reject)
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }), // when last review action was taken
+    reviewedBy: text("reviewed_by"),                  // reviewer email — nullable for rows created before auth
+    createdBy: text("created_by"),                    // designer email — nullable for rows created before auth
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { ABP } from "@/lib/types/abp";
 import { validateBlueprint } from "@/lib/governance/validator";
 import { apiError, ErrorCode } from "@/lib/errors";
+import { requireAuth } from "@/lib/auth/require";
 
 /**
  * POST /api/blueprints/[id]/validate
@@ -15,6 +16,8 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { error } = await requireAuth(["designer", "admin"]);
+  if (error) return error;
   try {
     const { id } = await params;
 

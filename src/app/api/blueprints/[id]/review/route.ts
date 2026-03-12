@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
+import { requireAuth } from "@/lib/auth/require";
 
 type ReviewAction = "approve" | "reject" | "request_changes";
 
@@ -22,6 +23,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { session: authSession, error } = await requireAuth(["reviewer"]);
+  if (error) return error;
+
   try {
     const { id } = await params;
     const { action, comment } = (await request.json()) as {
@@ -59,6 +63,7 @@ export async function POST(
         status: newStatus,
         reviewComment: comment?.trim() || null,
         reviewedAt,
+        reviewedBy: authSession.user.email ?? null,
         updatedAt: reviewedAt,
       })
       .where(eq(agentBlueprints.id, id))

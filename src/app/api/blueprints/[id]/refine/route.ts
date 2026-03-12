@@ -6,11 +6,14 @@ import { refineBlueprint } from "@/lib/generation/generate";
 import { ABP } from "@/lib/types/abp";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
+import { requireAuth } from "@/lib/auth/require";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { error } = await requireAuth(["designer", "admin"]);
+  if (error) return error;
   try {
     const { id } = await params;
     const { change } = (await request.json()) as { change: string };

@@ -3,12 +3,15 @@ import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
+import { requireAuth } from "@/lib/auth/require";
 
 /**
  * GET /api/review
  * Returns all blueprints currently in the `in_review` status (the review queue).
  */
 export async function GET() {
+  const { error } = await requireAuth(["reviewer", "compliance_officer", "admin"]);
+  if (error) return error;
   try {
     const rows = await db
       .select({
