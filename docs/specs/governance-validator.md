@@ -34,3 +34,13 @@ Validates an Agent Blueprint Package against enterprise policies, compliance rul
 - **Policy storage:** Governance policies are stored in PostgreSQL alongside the Agent Registry. See ADR-002.
 - **Sync vs. async:** Synchronous for MVP. Validation runs inline before storage. See ADR-003.
 - **Auto-fix suggestions:** Yes. The validator returns violations with Claude-powered suggested remediations. See ADR-003.
+
+## Known Unknowns
+
+These questions must be resolved before this component can be implemented. See `docs/open-questions.md` for full detail.
+
+| # | Question | Blocks |
+|---|---|---|
+| OQ-001 | Governance policy expression language — what is the format of the `condition` field? What operators are supported? | Entire implementation |
+| OQ-004 | Where does validation fit in the blueprint lifecycle? Does it block storage or run post-insert? What happens to ABPs that fail? | Integration with Generation Engine and Agent Registry |
+| OQ-002 | Authentication and multi-tenancy — how are governance policies scoped to an enterprise? | Policy loading logic |

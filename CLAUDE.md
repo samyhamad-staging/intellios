@@ -15,6 +15,8 @@ docs/
   schemas/             ← Versioned JSON Schema files for core artifacts
   specs/               ← Behavior specifications for each component
   glossary.md          ← Canonical term definitions
+  open-questions.md    ← Live tracker of unresolved questions (OQ-NNN)
+  project-journal.md   ← Narrative evolution record (one entry per session)
   roadmap.md           ← Current phase, MVP scope, priorities
 src/                   ← Application source code
   app/                 ← Next.js App Router (pages + API routes)
@@ -71,6 +73,8 @@ After every implementation task:
 4. **Effort log** — update `docs/log/effort-log.md` with the session's Claude and Samy effort at session close.
 5. **Architecture** — update `docs/architecture/` if subsystem boundaries or data flow changed.
 6. **ADRs** — record new significant technical decisions as ADR files before or alongside implementation.
+7. **Open questions** — update `docs/open-questions.md`: add new questions discovered during implementation; mark questions resolved (with reference to the resolving decision or ADR).
+8. **Project journal** — append a narrative entry to `docs/project-journal.md` at the end of each session capturing the strategic context, key decisions made, and why they were made.
 
 Do not commit code without committing the corresponding documentation update in the same commit or an immediately following one.
 

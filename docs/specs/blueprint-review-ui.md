@@ -31,3 +31,14 @@ Provides a human-facing interface for reviewing, approving, or requesting change
 - **Technology stack:** Next.js (full-stack React with SSR). See ADR-002.
 - **Editing:** Request changes only. Reviewers can approve, reject, or request changes with comments. Changes go back through the generation/validation loop. See ADR-003.
 - **Roles and permissions:** Deferred to a future phase. MVP assumes a single reviewer role. See ADR-003.
+
+## Known Unknowns
+
+These questions must be resolved before this component can be implemented. See `docs/open-questions.md` for full detail.
+
+| # | Question | Blocks |
+|---|---|---|
+| OQ-006 | Is the generation preview page (`/blueprints/[id]`) the same as the review interface, or are they separate pages? | Page architecture |
+| OQ-006 | How does a reviewer discover ABPs pending review — queue page, notification, or direct link? | Review queue design |
+| OQ-006 | What does "request changes" produce — a new intake session, a refinement pass, or a comment? | Review action implementation |
+| OQ-002 | Authentication and multi-tenancy — how does the reviewer authenticate and which ABPs can they see? | Access control |
