@@ -6,8 +6,14 @@ import { ValidationReport } from "@/lib/governance/types";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { writeAuditLog } from "@/lib/audit/log";
+import { parseBody } from "@/lib/parse-body";
+import { z } from "zod";
 
 type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated";
+
+const StatusBody = z.object({
+  status: z.enum(["draft", "in_review", "approved", "rejected", "deprecated"]),
+});
 
 // Valid forward transitions. Any status → deprecated is always allowed.
 const VALID_TRANSITIONS: Record<Status, Status[]> = {
@@ -31,20 +37,12 @@ export async function PATCH(
   const { session: authSession, error } = await requireAuth(["designer", "reviewer", "admin"]);
   if (error) return error;
 
+  const { data: body, error: bodyError } = await parseBody(request, StatusBody);
+  if (bodyError) return bodyError;
+
   try {
     const { id } = await params;
-    const { status: newStatus } = (await request.json()) as { status: Status };
-
-    const validStatuses: Status[] = [
-      "draft",
-      "in_review",
-      "approved",
-      "rejected",
-      "deprecated",
-    ];
-    if (!validStatuses.includes(newStatus)) {
-      return apiError(ErrorCode.BAD_REQUEST, `Invalid status. Must be one of: ${validStatuses.join(", ")}`);
-    }
+    const { status: newStatus } = body;
 
     const blueprint = await db.query.agentBlueprints.findFirst({
       where: eq(agentBlueprints.id, id),

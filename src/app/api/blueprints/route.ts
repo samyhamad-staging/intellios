@@ -9,6 +9,12 @@ import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { writeAuditLog } from "@/lib/audit/log";
 import { rateLimit } from "@/lib/rate-limit";
+import { parseBody } from "@/lib/parse-body";
+import { z } from "zod";
+
+const GenerateBody = z.object({
+  sessionId: z.string().uuid(),
+});
 
 export async function POST(request: NextRequest) {
   const { session: authSession, error } = await requireAuth(["designer", "admin"]);
@@ -21,12 +27,11 @@ export async function POST(request: NextRequest) {
   });
   if (rateLimitResponse) return rateLimitResponse;
 
-  try {
-    const { sessionId } = (await request.json()) as { sessionId: string };
+  const { data: body, error: bodyError } = await parseBody(request, GenerateBody);
+  if (bodyError) return bodyError;
 
-    if (!sessionId) {
-      return apiError(ErrorCode.BAD_REQUEST, "sessionId is required");
-    }
+  try {
+    const { sessionId } = body;
 
     const session = await db.query.intakeSessions.findFirst({
       where: eq(intakeSessions.id, sessionId),

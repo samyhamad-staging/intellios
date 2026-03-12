@@ -11,6 +11,13 @@ import { createIntakeTools } from "@/lib/intake/tools";
 import { IntakePayload } from "@/lib/types/intake";
 import { requireAuth } from "@/lib/auth/require";
 import { rateLimit } from "@/lib/rate-limit";
+import { parseBody } from "@/lib/parse-body";
+import { z } from "zod";
+
+// Validate outer shape only — inner message structure is owned by the AI SDK.
+const ChatBody = z.object({
+  messages: z.array(z.unknown()).min(1).max(200),
+});
 
 function extractTextContent(message: UIMessage): string {
   const textParts = message.parts
@@ -33,9 +40,12 @@ export async function POST(
   });
   if (rateLimitResponse) return rateLimitResponse;
 
+  const { data: body, error: bodyError } = await parseBody(request, ChatBody);
+  if (bodyError) return bodyError;
+
   try {
     const { id: sessionId } = await params;
-    const { messages } = (await request.json()) as { messages: UIMessage[] };
+    const messages = body.messages as UIMessage[];
 
     // Fetch session
     const session = await db.query.intakeSessions.findFirst({

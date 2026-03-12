@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { writeAuditLog } from "@/lib/audit/log";
+import { parseBody } from "@/lib/parse-body";
+import { z } from "zod";
 
 type ReviewAction = "approve" | "reject" | "request_changes";
 
@@ -13,6 +15,11 @@ const ACTION_STATUS: Record<ReviewAction, string> = {
   reject: "rejected",
   request_changes: "draft",
 };
+
+const ReviewBody = z.object({
+  action: z.enum(["approve", "reject", "request_changes"]),
+  comment: z.string().max(2000).optional(),
+});
 
 /**
  * POST /api/blueprints/[id]/review
@@ -27,17 +34,12 @@ export async function POST(
   const { session: authSession, error } = await requireAuth(["reviewer"]);
   if (error) return error;
 
+  const { data: body, error: bodyError } = await parseBody(request, ReviewBody);
+  if (bodyError) return bodyError;
+
   try {
     const { id } = await params;
-    const { action, comment } = (await request.json()) as {
-      action: ReviewAction;
-      comment?: string;
-    };
-
-    const validActions: ReviewAction[] = ["approve", "reject", "request_changes"];
-    if (!validActions.includes(action)) {
-      return apiError(ErrorCode.BAD_REQUEST, `Invalid action. Must be one of: ${validActions.join(", ")}`);
-    }
+    const { action, comment } = body;
 
     if (action === "request_changes" && !comment?.trim()) {
       return apiError(ErrorCode.BAD_REQUEST, "A comment is required when requesting changes.");

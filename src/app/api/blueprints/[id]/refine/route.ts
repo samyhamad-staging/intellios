@@ -9,6 +9,12 @@ import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { writeAuditLog } from "@/lib/audit/log";
 import { rateLimit } from "@/lib/rate-limit";
+import { parseBody } from "@/lib/parse-body";
+import { z } from "zod";
+
+const RefineBody = z.object({
+  change: z.string().min(1).max(2000),
+});
 
 export async function POST(
   request: NextRequest,
@@ -24,13 +30,12 @@ export async function POST(
   });
   if (rateLimitResponse) return rateLimitResponse;
 
+  const { data: body, error: bodyError } = await parseBody(request, RefineBody);
+  if (bodyError) return bodyError;
+
   try {
     const { id } = await params;
-    const { change } = (await request.json()) as { change: string };
-
-    if (!change?.trim()) {
-      return apiError(ErrorCode.BAD_REQUEST, "change is required");
-    }
+    const { change } = body;
 
     const blueprint = await db.query.agentBlueprints.findFirst({
       where: eq(agentBlueprints.id, id),

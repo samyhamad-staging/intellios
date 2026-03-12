@@ -4,6 +4,18 @@ import { governancePolicies } from "@/lib/db/schema";
 import { isNull } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { parseBody } from "@/lib/parse-body";
+import { z } from "zod";
+
+const POLICY_TYPES = ["safety", "compliance", "data_handling", "access_control", "audit"] as const;
+
+const CreatePolicyBody = z.object({
+  name: z.string().min(1).max(200),
+  type: z.enum(POLICY_TYPES),
+  description: z.string().max(1000).optional(),
+  rules: z.array(z.unknown()).default([]),
+  enterpriseId: z.string().max(200).optional(),
+});
 
 /**
  * GET /api/governance/policies
@@ -35,19 +47,10 @@ export async function POST(request: NextRequest) {
   const { error: authError } = await requireAuth(["admin"]);
   if (authError) return authError;
 
+  const { data: body, error: bodyError } = await parseBody(request, CreatePolicyBody);
+  if (bodyError) return bodyError;
+
   try {
-    const body = (await request.json()) as {
-      name: string;
-      type: string;
-      description?: string;
-      rules: unknown[];
-      enterpriseId?: string;
-    };
-
-    if (!body.name || !body.type || !Array.isArray(body.rules)) {
-      return apiError(ErrorCode.BAD_REQUEST, "name, type, and rules are required");
-    }
-
     const [policy] = await db
       .insert(governancePolicies)
       .values({
