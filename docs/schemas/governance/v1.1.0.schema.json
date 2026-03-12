@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intellios.dev/schemas/governance/policy/v1.1.0",
+  "title": "Governance Policy",
+  "description": "Defines a governance policy applied to Agent Blueprint Packages. Supersedes v1.0.0 — replaces the TBD condition string with a structured field/operator/value rule format.",
+  "type": "object",
+  "required": ["name", "type", "rules"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the policy."
+    },
+    "type": {
+      "type": "string",
+      "enum": ["safety", "compliance", "data_handling", "access_control", "audit"],
+      "description": "Category of governance this policy addresses."
+    },
+    "description": {
+      "type": "string",
+      "description": "What this policy enforces and why."
+    },
+    "enterprise_id": {
+      "type": "string",
+      "description": "Enterprise this policy belongs to. Omit for global policies applied to all."
+    },
+    "rules": {
+      "type": "array",
+      "description": "Individual assertion rules within this policy. All rules are evaluated independently.",
+      "items": {
+        "type": "object",
+        "required": ["id", "field", "operator", "severity", "message"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique rule identifier within this policy (e.g., 'require-instructions')."
+          },
+          "field": {
+            "type": "string",
+            "description": "Dot-notation path into the ABP to evaluate (e.g., 'capabilities.instructions', 'governance.policies')."
+          },
+          "operator": {
+            "type": "string",
+            "enum": [
+              "exists",
+              "not_exists",
+              "equals",
+              "not_equals",
+              "contains",
+              "not_contains",
+              "matches",
+              "count_gte",
+              "count_lte",
+              "includes_type",
+              "not_includes_type"
+            ],
+            "description": "How to compare the field value. See ADR-005 for operator semantics."
+          },
+          "value": {
+            "description": "Comparison value. Not required for 'exists' and 'not_exists'. Type depends on operator."
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning"],
+            "description": "error = blocks lifecycle transition to in_review. warning = informational only."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable violation message shown when this rule fails."
+          }
+        }
+      }
+    }
+  }
+}

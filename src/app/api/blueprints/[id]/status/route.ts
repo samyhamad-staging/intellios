@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { ValidationReport } from "@/lib/governance/types";
 
 type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated";
 
@@ -70,6 +71,23 @@ export async function PATCH(
         },
         { status: 422 }
       );
+    }
+
+    // Block submission for review if there are unresolved error-severity violations (ADR-003, ADR-005)
+    if (newStatus === "in_review") {
+      const report = blueprint.validationReport as ValidationReport | null;
+      if (report) {
+        const errorViolations = report.violations.filter((v) => v.severity === "error");
+        if (errorViolations.length > 0) {
+          return NextResponse.json(
+            {
+              error: `Cannot submit for review: ${errorViolations.length} error-severity governance violation${errorViolations.length === 1 ? "" : "s"} must be resolved first. Re-validate after refining the blueprint.`,
+              violations: errorViolations,
+            },
+            { status: 422 }
+          );
+        }
+      }
     }
 
     const [updated] = await db

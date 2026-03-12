@@ -42,6 +42,7 @@ export const agentBlueprints = pgTable(
     abp: jsonb("abp").notNull(), // full ABP document (JSON)
     status: text("status").notNull().default("draft"), // draft | in_review | approved | rejected | deprecated
     refinementCount: text("refinement_count").notNull().default("0"), // how many times refined
+    validationReport: jsonb("validation_report"),    // ValidationReport — null until first validation runs
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

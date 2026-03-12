@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS "agent_blueprints" (
   "abp" JSONB NOT NULL,
   "status" TEXT NOT NULL DEFAULT 'draft',
   "refinement_count" TEXT NOT NULL DEFAULT '0',
+  "validation_report" JSONB,
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
   "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now()
 );

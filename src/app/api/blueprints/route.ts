@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { intakeSessions, agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generateBlueprint } from "@/lib/generation/generate";
+import { validateBlueprint } from "@/lib/governance/validator";
 import { IntakePayload } from "@/lib/types/intake";
 
 export async function POST(request: NextRequest) {
@@ -40,13 +41,21 @@ export async function POST(request: NextRequest) {
     const name = abp.identity.name ?? null;
     const tags = (abp.metadata.tags ?? []) as string[];
 
+    // Run governance validation synchronously (ADR-003, ADR-005)
+    const validationReport = await validateBlueprint(abp, session.enterpriseId ?? null);
+
     // Persist — agentId defaults to a new UUID (first version of a new agent)
     const [blueprint] = await db
       .insert(agentBlueprints)
-      .values({ sessionId, abp, name, tags })
+      .values({ sessionId, abp, name, tags, validationReport })
       .returning();
 
-    return NextResponse.json({ id: blueprint.id, agentId: blueprint.agentId, abp });
+    return NextResponse.json({
+      id: blueprint.id,
+      agentId: blueprint.agentId,
+      abp,
+      validationReport,
+    });
   } catch (error) {
     console.error("Failed to generate blueprint:", error);
     return NextResponse.json(

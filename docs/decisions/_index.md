@@ -6,3 +6,4 @@
 | 002 | [MVP technology stack](002-mvp-technology-stack.md) | accepted | 2026-03-12 |
 | 003 | [MVP component behavior decisions](003-component-behavior-decisions.md) | accepted | 2026-03-12 |
 | 004 | [Implementation technology choices](004-implementation-tech-choices.md) | accepted | 2026-03-12 |
+| 005 | [Governance policy expression language](005-governance-policy-expression-language.md) | accepted | 2026-03-12 |

@@ -3,26 +3,30 @@
 import { use, useState, useCallback } from "react";
 import Link from "next/link";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
+import { ValidationReportView } from "@/components/governance/validation-report";
 import { ABP } from "@/lib/types/abp";
+import { ValidationReport } from "@/lib/governance/types";
 
 interface BlueprintPageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ abp?: string; agentId?: string }>;
+  searchParams: Promise<{ abp?: string; agentId?: string; vr?: string }>;
 }
 
 export default function BlueprintPage({ params, searchParams }: BlueprintPageProps) {
   const { id } = use(params);
-  // The generating page passes the initial ABP as a URL search param (base64 JSON)
-  // so we can render immediately without a round-trip. Falls back to fetching.
-  const { abp: encodedAbp, agentId } = use(searchParams);
+  // Generating page passes initial ABP + optionally initial validation report as base64 URL params
+  const { abp: encodedAbp, agentId, vr: encodedVr } = use(searchParams);
 
   const [abp, setAbp] = useState<ABP | null>(() => {
     if (encodedAbp) {
-      try {
-        return JSON.parse(atob(encodedAbp)) as ABP;
-      } catch {
-        return null;
-      }
+      try { return JSON.parse(atob(encodedAbp)) as ABP; } catch { return null; }
+    }
+    return null;
+  });
+
+  const [validationReport, setValidationReport] = useState<ValidationReport | null>(() => {
+    if (encodedVr) {
+      try { return JSON.parse(atob(encodedVr)) as ValidationReport; } catch { return null; }
     }
     return null;
   });
@@ -33,13 +37,14 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   const [refining, setRefining] = useState(false);
   const [refinementCount, setRefinementCount] = useState(0);
 
-  // Fetch if not already loaded
+  // Fetch if not already loaded from URL params
   if (loading && !abp) {
     fetch(`/api/blueprints/${id}`)
       .then((r) => r.json())
       .then((data) => {
         setAbp(data.abp as ABP);
         setRefinementCount(parseInt(data.refinementCount ?? "0", 10));
+        if (data.validationReport) setValidationReport(data.validationReport as ValidationReport);
         setLoading(false);
       })
       .catch(() => {
@@ -65,6 +70,8 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       const data = await res.json();
       setAbp(data.abp as ABP);
       setRefinementCount(parseInt(data.refinementCount ?? "0", 10));
+      // Clear validation report after refinement — user should re-validate
+      setValidationReport(null);
       setChange("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Refinement failed");
@@ -72,6 +79,12 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       setRefining(false);
     }
   }, [id, change, refining]);
+
+  const validationSummary = validationReport
+    ? validationReport.valid
+      ? "✓ passes governance"
+      : `✗ ${validationReport.violations.filter((v) => v.severity === "error").length} error(s)`
+    : null;
 
   return (
     <div className="flex h-screen flex-col">
@@ -84,6 +97,11 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           <p className="text-xs text-gray-500">
             Blueprint
             {refinementCount > 0 && ` · ${refinementCount} refinement${refinementCount === 1 ? "" : "s"}`}
+            {validationSummary && (
+              <span className={`ml-2 ${validationReport?.valid ? "text-green-600" : "text-red-600"}`}>
+                · {validationSummary}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -119,8 +137,43 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           {abp && <BlueprintView abp={abp} />}
         </main>
 
-        {/* Refinement panel */}
-        <aside className="w-72 shrink-0 border-l border-gray-200 bg-white flex flex-col">
+        {/* Right panel: Governance + Refinement */}
+        <aside className="w-80 shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-y-auto">
+          {/* Validation section */}
+          <div className="border-b border-gray-200 px-5 py-4">
+            <h2 className="text-sm font-semibold">Governance</h2>
+            <div className="mt-3">
+              {validationReport ? (
+                <ValidationReportView
+                  report={validationReport}
+                  blueprintId={id}
+                  onRevalidate={setValidationReport}
+                />
+              ) : (
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-400">
+                    {loading ? "Running validation…" : "Not yet validated"}
+                  </p>
+                  {!loading && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`/api/blueprints/${id}/validate`, { method: "POST" });
+                          const data = await res.json();
+                          if (data.report) setValidationReport(data.report as ValidationReport);
+                        } catch { /* non-critical */ }
+                      }}
+                      className="text-xs text-gray-500 hover:text-gray-900 underline"
+                    >
+                      Validate now
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Refinement section */}
           <div className="border-b border-gray-200 px-5 py-4">
             <h2 className="text-sm font-semibold">Request Changes</h2>
             <p className="mt-1 text-xs text-gray-500">
@@ -141,7 +194,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               placeholder="e.g. Add a rate limit of 50 requests per minute. Make the persona more formal."
               disabled={refining || loading}
               className="flex-1 resize-none rounded-lg border border-gray-200 p-3 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50"
-              rows={6}
+              rows={5}
             />
 
             {error && (

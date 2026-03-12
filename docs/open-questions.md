@@ -6,35 +6,6 @@ Live tracker of unresolved questions that must be answered before or during impl
 
 ## Critical — Blocks Implementation
 
-### OQ-001 · Governance policy expression language
-
-**Component:** Governance Validator
-**Blocks:** Governance Validator implementation, Governance Validator spec completion
-**Raised:** 2026-03-12 (Session 001, knowledge system audit)
-
-The governance policy schema defines rules as:
-```json
-{
-  "field": "capabilities.tools",
-  "operator": "not_contains",
-  "value": "external_api",
-  "condition": "[format TBD]"
-}
-```
-
-The `condition` field format is explicitly marked TBD. This means:
-- We cannot implement the rule evaluation engine
-- We cannot validate whether a real policy is well-formed
-- We cannot write meaningful test cases for the Governance Validator
-
-**Questions to resolve:**
-1. What operators are supported? (`not_contains`, `equals`, `matches`, `count_lte`, `all_match`?)
-2. What is the condition expression syntax? (JSONPath? Custom DSL? A fixed set of named conditions?)
-3. Can rules reference other ABP fields (e.g., "if `identity.persona` mentions 'financial advisor' then `governance.policies` must include 'financial-services-compliance'")?
-4. Are conditions evaluated client-side (in our code) or by Claude?
-
-**Decision needed from:** Samy (scope/complexity call) + implementation design
-
 ---
 
 ### OQ-002 · Authentication and multi-tenancy model
@@ -74,22 +45,6 @@ No spec defines error handling behavior. Currently:
 2. Which errors should be surfaced to the end user vs. logged silently?
 3. Retry behavior for Claude API calls: exponential backoff? How many retries?
 4. How are partial failures handled (e.g., tool handler fails mid-intake)?
-
----
-
-### OQ-004 · Governance Validator trigger and placement
-
-**Component:** Governance Validator
-**Blocks:** Governance Validator implementation
-**Raised:** 2026-03-12 (Session 001, knowledge system audit)
-
-ADR-003 states validation is synchronous and runs "before storage." But the current blueprint generation flow (POST `/api/blueprints`) immediately inserts the ABP to the database. The Governance Validator is not yet integrated.
-
-**Questions to resolve:**
-1. Does generation block on validation, or is the ABP stored as `draft` and validated asynchronously?
-2. If validation fails, is the blueprint stored (as `failed_validation`) or discarded?
-3. Who triggers re-validation after refinement? The refine endpoint automatically, or manually by the reviewer?
-4. Where does validation run — in the `/api/blueprints` POST route, or as a separate `/api/blueprints/[id]/validate` endpoint?
 
 ---
 
@@ -155,3 +110,5 @@ Generated ABPs are not quality-checked beyond Zod schema validation. A generated
 | — | ORM | Drizzle (ADR-004) | 2026-03-12 |
 | — | AI SDK | Vercel AI SDK v5 (ADR-004) | 2026-03-12 |
 | OQ-005 | Agent Registry: table relationship, version model, uniqueness | `agent_blueprints` is the registry. Separate rows per version. `agent_id` UUID is the logical agent key (uniqueness by UUID, not name). See agent-registry.md Implementation. | 2026-03-12 |
+| OQ-001 | Governance policy expression language | Structured `{ field, operator, value, severity, message }` rules. 11 operators. `condition` field dropped. Policy schema advances to v1.1.0. See ADR-005. | 2026-03-12 |
+| OQ-004 | Governance Validator trigger + lifecycle placement | Validation auto-runs after generation (stored in `validation_report`). Blueprint always stored. `draft → in_review` blocked on error violations. Manual re-validation via POST `/validate`. | 2026-03-12 |

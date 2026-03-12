@@ -49,10 +49,12 @@ export default function IntakeSessionPage({
         const data = await res.json();
         throw new Error(data.error ?? "Generation failed");
       }
-      const { id, agentId, abp } = await res.json();
-      // Pass initial ABP and agentId to the blueprint page to avoid a redundant fetch
-      const encoded = btoa(JSON.stringify(abp));
-      router.push(`/blueprints/${id}?abp=${encoded}&agentId=${agentId}`);
+      const { id, agentId, abp, validationReport } = await res.json();
+      // Pass initial ABP, agentId, and validation report to avoid redundant fetches
+      const encodedAbp = btoa(JSON.stringify(abp));
+      const encodedVr = validationReport ? btoa(JSON.stringify(validationReport)) : "";
+      const url = `/blueprints/${id}?abp=${encodedAbp}&agentId=${agentId}${encodedVr ? `&vr=${encodedVr}` : ""}`;
+      router.push(url);
     } catch (err) {
       setGenerateError(err instanceof Error ? err.message : "Generation failed");
       setGenerating(false);
