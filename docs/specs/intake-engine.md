@@ -1,7 +1,7 @@
 # Intake Engine — Specification
 
 **Subsystem:** Design Studio
-**Status:** In Progress
+**Status:** Complete
 
 ## Purpose
 
@@ -76,3 +76,26 @@ Tools use Vercel AI SDK v5 (`tool()` + `zodSchema()` from the `ai` package).
 ### Streaming
 
 The chat route uses `streamText` from AI SDK v5 with `stopWhen: stepCountIs(5)` to allow multi-step tool use. The response is returned via `toUIMessageStreamResponse()`. The frontend uses `useChat` from `@ai-sdk/react` with `DefaultChatTransport`.
+
+### Finalization Flow
+
+`mark_intake_complete` triggers session finalization:
+1. Tool validates minimum requirements (identity name + at least one tool)
+2. On success, calls `finalizeSession()` callback which sets `session.status = "completed"` in the database
+3. The intake page polls session status after each AI response and shows a completion banner when status is `completed`
+4. The `/finalize` REST endpoint also finalizes sessions and validates the same minimum requirements — intended for explicit human-triggered finalization
+
+Both paths reject further chat messages for a completed session with `409 Conflict`.
+
+### Tool Update Semantics
+
+- **Serialization:** All `updatePayload` calls are chained on a request-scoped promise queue. This prevents data loss when Claude calls multiple tools in the same step (parallel execution).
+- **Deduplication:** `add_tool`, `add_knowledge_source`, and `add_governance_policy` upsert by name — calling them again with the same name updates the existing entry rather than creating a duplicate.
+
+### Progress Sidebar
+
+`IntakeProgress` component polls `/api/intake/sessions/[id]/payload` after each AI response (via `refreshTick` prop from the parent page). It displays:
+- 7 ABP sections with filled/unfilled state
+- Progress bar (% of sections complete)
+- Required vs optional distinction
+- Readiness indicator ("Ready to finalize" when required sections are filled)
