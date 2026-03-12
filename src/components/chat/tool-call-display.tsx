@@ -18,7 +18,7 @@ const TOOL_LABELS: Record<string, string> = {
 
 export function ToolCallDisplay({ toolName, args }: ToolCallDisplayProps) {
   const label = TOOL_LABELS[toolName] ?? toolName;
-  const summary = Object.entries(args)
+  const summary = Object.entries(args ?? {})
     .filter(([, v]) => v !== undefined && v !== null)
     .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`)
     .join(", ");

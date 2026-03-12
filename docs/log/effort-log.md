@@ -133,18 +133,47 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 002 — 2026-03-12
+
+**Duration:** Same calendar day, third context window
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| PostgreSQL setup | Environment assessment, winget install, initdb troubleshooting, DB creation | ~12K in / ~5K out |
+| .env.local + db:push | Credential config, schema push, seed run | ~6K in / ~3K out |
+| Dev server setup | launch.json, spawn debugging, preview_start resolution | ~8K in / ~4K out |
+| End-to-end test run | Full pipeline walkthrough: intake → generate → govern → review → approve | ~10K in / ~4K out |
+| Bug fix | tool-call-display.tsx null args crash | ~3K in / ~1K out |
+| Session logging | Session log, effort log, _index.md | ~5K in / ~3K out |
+| **Session total (est.)** | | **~44K in / ~20K out** |
+
+**Estimated session cost:** Sonnet ~44K in × $3/1M + ~20K out × $15/1M = **$0.13 + $0.30 = ~$0.43**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 21 | Proceed with end-to-end run (delegated) | D-Approve | Full ownership delegation — no further guidance needed |
+
+**Totals:** 1 message · 1 D-Approve · ~5 min
+
+---
+
 ## Running Totals
 
-| Metric | Session 001 | Total |
-|---|---|---|
-| Est. Claude input tokens | ~143K | ~288K |
-| Est. Claude output tokens | ~79K | ~155K |
-| Est. Claude cost | ~$2.20 | ~$3.78 |
-| Samy messages | 13 | 20 |
-| Samy decisions | 26 | 31 |
-| Samy est. time | ~2–3 hrs | ~3–4 hrs |
-| Code shipped | Intake Engine + Generation Engine | All 5 MVP components complete |
-| Files created/modified | ~50 | ~130 |
+| Metric | Session 001 | Session 002 | Total |
+|---|---|---|---|
+| Est. Claude input tokens | ~288K | ~44K | ~332K |
+| Est. Claude output tokens | ~155K | ~20K | ~175K |
+| Est. Claude cost | ~$3.78 | ~$0.43 | ~$4.21 |
+| Samy messages | 20 | 1 | 21 |
+| Samy decisions | 31 | 1 | 32 |
+| Samy est. time | ~3–4 hrs | ~5 min | ~3–4 hrs |
+| Code shipped | All 5 MVP components | 1 bug fix | MVP live + validated |
+| Files created/modified | ~130 | ~5 | ~135 |
 
 ---
 
