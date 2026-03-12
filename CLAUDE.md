@@ -17,6 +17,19 @@ docs/
   glossary.md          ← Canonical term definitions
   roadmap.md           ← Current phase, MVP scope, priorities
 src/                   ← Application source code
+  app/                 ← Next.js App Router (pages + API routes)
+    api/intake/        ← Intake Engine REST API endpoints
+    intake/            ← Intake session UI pages
+  components/          ← React UI components
+    chat/              ← Chat UI: container, bubbles, input, tool display
+  lib/
+    db/                ← Drizzle ORM: schema, client
+    intake/            ← Intake Engine logic: system prompt, tool definitions
+    types/             ← Shared TypeScript interfaces (IntakePayload, etc.)
+  drizzle.config.ts    ← Drizzle ORM configuration
+  next.config.ts       ← Next.js configuration
+  package.json         ← Dependencies (Next.js 16, AI SDK v5, Drizzle, Zod)
+  tsconfig.json        ← TypeScript configuration
 ```
 
 ## Conventions

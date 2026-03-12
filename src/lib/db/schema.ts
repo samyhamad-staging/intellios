@@ -1,0 +1,37 @@
+import { pgTable, uuid, text, jsonb, timestamp, index } from "drizzle-orm/pg-core";
+
+export const intakeSessions = pgTable("intake_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  enterpriseId: text("enterprise_id"),
+  status: text("status").notNull().default("active"), // active | completed | abandoned
+  intakePayload: jsonb("intake_payload").notNull().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const intakeMessages = pgTable(
+  "intake_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => intakeSessions.id, { onDelete: "cascade" }),
+    role: text("role").notNull(), // user | assistant
+    content: text("content").notNull(),
+    toolName: text("tool_name"),
+    toolInput: jsonb("tool_input"),
+    toolOutput: jsonb("tool_output"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("idx_intake_messages_session").on(table.sessionId, table.createdAt)]
+);
+
+export const governancePolicies = pgTable("governance_policies", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  enterpriseId: text("enterprise_id"),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // safety | compliance | data_handling | access_control | audit
+  description: text("description"),
+  rules: jsonb("rules").notNull().default([]),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
