@@ -1,0 +1,137 @@
+# Intellios — Effort Log
+
+Tracks resource consumption per session for post-project cost estimation.
+
+---
+
+## Methodology
+
+### Claude Effort — What Is Measured
+
+| Metric | Why it matters | How measured |
+|---|---|---|
+| **Model** | Different cost per token (Opus > Sonnet > Haiku) | Noted per session |
+| **Input tokens (est.)** | Includes: user messages, file reads, tool results, system prompts, conversation history carried forward | Estimated from session scope |
+| **Output tokens (est.)** | Includes: text responses, generated code, documentation, tool calls | Estimated from output volume |
+| **API calls** | Each `streamText`, `generateObject`, and tool execution round-trip | Counted where trackable |
+
+**Pricing reference (as of 2026-03-12):**
+- Claude Sonnet 4.6: $3 / 1M input tokens · $15 / 1M output tokens
+- Claude Opus 4.6: $15 / 1M input tokens · $75 / 1M output tokens
+
+> Note: Session 001 token counts are retrospective estimates. Going forward, token usage will be noted at the end of each exchange where available.
+
+### Samy Effort — What Is Measured
+
+| Metric | Why it matters | How measured |
+|---|---|---|
+| **Messages sent** | Baseline engagement proxy | Counted |
+| **Decisions made** | High-value inputs: architectural choices, requirement calls, approval of significant work | Counted and categorized |
+| **Engagement type** | Direction-setting vs. approval vs. correction vs. feedback — different cognitive load | Qualitative per session |
+| **Estimated time** | Approximate calendar time actively engaged | Estimated |
+
+**Decision categories:**
+- **D-Arch**: Architectural or technology choice (high value — shapes everything downstream)
+- **D-Scope**: What to build / not build for MVP
+- **D-Approve**: Review and approval of generated work
+- **D-Correct**: Correction or redirect of Claude's approach
+
+---
+
+## Session 001 — 2026-03-12
+
+**Duration:** Single calendar day (multi-context, session hit context limit and continued)
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 (primary) · claude-opus-4-6 (partial, user-switched mid-session) | — |
+| Knowledge system design | Architecture evaluation, doc structure planning, glossary | ~8K in / ~4K out |
+| Documentation generation | 20+ files: arch docs, ADRs, schemas, specs, glossary, roadmap, session log | ~15K in / ~12K out |
+| Q&A: 15 open spec questions | Decision facilitation across 5 component specs | ~6K in / ~3K out |
+| Intake Engine implementation | System prompt, 10 tools, 5 API routes, 4 UI components, DB schema | ~30K in / ~20K out |
+| AI SDK v5 debugging (12 fix cycles) | Type errors, API changes, build failures | ~18K in / ~8K out |
+| Code review (full src/ analysis) | Subagent explore pass over all source files | ~20K in / ~5K out |
+| Hardening pass | Race condition fix, error handling, deduplication | ~8K in / ~4K out |
+| Phase 3 & 4 | Finalization wiring, progress sidebar, completion state | ~10K in / ~6K out |
+| Generation Engine | ABP Zod schema, generation service, 3 API routes, blueprint view/page, refinement | ~20K in / ~12K out |
+| Documentation updates (multiple) | Spec updates, roadmap, session log maintenance | ~8K in / ~5K out |
+| **Session total (est.)** | | **~143K in / ~79K out** |
+
+**Estimated session cost:**
+- Sonnet (majority): ~130K in × $3/1M + ~72K out × $15/1M ≈ **$0.39 + $1.08 = ~$1.47**
+- Opus (partial): ~13K in × $15/1M + ~7K out × $75/1M ≈ **$0.20 + $0.53 = ~$0.73**
+- **Session 001 total est.: ~$2.20**
+
+> These are rough estimates. The context summary alone was ~46K tokens, suggesting the full session was significantly larger. Actual costs could be 1.5–2× higher.
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Design knowledge management system for Intellios | D-Arch | Set the entire knowledge architecture direction |
+| 2 | "OK" (approve knowledge system) | D-Approve | Approved git-native docs approach |
+| 3 | "Proceed" (to documentation generation) | D-Approve | — |
+| 4 | Request always-up-to-date audit trail | D-Scope | Added session logging convention to project |
+| 5 | "Great. Proceed to the next best step" | D-Approve | Delegated next-step judgment to Claude |
+| 6 | Answered 15 open questions across 5 specs | D-Scope × 15 | Highest-value session input; resolved all MVP scope questions |
+| 7 | "Yes. Proceed carefully and diligently…" (implement Intake Engine) | D-Approve + D-Scope | Approved full Intake Engine implementation |
+| 8 | Request conversation summary | Operational | Context management |
+| 9 | "Proceed with the next best action" (after context reset) | D-Approve | Delegated; Claude completed docs + committed |
+| 10 | "Proceed with the next best action" | D-Approve | Triggered hardening pass |
+| 11 | "Is the required documentation up to date?" | D-Correct | Quality check; caught doc gaps |
+| 12 | "Proceed with the next best action" | D-Approve | Triggered Generation Engine |
+| 13 | Effort tracking request (this message) | D-Scope | Added resource tracking to project artifacts |
+
+**Totals:**
+| Metric | Value |
+|---|---|
+| Messages sent | 13 |
+| Decisions (D-Arch) | 1 |
+| Decisions (D-Scope) | 17 (including 15 spec questions) |
+| Decisions (D-Approve) | 7 |
+| Decisions (D-Correct) | 1 |
+| **Total decision points** | **26** |
+| Estimated engaged time | ~2–3 hours |
+| Engagement character | Primarily direction-setting and approval; minimal correction needed |
+
+---
+
+## Running Totals
+
+| Metric | Session 001 | Total |
+|---|---|---|
+| Est. Claude input tokens | ~143K | ~143K |
+| Est. Claude output tokens | ~79K | ~79K |
+| Est. Claude cost | ~$2.20 | ~$2.20 |
+| Samy messages | 13 | 13 |
+| Samy decisions | 26 | 26 |
+| Samy est. time | ~2–3 hrs | ~2–3 hrs |
+| Code shipped | 2 MVP components (Intake Engine + Generation Engine) | — |
+| Files created/modified | ~50 | — |
+
+---
+
+## Template for Future Sessions
+
+```
+## Session NNN — YYYY-MM-DD
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | | — |
+| [work item] | | ~Xk in / ~Xk out |
+| **Session total (est.)** | | **~Xk in / ~Xk out** |
+
+**Estimated session cost:** ~$X.XX
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+
+**Totals:** X messages · X decisions · ~X hrs
+```
