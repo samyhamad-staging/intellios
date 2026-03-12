@@ -5,12 +5,13 @@ import { eq } from "drizzle-orm";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { writeAuditLog } from "@/lib/audit/log";
 
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
   if (error) return error;
   try {
     const { id } = await params;
@@ -46,6 +47,17 @@ export async function POST(
       .set({ status: "completed", updatedAt: new Date() })
       .where(eq(intakeSessions.id, id))
       .returning();
+
+    await writeAuditLog({
+      entityType: "intake_session",
+      entityId: id,
+      action: "intake.finalized",
+      actorEmail: authSession.user.email!,
+      actorRole: authSession.user.role,
+      fromState: { status: "active" },
+      toState: { status: "completed" },
+      metadata: { agentName: payload.identity?.name ?? null },
+    });
 
     return NextResponse.json({ session: updated, payload });
   } catch (error) {

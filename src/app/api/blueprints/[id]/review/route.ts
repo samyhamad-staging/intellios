@@ -4,6 +4,7 @@ import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { writeAuditLog } from "@/lib/audit/log";
 
 type ReviewAction = "approve" | "reject" | "request_changes";
 
@@ -73,6 +74,17 @@ export async function POST(
         reviewComment: agentBlueprints.reviewComment,
         reviewedAt: agentBlueprints.reviewedAt,
       });
+
+    await writeAuditLog({
+      entityType: "blueprint",
+      entityId: id,
+      action: "blueprint.reviewed",
+      actorEmail: authSession.user.email!,
+      actorRole: authSession.user.role,
+      fromState: { status: "in_review" },
+      toState: { status: newStatus },
+      metadata: { reviewAction: action, comment: comment?.trim() || null },
+    });
 
     return NextResponse.json(updated);
   } catch (error) {

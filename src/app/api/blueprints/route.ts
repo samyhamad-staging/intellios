@@ -7,6 +7,7 @@ import { validateBlueprint } from "@/lib/governance/validator";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { writeAuditLog } from "@/lib/audit/log";
 
 export async function POST(request: NextRequest) {
   const { session: authSession, error } = await requireAuth(["designer", "admin"]);
@@ -54,6 +55,16 @@ export async function POST(request: NextRequest) {
       .insert(agentBlueprints)
       .values({ sessionId, abp, name, tags, validationReport, createdBy: authSession.user.email ?? null })
       .returning();
+
+    await writeAuditLog({
+      entityType: "blueprint",
+      entityId: blueprint.id,
+      action: "blueprint.created",
+      actorEmail: authSession.user.email!,
+      actorRole: authSession.user.role,
+      toState: { status: "draft", agentId: blueprint.agentId, name: blueprint.name },
+      metadata: { sessionId, violationCount: validationReport?.violations?.length ?? 0 },
+    });
 
     return NextResponse.json({
       id: blueprint.id,

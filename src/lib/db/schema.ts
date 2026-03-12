@@ -71,6 +71,31 @@ export const agentBlueprints = pgTable(
   ]
 );
 
+// ─── Audit Log ───────────────────────────────────────────────────────────────
+// Append-only. Never UPDATE or DELETE rows from this table.
+
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    entityType: text("entity_type").notNull(), // blueprint | intake_session | policy
+    entityId: uuid("entity_id").notNull(),
+    action: text("action").notNull(),          // blueprint.created | blueprint.refined | blueprint.status_changed | blueprint.reviewed | intake.finalized | policy.created
+    actorEmail: text("actor_email").notNull(),
+    actorRole: text("actor_role").notNull(),
+    fromState: jsonb("from_state"),            // state snapshot before the action (nullable for creation events)
+    toState: jsonb("to_state"),                // state snapshot after the action
+    metadata: jsonb("metadata"),               // extra context (comment, refinement count, etc.)
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_audit_log_entity").on(table.entityType, table.entityId, table.createdAt),
+    index("idx_audit_log_actor").on(table.actorEmail, table.createdAt),
+  ]
+);
+
+// ─── Governance Policies ─────────────────────────────────────────────────────
+
 export const governancePolicies = pgTable("governance_policies", {
   id: uuid("id").primaryKey().defaultRandom(),
   enterpriseId: text("enterprise_id"),

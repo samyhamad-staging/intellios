@@ -7,12 +7,13 @@ import { ABP } from "@/lib/types/abp";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { writeAuditLog } from "@/lib/audit/log";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
   if (error) return error;
   try {
     const { id } = await params;
@@ -62,6 +63,15 @@ export async function POST(
       .set({ abp: updatedAbp, name, tags, refinementCount: newCount, updatedAt: new Date() })
       .where(eq(agentBlueprints.id, id))
       .returning();
+
+    await writeAuditLog({
+      entityType: "blueprint",
+      entityId: id,
+      action: "blueprint.refined",
+      actorEmail: authSession.user.email!,
+      actorRole: authSession.user.role,
+      metadata: { change: change.trim(), refinementCount: newCount },
+    });
 
     return NextResponse.json({
       id: updated.id,

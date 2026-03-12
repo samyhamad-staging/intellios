@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { ValidationReport } from "@/lib/governance/types";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { writeAuditLog } from "@/lib/audit/log";
 
 type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated";
 
@@ -95,6 +96,16 @@ export async function PATCH(
       .set({ status: newStatus, updatedAt: new Date() })
       .where(eq(agentBlueprints.id, id))
       .returning();
+
+    await writeAuditLog({
+      entityType: "blueprint",
+      entityId: id,
+      action: "blueprint.status_changed",
+      actorEmail: authSession.user.email!,
+      actorRole: authSession.user.role,
+      fromState: { status: currentStatus },
+      toState: { status: newStatus },
+    });
 
     return NextResponse.json({ id: updated.id, status: updated.status });
   } catch (error) {
