@@ -17,11 +17,13 @@
 
 ### MVP Success Criteria
 
-1. An enterprise user can provide requirements through the Intake Engine.
-2. The Generation Engine produces a valid ABP from those requirements.
-3. The Governance Validator checks the ABP against a set of policies.
-4. The ABP is stored in the Agent Registry with versioning.
-5. A human reviewer can view and approve/reject the ABP through the Review UI.
+All criteria validated end-to-end on 2026-03-12 (Session 002) against PostgreSQL with a live Anthropic API key.
+
+1. ✓ An enterprise user can provide requirements through the Intake Engine.
+2. ✓ The Generation Engine produces a valid ABP from those requirements.
+3. ✓ The Governance Validator checks the ABP against a set of policies.
+4. ✓ The ABP is stored in the Agent Registry with versioning.
+5. ✓ A human reviewer can view and approve/reject the ABP through the Review UI.
 
 ## Future Phases (not yet scoped)
 

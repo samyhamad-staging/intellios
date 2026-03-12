@@ -131,8 +131,6 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
----
-
 ## Session 002 — 2026-03-12
 
 **Duration:** Same calendar day, third context window
