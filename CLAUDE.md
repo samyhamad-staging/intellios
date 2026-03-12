@@ -60,10 +60,19 @@ src/                   ← Application source code
 - Before ending a session, write the summary section.
 - Keep `docs/log/_index.md` updated with each new session.
 
-### Documentation Updates
-- When you change system behavior, update the corresponding spec in `docs/specs/`.
-- When you change architecture, update the corresponding doc in `docs/architecture/`.
-- Keep `docs/roadmap.md` current when scope changes.
+### Documentation Updates — MANDATORY
+
+Documentation is not optional and not an afterthought. Every task is incomplete until its documentation is current. This applies every session, without exception.
+
+After every implementation task:
+1. **Spec** — update the relevant `docs/specs/` file (status, implementation section, behavior changes).
+2. **Roadmap** — update `docs/roadmap.md` component status when a component progresses or completes.
+3. **Session log** — append new actions to the current session's log file in `docs/log/`.
+4. **Effort log** — update `docs/log/effort-log.md` with the session's Claude and Samy effort at session close.
+5. **Architecture** — update `docs/architecture/` if subsystem boundaries or data flow changed.
+6. **ADRs** — record new significant technical decisions as ADR files before or alongside implementation.
+
+Do not commit code without committing the corresponding documentation update in the same commit or an immediately following one.
 
 ## Key Subsystems
 
