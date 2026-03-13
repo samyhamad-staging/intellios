@@ -12,7 +12,9 @@ export async function GET() {
   if (error) return error;
 
   return NextResponse.json({
+    id: session.user.id,
     user: {
+      id: session.user.id,
       email: session.user.email,
       name: session.user.name,
       role: session.user.role,

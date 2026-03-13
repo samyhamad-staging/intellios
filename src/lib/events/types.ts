@@ -13,7 +13,9 @@ export type EventType =
   | "blueprint.report_exported"
   | "intake.finalized"
   | "intake.contribution_submitted"
-  | "policy.created";
+  | "policy.created"
+  | "policy.updated"
+  | "policy.deleted";
 
 export interface LifecycleEvent {
   /** Audit log row ID — can be used to correlate with the audit trail */

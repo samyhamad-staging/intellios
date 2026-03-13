@@ -19,21 +19,29 @@ interface AuditEntry {
 
 const ENTITY_TYPES = ["", "blueprint", "intake_session", "policy"] as const;
 const ACTION_LABELS: Record<string, string> = {
-  "blueprint.created":        "Blueprint created",
-  "blueprint.refined":        "Blueprint refined",
-  "blueprint.status_changed": "Status changed",
-  "blueprint.reviewed":       "Review submitted",
-  "intake.finalized":         "Intake finalized",
-  "policy.created":           "Policy created",
+  "blueprint.created":             "Blueprint created",
+  "blueprint.refined":             "Blueprint refined",
+  "blueprint.status_changed":      "Status changed",
+  "blueprint.reviewed":            "Review submitted",
+  "blueprint.report_exported":     "MRM report exported",
+  "intake.finalized":              "Intake finalized",
+  "intake.contribution_submitted": "Contribution submitted",
+  "policy.created":                "Policy created",
+  "policy.updated":                "Policy updated",
+  "policy.deleted":                "Policy deleted",
 };
 
 const ACTION_COLORS: Record<string, string> = {
-  "blueprint.created":        "bg-blue-50 text-blue-700",
-  "blueprint.refined":        "bg-purple-50 text-purple-700",
-  "blueprint.status_changed": "bg-amber-50 text-amber-700",
-  "blueprint.reviewed":       "bg-green-50 text-green-700",
-  "intake.finalized":         "bg-gray-100 text-gray-600",
-  "policy.created":           "bg-red-50 text-red-700",
+  "blueprint.created":             "bg-blue-50 text-blue-700",
+  "blueprint.refined":             "bg-purple-50 text-purple-700",
+  "blueprint.status_changed":      "bg-amber-50 text-amber-700",
+  "blueprint.reviewed":            "bg-green-50 text-green-700",
+  "blueprint.report_exported":     "bg-teal-50 text-teal-700",
+  "intake.finalized":              "bg-gray-100 text-gray-600",
+  "intake.contribution_submitted": "bg-sky-50 text-sky-700",
+  "policy.created":                "bg-red-50 text-red-700",
+  "policy.updated":                "bg-orange-50 text-orange-700",
+  "policy.deleted":                "bg-rose-100 text-rose-800",
 };
 
 function formatDate(iso: string): string {

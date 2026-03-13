@@ -4,6 +4,7 @@ All interactions and actions taken on the Intellios project, in reverse chronolo
 
 | Session | Date | Summary |
 |---|---|---|
+| [014](2026-03-13_session-014.md) | 2026-03-13 | Phase 11: Policy Lifecycle Audit (policy.created/updated/deleted wired to audit trail; all 10 AuditActions labeled in UI). Phase 12: Admin User Management (create/list/role-edit users at /admin/users). |
 | [013](2026-03-13_session-013.md) | 2026-03-13 | Phase 10: Governance Policy Management. Compliance officers + admins can create/edit/delete enterprise policies via UI. PATCH + DELETE API endpoints, PolicyForm component with interactive rule builder, Governance Hub CTA + per-card Edit links. |
 | [012](2026-03-13_session-012.md) | 2026-03-13 | Phase 9: Intake Session Management + MRM Coverage Gap. Session list page (/intake) for designers + admins, GET collection endpoint, nav link, MRM stakeholderCoverageGaps field documenting expected-but-absent domains. |
 | [011](2026-03-13_session-011.md) | 2026-03-13 | Phase 8: Policy Substance Enforcement + Contribution Coverage Indicators. Empty governance policy shells now fail finalization. New coverage helper derives expected domains from Phase 1 signals; missing domains surfaced in Phase 2 sidebar gap strip and Phase 3 review callout. |
