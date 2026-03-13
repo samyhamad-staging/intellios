@@ -71,12 +71,16 @@ export async function PATCH(
     }
 
     const allowed = VALID_TRANSITIONS[currentStatus];
-    // Role-based transition enforcement (SOD: designers submit, reviewers decide)
+    // Role-based transition enforcement (SOD: designers submit, reviewers decide, reviewers/admins deploy)
     if (newStatus === "in_review" && authSession.user.role !== "designer" && authSession.user.role !== "admin") {
       return apiError(ErrorCode.FORBIDDEN, "Only designers can submit blueprints for review");
     }
     if (newStatus === "deprecated" && authSession.user.role !== "reviewer" && authSession.user.role !== "admin") {
       return apiError(ErrorCode.FORBIDDEN, "Only reviewers and administrators can deprecate blueprints");
+    }
+    // SOD: the designer who created the blueprint must not also control its production promotion.
+    if (newStatus === "deployed" && authSession.user.role !== "reviewer" && authSession.user.role !== "admin") {
+      return apiError(ErrorCode.FORBIDDEN, "Only reviewers and administrators can deploy blueprints to production");
     }
 
     if (!allowed.includes(newStatus)) {

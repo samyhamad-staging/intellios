@@ -122,6 +122,7 @@ Addresses the three most critical gaps identified in the Fortune 500 financial s
 | Global search — Pipeline Board | P0 | ✓ Complete | Text search input alongside tag filter. `matchesSearch()` helper + `useMemo`. Clear link when active. |
 | Review decision banner | P0 | ✓ Complete | Color-coded banner between tabs and content on Blueprint detail: green (approved), red (rejected), amber (changes requested). Shows reviewer identity, timestamp, and comment. |
 | Status route — change management fields | P0 | ✓ Complete | `changeRef` + `deploymentNotes` added to Zod schema; stored in audit metadata on `deployed` transitions. |
+| Three-layer deployment defense | P0 | ✓ Complete | (1) `LifecycleControls` redirects to `/deploy` modal — no direct deploy from detail page. (2) API rejects `deployed` without `changeRef`. (3) RBAC guard: only `reviewer`/`admin` may transition to `deployed`. SOD fully enforced. |
 
 ---
 

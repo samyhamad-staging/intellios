@@ -32,6 +32,14 @@ The banner is color-coded (green/red/amber) and placed immediately below the tab
 
 The "changes requested" case (amber) is particularly important. When a reviewer returns a blueprint to draft with a comment, the comment contains the actionable feedback. Making that comment visible at the top of the page, rather than buried in an audit trail, directly shortens the revision cycle.
 
+### SOD Was Incomplete Until the Control Validation
+
+A production-readiness validation pass at the end of this session surfaced a SOD gap that should have been caught earlier. The `deployed` transition — the single most consequential step in the entire lifecycle — had no role restriction. Any authenticated user could call `PATCH /api/blueprints/{id}/status` with `{ status: "deployed", changeRef: "CR-123" }` and bypass the reviewer gate entirely.
+
+The fix is a single guard in the status route: `if (newStatus === "deployed" && role !== "reviewer" && role !== "admin")`. But the significance is architectural. Three independent enforcement layers now stand between a designer and a production deployment: the client redirects to the modal (UX friction), the API rejects missing `changeRef` (business rule), and the RBAC guard enforces the reviewer/admin boundary (SOD). No single layer failure compromises the system. A designer who bypasses the UI still hits the API gate. A reviewer who bypasses the modal still must provide a `changeRef`. The layers are independent and cumulative.
+
+This is the property that matters for SR 11-7 compliance: defense in depth on the deployment promotion, not trust in a single checkpoint.
+
 ---
 
 ## Session 006 — 2026-03-13: The Platform Becomes Aware of Itself
