@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Post-MVP Phase 10 ✓ Complete (2026-03-13) — Governance Policy Management delivered
+## Current Phase: Post-MVP Phase 12 ✓ Complete (2026-03-13) — Policy Lifecycle Audit + Admin User Management delivered
 
 ---
 
@@ -230,6 +230,36 @@ Closes the governance configuration gap: compliance officers and admins can now 
 | Governance Hub — New Policy CTA | P0 | ✓ Complete | "New Policy" button in Policy Library header; visible to compliance_officer + admin |
 | Governance Hub — Edit/View links | P0 | ✓ Complete | Per-card link: "Edit →" for enterprise policies, "View →" for platform policies; visible to managers |
 | Governance Hub — empty state | P1 | ✓ Complete | Shows "Create first policy" CTA for managers; "Contact your administrator" for others |
+
+---
+
+## Post-MVP Phase 11 — Policy Lifecycle Audit ✓ Complete (2026-03-13 Session 014)
+
+Closes the compliance gap introduced by Phase 10: every governance policy mutation is now permanently recorded in the audit trail.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| `policy.updated` + `policy.deleted` in `EventType` | P0 | ✓ Complete | Mirror `AuditAction` 1:1 per event bus convention |
+| `policy.updated` + `policy.deleted` in `AuditAction` | P0 | ✓ Complete | Type-safe across all call sites |
+| `policy.created` audit wired into POST handler | P0 | ✓ Complete | Was defined but never called; now fires with `toState: { name, type, ruleCount }` |
+| `policy.updated` audit wired into PATCH handler | P0 | ✓ Complete | `fromState` + `toState` capture name, type, ruleCount before and after |
+| `policy.deleted` audit wired into DELETE handler | P0 | ✓ Complete | `fromState` captures final policy state before deletion |
+| Audit Trail UI — all 10 actions labeled | P1 | ✓ Complete | `policy.updated` (orange), `policy.deleted` (rose), `blueprint.report_exported` (teal), `intake.contribution_submitted` (sky) added |
+
+---
+
+## Post-MVP Phase 12 — Admin User Management ✓ Complete (2026-03-13 Session 014)
+
+Enables administrators to onboard new users, view the enterprise roster, and adjust roles without database access.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| `GET /api/admin/users` | P0 | ✓ Complete | Enterprise-scoped list; admin only; excludes passwordHash |
+| `POST /api/admin/users` | P0 | ✓ Complete | Create user: name, email, role, password (bcrypt cost 12); email uniqueness enforced; 409 on conflict |
+| `PATCH /api/admin/users/[id]` | P0 | ✓ Complete | Update name and/or role; enterprise-scoped access; admin cannot change own role |
+| `/admin/users` page | P0 | ✓ Complete | Role summary stats, Create User form, user table with inline role editor; alphabetically sorted |
+| "Users" nav link | P0 | ✓ Complete | Admin-only; positioned after Dashboard |
+| `/api/me` — id field | P1 | ✓ Complete | Added `id` to response for client-side self-protection in user management UI |
 
 ---
 

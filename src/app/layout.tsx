@@ -80,6 +80,11 @@ export default async function RootLayout({
                       </Link>
                     </>
                   )}
+                  {session.user.role === "admin" && (
+                    <Link href="/admin/users" className="hover:text-gray-900">
+                      Users
+                    </Link>
+                  )}
                 </div>
               </div>
 

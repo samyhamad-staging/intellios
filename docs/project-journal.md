@@ -2,6 +2,31 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 014 — 2026-03-13: Auditing the Auditors + Opening the Door
+
+### The Audit Gap in the Governance Layer
+
+Phase 10 introduced the ability for compliance officers to create, modify, and delete governance policies. This was a meaningful operational step forward — but it introduced a subtle compliance problem. The audit infrastructure already captured blueprint lifecycle events in meticulous detail: every refinement, every status transition, every review decision. Yet when a compliance officer deleted a governance policy, that deletion left no trace. The very layer responsible for governing AI agent behavior had no immutable record of its own mutations.
+
+This is precisely the kind of gap that surfaces in SR 11-7 model risk examinations: "show me the history of your governance policies over the past 12 months." Without audit entries for policy changes, the only answer would be "we don't have it."
+
+Phase 11 closes this completely. `policy.created` was already defined in `AuditAction` but had never been wired to the POST handler — a silent gap since Phase 1. PATCH and DELETE now emit `policy.updated` and `policy.deleted` respectively, with `fromState`/`toState` snapshots capturing name, type, and rule count. The Audit Trail UI was also brought to completeness: all 10 `AuditAction` values now have explicit labels and color tokens, including `blueprint.report_exported` and `intake.contribution_submitted` which were also previously missing from the display dictionary.
+
+### The Onboarding Problem
+
+A more operational question than the audit gap: how does a new compliance officer get access to Intellios? Or a new designer starting their first project? Until Phase 12, the only answer was "ask a developer to insert a row into the database." This is a deal-breaker for any real enterprise deployment — database access for user provisioning is not acceptable in financial services environments where privilege separation is audited.
+
+Phase 12 gives administrators a purpose-built user management interface at `/admin/users`. The design is deliberately straightforward:
+
+- **Create**: full name, email, role, temporary password. bcrypt at cost 12. Email uniqueness enforced at the API layer with a 409 so the form can surface the error correctly.
+- **View**: alphabetically sorted roster with role statistics at the top. Role counts let an admin quickly see if their enterprise has appropriate coverage (e.g., at least one compliance officer).
+- **Edit role**: inline — clicking "Edit" on a row opens a `<select>` dropdown with Save/Cancel, no separate page needed for a single-field update. The updated role reflects immediately in the badge.
+- **Self-protection**: the API rejects role changes to the calling admin's own account, and the UI omits the edit affordance on the admin's own row. This prevents an admin from accidentally locking themselves out.
+
+Password reset is intentionally absent from v1. The pattern in enterprise security is for users to change their own passwords through a separate flow; admin-forced password resets require more infrastructure (temporary password flags, forced-change-on-login enforcement) than this phase warranted.
+
+---
+
 ## Session 013 — 2026-03-13: Closing the Governance Configuration Loop
 
 ### The Last Manual Step

@@ -14,7 +14,9 @@ export type AuditAction =
   | "blueprint.report_exported"
   | "intake.finalized"
   | "intake.contribution_submitted"
-  | "policy.created";
+  | "policy.created"
+  | "policy.updated"
+  | "policy.deleted";
 
 export interface AuditEntry {
   entityType: "blueprint" | "intake_session" | "policy";
