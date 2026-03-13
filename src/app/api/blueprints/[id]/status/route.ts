@@ -11,17 +11,18 @@ import { writeAuditLog } from "@/lib/audit/log";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
 
-type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated";
+type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
 
 const StatusBody = z.object({
-  status: z.enum(["draft", "in_review", "approved", "rejected", "deprecated"]),
+  status: z.enum(["draft", "in_review", "approved", "rejected", "deprecated", "deployed"]),
 });
 
 // Valid forward transitions. Any status → deprecated is always allowed.
 const VALID_TRANSITIONS: Record<Status, Status[]> = {
   draft: ["in_review", "deprecated"],
   in_review: ["approved", "rejected", "deprecated"],
-  approved: ["deprecated"],
+  approved: ["deployed", "deprecated"],
+  deployed: ["deprecated"],
   rejected: ["deprecated"],
   deprecated: [],
 };

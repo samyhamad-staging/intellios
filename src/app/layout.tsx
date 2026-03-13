@@ -53,6 +53,13 @@ export default async function RootLayout({
                       Review Queue
                     </Link>
                   )}
+                  {(session.user.role === "admin" ||
+                    session.user.role === "reviewer" ||
+                    session.user.role === "compliance_officer") && (
+                    <Link href="/deploy" className="hover:text-gray-900">
+                      Deploy
+                    </Link>
+                  )}
                   {(session.user.role === "compliance_officer" ||
                     session.user.role === "admin") && (
                     <>
@@ -61,6 +68,9 @@ export default async function RootLayout({
                       </Link>
                       <Link href="/audit" className="hover:text-gray-900">
                         Audit
+                      </Link>
+                      <Link href="/dashboard" className="hover:text-gray-900">
+                        Dashboard
                       </Link>
                     </>
                   )}

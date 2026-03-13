@@ -4,6 +4,7 @@ import { use, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
+import { BlueprintSummary } from "@/components/blueprint/blueprint-summary";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { LifecycleControls } from "@/components/registry/lifecycle-controls";
 import { ValidationReportView } from "@/components/governance/validation-report";
@@ -34,8 +35,8 @@ interface BlueprintVersion {
   abp: ABP;
 }
 
-type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated";
-type Tab = "blueprint" | "governance" | "review" | "versions";
+type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
+type Tab = "blueprint" | "summary" | "governance" | "review" | "versions";
 
 export default function AgentDetailPage({
   params,
@@ -52,7 +53,7 @@ export default function AgentDetailPage({
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const tab = searchParams.get("tab");
-    if (tab === "review" || tab === "governance" || tab === "versions") return tab;
+    if (tab === "review" || tab === "governance" || tab === "versions" || tab === "summary") return tab;
     return "blueprint";
   });
 
@@ -123,6 +124,7 @@ export default function AgentDetailPage({
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "blueprint", label: "Blueprint" },
+    { id: "summary", label: "Summary" },
     { id: "governance", label: "Governance" },
     ...(isInReview ? [{ id: "review" as Tab, label: "Review" }] : []),
     { id: "versions", label: `Versions (${versions.length})` },
@@ -196,6 +198,12 @@ export default function AgentDetailPage({
         {activeTab === "blueprint" && (
           <div className="p-6">
             <BlueprintView abp={latest.abp} />
+          </div>
+        )}
+
+        {activeTab === "summary" && (
+          <div className="p-6 max-w-2xl">
+            <BlueprintSummary abp={latest.abp} status={latest.status} />
           </div>
         )}
 

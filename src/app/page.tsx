@@ -240,7 +240,7 @@ export default async function Home() {
   }
 
   // ── Admin ──────────────────────────────────────────────────────────────────
-  const statuses = ["draft", "in_review", "approved", "rejected", "deprecated"] as const;
+  const statuses = ["draft", "in_review", "approved", "deployed", "rejected", "deprecated"] as const;
   const counts = Object.fromEntries(
     statuses.map((s) => [s, allAgents.filter((a) => a.status === s).length])
   ) as Record<typeof statuses[number], number>;
@@ -257,13 +257,14 @@ export default async function Home() {
         </div>
 
         {/* Stats row */}
-        <div className="mb-8 grid grid-cols-5 gap-3">
+        <div className="mb-8 grid grid-cols-6 gap-3">
           {[
-            { label: "Draft", count: counts.draft, color: "text-gray-700 bg-gray-50 border-gray-200" },
-            { label: "In Review", count: counts.in_review, color: "text-blue-700 bg-blue-50 border-blue-200" },
-            { label: "Approved", count: counts.approved, color: "text-green-700 bg-green-50 border-green-200" },
-            { label: "Rejected", count: counts.rejected, color: "text-red-700 bg-red-50 border-red-200" },
-            { label: "Deprecated", count: counts.deprecated, color: "text-amber-700 bg-amber-50 border-amber-200" },
+            { label: "Draft",      count: counts.draft,       color: "text-gray-700 bg-gray-50 border-gray-200" },
+            { label: "In Review",  count: counts.in_review,   color: "text-blue-700 bg-blue-50 border-blue-200" },
+            { label: "Approved",   count: counts.approved,    color: "text-green-700 bg-green-50 border-green-200" },
+            { label: "Deployed",   count: counts.deployed,    color: "text-indigo-700 bg-indigo-50 border-indigo-200" },
+            { label: "Rejected",   count: counts.rejected,    color: "text-red-700 bg-red-50 border-red-200" },
+            { label: "Deprecated", count: counts.deprecated,  color: "text-amber-700 bg-amber-50 border-amber-200" },
           ].map(({ label, count, color }) => (
             <div key={label} className={`rounded-lg border px-4 py-3 text-center ${color}`}>
               <div className="text-2xl font-bold">{count}</div>
@@ -281,16 +282,28 @@ export default async function Home() {
             Pipeline Board
           </Link>
           <Link
+            href="/deploy"
+            className="rounded-lg border border-indigo-200 bg-indigo-50 px-5 py-2.5 text-sm font-medium text-indigo-700 hover:border-indigo-400 hover:bg-indigo-100 transition-colors"
+          >
+            Deploy {counts.approved > 0 && `(${counts.approved} ready)`}
+          </Link>
+          <Link
             href="/review"
             className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
           >
             Review Queue {counts.in_review > 0 && `(${counts.in_review})`}
           </Link>
           <Link
+            href="/dashboard"
+            className="text-sm text-gray-500 hover:text-gray-900"
+          >
+            Dashboard →
+          </Link>
+          <Link
             href="/registry"
             className="text-sm text-gray-500 hover:text-gray-900"
           >
-            Agent Registry →
+            Registry →
           </Link>
         </div>
 

@@ -131,7 +131,7 @@ export const ABPSchema = z.object({
     id: z.string().uuid(),
     created_at: z.string().datetime(),
     created_by: z.string(),
-    status: z.enum(["draft", "in_review", "approved", "rejected", "deprecated"]),
+    status: z.enum(["draft", "in_review", "approved", "rejected", "deprecated", "deployed"]),
     enterprise_id: z.string().optional(),
     tags: z.array(z.string()).optional(),
   }),

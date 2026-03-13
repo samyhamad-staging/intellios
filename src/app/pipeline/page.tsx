@@ -17,14 +17,15 @@ interface Agent {
   updatedAt: string;
 }
 
-type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated";
+type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
 
 const COLUMNS: { status: Status; label: string; color: string; dotColor: string }[] = [
-  { status: "draft",      label: "Draft",      color: "bg-gray-50 border-gray-200",  dotColor: "bg-gray-400" },
-  { status: "in_review",  label: "In Review",  color: "bg-blue-50 border-blue-200",  dotColor: "bg-blue-500" },
-  { status: "approved",   label: "Approved",   color: "bg-green-50 border-green-200", dotColor: "bg-green-500" },
-  { status: "rejected",   label: "Rejected",   color: "bg-red-50 border-red-200",    dotColor: "bg-red-500" },
-  { status: "deprecated", label: "Deprecated", color: "bg-amber-50 border-amber-200", dotColor: "bg-amber-400" },
+  { status: "draft",      label: "Draft",      color: "bg-gray-50 border-gray-200",    dotColor: "bg-gray-400" },
+  { status: "in_review",  label: "In Review",  color: "bg-blue-50 border-blue-200",    dotColor: "bg-blue-500" },
+  { status: "approved",   label: "Approved",   color: "bg-green-50 border-green-200",  dotColor: "bg-green-500" },
+  { status: "deployed",   label: "Deployed",   color: "bg-indigo-50 border-indigo-200", dotColor: "bg-indigo-500" },
+  { status: "rejected",   label: "Rejected",   color: "bg-red-50 border-red-200",      dotColor: "bg-red-500" },
+  { status: "deprecated", label: "Deprecated", color: "bg-amber-50 border-amber-200",  dotColor: "bg-amber-400" },
 ];
 
 function timeAgo(dateStr: string): string {
