@@ -122,6 +122,17 @@ export default function AgentDetailPage({
 
   const isInReview = latest.status === "in_review";
 
+  // Derive review outcome for banner display
+  type ReviewOutcome = "approved" | "rejected" | "changes_requested" | null;
+  const reviewOutcome: ReviewOutcome = (() => {
+    if (!latest.reviewedBy) return null;
+    if (latest.status === "approved") return "approved";
+    if (latest.status === "rejected") return "rejected";
+    // draft + reviewedBy → changes were requested
+    if (latest.status === "draft") return "changes_requested";
+    return null;
+  })();
+
   const tabs: { id: Tab; label: string }[] = [
     { id: "blueprint", label: "Blueprint" },
     { id: "summary", label: "Summary" },
@@ -192,6 +203,75 @@ export default function AgentDetailPage({
           </button>
         ))}
       </div>
+
+      {/* Review decision banner — shown when a review decision has been recorded */}
+      {reviewOutcome && (
+        <div
+          className={`shrink-0 border-b px-6 py-3 ${
+            reviewOutcome === "approved"
+              ? "border-green-200 bg-green-50"
+              : reviewOutcome === "rejected"
+              ? "border-red-200 bg-red-50"
+              : "border-amber-200 bg-amber-50"
+          }`}
+        >
+          <div className="flex items-start gap-3 max-w-4xl">
+            {/* Icon */}
+            <span className="mt-0.5 text-base shrink-0">
+              {reviewOutcome === "approved" ? "✅" : reviewOutcome === "rejected" ? "❌" : "🔄"}
+            </span>
+
+            <div className="min-w-0 flex-1">
+              {/* Headline */}
+              <p className={`text-sm font-semibold ${
+                reviewOutcome === "approved"
+                  ? "text-green-800"
+                  : reviewOutcome === "rejected"
+                  ? "text-red-800"
+                  : "text-amber-800"
+              }`}>
+                {reviewOutcome === "approved" && "Approved for deployment"}
+                {reviewOutcome === "rejected" && "Rejected — not approved for deployment"}
+                {reviewOutcome === "changes_requested" && "Changes requested — returned for revision"}
+              </p>
+
+              {/* Reviewer + timestamp */}
+              <p className={`mt-0.5 text-xs ${
+                reviewOutcome === "approved"
+                  ? "text-green-700"
+                  : reviewOutcome === "rejected"
+                  ? "text-red-700"
+                  : "text-amber-700"
+              }`}>
+                Reviewed by{" "}
+                <span className="font-medium">{latest.reviewedBy}</span>
+                {latest.reviewedAt && (
+                  <>
+                    {" "}on{" "}
+                    {new Date(latest.reviewedAt).toLocaleString(undefined, {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </>
+                )}
+              </p>
+
+              {/* Reviewer comment */}
+              {latest.reviewComment && (
+                <p className={`mt-1.5 text-sm italic leading-relaxed ${
+                  reviewOutcome === "approved"
+                    ? "text-green-800"
+                    : reviewOutcome === "rejected"
+                    ? "text-red-800"
+                    : "text-amber-800"
+                }`}>
+                  &ldquo;{latest.reviewComment}&rdquo;
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">

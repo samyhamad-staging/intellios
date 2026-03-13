@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Post-MVP Phase 3 ✓ Complete (2026-03-13) — Event-driven notifications + SLA monitoring delivered
+## Current Phase: Post-MVP Phase 4 ✓ Complete (2026-03-13) — Enterprise UX hardening delivered
 
 ---
 
@@ -106,6 +106,22 @@ Transforms Intellios from a governed pipeline into a self-managing enterprise pl
 | NotificationBell UI | P0 | ✓ Complete | `src/components/nav/notification-bell.tsx` — 30s focus-aware polling, unread count badge, dropdown with type icons + relative timestamps. |
 | SLA monitoring | P1 | ✓ Complete | `src/lib/sla/config.ts` — `getSlaStatus()` with 48h warn / 72h alert (env-var overridable). Pipeline Board: amber ring at warn, red ring + "SLA breach" badge at alert. |
 | Route metadata enrichment | P0 | ✓ Complete | Status + review routes now pass `agentName`, `agentId`, `createdBy` in audit metadata — enables correct notification recipient lookup. |
+
+---
+
+---
+
+## Post-MVP Phase 4 — Enterprise UX Hardening ✓ Complete (2026-03-13 Session 007)
+
+Addresses the three most critical gaps identified in the Fortune 500 financial services UX evaluation.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| Deployment confirmation modal | P0 | ✓ Complete | Change reference (required), deployment notes (optional), authorization checkbox. All stored in audit log metadata. Deploy button opens modal; no one-click production deployments. |
+| Global search — Registry | P0 | ✓ Complete | Text search by name, agentId, or tag + status filter dropdown. `useMemo` client-side filter. Result count + clear filters affordance. |
+| Global search — Pipeline Board | P0 | ✓ Complete | Text search input alongside tag filter. `matchesSearch()` helper + `useMemo`. Clear link when active. |
+| Review decision banner | P0 | ✓ Complete | Color-coded banner between tabs and content on Blueprint detail: green (approved), red (rejected), amber (changes requested). Shows reviewer identity, timestamp, and comment. |
+| Status route — change management fields | P0 | ✓ Complete | `changeRef` + `deploymentNotes` added to Zod schema; stored in audit metadata on `deployed` transitions. |
 
 ---
 

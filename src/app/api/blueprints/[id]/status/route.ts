@@ -15,6 +15,9 @@ type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "
 
 const StatusBody = z.object({
   status: z.enum(["draft", "in_review", "approved", "rejected", "deprecated", "deployed"]),
+  // Optional change-management fields; required at the UI layer for "deployed" transitions
+  changeRef: z.string().max(100).optional(),
+  deploymentNotes: z.string().max(1000).optional(),
 });
 
 // Valid forward transitions. Any status → deprecated is always allowed.
@@ -46,7 +49,7 @@ export async function PATCH(
 
   try {
     const { id } = await params;
-    const { status: newStatus } = body;
+    const { status: newStatus, changeRef, deploymentNotes } = body;
 
     const blueprint = await db.query.agentBlueprints.findFirst({
       where: eq(agentBlueprints.id, id),
@@ -122,6 +125,11 @@ export async function PATCH(
         agentId: id,
         agentName,
         createdBy: blueprint.createdBy ?? null,
+        // Change management fields — populated for deployed transitions
+        ...(newStatus === "deployed" && {
+          changeRef: changeRef ?? null,
+          deploymentNotes: deploymentNotes ?? null,
+        }),
       },
     });
 

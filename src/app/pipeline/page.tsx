@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { getSlaStatus } from "@/lib/sla/config";
@@ -40,11 +40,21 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diffDays / 30)}mo ago`;
 }
 
+function matchesSearch(agent: Agent, query: string): boolean {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  if (agent.name?.toLowerCase().includes(q)) return true;
+  if (agent.agentId.toLowerCase().includes(q)) return true;
+  if (agent.tags?.some((t) => t.toLowerCase().includes(q))) return true;
+  return false;
+}
+
 export default function PipelinePage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     fetch("/api/registry")
@@ -59,9 +69,14 @@ export default function PipelinePage() {
       });
   }, []);
 
-  const filtered = filterTag
-    ? agents.filter((a) => a.tags?.includes(filterTag))
-    : agents;
+  const filtered = useMemo(() =>
+    agents.filter(
+      (a) =>
+        (!filterTag || a.tags?.includes(filterTag)) &&
+        matchesSearch(a, searchQuery)
+    ),
+    [agents, filterTag, searchQuery]
+  );
 
   const byStatus = (status: Status) =>
     filtered.filter((a) => a.status === status);
@@ -81,6 +96,30 @@ export default function PipelinePage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {/* Text search */}
+            <div className="relative">
+              <svg
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
+                />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search agents…"
+                className="w-44 rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-sm placeholder-gray-400 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+              />
+            </div>
+
             {allTags.length > 0 && (
               <select
                 value={filterTag}
@@ -93,6 +132,16 @@ export default function PipelinePage() {
                 ))}
               </select>
             )}
+
+            {(searchQuery || filterTag) && (
+              <button
+                onClick={() => { setSearchQuery(""); setFilterTag(""); }}
+                className="text-xs text-gray-400 hover:text-gray-700 underline"
+              >
+                Clear
+              </button>
+            )}
+
             <Link
               href="/"
               className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"

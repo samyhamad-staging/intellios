@@ -2,6 +2,38 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 007 — 2026-03-13: Closing the Operational Gaps
+
+### Deployment as a Documented Event
+
+The single most important fix this session has nothing to do with UI aesthetics. It is the elimination of a one-click production deployment. Before this session, deploying an AI agent to production required exactly one click — the same amount of deliberation as liking a social media post.
+
+In a financial services firm, production deployments require change records. They exist in ServiceNow or Jira. They have ticket numbers. They have been approved by a change advisory board. The absence of a change reference capture in the deployment flow was not a UX gap — it was a compliance gap. Any audit of the deployment process would surface it immediately.
+
+The confirmation modal now requires a change reference number before the deploy button becomes active. The reference is stored in the audit log, permanently attached to the `blueprint.status_changed (deployed)` event. This means an auditor can look at any deployed agent and trace back to the change record that authorized it. That is the property that matters.
+
+### The Friction Is the Feature
+
+The modal introduces intentional friction. This is deliberate. The previous one-click flow optimized for speed. Enterprise production deployments should not optimize for speed — they should optimize for deliberateness. The extra 30 seconds to enter a change reference is not waste; it is the moment at which someone consciously takes ownership of a production decision.
+
+The authorization checkbox reinforces this: "I confirm that this deployment is authorized..." This language is borrowed from regulated industries where written acknowledgment of responsibility is a control. It is not bureaucracy for its own sake — it is a checkpoint that shifts accountability from the system to the individual.
+
+### Search at Scale
+
+The tag filter on the pipeline board was designed for small datasets. At Fortune 500 scale — potentially hundreds of agents across business units — users need text search. The same logic applies to the registry. A reviewer looking for "the customer support bot from the retail division" should not have to scroll.
+
+The implementation is deliberately client-side. The registry API already returns the full list for the user's enterprise scope. Adding a server-side search would add API latency for a filtering operation that can be done instantly in the browser. The `useMemo` filter runs in microseconds on lists of hundreds of items. This is the right architectural choice.
+
+### Review Decisions Belong on the Blueprint
+
+Before this session, a designer whose blueprint was rejected had two options to find out why: check their notification (if they happened to notice it) or open the audit trail and search. Neither is acceptable as the primary discovery path. The decision and rationale should be the first thing a designer sees when they open a blueprint that has been reviewed.
+
+The banner is color-coded (green/red/amber) and placed immediately below the tab bar, above the content. It is impossible to miss. It includes the reviewer's identity, the timestamp, and the comment verbatim. A designer can act on the feedback — refine the blueprint, address the violations — without leaving the page.
+
+The "changes requested" case (amber) is particularly important. When a reviewer returns a blueprint to draft with a comment, the comment contains the actionable feedback. Making that comment visible at the top of the page, rather than buried in an audit trail, directly shortens the revision cycle.
+
+---
+
 ## Session 006 — 2026-03-13: The Platform Becomes Aware of Itself
 
 ### The Transition from Tool to Platform

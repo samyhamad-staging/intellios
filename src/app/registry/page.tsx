@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 
@@ -16,10 +16,23 @@ interface RegistryEntry {
   updatedAt: string;
 }
 
+const ALL_STATUSES = ["draft", "in_review", "approved", "deployed", "rejected", "deprecated"] as const;
+
+function matchesSearch(agent: RegistryEntry, query: string): boolean {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  if (agent.name?.toLowerCase().includes(q)) return true;
+  if (agent.agentId.toLowerCase().includes(q)) return true;
+  if (agent.tags?.some((t) => t.toLowerCase().includes(q))) return true;
+  return false;
+}
+
 export default function RegistryPage() {
   const [agents, setAgents] = useState<RegistryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
 
   useEffect(() => {
     fetch("/api/registry")
@@ -34,6 +47,16 @@ export default function RegistryPage() {
       });
   }, []);
 
+  const filtered = useMemo(() => {
+    return agents.filter(
+      (a) =>
+        matchesSearch(a, searchQuery) &&
+        (!statusFilter || a.status === statusFilter)
+    );
+  }, [agents, searchQuery, statusFilter]);
+
+  const hasFilters = searchQuery.trim() !== "" || statusFilter !== "";
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white px-6 py-4">
@@ -41,7 +64,9 @@ export default function RegistryPage() {
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Agent Registry</h1>
             <p className="mt-0.5 text-sm text-gray-500">
-              All generated Agent Blueprint Packages
+              {loading
+                ? "Loading…"
+                : `${agents.length} agent${agents.length !== 1 ? "s" : ""} total`}
             </p>
           </div>
           <Link
@@ -53,6 +78,76 @@ export default function RegistryPage() {
         </div>
       </header>
 
+      {/* Search + filter bar */}
+      <div className="border-b border-gray-200 bg-white px-6 py-3">
+        <div className="mx-auto max-w-5xl flex items-center gap-3">
+          {/* Text search */}
+          <div className="relative flex-1 max-w-md">
+            <svg
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
+              />
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name, ID, or tag…"
+              className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-9 pr-3 text-sm placeholder-gray-400 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                aria-label="Clear search"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          {/* Status filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+          >
+            <option value="">All statuses</option>
+            {ALL_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+              </option>
+            ))}
+          </select>
+
+          {/* Result count */}
+          {hasFilters && !loading && (
+            <span className="text-xs text-gray-400">
+              {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+            </span>
+          )}
+          {hasFilters && (
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setStatusFilter("");
+              }}
+              className="text-xs text-gray-400 hover:text-gray-700 underline"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      </div>
+
       <main className="mx-auto max-w-5xl px-6 py-8">
         {loading && (
           <p className="text-center text-sm text-gray-400">Loading agents…</p>
@@ -62,6 +157,8 @@ export default function RegistryPage() {
             {error}
           </div>
         )}
+
+        {/* Empty registry state */}
         {!loading && !error && agents.length === 0 && (
           <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
             <p className="text-gray-500 text-sm">No agents in the registry yet.</p>
@@ -73,9 +170,28 @@ export default function RegistryPage() {
             </Link>
           </div>
         )}
-        {agents.length > 0 && (
+
+        {/* No search results */}
+        {!loading && !error && agents.length > 0 && filtered.length === 0 && (
+          <div className="rounded-lg border border-dashed border-gray-300 bg-white p-12 text-center">
+            <p className="text-sm text-gray-500">
+              No agents match &ldquo;{searchQuery || statusFilter}&rdquo;.
+            </p>
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setStatusFilter("");
+              }}
+              className="mt-2 text-xs text-gray-400 underline hover:text-gray-700"
+            >
+              Clear filters
+            </button>
+          </div>
+        )}
+
+        {filtered.length > 0 && (
           <div className="space-y-3">
-            {agents.map((agent) => (
+            {filtered.map((agent) => (
               <Link
                 key={agent.agentId}
                 href={`/registry/${agent.agentId}`}

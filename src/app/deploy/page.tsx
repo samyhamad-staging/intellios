@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 
@@ -16,6 +16,15 @@ interface Agent {
   updatedAt: string;
 }
 
+interface DeployModalState {
+  agent: Agent;
+  changeRef: string;
+  deploymentNotes: string;
+  authorized: boolean;
+  submitting: boolean;
+  error: string | null;
+}
+
 function timeAgo(dateStr: string): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -27,12 +36,145 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diffDays / 30)}mo ago`;
 }
 
+/**
+ * DeployConfirmModal — captures change ticket reference, deployment notes,
+ * and explicit authorization acknowledgment before promoting an agent to
+ * production. All fields are stored in the audit log as deployment metadata.
+ */
+function DeployConfirmModal({
+  modal,
+  onChange,
+  onConfirm,
+  onCancel,
+}: {
+  modal: DeployModalState;
+  onChange: (patch: Partial<DeployModalState>) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const changeRefRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    changeRefRef.current?.focus();
+  }, []);
+
+  const canSubmit =
+    modal.changeRef.trim().length > 0 && modal.authorized && !modal.submitting;
+
+  return (
+    /* Backdrop */
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onCancel();
+      }}
+    >
+      <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white shadow-2xl">
+        {/* Modal header */}
+        <div className="border-b border-gray-100 px-6 py-4">
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 text-sm">
+              🚀
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">
+                Deploy to Production
+              </h2>
+              <p className="text-xs text-gray-500">
+                {modal.agent.name ?? "Unnamed Agent"} — v{modal.agent.version}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Fields */}
+        <div className="space-y-5 px-6 py-5">
+          {/* Change reference — required */}
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+              Change Reference Number
+              <span className="ml-1 text-red-500">*</span>
+            </label>
+            <input
+              ref={changeRefRef}
+              type="text"
+              value={modal.changeRef}
+              onChange={(e) => onChange({ changeRef: e.target.value })}
+              placeholder="e.g. CHG0012345"
+              maxLength={100}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              Enter the change management ticket associated with this deployment.
+              This will be stored permanently in the audit log.
+            </p>
+          </div>
+
+          {/* Deployment notes — optional */}
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+              Deployment Notes
+              <span className="ml-1 text-gray-400 font-normal">(optional)</span>
+            </label>
+            <textarea
+              value={modal.deploymentNotes}
+              onChange={(e) => onChange({ deploymentNotes: e.target.value })}
+              placeholder="Environment, rollout plan, stakeholder sign-offs, or other relevant context…"
+              maxLength={1000}
+              rows={3}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 resize-none"
+            />
+          </div>
+
+          {/* Authorization checkbox */}
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <input
+              type="checkbox"
+              checked={modal.authorized}
+              onChange={(e) => onChange({ authorized: e.target.checked })}
+              className="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span className="text-xs text-gray-700 leading-relaxed">
+              I confirm that this deployment is authorized, the change reference
+              above is valid, and all required approvals have been obtained in
+              accordance with the organization&apos;s change management policy.
+            </span>
+          </label>
+
+          {modal.error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+              {modal.error}
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+          <button
+            onClick={onCancel}
+            disabled={modal.submitting}
+            className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 disabled:opacity-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={!canSubmit}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {modal.submitting ? "Deploying…" : "Confirm Deployment"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DeploymentConsolePage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deploying, setDeploying] = useState<string | null>(null);
-  const [deployError, setDeployError] = useState<string | null>(null);
+  const [modal, setModal] = useState<DeployModalState | null>(null);
 
   useEffect(() => {
     fetch("/api/registry")
@@ -50,31 +192,58 @@ export default function DeploymentConsolePage() {
   const deployed = agents.filter((a) => a.status === "deployed");
   const readyToDeploy = agents.filter((a) => a.status === "approved");
 
-  async function handleDeploy(agent: Agent) {
-    setDeploying(agent.id);
-    setDeployError(null);
+  function openModal(agent: Agent) {
+    setModal({
+      agent,
+      changeRef: "",
+      deploymentNotes: "",
+      authorized: false,
+      submitting: false,
+      error: null,
+    });
+  }
+
+  async function handleConfirmDeploy() {
+    if (!modal) return;
+    setModal((m) => m && { ...m, submitting: true, error: null });
     try {
-      const res = await fetch(`/api/blueprints/${agent.id}/status`, {
+      const res = await fetch(`/api/blueprints/${modal.agent.id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "deployed" }),
+        body: JSON.stringify({
+          status: "deployed",
+          changeRef: modal.changeRef.trim(),
+          deploymentNotes: modal.deploymentNotes.trim() || undefined,
+        }),
       });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error ?? "Deployment failed");
       }
+      const agentId = modal.agent.id;
       setAgents((prev) =>
-        prev.map((a) => (a.id === agent.id ? { ...a, status: "deployed" } : a))
+        prev.map((a) => (a.id === agentId ? { ...a, status: "deployed" } : a))
       );
+      setModal(null);
     } catch (err) {
-      setDeployError(err instanceof Error ? err.message : "Deployment failed");
-    } finally {
-      setDeploying(null);
+      setModal((m) =>
+        m && { ...m, submitting: false, error: err instanceof Error ? err.message : "Deployment failed" }
+      );
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Deployment confirmation modal */}
+      {modal && (
+        <DeployConfirmModal
+          modal={modal}
+          onChange={(patch) => setModal((m) => m && { ...m, ...patch })}
+          onConfirm={handleConfirmDeploy}
+          onCancel={() => setModal(null)}
+        />
+      )}
+
       {/* Header */}
       <header className="border-b border-gray-200 bg-white px-6 py-4">
         <div className="mx-auto max-w-5xl flex items-center justify-between">
@@ -102,12 +271,6 @@ export default function DeploymentConsolePage() {
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
-          </div>
-        )}
-
-        {deployError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            {deployError}
           </div>
         )}
 
@@ -199,11 +362,10 @@ export default function DeploymentConsolePage() {
                     )}
                   </div>
                   <button
-                    onClick={() => handleDeploy(agent)}
-                    disabled={deploying === agent.id}
-                    className="ml-4 shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                    onClick={() => openModal(agent)}
+                    className="ml-4 shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
                   >
-                    {deploying === agent.id ? "Deploying…" : "Deploy to Production"}
+                    Deploy to Production…
                   </button>
                 </div>
               ))}
