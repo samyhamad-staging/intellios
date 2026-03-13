@@ -1,4 +1,4 @@
-import { IntakePayload, IntakeContext } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext, StakeholderContribution } from "@/lib/types/intake";
 
 const BASE_PROMPT = `You are the Intellios Intake Assistant. Your role is to help enterprise users define the requirements for a new AI agent through natural conversation.
 
@@ -106,7 +106,64 @@ function buildContextBlock(context: IntakeContext): string {
   return lines.join("\n");
 }
 
-export function buildIntakeSystemPrompt(payload: IntakePayload, context?: IntakeContext | null): string {
+// Human-readable field labels for the system prompt
+const CONTRIBUTION_FIELD_LABELS: Record<string, string> = {
+  required_policies: "Required policies",
+  regulatory_constraints: "Regulatory constraints",
+  audit_requirements: "Audit requirements",
+  risk_thresholds: "Risk thresholds",
+  denied_scenarios: "Denied scenarios",
+  escalation_requirements: "Escalation requirements",
+  use_boundaries: "Permitted use boundaries",
+  prohibited_use_cases: "Prohibited use cases",
+  access_control_requirements: "Access control requirements",
+  data_handling_requirements: "Data handling requirements",
+  integration_requirements: "Integration requirements",
+  infrastructure_constraints: "Infrastructure constraints",
+  sla_requirements: "SLA requirements",
+  escalation_paths: "Escalation paths",
+  success_criteria: "Success criteria",
+  business_constraints: "Business constraints",
+};
+
+function buildContributionsBlock(contributions: StakeholderContribution[]): string {
+  if (contributions.length === 0) return "";
+
+  const lines: string[] = [
+    "",
+    "## Stakeholder Contributions",
+    "",
+    "The following requirements were submitted directly by domain experts before or during this intake session.",
+    "These are authoritative inputs from stakeholders who own those domains.",
+    "",
+    "**You MUST incorporate these requirements verbatim.** Do not paraphrase, generalize, or omit them.",
+    "When a stakeholder has identified a specific policy, constraint, or requirement:",
+    "- Capture it using the appropriate tool (add_governance_policy, set_constraints, set_instructions, etc.)",
+    "- Reference the stakeholder's exact language when calling the tool",
+    "- Ensure `mark_intake_complete` cannot succeed if these requirements remain uncaptured",
+    "",
+  ];
+
+  for (const c of contributions) {
+    const nonEmptyEntries = Object.entries(c.fields).filter(([, v]) => v.trim().length > 0);
+    if (nonEmptyEntries.length === 0) continue;
+
+    lines.push(`### ${c.domain.charAt(0).toUpperCase() + c.domain.slice(1)} — ${c.contributorEmail} (${c.contributorRole})`);
+    for (const [key, value] of nonEmptyEntries) {
+      const label = CONTRIBUTION_FIELD_LABELS[key] ?? key;
+      lines.push(`- **${label}**: ${value}`);
+    }
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+export function buildIntakeSystemPrompt(
+  payload: IntakePayload,
+  context?: IntakeContext | null,
+  contributions?: StakeholderContribution[]
+): string {
   const identity = payload.identity;
   const capabilities = payload.capabilities;
   const constraints = payload.constraints;
@@ -208,5 +265,9 @@ export function buildIntakeSystemPrompt(payload: IntakePayload, context?: Intake
   // Inject context block if context was provided in Phase 1
   const contextBlock = context ? buildContextBlock(context) : "";
 
-  return BASE_PROMPT + contextBlock + lines.join("\n");
+  // Inject contributions block between context and current state (when non-empty)
+  const contributionsBlock =
+    contributions && contributions.length > 0 ? buildContributionsBlock(contributions) : "";
+
+  return BASE_PROMPT + contextBlock + contributionsBlock + lines.join("\n");
 }

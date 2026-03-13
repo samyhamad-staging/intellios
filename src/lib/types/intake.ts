@@ -18,6 +18,48 @@ export interface IntakeContext {
   stakeholdersConsulted: Array<"legal" | "compliance" | "security" | "it" | "business-owner" | "none">;
 }
 
+/**
+ * ContributionDomain — the stakeholder domain that a contribution covers.
+ * Maps to the seven functional areas represented in the stakeholder lane model.
+ */
+export type ContributionDomain =
+  | "compliance"
+  | "risk"
+  | "legal"
+  | "security"
+  | "it"
+  | "operations"
+  | "business";
+
+/**
+ * Domain field key sets — the structured fields captured per domain.
+ * Each value is a free-text requirement entered by the contributing stakeholder.
+ *
+ * compliance : required_policies, regulatory_constraints, audit_requirements
+ * risk       : risk_thresholds, denied_scenarios, escalation_requirements
+ * legal      : use_boundaries, prohibited_use_cases
+ * security   : access_control_requirements, data_handling_requirements
+ * it         : integration_requirements, infrastructure_constraints
+ * operations : sla_requirements, escalation_paths
+ * business   : success_criteria, business_constraints
+ */
+
+/**
+ * StakeholderContribution — a single domain-specific requirement submission
+ * from a stakeholder (compliance officer, risk officer, legal, etc.).
+ * Stored in intake_contributions; one row per submission.
+ */
+export interface StakeholderContribution {
+  id: string;
+  sessionId: string;
+  contributorEmail: string;
+  contributorRole: string;
+  domain: ContributionDomain;
+  /** Domain-specific field key → free-text requirement entered by the stakeholder */
+  fields: Record<string, string>;
+  createdAt: string; // ISO 8601
+}
+
 export interface IntakePayload {
   identity?: {
     name?: string;

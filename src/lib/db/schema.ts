@@ -42,6 +42,23 @@ export const intakeMessages = pgTable(
   (table) => [index("idx_intake_messages_session").on(table.sessionId, table.createdAt)]
 );
 
+export const intakeContributions = pgTable(
+  "intake_contributions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => intakeSessions.id, { onDelete: "cascade" }),
+    enterpriseId: text("enterprise_id"),
+    contributorEmail: text("contributor_email").notNull(),
+    contributorRole: text("contributor_role").notNull(),
+    domain: text("domain").notNull(), // compliance | risk | legal | security | it | operations | business
+    fields: jsonb("fields").notNull(), // domain-specific key → free-text requirement
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("idx_contributions_session").on(table.sessionId)]
+);
+
 export const agentBlueprints = pgTable(
   "agent_blueprints",
   {
