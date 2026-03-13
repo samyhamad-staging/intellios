@@ -247,6 +247,7 @@ export default function IntakeSessionPage({
           refreshTick={refreshTick}
           contributions={contributions}
           onContributionAdded={handleContributionAdded}
+          context={intakeContext ?? undefined}
         />
       </main>
     </div>

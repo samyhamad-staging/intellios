@@ -56,6 +56,41 @@ function checkGovernanceSufficiency(
       gaps.push({ type: "access_control policy", reason: "external API integrations require access control policies" });
   }
 
+  // ── Substance check ────────────────────────────────────────────────────────
+  // For each required policy type that passed the presence check above, verify
+  // the policy has at least one rule or a non-trivial description.
+  // An empty policy shell provides no audit evidence.
+  const isSubstantive = (p: { rules?: string[]; description?: string }): boolean =>
+    (p.rules?.filter((r) => r.trim().length > 0).length ?? 0) > 0 ||
+    (p.description !== undefined && p.description.trim().length >= 25);
+
+  const requiredTypes: string[] = [];
+  if (context.dataSensitivity === "pii" || context.dataSensitivity === "regulated") {
+    requiredTypes.push("data_handling");
+  }
+  if (context.regulatoryScope.includes("FINRA") || context.regulatoryScope.includes("SOX")) {
+    requiredTypes.push("compliance");
+  }
+  if (context.regulatoryScope.includes("GDPR") || context.regulatoryScope.includes("HIPAA")) {
+    if (!requiredTypes.includes("data_handling")) requiredTypes.push("data_handling");
+  }
+  if (context.deploymentType === "customer-facing" || context.deploymentType === "partner-facing") {
+    requiredTypes.push("safety");
+  }
+  if (context.integrationTypes.includes("external-apis")) {
+    requiredTypes.push("access_control");
+  }
+
+  for (const requiredType of requiredTypes) {
+    const matchingPolicy = (payload.governance?.policies ?? []).find((p) => p.type === requiredType);
+    if (matchingPolicy && !isSubstantive(matchingPolicy)) {
+      gaps.push({
+        type: `${requiredType}_substance`,
+        reason: `"${matchingPolicy.name}" (${requiredType} policy) has no rules or description — add the specific controls it enforces`,
+      });
+    }
+  }
+
   return gaps;
 }
 

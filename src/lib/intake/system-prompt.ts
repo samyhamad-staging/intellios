@@ -101,6 +101,8 @@ function buildContextBlock(context: IntakeContext): string {
   }
 
   lines.push("");
+  lines.push("**Policy substance requirement**: When adding a governance policy with `add_governance_policy`, always include at least one specific rule in `rules[]` or a substantive `description` (≥25 characters). Empty policy shells will be rejected at finalization — specify the actual controls, prohibitions, or requirements the policy enforces.");
+  lines.push("");
   lines.push("If any of the above are not captured when the user tries to finalize, `mark_intake_complete` will reject the call with a clear explanation of what is missing.");
 
   return lines.join("\n");

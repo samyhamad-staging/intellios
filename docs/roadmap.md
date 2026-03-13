@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Post-MVP Phase 7 ✓ Complete (2026-03-13) — Stakeholder requirement lanes delivered
+## Current Phase: Post-MVP Phase 8 ✓ Complete (2026-03-13) — Policy substance enforcement + contribution coverage indicators delivered
 
 ---
 
@@ -183,6 +183,21 @@ attributed evidence record.
 | `IntakeProgress` contributions rendering | P0 | ✓ Complete | `StakeholderContributionsPanel` rendered at bottom of Phase 2 sidebar |
 | `IntakeReview` contributions panel | P0 | ✓ Complete | Full attributed contribution content shown before section cards in Phase 3 |
 | MRM report Section 11 (`stakeholderContributions`) | P1 | ✓ Complete | 6th DB query in `assembleMRMReport()`; empty-array safe for pre-Phase 7 blueprints |
+
+---
+
+## Post-MVP Phase 8 — Policy Substance Enforcement + Contribution Coverage Indicators ✓ Complete (2026-03-13 Session 011)
+
+Closes two silent failure modes that survived Phase 7:
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| Policy substance check in `checkGovernanceSufficiency` | P0 | ✓ Complete | Required policies must have ≥1 non-empty rule or description ≥25 chars; empty shells return `_substance` gap and block finalization |
+| Policy substance instruction in system prompt | P0 | ✓ Complete | `buildContextBlock` now warns Claude to include substantive content when calling `add_governance_policy` |
+| `src/lib/intake/coverage.ts` — coverage helper | P0 | ✓ Complete | `getExpectedContributionDomains` + `getMissingContributionDomains` derived from Phase 1 signals |
+| Sidebar coverage gap strip | P0 | ✓ Complete | `StakeholderContributionsPanel` renders amber strip with missing domain chips when `context` prop is provided |
+| Phase 3 review missing-domain callout | P0 | ✓ Complete | `IntakeReview` renders non-blocking amber callout listing missing expected domains |
+| Context prop pass-through | P0 | ✓ Complete | `IntakeProgress` → `StakeholderContributionsPanel`; session page passes `intakeContext` |
 
 ---
 

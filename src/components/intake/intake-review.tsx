@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { IntakePayload, IntakeContext, ContributionDomain, StakeholderContribution } from "@/lib/types/intake";
+import { getMissingContributionDomains } from "@/lib/intake/coverage";
 
 interface IntakeReviewProps {
   sessionId: string;
@@ -343,50 +344,82 @@ export function IntakeReview({
         )}
 
         {/* Stakeholder contributions */}
-        {contributions.length > 0 && (
+        {(contributions.length > 0 || (context && getMissingContributionDomains(context, contributions).length > 0)) && (
           <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
             <div className="flex items-baseline gap-2 mb-3">
               <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Stakeholder Input
               </div>
-              <div className="text-xs text-gray-500">
-                {contributions.length} contribution{contributions.length > 1 ? "s" : ""} from{" "}
-                {new Set(contributions.map((c) => c.contributorEmail)).size} contributor{new Set(contributions.map((c) => c.contributorEmail)).size > 1 ? "s" : ""}
-              </div>
+              {contributions.length > 0 && (
+                <div className="text-xs text-gray-500">
+                  {contributions.length} contribution{contributions.length > 1 ? "s" : ""} from{" "}
+                  {new Set(contributions.map((c) => c.contributorEmail)).size} contributor{new Set(contributions.map((c) => c.contributorEmail)).size > 1 ? "s" : ""}
+                </div>
+              )}
             </div>
-            <div className="space-y-4">
-              {contributions.map((c) => {
-                const domain = c.domain as ContributionDomain;
-                const colorClass = DOMAIN_COLORS[domain] ?? "bg-gray-50 text-gray-700 border-gray-200";
-                const nonEmptyEntries = Object.entries(c.fields).filter(([, v]) => v.trim().length > 0);
-                return (
-                  <div key={c.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`inline-flex px-2 py-0.5 rounded border text-xs font-medium ${colorClass}`}>
-                        {DOMAIN_LABELS[domain] ?? domain}
-                      </span>
-                      <span className="text-xs text-gray-600">{c.contributorEmail}</span>
-                      {c.contributorRole && (
-                        <span className="text-xs text-gray-400">· {c.contributorRole}</span>
+            {contributions.length > 0 && (
+              <div className="space-y-4">
+                {contributions.map((c) => {
+                  const domain = c.domain as ContributionDomain;
+                  const colorClass = DOMAIN_COLORS[domain] ?? "bg-gray-50 text-gray-700 border-gray-200";
+                  const nonEmptyEntries = Object.entries(c.fields).filter(([, v]) => v.trim().length > 0);
+                  return (
+                    <div key={c.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`inline-flex px-2 py-0.5 rounded border text-xs font-medium ${colorClass}`}>
+                          {DOMAIN_LABELS[domain] ?? domain}
+                        </span>
+                        <span className="text-xs text-gray-600">{c.contributorEmail}</span>
+                        {c.contributorRole && (
+                          <span className="text-xs text-gray-400">· {c.contributorRole}</span>
+                        )}
+                        <span className="ml-auto text-xs text-gray-400">{formatDate(c.createdAt)}</span>
+                      </div>
+                      {nonEmptyEntries.length > 0 && (
+                        <dl className="space-y-1.5">
+                          {nonEmptyEntries.map(([key, value]) => (
+                            <div key={key}>
+                              <dt className="text-xs font-medium text-gray-500">
+                                {CONTRIBUTION_FIELD_LABELS[key] ?? key}
+                              </dt>
+                              <dd className="text-sm text-gray-700 leading-relaxed">{value}</dd>
+                            </div>
+                          ))}
+                        </dl>
                       )}
-                      <span className="ml-auto text-xs text-gray-400">{formatDate(c.createdAt)}</span>
                     </div>
-                    {nonEmptyEntries.length > 0 && (
-                      <dl className="space-y-1.5">
-                        {nonEmptyEntries.map(([key, value]) => (
-                          <div key={key}>
-                            <dt className="text-xs font-medium text-gray-500">
-                              {CONTRIBUTION_FIELD_LABELS[key] ?? key}
-                            </dt>
-                            <dd className="text-sm text-gray-700 leading-relaxed">{value}</dd>
-                          </div>
+                  );
+                })}
+              </div>
+            )}
+            {/* Missing-domain callout */}
+            {context && (() => {
+              const missing = getMissingContributionDomains(context, contributions);
+              if (missing.length === 0) return null;
+              return (
+                <div className={`rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs ${contributions.length > 0 ? "mt-4" : ""}`}>
+                  <div className="flex items-start gap-2">
+                    <span className="text-amber-600 mt-0.5">⚠</span>
+                    <div>
+                      <p className="font-medium text-amber-800 mb-1.5">
+                        No input received from:{" "}
+                        {missing.map((domain, i) => (
+                          <span key={domain}>
+                            {i > 0 && ", "}
+                            <span className={`inline-flex px-1.5 py-0.5 rounded border text-xs font-medium ${DOMAIN_COLORS[domain] ?? "bg-gray-50 text-gray-700 border-gray-200"}`}>
+                              {DOMAIN_LABELS[domain] ?? domain}
+                            </span>
+                          </span>
                         ))}
-                      </dl>
-                    )}
+                      </p>
+                      <p className="text-amber-700">
+                        These domains were implicated by your intake context. You may proceed, but reviewers will note the absence.
+                      </p>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
