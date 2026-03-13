@@ -1,38 +1,82 @@
 # Intake Engine — Specification
 
 **Subsystem:** Design Studio
-**Status:** Complete
+**Status:** Complete — Phase 6 (three-phase enterprise architecture, 2026-03-13)
 
 ## Purpose
 
-Captures enterprise requirements, constraints, and preferences for agent creation. Produces structured intake data that the Generation Engine consumes.
+Captures enterprise requirements, constraints, and governance context for agent creation. Produces a structured intake payload that the Generation Engine consumes and a Phase 1 context record that the governance validator and MRM report use.
+
+The engine operates as a **three-phase process** designed to eliminate the completeness blindspot inherent in discovery-driven intake: Claude cannot know to probe for FINRA compliance if the user never mentions financial data. Phase 1 captures domain signals first; Phase 2 uses those signals to enforce context-appropriate governance requirements deterministically; Phase 3 requires explicit human acknowledgment of what was captured before generation proceeds.
 
 ## Inputs
 
-- Enterprise user interaction via **conversational UI** (chat-based, powered by Claude)
+- **Phase 1:** Enterprise user fills a structured context form (6 domain-signal fields)
+- **Phase 2:** Enterprise user interaction via conversational UI (chat-based, powered by Claude), seeded with Phase 1 context
 - Enterprise policies (referenced from governance system)
 
 ## Outputs
 
-- Structured intake payload containing:
-  - Agent purpose and description
-  - Desired capabilities and tools
-  - Behavioral constraints
-  - Branding preferences
-  - Applicable governance policies
+- **`IntakeContext`** — Phase 1 domain signals (deployment type, data sensitivity, regulatory scope, integrations, stakeholders)
+- **`IntakePayload`** — Structured intake data containing agent identity, capabilities, constraints, governance policies, audit config, and optional ambiguity flags
 
-## Behavior
+## Three-Phase Architecture
 
-1. Present the enterprise user with a guided experience to define their agent.
-2. Validate completeness of required fields.
-3. Resolve references to enterprise policies from the Control Plane.
-4. Produce a structured intake payload for the Generation Engine.
+### Phase 1 — Structured Context Form
+
+The `IntakeContextForm` component is shown before the AI conversation begins. The user fills 6 fields:
+
+| Field | Type | Purpose |
+|---|---|---|
+| `agentPurpose` | `string` | Brief description of agent's goal — seeds Claude's opening message |
+| `deploymentType` | enum (4 options) | `internal-only` \| `customer-facing` \| `partner-facing` \| `automated-pipeline` |
+| `dataSensitivity` | enum (5 levels) | `public` \| `internal` \| `confidential` \| `pii` \| `regulated` |
+| `regulatoryScope` | multi-select | `FINRA` \| `SOX` \| `GDPR` \| `HIPAA` \| `PCI-DSS` \| `none` |
+| `integrationTypes` | multi-select | `internal-apis` \| `external-apis` \| `databases` \| `file-systems` \| `none` |
+| `stakeholdersConsulted` | multi-select | `legal` \| `compliance` \| `security` \| `it` \| `business-owner` \| `none` |
+
+On submit, the form calls `PATCH /api/intake/sessions/[id]/context`. The session page transitions to Phase 2 only on success. The `IntakeContext` is stored in `intake_sessions.intake_context` (JSONB).
+
+### Phase 2 — Guided AI Conversation
+
+Claude receives both the current `IntakePayload` state and the `IntakeContext` from Phase 1 via `buildIntakeSystemPrompt(payload, context)`. The system prompt injects two additional sections:
+
+**Enterprise Context block** — States the agent purpose, deployment type, data sensitivity, regulatory scope, integrations, and stakeholders consulted. Instructs Claude not to re-ask for this information and to use it to frame the opening message.
+
+**Mandatory Governance Probing Rules** — A deterministic list of what must be captured before finalization, derived from the context signals:
+
+| Trigger | Required governance |
+|---|---|
+| `dataSensitivity: pii` or `regulated` | data_handling policy + audit logging on + retention_days set |
+| `regulatoryScope: FINRA` or `SOX` | compliance policy + retention_days set |
+| `regulatoryScope: GDPR` or `HIPAA` | data_handling policy + pii_redaction on |
+| `deploymentType: customer-facing` or `partner-facing` | safety policy + behavioral instructions set |
+| `integrationTypes: external-apis` | access_control policy |
+
+These are enforced at two levels:
+1. **Prompted enforcement** — Claude is told what to probe for in the system prompt
+2. **Hard enforcement** — `mark_intake_complete` calls `checkGovernanceSufficiency()` and returns an error with a gap list if any required governance is missing; finalization is rejected until all gaps are closed
+
+The `flag_ambiguous_requirement` tool allows Claude to record unclear or contradictory requirements to a `_flags` array in the payload. Flags are surfaced in the Phase 3 review screen.
+
+### Phase 3 — Pre-Finalization Review Screen
+
+The `IntakeReview` component replaces the simple completion banner. It is shown when the session status transitions to `completed` (after `mark_intake_complete` succeeds). It displays:
+
+- **Enterprise context summary strip** — Deployment type, data sensitivity, regulatory scope, integrations, stakeholders consulted
+- **Ambiguity flags panel** (expandable) — Each flag shows field, description, and the user's original statement
+- **Per-section review cards** — Rich content display for each of the 7 ABP sections with an acknowledgment checkbox. Generate button is disabled until all filled sections are checked
+- **Gated Generate button** — Activates only when all required sections are filled and all filled sections are acknowledged
+
+---
 
 ## Resolved Decisions
 
 - **Intake format:** Conversational UI (chat-based, powered by Claude). See ADR-002.
 - **Policy discovery:** Policies are fetched from the Control Plane (PostgreSQL) at intake time. See ADR-003.
-- **Templates:** No templates for MVP. Every agent starts from scratch. See ADR-003.
+- **Templates:** No templates. Every agent starts from scratch. See ADR-003.
+- **Phase 1 context capture:** Structured form before conversation eliminates governance discovery blindspot. Context stored in `intake_sessions.intake_context` JSONB column.
+- **Governance enforcement model:** Dual-layer — prompted (system prompt probing rules) + hard (mark_intake_complete sufficiency check). Prevents silent governance gaps.
 
 ## Implementation
 
@@ -40,7 +84,7 @@ See ADR-004 for implementation technology choices.
 
 ### Data Model
 
-- **`intake_sessions`** — One row per intake session. Stores `enterprise_id`, `status` (`active` | `complete`), and `intake_payload` (JSONB, accumulates ABP sections as the conversation progresses).
+- **`intake_sessions`** — One row per intake session. Stores `enterprise_id`, `status` (`active` | `completed`), `intake_payload` (JSONB, accumulates ABP sections), and `intake_context` (JSONB, Phase 1 domain signals — null until Phase 1 submitted).
 - **`intake_messages`** — One row per message in a session. Stores `role`, `content`, and ordering metadata.
 - **`governance_policies`** — Enterprise policies referenced during intake.
 
@@ -50,13 +94,13 @@ See ADR-004 for implementation technology choices.
 |---|---|---|
 | POST | `/api/intake/sessions` | Create a new intake session |
 | GET | `/api/intake/sessions/[id]` | Fetch session with message history |
+| PATCH | `/api/intake/sessions/[id]/context` | Save Phase 1 IntakeContext |
 | POST | `/api/intake/sessions/[id]/chat` | Streaming chat endpoint (Claude + tool use) |
 | GET | `/api/intake/sessions/[id]/payload` | Get current intake payload state |
-| POST | `/api/intake/sessions/[id]/finalize` | Validate and finalize intake |
 
 ### Claude Tool Use
 
-The intake assistant uses 10 tools to incrementally build the `IntakePayload` as the conversation progresses:
+The intake assistant uses 11 tools to incrementally build the `IntakePayload`:
 
 | Tool | Purpose |
 |---|---|
@@ -66,36 +110,64 @@ The intake assistant uses 10 tools to incrementally build the `IntakePayload` as
 | `set_instructions` | Set behavioral instructions |
 | `add_knowledge_source` | Add a knowledge source |
 | `set_constraints` | Set constraint settings (output length, topic allowlist/blocklist) |
-| `add_governance_policy` | Reference an enterprise policy by ID |
+| `add_governance_policy` | Attach a governance policy |
 | `set_audit_config` | Set audit logging configuration |
+| `flag_ambiguous_requirement` | Record an ambiguous or contradictory requirement to `_flags[]` in the payload |
 | `get_intake_summary` | Check completeness of captured fields (read-only) |
-| `mark_intake_complete` | Finalize intake after user confirmation |
+| `mark_intake_complete` | Finalize intake — runs governance sufficiency check before calling `finalizeSession()` |
 
-Tools use Vercel AI SDK v5 (`tool()` + `zodSchema()` from the `ai` package).
+Tools use Vercel AI SDK v5 (`tool()` + `zodSchema()` from the `ai` package). `stopWhen: stepCountIs(10)`.
+
+### System Prompt
+
+`buildIntakeSystemPrompt(payload, context?)` builds the system prompt dynamically on each request:
+
+1. **Base prompt** — Conversation style guide, tool usage rules, section list
+2. **Enterprise Context block** (injected when `context` is provided) — Phase 1 signals + mandatory governance probing rules derived from the governance sufficiency matrix
+3. **Current State block** — Per-section filled/unfilled status with detail lines (agent name, tool list, policy list, etc.) so Claude never re-asks for already-captured information
+
+### Governance Sufficiency Matrix
+
+`checkGovernanceSufficiency(payload, context)` in `src/lib/intake/tools.ts` — called by `mark_intake_complete`. Returns an array of `{ type, reason }` for each required but missing governance element. If non-empty, `mark_intake_complete` returns `success: false` with the gap list rather than finalizing.
 
 ### Streaming
 
-The chat route uses `streamText` from AI SDK v5 with `stopWhen: stepCountIs(5)` to allow multi-step tool use. The response is returned via `toUIMessageStreamResponse()`. The frontend uses `useChat` from `@ai-sdk/react` with `DefaultChatTransport`.
+The chat route uses `streamText` from AI SDK v5 with `stopWhen: stepCountIs(10)`. The response is returned via `toUIMessageStreamResponse()`. The frontend uses `useChat` from `@ai-sdk/react` with `DefaultChatTransport`.
 
-### Finalization Flow
+### Session Page State Machine
 
-`mark_intake_complete` triggers session finalization:
-1. Tool validates minimum requirements (identity name + at least one tool)
-2. On success, calls `finalizeSession()` callback which sets `session.status = "completed"` in the database
-3. The intake page polls session status after each AI response and shows a completion banner when status is `completed`
-4. The `/finalize` REST endpoint also finalizes sessions and validates the same minimum requirements — intended for explicit human-triggered finalization
+The intake session page (`src/app/intake/[sessionId]/page.tsx`) operates as a state machine:
 
-Both paths reject further chat messages for a completed session with `409 Conflict`.
+```
+loading → context-form    (if intakeContext is null)
+        → review          (if session.status = "completed")
+        → conversation    (if intakeContext is set and session is active)
+
+conversation → review     (after mark_intake_complete succeeds)
+```
+
+On mount, the page fetches the session to determine the initial phase. On `completed`, it also fetches the current payload to populate the review screen.
 
 ### Tool Update Semantics
 
 - **Serialization:** All `updatePayload` calls are chained on a request-scoped promise queue. This prevents data loss when Claude calls multiple tools in the same step (parallel execution).
 - **Deduplication:** `add_tool`, `add_knowledge_source`, and `add_governance_policy` upsert by name — calling them again with the same name updates the existing entry rather than creating a duplicate.
+- **Flag accumulation:** `flag_ambiguous_requirement` appends to `_flags[]` in the payload — never overwrites. Each flag gets a unique timestamp-derived ID.
 
 ### Progress Sidebar
 
 `IntakeProgress` component polls `/api/intake/sessions/[id]/payload` after each AI response (via `refreshTick` prop from the parent page). It displays:
-- 7 ABP sections with filled/unfilled state
+- 7 ABP sections with filled/unfilled state and detail lines (e.g., tool names, policy names)
 - Progress bar (% of sections complete)
 - Required vs optional distinction
 - Readiness indicator ("Ready to finalize" when required sections are filled)
+
+### MRM Report Integration
+
+When a blueprint's MRM Compliance Report is assembled, `assembleMRMReport()` fetches the originating intake session and reads `intake_context`. The `riskClassification` section of the report is enriched with:
+- `deploymentType` — from Phase 1 context
+- `dataSensitivity` — from Phase 1 context
+- `regulatoryScope` — from Phase 1 context
+- `stakeholdersConsulted` — from Phase 1 context
+
+All four fields are null/empty-array safe for backwards compatibility with blueprints generated before Phase 6.
