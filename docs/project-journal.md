@@ -2,6 +2,36 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 012 — 2026-03-13: The Missing Navigation Layer
+
+### A Platform With No Memory for Its Designers
+
+By the end of Phase 8, Intellios had a sophisticated intake pipeline: a three-phase structured capture process, context-driven governance enforcement, stakeholder requirement lanes, contribution coverage indicators, and policy substance validation. What it did not have was a way for a designer to find their own work.
+
+The only entry point to an intake session was a direct URL (`/intake/{uuid}`). If a designer created a session, navigated away, and came back an hour later, there was no link in the navigation to get back. The home page showed blueprints — completed agents in the registry — not the in-progress intake sessions that would eventually produce them. The gap was subtle because in development the session URL was always in the browser history, but for any real user in a real enterprise context, losing a session URL means losing the session.
+
+### The Fix: Session List + Nav
+
+The intake session list page (`/intake`) is deliberately simple. It reads directly from the database in a server component, separates sessions into "In Progress" and "Completed" sections, and links each row to the session workspace. Each row shows the agent name (when captured from Phase 2), the purpose (from Phase 1 context), deployment type and data sensitivity as context chips, and a relative timestamp. The "Design a New Agent" CTA is prominent at the top and repeated in the empty state.
+
+The nav addition is one condition: `designer` or `admin`. Reviewers, compliance officers, and other roles don't have intake sessions — their work surfaces appear in the Review Queue and Governance sections. The placement before "Pipeline" reflects the workflow order: intake comes first.
+
+### Completing the MRM Evidence Chain
+
+Phase 8's coverage gap detection was visible in the UI during intake — the sidebar strip and the Phase 3 callout — but the coverage gap data was not preserved in the MRM Compliance Report. The report already documented which domains contributed (Section 11). Phase 9 adds what was expected but absent.
+
+`stakeholderCoverageGaps: string[] | null` is a simple extension to the MRM type. The assembly is equally simple: call `getMissingContributionDomains` with the intake context and the mapped contribution rows. The result is null for blueprints generated before Phase 8 (no intake context available for the derivation), and an empty array for blueprints with full stakeholder coverage.
+
+This matters for audit. An SR 11-7 review of an agent's MRM report will now show not just who contributed, but which domains were implicated by the agent's context and chose not to (or were unable to) contribute. The distinction between "no legal input required" and "legal input was expected but not received" is exactly the kind of nuance that regulators care about — and that the report can now express.
+
+### The Intake Arc Complete
+
+Looking back at the intake progression: Phase 6 established *what* governance was required. Phase 7 made it possible for stakeholders to say *what they required*. Phase 8 ensured what was said was *substantive* and surfaced what was *missing*. Phase 9 gives designers a way to navigate their work and ensures the coverage gap evidence is *preserved* in the permanent compliance record.
+
+The intake engine is now a structured, evidence-grade process end to end.
+
+---
+
 ## Session 011 — 2026-03-13: Closing the Completeness Loop
 
 ### The Problem With Presence

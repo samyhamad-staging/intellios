@@ -488,20 +488,49 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 012 — 2026-03-13
+
+**Duration:** Single context window (resumed from 011 via summary)
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Codebase exploration (subagent) | Assessed intake pages, sessions API, MRM types/report, layout, home page | ~15K in / ~1K out |
+| `sessions/route.ts` GET endpoint | Enterprise-scoped list; agentName/purpose derivation from JSONB | ~5K in / ~2K out |
+| `src/app/intake/page.tsx` (NEW) | Server component; In Progress + Completed sections; SessionRow component | ~6K in / ~5K out |
+| `layout.tsx` nav update | "Intake" link for designer/admin | ~2K in / ~0.5K out |
+| `mrm/types.ts` | `stakeholderCoverageGaps: string[] \| null` field | ~2K in / ~0.5K out |
+| `mrm/report.ts` | Import coverage helper; compute coverageGaps from context + contributions | ~3K in / ~1K out |
+| TypeScript build check | `npm run build` → ✓ Compiled successfully | ~3K in / ~0.5K out |
+| Documentation | Session log, _index.md, roadmap Phase 9, project journal, effort log | ~8K in / ~5K out |
+| **Session total (est.)** | | **~44K in / ~15.5K out** |
+
+**Estimated session cost:** Sonnet ~44K in × $3/1M + ~15.5K out × $15/1M = **$0.13 + $0.23 = ~$0.36**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 50 | "Proceed" | D-Approve | Full implementation delegated |
+
+**Totals:** 1 message · 1 D-Approve · ~0 min (fully autonomous)
+
+---
+
 ## Running Totals
 
-| Metric | Session 001 | Session 002 | Session 003 | Session 004 | Session 005 | Session 006 | Session 007 | Session 008 | Session 009 | Session 010 | Total |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| Metric | Session 001 | Session 002 | Session 003 | Session 004 | Session 005 | Session 006 | Session 007 | Session 008 | Session 009 | Session 010 | Session 011 | Total |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Est. Claude input tokens | ~288K | ~56K | ~97K | ~88K | ~162K | ~82K | ~50K | ~35K | ~80K | ~72K | ~52K | ~1,062K |
-| Est. Claude output tokens | ~155K | ~26K | ~41K | ~22K | ~58K | ~30.5K | ~20K | ~16.5K | ~37K | ~30K | ~17K | ~453K |
-| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$0.59 | ~$1.36 | ~$0.71 | ~$0.45 | ~$0.36 | ~$0.80 | ~$0.67 | ~$0.42 | ~$10.61 |
-| Samy messages | 20 | 5 | 7 | 2 | 4 | 2 | 2 | 2 | 1 | 1 | 2 | 48 |
-| Samy decisions | 31 | 4 | 6 | 2 | 4 | 3 | 2 | 2 | 1 | 1 | 2 | 58 |
-| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~5 min | ~20 min | ~10 min | ~5 min | ~5 min | ~0 min | ~0 min | ~0 min | ~5.5–6.5 hrs |
-| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Multi-tenancy (22 files) | Phase A + B + C UX (26 files) | Event bus + notifications + SLA (16 files) | Deploy modal + search + review banner (5 files) | MRM report (7 files) | 3-phase intake (12 files) | Stakeholder lanes (14 files) | Phase 8 substance + coverage (7 files) | Full app + all phases |
-| Files created/modified | ~130 | ~8 | ~25 | ~22 | ~26 | ~16 | ~8 | ~7 | ~12 | ~14 | ~7 | ~275 |
+| Metric | Session 001 | Session 002 | Session 003 | Session 004 | Session 005 | Session 006 | Session 007 | Session 008 | Session 009 | Session 010 | Session 011 | Session 012 | Total |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Est. Claude input tokens | ~288K | ~56K | ~97K | ~88K | ~162K | ~82K | ~50K | ~35K | ~80K | ~72K | ~52K | ~44K | ~1,106K |
+| Est. Claude output tokens | ~155K | ~26K | ~41K | ~22K | ~58K | ~30.5K | ~20K | ~16.5K | ~37K | ~30K | ~17K | ~15.5K | ~468.5K |
+| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$0.59 | ~$1.36 | ~$0.71 | ~$0.45 | ~$0.36 | ~$0.80 | ~$0.67 | ~$0.42 | ~$0.36 | ~$10.97 |
+| Samy messages | 20 | 5 | 7 | 2 | 4 | 2 | 2 | 2 | 1 | 1 | 2 | 1 | 49 |
+| Samy decisions | 31 | 4 | 6 | 2 | 4 | 3 | 2 | 2 | 1 | 1 | 2 | 1 | 59 |
+| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~5 min | ~20 min | ~10 min | ~5 min | ~5 min | ~0 min | ~0 min | ~0 min | ~0 min | ~5.5–6.5 hrs |
+| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Multi-tenancy (22 files) | Phase A + B + C UX (26 files) | Event bus + notifications + SLA (16 files) | Deploy modal + search + review banner (5 files) | MRM report (7 files) | 3-phase intake (12 files) | Stakeholder lanes (14 files) | Phase 8 substance + coverage (7 files) | Phase 9 session mgmt + MRM gap (5 files) | Full app + all phases |
+| Files created/modified | ~130 | ~8 | ~25 | ~22 | ~26 | ~16 | ~8 | ~7 | ~12 | ~14 | ~7 | ~5 | ~280 |
 
 ---
 
