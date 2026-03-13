@@ -236,18 +236,51 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 005 — 2026-03-13
+
+**Duration:** Single context window (resumed from 004 via summary)
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| UX architecture delivery | Refined 8-section architecture incorporating ChatGPT feedback | ~10K in / ~5K out |
+| Codebase exploration (subagent) | Full read of 20+ files for Phase A planning | ~30K in / ~3K out |
+| Registry API update | violationCount derivation from stored validation report | ~3K in / ~1K out |
+| Pipeline Board | `/src/app/pipeline/page.tsx` — Kanban with 5 columns | ~8K in / ~3K out |
+| NewIntakeButton component | Thin client button extracted for server-component home | ~2K in / ~0.5K out |
+| Home page redesign | Server component, 3 role variants (designer/reviewer/admin), DB reads | ~8K in / ~4K out |
+| Layout nav update | Added Pipeline link | ~2K in / ~0.5K out |
+| Blueprint Workbench redesign | Three-column, 7-section stepper, Submit for Review, inline violations | ~12K in / ~6K out |
+| Documentation | Session log, _index.md, roadmap, effort log, project journal | ~8K in / ~5K out |
+| **Session total (est.)** | | **~83K in / ~28K out** |
+
+**Estimated session cost:** Sonnet ~83K in × $3/1M + ~28K out × $15/1M = **$0.25 + $0.42 = ~$0.67**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 35 | "What is the next best action?" (from prior session) + "proceed" | D-Approve | Implicit continuation from session 004 |
+| 36 | Full UX evaluation + refined UX architecture request | D-Scope + D-Arch | High-value strategic direction; set enterprise UX architecture for all future sessions |
+
+**Totals:** 2 messages (+ prior session UX prompt) · 1 D-Arch · 1 D-Scope · ~10 min
+
+---
+
 ## Running Totals
 
-| Metric | Session 001 | Session 002 | Session 003 | Session 004 | Total |
-|---|---|---|---|---|---|
-| Est. Claude input tokens | ~288K | ~56K | ~97K | ~88K | ~529K |
-| Est. Claude output tokens | ~155K | ~26K | ~41K | ~22K | ~244K |
-| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$0.59 | ~$5.84 |
-| Samy messages | 20 | 5 | 7 | 2 | 34 |
-| Samy decisions | 31 | 4 | 6 | 2 | 43 |
-| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~5 min | ~4.5–5.5 hrs |
-| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Multi-tenancy (22 files) | Full app + hardened + multi-tenant |
-| Files created/modified | ~130 | ~8 | ~25 | ~22 | ~185 |
+| Metric | Session 001 | Session 002 | Session 003 | Session 004 | Session 005 | Total |
+|---|---|---|---|---|---|---|
+| Est. Claude input tokens | ~288K | ~56K | ~97K | ~88K | ~83K | ~612K |
+| Est. Claude output tokens | ~155K | ~26K | ~41K | ~22K | ~28K | ~272K |
+| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$0.59 | ~$0.67 | ~$6.51 |
+| Samy messages | 20 | 5 | 7 | 2 | 2 | 36 |
+| Samy decisions | 31 | 4 | 6 | 2 | 2 | 45 |
+| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~5 min | ~10 min | ~4.75–5.75 hrs |
+| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Multi-tenancy (22 files) | Phase A UX (7 files) | Full app + hardened + multi-tenant + enterprise UX |
+| Files created/modified | ~130 | ~8 | ~25 | ~22 | ~7 | ~192 |
 
 ---
 

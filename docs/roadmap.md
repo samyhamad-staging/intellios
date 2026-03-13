@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Post-MVP Phase 1 (P0 complete — multi-tenancy enforced; P2 items remain: distributed rate limiting, deployment pipeline)
+## Current Phase: Post-MVP Phase 2 (Phase 1 complete; Phase 2: enterprise UX — Pipeline Board, role-differentiated home, Blueprint Workbench ✓ Phase A delivered)
 
 ---
 
@@ -50,6 +50,39 @@ Prerequisite work before Intellios can serve real enterprise users.
 | ABP schema evolution strategy | P1 | Not started | Migration strategy needed before v1.1.0. See OQ-007. |
 | Deployment pipeline | P2 | Not started | Package approved ABPs for delivery to target runtime environments. |
 | Distributed rate limiting | P2 | Not started | Current in-memory limiter does not work across multiple server instances. Replace with Redis. |
+
+---
+
+## Post-MVP Phase 2 — Enterprise UX
+
+Transforms Intellios from a functional tool into a governed enterprise platform. Implemented in three phases (A → B → C) derived from the full UX architecture evaluation (Session 005).
+
+### Phase A — Foundation ✓ Complete (2026-03-13 Session 005)
+
+| Item | Status | Notes |
+|---|---|---|
+| Role-differentiated home screens | ✓ Complete | Designer (My Work + intake CTA), Reviewer (Review Queue focus), Admin (portfolio stats). Server component with direct DB reads. |
+| Pipeline Board | ✓ Complete | Kanban board at `/pipeline`. DRAFT → IN_REVIEW → APPROVED → REJECTED → DEPRECATED columns. Violation count badges. Tag filter. |
+| Blueprint Workbench redesign | ✓ Complete | Three-column layout: left-rail section stepper (7 sections, ✓/· per section), center (blueprint content), right (Submit for Review + violations + refinement). Submit button disabled until governance blockers = 0. |
+| Navigation update | ✓ Complete | Pipeline link added for all authenticated users. |
+| Registry API enrichment | ✓ Complete | `/api/registry` now returns `violationCount` (derived from stored validation report). |
+
+### Phase B — Governance & Oversight (next)
+
+| Item | Priority | Status |
+|---|---|---|
+| Governance Hub | P1 | Not started — violation summary, policy library, coverage map |
+| Review Console upgrade | P1 | Not started — inline governance report, structured form, SOD sign-off indicators |
+| Audit Trail UI | P1 | Not started — searchable, filterable, exportable event log |
+
+### Phase C — Lifecycle Extension
+
+| Item | Priority | Status |
+|---|---|---|
+| Blueprint plain-language summary | P2 | Not started — business-readable agent description for non-technical reviewers |
+| Version diff view | P2 | Not started — compare blueprint versions side by side |
+| Deployment Console | P2 | Not started — deploy queue, environment config, runtime health |
+| Executive Dashboard | P2 | Not started — KPIs, portfolio health for exec stakeholders |
 
 ---
 

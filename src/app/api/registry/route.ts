@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
         tags: agentBlueprints.tags,
         status: agentBlueprints.status,
         sessionId: agentBlueprints.sessionId,
+        validationReport: agentBlueprints.validationReport,
         createdAt: agentBlueprints.createdAt,
         updatedAt: agentBlueprints.updatedAt,
       })
@@ -47,7 +48,18 @@ export async function GET(request: NextRequest) {
         new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
 
-    return NextResponse.json({ agents });
+    // Derive violationCount from the stored validation report (errors only)
+    const enriched = agents.map((a) => {
+      const report = a.validationReport as {
+        violations?: { severity: string }[];
+      } | null;
+      const violationCount = report?.violations
+        ? report.violations.filter((v) => v.severity === "error").length
+        : null; // null = not yet validated
+      return { ...a, violationCount, validationReport: undefined };
+    });
+
+    return NextResponse.json({ agents: enriched });
   } catch (error) {
     console.error(`[${requestId}] Failed to list registry agents:`, error);
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to list agents", undefined, requestId);

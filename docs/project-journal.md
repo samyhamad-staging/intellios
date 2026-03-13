@@ -2,6 +2,41 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 005 — 2026-03-13: From Tool to Platform
+
+### The UX Reckoning
+
+Sessions 001–004 built a technically sound system. By Session 005, the honest assessment was that Intellios looked like an internal prototype, not an enterprise platform. The home page was a single centered button. The registry was a flat list. The Blueprint Workbench had no sense of progress or governance status until you scrolled to the right sidebar. There was no pipeline visibility — no way for any stakeholder to see the overall state of agent production at a glance.
+
+Session 005 was a deliberate pivot: stop building new capabilities, start making the existing capabilities feel like a product worth using.
+
+### The Architecture Decision: Governed Kanban
+
+The most consequential design decision was framing Intellios around a **pipeline board as the universal status layer**. Every role — designer, reviewer, compliance officer, executive — needs to know where each agent is in its lifecycle. A Kanban board with five columns (Draft, In Review, Approved, Rejected, Deprecated) gives that clarity immediately. It also makes the governance model visible: agents can only move forward through legitimate transitions, and the board shows the consequences.
+
+This was a departure from the original registry-as-list approach. The registry is now a detail surface; the pipeline board is the operational center.
+
+### Role Differentiation on the Home Screen
+
+The home page redesign was architecturally meaningful because it required a shift from client component to server component. The original `page.tsx` was a client component purely because it needed `useRouter` for post-fetch navigation. Moving to a server component that queries the DB directly (instead of fetching from the API) enabled:
+- Role-aware rendering before any JavaScript executes
+- Zero client-side data fetching for the home page shell
+- A clean extraction of the "New Intake" button into a minimal `NewIntakeButton` client component that handles only its own local state
+
+The result: each role now lands on a different home with a different primary CTA. Designer sees their work. Reviewer sees their queue. Admin sees portfolio stats.
+
+### Blueprint Workbench: The Three-Column Model
+
+The workbench redesign introduced a left-rail section stepper — seven sections drawn from the ABP structure (Identity, Instructions, Tools, Knowledge, Constraints, Governance, Audit), each marked ✓ or · based on whether the ABP field is populated. This addresses a consistent user confusion: designers couldn't tell at a glance whether their agent was "complete" or had gaps Claude had left unfilled.
+
+The Submit for Review button moved from the registry page (where designers never looked) to the right rail of the workbench, directly in the workflow. It is governance-aware: disabled when validation errors exist, showing an explicit blocker count. This enforces the "no submitting broken agents" rule at the UI level, not just the API level.
+
+### What Comes Next
+
+Phase A delivered the surfaces that every role touches daily. Phase B (Governance Hub, Review Console upgrade, Audit Trail UI) is the next highest-ROI investment — it's where the compliance and reviewer workflows become genuinely usable rather than functional. The infrastructure is already in place (the `audit_log` table, the `governance_policies` table, the existing review panel). Phase B is surface work on top of a solid foundation.
+
+---
+
 ## Session 004 — 2026-03-13: Crossing the Multi-Tenancy Threshold
 
 ### Why Multi-Tenancy Was the Last P0

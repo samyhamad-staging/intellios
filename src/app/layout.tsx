@@ -40,6 +40,9 @@ export default async function RootLayout({
                   Intellios
                 </Link>
                 <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <Link href="/pipeline" className="hover:text-gray-900">
+                    Pipeline
+                  </Link>
                   <Link href="/registry" className="hover:text-gray-900">
                     Registry
                   </Link>
