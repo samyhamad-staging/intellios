@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 interface Agent {
   id: string;
@@ -32,6 +33,9 @@ const POLICY_TYPE_COLORS: Record<string, string> = {
 };
 
 export default function GovernanceHubPage() {
+  const { data: session } = useSession();
+  const canManagePolicies =
+    session?.user?.role === "admin" || session?.user?.role === "compliance_officer";
   const [agents, setAgents] = useState<Agent[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -204,6 +208,14 @@ export default function GovernanceHubPage() {
             <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
               Policy Library ({loading ? "…" : policies.length})
             </h2>
+            {canManagePolicies && (
+              <Link
+                href="/governance/policies/new"
+                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              >
+                + New Policy
+              </Link>
+            )}
           </div>
 
           {loading && (
@@ -217,9 +229,18 @@ export default function GovernanceHubPage() {
           {!loading && policies.length === 0 && (
             <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
               <p className="text-sm text-gray-400">No governance policies defined.</p>
-              <p className="mt-1 text-xs text-gray-400">
-                Policies are created via the Governance API by administrators.
-              </p>
+              {canManagePolicies ? (
+                <Link
+                  href="/governance/policies/new"
+                  className="mt-3 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                >
+                  Create first policy
+                </Link>
+              ) : (
+                <p className="mt-1 text-xs text-gray-400">
+                  Contact your administrator to define governance policies.
+                </p>
+              )}
             </div>
           )}
 
@@ -250,13 +271,21 @@ export default function GovernanceHubPage() {
                       <p className="mt-1 text-xs text-gray-500 line-clamp-2">{policy.description}</p>
                     )}
                   </div>
-                  <div className="shrink-0 ml-4 text-right">
-                    <span className="text-xs text-gray-400">
+                  <div className="shrink-0 ml-4 text-right space-y-1">
+                    <div className="text-xs text-gray-400">
                       {Array.isArray(policy.rules) ? policy.rules.length : 0} rule{(Array.isArray(policy.rules) ? policy.rules.length : 0) === 1 ? "" : "s"}
-                    </span>
-                    <div className="text-xs text-gray-400 mt-0.5">
+                    </div>
+                    <div className="text-xs text-gray-400">
                       {new Date(policy.createdAt).toLocaleDateString()}
                     </div>
+                    {canManagePolicies && (
+                      <Link
+                        href={`/governance/policies/${policy.id}/edit`}
+                        className="inline-block text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        {policy.enterpriseId === null ? "View" : "Edit"} →
+                      </Link>
+                    )}
                   </div>
                 </div>
               ))}

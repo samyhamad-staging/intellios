@@ -2,6 +2,42 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 013 — 2026-03-13: Closing the Governance Configuration Loop
+
+### The Last Manual Step
+
+Every previous phase assumed governance policies were a fixed input — defined once (via direct API calls, seeded in migrations, or hardcoded) and applied automatically thereafter. This was fine for development, but in an enterprise deployment the set of governance policies isn't static. Compliance teams evolve them as regulations change, audit findings emerge, and internal risk appetite shifts. Without a UI to manage them, Intellios left a meaningful gap: the engine that validates every AI agent was itself ungoverned from a UX perspective.
+
+Phase 10 closes this gap by giving compliance officers and administrators a full policy management interface inside the Governance Hub.
+
+### Design Decisions
+
+Three choices shaped how this was implemented:
+
+**Role expansion on POST.** The original POST endpoint was admin-only. This made sense for the first implementation — policies are high-stakes, so keeping them under the strictest role was conservative. But compliance officers are the subject matter experts on regulatory requirements; requiring them to route policy changes through an admin creates friction and a handoff that doesn't reflect how real teams work. Expanding POST (and the new PATCH/DELETE) to include `compliance_officer` matches the role's purpose: they own the governance framework.
+
+**Platform policy protection.** Global platform policies (those with `enterpriseId = null`) represent the baseline governance floor that applies to all enterprises. Compliance officers manage enterprise-specific policies; they cannot override the platform layer. This is enforced at the API level and surfaced in the edit page via a read-only amber warning banner. The separation is architecturally important — it maintains the platform's ability to enforce baseline standards regardless of what any given enterprise compliance officer chooses.
+
+**Shared form component.** Rather than building two separate forms (create + edit) with duplicated rule-builder logic, the `PolicyForm` component handles both through props: `initialValues` for pre-population, `readOnly` for the platform-policy view, `submitLabel` and `onSubmit` for the action variant. The rule builder renders identically in both contexts — the only visual difference is whether inputs are editable and whether the submit button appears.
+
+### The Rule Builder
+
+The governance policy rule language has 11 operators covering existence checks, equality, string containment, regex, numeric count comparisons, and type array membership. Expressing this in a form without overwhelming users required one structural choice: operators that don't take a value (`exists`, `not_exists`) hide the value field entirely. This reduces the form's visual weight for the most common check types and eliminates the confusion of a visible empty field that has no meaning.
+
+Each rule independently sets its severity (`error` blocks deployment; `warning` is informational). This lets a policy mix mandatory requirements with advisory best-practices in a single policy object.
+
+### What This Enables
+
+With policy management in the UI, the full governance lifecycle now lives in Intellios:
+1. Compliance officers define what the rules are (Policy Library)
+2. The Governance Validator applies them automatically during blueprint review
+3. Violations surface in the Blueprint Workbench and Review Console
+4. The MRM Report captures the complete governance record for regulators
+
+The platform is now self-contained for enterprise governance configuration without requiring developer or API access for day-to-day policy management.
+
+---
+
 ## Session 012 — 2026-03-13: The Missing Navigation Layer
 
 ### A Platform With No Memory for Its Designers
