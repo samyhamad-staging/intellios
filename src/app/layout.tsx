@@ -41,6 +41,11 @@ export default async function RootLayout({
                   Intellios
                 </Link>
                 <div className="flex items-center gap-4 text-sm text-gray-500">
+                  {(session.user.role === "designer" || session.user.role === "admin") && (
+                    <Link href="/intake" className="hover:text-gray-900">
+                      Intake
+                    </Link>
+                  )}
                   <Link href="/pipeline" className="hover:text-gray-900">
                     Pipeline
                   </Link>

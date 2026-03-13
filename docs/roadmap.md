@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Post-MVP Phase 8 ✓ Complete (2026-03-13) — Policy substance enforcement + contribution coverage indicators delivered
+## Current Phase: Post-MVP Phase 9 ✓ Complete (2026-03-13) — Intake session management + MRM coverage gap delivered
 
 ---
 
@@ -198,6 +198,19 @@ Closes two silent failure modes that survived Phase 7:
 | Sidebar coverage gap strip | P0 | ✓ Complete | `StakeholderContributionsPanel` renders amber strip with missing domain chips when `context` prop is provided |
 | Phase 3 review missing-domain callout | P0 | ✓ Complete | `IntakeReview` renders non-blocking amber callout listing missing expected domains |
 | Context prop pass-through | P0 | ✓ Complete | `IntakeProgress` → `StakeholderContributionsPanel`; session page passes `intakeContext` |
+
+---
+
+## Post-MVP Phase 9 — Intake Session Management + MRM Coverage Gap ✓ Complete (2026-03-13 Session 012)
+
+Closes two remaining gaps: no way for designers to navigate back to in-progress sessions; MRM report documented which domains contributed but not which expected domains were absent.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| `GET /api/intake/sessions` | P0 | ✓ Complete | Lists sessions for current user/enterprise; designer sees own sessions, admin sees all enterprise sessions; derives agentName + agentPurpose from JSONB |
+| `src/app/intake/page.tsx` — session list | P0 | ✓ Complete | Server component; In Progress + Completed sections; rows link to `/intake/{id}`; empty state with CTA |
+| "Intake" nav link | P0 | ✓ Complete | Added for designer + admin roles, positioned before Pipeline |
+| MRM `stakeholderCoverageGaps` field | P1 | ✓ Complete | `string[] \| null` in Section 11; computed via `getMissingContributionDomains`; null for pre-Phase 8 blueprints |
 
 ---
 

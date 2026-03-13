@@ -3,7 +3,8 @@ import { agentBlueprints, auditLog, intakeSessions, intakeContributions } from "
 import { eq, and, asc, inArray } from "drizzle-orm";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
-import { IntakeContext } from "@/lib/types/intake";
+import { IntakeContext, StakeholderContribution } from "@/lib/types/intake";
+import { getMissingContributionDomains } from "@/lib/intake/coverage";
 import { MRMReport } from "./types";
 
 /**
@@ -261,5 +262,21 @@ export async function assembleMRMReport(
       fields: row.fields as Record<string, string>,
       submittedAt: row.createdAt.toISOString(),
     })),
+
+    stakeholderCoverageGaps: intakeContext
+      ? getMissingContributionDomains(
+          intakeContext,
+          contributionRows.map((row) => ({
+            id: row.id,
+            sessionId: row.sessionId,
+            enterpriseId: row.enterpriseId,
+            contributorEmail: row.contributorEmail,
+            contributorRole: row.contributorRole,
+            domain: row.domain as StakeholderContribution["domain"],
+            fields: row.fields as Record<string, string>,
+            createdAt: row.createdAt.toISOString(),
+          }))
+        )
+      : null,
   };
 }

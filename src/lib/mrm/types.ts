@@ -192,4 +192,12 @@ export interface MRMReport {
     fields: Record<string, string>;
     submittedAt: string; // ISO 8601
   }>;
+
+  /**
+   * Domains that were expected to contribute (based on Phase 1 context signals)
+   * but had no contribution on record at finalization time. Empty array means
+   * full coverage across all expected domains. Null for blueprints generated
+   * before Phase 8 was introduced (no intake context available).
+   */
+  stakeholderCoverageGaps: string[] | null;
 }
