@@ -126,6 +126,23 @@ Addresses the three most critical gaps identified in the Fortune 500 financial s
 
 ---
 
+## Post-MVP Phase 5 — MRM Compliance Report ✓ Complete (2026-03-13 Session 008)
+
+Enables compliance officers and model risk teams to extract a single, structured evidence
+package per deployed agent — satisfying SR 11-7 model documentation and audit trail requirements.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| `MRMReport` type definition | P0 | ✓ Complete | `src/lib/mrm/types.ts` — 10-section typed interface. |
+| Report assembly function | P0 | ✓ Complete | `src/lib/mrm/report.ts` — assembles from blueprint record, version history, and audit log. 4 DB queries. |
+| Report API endpoint | P0 | ✓ Complete | `GET /api/blueprints/[id]/report` — compliance_officer + admin only. Writes `blueprint.report_exported` audit entry on every call. |
+| Export audit trail | P0 | ✓ Complete | `blueprint.report_exported` added to `AuditAction` + `EventType`. Every download is permanently traceable. |
+| Export button on Blueprint detail | P0 | ✓ Complete | "Export MRM Report" button in Registry detail header — role-gated (compliance_officer + admin). Downloads `mrm-report-{name}-v{version}.json`. |
+| Risk Classification section | P0 | ✓ Complete | Risk tier (High/Medium/Low) derived from governance policy types. Intended use, business owner, model owner. Derivation basis stated for human validation. |
+| Model Lineage section | P0 | ✓ Complete | Full version history (all agent versions) + deployment lineage (every production deploy across all versions, with changeRef). |
+
+---
+
 ## Future Phases (not yet scoped)
 
 - Runtime monitoring and observability

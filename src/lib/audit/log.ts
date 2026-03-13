@@ -11,6 +11,7 @@ export type AuditAction =
   | "blueprint.refined"
   | "blueprint.status_changed"
   | "blueprint.reviewed"
+  | "blueprint.report_exported"
   | "intake.finalized"
   | "policy.created";
 

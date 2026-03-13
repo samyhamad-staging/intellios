@@ -350,18 +350,49 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 008 — 2026-03-13
+
+**Duration:** Single context window
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Strategic evaluation | MRM Compliance Report identified as highest-value next initiative | ~8K in / ~2K out |
+| `src/lib/mrm/types.ts` | `MRMReport` interface — 10 typed sections | ~3K in / ~2K out |
+| `src/lib/mrm/report.ts` | `assembleMRMReport()` — 4 DB queries, risk tier derivation, SOD check, lineage | ~6K in / ~4K out |
+| `src/app/api/blueprints/[id]/report/route.ts` | GET route, access control, audit trail on export | ~4K in / ~2K out |
+| `src/lib/audit/log.ts` + `events/types.ts` | `blueprint.report_exported` action + event type | ~3K in / ~0.5K out |
+| `src/app/registry/[agentId]/page.tsx` | `exporting` state, `handleExportReport`, role-gated button | ~5K in / ~2K out |
+| Documentation | Session log, _index.md, roadmap Phase 5, project journal, effort log | ~6K in / ~4K out |
+| **Session total (est.)** | | **~35K in / ~16.5K out** |
+
+**Estimated session cost:** Sonnet ~35K in × $3/1M + ~16.5K out × $15/1M = **$0.11 + $0.25 = ~$0.36**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 44 | Strategic assessment: "determine single next piece of work with highest strategic value" | D-Scope | Claude independently identified MRM Compliance Report |
+| 45 | "proceed with implementing the MRM Compliance Report feature" + two section additions (Risk Classification, Model Lineage) | D-Approve + D-Scope | Approved and extended scope |
+
+**Totals:** 2 messages · 1 D-Scope · 1 D-Approve · ~5 min
+
+---
+
 ## Running Totals
 
-| Metric | Session 001 | Session 002 | Session 003 | Session 004 | Session 005 | Session 006 | Session 007 | Total |
-|---|---|---|---|---|---|---|---|---|
-| Est. Claude input tokens | ~288K | ~56K | ~97K | ~88K | ~162K | ~82K | ~50K | ~823K |
-| Est. Claude output tokens | ~155K | ~26K | ~41K | ~22K | ~58K | ~30.5K | ~20K | ~352.5K |
-| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$0.59 | ~$1.36 | ~$0.71 | ~$0.45 | ~$8.36 |
-| Samy messages | 20 | 5 | 7 | 2 | 4 | 2 | 2 | 42 |
-| Samy decisions | 31 | 4 | 6 | 2 | 4 | 3 | 2 | 52 |
-| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~5 min | ~20 min | ~10 min | ~5 min | ~5.25–6.25 hrs |
-| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Multi-tenancy (22 files) | Phase A + B + C UX (26 files) | Event bus + notifications + SLA (16 files) | Deploy modal + search + review banner (5 files) | Full app + hardened + multi-tenant + enterprise UX + notifications + change mgmt |
-| Files created/modified | ~130 | ~8 | ~25 | ~22 | ~26 | ~16 | ~8 | ~235 |
+| Metric | Session 001 | Session 002 | Session 003 | Session 004 | Session 005 | Session 006 | Session 007 | Session 008 | Total |
+|---|---|---|---|---|---|---|---|---|---|
+| Est. Claude input tokens | ~288K | ~56K | ~97K | ~88K | ~162K | ~82K | ~50K | ~35K | ~858K |
+| Est. Claude output tokens | ~155K | ~26K | ~41K | ~22K | ~58K | ~30.5K | ~20K | ~16.5K | ~369K |
+| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$0.59 | ~$1.36 | ~$0.71 | ~$0.45 | ~$0.36 | ~$8.72 |
+| Samy messages | 20 | 5 | 7 | 2 | 4 | 2 | 2 | 2 | 44 |
+| Samy decisions | 31 | 4 | 6 | 2 | 4 | 3 | 2 | 2 | 54 |
+| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~5 min | ~20 min | ~10 min | ~5 min | ~5 min | ~5.5–6.5 hrs |
+| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Multi-tenancy (22 files) | Phase A + B + C UX (26 files) | Event bus + notifications + SLA (16 files) | Deploy modal + search + review banner (5 files) | MRM report (7 files) | Full app + all phases |
+| Files created/modified | ~130 | ~8 | ~25 | ~22 | ~26 | ~16 | ~8 | ~7 | ~242 |
 
 ---
 

@@ -51,6 +51,7 @@ export default function AgentDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const tab = searchParams.get("tab");
     if (tab === "review" || tab === "governance" || tab === "versions" || tab === "summary") return tab;
@@ -100,6 +101,31 @@ export default function AgentDetailPage({
   const handleRevalidate = useCallback((report: ValidationReport) => {
     setLatest((prev) => prev ? { ...prev, validationReport: report } : prev);
   }, []);
+
+  const handleExportReport = useCallback(async () => {
+    if (!latest) return;
+    setExporting(true);
+    try {
+      const res = await fetch(`/api/blueprints/${latest.id}/report`);
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "Export failed");
+      }
+      const report = await res.json();
+      const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const safeName = (latest.name ?? "agent").replace(/\s+/g, "-").toLowerCase();
+      a.download = `mrm-report-${safeName}-v${latest.version}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // non-critical — export errors are silent; the user can retry
+    } finally {
+      setExporting(false);
+    }
+  }, [latest]);
 
   if (loading) {
     return (
@@ -171,6 +197,15 @@ export default function AgentDetailPage({
             currentStatus={latest.status}
             onStatusChange={handleStatusChange}
           />
+          {(currentUser?.role === "compliance_officer" || currentUser?.role === "admin") && (
+            <button
+              onClick={handleExportReport}
+              disabled={exporting}
+              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors disabled:opacity-50"
+            >
+              {exporting ? "Exporting…" : "Export MRM Report"}
+            </button>
+          )}
           <Link
             href={`/blueprints/${latest.id}`}
             className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"

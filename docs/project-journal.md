@@ -2,6 +2,36 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 008 — 2026-03-13: From Controls to Evidence
+
+### The Proof Problem
+
+After seven sessions, Intellios has strong controls: governance validation, independent review, SOD enforcement, change management records, immutable audit logs, role-based access, and multi-tenant isolation. The platform enforces everything a regulated enterprise needs.
+
+But controls and proof of controls are different things. A model risk officer reviewing an AI platform for SR 11-7 compliance doesn't walk through a live application clicking tabs. They receive a document. That document answers specific questions: What is this model? Who approved it? Who reviewed it independently? What governance checks passed? What policies were applied? Was the deployment authorized by change management? Can I trace every decision back to a named individual at a specific time?
+
+The MRM Compliance Report answers all of these questions in a single artifact.
+
+### Why JSON, Not PDF
+
+The report is exported as structured JSON rather than a formatted PDF. This is deliberate. Enterprises have their own document management, eGRC, and model inventory systems. A structured JSON artifact can be imported into ServiceNow, Archer, or any model risk management platform without manual re-entry. A PDF is readable by humans; JSON is processable by systems. At scale, enterprises will ingest these reports programmatically, not print them.
+
+### Risk Classification Without a Risk Framework
+
+The Risk Classification section involves a deliberate design tension. The current schema has no explicit risk tier or business owner field — those concepts don't exist in the ABP. Rather than defer the section or require schema changes, the report derives a risk tier from governance policy types: both safety and compliance policies present → High; one of the two → Medium; neither → Low. The derivation basis is stated verbatim in the report alongside the tier.
+
+This is honest about what the system knows and doesn't know. An enterprise can validate or override the derived tier using their own risk taxonomy. The section captures what is machine-derivable while making clear where human judgment is required. That transparency is itself a governance artifact.
+
+### Audit of Audits
+
+Every report export writes a `blueprint.report_exported` entry to the audit log. This closes a subtle traceability gap: if a regulator asks "when did your compliance team last review the documentation for this model?", the answer is now queryable. The audit trail records not just what happened to the agent, but who examined the evidence and when.
+
+### Model Lineage as Regulatory Evidence
+
+The Model Lineage section captures two things: the full version history of a logical agent (all blueprint versions, their statuses, who created them, how many refinement cycles each underwent) and the deployment lineage (every production deployment across all versions, with the change reference number). In a financial services firm with a multi-year agent lifecycle, this section tells the story of a model's evolution — from initial design through revisions, reviews, and production deployments — in a single read.
+
+---
+
 ## Session 007 — 2026-03-13: Closing the Operational Gaps
 
 ### Deployment as a Documented Event
