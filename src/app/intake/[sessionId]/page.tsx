@@ -7,7 +7,7 @@ import { ChatContainer } from "@/components/chat/chat-container";
 import { IntakeProgress } from "@/components/intake/intake-progress";
 import { IntakeContextForm } from "@/components/intake/intake-context-form";
 import { IntakeReview } from "@/components/intake/intake-review";
-import { IntakeContext, IntakePayload } from "@/lib/types/intake";
+import { IntakeContext, IntakePayload, StakeholderContribution } from "@/lib/types/intake";
 
 interface DBMessage {
   id: string;
@@ -41,14 +41,26 @@ export default function IntakeSessionPage({
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | undefined>(undefined);
   const [intakeContext, setIntakeContext] = useState<IntakeContext | null>(null);
   const [currentPayload, setCurrentPayload] = useState<IntakePayload>({});
+  const [contributions, setContributions] = useState<StakeholderContribution[]>([]);
 
-  // Load session status + message history on mount
+  // Load session status + message history + contributions on mount
   useEffect(() => {
     async function loadSession() {
       try {
-        const res = await fetch(`/api/intake/sessions/${sessionId}`);
+        // Fetch session and contributions in parallel
+        const [res, contribRes] = await Promise.all([
+          fetch(`/api/intake/sessions/${sessionId}`),
+          fetch(`/api/intake/sessions/${sessionId}/contributions`),
+        ]);
+
         if (!res.ok) return;
         const { session, messages } = await res.json();
+
+        // Load contributions (non-critical — fail silently)
+        if (contribRes.ok) {
+          const { contributions: loadedContributions } = await contribRes.json();
+          setContributions(loadedContributions ?? []);
+        }
 
         const storedContext = (session?.intakeContext as IntakeContext | null) ?? null;
         setIntakeContext(storedContext);
@@ -120,6 +132,10 @@ export default function IntakeSessionPage({
   function handleContextComplete(context: IntakeContext) {
     setIntakeContext(context);
     setPhase("conversation");
+  }
+
+  function handleContributionAdded(contribution: StakeholderContribution) {
+    setContributions((prev) => [...prev, contribution]);
   }
 
   const handleGenerate = useCallback(async () => {
@@ -194,6 +210,7 @@ export default function IntakeSessionPage({
           sessionId={sessionId}
           payload={currentPayload}
           context={intakeContext}
+          contributions={contributions}
           onGenerate={handleGenerate}
           generating={generating}
           generateError={generateError}
@@ -225,7 +242,12 @@ export default function IntakeSessionPage({
           showSuggestedPrompts={false}
           onResponseComplete={handleResponseComplete}
         />
-        <IntakeProgress sessionId={sessionId} refreshTick={refreshTick} />
+        <IntakeProgress
+          sessionId={sessionId}
+          refreshTick={refreshTick}
+          contributions={contributions}
+          onContributionAdded={handleContributionAdded}
+        />
       </main>
     </div>
   );

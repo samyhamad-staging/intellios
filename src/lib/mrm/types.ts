@@ -176,4 +176,20 @@ export interface MRMReport {
     toStatus: string | null;
     metadata: Record<string, unknown> | null;
   }>;
+
+  // ── Section 11: Stakeholder Contributions ─────────────────────────────────
+  /**
+   * Direct requirements submitted by domain stakeholders (compliance, risk,
+   * legal, security, IT, operations, business) during or before the intake
+   * session. Captured via the Stakeholder Requirement Lanes feature (Phase 7).
+   * Empty array for blueprints generated before Phase 7 was introduced.
+   */
+  stakeholderContributions: Array<{
+    contributorEmail: string;
+    contributorRole: string;
+    domain: string;
+    /** Domain-specific key → free-text requirement as submitted by the stakeholder */
+    fields: Record<string, string>;
+    submittedAt: string; // ISO 8601
+  }>;
 }

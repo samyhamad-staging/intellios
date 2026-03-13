@@ -4,11 +4,11 @@ import type { UIMessage } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { db } from "@/lib/db";
-import { intakeSessions, intakeMessages } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { intakeSessions, intakeMessages, intakeContributions } from "@/lib/db/schema";
+import { eq, asc } from "drizzle-orm";
 import { buildIntakeSystemPrompt } from "@/lib/intake/system-prompt";
 import { createIntakeTools } from "@/lib/intake/tools";
-import { IntakePayload, IntakeContext } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext, ContributionDomain, StakeholderContribution } from "@/lib/types/intake";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
@@ -83,6 +83,24 @@ export async function POST(
     // Claude calls multiple tools in the same step (parallel execution).
     let currentPayload = (session.intakePayload as IntakePayload) ?? {};
     const currentContext = (session.intakeContext as IntakeContext | null) ?? null;
+
+    // Fetch stakeholder contributions for this session to inject into system prompt
+    const contributionRows = await db
+      .select()
+      .from(intakeContributions)
+      .where(eq(intakeContributions.sessionId, sessionId))
+      .orderBy(asc(intakeContributions.createdAt));
+
+    const currentContributions: StakeholderContribution[] = contributionRows.map((row) => ({
+      id: row.id,
+      sessionId: row.sessionId,
+      contributorEmail: row.contributorEmail,
+      contributorRole: row.contributorRole,
+      domain: row.domain as ContributionDomain,
+      fields: row.fields as Record<string, string>,
+      createdAt: row.createdAt.toISOString(),
+    }));
+
     let updateQueue = Promise.resolve();
 
     // Create tools with payload access
@@ -113,7 +131,7 @@ export async function POST(
     // Stream response
     const result = streamText({
       model: anthropic("claude-sonnet-4-20250514"),
-      system: buildIntakeSystemPrompt(currentPayload, currentContext),
+      system: buildIntakeSystemPrompt(currentPayload, currentContext, currentContributions),
       messages: modelMessages,
       tools,
       stopWhen: stepCountIs(10),

@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Post-MVP Phase 6 ✓ Complete (2026-03-13) — Enterprise intake architecture delivered
+## Current Phase: Post-MVP Phase 7 ✓ Complete (2026-03-13) — Stakeholder requirement lanes delivered
 
 ---
 
@@ -160,6 +160,29 @@ Transforms intake from a discovery-driven conversation into a structured, eviden
 | `IntakeReview` component (Phase 3) | P0 | ✓ Complete | Per-section review cards, acknowledgment checkboxes, flags panel, context strip, gated Generate button |
 | Session page three-phase gating | P0 | ✓ Complete | Phase type: loading → context-form → conversation → review; correct state machine across all flows |
 | MRM report intake context enrichment | P1 | ✓ Complete | riskClassification section now includes deploymentType, dataSensitivity, regulatoryScope, stakeholdersConsulted |
+
+---
+
+## Post-MVP Phase 7 — Stakeholder Requirement Lanes ✓ Complete (2026-03-13 Session 010)
+
+Closes the gap between knowing that domain specialists were consulted and capturing what they
+actually said. Transforms `stakeholdersConsulted` from a participation boolean into a full
+attributed evidence record.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| DB migration: `intake_contributions` table | P0 | ✓ Complete | `0007_intake_contributions.sql` — id, session_id, enterprise_id, domain, contributor_name, contributor_role, fields (JSONB), submitted_at |
+| `ContributionDomain` type + `StakeholderContribution` interface | P0 | ✓ Complete | 7 domains; fields typed as `Record<string, string>` per domain |
+| `AuditAction` + `EventType` extension | P0 | ✓ Complete | `intake.contribution_submitted` added to both union types |
+| `POST /api/intake/sessions/[id]/contributions` | P0 | ✓ Complete | Zod validation, enterprise access guard, audit log write |
+| `GET /api/intake/sessions/[id]/contributions` | P0 | ✓ Complete | List contributions for session; auth + enterprise guard |
+| `StakeholderContributionForm` component | P0 | ✓ Complete | Domain-adaptive form — selecting domain reveals 3 domain-specific fields |
+| `StakeholderContributionsPanel` component | P0 | ✓ Complete | Phase 2 sidebar panel: count badge, per-contribution cards, Add Contribution affordance |
+| System prompt injection (`buildContributionsBlock`) | P0 | ✓ Complete | Attributed per-domain sections; injected between context block and current state block |
+| Session page + chat route contributions wiring | P0 | ✓ Complete | Contributions fetched on mount + after AI response; passed to progress + review components |
+| `IntakeProgress` contributions rendering | P0 | ✓ Complete | `StakeholderContributionsPanel` rendered at bottom of Phase 2 sidebar |
+| `IntakeReview` contributions panel | P0 | ✓ Complete | Full attributed contribution content shown before section cards in Phase 3 |
+| MRM report Section 11 (`stakeholderContributions`) | P1 | ✓ Complete | 6th DB query in `assembleMRMReport()`; empty-array safe for pre-Phase 7 blueprints |
 
 ---
 

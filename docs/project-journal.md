@@ -2,6 +2,83 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 010 — 2026-03-13: From Consultation to Evidence
+
+### The Gap That Phase 6 Left Open
+
+Phase 6's three-phase architecture eliminated the governance blindspot. Claude now knows before the
+first message what compliance requirements are mandatory for this specific agent. But there was a
+second gap, quieter and harder to see: the system still captured requirements through a single
+channel.
+
+`stakeholdersConsulted` in Phase 1 was a multi-select: compliance, risk, legal, security, IT,
+business owner. It was intended to signal that the right people had been involved. What it actually
+captured was participation, not content. A compliance officer checking "consulted" and a compliance
+officer who spent 45 minutes reviewing the agent spec and producing 12 specific FINRA Rule 3110
+requirements looked identical in the data model.
+
+In a Fortune 500 financial services firm, those are not the same thing. The audit trail for SR 11-7
+must show not just that compliance was involved, but what compliance required. "We consulted" is
+not a governance artifact. "We consulted, and here is what was required" is.
+
+### The Shift: From Indirect to Direct
+
+The fundamental change in Phase 7 is moving from indirect evidence to direct evidence. Before:
+the designer relays what stakeholders told them. After: stakeholders submit their requirements
+directly, attributed under their name and role.
+
+This matters for two reasons beyond completeness. First, attribution. When a risk officer submits
+a denied-scenario list, their name and role are attached to that list in the MRM report. If an
+auditor asks where the denied-scenario constraints came from, the answer is not "the designer
+mentioned risk concerns" — it is "Rafael Morales, VP Model Risk, submitted them on [date]." That
+is a different quality of evidence.
+
+Second, verbatim incorporation. The requirements are injected into Claude's system prompt and Claude
+is instructed to incorporate them verbatim. There is no paraphrase, no interpretation, no
+translation through the designer's understanding. The compliance officer's FINRA Rule 3110
+language appears in the blueprint as the compliance officer wrote it.
+
+### The Architecture: Domain-Adaptive Channels
+
+Seven contribution domains, each with three domain-specific fields, were chosen over a single
+free-form text box for the same reason Phase 1 chose structured fields over open narrative: structure
+is more useful downstream than completeness.
+
+A free-form textarea from a compliance officer might contain anything — or nothing useful. A form
+with `regulatoryRequirements`, `prohibitedActions`, and `auditRequirements` fields guides the
+compliance officer toward the precise content that matters for the blueprint. The fields are
+different for each domain. A risk officer sees `riskConstraints`, `deniedScenarios`, and
+`escalationProcedures`. A legal officer sees `legalConstraints`, `liabilityLimitations`, and
+`dataHandlingRequirements`. The form adapts to the stakeholder's domain expertise.
+
+### MRM Report: Closing the Evidence Chain
+
+Phase 6 established the intake evidence chain: context signals → governance requirements → policies
+→ validation → review → deployment → audit. Phase 7 adds a layer that was missing: the human
+inputs that shaped the requirements before Claude ever saw them.
+
+Section 11 of the MRM report (`stakeholderContributions`) is not a summary or a digest. It is
+the full content of every stakeholder contribution, attributed and timestamped. A model risk
+officer reviewing the MRM report can now answer the question that SR 11-7 implicitly asks: "Who
+was involved in defining the requirements for this model, what did they require, and when?"
+
+The answer is no longer "the designer said stakeholders were consulted." It is: seven named
+individuals, representing seven governance domains, submitted specific requirements on a specific
+date, and those requirements are reprinted here in full.
+
+### What the Evidence Chain Now Looks Like
+
+Before Phase 7: context → requirements → policies → validation → review → deployment → audit.
+
+After Phase 7: **stakeholder requirements** → context → requirements → policies → validation →
+review → deployment → audit.
+
+The chain extends one step further upstream, to the point where the human judgment about what the
+agent must do enters the system. That upstream evidence — direct, attributed, verbatim — is the
+difference between a compliance record and a compliance story.
+
+---
+
 ## Session 009 — 2026-03-13: From Discovery to Determinism
 
 ### The Blindspot in Conversation-First Intake

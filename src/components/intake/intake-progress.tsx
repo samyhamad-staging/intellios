@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IntakePayload } from "@/lib/types/intake";
+import { IntakePayload, StakeholderContribution } from "@/lib/types/intake";
+import { StakeholderContributionsPanel } from "./stakeholder-contributions-panel";
 
 interface Section {
   key: string;
@@ -109,9 +110,11 @@ function getSections(payload: IntakePayload): Section[] {
 interface IntakeProgressProps {
   sessionId: string;
   refreshTick: number;
+  contributions?: StakeholderContribution[];
+  onContributionAdded?: (contribution: StakeholderContribution) => void;
 }
 
-export function IntakeProgress({ sessionId, refreshTick }: IntakeProgressProps) {
+export function IntakeProgress({ sessionId, refreshTick, contributions = [], onContributionAdded }: IntakeProgressProps) {
   const [sections, setSections] = useState<Section[]>(getSections({}));
   const [agentName, setAgentName] = useState<string | null>(null);
 
@@ -142,7 +145,7 @@ export function IntakeProgress({ sessionId, refreshTick }: IntakeProgressProps) 
   const pct = Math.round((filled / sections.length) * 100);
 
   return (
-    <aside className="w-72 shrink-0 border-l border-gray-200 bg-white p-5 flex flex-col gap-4">
+    <aside className="w-72 shrink-0 border-l border-gray-200 bg-white p-5 flex flex-col gap-4 overflow-y-auto">
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
           Blueprint Progress
@@ -217,6 +220,15 @@ export function IntakeProgress({ sessionId, refreshTick }: IntakeProgressProps) 
           ? "Ready to finalize"
           : `${requiredTotal - requiredFilled} required section${requiredTotal - requiredFilled === 1 ? "" : "s"} remaining`}
       </div>
+
+      {/* Stakeholder contributions panel */}
+      {onContributionAdded && (
+        <StakeholderContributionsPanel
+          sessionId={sessionId}
+          contributions={contributions}
+          onContributionAdded={onContributionAdded}
+        />
+      )}
     </aside>
   );
 }

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { agentBlueprints, auditLog, intakeSessions } from "@/lib/db/schema";
+import { agentBlueprints, auditLog, intakeSessions, intakeContributions } from "@/lib/db/schema";
 import { eq, and, asc, inArray } from "drizzle-orm";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
@@ -57,6 +57,13 @@ export async function assembleMRMReport(
     where: eq(intakeSessions.id, blueprint.sessionId),
   });
   const intakeContext = (intakeSession?.intakeContext as IntakeContext | null) ?? null;
+
+  // ── 6. Fetch stakeholder contributions for this session ──────────────────
+  const contributionRows = await db
+    .select()
+    .from(intakeContributions)
+    .where(eq(intakeContributions.sessionId, blueprint.sessionId))
+    .orderBy(asc(intakeContributions.createdAt));
 
   const abp = blueprint.abp as ABP;
   const validationReport = blueprint.validationReport as ValidationReport | null;
@@ -246,5 +253,13 @@ export async function assembleMRMReport(
     },
 
     auditChain,
+
+    stakeholderContributions: contributionRows.map((row) => ({
+      contributorEmail: row.contributorEmail,
+      contributorRole: row.contributorRole,
+      domain: row.domain,
+      fields: row.fields as Record<string, string>,
+      submittedAt: row.createdAt.toISOString(),
+    })),
   };
 }

@@ -12,6 +12,7 @@ export type EventType =
   | "blueprint.reviewed"
   | "blueprint.report_exported"
   | "intake.finalized"
+  | "intake.contribution_submitted"
   | "policy.created";
 
 export interface LifecycleEvent {

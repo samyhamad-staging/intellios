@@ -1,15 +1,65 @@
 "use client";
 
 import { useState } from "react";
-import { IntakePayload, IntakeContext } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext, ContributionDomain, StakeholderContribution } from "@/lib/types/intake";
 
 interface IntakeReviewProps {
   sessionId: string;
   payload: IntakePayload;
   context: IntakeContext | null;
+  contributions?: StakeholderContribution[];
   onGenerate: () => void;
   generating: boolean;
   generateError: string | null;
+}
+
+// Human-readable field labels for rendering contributions
+const CONTRIBUTION_FIELD_LABELS: Record<string, string> = {
+  required_policies: "Required policies",
+  regulatory_constraints: "Regulatory constraints",
+  audit_requirements: "Audit requirements",
+  risk_thresholds: "Risk thresholds",
+  denied_scenarios: "Denied scenarios",
+  escalation_requirements: "Escalation requirements",
+  use_boundaries: "Permitted use boundaries",
+  prohibited_use_cases: "Prohibited use cases",
+  access_control_requirements: "Access control requirements",
+  data_handling_requirements: "Data handling requirements",
+  integration_requirements: "Integration requirements",
+  infrastructure_constraints: "Infrastructure constraints",
+  sla_requirements: "SLA requirements",
+  escalation_paths: "Escalation paths",
+  success_criteria: "Success criteria",
+  business_constraints: "Business constraints",
+};
+
+const DOMAIN_LABELS: Record<ContributionDomain, string> = {
+  compliance: "Compliance",
+  risk: "Risk",
+  legal: "Legal",
+  security: "Security",
+  it: "IT / Infrastructure",
+  operations: "Operations",
+  business: "Business",
+};
+
+const DOMAIN_COLORS: Record<ContributionDomain, string> = {
+  compliance: "bg-blue-50 text-blue-700 border-blue-200",
+  risk: "bg-orange-50 text-orange-700 border-orange-200",
+  legal: "bg-purple-50 text-purple-700 border-purple-200",
+  security: "bg-red-50 text-red-700 border-red-200",
+  it: "bg-gray-50 text-gray-700 border-gray-200",
+  operations: "bg-green-50 text-green-700 border-green-200",
+  business: "bg-yellow-50 text-yellow-700 border-yellow-200",
+};
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 interface AmbiguityFlag {
@@ -189,6 +239,7 @@ export function IntakeReview({
   sessionId,
   payload,
   context,
+  contributions = [],
   onGenerate,
   generating,
   generateError,
@@ -288,6 +339,54 @@ export function IntakeReview({
             <p className="mt-2 text-xs text-amber-700">
               These items were flagged for human review. You may proceed, but reviewers will see these flags in the governance report.
             </p>
+          </div>
+        )}
+
+        {/* Stakeholder contributions */}
+        {contributions.length > 0 && (
+          <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+            <div className="flex items-baseline gap-2 mb-3">
+              <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                Stakeholder Input
+              </div>
+              <div className="text-xs text-gray-500">
+                {contributions.length} contribution{contributions.length > 1 ? "s" : ""} from{" "}
+                {new Set(contributions.map((c) => c.contributorEmail)).size} contributor{new Set(contributions.map((c) => c.contributorEmail)).size > 1 ? "s" : ""}
+              </div>
+            </div>
+            <div className="space-y-4">
+              {contributions.map((c) => {
+                const domain = c.domain as ContributionDomain;
+                const colorClass = DOMAIN_COLORS[domain] ?? "bg-gray-50 text-gray-700 border-gray-200";
+                const nonEmptyEntries = Object.entries(c.fields).filter(([, v]) => v.trim().length > 0);
+                return (
+                  <div key={c.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`inline-flex px-2 py-0.5 rounded border text-xs font-medium ${colorClass}`}>
+                        {DOMAIN_LABELS[domain] ?? domain}
+                      </span>
+                      <span className="text-xs text-gray-600">{c.contributorEmail}</span>
+                      {c.contributorRole && (
+                        <span className="text-xs text-gray-400">· {c.contributorRole}</span>
+                      )}
+                      <span className="ml-auto text-xs text-gray-400">{formatDate(c.createdAt)}</span>
+                    </div>
+                    {nonEmptyEntries.length > 0 && (
+                      <dl className="space-y-1.5">
+                        {nonEmptyEntries.map(([key, value]) => (
+                          <div key={key}>
+                            <dt className="text-xs font-medium text-gray-500">
+                              {CONTRIBUTION_FIELD_LABELS[key] ?? key}
+                            </dt>
+                            <dd className="text-sm text-gray-700 leading-relaxed">{value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
