@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Post-MVP Phase 2 (Phase 1 complete; Phase 2: enterprise UX — Pipeline Board, role-differentiated home, Blueprint Workbench ✓ Phase A delivered)
+## Current Phase: Post-MVP Phase 2 ✓ Complete (2026-03-13) — All three UX phases (A, B, C) delivered
 
 ---
 
@@ -76,14 +76,16 @@ Transforms Intellios from a functional tool into a governed enterprise platform.
 | Audit Trail UI | ✓ Complete | `/audit` — filter by entity type/actor/date, load-on-demand table, expandable metadata, CSV export. Restricted to compliance_officer + admin. |
 | `/api/me` endpoint | ✓ Complete | Returns current user email/name/role for client-side SOD checks |
 
-### Phase C — Lifecycle Extension
+### Phase C — Lifecycle Extension ✓ Complete (2026-03-13 Session 005)
 
-| Item | Priority | Status |
-|---|---|---|
-| Blueprint plain-language summary | P2 | Not started — business-readable agent description for non-technical reviewers |
-| Version diff view | P2 | Not started — compare blueprint versions side by side |
-| Deployment Console | P2 | Not started — deploy queue, environment config, runtime health |
-| Executive Dashboard | P2 | Not started — KPIs, portfolio health for exec stakeholders |
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| `deployed` lifecycle status | P2 | ✓ Complete | Added `deployed` to all type enums (status route, ABP schema, lifecycle controls, status badge, pipeline board). Transition: `approved → deployed → deprecated`. |
+| Blueprint plain-language summary | P2 | ✓ Complete | `BlueprintSummary` component + "Summary" tab on registry detail page. Human-readable view of identity, capabilities, constraints, governance, audit. |
+| Deployment Console | P2 | ✓ Complete | `/deploy` — ready-to-deploy queue, one-click deploy, live production table with governance health. |
+| Executive Dashboard | P2 | ✓ Complete | `/dashboard` — top-line KPIs (deployed count, deployment rate, compliance rate, pending review), pipeline funnel bar chart, governance health grid, recent deployments table, platform summary stats. |
+| Navigation update | P2 | ✓ Complete | Deploy link added for reviewer/compliance_officer/admin. Dashboard link for compliance_officer/admin. |
+| Version diff view | P3 | Not started — compare blueprint versions side by side |
 
 ---
 

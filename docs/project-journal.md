@@ -2,6 +2,49 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 005 (continued) — 2026-03-13: Completing the Lifecycle Loop
+
+### Phase C: From Approval to Deployment
+
+Phase A built the pipeline surface. Phase B made compliance visible. Phase C closed the loop that neither of those phases addressed: what happens after approval?
+
+Before Phase C, "Approved" was a terminal success state in the UI — the agent had passed review, and then... nothing. There was no surface to promote it to production, no way to distinguish between "approved but not yet deployed" and "live." For an enterprise product built around governed AI agent deployment, this was a conceptual gap. Approval is a governance milestone; deployment is a business event. They need to be distinct.
+
+### The `deployed` Status: A Production Reality Marker
+
+Adding `deployed` as a lifecycle status (between `approved` and `deprecated`) was a deliberate modeling decision, not just a UI addition. The valid transition `approved → deployed → deprecated` encodes the production lifecycle semantics in the data model itself. It means:
+- An agent can be approved but not yet running in production (queue model)
+- An agent can be deployed and later deprecated without going back through approval
+- The audit log records the deployment event as a distinct transition, separate from the approval
+
+This is surfaced across every layer that was already tracking status: status badge (indigo), pipeline board (sixth column), lifecycle controls ("Deploy to Production" button), ABP schema metadata, and the status route's transition validator.
+
+### The Deployment Console: Intentional Friction
+
+The Deployment Console (`/deploy`) separates "approved" and "deployed" into a visible queue with an explicit action. This is intentional friction. Auto-deployment on approval would be faster but would eliminate the deployment as a conscious business decision. In regulated environments, the deployment step is often where a separate sign-off, environment check, or change management record is required.
+
+By surfacing approved agents as a "ready to deploy" list with a single button, the console acknowledges both the typical case (deploy promptly after approval) and the atypical case (hold an approved agent for a release window, a change freeze, or a final environment verification).
+
+### The Executive Dashboard: Synthesizing the Full Picture
+
+The Executive Dashboard (`/dashboard`) is the highest-abstraction surface in the platform — designed for stakeholders who need answers, not workflow tools. Its four KPIs (deployed count, deployment rate, compliance rate, pending review) are chosen to answer the questions a CTO or Chief Risk Officer would ask in a governance review:
+- *How many agents are live?*
+- *What fraction of our work makes it to production?*
+- *Are our deployed agents compliant?*
+- *Is anything stuck in review?*
+
+The pipeline funnel visualization makes throughput visible. The governance health grid surfaces the top issues requiring remediation. The recent deployments table provides accountability — who deployed what, when.
+
+### The Blueprint Summary: Bridging Technical and Business
+
+The `BlueprintSummary` component addresses a gap that became visible during the review workflow design: the Blueprint JSON view (raw ABP structure) is useful for engineers and compliance officers, but business stakeholders reviewing an agent for deployment approval need plain language. The Summary tab renders the same data with natural-language labels, tool descriptions, policy names, and constraint plain-text — purpose-built for the non-technical decision-maker.
+
+### Phase 2 Complete
+
+All three UX phases are now delivered. Intellios has transformed from a functional prototype into a governed enterprise platform: every role has a purpose-built home, every workflow has a clear surface, every lifecycle stage has a corresponding UI treatment, and the governance posture is visible at every level from individual blueprint to executive portfolio.
+
+---
+
 ## Session 005 (continued) — 2026-03-13: Governance as a First-Class Surface
 
 ### Phase B: Making Compliance Visible
