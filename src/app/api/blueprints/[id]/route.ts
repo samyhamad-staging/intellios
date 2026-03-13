@@ -4,13 +4,14 @@ import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth();
+  const { session: authSession, error } = await requireAuth();
   if (error) return error;
   const requestId = getRequestId(request);
   try {
@@ -23,6 +24,9 @@ export async function GET(
     if (!blueprint) {
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }
+
+    const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, authSession.user);
+    if (enterpriseError) return enterpriseError;
 
     return NextResponse.json(blueprint);
   } catch (error) {

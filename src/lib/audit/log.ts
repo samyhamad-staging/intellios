@@ -15,6 +15,7 @@ export interface AuditEntry {
   action: AuditAction;
   actorEmail: string;
   actorRole: string;
+  enterpriseId?: string | null;
   fromState?: Record<string, unknown> | null;
   toState?: Record<string, unknown> | null;
   metadata?: Record<string, unknown> | null;
@@ -33,6 +34,7 @@ export async function writeAuditLog(entry: AuditEntry): Promise<void> {
       action: entry.action,
       actorEmail: entry.actorEmail,
       actorRole: entry.actorRole,
+      enterpriseId: entry.enterpriseId ?? null,
       fromState: entry.fromState ?? null,
       toState: entry.toState ?? null,
       metadata: entry.metadata ?? null,

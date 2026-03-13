@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 import { writeAuditLog } from "@/lib/audit/log";
 
@@ -25,6 +26,9 @@ export async function POST(
     if (!session) {
       return apiError(ErrorCode.NOT_FOUND, "Session not found");
     }
+
+    const enterpriseError = assertEnterpriseAccess(session.enterpriseId, authSession.user);
+    if (enterpriseError) return enterpriseError;
 
     if (session.status === "completed") {
       return apiError(ErrorCode.CONFLICT, "Session is already finalized");
@@ -56,6 +60,7 @@ export async function POST(
       action: "intake.finalized",
       actorEmail: authSession.user.email!,
       actorRole: authSession.user.role,
+      enterpriseId: session.enterpriseId ?? null,
       fromState: { status: "active" },
       toState: { status: "completed" },
       metadata: { agentName: payload.identity?.name ?? null },

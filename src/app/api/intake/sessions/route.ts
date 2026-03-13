@@ -13,7 +13,10 @@ export async function POST(request: NextRequest) {
   try {
     const [session] = await db
       .insert(intakeSessions)
-      .values({ createdBy: authSession.user.email ?? null })
+      .values({
+        createdBy: authSession.user.email ?? null,
+        enterpriseId: authSession.user.enterpriseId ?? null,
+      })
       .returning();
     return NextResponse.json(session);
   } catch (error) {

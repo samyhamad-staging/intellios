@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { governancePolicies } from "@/lib/db/schema";
-import { isNull } from "drizzle-orm";
+import { or, isNull, eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
@@ -15,23 +15,30 @@ const CreatePolicyBody = z.object({
   type: z.enum(POLICY_TYPES),
   description: z.string().max(1000).optional(),
   rules: z.array(z.unknown()).default([]),
-  enterpriseId: z.string().max(200).optional(),
 });
 
 /**
  * GET /api/governance/policies
- * Returns all global governance policies (enterprise_id IS NULL).
+ * Returns global policies (enterprise_id IS NULL) plus the caller's enterprise-specific
+ * policies. Admins see all policies across enterprises.
  */
 export async function GET(request: NextRequest) {
-  const { error: authError } = await requireAuth();
+  const { session: authSession, error: authError } = await requireAuth();
   if (authError) return authError;
   const requestId = getRequestId(request);
 
   try {
+    const filter =
+      authSession.user.role === "admin"
+        ? undefined
+        : authSession.user.enterpriseId
+        ? or(isNull(governancePolicies.enterpriseId), eq(governancePolicies.enterpriseId, authSession.user.enterpriseId))
+        : isNull(governancePolicies.enterpriseId);
+
     const policies = await db
       .select()
       .from(governancePolicies)
-      .where(isNull(governancePolicies.enterpriseId));
+      .where(filter);
 
     return NextResponse.json({ policies });
   } catch (error) {
@@ -42,11 +49,12 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/governance/policies
- * Creates a new governance policy.
- * Body: { name, type, description?, rules, enterprise_id? }
+ * Creates a new governance policy, scoped to the admin's enterprise.
+ * Admins with no enterpriseId create global (platform-level) policies.
+ * Body: { name, type, description?, rules }
  */
 export async function POST(request: NextRequest) {
-  const { error: authError } = await requireAuth(["admin"]);
+  const { session: authSession, error: authError } = await requireAuth(["admin"]);
   if (authError) return authError;
 
   const { data: body, error: bodyError } = await parseBody(request, CreatePolicyBody);
@@ -61,7 +69,7 @@ export async function POST(request: NextRequest) {
         type: body.type,
         description: body.description ?? null,
         rules: body.rules,
-        enterpriseId: body.enterpriseId ?? null,
+        enterpriseId: authSession.user.enterpriseId ?? null,
       })
       .returning();
 

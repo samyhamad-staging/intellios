@@ -10,6 +10,7 @@ import { buildIntakeSystemPrompt } from "@/lib/intake/system-prompt";
 import { createIntakeTools } from "@/lib/intake/tools";
 import { IntakePayload } from "@/lib/types/intake";
 import { requireAuth } from "@/lib/auth/require";
+import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
@@ -57,6 +58,9 @@ export async function POST(
     if (!session) {
       return apiError(ErrorCode.NOT_FOUND, "Session not found");
     }
+
+    const enterpriseError = assertEnterpriseAccess(session.enterpriseId, authSession.user);
+    if (enterpriseError) return enterpriseError;
 
     if (session.status === "completed") {
       return apiError(ErrorCode.CONFLICT, "Session is already finalized");

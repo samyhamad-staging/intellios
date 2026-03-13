@@ -4,6 +4,7 @@ import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 import { writeAuditLog } from "@/lib/audit/log";
 import { parseBody } from "@/lib/parse-body";
@@ -55,6 +56,9 @@ export async function POST(
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }
 
+    const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, authSession.user);
+    if (enterpriseError) return enterpriseError;
+
     if (blueprint.status !== "in_review") {
       return apiError(ErrorCode.INVALID_STATE, `Blueprint is not in review. Current status: ${blueprint.status}`);
     }
@@ -85,6 +89,7 @@ export async function POST(
       action: "blueprint.reviewed",
       actorEmail: authSession.user.email!,
       actorRole: authSession.user.role,
+      enterpriseId: blueprint.enterpriseId ?? null,
       fromState: { status: "in_review" },
       toState: { status: newStatus },
       metadata: { reviewAction: action, comment: comment?.trim() || null },

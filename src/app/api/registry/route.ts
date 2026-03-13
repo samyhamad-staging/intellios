@@ -1,22 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
-import { desc } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
 
 /**
  * GET /api/registry
- * Returns all registered agents — latest version per agentId.
- * In MVP, each agentId has exactly one version row.
+ * Returns all registered agents — latest version per agentId, scoped to the
+ * caller's enterprise. Admins see all agents across enterprises.
  */
 export async function GET(request: NextRequest) {
-  const { error } = await requireAuth();
+  const { session: authSession, error } = await requireAuth();
   if (error) return error;
   const requestId = getRequestId(request);
   try {
-    // Fetch all blueprints; DISTINCT ON agentId ordered by created_at desc gives latest per agent
+    // Build enterprise filter: admin sees all; others see their enterprise only
+    const enterpriseFilter =
+      authSession.user.role === "admin"
+        ? undefined
+        : authSession.user.enterpriseId
+        ? eq(agentBlueprints.enterpriseId, authSession.user.enterpriseId)
+        : isNull(agentBlueprints.enterpriseId);
+
+    // Fetch blueprints; DISTINCT ON agentId ordered by created_at desc gives latest per agent
     const agents = await db
       .selectDistinctOn([agentBlueprints.agentId], {
         id: agentBlueprints.id,
@@ -30,6 +38,7 @@ export async function GET(request: NextRequest) {
         updatedAt: agentBlueprints.updatedAt,
       })
       .from(agentBlueprints)
+      .where(enterpriseFilter)
       .orderBy(agentBlueprints.agentId, desc(agentBlueprints.createdAt));
 
     // Sort the results by updatedAt desc (distinctOn forces agentId ordering)

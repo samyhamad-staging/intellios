@@ -1,20 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
 
 /**
  * GET /api/review
- * Returns all blueprints currently in the `in_review` status (the review queue).
+ * Returns all blueprints in `in_review` status, scoped to the caller's enterprise.
+ * Admins see all enterprises.
  */
 export async function GET(request: NextRequest) {
-  const { error } = await requireAuth(["reviewer", "compliance_officer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["reviewer", "compliance_officer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
   try {
+    const enterpriseFilter =
+      authSession.user.role === "admin"
+        ? eq(agentBlueprints.status, "in_review")
+        : authSession.user.enterpriseId
+        ? and(
+            eq(agentBlueprints.status, "in_review"),
+            eq(agentBlueprints.enterpriseId, authSession.user.enterpriseId)
+          )
+        : and(eq(agentBlueprints.status, "in_review"), isNull(agentBlueprints.enterpriseId));
+
     const rows = await db
       .select({
         id: agentBlueprints.id,
@@ -30,7 +41,7 @@ export async function GET(request: NextRequest) {
         updatedAt: agentBlueprints.updatedAt,
       })
       .from(agentBlueprints)
-      .where(eq(agentBlueprints.status, "in_review"))
+      .where(enterpriseFilter)
       .orderBy(agentBlueprints.updatedAt);
 
     return NextResponse.json({ blueprints: rows });

@@ -4,13 +4,14 @@ import { intakeSessions, intakeMessages } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth();
+  const { session: authSession, error } = await requireAuth();
   if (error) return error;
   const requestId = getRequestId(request);
 
@@ -24,6 +25,9 @@ export async function GET(
     if (!session) {
       return apiError(ErrorCode.NOT_FOUND, "Session not found");
     }
+
+    const enterpriseError = assertEnterpriseAccess(session.enterpriseId, authSession.user);
+    if (enterpriseError) return enterpriseError;
 
     const messages = await db.query.intakeMessages.findMany({
       where: eq(intakeMessages.sessionId, id),

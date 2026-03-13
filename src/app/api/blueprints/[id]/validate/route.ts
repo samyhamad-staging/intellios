@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { agentBlueprints, intakeSessions } from "@/lib/db/schema";
+import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { ABP } from "@/lib/types/abp";
 import { validateBlueprint } from "@/lib/governance/validator";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 
 /**
@@ -17,7 +18,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
   try {
@@ -31,13 +32,12 @@ export async function POST(
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }
 
-    const abp = blueprint.abp as ABP;
+    const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, authSession.user);
+    if (enterpriseError) return enterpriseError;
 
-    // Determine enterprise scope from the originating intake session
-    const session = await db.query.intakeSessions.findFirst({
-      where: eq(intakeSessions.id, blueprint.sessionId),
-    });
-    const enterpriseId = session?.enterpriseId ?? null;
+    const abp = blueprint.abp as ABP;
+    // Use denormalized enterpriseId from blueprint (set at creation)
+    const enterpriseId = blueprint.enterpriseId ?? null;
 
     // Run validation
     const report = await validateBlueprint(abp, enterpriseId);

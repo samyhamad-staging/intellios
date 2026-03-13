@@ -7,6 +7,7 @@ import { ABP } from "@/lib/types/abp";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 import { writeAuditLog } from "@/lib/audit/log";
 import { rateLimit } from "@/lib/rate-limit";
@@ -47,6 +48,9 @@ export async function POST(
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }
 
+    const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, authSession.user);
+    if (enterpriseError) return enterpriseError;
+
     if (blueprint.status === "approved") {
       return apiError(ErrorCode.CONFLICT, "Approved blueprints cannot be refined");
     }
@@ -86,6 +90,7 @@ export async function POST(
       action: "blueprint.refined",
       actorEmail: authSession.user.email!,
       actorRole: authSession.user.role,
+      enterpriseId: blueprint.enterpriseId ?? null,
       metadata: { change: change.trim(), refinementCount: newCount },
     });
 

@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull(), // designer | reviewer | compliance_officer | admin
+  enterpriseId: text("enterprise_id"),  // tenant identifier — null for platform admins
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -49,6 +50,7 @@ export const agentBlueprints = pgTable(
     version: text("version").notNull().default("1.0.0"),  // semver
     name: text("name"),                                    // denormalized from abp.identity.name for search
     tags: jsonb("tags").notNull().default([]),             // denormalized from abp.tags for search
+    enterpriseId: text("enterprise_id"),                   // denormalized from intake session for efficient filtering
     // Core fields
     sessionId: uuid("session_id")
       .notNull()
@@ -68,6 +70,7 @@ export const agentBlueprints = pgTable(
     index("idx_agent_blueprints_session").on(table.sessionId),
     index("idx_agent_blueprints_agent_id").on(table.agentId),
     index("idx_agent_blueprints_status").on(table.status),
+    index("idx_agent_blueprints_enterprise").on(table.enterpriseId),
   ]
 );
 
@@ -83,6 +86,7 @@ export const auditLog = pgTable(
     action: text("action").notNull(),          // blueprint.created | blueprint.refined | blueprint.status_changed | blueprint.reviewed | intake.finalized | policy.created
     actorEmail: text("actor_email").notNull(),
     actorRole: text("actor_role").notNull(),
+    enterpriseId: text("enterprise_id"),       // tenant scope — null for platform-level actions
     fromState: jsonb("from_state"),            // state snapshot before the action (nullable for creation events)
     toState: jsonb("to_state"),                // state snapshot after the action
     metadata: jsonb("metadata"),               // extra context (comment, refinement count, etc.)
@@ -91,6 +95,7 @@ export const auditLog = pgTable(
   (table) => [
     index("idx_audit_log_entity").on(table.entityType, table.entityId, table.createdAt),
     index("idx_audit_log_actor").on(table.actorEmail, table.createdAt),
+    index("idx_audit_log_enterprise").on(table.enterpriseId, table.createdAt),
   ]
 );
 

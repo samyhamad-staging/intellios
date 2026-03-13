@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auditLog } from "@/lib/db/schema";
-import { and, gte, lte, eq, desc } from "drizzle-orm";
+import { and, gte, lte, eq, desc, isNull } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
@@ -19,7 +19,7 @@ import { getRequestId } from "@/lib/request-id";
  *   limit       — max rows (default 200, max 1000)
  */
 export async function GET(request: NextRequest) {
-  const { error } = await requireAuth(["compliance_officer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["compliance_officer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
@@ -33,6 +33,14 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get("limit") ?? "200", 10), 1000);
 
     const conditions = [];
+    // Non-admins are automatically scoped to their enterprise
+    if (authSession.user.role !== "admin") {
+      if (authSession.user.enterpriseId) {
+        conditions.push(eq(auditLog.enterpriseId, authSession.user.enterpriseId));
+      } else {
+        conditions.push(isNull(auditLog.enterpriseId));
+      }
+    }
     if (entityType) conditions.push(eq(auditLog.entityType, entityType));
     if (entityId) conditions.push(eq(auditLog.entityId, entityId));
     if (actorEmail) conditions.push(eq(auditLog.actorEmail, actorEmail));

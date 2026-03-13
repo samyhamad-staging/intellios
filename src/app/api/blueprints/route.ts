@@ -7,6 +7,7 @@ import { validateBlueprint } from "@/lib/governance/validator";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 import { writeAuditLog } from "@/lib/audit/log";
 import { rateLimit } from "@/lib/rate-limit";
@@ -43,6 +44,10 @@ export async function POST(request: NextRequest) {
       return apiError(ErrorCode.NOT_FOUND, "Session not found");
     }
 
+    // Enterprise access check — designer can only generate from their own enterprise's sessions
+    const enterpriseError = assertEnterpriseAccess(session.enterpriseId, authSession.user);
+    if (enterpriseError) return enterpriseError;
+
     if (session.status !== "completed") {
       return apiError(ErrorCode.INVALID_STATE, "Intake session must be completed before generating a blueprint");
     }
@@ -61,14 +66,15 @@ export async function POST(request: NextRequest) {
     // Denormalize searchable fields from the ABP for the registry
     const name = abp.identity.name ?? null;
     const tags = (abp.metadata.tags ?? []) as string[];
+    const enterpriseId = session.enterpriseId ?? null;
 
     // Run governance validation synchronously (ADR-003, ADR-005)
-    const validationReport = await validateBlueprint(abp, session.enterpriseId ?? null);
+    const validationReport = await validateBlueprint(abp, enterpriseId);
 
     // Persist — agentId defaults to a new UUID (first version of a new agent)
     const [blueprint] = await db
       .insert(agentBlueprints)
-      .values({ sessionId, abp, name, tags, validationReport, createdBy: authSession.user.email ?? null })
+      .values({ sessionId, abp, name, tags, enterpriseId, validationReport, createdBy: authSession.user.email ?? null })
       .returning();
 
     await writeAuditLog({
@@ -77,6 +83,7 @@ export async function POST(request: NextRequest) {
       action: "blueprint.created",
       actorEmail: authSession.user.email!,
       actorRole: authSession.user.role,
+      enterpriseId,
       toState: { status: "draft", agentId: blueprint.agentId, name: blueprint.name },
       metadata: { sessionId, violationCount: validationReport?.violations?.length ?? 0 },
     });

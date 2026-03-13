@@ -4,17 +4,19 @@ import { agentBlueprints } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 
 /**
  * GET /api/registry/[agentId]
  * Returns the latest version of an agent plus its full version history.
+ * Scoped to the caller's enterprise.
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ agentId: string }> }
 ) {
-  const { error } = await requireAuth();
+  const { session: authSession, error } = await requireAuth();
   if (error) return error;
   const requestId = getRequestId(request);
   try {
@@ -31,6 +33,10 @@ export async function GET(
     }
 
     const latest = versions[0];
+
+    // Enterprise access check — based on the agent's enterprise scope
+    const enterpriseError = assertEnterpriseAccess(latest.enterpriseId, authSession.user);
+    if (enterpriseError) return enterpriseError;
 
     return NextResponse.json({ agent: latest, versions });
   } catch (error) {
