@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Post-MVP Phase 9 ✓ Complete (2026-03-13) — Intake session management + MRM coverage gap delivered
+## Current Phase: Post-MVP Phase 10 ✓ Complete (2026-03-13) — Governance Policy Management delivered
 
 ---
 
@@ -211,6 +211,25 @@ Closes two remaining gaps: no way for designers to navigate back to in-progress 
 | `src/app/intake/page.tsx` — session list | P0 | ✓ Complete | Server component; In Progress + Completed sections; rows link to `/intake/{id}`; empty state with CTA |
 | "Intake" nav link | P0 | ✓ Complete | Added for designer + admin roles, positioned before Pipeline |
 | MRM `stakeholderCoverageGaps` field | P1 | ✓ Complete | `string[] \| null` in Section 11; computed via `getMissingContributionDomains`; null for pre-Phase 8 blueprints |
+
+---
+
+## Post-MVP Phase 10 — Governance Policy Management ✓ Complete (2026-03-13 Session 013)
+
+Closes the governance configuration gap: compliance officers and admins can now create, edit, and delete enterprise governance policies entirely through the UI without needing direct API access.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| `GET /api/governance/policies/[id]` | P0 | ✓ Complete | Fetch single policy; compliance_officer + admin; enterprise-scoped access control |
+| `PATCH /api/governance/policies/[id]` | P0 | ✓ Complete | Partial update; compliance_officer cannot modify global/platform policies; admin unrestricted |
+| `DELETE /api/governance/policies/[id]` | P0 | ✓ Complete | Delete policy; same access control rules as PATCH; returns `{ deleted: true }` |
+| POST — compliance_officer role | P0 | ✓ Complete | `POST /api/governance/policies` now accepts compliance_officer in addition to admin |
+| `PolicyForm` component — rule builder | P0 | ✓ Complete | Shared form: name/type/description + interactive rule builder for all 11 operators; value field hidden for exists/not_exists; client-side validation |
+| `/governance/policies/new` page | P0 | ✓ Complete | Client component; POSTs to policies API; redirects to Governance Hub on success |
+| `/governance/policies/[id]/edit` page | P0 | ✓ Complete | Pre-populated from API; platform-policy read-only mode; two-step delete confirmation for enterprise policies |
+| Governance Hub — New Policy CTA | P0 | ✓ Complete | "New Policy" button in Policy Library header; visible to compliance_officer + admin |
+| Governance Hub — Edit/View links | P0 | ✓ Complete | Per-card link: "Edit →" for enterprise policies, "View →" for platform policies; visible to managers |
+| Governance Hub — empty state | P1 | ✓ Complete | Shows "Create first policy" CTA for managers; "Contact your administrator" for others |
 
 ---
 

@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
  * Body: { name, type, description?, rules }
  */
 export async function POST(request: NextRequest) {
-  const { session: authSession, error: authError } = await requireAuth(["admin"]);
+  const { session: authSession, error: authError } = await requireAuth(["compliance_officer", "admin"]);
   if (authError) return authError;
 
   const { data: body, error: bodyError } = await parseBody(request, CreatePolicyBody);
