@@ -1,11 +1,69 @@
 import { z } from "zod";
 import { tool, zodSchema } from "ai";
-import { IntakePayload } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext } from "@/lib/types/intake";
+
+/**
+ * Derive which governance policies are required given the intake context.
+ * Returns an array of { type, reason } for each required but missing policy.
+ */
+function checkGovernanceSufficiency(
+  payload: IntakePayload,
+  context: IntakeContext | null | undefined
+): Array<{ type: string; reason: string }> {
+  if (!context) return [];
+
+  const policyTypes = (payload.governance?.policies ?? []).map((p) => p.type);
+  const hasPolicy = (type: string) => policyTypes.includes(type as never);
+  const hasAuditRetention = payload.governance?.audit?.retention_days !== undefined;
+  const hasAuditLogging = payload.governance?.audit?.log_interactions === true;
+  const hasPiiRedaction = payload.governance?.audit?.pii_redaction === true;
+  const hasInstructions = !!payload.capabilities?.instructions;
+
+  const gaps: Array<{ type: string; reason: string }> = [];
+
+  if (context.dataSensitivity === "pii" || context.dataSensitivity === "regulated") {
+    if (!hasPolicy("data_handling"))
+      gaps.push({ type: "data_handling policy", reason: "data sensitivity is PII/regulated" });
+    if (!hasAuditLogging)
+      gaps.push({ type: "audit config with log_interactions=true", reason: "PII/regulated data requires interaction logging" });
+    if (!hasAuditRetention)
+      gaps.push({ type: "audit config with retention_days", reason: "PII/regulated data requires a defined retention period" });
+  }
+
+  if (context.regulatoryScope.includes("FINRA") || context.regulatoryScope.includes("SOX")) {
+    if (!hasPolicy("compliance"))
+      gaps.push({ type: "compliance policy", reason: "FINRA/SOX regulatory scope" });
+    if (!hasAuditRetention)
+      gaps.push({ type: "audit config with retention_days", reason: "FINRA/SOX requires a defined retention period" });
+  }
+
+  if (context.regulatoryScope.includes("GDPR") || context.regulatoryScope.includes("HIPAA")) {
+    if (!hasPolicy("data_handling"))
+      gaps.push({ type: "data_handling policy", reason: "GDPR/HIPAA regulatory scope" });
+    if (!hasPiiRedaction)
+      gaps.push({ type: "audit config with pii_redaction=true", reason: "GDPR/HIPAA requires PII redaction in logs" });
+  }
+
+  if (context.deploymentType === "customer-facing" || context.deploymentType === "partner-facing") {
+    if (!hasPolicy("safety"))
+      gaps.push({ type: "safety policy", reason: "customer/partner-facing deployment requires safety guardrails" });
+    if (!hasInstructions)
+      gaps.push({ type: "behavioral instructions (set_instructions)", reason: "customer-facing agents require explicit instructions" });
+  }
+
+  if (context.integrationTypes.includes("external-apis")) {
+    if (!hasPolicy("access_control"))
+      gaps.push({ type: "access_control policy", reason: "external API integrations require access control policies" });
+  }
+
+  return gaps;
+}
 
 export function createIntakeTools(
   getPayload: () => IntakePayload,
   updatePayload: (updater: (current: IntakePayload) => IntakePayload) => Promise<void>,
-  finalizeSession: () => Promise<void>
+  finalizeSession: () => Promise<void>,
+  getContext?: () => IntakeContext | null | undefined
 ) {
   return {
     set_agent_identity: tool({
@@ -193,6 +251,36 @@ export function createIntakeTools(
       },
     }),
 
+    flag_ambiguous_requirement: tool({
+      description:
+        "Flag an ambiguous or contradictory requirement for human review. Call this when the user's input is unclear, contradictory, or requires interpretation. Then ask the user a clarifying question.",
+      inputSchema: zodSchema(z.object({
+        field: z.string().describe("Which field or section the ambiguity relates to (e.g. 'constraints.denied_actions', 'governance.policies')"),
+        description: z.string().describe("Brief description of the ambiguity or contradiction"),
+        userStatement: z.string().describe("The exact or paraphrased statement from the user that is ambiguous"),
+      })),
+      execute: async ({ field, description, userStatement }) => {
+        await updatePayload((p) => {
+          const existingFlags = (p as Record<string, unknown>)._flags as Array<Record<string, unknown>> ?? [];
+          return {
+            ...p,
+            _flags: [
+              ...existingFlags,
+              {
+                id: `flag-${Date.now()}`,
+                field,
+                description,
+                userStatement,
+                flaggedAt: new Date().toISOString(),
+                resolved: false,
+              },
+            ],
+          } as IntakePayload;
+        });
+        return { success: true, flagged: { field, description } };
+      },
+    }),
+
     get_intake_summary: tool({
       description:
         "Get a summary of what has been captured so far. Use this to check completeness and identify missing sections.",
@@ -224,6 +312,18 @@ export function createIntakeTools(
         if (!payload.capabilities?.tools?.length) {
           return { success: false, error: "At least one capability/tool is required before finalizing." };
         }
+
+        // Context-driven governance sufficiency check
+        const context = getContext?.();
+        const governanceGaps = checkGovernanceSufficiency(payload, context);
+        if (governanceGaps.length > 0) {
+          const gapList = governanceGaps.map((g) => `• ${g.type} (${g.reason})`).join("\n");
+          return {
+            success: false,
+            error: `The following governance requirements must be captured before finalizing:\n${gapList}\n\nPlease address each item above with the user.`,
+          };
+        }
+
         await finalizeSession();
         return { success: true, message: "Intake marked as complete.", confirmation };
       },

@@ -381,18 +381,54 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 009 — 2026-03-13
+
+**Duration:** Single context window (resumed from 008 via summary)
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context restore + prereq reads | schema.ts, intake/types.ts, system-prompt.ts, tools.ts, chat/route.ts, page.tsx, migration format | ~20K in / ~1K out |
+| DB migration + schema update | 0006_intake_context.sql, schema.ts intakeContext column, applied migration | ~4K in / ~1K out |
+| `IntakeContext` type | types/intake.ts: 6-field interface with JSDoc | ~2K in / ~1K out |
+| PATCH context API route | `/api/intake/sessions/[id]/context/route.ts` — Zod validation, enterprise guard, completed-session guard | ~4K in / ~2K out |
+| `IntakeContextForm` component | Phase 1 form: 6 field groups, toggle helpers, submit + error state | ~6K in / ~5K out |
+| System prompt update | `buildContextBlock()` — enterprise context + 5-rule governance probing matrix | ~6K in / ~4K out |
+| Tools update | `checkGovernanceSufficiency()`, `flag_ambiguous_requirement` tool, `mark_intake_complete` enforcement, `getContext` param | ~8K in / ~5K out |
+| Chat route update | `currentContext` read, pass to `createIntakeTools` + `buildIntakeSystemPrompt` | ~3K in / ~0.5K out |
+| `IntakeReview` component | Phase 3 review: section cards, acknowledgment checkboxes, flags panel, context strip, gated button | ~6K in / ~6K out |
+| Session page rewrite | Phase state machine: loading → context-form → conversation → review | ~5K in / ~4K out |
+| MRM types + report update | riskClassification extended; 5th DB query for intake context; 4 new fields populated | ~5K in / ~2K out |
+| TypeScript clean check | `npm run build` — ✓ Compiled successfully | ~3K in / ~0.5K out |
+| Documentation | Session log, _index.md, roadmap Phase 6, project journal, effort log | ~8K in / ~5K out |
+| **Session total (est.)** | | **~80K in / ~37K out** |
+
+**Estimated session cost:** Sonnet ~80K in × $3/1M + ~37K out × $15/1M = **$0.24 + $0.56 = ~$0.80**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 46 | [Implicit continuation] — "Proceed with all phases. I will step away from the laptop." | D-Approve | Full autonomous implementation delegated; Samy stepped away |
+
+**Totals:** 1 message · 1 D-Approve · ~0 min (fully autonomous)
+
+---
+
 ## Running Totals
 
-| Metric | Session 001 | Session 002 | Session 003 | Session 004 | Session 005 | Session 006 | Session 007 | Session 008 | Total |
-|---|---|---|---|---|---|---|---|---|---|
-| Est. Claude input tokens | ~288K | ~56K | ~97K | ~88K | ~162K | ~82K | ~50K | ~35K | ~858K |
-| Est. Claude output tokens | ~155K | ~26K | ~41K | ~22K | ~58K | ~30.5K | ~20K | ~16.5K | ~369K |
-| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$0.59 | ~$1.36 | ~$0.71 | ~$0.45 | ~$0.36 | ~$8.72 |
-| Samy messages | 20 | 5 | 7 | 2 | 4 | 2 | 2 | 2 | 44 |
-| Samy decisions | 31 | 4 | 6 | 2 | 4 | 3 | 2 | 2 | 54 |
-| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~5 min | ~20 min | ~10 min | ~5 min | ~5 min | ~5.5–6.5 hrs |
-| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Multi-tenancy (22 files) | Phase A + B + C UX (26 files) | Event bus + notifications + SLA (16 files) | Deploy modal + search + review banner (5 files) | MRM report (7 files) | Full app + all phases |
-| Files created/modified | ~130 | ~8 | ~25 | ~22 | ~26 | ~16 | ~8 | ~7 | ~242 |
+| Metric | Session 001 | Session 002 | Session 003 | Session 004 | Session 005 | Session 006 | Session 007 | Session 008 | Session 009 | Total |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Est. Claude input tokens | ~288K | ~56K | ~97K | ~88K | ~162K | ~82K | ~50K | ~35K | ~80K | ~938K |
+| Est. Claude output tokens | ~155K | ~26K | ~41K | ~22K | ~58K | ~30.5K | ~20K | ~16.5K | ~37K | ~406K |
+| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$0.59 | ~$1.36 | ~$0.71 | ~$0.45 | ~$0.36 | ~$0.80 | ~$9.52 |
+| Samy messages | 20 | 5 | 7 | 2 | 4 | 2 | 2 | 2 | 1 | 45 |
+| Samy decisions | 31 | 4 | 6 | 2 | 4 | 3 | 2 | 2 | 1 | 55 |
+| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~5 min | ~20 min | ~10 min | ~5 min | ~5 min | ~0 min | ~5.5–6.5 hrs |
+| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Multi-tenancy (22 files) | Phase A + B + C UX (26 files) | Event bus + notifications + SLA (16 files) | Deploy modal + search + review banner (5 files) | MRM report (7 files) | 3-phase intake (12 files) | Full app + all phases |
+| Files created/modified | ~130 | ~8 | ~25 | ~22 | ~26 | ~16 | ~8 | ~7 | ~12 | ~254 |
 
 ---
 

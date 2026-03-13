@@ -20,6 +20,7 @@ export const intakeSessions = pgTable("intake_sessions", {
   createdBy: text("created_by"), // user email — nullable for rows created before auth
   status: text("status").notNull().default("active"), // active | completed | abandoned
   intakePayload: jsonb("intake_payload").notNull().default({}),
+  intakeContext: jsonb("intake_context"), // Phase 1 structured context — null until Phase 1 is submitted
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

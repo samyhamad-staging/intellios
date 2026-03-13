@@ -2,6 +2,67 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 009 — 2026-03-13: From Discovery to Determinism
+
+### The Blindspot in Conversation-First Intake
+
+The original intake design had a fundamental assumption embedded in it: that Claude could discover
+all relevant governance requirements through conversation. A user describes their agent; Claude asks
+follow-up questions; governance requirements emerge from dialogue.
+
+This works when users know what they don't know. It fails — silently — when they don't. An engineer
+building a customer-facing trading agent might not mention FINRA compliance because they assume it's
+someone else's concern, or because they don't know the platform needs to reflect it in the blueprint.
+The conversation ends. The blueprint is generated. The governance gap is invisible until a compliance
+officer flags it at review, or worse, during a regulatory examination.
+
+The root cause isn't Claude's quality — it's the architecture. Discovery-based probing requires the
+domain signal to appear in the conversation before the requirement can be enforced. Structured intake
+moves that signal upstream.
+
+### The Two-Signal Architecture
+
+The fix is not to make Claude ask better questions. It's to make Claude ask the *right* questions from
+the start, because it already knows the domain context before the conversation begins.
+
+Phase 1 captures six signals: agent purpose, deployment surface, data sensitivity level, regulatory
+frameworks, system integrations, and stakeholders consulted. These take two minutes to fill out. They
+produce a deterministic map of what governance requirements are mandatory for this specific agent in
+this specific enterprise context.
+
+Phase 2 is still a freeform conversation — that expressiveness is the intake engine's core value.
+But now Claude starts fully informed. The system prompt receives both the current payload state (what
+has been captured) and the context block (what the enterprise environment requires). Claude knows,
+before the user says a word, that a customer-facing agent processing PII under FINRA must have a
+compliance policy, a data handling policy, audit logging, a defined retention period, and behavioral
+instructions. Claude will probe for all of these. Not because it inferred them from the conversation,
+but because the context made them mandatory.
+
+The governance sufficiency matrix in `mark_intake_complete` closes the loop as hard enforcement: even
+if Claude missed something, or the user deflected, the intake cannot be finalized with required
+governance gaps outstanding. The error message names each missing item and its reason.
+
+### Phase 3: Review as Evidence
+
+The pre-finalization review screen is not a usability feature — it's a governance artifact. It requires
+the designer to read what was captured, section by section, and check a box confirming it is correct.
+That acknowledgment is a documented human review event, not just a button click.
+
+The ambiguity flags panel surfaces everything Claude flagged as unclear during the conversation.
+Reviewers and compliance officers will see these flags in the governance report. Making them visible at
+the point of finalization — before the blueprint exists — creates an opportunity to resolve ambiguity
+rather than pass it downstream.
+
+### MRM Report: A Complete Intake Evidence Chain
+
+The MRM report now includes deployment type, data sensitivity, regulatory scope, and stakeholders
+consulted from Phase 1 context in its Risk Classification section. A model risk officer reviewing
+the report can now see not just what governance policies were applied, but what domain signals drove
+the intake process. The evidence chain is complete: context → requirements → policies → validation →
+review → deployment → audit.
+
+---
+
 ## Session 008 — 2026-03-13: From Controls to Evidence
 
 ### The Proof Problem

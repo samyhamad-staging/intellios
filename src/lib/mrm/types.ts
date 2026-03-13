@@ -33,8 +33,8 @@ export interface MRMReport {
   };
 
   // ── Section 2: Risk Classification ───────────────────────────────────────
-  // Derived from governance policy coverage; requires human validation against
-  // the enterprise model risk taxonomy.
+  // Derived from governance policy coverage and Phase 1 intake context.
+  // Requires human validation against the enterprise model risk taxonomy.
   riskClassification: {
     /** "High" | "Medium" | "Low" — derived from governance policy types. */
     riskTier: string;
@@ -52,6 +52,26 @@ export interface MRMReport {
      * model owner accountable for its specification and maintenance.
      */
     modelOwner: string | null;
+    /**
+     * Deployment surface captured during Phase 1 intake context.
+     * null if intake was conducted before Phase 1 context was introduced.
+     */
+    deploymentType: string | null;
+    /**
+     * Highest data sensitivity level identified in Phase 1 intake context.
+     * null if intake was conducted before Phase 1 context was introduced.
+     */
+    dataSensitivity: string | null;
+    /**
+     * Regulatory frameworks identified as applicable during Phase 1.
+     * Empty array if none selected or context unavailable.
+     */
+    regulatoryScope: string[];
+    /**
+     * Stakeholders who were consulted before initiating the intake.
+     * Recorded here as evidence of pre-design governance engagement.
+     */
+    stakeholdersConsulted: string[];
   };
 
   // ── Section 3: Agent Identity ─────────────────────────────────────────────

@@ -8,7 +8,7 @@ import { intakeSessions, intakeMessages } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { buildIntakeSystemPrompt } from "@/lib/intake/system-prompt";
 import { createIntakeTools } from "@/lib/intake/tools";
-import { IntakePayload } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext } from "@/lib/types/intake";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
@@ -82,6 +82,7 @@ export async function POST(
     // Current payload state — serialized to prevent race conditions when
     // Claude calls multiple tools in the same step (parallel execution).
     let currentPayload = (session.intakePayload as IntakePayload) ?? {};
+    const currentContext = (session.intakeContext as IntakeContext | null) ?? null;
     let updateQueue = Promise.resolve();
 
     // Create tools with payload access
@@ -102,7 +103,8 @@ export async function POST(
           .update(intakeSessions)
           .set({ status: "completed", updatedAt: new Date() })
           .where(eq(intakeSessions.id, sessionId));
-      }
+      },
+      () => currentContext
     );
 
     // Convert UI messages to model messages for Claude
@@ -111,7 +113,7 @@ export async function POST(
     // Stream response
     const result = streamText({
       model: anthropic("claude-sonnet-4-20250514"),
-      system: buildIntakeSystemPrompt(currentPayload),
+      system: buildIntakeSystemPrompt(currentPayload, currentContext),
       messages: modelMessages,
       tools,
       stopWhen: stepCountIs(10),

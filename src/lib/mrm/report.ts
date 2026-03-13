@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
-import { agentBlueprints, auditLog } from "@/lib/db/schema";
+import { agentBlueprints, auditLog, intakeSessions } from "@/lib/db/schema";
 import { eq, and, asc, inArray } from "drizzle-orm";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
+import { IntakeContext } from "@/lib/types/intake";
 import { MRMReport } from "./types";
 
 /**
@@ -50,6 +51,12 @@ export async function assembleMRMReport(
           .where(and(eq(auditLog.entityType, "blueprint"), inArray(auditLog.entityId, versionIds)))
           .orderBy(asc(auditLog.createdAt))
       : [];
+
+  // ── 5. Fetch the intake session for Phase 1 context ─────────────────────
+  const intakeSession = await db.query.intakeSessions.findFirst({
+    where: eq(intakeSessions.id, blueprint.sessionId),
+  });
+  const intakeContext = (intakeSession?.intakeContext as IntakeContext | null) ?? null;
 
   const abp = blueprint.abp as ABP;
   const validationReport = blueprint.validationReport as ValidationReport | null;
@@ -159,6 +166,10 @@ export async function assembleMRMReport(
       intendedUse: abp.identity?.description ?? "Not specified",
       businessOwner: blueprint.enterpriseId ?? null,
       modelOwner: blueprint.createdBy ?? null,
+      deploymentType: intakeContext?.deploymentType ?? null,
+      dataSensitivity: intakeContext?.dataSensitivity ?? null,
+      regulatoryScope: intakeContext?.regulatoryScope ?? [],
+      stakeholdersConsulted: intakeContext?.stakeholdersConsulted ?? [],
     },
 
     identity: {

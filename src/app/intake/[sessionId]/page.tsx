@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import type { UIMessage } from "ai";
 import { ChatContainer } from "@/components/chat/chat-container";
 import { IntakeProgress } from "@/components/intake/intake-progress";
+import { IntakeContextForm } from "@/components/intake/intake-context-form";
+import { IntakeReview } from "@/components/intake/intake-review";
+import { IntakeContext, IntakePayload } from "@/lib/types/intake";
 
 interface DBMessage {
   id: string;
@@ -21,6 +24,9 @@ function mapToUIMessages(dbMessages: DBMessage[]): UIMessage[] {
   }));
 }
 
+/** Which phase the UI is currently showing */
+type Phase = "loading" | "context-form" | "conversation" | "review";
+
 export default function IntakeSessionPage({
   params,
 }: {
@@ -29,12 +35,12 @@ export default function IntakeSessionPage({
   const { sessionId } = use(params);
   const router = useRouter();
   const [refreshTick, setRefreshTick] = useState(0);
-  const [isCompleted, setIsCompleted] = useState(false);
+  const [phase, setPhase] = useState<Phase>("loading");
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | undefined>(undefined);
-  const [isNewSession, setIsNewSession] = useState(false);
-  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [intakeContext, setIntakeContext] = useState<IntakeContext | null>(null);
+  const [currentPayload, setCurrentPayload] = useState<IntakePayload>({});
 
   // Load session status + message history on mount
   useEffect(() => {
@@ -43,14 +49,37 @@ export default function IntakeSessionPage({
         const res = await fetch(`/api/intake/sessions/${sessionId}`);
         if (!res.ok) return;
         const { session, messages } = await res.json();
-        if (session?.status === "completed") setIsCompleted(true);
+
+        const storedContext = (session?.intakeContext as IntakeContext | null) ?? null;
+        setIntakeContext(storedContext);
+
+        if (session?.status === "completed") {
+          // Load payload for review screen
+          try {
+            const payloadRes = await fetch(`/api/intake/sessions/${sessionId}/payload`);
+            if (payloadRes.ok) {
+              const payload = (await payloadRes.json()) as IntakePayload;
+              setCurrentPayload(payload);
+            }
+          } catch {
+            // non-critical
+          }
+          setPhase("review");
+          return;
+        }
+
+        // If no context yet → show Phase 1 form
+        if (!storedContext) {
+          setPhase("context-form");
+          return;
+        }
+
+        // Context present → show conversation
         const uiMessages = mapToUIMessages(messages ?? []);
         setInitialMessages(uiMessages.length > 0 ? uiMessages : undefined);
-        setIsNewSession(uiMessages.length === 0);
+        setPhase("conversation");
       } catch {
-        setIsNewSession(true);
-      } finally {
-        setHistoryLoaded(true);
+        setPhase("context-form");
       }
     }
     loadSession();
@@ -64,7 +93,19 @@ export default function IntakeSessionPage({
         const res = await fetch(`/api/intake/sessions/${sessionId}`);
         if (!res.ok) return;
         const { session } = await res.json();
-        if (session?.status === "completed") setIsCompleted(true);
+        if (session?.status === "completed") {
+          // Fetch final payload for review screen
+          try {
+            const payloadRes = await fetch(`/api/intake/sessions/${sessionId}/payload`);
+            if (payloadRes.ok) {
+              const payload = (await payloadRes.json()) as IntakePayload;
+              setCurrentPayload(payload);
+            }
+          } catch {
+            // non-critical
+          }
+          setPhase("review");
+        }
       } catch {
         // Non-critical
       }
@@ -74,6 +115,11 @@ export default function IntakeSessionPage({
 
   function handleResponseComplete() {
     setRefreshTick((t) => t + 1);
+  }
+
+  function handleContextComplete(context: IntakeContext) {
+    setIntakeContext(context);
+    setPhase("conversation");
   }
 
   const handleGenerate = useCallback(async () => {
@@ -100,6 +146,64 @@ export default function IntakeSessionPage({
     }
   }, [sessionId, router]);
 
+  // ─── Phase: Loading ──────────────────────────────────────────────────────────
+
+  if (phase === "loading") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-sm text-gray-400">Loading session…</div>
+      </div>
+    );
+  }
+
+  // ─── Phase 1: Context Form ───────────────────────────────────────────────────
+
+  if (phase === "context-form") {
+    return (
+      <div className="flex h-screen flex-col">
+        <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
+          <div>
+            <h1 className="text-lg font-semibold">Intellios</h1>
+            <p className="text-xs text-gray-500">Agent Intake</p>
+          </div>
+          <div className="text-xs text-gray-400 font-mono">{sessionId.slice(0, 8)}</div>
+        </header>
+        <IntakeContextForm sessionId={sessionId} onComplete={handleContextComplete} />
+      </div>
+    );
+  }
+
+  // ─── Phase 3: Review ─────────────────────────────────────────────────────────
+
+  if (phase === "review") {
+    return (
+      <div className="flex h-screen flex-col">
+        <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
+          <div>
+            <h1 className="text-lg font-semibold">Intellios</h1>
+            <p className="text-xs text-gray-500">Agent Intake</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+              Complete
+            </span>
+            <div className="text-xs text-gray-400 font-mono">{sessionId.slice(0, 8)}</div>
+          </div>
+        </header>
+        <IntakeReview
+          sessionId={sessionId}
+          payload={currentPayload}
+          context={intakeContext}
+          onGenerate={handleGenerate}
+          generating={generating}
+          generateError={generateError}
+        />
+      </div>
+    );
+  }
+
+  // ─── Phase 2: Conversation ───────────────────────────────────────────────────
+
   return (
     <div className="flex h-screen flex-col">
       {/* Header */}
@@ -109,46 +213,18 @@ export default function IntakeSessionPage({
           <p className="text-xs text-gray-500">Agent Intake</p>
         </div>
         <div className="flex items-center gap-3">
-          {isCompleted && (
-            <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-              Complete
-            </span>
-          )}
           <div className="text-xs text-gray-400 font-mono">{sessionId.slice(0, 8)}</div>
         </div>
       </header>
 
-      {/* Completion banner */}
-      {isCompleted && (
-        <div className="flex items-center justify-between border-b border-green-200 bg-green-50 px-6 py-3">
-          <div className="text-sm text-green-800">
-            <strong>Intake complete.</strong> All requirements captured. Ready to generate the blueprint.
-          </div>
-          <div className="flex items-center gap-3">
-            {generateError && (
-              <span className="text-xs text-red-600">{generateError}</span>
-            )}
-            <button
-              onClick={handleGenerate}
-              disabled={generating}
-              className="rounded-lg bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-50"
-            >
-              {generating ? "Generating..." : "Generate Blueprint →"}
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Body: chat + progress sidebar */}
       <main className="flex flex-1 overflow-hidden">
-        {historyLoaded && (
-          <ChatContainer
-            sessionId={sessionId}
-            initialMessages={initialMessages}
-            showSuggestedPrompts={isNewSession}
-            onResponseComplete={handleResponseComplete}
-          />
-        )}
+        <ChatContainer
+          sessionId={sessionId}
+          initialMessages={initialMessages}
+          showSuggestedPrompts={false}
+          onResponseComplete={handleResponseComplete}
+        />
         <IntakeProgress sessionId={sessionId} refreshTick={refreshTick} />
       </main>
     </div>

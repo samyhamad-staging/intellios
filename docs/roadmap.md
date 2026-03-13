@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Post-MVP Phase 4 ✓ Complete (2026-03-13) — Enterprise UX hardening delivered
+## Current Phase: Post-MVP Phase 6 ✓ Complete (2026-03-13) — Enterprise intake architecture delivered
 
 ---
 
@@ -140,6 +140,26 @@ package per deployed agent — satisfying SR 11-7 model documentation and audit 
 | Export button on Blueprint detail | P0 | ✓ Complete | "Export MRM Report" button in Registry detail header — role-gated (compliance_officer + admin). Downloads `mrm-report-{name}-v{version}.json`. |
 | Risk Classification section | P0 | ✓ Complete | Risk tier (High/Medium/Low) derived from governance policy types. Intended use, business owner, model owner. Derivation basis stated for human validation. |
 | Model Lineage section | P0 | ✓ Complete | Full version history (all agent versions) + deployment lineage (every production deploy across all versions, with changeRef). |
+
+---
+
+## Post-MVP Phase 6 — Enterprise Intake Architecture ✓ Complete (2026-03-13 Session 009)
+
+Eliminates the completeness and governance blindspot in the original single-phase intake design.
+Transforms intake from a discovery-driven conversation into a structured, evidence-grade capture process.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| DB migration: `intake_context` column | P0 | ✓ Complete | `ALTER TABLE intake_sessions ADD COLUMN IF NOT EXISTS intake_context JSONB` |
+| `IntakeContext` type | P0 | ✓ Complete | 6 fields: agentPurpose, deploymentType, dataSensitivity, regulatoryScope, integrationTypes, stakeholdersConsulted |
+| `PATCH /api/intake/sessions/[id]/context` | P0 | ✓ Complete | Validates + saves Phase 1 context; auth + enterprise access guards |
+| `IntakeContextForm` component (Phase 1) | P0 | ✓ Complete | Structured form with 6 field groups; all required before conversation begins |
+| System prompt context injection | P0 | ✓ Complete | `buildContextBlock()` injects Enterprise Context + Mandatory Governance Probing Rules (5 trigger rules) |
+| Governance sufficiency matrix | P0 | ✓ Complete | `checkGovernanceSufficiency()` in tools.ts; `mark_intake_complete` rejects if required governance missing |
+| `flag_ambiguous_requirement` tool | P1 | ✓ Complete | Stores to `_flags` array in payload; surfaced in Phase 3 review screen |
+| `IntakeReview` component (Phase 3) | P0 | ✓ Complete | Per-section review cards, acknowledgment checkboxes, flags panel, context strip, gated Generate button |
+| Session page three-phase gating | P0 | ✓ Complete | Phase type: loading → context-form → conversation → review; correct state machine across all flows |
+| MRM report intake context enrichment | P1 | ✓ Complete | riskClassification section now includes deploymentType, dataSensitivity, regulatoryScope, stakeholdersConsulted |
 
 ---
 

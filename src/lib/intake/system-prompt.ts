@@ -1,4 +1,4 @@
-import { IntakePayload } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext } from "@/lib/types/intake";
 
 const BASE_PROMPT = `You are the Intellios Intake Assistant. Your role is to help enterprise users define the requirements for a new AI agent through natural conversation.
 
@@ -11,17 +11,18 @@ You need to collect information for these sections:
 1. **Identity** (required) — Agent name, description, and optionally a persona/personality
 2. **Capabilities** (required) — What tools the agent should have, behavioral instructions, and knowledge sources
 3. **Constraints** (optional) — Allowed domains, denied actions, rate limits
-4. **Governance** (optional) — Policies, audit configuration
+4. **Governance** (required based on context — see Mandatory Governance section below) — Policies, audit configuration
 
 ## How to Guide the Conversation
 
-Start by asking what kind of agent the user wants to build and what problem it should solve. Listen carefully, then:
+The user has already provided their agent's purpose and enterprise context. Start by acknowledging their purpose and asking one focused clarifying question to begin building the requirements. Do NOT re-ask what they already told you in the context block below.
 
-- When you understand the agent's purpose, call \`set_agent_identity\` to capture the name and description
+- When you understand the agent's identity, call \`set_agent_identity\` to capture the name and description
 - When the user describes what the agent should do, call \`add_tool\` for each capability
 - When behavioral guidelines are mentioned, call \`set_instructions\`
 - When limitations or restrictions come up, call \`set_constraints\`
 - Proactively ask about areas the user hasn't covered yet
+- If a requirement is ambiguous or contradictory, call \`flag_ambiguous_requirement\` to record it — then ask for clarification
 
 ## Tool Usage Rules
 
@@ -36,14 +37,76 @@ Start by asking what kind of agent the user wants to build and what problem it s
 - Be concise but thorough
 - Ask one or two questions at a time, not a long list
 - Acknowledge what the user says before asking the next question
-- If something is unclear, ask for clarification rather than guessing
+- If something is unclear, call \`flag_ambiguous_requirement\` and then ask for clarification — do not guess
 - Suggest common options when the user seems unsure (e.g., "Many agents use tools like search, email, or database access — which of these would be relevant?")`;
 
 function truncate(s: string, max: number): string {
   return s.length > max ? s.slice(0, max) + "…" : s;
 }
 
-export function buildIntakeSystemPrompt(payload: IntakePayload): string {
+function buildContextBlock(context: IntakeContext): string {
+  const lines: string[] = [
+    "",
+    "## Enterprise Context (captured in Phase 1)",
+    "",
+    "The following context was provided by the user before this conversation. Use it to:",
+    "1. Frame your opening message around the stated agent purpose",
+    "2. Apply the mandatory governance probing rules below",
+    "3. Do NOT ask the user to re-state any of this information",
+    "",
+    `**Agent purpose**: ${context.agentPurpose}`,
+    `**Deployment type**: ${context.deploymentType}`,
+    `**Data sensitivity**: ${context.dataSensitivity}`,
+    `**Regulatory scope**: ${context.regulatoryScope.join(", ") || "none"}`,
+    `**System integrations**: ${context.integrationTypes.join(", ") || "none"}`,
+    `**Stakeholders consulted**: ${context.stakeholdersConsulted.join(", ") || "none"}`,
+    "",
+    "## Mandatory Governance Probing Rules",
+    "",
+    "Based on the context above, you MUST ensure the following are captured before allowing finalization:",
+  ];
+
+  const rules: string[] = [];
+
+  if (context.dataSensitivity === "pii" || context.dataSensitivity === "regulated") {
+    rules.push("• **Data handling policy** (required): data sensitivity is PII/regulated — ask the user to define data handling rules and call `add_governance_policy` with type=data_handling");
+    rules.push("• **Audit configuration** (required): PII/regulated data requires logging — ensure `set_audit_config` is called with log_interactions=true and a retention_days value");
+  }
+
+  if (context.regulatoryScope.includes("FINRA") || context.regulatoryScope.includes("SOX")) {
+    rules.push("• **Compliance policy** (required): FINRA/SOX scope — ask the user to define the compliance policy and call `add_governance_policy` with type=compliance");
+    if (!context.dataSensitivity.match(/pii|regulated/)) {
+      rules.push("• **Audit retention** (required): regulatory scope requires retention — ensure `set_audit_config` is called with a retention_days value");
+    }
+  }
+
+  if (context.regulatoryScope.includes("GDPR") || context.regulatoryScope.includes("HIPAA")) {
+    rules.push("• **Data handling policy** (required): GDPR/HIPAA scope — ask the user to define data handling rules and call `add_governance_policy` with type=data_handling");
+    rules.push("• **PII redaction** (required): GDPR/HIPAA agents should have PII redaction — ensure `set_audit_config` is called with pii_redaction=true");
+  }
+
+  if (context.deploymentType === "customer-facing" || context.deploymentType === "partner-facing") {
+    rules.push("• **Safety policy** (required): customer/partner-facing agents must have a safety policy — ask the user to define safety guardrails and call `add_governance_policy` with type=safety");
+    rules.push("• **Behavioral instructions** (required): customer-facing agents need explicit behavioral instructions — ensure `set_instructions` is called");
+  }
+
+  if (context.integrationTypes.includes("external-apis")) {
+    rules.push("• **Access control policy** (required): external API integrations require an access control policy — ask the user about API authorization and call `add_governance_policy` with type=access_control");
+  }
+
+  if (rules.length === 0) {
+    lines.push("No mandatory governance rules triggered by this context. Standard probing applies.");
+  } else {
+    lines.push(...rules);
+  }
+
+  lines.push("");
+  lines.push("If any of the above are not captured when the user tries to finalize, `mark_intake_complete` will reject the call with a clear explanation of what is missing.");
+
+  return lines.join("\n");
+}
+
+export function buildIntakeSystemPrompt(payload: IntakePayload, context?: IntakeContext | null): string {
   const identity = payload.identity;
   const capabilities = payload.capabilities;
   const constraints = payload.constraints;
@@ -142,5 +205,8 @@ export function buildIntakeSystemPrompt(payload: IntakePayload): string {
     lines.push("**All required sections are filled.** When the user is satisfied, summarize and offer to finalize.");
   }
 
-  return BASE_PROMPT + lines.join("\n");
+  // Inject context block if context was provided in Phase 1
+  const contextBlock = context ? buildContextBlock(context) : "";
+
+  return BASE_PROMPT + contextBlock + lines.join("\n");
 }
