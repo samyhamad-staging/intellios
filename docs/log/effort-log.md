@@ -282,18 +282,55 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 006 — 2026-03-13
+
+**Duration:** Single context window (resumed from 005 via summary)
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context restoration | Re-read audit/log.ts, status/route.ts, review/route.ts, pipeline/page.tsx, layout.tsx | ~15K in / ~1K out |
+| Event bus (types + bus) | LifecycleEvent type, EventHandler alias, dispatch + registerHandler | ~5K in / ~2K out |
+| Notifications table + migration | schema.ts update, 0005_notifications.sql | ~6K in / ~2K out |
+| SLA config | `getSlaStatus()` + env-var thresholds | ~3K in / ~1K out |
+| Notification system (4 files) | store.ts, recipients.ts, email.ts, handler.ts | ~12K in / ~6K out |
+| audit/log.ts integration | dispatch after insert, side-effect handler import, returning() | ~5K in / ~2K out |
+| Route metadata enrichment (2 routes) | agentName + createdBy in writeAuditLog metadata | ~6K in / ~2K out |
+| Notifications API route | GET + PATCH handlers | ~4K in / ~2K out |
+| NotificationBell component | Bell icon, badge, dropdown, polling, mark-read, navigation | ~10K in / ~5K out |
+| Layout + pipeline board updates | NotificationBell in nav, SLA borders/badges on pipeline cards | ~6K in / ~2K out |
+| .env.example update | Resend + SLA env vars | ~2K in / ~0.5K out |
+| Documentation | Session log, _index.md, roadmap Phase 3, project journal, effort log | ~8K in / ~5K out |
+| **Session total (est.)** | | **~82K in / ~30.5K out** |
+
+**Estimated session cost:** Sonnet ~82K in × $3/1M + ~30.5K out × $15/1M = **$0.25 + $0.46 = ~$0.71**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 39 | [Strategic assessment prompt] "Determine the single most valuable next action…" | D-Arch + D-Scope | High-value strategic direction; Claude independently identified workflow notifications as highest-leverage next feature |
+| 40 | [ChatGPT architectural feedback] — event layer refinement | D-Arch | External review incorporated: workflow transition → event → notification architecture adopted |
+| 41 | [Implicit continuation] — session context auto-resumed | D-Approve | Implementation proceeded without further instruction |
+
+**Totals:** 2 messages · 2 D-Arch · 1 D-Scope · ~10 min
+
+---
+
 ## Running Totals
 
-| Metric | Session 001 | Session 002 | Session 003 | Session 004 | Session 005 | Total |
-|---|---|---|---|---|---|---|
-| Est. Claude input tokens | ~288K | ~56K | ~97K | ~88K | ~162K | ~691K |
-| Est. Claude output tokens | ~155K | ~26K | ~41K | ~22K | ~58K | ~302K |
-| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$0.59 | ~$1.36 | ~$7.20 |
-| Samy messages | 20 | 5 | 7 | 2 | 4 | 38 |
-| Samy decisions | 31 | 4 | 6 | 2 | 4 | 47 |
-| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~5 min | ~20 min | ~4.75–5.75 hrs |
-| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Multi-tenancy (22 files) | Phase A + B + C UX (26 files) | Full app + hardened + multi-tenant + enterprise UX |
-| Files created/modified | ~130 | ~8 | ~25 | ~22 | ~26 | ~211 |
+| Metric | Session 001 | Session 002 | Session 003 | Session 004 | Session 005 | Session 006 | Total |
+|---|---|---|---|---|---|---|---|
+| Est. Claude input tokens | ~288K | ~56K | ~97K | ~88K | ~162K | ~82K | ~773K |
+| Est. Claude output tokens | ~155K | ~26K | ~41K | ~22K | ~58K | ~30.5K | ~332.5K |
+| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$0.59 | ~$1.36 | ~$0.71 | ~$7.91 |
+| Samy messages | 20 | 5 | 7 | 2 | 4 | 2 | 40 |
+| Samy decisions | 31 | 4 | 6 | 2 | 4 | 3 | 50 |
+| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~5 min | ~20 min | ~10 min | ~5–6 hrs |
+| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Multi-tenancy (22 files) | Phase A + B + C UX (26 files) | Event bus + notifications + SLA (16 files) | Full app + hardened + multi-tenant + enterprise UX + notifications |
+| Files created/modified | ~130 | ~8 | ~25 | ~22 | ~26 | ~16 | ~227 |
 
 ---
 

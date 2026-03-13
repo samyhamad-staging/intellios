@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, jsonb, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, jsonb, timestamp, boolean, index } from "drizzle-orm/pg-core";
 
 // ─── Users ───────────────────────────────────────────────────────────────────
 
@@ -96,6 +96,31 @@ export const auditLog = pgTable(
     index("idx_audit_log_entity").on(table.entityType, table.entityId, table.createdAt),
     index("idx_audit_log_actor").on(table.actorEmail, table.createdAt),
     index("idx_audit_log_enterprise").on(table.enterpriseId, table.createdAt),
+  ]
+);
+
+// ─── Notifications ───────────────────────────────────────────────────────────
+// In-app notifications driven by lifecycle events. Written by the event bus
+// notification handler; never mutated after creation except to set read=true.
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    recipientEmail: text("recipient_email").notNull(),
+    enterpriseId: text("enterprise_id"),
+    type: text("type").notNull(),         // blueprint.submitted | blueprint.approved | etc.
+    title: text("title").notNull(),
+    message: text("message").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(), // blueprint version id
+    link: text("link"),                    // /registry/[agentId] — direct navigation target
+    read: boolean("read").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_notifications_recipient").on(table.recipientEmail, table.read, table.createdAt),
+    index("idx_notifications_enterprise").on(table.enterpriseId, table.createdAt),
   ]
 );
 

@@ -1,5 +1,10 @@
 import { db } from "@/lib/db";
 import { auditLog } from "@/lib/db/schema";
+import { dispatch } from "@/lib/events/bus";
+
+// Side-effect import: registers the notification handler with the event bus.
+// Guaranteed to run on every request that writes an audit entry.
+import "@/lib/notifications/handler";
 
 export type AuditAction =
   | "blueprint.created"
@@ -22,22 +27,42 @@ export interface AuditEntry {
 }
 
 /**
- * Write an immutable audit log entry.
- * Fire-and-forget: errors are logged but never thrown — audit failure must not
- * block the primary operation.
+ * Write an immutable audit log entry, then dispatch a LifecycleEvent to the
+ * in-process event bus (notification handler is registered via side-effect import
+ * above).  Fire-and-forget: errors are logged but never thrown — audit failure
+ * must not block the primary operation.
  */
 export async function writeAuditLog(entry: AuditEntry): Promise<void> {
   try {
-    await db.insert(auditLog).values({
-      entityType: entry.entityType,
-      entityId: entry.entityId,
-      action: entry.action,
+    const [row] = await db
+      .insert(auditLog)
+      .values({
+        entityType: entry.entityType,
+        entityId: entry.entityId,
+        action: entry.action,
+        actorEmail: entry.actorEmail,
+        actorRole: entry.actorRole,
+        enterpriseId: entry.enterpriseId ?? null,
+        fromState: entry.fromState ?? null,
+        toState: entry.toState ?? null,
+        metadata: entry.metadata ?? null,
+      })
+      .returning({ id: auditLog.id, createdAt: auditLog.createdAt });
+
+    // Dispatch lifecycle event — fire-and-forget so handler errors never block
+    // the caller. The audit row id is the authoritative correlation id.
+    void dispatch({
+      auditId: row.id,
+      type: entry.action,
       actorEmail: entry.actorEmail,
       actorRole: entry.actorRole,
+      entityType: entry.entityType,
+      entityId: entry.entityId,
       enterpriseId: entry.enterpriseId ?? null,
-      fromState: entry.fromState ?? null,
-      toState: entry.toState ?? null,
-      metadata: entry.metadata ?? null,
+      fromState: (entry.fromState as Record<string, unknown>) ?? null,
+      toState: (entry.toState as Record<string, unknown>) ?? null,
+      metadata: (entry.metadata as Record<string, unknown>) ?? null,
+      timestamp: row.createdAt.toISOString(),
     });
   } catch (err) {
     // Audit log failure must never interrupt the main flow.

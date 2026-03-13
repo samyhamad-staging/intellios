@@ -2,6 +2,53 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 006 — 2026-03-13: The Platform Becomes Aware of Itself
+
+### The Transition from Tool to Platform
+
+Up to this session, Intellios was a well-governed workflow tool. Every lifecycle action was captured, every approval documented, every transition enforced. But the system was silent. Nothing moved unless someone opened a browser tab and looked.
+
+In regulated environments — the exact environment Intellios is built for — that model breaks. SR 11-7 model governance requires not just that reviews happen, but that they happen in a documented, timely manner. A 72-hour review clock doesn't work if reviewers only discover work when they happen to log in. The pull-based model shifts accountability from the system to individual memory.
+
+This session's work adds a push dimension to the platform.
+
+### Architectural Choice: The Audit Log as Event Source
+
+The most important decision this session was not adding notifications. It was deciding where notifications originate.
+
+The naive implementation would add a `publishEvent()` call alongside `writeAuditLog()` in every route handler that changes status. This works, but it creates two problems: every developer must remember to call both functions, and the audit log and the event system can diverge (audit write succeeds, event publish fails, or vice versa).
+
+The ChatGPT architectural feedback crystallized a better pattern: the audit log write IS the event. After the DB insert succeeds, `writeAuditLog` dispatches a `LifecycleEvent` with the audit row's ID as the correlation ID. The audit record is the source of truth; the event is a derived signal. The routes don't know about notifications. The notification handler doesn't know about the audit format. The event bus is the seam.
+
+This has a second property that matters for correctness: if the audit write fails, the event is never dispatched. No notification will fire for an action that wasn't actually recorded. The system cannot notify about something that didn't happen.
+
+### Handler Registration: Side-Effect Import
+
+The notification handler registers itself with the event bus via a side-effect import inside `audit/log.ts`. This is a deliberate design: any code that writes an audit entry automatically gets the notification handler registered. There is no separate bootstrap step, no `initNotifications()` call to forget. The import creates the binding.
+
+This pattern works cleanly in Next.js's per-request module evaluation model. Each worker that handles a request will execute the module's top-level code on first import, registering the handler. Subsequent requests in the same worker reuse the already-registered handler.
+
+### SLA Monitoring: Governance Made Visible
+
+The 48h warn / 72h alert thresholds on the Pipeline Board are not just UX indicators. They are the governance policy made visible at the exact moment it matters — when a reviewer is looking at their work queue. A red-ringed card with "SLA breach" is harder to ignore than a number in a compliance report written two weeks later.
+
+The implementation is deliberately simple: a `getSlaStatus()` function, called client-side on each card render, returning a three-value signal. No background jobs, no scheduler, no database polling. The computation is O(n) over the cards currently visible. At enterprise scale (hundreds of agents), this remains fast. The thresholds are environment-variable overridable, so each enterprise can configure their own review SLA without a code change.
+
+### What the Platform Now Does Automatically
+
+Before this session: every workflow state change was recorded silently.
+
+After this session:
+- Designer submits for review → all reviewers and compliance officers for that enterprise receive an in-app notification (and email if Resend is configured)
+- Reviewer approves, rejects, or requests changes → designer receives notification with the review outcome
+- Agent deployed → designer notified (it's live), compliance officers notified (a new model is in production)
+- Any in-review agent crossing 48 hours → amber SLA indicator on pipeline board
+- Any in-review agent crossing 72 hours → red SLA breach indicator
+
+The platform now knows when to interrupt people — and which people to interrupt.
+
+---
+
 ## Session 005 (continued) — 2026-03-13: Completing the Lifecycle Loop
 
 ### Phase C: From Approval to Deployment

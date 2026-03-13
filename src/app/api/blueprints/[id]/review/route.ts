@@ -83,6 +83,13 @@ export async function POST(
         reviewedAt: agentBlueprints.reviewedAt,
       });
 
+    // Extract agent name for notification routing (best-effort)
+    const abp = blueprint.abp as Record<string, unknown> | null;
+    const agentName =
+      (abp?.metadata as Record<string, unknown> | undefined)?.name ??
+      (abp?.identity as Record<string, unknown> | undefined)?.name ??
+      "Unnamed Agent";
+
     await writeAuditLog({
       entityType: "blueprint",
       entityId: id,
@@ -92,7 +99,13 @@ export async function POST(
       enterpriseId: blueprint.enterpriseId ?? null,
       fromState: { status: "in_review" },
       toState: { status: newStatus },
-      metadata: { reviewAction: action, comment: comment?.trim() || null },
+      metadata: {
+        agentId: id,
+        agentName,
+        createdBy: blueprint.createdBy ?? null,
+        reviewAction: action,
+        comment: comment?.trim() || null,
+      },
     });
 
     return NextResponse.json(updated);

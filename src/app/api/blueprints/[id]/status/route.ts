@@ -102,6 +102,13 @@ export async function PATCH(
       .where(eq(agentBlueprints.id, id))
       .returning();
 
+    // Extract agent name for notification routing (best-effort, falls back gracefully)
+    const abp = blueprint.abp as Record<string, unknown> | null;
+    const agentName =
+      (abp?.metadata as Record<string, unknown> | undefined)?.name ??
+      (abp?.identity as Record<string, unknown> | undefined)?.name ??
+      "Unnamed Agent";
+
     await writeAuditLog({
       entityType: "blueprint",
       entityId: id,
@@ -111,6 +118,11 @@ export async function PATCH(
       enterpriseId: blueprint.enterpriseId ?? null,
       fromState: { status: currentStatus },
       toState: { status: newStatus },
+      metadata: {
+        agentId: id,
+        agentName,
+        createdBy: blueprint.createdBy ?? null,
+      },
     });
 
     return NextResponse.json({ id: updated.id, status: updated.status });

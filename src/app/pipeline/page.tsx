@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { getSlaStatus } from "@/lib/sla/config";
 
 interface Agent {
   id: string;
@@ -136,11 +137,19 @@ export default function PipelinePage() {
                 {!loading && cards.length === 0 && (
                   <p className="py-4 text-center text-xs text-gray-400">Empty</p>
                 )}
-                {!loading && cards.map((agent) => (
+                {!loading && cards.map((agent) => {
+                  const sla = getSlaStatus(agent.updatedAt, agent.status);
+                  const slaBorder =
+                    sla === "alert"
+                      ? "border-red-400 ring-1 ring-red-300"
+                      : sla === "warn"
+                      ? "border-amber-400 ring-1 ring-amber-200"
+                      : "border-gray-200";
+                  return (
                   <Link
                     key={agent.agentId}
                     href={`/registry/${agent.agentId}`}
-                    className="block rounded-lg border border-gray-200 bg-white p-3 shadow-sm hover:border-gray-400 hover:shadow-md transition-all"
+                    className={`block rounded-lg border bg-white p-3 shadow-sm hover:shadow-md transition-all ${slaBorder}`}
                   >
                     {/* Name + violation badge */}
                     <div className="flex items-start justify-between gap-1">
@@ -176,13 +185,26 @@ export default function PipelinePage() {
                       </div>
                     )}
 
-                    {/* Footer: version + time */}
+                    {/* Footer: version + time + SLA indicator */}
                     <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
                       <span className="font-mono">v{agent.version}</span>
-                      <span>{timeAgo(agent.updatedAt)}</span>
+                      <div className="flex items-center gap-1.5">
+                        {sla === "alert" && (
+                          <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
+                            SLA breach
+                          </span>
+                        )}
+                        {sla === "warn" && (
+                          <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                            Nearing SLA
+                          </span>
+                        )}
+                        <span>{timeAgo(agent.updatedAt)}</span>
+                      </div>
                     </div>
                   </Link>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );

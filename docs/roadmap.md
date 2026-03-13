@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Post-MVP Phase 2 ✓ Complete (2026-03-13) — All three UX phases (A, B, C) delivered
+## Current Phase: Post-MVP Phase 3 ✓ Complete (2026-03-13) — Event-driven notifications + SLA monitoring delivered
 
 ---
 
@@ -86,6 +86,26 @@ Transforms Intellios from a functional tool into a governed enterprise platform.
 | Executive Dashboard | P2 | ✓ Complete | `/dashboard` — top-line KPIs (deployed count, deployment rate, compliance rate, pending review), pipeline funnel bar chart, governance health grid, recent deployments table, platform summary stats. |
 | Navigation update | P2 | ✓ Complete | Deploy link added for reviewer/compliance_officer/admin. Dashboard link for compliance_officer/admin. |
 | Version diff view | P3 | Not started — compare blueprint versions side by side |
+
+---
+
+---
+
+## Post-MVP Phase 3 — Workflow Intelligence ✓ Complete (2026-03-13 Session 006)
+
+Transforms Intellios from a governed pipeline into a self-managing enterprise platform. Reviewers and designers are notified in real time; compliance officers receive SLA breach alerts; no one needs to poll the UI to know their work is waiting.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| Event bus | P0 | ✓ Complete | In-process `LifecycleEvent` bus (`src/lib/events/`). `registerHandler()` + fire-and-forget `dispatch()`. |
+| Notifications DB table | P0 | ✓ Complete | `notifications` table + migration `0005_notifications.sql`. Two indexes: recipient inbox + enterprise audit. |
+| Notification routing handler | P0 | ✓ Complete | `src/lib/notifications/handler.ts` — routes lifecycle events to correct recipients (reviewers, designers, compliance officers) by event type and `toState`. Self-registers via side-effect import in `audit/log.ts`. |
+| Audit-as-event-source | P0 | ✓ Complete | `writeAuditLog` is the single event integration point — dispatches `LifecycleEvent` after DB insert. No duplicate call sites. |
+| Email delivery (Resend) | P1 | ✓ Complete | `src/lib/notifications/email.ts` — Resend API, graceful no-op when `RESEND_API_KEY` absent. |
+| Notifications API | P0 | ✓ Complete | `GET /api/notifications` (list + unread count) + `PATCH /api/notifications` (mark all read). |
+| NotificationBell UI | P0 | ✓ Complete | `src/components/nav/notification-bell.tsx` — 30s focus-aware polling, unread count badge, dropdown with type icons + relative timestamps. |
+| SLA monitoring | P1 | ✓ Complete | `src/lib/sla/config.ts` — `getSlaStatus()` with 48h warn / 72h alert (env-var overridable). Pipeline Board: amber ring at warn, red ring + "SLA breach" badge at alert. |
+| Route metadata enrichment | P0 | ✓ Complete | Status + review routes now pass `agentName`, `agentId`, `createdBy` in audit metadata — enables correct notification recipient lookup. |
 
 ---
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { auth, signOut } from "@/auth";
 import Link from "next/link";
+import NotificationBell from "@/components/nav/notification-bell";
 
 export const metadata: Metadata = {
   title: "Intellios",
@@ -77,8 +78,9 @@ export default async function RootLayout({
                 </div>
               </div>
 
-              {/* Right: user info + sign out */}
+              {/* Right: notifications + user info + sign out */}
               <div className="flex items-center gap-3">
+                <NotificationBell />
                 <span className="text-sm text-gray-700">{session.user.name}</span>
                 {roleInfo && (
                   <span className={`rounded px-2 py-0.5 text-xs font-medium ${roleInfo.color}`}>
