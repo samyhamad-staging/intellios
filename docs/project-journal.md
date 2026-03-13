@@ -2,6 +2,39 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 005 (continued) — 2026-03-13: Governance as a First-Class Surface
+
+### Phase B: Making Compliance Visible
+
+Phase A established the skeleton — a pipeline board and role-differentiated home that gave every stakeholder a clear entry point. Phase B addressed the deeper problem: governance was functional (the validator ran, the audit log recorded), but it was invisible. A compliance officer had no surface to understand the state of compliance across the entire agent portfolio. A reviewer had no inline governance context when deciding whether to approve or reject a blueprint. The audit log existed as an API endpoint with no UI.
+
+Phase B surfaced all three of these buried capabilities.
+
+### The Governance Hub as a Command Center
+
+The Governance Hub (`/governance`) is designed to answer a single question in under 5 seconds: *"Is our agent portfolio compliant?"* The four-stat coverage block at the top — Total, Passing, With Errors, Not Validated — gives an immediate answer. Everything below is context for the answer. The "agents requiring attention" list is sorted by violation count descending, so the worst problems are always first. The policy library makes it clear exactly what rules agents are being evaluated against.
+
+This design decision — lead with status, follow with detail — reflects how compliance officers actually work. They don't start by reading policy definitions. They start by looking for violations.
+
+### The Audit Trail as a Compliance Record
+
+The audit trail was deliberately designed as load-on-demand rather than an auto-loading page. The reason: at enterprise scale, the audit log could have thousands of entries. Auto-loading all of them on every page visit would be slow and wasteful. The filter bar forces the user to scope the query before loading, which matches how audit trails are actually used (investigating a specific incident, actor, or time window) and keeps performance predictable.
+
+The CSV export is deliberately one click from the filtered view — the same filtered view a compliance officer would have open during a regulatory review. Export follows the scope of the current query, not all records.
+
+### The Review Console: From Free-Form to Structured
+
+The most important governance upgrade in Phase B was making review decisions structured. The old panel had a free-form textarea — reviewers could write nothing, write a single word, or write a novel. There was no enforced format.
+
+The new panel enforces:
+1. An explicit decision choice (radio buttons) — no ambiguous text like "looks good to me"
+2. A required rationale for all decisions — not just "request changes"
+3. The governance report inline — reviewers can't claim ignorance of violations
+
+The SOD warning is a soft control, not a hard block. Blocking would be too strict — in small teams, the designer and reviewer might legitimately be the same person, especially early in deployment. The warning creates an audit trail of the exception without preventing legitimate work.
+
+---
+
 ## Session 005 — 2026-03-13: From Tool to Platform
 
 ### The UX Reckoning

@@ -253,10 +253,16 @@ Tracks resource consumption per session for post-project cost estimation.
 | Home page redesign | Server component, 3 role variants (designer/reviewer/admin), DB reads | ~8K in / ~4K out |
 | Layout nav update | Added Pipeline link | ~2K in / ~0.5K out |
 | Blueprint Workbench redesign | Three-column, 7-section stepper, Submit for Review, inline violations | ~12K in / ~6K out |
-| Documentation | Session log, _index.md, roadmap, effort log, project journal | ~8K in / ~5K out |
-| **Session total (est.)** | | **~83K in / ~28K out** |
+| Phase A documentation | Session log, _index.md, roadmap, effort log, project journal | ~8K in / ~5K out |
+| Phase B: /api/me | Current user endpoint for SOD checks | ~2K in / ~0.5K out |
+| Phase B: Governance Hub | Coverage stats, violation list, policy library, stage breakdown | ~10K in / ~4K out |
+| Phase B: Audit Trail UI | Filter bar, load-on-demand table, expandable metadata, CSV export | ~10K in / ~5K out |
+| Phase B: ReviewPanel upgrade | Structured form, inline violations, SOD warning, required rationale | ~8K in / ~4K out |
+| Phase B: Registry detail page | currentUser fetch, BlueprintVersion type, ReviewPanel props | ~5K in / ~2K out |
+| Phase B: Layout nav + docs | Governance/Audit links, roadmap, journal, session log | ~6K in / ~3K out |
+| **Session total (est.)** | | **~124K in / ~43K out** |
 
-**Estimated session cost:** Sonnet ~83K in × $3/1M + ~28K out × $15/1M = **$0.25 + $0.42 = ~$0.67**
+**Estimated session cost:** Sonnet ~124K in × $3/1M + ~43K out × $15/1M = **$0.37 + $0.65 = ~$1.02**
 
 ### Samy Effort
 
@@ -264,8 +270,9 @@ Tracks resource consumption per session for post-project cost estimation.
 |---|---|---|---|
 | 35 | "What is the next best action?" (from prior session) + "proceed" | D-Approve | Implicit continuation from session 004 |
 | 36 | Full UX evaluation + refined UX architecture request | D-Scope + D-Arch | High-value strategic direction; set enterprise UX architecture for all future sessions |
+| 37 | "Proceed" | D-Approve | Triggered Phase B implementation |
 
-**Totals:** 2 messages (+ prior session UX prompt) · 1 D-Arch · 1 D-Scope · ~10 min
+**Totals:** 3 messages · 1 D-Arch · 1 D-Scope · 1 D-Approve · ~15 min
 
 ---
 
@@ -273,14 +280,14 @@ Tracks resource consumption per session for post-project cost estimation.
 
 | Metric | Session 001 | Session 002 | Session 003 | Session 004 | Session 005 | Total |
 |---|---|---|---|---|---|---|
-| Est. Claude input tokens | ~288K | ~56K | ~97K | ~88K | ~83K | ~612K |
-| Est. Claude output tokens | ~155K | ~26K | ~41K | ~22K | ~28K | ~272K |
-| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$0.59 | ~$0.67 | ~$6.51 |
-| Samy messages | 20 | 5 | 7 | 2 | 2 | 36 |
-| Samy decisions | 31 | 4 | 6 | 2 | 2 | 45 |
-| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~5 min | ~10 min | ~4.75–5.75 hrs |
-| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Multi-tenancy (22 files) | Phase A UX (7 files) | Full app + hardened + multi-tenant + enterprise UX |
-| Files created/modified | ~130 | ~8 | ~25 | ~22 | ~7 | ~192 |
+| Est. Claude input tokens | ~288K | ~56K | ~97K | ~88K | ~124K | ~653K |
+| Est. Claude output tokens | ~155K | ~26K | ~41K | ~22K | ~43K | ~287K |
+| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$0.59 | ~$1.02 | ~$6.86 |
+| Samy messages | 20 | 5 | 7 | 2 | 3 | 37 |
+| Samy decisions | 31 | 4 | 6 | 2 | 3 | 46 |
+| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~5 min | ~15 min | ~4.75–5.75 hrs |
+| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Multi-tenancy (22 files) | Phase A + B UX (15 files) | Full app + hardened + multi-tenant + enterprise UX |
+| Files created/modified | ~130 | ~8 | ~25 | ~22 | ~15 | ~200 |
 
 ---
 

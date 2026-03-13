@@ -11,6 +11,12 @@ import { ReviewPanel } from "@/components/review/review-panel";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
 
+interface CurrentUser {
+  email: string;
+  name: string;
+  role: string;
+}
+
 interface BlueprintVersion {
   id: string;
   agentId: string;
@@ -21,6 +27,8 @@ interface BlueprintVersion {
   validationReport: ValidationReport | null;
   reviewComment: string | null;
   reviewedAt: string | null;
+  reviewedBy: string | null;
+  createdBy: string | null;
   createdAt: string;
   updatedAt: string;
   abp: ABP;
@@ -41,6 +49,7 @@ export default function AgentDetailPage({
   const [versions, setVersions] = useState<BlueprintVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const tab = searchParams.get("tab");
     if (tab === "review" || tab === "governance" || tab === "versions") return tab;
@@ -66,6 +75,11 @@ export default function AgentDetailPage({
 
   useEffect(() => {
     load();
+    // Fetch current user for SOD check
+    fetch("/api/me")
+      .then((r) => r.json())
+      .then((data) => setCurrentUser(data.user ?? null))
+      .catch(() => {}); // non-critical
   }, [load]);
 
   const handleStatusChange = useCallback((newStatus: Status) => {
@@ -223,6 +237,9 @@ export default function AgentDetailPage({
               version={latest.version}
               submittedAt={latest.updatedAt}
               previousComment={latest.reviewComment}
+              validationReport={latest.validationReport}
+              createdBy={latest.createdBy}
+              currentUserEmail={currentUser?.email ?? null}
               onReviewComplete={handleReviewComplete}
             />
           </div>

@@ -67,13 +67,14 @@ Transforms Intellios from a functional tool into a governed enterprise platform.
 | Navigation update | ✓ Complete | Pipeline link added for all authenticated users. |
 | Registry API enrichment | ✓ Complete | `/api/registry` now returns `violationCount` (derived from stored validation report). |
 
-### Phase B — Governance & Oversight (next)
+### Phase B — Governance & Oversight ✓ Complete (2026-03-13 Session 005)
 
-| Item | Priority | Status |
+| Item | Status | Notes |
 |---|---|---|
-| Governance Hub | P1 | Not started — violation summary, policy library, coverage map |
-| Review Console upgrade | P1 | Not started — inline governance report, structured form, SOD sign-off indicators |
-| Audit Trail UI | P1 | Not started — searchable, filterable, exportable event log |
+| Governance Hub | ✓ Complete | `/governance` — 4-stat coverage overview, agents-requiring-attention list, policy library with type/scope badges, compliance-by-stage table |
+| Review Console upgrade | ✓ Complete | Structured radio decision form (approve/request_changes/reject), inline governance report with violation detail, SOD warning when reviewer = designer, required rationale stored in audit log |
+| Audit Trail UI | ✓ Complete | `/audit` — filter by entity type/actor/date, load-on-demand table, expandable metadata, CSV export. Restricted to compliance_officer + admin. |
+| `/api/me` endpoint | ✓ Complete | Returns current user email/name/role for client-side SOD checks |
 
 ### Phase C — Lifecycle Extension
 

@@ -53,6 +53,17 @@ export default async function RootLayout({
                       Review Queue
                     </Link>
                   )}
+                  {(session.user.role === "compliance_officer" ||
+                    session.user.role === "admin") && (
+                    <>
+                      <Link href="/governance" className="hover:text-gray-900">
+                        Governance
+                      </Link>
+                      <Link href="/audit" className="hover:text-gray-900">
+                        Audit
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
 
