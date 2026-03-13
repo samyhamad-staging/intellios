@@ -15,7 +15,9 @@ type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "
 
 const StatusBody = z.object({
   status: z.enum(["draft", "in_review", "approved", "rejected", "deprecated", "deployed"]),
-  // Optional change-management fields; required at the UI layer for "deployed" transitions
+  // changeRef is required at the API boundary for "deployed" transitions (enforced below).
+  // Accepting it as optional here so Zod parses the field; the business rule is applied
+  // explicitly after auth + transition checks so the error message is domain-specific.
   changeRef: z.string().max(100).optional(),
   deploymentNotes: z.string().max(1000).optional(),
 });
@@ -81,6 +83,16 @@ export async function PATCH(
       return apiError(
         ErrorCode.INVALID_STATE,
         `Cannot transition from ${currentStatus} to ${newStatus}. Allowed: ${allowed.join(", ") || "none"}`
+      );
+    }
+
+    // Require a change reference for all production deployments — enforced at the API
+    // boundary so no UI path (LifecycleControls, direct API call, etc.) can bypass it.
+    if (newStatus === "deployed" && !changeRef?.trim()) {
+      return apiError(
+        ErrorCode.BAD_REQUEST,
+        "A change reference number is required to deploy to production. " +
+          "Obtain a change ticket from your change management system and provide it in the changeRef field."
       );
     }
 

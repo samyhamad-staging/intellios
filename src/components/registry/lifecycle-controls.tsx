@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
 
@@ -44,6 +45,7 @@ export function LifecycleControls({
   currentStatus,
   onStatusChange,
 }: LifecycleControlsProps) {
+  const router = useRouter();
   const [transitioning, setTransitioning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +54,14 @@ export function LifecycleControls({
   if (actions.length === 0) return null;
 
   const handleTransition = async (next: Status) => {
+    // Deployments must go through the Deployment Console where a change
+    // reference number and authorization acknowledgment are required.
+    // This prevents bypassing the change management gate from this surface.
+    if (next === "deployed") {
+      router.push("/deploy");
+      return;
+    }
+
     setTransitioning(true);
     setError(null);
     try {
