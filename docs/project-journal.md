@@ -2,6 +2,34 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 011 — 2026-03-13: Closing the Completeness Loop
+
+### The Problem With Presence
+
+Phase 7 made it possible for a compliance officer to submit their requirements directly. Phase 8 asks the question Phase 7 could not answer: what if they didn't? And what if the ones who did submit requirements provided a policy that was technically present but substantively empty?
+
+Both failure modes are invisible in normal operation. A governance policy named "FINRA Compliance Policy" with no rules and no description passes every type-presence check. It exists. It has a name. It has the right category. But it says nothing about what the agent is allowed or prohibited from doing under FINRA Rule 3110. For SR 11-7 purposes, that policy provides no audit evidence. It is an empty label.
+
+The same invisibility applied to domain absence. If a FINRA-scoped agent had no compliance officer contribution on record, nothing surfaced that gap. The Phase 3 review screen would render normally. The Generate Blueprint button would be available. The omission was silent.
+
+### Two Independent Fixes
+
+The substance enforcement fix is entirely server-side. `checkGovernanceSufficiency` already ran before `mark_intake_complete` could succeed. The new substance pass is a second loop over the same required types, checking each matching policy for meaningful content. A policy is substantive if it has at least one non-empty rule in `rules[]` or a description of at least 25 characters. Below that threshold, the policy is rejected with a specific `_substance` gap type that names the offending policy and tells the AI exactly what to fix. The Claude instruction in the system prompt was updated to warn about this upfront.
+
+The coverage indicator fix is entirely client-side. A new coverage module (`src/lib/intake/coverage.ts`) derives which contribution domains are *expected* from Phase 1 signals — FINRA implies compliance, external APIs imply security and IT, PII data implies compliance, security, and legal, and so on. The missing domains are computed by subtracting covered domains from expected ones. Two UI surfaces now show that delta: a compact amber strip in the Phase 2 sidebar (visible during the conversation, while there is still time to request input), and an informational callout in the Phase 3 review screen (visible before blueprint generation, where a designer can decide whether to proceed anyway). Both are non-blocking — the system records the gap and flags it for reviewers, but does not prevent finalization.
+
+### The Design Choice: Non-Blocking Coverage
+
+The decision to make coverage gaps non-blocking (while making substance gaps hard-blocking) reflects a deliberate asymmetry in the Intellios governance model. A policy with no content is definitively wrong — it provides false audit coverage and cannot be submitted to a regulator. An absent stakeholder contribution is a process gap — it may reflect a legitimate decision (the IT team was not needed for this agent), a practical constraint (the legal team is unavailable this week), or a genuine oversight. The system should surface the absence clearly, attribute it, and ensure reviewers are aware. It should not prevent a designer from proceeding when they have a legitimate reason to.
+
+This asymmetry will become important in the MRM report. When the contribution coverage gap is surfaced in Phase 3, the absence becomes a documented decision rather than an undetected oversight. A compliance officer reviewing the MRM report will see which domains had contributions and which did not — and for the ones that did not, will see that the designer was informed and proceeded deliberately.
+
+### The Compound Effect
+
+Phase 6 established what governance was required. Phase 7 made it possible to capture who said what. Phase 8 ensures that what was captured is real — that policies contain actual controls, and that domain absences are visible rather than silent. The three phases together turn intake from a form-filling exercise into a structured, auditable evidence assembly process.
+
+---
+
 ## Session 010 — 2026-03-13: From Consultation to Evidence
 
 ### The Gap That Phase 6 Left Open

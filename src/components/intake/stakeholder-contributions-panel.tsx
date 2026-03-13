@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ContributionDomain, StakeholderContribution } from "@/lib/types/intake";
+import { ContributionDomain, IntakeContext, StakeholderContribution } from "@/lib/types/intake";
+import { getMissingContributionDomains } from "@/lib/intake/coverage";
 import { StakeholderContributionForm } from "./stakeholder-contribution-form";
 
 // ── Domain display helpers ────────────────────────────────────────────────────
@@ -61,6 +62,7 @@ interface Props {
   sessionId: string;
   contributions: StakeholderContribution[];
   onContributionAdded: (contribution: StakeholderContribution) => void;
+  context?: IntakeContext;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -69,8 +71,11 @@ export function StakeholderContributionsPanel({
   sessionId,
   contributions,
   onContributionAdded,
+  context,
 }: Props) {
   const [showForm, setShowForm] = useState(false);
+
+  const missingDomains = context ? getMissingContributionDomains(context, contributions) : [];
 
   function handleSubmitted(contribution: StakeholderContribution) {
     onContributionAdded(contribution);
@@ -100,6 +105,23 @@ export function StakeholderContributionsPanel({
           </button>
         )}
       </div>
+
+      {/* Coverage gap strip */}
+      {missingDomains.length > 0 && (
+        <div className="text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2 mb-3">
+          <span className="text-amber-700 font-medium">⚠ Expected input missing: </span>
+          <span className="inline-flex flex-wrap gap-1 mt-1">
+            {missingDomains.map((domain) => (
+              <span
+                key={domain}
+                className={`inline-flex px-1.5 py-0.5 rounded border text-xs font-medium ${DOMAIN_COLORS[domain] ?? "bg-gray-50 text-gray-700 border-gray-200"}`}
+              >
+                {DOMAIN_LABELS[domain] ?? domain}
+              </span>
+            ))}
+          </span>
+        </div>
+      )}
 
       {/* Existing contributions */}
       {contributions.length > 0 && (
