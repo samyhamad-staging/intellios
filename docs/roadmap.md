@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Post-MVP Phase 1 (in progress — hardening complete, multi-tenancy and deployment remain)
+## Current Phase: Post-MVP Phase 1 (P0 complete — multi-tenancy enforced; P2 items remain: distributed rate limiting, deployment pipeline)
 
 ---
 
@@ -46,7 +46,7 @@ Prerequisite work before Intellios can serve real enterprise users.
 | Request correlation IDs | P1 | ✓ Complete (Session 003) | `X-Request-Id` injected by middleware, threaded through all routes and error responses |
 | Environment variable validation | P1 | ✓ Complete (Session 003) | `src/lib/env.ts` validates DATABASE_URL, ANTHROPIC_API_KEY, AUTH_SECRET at startup |
 | Intake Engine UX | P1 | ✓ Complete (Session 003) | Dynamic system prompt, markdown rendering, suggested prompts, session history, sidebar detail |
-| Multi-tenancy | P0 | Not started | Row-level security or application-level `enterprise_id` filtering. Schema columns exist. |
+| Multi-tenancy | P0 | ✓ Complete (Session 004) | Application-level `enterprise_id` filtering on all 16 routes; `assertEnterpriseAccess()` helper; admin has cross-enterprise access |
 | ABP schema evolution strategy | P1 | Not started | Migration strategy needed before v1.1.0. See OQ-007. |
 | Deployment pipeline | P2 | Not started | Package approved ABPs for delivery to target runtime environments. |
 | Distributed rate limiting | P2 | Not started | Current in-memory limiter does not work across multiple server instances. Replace with Redis. |

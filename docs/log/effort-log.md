@@ -206,18 +206,48 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 004 — 2026-03-13
+
+**Duration:** Single context window
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Schema + auth audit | Read 20+ files to map enterprise_id gaps across all tables and routes | ~25K in / ~3K out |
+| Schema changes | schema.ts (3 tables), auth.ts, next-auth.d.ts, AuditEntry type | ~10K in / ~4K out |
+| New helpers | enterprise.ts (assertEnterpriseAccess), migration 0004 | ~5K in / ~2K out |
+| Route enforcement (16 routes) | Read + edit all API route handlers | ~40K in / ~8K out |
+| TypeScript check + cleanup | npx tsc --noEmit, drizzle-kit artifact cleanup | ~3K in / ~1K out |
+| Documentation | Session log, _index.md, roadmap, effort log, project journal | ~5K in / ~4K out |
+| **Session total (est.)** | | **~88K in / ~22K out** |
+
+**Estimated session cost:** Sonnet ~88K in × $3/1M + ~22K out × $15/1M = **$0.26 + $0.33 = ~$0.59**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 33 | "What is the next best action?" | D-Approve | Claude recommended multi-tenancy |
+| 34 | "proceed" | D-Approve | Full implementation delegated |
+
+**Totals:** 2 messages · 2 D-Approve · ~5 min
+
+---
+
 ## Running Totals
 
-| Metric | Session 001 | Session 002 | Session 003 | Total |
-|---|---|---|---|---|
-| Est. Claude input tokens | ~288K | ~56K | ~97K | ~441K |
-| Est. Claude output tokens | ~155K | ~26K | ~41K | ~222K |
-| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$5.25 |
-| Samy messages | 20 | 5 | 7 | 32 |
-| Samy decisions | 31 | 4 | 6 | 41 |
-| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~4.5–5.5 hrs |
-| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Full app + hardened |
-| Files created/modified | ~130 | ~8 | ~25 | ~163 |
+| Metric | Session 001 | Session 002 | Session 003 | Session 004 | Total |
+|---|---|---|---|---|---|
+| Est. Claude input tokens | ~288K | ~56K | ~97K | ~88K | ~529K |
+| Est. Claude output tokens | ~155K | ~26K | ~41K | ~22K | ~244K |
+| Est. Claude cost | ~$3.78 | ~$0.56 | ~$0.91 | ~$0.59 | ~$5.84 |
+| Samy messages | 20 | 5 | 7 | 2 | 34 |
+| Samy decisions | 31 | 4 | 6 | 2 | 43 |
+| Samy est. time | ~3–4 hrs | ~15 min | ~45 min | ~5 min | ~4.5–5.5 hrs |
+| Code shipped | All 5 MVP components | 1 bug fix | 8 hardening + UX commits | Multi-tenancy (22 files) | Full app + hardened + multi-tenant |
+| Files created/modified | ~130 | ~8 | ~25 | ~22 | ~185 |
 
 ---
 

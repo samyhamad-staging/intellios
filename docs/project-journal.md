@@ -2,6 +2,45 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 004 — 2026-03-13: Crossing the Multi-Tenancy Threshold
+
+### Why Multi-Tenancy Was the Last P0
+
+Every other Post-MVP Phase 1 item was additive — rate limiting, security headers, audit logging. They hardened an already-correct system. Multi-tenancy was different: it was a correctness gap. Without it, every authenticated user had implicit access to all data regardless of which enterprise they belonged to. The system was only safe in single-tenant deployments where all users shared a trust boundary. That constraint had to be lifted before any real enterprise could be onboarded.
+
+### The Architecture Decision
+
+The alternative to application-level enforcement was row-level security (RLS) at the Postgres layer. RLS is more airtight — the database enforces isolation even if application code has bugs — but it requires a fundamentally different authentication model (each enterprise gets its own connection context or the RLS policy uses a session variable set per request). Given that the project uses a connection pool with a single service credential, RLS would have required significant infrastructure changes.
+
+Application-level enforcement was the right call for this phase: it's explicit, testable, and the enforcement logic lives where the business rules live. The `assertEnterpriseAccess()` helper makes the check visible at every call site rather than hidden in database machinery.
+
+### The Design
+
+Two patterns emerged naturally:
+
+1. **Single-resource routes** (blueprint by ID, intake session by ID, registry agent by agentId): fetch the resource, then call `assertEnterpriseAccess(resource.enterpriseId, user)`. The response is either null (proceed) or a 403 (return immediately). This is explicit and colocated with the not-found check.
+
+2. **List routes** (registry, review queue, audit log): the WHERE clause carries the filter. No post-fetch filtering — the database does the work. This is more efficient and scales correctly as data volumes grow.
+
+Governance policies needed a third pattern: GET returns global (null enterpriseId) plus the caller's enterprise-specific policies. This reflects the real semantics — platform-level policies apply to everyone; enterprise policies layer on top.
+
+### What enterpriseId on blueprints enables
+
+The key insight was denormalizing `enterpriseId` onto `agent_blueprints` rather than deriving it via a JOIN through `intake_sessions`. This means:
+- Every blueprint read does zero additional DB queries for the enterprise check
+- The validate route dropped a JOIN it had been doing to get enterprise scope from the session
+- Future index on `(enterprise_id)` can support efficient tenant-scoped list queries
+
+### The Remaining Roadmap
+
+Phase 1 is now P0-complete. All the items that were hard blockers for enterprise use have shipped. What remains is P2:
+- Distributed rate limiting (Redis) — the in-memory limiter doesn't work across multiple server instances, which matters only in horizontally scaled deployments
+- Deployment pipeline — packaging approved ABPs for delivery to target runtime environments
+
+The next most valuable technical work is the ABP schema evolution strategy (OQ-007, P1) — defining how schema versions migrate before any v1.1.0 changes are made. This is architectural design work, not implementation.
+
+---
+
 ## Session 002 — 2026-03-12: First Live Run
 
 ### The Gap Between "Complete" and "Working"
