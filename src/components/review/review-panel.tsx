@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ValidationReport } from "@/lib/governance/types";
 import { VersionDiff } from "@/components/registry/version-diff";
-import { Sparkles, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Sparkles, ThumbsUp, ThumbsDown, CheckCircle } from "lucide-react";
 
 type ReviewAction = "approve" | "reject" | "request_changes";
 
@@ -80,6 +80,7 @@ export function ReviewPanel({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiBrief, setAiBrief] = useState<null | "loading" | RiskBrief>(null);
+  const [stepToast, setStepToast] = useState<string | null>(null);
 
   // ── AI Risk Brief ───────────────────────────────────────────────────────────
   async function generateAiBrief() {
@@ -123,7 +124,17 @@ export function ReviewPanel({
       if (!res.ok) {
         throw new Error(data.error ?? "Review submission failed");
       }
-      onReviewComplete(data.status);
+      if (data.nextApproverLabel) {
+        // Intermediate step — show advancement toast, then notify parent
+        setStepToast(`Approval submitted — advancing to ${data.nextApproverLabel}`);
+        setTimeout(() => {
+          setStepToast(null);
+          onReviewComplete(data.status);
+        }, 2000);
+      } else {
+        // Final step — close immediately
+        onReviewComplete(data.status);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Review submission failed");
     } finally {
@@ -364,6 +375,14 @@ export function ReviewPanel({
           This rationale is stored in the audit log and visible to the designer.
         </p>
       </div>
+
+      {/* Step advancement toast */}
+      {stepToast && (
+        <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800 flex items-center gap-2">
+          <CheckCircle size={14} className="shrink-0 text-green-600" />
+          {stepToast}
+        </div>
+      )}
 
       {/* Error */}
       {error && (

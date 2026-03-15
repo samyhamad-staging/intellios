@@ -429,14 +429,16 @@ export default function AgentDetailPage({
             currentStatus={latest.status}
             onStatusChange={handleStatusChange}
           />
+          {/* MRM Report — visible to all authenticated users */}
+          <Link
+            href={`/blueprints/${latest.id}/report`}
+            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+          >
+            View MRM Report
+          </Link>
+          {/* Compliance exports — restricted to compliance_officer + admin */}
           {(currentUser?.role === "compliance_officer" || currentUser?.role === "admin") && (
             <>
-              <Link
-                href={`/blueprints/${latest.id}/report`}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-              >
-                View MRM Report
-              </Link>
               {(latest.status === "approved" || latest.status === "deployed") && (
                 <a
                   href={`/api/blueprints/${latest.id}/export/compliance`}

@@ -71,20 +71,7 @@ export default async function MRMReportPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const role = session.user.role;
-  if (role !== "compliance_officer" && role !== "admin") {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <p className="text-sm font-medium text-red-600">Access denied</p>
-          <p className="mt-1 text-xs text-gray-500">MRM reports are restricted to compliance officers and administrators.</p>
-          <Link href="/registry" className="mt-3 inline-block text-xs text-gray-400 underline">
-            Back to Registry
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // MRM report is read-only evidence — accessible to all authenticated enterprise members.
 
   const { id } = await params;
 
