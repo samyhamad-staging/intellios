@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Phase 34 ✓ Complete (2026-03-15) — Showcase Readiness
+## Current Phase: Phase 35 ✓ Complete (2026-03-15) — Demo Flow Fidelity
 
 ---
 
@@ -688,6 +688,19 @@ Hardens Intellios for live demo showcasing. Six targeted deliverables that colle
 | `src/app/blueprints/[id]/report/loading.tsx` — MRM skeleton | P1 | ✓ Complete | Co-located Suspense skeleton; prevents blank screen during 2–5s `assembleMRMReport()`; matches report structure |
 | Intelligence page cold-start message | P1 | ✓ Complete | Non-admins now see actionable message; only admins see "Generate Briefing" CTA |
 | `docs/demo/DEMO_SETUP.md` | P0 | ✓ Complete | Complete setup guide: prerequisites, env vars, DB commands, credentials, 12-min 9-stop demo flow, troubleshooting, what not to demo live |
+
+---
+
+## Phase 35 — Demo Flow Fidelity ✓ Complete (2026-03-15 Session 040)
+
+Fixes three demo-blocking gaps identified by systematic codebase audit of all 9 showcase stops. No DB migrations. No new npm dependencies.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| MRM Report access — extend to all roles | P0 | ✓ Complete | Removed role restriction on report page + registry link; compliance exports remain gated to compliance_officer + admin |
+| Governance Hub — inline "Preview Impact" on policy cards | P0 | ✓ Complete | `SimResult` type + `simulatingId`/`simResults` state + `handlePreviewImpact()` + button + inline result panel (counts + agent list with registry links); reuses existing simulate API |
+| Review panel — step advancement toast | P1 | ✓ Complete | 2s green toast "Approval submitted — advancing to [label]" on intermediate step; checks `data.nextApproverLabel` in API response |
+| DEMO_SETUP.md corrections | P1 | ✓ Complete | Stops 4, 5, 6, 9 updated to reflect working flows |
 
 ---
 
