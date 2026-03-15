@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { tool, zodSchema } from "ai";
-import { IntakePayload, IntakeContext, CaptureVerificationItem, PolicyQualityItem } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext, IntakeRiskTier, CaptureVerificationItem, PolicyQualityItem } from "@/lib/types/intake";
 
 /**
  * Derive which governance policies are required given the intake context.
@@ -9,9 +9,29 @@ import { IntakePayload, IntakeContext, CaptureVerificationItem, PolicyQualityIte
 function checkGovernanceSufficiency(
   payload: IntakePayload,
   context: IntakeContext | null | undefined,
-  captureVerification?: CaptureVerificationItem[]
+  captureVerification?: CaptureVerificationItem[],
+  riskTier?: IntakeRiskTier | null
 ): Array<{ type: string; reason: string }> {
   if (!context) return [];
+
+  // Tier-based early return: low-risk agents skip most checks
+  if (riskTier === "low") {
+    const policyTypes = (payload.governance?.policies ?? []).map((p) => p.type);
+    const hasAnyPolicy = policyTypes.length > 0;
+    const gaps: Array<{ type: string; reason: string }> = [];
+    // Low risk only requires identity + tools (checked separately); governance is optional
+    // Only block on explicitly uncaptured items from capture verification
+    for (const item of captureVerification ?? []) {
+      if (item.capturedAs === null) {
+        gaps.push({
+          type: "uncaptured requirement",
+          reason: `"${item.area}": ${item.mentioned} — was discussed but not captured.`,
+        });
+      }
+    }
+    void hasAnyPolicy; // suppress unused warning
+    return gaps;
+  }
 
   const policyTypes = (payload.governance?.policies ?? []).map((p) => p.type);
   const hasPolicy = (type: string) => policyTypes.includes(type as never);
@@ -82,6 +102,24 @@ function checkGovernanceSufficiency(
     requiredTypes.push("access_control");
   }
 
+  // Tier-driven additional requirements
+  if (riskTier === "high" || riskTier === "critical") {
+    if (!requiredTypes.includes("compliance")) requiredTypes.push("compliance");
+    if (!requiredTypes.includes("audit")) requiredTypes.push("audit");
+    if (!hasAuditRetention)
+      gaps.push({ type: "audit config with retention_days", reason: `${riskTier} risk tier requires a defined audit retention period` });
+  }
+  if (riskTier === "critical") {
+    if (!requiredTypes.includes("safety")) requiredTypes.push("safety");
+    if (!requiredTypes.includes("data_handling")) requiredTypes.push("data_handling");
+    if (!requiredTypes.includes("access_control")) requiredTypes.push("access_control");
+    for (const type of ["safety", "compliance", "data_handling", "access_control"] as const) {
+      if (!(payload.governance?.policies ?? []).some((p) => p.type === type)) {
+        gaps.push({ type: `${type} policy`, reason: `critical risk tier requires all 5 policy types` });
+      }
+    }
+  }
+
   for (const requiredType of requiredTypes) {
     const matchingPolicy = (payload.governance?.policies ?? []).find((p) => p.type === requiredType);
     if (matchingPolicy && !isSubstantive(matchingPolicy)) {
@@ -112,7 +150,8 @@ export function createIntakeTools(
   getPayload: () => IntakePayload,
   updatePayload: (updater: (current: IntakePayload) => IntakePayload) => Promise<void>,
   finalizeSession: () => Promise<void>,
-  getContext?: () => IntakeContext | null | undefined
+  getContext?: () => IntakeContext | null | undefined,
+  getRiskTier?: () => IntakeRiskTier | null | undefined
 ) {
   return {
     set_agent_identity: tool({
@@ -374,7 +413,8 @@ export function createIntakeTools(
 
         // Context-driven governance sufficiency check (includes capture verification gate)
         const context = getContext?.();
-        const governanceGaps = checkGovernanceSufficiency(payload, context, captureVerification);
+        const riskTier = getRiskTier?.() ?? null;
+        const governanceGaps = checkGovernanceSufficiency(payload, context, captureVerification, riskTier);
         if (governanceGaps.length > 0) {
           const gapList = governanceGaps.map((g) => `• ${g.type} (${g.reason})`).join("\n");
           return {

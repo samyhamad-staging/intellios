@@ -103,6 +103,38 @@ export interface PolicyQualityItem {
   reason: string;
 }
 
+/**
+ * AgentType — functional classification of the agent being designed.
+ * Derived via a small Haiku generateObject call immediately after Phase 1 form submit.
+ *
+ * automation      : Executes predefined workflows, process orchestration, no human-facing output
+ * decision-support: Analyzes data and presents recommendations to human decision-makers
+ * autonomous      : Takes consequential actions without human approval in the loop
+ * data-access     : Queries, retrieves, summarizes data — read-only, no actuation
+ */
+export type AgentType = "automation" | "decision-support" | "autonomous" | "data-access";
+
+/**
+ * IntakeRiskTier — governance risk classification derived deterministically from EU AI Act mapping.
+ *
+ * low      ← "minimal-risk"    : Internal only, public/internal data, no regulated scope
+ * medium   ← "limited-risk"   : Customer/partner-facing OR internal with confidential data
+ * high     ← "high-risk"      : Customer-facing + PII/confidential, OR any regulated scope
+ * critical ← "review-required": FINRA/SOX customer-facing, HIPAA, PCI-DSS, or regulated + external
+ */
+export type IntakeRiskTier = "low" | "medium" | "high" | "critical";
+
+/**
+ * IntakeClassification — computed immediately after Phase 1 context submit.
+ * Stored in the intakeSessions row; drives conversation depth, domain gating, and blueprint quality.
+ */
+export interface IntakeClassification {
+  agentType: AgentType;
+  riskTier: IntakeRiskTier;
+  /** 1–2 sentence explanation shown to the designer in the classification header */
+  rationale: string;
+}
+
 export interface IntakePayload {
   identity?: {
     name?: string;

@@ -22,6 +22,8 @@ export const intakeSessions = pgTable("intake_sessions", {
   status: text("status").notNull().default("active"), // active | completed | abandoned
   intakePayload: jsonb("intake_payload").notNull().default({}),
   intakeContext: jsonb("intake_context"), // Phase 1 structured context — null until Phase 1 is submitted
+  agentType: text("agent_type"),   // "automation" | "decision-support" | "autonomous" | "data-access" | null
+  riskTier:  text("risk_tier"),    // "low" | "medium" | "high" | "critical" | null
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

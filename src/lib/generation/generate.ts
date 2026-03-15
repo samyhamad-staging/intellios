@@ -1,7 +1,7 @@
 import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { ABPContentSchema, ABPContent, ABP } from "@/lib/types/abp";
-import { IntakePayload } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext, IntakeClassification } from "@/lib/types/intake";
 import { GovernancePolicy } from "@/lib/governance/types";
 import { buildGenerationSystemPrompt } from "./system-prompt";
 import { randomUUID } from "crypto";
@@ -16,13 +16,15 @@ import { randomUUID } from "crypto";
  */
 export async function generateBlueprint(
   intake: IntakePayload,
+  intakeContext: IntakeContext | null | undefined,
+  classification: IntakeClassification | null | undefined,
   sessionId: string,
   policies?: GovernancePolicy[]
 ): Promise<ABP> {
   const { object: content } = await generateObject({
     model: anthropic("claude-sonnet-4-20250514"),
     schema: ABPContentSchema,
-    system: buildGenerationSystemPrompt(policies),
+    system: buildGenerationSystemPrompt(policies, intakeContext ?? null, classification ?? null),
     prompt: `Generate a complete Agent Blueprint Package from this intake data:\n\n${JSON.stringify(intake, null, 2)}`,
   });
 

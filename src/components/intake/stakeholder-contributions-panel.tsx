@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ContributionDomain, IntakeContext, StakeholderContribution } from "@/lib/types/intake";
+import { ContributionDomain, IntakeContext, IntakeRiskTier, StakeholderContribution } from "@/lib/types/intake";
 import { getMissingContributionDomains } from "@/lib/intake/coverage";
 import { StakeholderContributionForm } from "./stakeholder-contribution-form";
 
@@ -63,6 +63,7 @@ interface Props {
   contributions: StakeholderContribution[];
   onContributionAdded: (contribution: StakeholderContribution) => void;
   context?: IntakeContext;
+  riskTier?: IntakeRiskTier | null;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -72,10 +73,11 @@ export function StakeholderContributionsPanel({
   contributions,
   onContributionAdded,
   context,
+  riskTier,
 }: Props) {
   const [showForm, setShowForm] = useState(false);
 
-  const missingDomains = context ? getMissingContributionDomains(context, contributions) : [];
+  const missingDomains = context ? getMissingContributionDomains(context, contributions, riskTier) : [];
 
   function handleSubmitted(contribution: StakeholderContribution) {
     onContributionAdded(contribution);

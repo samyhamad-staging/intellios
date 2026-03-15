@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { generateBlueprint } from "@/lib/generation/generate";
 import { validateBlueprint } from "@/lib/governance/validator";
 import { loadPolicies } from "@/lib/governance/load-policies";
-import { IntakePayload } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext, IntakeClassification, AgentType, IntakeRiskTier } from "@/lib/types/intake";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
@@ -54,7 +54,18 @@ export async function POST(request: NextRequest) {
     }
 
     const intake = session.intakePayload as IntakePayload;
+    const intakeContext = (session.intakeContext as IntakeContext | null) ?? null;
     const enterpriseId = session.enterpriseId ?? null;
+
+    // Build classification from session columns if available
+    const intakeClassification: IntakeClassification | null =
+      session.agentType && session.riskTier
+        ? {
+            agentType: session.agentType as AgentType,
+            riskTier: session.riskTier as IntakeRiskTier,
+            rationale: "",
+          }
+        : null;
 
     // Load enterprise policies once — passed to both generation (so Claude can satisfy
     // them proactively) and validation (skips the redundant second DB query).
@@ -63,7 +74,7 @@ export async function POST(request: NextRequest) {
     // Generate the ABP via Claude
     let abp;
     try {
-      abp = await generateBlueprint(intake, sessionId, policies);
+      abp = await generateBlueprint(intake, intakeContext, intakeClassification, sessionId, policies);
     } catch (err) {
       console.error(`[${requestId}] Claude generateBlueprint failed:`, err);
       return aiError(err, requestId);
