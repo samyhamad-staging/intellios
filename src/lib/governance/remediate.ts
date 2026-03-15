@@ -53,7 +53,7 @@ export async function addRemediationSuggestions(
 
   try {
     const { object } = await generateObject({
-      model: anthropic("claude-sonnet-4-20250514"),
+      model: anthropic("claude-3-5-haiku-20241022"),
       schema: RemediationSchema,
       system: `You are a governance advisor for enterprise AI agents.
 Given an Agent Blueprint Package and a list of governance violations, provide specific, actionable remediation suggestions.

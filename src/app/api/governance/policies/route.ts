@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { governancePolicies } from "@/lib/db/schema";
-import { or, isNull, eq } from "drizzle-orm";
+import { or, isNull, eq, and } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
@@ -29,12 +29,17 @@ export async function GET(request: NextRequest) {
   const requestId = getRequestId(request);
 
   try {
-    const filter =
+    // Phase 22: only return active (non-superseded) policy versions
+    const activeOnly = isNull(governancePolicies.supersededAt);
+
+    const enterpriseFilter =
       authSession.user.role === "admin"
         ? undefined
         : authSession.user.enterpriseId
         ? or(isNull(governancePolicies.enterpriseId), eq(governancePolicies.enterpriseId, authSession.user.enterpriseId))
         : isNull(governancePolicies.enterpriseId);
+
+    const filter = enterpriseFilter ? and(activeOnly, enterpriseFilter) : activeOnly;
 
     const policies = await db
       .select()

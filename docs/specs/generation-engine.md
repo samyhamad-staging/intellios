@@ -1,7 +1,7 @@
 # Generation Engine — Specification
 
 **Subsystem:** Design Studio
-**Status:** Complete
+**Status:** Complete — Phase 17 (generation intelligence, 2026-03-13)
 
 ## Purpose
 
@@ -51,6 +51,30 @@ Refinement re-calls `generateObject` with:
 
 The full ABP is regenerated with the change applied. The original blueprint's `metadata.id` and `created_at` are preserved; `refinementCount` is incremented in the database.
 
+### Policy-Aware Generation (Phase 17)
+
+`generateBlueprint(intake, sessionId, policies?)` and `refineBlueprint(current, changeRequest, intake, policies?)` accept an optional `policies?: GovernancePolicy[]` parameter. When provided, `buildGenerationSystemPrompt(policies)` appends a `## Enterprise Governance Policies` block to the generation system prompt.
+
+The block lists every policy rule with severity-tagged prefixes:
+- **`[ERROR]`** — blueprint MUST satisfy these; a violation blocks submission for review
+- **`[WARN]`** — blueprint SHOULD satisfy these; violation is flagged but non-blocking
+
+Each rule is rendered as: `- [SEVERITY] \`field.path\` must \`operator\` \`value\` — human message`
+
+Claude is instructed to satisfy all error-severity rules proactively during generation, eliminating the generate → violate → refine cycle that was previously the most common source of wasted API calls.
+
+When policies are absent (no enterprise, or first call before policies are loaded), `buildGenerationSystemPrompt()` returns the base prompt unchanged — fully backward-compatible.
+
+### Policy Loading and the Double-Query Elimination (Phase 17)
+
+The generate route (`POST /api/blueprints`) and refine route (`POST /api/blueprints/[id]/refine`) each load enterprise policies once via `loadPolicies(enterpriseId)` and pass the result to both the generation function and `validateBlueprint`. The validator's optional `policies?` parameter skips the internal DB query when policies are pre-supplied:
+
+```typescript
+const resolvedPolicies = policies ?? await loadPolicies(enterpriseId);
+```
+
+This eliminates the second DB round-trip that previously occurred when the generate route called `validateBlueprint` without pre-loaded policies.
+
 ### Data Model
 
 | Table | Purpose |
@@ -69,4 +93,4 @@ Key columns: `id`, `session_id` (FK), `abp` (JSONB), `status`, `refinement_count
 
 ### UI
 
-`/blueprints/[id]` renders the ABP with a refinement panel. The initial ABP is passed as base64-encoded JSON in the URL from the intake page to avoid a redundant fetch. The refinement panel accepts free-text change requests and shows the updated blueprint in place.
+`/blueprints/[id]` renders the ABP with a refinement panel. The workbench always fetches the ABP from the API on mount (`GET /api/blueprints/[id]`); the generate redirect passes only `agentId` as a URL parameter. The refinement panel accepts free-text change requests and shows the updated blueprint in place.

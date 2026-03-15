@@ -2,8 +2,18 @@
 
 import { useState } from "react";
 import { ValidationReport } from "@/lib/governance/types";
+import { VersionDiff } from "@/components/registry/version-diff";
+import { Sparkles, ThumbsUp, ThumbsDown, CheckCircle } from "lucide-react";
 
 type ReviewAction = "approve" | "reject" | "request_changes";
+
+interface RiskBrief {
+  riskLevel: "low" | "medium" | "high";
+  summary: string;
+  keyPoints: string[];
+  recommendation: "approve" | "request_changes" | "reject";
+  recommendationReason: string;
+}
 
 interface ReviewPanelProps {
   blueprintId: string;
@@ -15,6 +25,10 @@ interface ReviewPanelProps {
   createdBy: string | null;
   currentUserEmail: string | null;
   onReviewComplete: (newStatus: string) => void;
+  /** Id of the prior blueprint version — if provided, a collapsible diff section is shown */
+  previousBlueprintId?: string | null;
+  /** Version string of the prior blueprint, e.g. "1.0.0" */
+  previousVersion?: string | null;
 }
 
 const ACTIONS: {
@@ -57,11 +71,29 @@ export function ReviewPanel({
   createdBy,
   currentUserEmail,
   onReviewComplete,
+  previousBlueprintId = null,
+  previousVersion = null,
 }: ReviewPanelProps) {
   const [selectedAction, setSelectedAction] = useState<ReviewAction | null>(null);
+  const [diffExpanded, setDiffExpanded] = useState(false);
   const [rationale, setRationale] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiBrief, setAiBrief] = useState<null | "loading" | RiskBrief>(null);
+  const [stepToast, setStepToast] = useState<string | null>(null);
+
+  // ── AI Risk Brief ───────────────────────────────────────────────────────────
+  async function generateAiBrief() {
+    setAiBrief("loading");
+    try {
+      const res = await fetch(`/api/blueprints/${blueprintId}/review-brief`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to generate brief");
+      setAiBrief(data.brief as RiskBrief);
+    } catch {
+      setAiBrief(null);
+    }
+  }
 
   // ── SOD check ───────────────────────────────────────────────────────────────
   const isSodViolation =
@@ -92,7 +124,17 @@ export function ReviewPanel({
       if (!res.ok) {
         throw new Error(data.error ?? "Review submission failed");
       }
-      onReviewComplete(data.status);
+      if (data.nextApproverLabel) {
+        // Intermediate step — show advancement toast, then notify parent
+        setStepToast(`Approval submitted — advancing to ${data.nextApproverLabel}`);
+        setTimeout(() => {
+          setStepToast(null);
+          onReviewComplete(data.status);
+        }, 2000);
+      } else {
+        // Final step — close immediately
+        onReviewComplete(data.status);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Review submission failed");
     } finally {
@@ -100,8 +142,104 @@ export function ReviewPanel({
     }
   }
 
+  const riskLevelConfig = {
+    low: { badge: "bg-green-100 text-green-700", label: "Low Risk" },
+    medium: { badge: "bg-amber-100 text-amber-700", label: "Medium Risk" },
+    high: { badge: "bg-red-100 text-red-700", label: "High Risk" },
+  };
+  const recConfig = {
+    approve: { badge: "bg-green-100 text-green-700", label: "Approve" },
+    request_changes: { badge: "bg-amber-100 text-amber-700", label: "Request Changes" },
+    reject: { badge: "bg-red-100 text-red-700", label: "Reject" },
+  };
+
   return (
     <div className="space-y-5">
+      {/* AI Risk Brief */}
+      <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
+        <div className="flex items-center justify-between">
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700"><Sparkles size={12} />AI Risk Brief</span>
+          {aiBrief === null && (
+            <button
+              onClick={generateAiBrief}
+              className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 transition-colors"
+            >
+              <Sparkles size={11} />Generate Brief
+            </button>
+          )}
+          {aiBrief !== null && aiBrief !== "loading" && (
+            <button
+              onClick={() => setAiBrief(null)}
+              className="text-xs text-indigo-400 hover:text-indigo-600"
+            >
+              Dismiss
+            </button>
+          )}
+        </div>
+        {aiBrief === "loading" && (
+          <div className="mt-3 space-y-2 animate-pulse">
+            <div className="h-3 w-3/4 rounded bg-indigo-200" />
+            <div className="h-3 w-full rounded bg-indigo-200" />
+            <div className="h-3 w-2/3 rounded bg-indigo-200" />
+            <p className="mt-2 text-xs text-indigo-400">Analyzing blueprint…</p>
+          </div>
+        )}
+        {aiBrief !== null && aiBrief !== "loading" && (
+          <div className="mt-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${riskLevelConfig[aiBrief.riskLevel].badge}`}>
+                {riskLevelConfig[aiBrief.riskLevel].label}
+              </span>
+              <p className="text-sm text-gray-700">{aiBrief.summary}</p>
+            </div>
+            {aiBrief.keyPoints.length > 0 && (
+              <ul className="space-y-1">
+                {aiBrief.keyPoints.map((pt, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-sm text-gray-600">
+                    <span className="mt-1 shrink-0 text-indigo-400">•</span>
+                    {pt}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex items-center gap-2 rounded-md border border-indigo-100 bg-white px-3 py-2">
+              <span className="text-xs text-gray-500">Suggested action:</span>
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${recConfig[aiBrief.recommendation].badge}`}>
+                {recConfig[aiBrief.recommendation].label}
+              </span>
+              <span className="text-xs text-gray-500">— {aiBrief.recommendationReason}</span>
+            </div>
+          </div>
+        )}
+        {aiBrief === null && (
+          <p className="mt-1.5 text-xs text-indigo-400">Generate a Claude-powered risk analysis of this blueprint before deciding.</p>
+        )}
+      </div>
+
+      {/* Version diff — shown when this is a re-review (prior version exists) */}
+      {previousBlueprintId && (
+        <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+          <button
+            onClick={() => setDiffExpanded((e) => !e)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+          >
+            <span className="text-sm font-medium text-gray-800">
+              Changes from v{previousVersion} → v{version}
+            </span>
+            <span className="text-gray-400 text-xs">{diffExpanded ? "▲" : "▼"}</span>
+          </button>
+          {diffExpanded && (
+            <div className="border-t border-gray-100 px-4 py-4">
+              <VersionDiff
+                blueprintId={blueprintId}
+                compareWithId={previousBlueprintId}
+                defaultCollapsed={false}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Agent summary header */}
       <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
         <div className="flex items-baseline justify-between">
@@ -238,6 +376,14 @@ export function ReviewPanel({
         </p>
       </div>
 
+      {/* Step advancement toast */}
+      {stepToast && (
+        <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800 flex items-center gap-2">
+          <CheckCircle size={14} className="shrink-0 text-green-600" />
+          {stepToast}
+        </div>
+      )}
+
       {/* Error */}
       {error && (
         <p className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
@@ -249,7 +395,7 @@ export function ReviewPanel({
       <button
         onClick={submitReview}
         disabled={!selectedAction || !rationale.trim() || submitting}
-        className={`w-full rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-40 ${
+        className={`inline-flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-40 ${
           selectedAction === "approve"
             ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-green-600"
             : selectedAction === "reject"
@@ -259,6 +405,8 @@ export function ReviewPanel({
             : "bg-gray-900 text-white hover:bg-gray-800"
         }`}
       >
+        {selectedAction === "approve" && <ThumbsUp size={14} />}
+        {selectedAction === "reject" && <ThumbsDown size={14} />}
         {submitting
           ? "Submitting…"
           : selectedAction

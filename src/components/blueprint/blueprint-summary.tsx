@@ -215,6 +215,44 @@ export function BlueprintSummary({ abp, status }: BlueprintSummaryProps) {
         )}
       </Section>
 
+      {/* Ownership & Classification */}
+      {abp.ownership && (abp.ownership.businessUnit || abp.ownership.ownerEmail || abp.ownership.costCenter || abp.ownership.deploymentEnvironment || abp.ownership.dataClassification) && (
+        <Section title="Ownership & Classification">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+            {abp.ownership.businessUnit && (
+              <div>
+                <dt className="font-medium text-gray-400">Business Unit</dt>
+                <dd className="mt-0.5 text-gray-700">{abp.ownership.businessUnit}</dd>
+              </div>
+            )}
+            {abp.ownership.ownerEmail && (
+              <div>
+                <dt className="font-medium text-gray-400">Owner</dt>
+                <dd className="mt-0.5 text-gray-700">{abp.ownership.ownerEmail}</dd>
+              </div>
+            )}
+            {abp.ownership.costCenter && (
+              <div>
+                <dt className="font-medium text-gray-400">Cost Center</dt>
+                <dd className="mt-0.5 text-gray-700">{abp.ownership.costCenter}</dd>
+              </div>
+            )}
+            {abp.ownership.deploymentEnvironment && (
+              <div>
+                <dt className="font-medium text-gray-400">Environment</dt>
+                <dd className="mt-0.5 capitalize text-gray-700">{abp.ownership.deploymentEnvironment}</dd>
+              </div>
+            )}
+            {abp.ownership.dataClassification && (
+              <div>
+                <dt className="font-medium text-gray-400">Data Classification</dt>
+                <dd className="mt-0.5 capitalize text-gray-700">{abp.ownership.dataClassification}</dd>
+              </div>
+            )}
+          </dl>
+        </Section>
+      )}
+
       {/* Tags */}
       {abp.metadata?.tags && abp.metadata.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">

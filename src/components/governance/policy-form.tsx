@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,6 +47,27 @@ export interface PolicyFormValues {
   rules: PolicyRule[];
 }
 
+// ─── Simulation result types ──────────────────────────────────────────────────
+
+interface SimulationBlueprintResult {
+  blueprintId: string;
+  agentName: string;
+  agentId: string;
+  status: "new_violations" | "resolved_violations" | "no_change";
+  newViolationCount: number;
+  resolvedViolationCount: number;
+}
+
+interface SimulationResult {
+  summary: {
+    total: number;
+    newViolations: number;
+    resolvedViolations: number;
+    noChange: number;
+  };
+  blueprints: SimulationBlueprintResult[];
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface PolicyFormProps {
@@ -54,6 +76,8 @@ interface PolicyFormProps {
   submitLabel?: string;
   saving?: boolean;
   readOnly?: boolean;
+  /** When provided, the "Preview Impact" button is shown and this ID is sent as existingPolicyId */
+  existingPolicyId?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -200,12 +224,19 @@ export default function PolicyForm({
   submitLabel = "Save",
   saving = false,
   readOnly = false,
+  existingPolicyId,
 }: PolicyFormProps) {
   const [name, setName] = useState(initialValues?.name ?? "");
   const [type, setType] = useState<PolicyType>(initialValues?.type ?? "compliance");
   const [description, setDescription] = useState(initialValues?.description ?? "");
   const [rules, setRules] = useState<PolicyRule[]>(initialValues?.rules ?? []);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // ── Impact simulation state ────────────────────────────────────────────────
+  const [simulating, setSimulating] = useState(false);
+  const [simResult, setSimResult] = useState<SimulationResult | null>(null);
+  const [simError, setSimError] = useState<string | null>(null);
+  const [simDirty, setSimDirty] = useState(false); // true when form changed after last simulation
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
@@ -245,14 +276,70 @@ export default function PolicyForm({
 
   function updateRule(index: number, updated: PolicyRule) {
     setRules((prev) => prev.map((r, i) => (i === index ? updated : r)));
+    setSimDirty(true);
   }
 
   function removeRule(index: number) {
     setRules((prev) => prev.filter((_, i) => i !== index));
+    setSimDirty(true);
   }
 
   function addRule() {
     setRules((prev) => [...prev, emptyRule()]);
+    setSimDirty(true);
+  }
+
+  async function handleSimulate() {
+    if (rules.length === 0) {
+      setSimError("Add at least one rule before previewing impact.");
+      return;
+    }
+    setSimulating(true);
+    setSimError(null);
+    setSimResult(null);
+    setSimDirty(false);
+
+    try {
+      const payload: Record<string, unknown> = {
+        policy: {
+          name: name.trim() || "Draft Policy",
+          description: description.trim() || undefined,
+          type,
+          rules: rules.map((r) => ({
+            id: r.id,
+            field: r.field,
+            operator: r.operator,
+            value: r.value,
+            severity: r.severity,
+            message: r.message,
+          })),
+        },
+      };
+      if (existingPolicyId) {
+        payload.existingPolicyId = existingPolicyId;
+      }
+
+      const res = await fetch("/api/governance/policies/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setSimError(
+          (data as { message?: string }).message ?? "Simulation failed"
+        );
+        return;
+      }
+
+      const data = (await res.json()) as SimulationResult;
+      setSimResult(data);
+    } catch {
+      setSimError("Network error. Please try again.");
+    } finally {
+      setSimulating(false);
+    }
   }
 
   return (
@@ -268,7 +355,7 @@ export default function PolicyForm({
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => { setName(e.target.value); setSimDirty(true); }}
             placeholder="e.g. PII Data Handling Policy"
             disabled={readOnly}
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:border-blue-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
@@ -282,7 +369,7 @@ export default function PolicyForm({
           </label>
           <select
             value={type}
-            onChange={(e) => setType(e.target.value as PolicyType)}
+            onChange={(e) => { setType(e.target.value as PolicyType); setSimDirty(true); }}
             disabled={readOnly}
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-blue-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
           >
@@ -376,6 +463,136 @@ export default function PolicyForm({
           ))}
         </div>
       </div>
+
+      {/* ── Impact Simulation ─────────────────────────────────────────────────── */}
+      {!readOnly && (
+        <div className="rounded-xl border border-gray-200 bg-white px-6 py-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">Impact Preview</h2>
+              <p className="mt-0.5 text-xs text-gray-400">
+                See how this policy would affect approved and deployed blueprints before saving.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleSimulate}
+              disabled={simulating || rules.length === 0}
+              className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700 hover:bg-purple-100 disabled:opacity-50 transition-colors"
+            >
+              {simulating ? "Analyzing…" : "Preview Impact"}
+            </button>
+          </div>
+
+          {simDirty && simResult && (
+            <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              ⚠ Simulation may be outdated — policy has changed since last preview.
+            </div>
+          )}
+
+          {simError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {simError}
+            </div>
+          )}
+
+          {simResult && !simDirty && (
+            <div className="space-y-3">
+              {/* Summary row */}
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  {
+                    label: "Total checked",
+                    value: simResult.summary.total,
+                    color: "bg-gray-50 border-gray-200 text-gray-700",
+                  },
+                  {
+                    label: "New violations",
+                    value: simResult.summary.newViolations,
+                    color:
+                      simResult.summary.newViolations > 0
+                        ? "bg-red-50 border-red-200 text-red-700"
+                        : "bg-gray-50 border-gray-200 text-gray-700",
+                  },
+                  {
+                    label: "Resolved",
+                    value: simResult.summary.resolvedViolations,
+                    color:
+                      simResult.summary.resolvedViolations > 0
+                        ? "bg-green-50 border-green-200 text-green-700"
+                        : "bg-gray-50 border-gray-200 text-gray-700",
+                  },
+                  {
+                    label: "Unaffected",
+                    value: simResult.summary.noChange,
+                    color: "bg-gray-50 border-gray-200 text-gray-700",
+                  },
+                ].map(({ label, value, color }) => (
+                  <div
+                    key={label}
+                    className={`rounded-lg border px-3 py-2 text-center ${color}`}
+                  >
+                    <div className="text-lg font-bold">{value}</div>
+                    <div className="text-xs">{label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Affected blueprints */}
+              {simResult.blueprints.filter(
+                (b) => b.status !== "no_change"
+              ).length > 0 && (
+                <div className="space-y-1">
+                  {simResult.blueprints
+                    .filter((b) => b.status !== "no_change")
+                    .map((bp) => (
+                      <div
+                        key={bp.blueprintId}
+                        className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${
+                          bp.status === "new_violations"
+                            ? "border-red-200 bg-red-50"
+                            : "border-green-200 bg-green-50"
+                        }`}
+                      >
+                        <Link
+                          href={`/registry/${bp.agentId}`}
+                          className="font-medium text-gray-900 hover:underline truncate"
+                        >
+                          {bp.agentName}
+                        </Link>
+                        <span
+                          className={`shrink-0 ml-3 text-xs font-medium ${
+                            bp.status === "new_violations"
+                              ? "text-red-700"
+                              : "text-green-700"
+                          }`}
+                        >
+                          {bp.status === "new_violations"
+                            ? `+${bp.newViolationCount} violation${bp.newViolationCount !== 1 ? "s" : ""}`
+                            : `−${bp.resolvedViolationCount} violation${bp.resolvedViolationCount !== 1 ? "s" : ""}`}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {simResult.summary.newViolations === 0 &&
+                simResult.summary.resolvedViolations === 0 && (
+                  <p className="text-xs text-gray-500 text-center py-2">
+                    ✓ No deployed blueprints would be affected by this policy.
+                  </p>
+                )}
+            </div>
+          )}
+
+          {!simResult && !simError && !simulating && (
+            <p className="text-xs text-gray-400 py-2">
+              Click &quot;Preview Impact&quot; to check how this policy would affect your{" "}
+              approved and deployed blueprints.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* ── Submit ────────────────────────────────────────────────────────────── */}
       {!readOnly && (

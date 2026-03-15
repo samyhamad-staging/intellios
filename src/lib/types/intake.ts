@@ -60,6 +60,81 @@ export interface StakeholderContribution {
   createdAt: string; // ISO 8601
 }
 
+/**
+ * AmbiguityFlag — a requirement flagged as ambiguous or contradictory during intake.
+ * Stored in IntakePayload._flags; surfaced in Phase 3 review.
+ */
+export interface AmbiguityFlag {
+  id: string;
+  field: string;
+  description: string;
+  userStatement: string;
+  flaggedAt: string;
+  resolved: boolean;
+}
+
+/**
+ * CaptureVerificationItem — one entry in Claude's self-assessment of requirement capture.
+ * For every significant requirement mentioned in the intake conversation, Claude records
+ * what was heard and how (or whether) it was captured via a tool call.
+ * Stored in IntakePayload._captureVerification; surfaced in Phase 3 review.
+ */
+export interface CaptureVerificationItem {
+  /** Topic area (e.g., "constraints", "data retention", "safety guardrails") */
+  area: string;
+  /** What the user said about this area during the conversation */
+  mentioned: string;
+  /** How it was captured — tool name + field (e.g., "set_constraints.denied_actions"). Null if not captured. */
+  capturedAs: string | null;
+}
+
+/**
+ * PolicyQualityItem — Claude's quality assessment for one governance policy.
+ * adequate=true means the policy contains specific, operational requirements.
+ * adequate=false is a warning (not a blocker) — surfaced in Phase 3 for reviewer attention.
+ * Stored in IntakePayload._policyQualityAssessment.
+ */
+export interface PolicyQualityItem {
+  /** Exact name of the governance policy as captured */
+  policyName: string;
+  /** True if specific and operational; false if too abstract to be enforced */
+  adequate: boolean;
+  /** One-sentence rationale for the rating */
+  reason: string;
+}
+
+/**
+ * AgentType — functional classification of the agent being designed.
+ * Derived via a small Haiku generateObject call immediately after Phase 1 form submit.
+ *
+ * automation      : Executes predefined workflows, process orchestration, no human-facing output
+ * decision-support: Analyzes data and presents recommendations to human decision-makers
+ * autonomous      : Takes consequential actions without human approval in the loop
+ * data-access     : Queries, retrieves, summarizes data — read-only, no actuation
+ */
+export type AgentType = "automation" | "decision-support" | "autonomous" | "data-access";
+
+/**
+ * IntakeRiskTier — governance risk classification derived deterministically from EU AI Act mapping.
+ *
+ * low      ← "minimal-risk"    : Internal only, public/internal data, no regulated scope
+ * medium   ← "limited-risk"   : Customer/partner-facing OR internal with confidential data
+ * high     ← "high-risk"      : Customer-facing + PII/confidential, OR any regulated scope
+ * critical ← "review-required": FINRA/SOX customer-facing, HIPAA, PCI-DSS, or regulated + external
+ */
+export type IntakeRiskTier = "low" | "medium" | "high" | "critical";
+
+/**
+ * IntakeClassification — computed immediately after Phase 1 context submit.
+ * Stored in the intakeSessions row; drives conversation depth, domain gating, and blueprint quality.
+ */
+export interface IntakeClassification {
+  agentType: AgentType;
+  riskTier: IntakeRiskTier;
+  /** 1–2 sentence explanation shown to the designer in the classification header */
+  rationale: string;
+}
+
 export interface IntakePayload {
   identity?: {
     name?: string;
@@ -108,4 +183,12 @@ export interface IntakePayload {
       pii_redaction?: boolean;
     };
   };
+
+  // ── Internal metadata (underscore-prefixed, not part of the ABP) ───────────
+  /** Ambiguity flags raised during the intake conversation */
+  _flags?: AmbiguityFlag[];
+  /** Capture verification produced by Claude at finalization */
+  _captureVerification?: CaptureVerificationItem[];
+  /** Policy quality assessment produced by Claude at finalization */
+  _policyQualityAssessment?: PolicyQualityItem[];
 }

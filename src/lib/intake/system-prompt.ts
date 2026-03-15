@@ -1,4 +1,5 @@
-import { IntakePayload, IntakeContext, StakeholderContribution } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext, StakeholderContribution, IntakeClassification, AgentType, IntakeRiskTier } from "@/lib/types/intake";
+import { GovernancePolicy } from "@/lib/governance/types";
 
 const BASE_PROMPT = `You are the Intellios Intake Assistant. Your role is to help enterprise users define the requirements for a new AI agent through natural conversation.
 
@@ -103,6 +104,15 @@ function buildContextBlock(context: IntakeContext): string {
   lines.push("");
   lines.push("**Policy substance requirement**: When adding a governance policy with `add_governance_policy`, always include at least one specific rule in `rules[]` or a substantive `description` (≥25 characters). Empty policy shells will be rejected at finalization — specify the actual controls, prohibitions, or requirements the policy enforces.");
   lines.push("");
+  lines.push("**Per-type quality standards** — a policy is adequate only if it meets the minimum for its type:");
+  lines.push("- **safety**: name at least one specific prohibited behavior or required guardrail (e.g., 'never provide investment advice', 'always escalate threats to personal safety') — 'agents must be safe' is not adequate");
+  lines.push("- **compliance**: reference the specific regulation AND state what the agent must or must not do (e.g., 'under FINRA Rule 2111, must not make suitability recommendations without prior customer profile verification')");
+  lines.push("- **data_handling**: specify what data categories are in scope and the retention, deletion, or masking rule that applies to each");
+  lines.push("- **access_control**: specify who or what is authorized and the enforcement mechanism (e.g., 'only authenticated users with role=analyst may invoke query tools; OAuth 2.0 required')");
+  lines.push("- **audit**: specify at minimum the retention period in days and whether interaction logging is enabled");
+  lines.push("");
+  lines.push("**At finalization** (`mark_intake_complete`): you must provide `captureVerification` — enumerating every significant requirement discussed and confirming it was captured — and `policyQualityAssessment` — rating whether each policy meets the above standards. Uncaptured requirements will block finalization. Policies rated inadequate are flagged for reviewer attention.");
+  lines.push("");
   lines.push("If any of the above are not captured when the user tries to finalize, `mark_intake_complete` will reject the call with a clear explanation of what is missing.");
 
   return lines.join("\n");
@@ -161,10 +171,111 @@ function buildContributionsBlock(contributions: StakeholderContribution[]): stri
   return lines.join("\n");
 }
 
+function buildPoliciesBlock(policies: GovernancePolicy[]): string {
+  if (policies.length === 0) return "";
+
+  const lines: string[] = [
+    "",
+    "## Active Enterprise Governance Policies",
+    "",
+    `This enterprise has ${policies.length} governance polic${policies.length === 1 ? "y" : "ies"} that will be evaluated against every blueprint generated from this session.`,
+    "Design the agent to satisfy these policies from the start — do not wait for the validation step to discover failures.",
+    "",
+    "**Error-severity rules [ERROR] MUST be satisfied** — blueprints that violate them cannot be submitted for review.",
+    "**Warning-severity rules [WARN] should be satisfied** — violations are flagged but do not block submission.",
+    "",
+  ];
+
+  for (const policy of policies) {
+    lines.push(`### ${policy.name} (type: ${policy.type})`);
+    if (policy.description) {
+      lines.push(`*${policy.description}*`);
+      lines.push("");
+    }
+    if (policy.rules.length === 0) {
+      lines.push("_(No rules defined for this policy — presence check only.)_");
+    } else {
+      for (const rule of policy.rules) {
+        const valueStr = rule.value !== undefined ? ` \`${JSON.stringify(rule.value)}\`` : "";
+        lines.push(
+          `- [${rule.severity === "error" ? "ERROR" : "WARN"}] \`${rule.field}\` **${rule.operator}**${valueStr} — ${rule.message}`
+        );
+      }
+    }
+    lines.push("");
+  }
+
+  lines.push(
+    "When a rule references a field path (e.g., `governance.policies`, `capabilities.tools`), ensure the blueprint structure satisfies the condition at that path.",
+    "Use `add_governance_policy` to attach governance policies matching the required types; use `set_audit_config`, `add_tool`, `set_constraints`, and `set_instructions` for the remaining fields."
+  );
+
+  return lines.join("\n");
+}
+
+const AGENT_TYPE_DESCRIPTIONS: Record<AgentType, string> = {
+  "automation": "executes predefined workflows and process orchestration with no direct human-facing output",
+  "decision-support": "analyzes data and presents recommendations or insights to human decision-makers",
+  "autonomous": "takes consequential actions without human approval in the loop",
+  "data-access": "queries, retrieves, and summarizes data in a read-only capacity",
+};
+
+const RISK_TIER_DESCRIPTIONS: Record<IntakeRiskTier, string> = {
+  "low": "internal-only, minimal data sensitivity, no regulatory scope — lightweight governance required",
+  "medium": "customer/partner-facing or handling confidential data — standard governance required",
+  "high": "customer-facing with PII/confidential data or regulated scope — deep governance required",
+  "critical": "HIPAA, FINRA/SOX customer-facing, or regulated data in external deployment — exhaustive governance required",
+};
+
+const RISK_TIER_DEPTH_INSTRUCTIONS: Record<IntakeRiskTier, string> = {
+  "low": `## Conversation Depth (LOW RISK)
+This is a low-risk agent. Apply a streamlined governance approach:
+- Capture functionality quickly (target 5–8 conversation turns)
+- Governance: capture agent identity, tools, and a brief safety acknowledgment
+- No mandatory stakeholder domain coverage required
+- Aim for concise, rapid finalization — do not probe for compliance/legal/security policies unless the user raises them`,
+
+  "medium": `## Conversation Depth (MEDIUM RISK)
+This is a medium-risk agent. Apply standard governance depth:
+- Follow normal conversation flow and complete domain coverage guidelines
+- Governance rules derived from context signals apply (see Mandatory Governance Probing Rules above)
+- Complete stakeholder domain contributions are expected before finalization`,
+
+  "high": `## Conversation Depth (HIGH RISK)
+This is a high-risk agent. Apply deep governance capture:
+- Probe for every governance policy type relevant to the context — do not leave gaps
+- Explicitly remind the designer that compliance and security stakeholder contributions are expected before finalization
+- Do NOT rush to finalize — ensure all governance areas are substantively addressed
+- All context-signal governance rules above are mandatory; also look for data_handling and audit gaps`,
+
+  "critical": `## Conversation Depth (CRITICAL RISK)
+This is a critical-risk agent. Apply exhaustive governance capture:
+- ALL five policy types are required: safety, compliance, data_handling, access_control, audit
+- Every governance gap MUST be flagged and addressed before finalization
+- Explicitly remind the designer that legal, compliance, security, and risk domain contributions are required
+- Do not accept vague or abstract policies — enforce the per-type quality standards strictly
+- Finalization will be blocked unless all five policy types are present and substantive`,
+};
+
+function buildClassificationBlock(classification: IntakeClassification): string {
+  return [
+    "",
+    "## Agent Classification",
+    "",
+    `Type: **${classification.agentType}** — ${AGENT_TYPE_DESCRIPTIONS[classification.agentType]}`,
+    `Risk Tier: **${classification.riskTier.toUpperCase()}** — ${RISK_TIER_DESCRIPTIONS[classification.riskTier]}`,
+    "",
+    RISK_TIER_DEPTH_INSTRUCTIONS[classification.riskTier],
+    "",
+  ].join("\n");
+}
+
 export function buildIntakeSystemPrompt(
   payload: IntakePayload,
   context?: IntakeContext | null,
-  contributions?: StakeholderContribution[]
+  contributions?: StakeholderContribution[],
+  policies?: GovernancePolicy[],
+  classification?: IntakeClassification | null
 ): string {
   const identity = payload.identity;
   const capabilities = payload.capabilities;
@@ -267,9 +378,15 @@ export function buildIntakeSystemPrompt(
   // Inject context block if context was provided in Phase 1
   const contextBlock = context ? buildContextBlock(context) : "";
 
-  // Inject contributions block between context and current state (when non-empty)
+  // Inject classification block (after context, before policies) when available
+  const classificationBlock = classification ? buildClassificationBlock(classification) : "";
+
+  // Inject active enterprise policies so Claude designs blueprints pre-adapted to them
+  const policiesBlock = policies && policies.length > 0 ? buildPoliciesBlock(policies) : "";
+
+  // Inject contributions block between policies and current state (when non-empty)
   const contributionsBlock =
     contributions && contributions.length > 0 ? buildContributionsBlock(contributions) : "";
 
-  return BASE_PROMPT + contextBlock + contributionsBlock + lines.join("\n");
+  return BASE_PROMPT + contextBlock + classificationBlock + policiesBlock + contributionsBlock + lines.join("\n");
 }

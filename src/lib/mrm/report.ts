@@ -5,6 +5,8 @@ import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
 import { IntakeContext, StakeholderContribution } from "@/lib/types/intake";
 import { getMissingContributionDomains } from "@/lib/intake/coverage";
+import { assessAllFrameworks } from "@/lib/regulatory/classifier";
+import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import { MRMReport } from "./types";
 
 /**
@@ -154,6 +156,41 @@ export async function assembleMRMReport(
     return "approved";
   })();
 
+  // ── Section 14: Periodic Review Schedule ─────────────────────────────────
+  const enterpriseSettings = await getEnterpriseSettings(blueprint.enterpriseId ?? null);
+  const periodicReviewSettings = enterpriseSettings.periodicReview;
+  const nextReviewDueAt = blueprint.nextReviewDue?.toISOString() ?? null;
+  const lastPeriodicReviewAt = blueprint.lastPeriodicReviewAt?.toISOString() ?? null;
+  const isOverdue = nextReviewDueAt != null && new Date(nextReviewDueAt) < new Date();
+
+  // ── Section 12: Regulatory Framework Assessment ──────────────────────────
+  const regulatoryAssessment = assessAllFrameworks({
+    blueprintId,
+    abp,
+    intakeContext,
+    validationReport,
+    deploymentHealthStatus: blueprint.status === "deployed" ? "deployed" : null,
+  });
+  const regulatoryFrameworks: MRMReport["regulatoryFrameworks"] = {
+    assessedAt: regulatoryAssessment.assessedAt,
+    frameworks: regulatoryAssessment.frameworks.map((fw) => {
+      const applicable = fw.requirements.filter((r) => r.evidenceStatus !== "not_applicable");
+      const satisfied = applicable.filter((r) => r.evidenceStatus === "satisfied").length;
+      const gaps = applicable
+        .filter((r) => r.evidenceStatus === "missing")
+        .map((r) => r.title);
+      return {
+        frameworkId: fw.frameworkId,
+        frameworkName: fw.frameworkName,
+        overallStatus: fw.overallStatus,
+        ...(fw.euAiActRiskTier ? { euAiActRiskTier: fw.euAiActRiskTier } : {}),
+        requirementsSatisfied: satisfied,
+        requirementsTotal: applicable.length,
+        gaps,
+      };
+    }),
+  };
+
   // ── Assemble ──────────────────────────────────────────────────────────────
   return {
     generatedAt: new Date().toISOString(),
@@ -240,6 +277,27 @@ export async function assembleMRMReport(
       deployedBy: deployEvent?.actorEmail ?? null,
       changeRef: (deployMeta?.changeRef as string) ?? null,
       deploymentNotes: (deployMeta?.deploymentNotes as string) ?? null,
+      deploymentTarget: blueprint.deploymentTarget ?? null,
+      agentcoreRecord: (() => {
+        if (blueprint.deploymentTarget !== "agentcore" || !blueprint.deploymentMetadata) return null;
+        const m = blueprint.deploymentMetadata as Record<string, unknown>;
+        if (
+          typeof m.agentId !== "string" ||
+          typeof m.agentArn !== "string" ||
+          typeof m.region !== "string" ||
+          typeof m.foundationModel !== "string" ||
+          typeof m.deployedAt !== "string" ||
+          typeof m.deployedBy !== "string"
+        ) return null;
+        return {
+          agentId: m.agentId,
+          agentArn: m.agentArn,
+          region: m.region,
+          foundationModel: m.foundationModel,
+          deployedAt: m.deployedAt,
+          deployedBy: m.deployedBy,
+        };
+      })(),
     },
 
     modelLineage: {
@@ -278,5 +336,15 @@ export async function assembleMRMReport(
           }))
         )
       : null,
+
+    regulatoryFrameworks,
+
+    periodicReviewSchedule: {
+      enabled: periodicReviewSettings.enabled,
+      cadenceMonths: periodicReviewSettings.defaultCadenceMonths,
+      lastPeriodicReviewAt,
+      nextReviewDueAt,
+      isOverdue,
+    },
   };
 }

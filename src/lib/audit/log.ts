@@ -2,9 +2,12 @@ import { db } from "@/lib/db";
 import { auditLog } from "@/lib/db/schema";
 import { dispatch } from "@/lib/events/bus";
 
-// Side-effect import: registers the notification handler with the event bus.
+// Side-effect imports: register event handlers with the event bus.
 // Guaranteed to run on every request that writes an audit entry.
 import "@/lib/notifications/handler";
+import "@/lib/monitoring/policy-impact-handler";
+import "@/lib/webhooks/dispatch";
+import "@/lib/awareness/quality-evaluator";
 
 export type AuditAction =
   | "blueprint.created"
@@ -12,11 +15,23 @@ export type AuditAction =
   | "blueprint.status_changed"
   | "blueprint.reviewed"
   | "blueprint.report_exported"
+  | "blueprint.health_checked"
+  | "blueprint.cloned"
+  | "blueprint.approval_step_completed"
+  | "blueprint.test_run_completed"
+  | "blueprint.agentcore_exported"
+  | "blueprint.agentcore_deployed"
+  | "blueprint.compliance_exported"
   | "intake.finalized"
   | "intake.contribution_submitted"
   | "policy.created"
   | "policy.updated"
-  | "policy.deleted";
+  | "policy.deleted"
+  | "policy.simulated"
+  | "settings.updated"
+  | "blueprint.periodic_review_scheduled"
+  | "blueprint.periodic_review_completed"
+  | "blueprint.periodic_review_reminder";
 
 export interface AuditEntry {
   entityType: "blueprint" | "intake_session" | "policy";

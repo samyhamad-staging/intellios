@@ -1,15 +1,16 @@
 "use client";
 
-import { use, useState, useCallback } from "react";
+import { use, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
 import { ValidationReportView } from "@/components/governance/validation-report";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
+import type { TestRun } from "@/lib/testing/types";
 
 interface BlueprintPageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ abp?: string; agentId?: string; vr?: string }>;
+  searchParams: Promise<{ agentId?: string }>;
 }
 
 // ─── Section stepper ─────────────────────────────────────────────────────────
@@ -62,6 +63,11 @@ function getSections(abp: ABP | null): StepperSection[] {
       label: "Audit",
       filled: !!abp.governance?.audit,
     },
+    {
+      id: "ownership",
+      label: "Ownership",
+      filled: !!(abp.ownership?.businessUnit || abp.ownership?.ownerEmail || abp.ownership?.costCenter),
+    },
   ];
 }
 
@@ -69,23 +75,22 @@ function getSections(abp: ABP | null): StepperSection[] {
 
 export default function BlueprintPage({ params, searchParams }: BlueprintPageProps) {
   const { id } = use(params);
-  const { abp: encodedAbp, agentId, vr: encodedVr } = use(searchParams);
+  const { agentId: agentIdParam } = use(searchParams);
 
-  const [abp, setAbp] = useState<ABP | null>(() => {
-    if (encodedAbp) {
-      try { return JSON.parse(atob(encodedAbp)) as ABP; } catch { return null; }
-    }
-    return null;
-  });
+  // agentId lives in state so the API fetch can populate it when navigating directly
+  // to /blueprints/[id] without going through the generate redirect.
+  const [agentIdState, setAgentIdState] = useState<string | null>(agentIdParam ?? null);
 
-  const [validationReport, setValidationReport] = useState<ValidationReport | null>(() => {
-    if (encodedVr) {
-      try { return JSON.parse(atob(encodedVr)) as ValidationReport; } catch { return null; }
-    }
-    return null;
-  });
+  const [abp, setAbp] = useState<ABP | null>(null);
 
-  const [loading, setLoading] = useState(!abp);
+  const [validationReport, setValidationReport] = useState<ValidationReport | null>(null);
+  // reportIsFresh = false when the report was loaded from the DB (may not reflect
+  // policies that were added or changed after it was run). Set to true only after
+  // validation is run in this browser session.
+  const [reportIsFresh, setReportIsFresh] = useState<boolean>(false);
+
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [change, setChange] = useState("");
   const [refining, setRefining] = useState(false);
@@ -94,15 +99,54 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   const [submitted, setSubmitted] = useState(false);
   const [validating, setValidating] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  // Phase 23: Test Harness state for workbench widget
+  const [testCaseCount, setTestCaseCount] = useState<number>(0);
+  const [latestTestRun, setLatestTestRun] = useState<TestRun | null>(null);
+  const [testDataLoaded, setTestDataLoaded] = useState(false);
+  const [runningWorkbenchTests, setRunningWorkbenchTests] = useState(false);
+  const [testRunExpanded, setTestRunExpanded] = useState(false);
+  const [generationStep, setGenerationStep] = useState(0);
 
-  // Fetch if not already loaded from URL params
+  const [blueprintStatus, setBlueprintStatus] = useState<string>("draft");
+  const [reviewComment, setReviewComment] = useState<string | null>(null);
+
+  const [ownershipOpen, setOwnershipOpen] = useState(false);
+  const [ownershipDraft, setOwnershipDraft] = useState<{
+    businessUnit: string;
+    ownerEmail: string;
+    costCenter: string;
+    deploymentEnvironment: string;
+    dataClassification: string;
+  }>({ businessUnit: "", ownerEmail: "", costCenter: "", deploymentEnvironment: "", dataClassification: "" });
+  const [savingOwnership, setSavingOwnership] = useState(false);
+
+  // Always fetch from API on mount — blueprint content is never passed via URL.
   if (loading && !abp) {
     fetch(`/api/blueprints/${id}`)
       .then((r) => r.json())
       .then((data) => {
-        setAbp(data.abp as ABP);
+        const loadedAbp = data.abp as ABP;
+        setAbp(loadedAbp);
         setRefinementCount(parseInt(data.refinementCount ?? "0", 10));
-        if (data.validationReport) setValidationReport(data.validationReport as ValidationReport);
+        if (data.agentId) setAgentIdState(data.agentId as string);
+        if (data.sessionId) setSessionId(data.sessionId as string);
+        if (data.status) setBlueprintStatus(data.status as string);
+        setReviewComment((data.reviewComment as string | null) ?? null);
+        // Pre-populate ownership draft from existing ABP
+        if (loadedAbp.ownership) {
+          setOwnershipDraft({
+            businessUnit: loadedAbp.ownership.businessUnit ?? "",
+            ownerEmail: loadedAbp.ownership.ownerEmail ?? "",
+            costCenter: loadedAbp.ownership.costCenter ?? "",
+            deploymentEnvironment: loadedAbp.ownership.deploymentEnvironment ?? "",
+            dataClassification: loadedAbp.ownership.dataClassification ?? "",
+          });
+        }
+        if (data.validationReport) {
+          setValidationReport(data.validationReport as ValidationReport);
+          // Report came from DB — may not reflect policy changes since it was run
+          setReportIsFresh(false);
+        }
         setLoading(false);
       })
       .catch(() => {
@@ -128,8 +172,18 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       const data = await res.json();
       setAbp(data.abp as ABP);
       setRefinementCount(parseInt(data.refinementCount ?? "0", 10));
-      setValidationReport(null);
       setChange("");
+      // Auto-validate so the designer doesn't need a manual click before submitting.
+      setValidating(true);
+      try {
+        const vRes = await fetch(`/api/blueprints/${id}/validate`, { method: "POST" });
+        const vData = await vRes.json();
+        if (vData.report) {
+          setValidationReport(vData.report as ValidationReport);
+          setReportIsFresh(true);
+        }
+      } catch { /* non-critical: user can re-validate manually if this fails */ }
+      finally { setValidating(false); }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Refinement failed");
     } finally {
@@ -142,13 +196,111 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
     try {
       const res = await fetch(`/api/blueprints/${id}/validate`, { method: "POST" });
       const data = await res.json();
-      if (data.report) setValidationReport(data.report as ValidationReport);
-    } catch { /* non-critical */ }
-    finally { setValidating(false); }
+      if (data.report) {
+        setValidationReport(data.report as ValidationReport);
+        setReportIsFresh(true);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Validation failed");
+    } finally { setValidating(false); }
   }, [id]);
 
+  const handleSaveOwnership = useCallback(async () => {
+    setSavingOwnership(true);
+    try {
+      const res = await fetch(`/api/blueprints/${id}/ownership`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessUnit: ownershipDraft.businessUnit || null,
+          ownerEmail: ownershipDraft.ownerEmail || null,
+          costCenter: ownershipDraft.costCenter || null,
+          deploymentEnvironment: ownershipDraft.deploymentEnvironment || null,
+          dataClassification: ownershipDraft.dataClassification || null,
+        }),
+      });
+      if (res.ok) {
+        // Update local ABP with saved ownership
+        const de = ownershipDraft.deploymentEnvironment as "production" | "staging" | "sandbox" | "internal" | undefined || undefined;
+        const dc = ownershipDraft.dataClassification as "public" | "internal" | "confidential" | "regulated" | undefined || undefined;
+        setAbp((prev) => prev ? {
+          ...prev,
+          ownership: {
+            businessUnit: ownershipDraft.businessUnit || undefined,
+            ownerEmail: ownershipDraft.ownerEmail || undefined,
+            costCenter: ownershipDraft.costCenter || undefined,
+            deploymentEnvironment: de,
+            dataClassification: dc,
+          },
+        } : prev);
+      }
+    } catch { /* non-critical */ }
+    finally { setSavingOwnership(false); }
+  }, [id, ownershipDraft]);
+
+  // Simulated step progress during blueprint generation
+  const GENERATION_STEPS = [
+    "Building agent identity…",
+    "Defining capabilities and tools…",
+    "Configuring governance constraints…",
+    "Finalizing blueprint…",
+  ];
+  const GENERATION_STEP_DELAYS = [2500, 3000, 3000];
+  useEffect(() => {
+    if (!loading || abp) {
+      setGenerationStep(0);
+      return;
+    }
+    let step = 0;
+    setGenerationStep(0);
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    let elapsed = 0;
+    for (let i = 0; i < GENERATION_STEP_DELAYS.length; i++) {
+      elapsed += GENERATION_STEP_DELAYS[i];
+      const s = i + 1;
+      timeouts.push(setTimeout(() => setGenerationStep(s), elapsed));
+    }
+    return () => timeouts.forEach(clearTimeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, abp]);
+
+  // Load test data (case count + latest run) once agentId + blueprintId are known
+  useEffect(() => {
+    if (!agentIdState || !id || testDataLoaded) return;
+    setTestDataLoaded(true);
+    Promise.all([
+      fetch(`/api/registry/${agentIdState}/test-cases`),
+      fetch(`/api/blueprints/${id}/test-runs?limit=1`),
+    ])
+      .then(async ([casesRes, runsRes]) => {
+        if (casesRes.ok) {
+          const d = await casesRes.json();
+          setTestCaseCount((d.testCases ?? []).length);
+        }
+        if (runsRes.ok) {
+          const d = await runsRes.json();
+          const runs = d.testRuns ?? [];
+          setLatestTestRun(runs[0] ?? null);
+        }
+      })
+      .catch(() => {}); // non-critical
+  }, [agentIdState, id, testDataLoaded]);
+
+  const handleRunWorkbenchTests = useCallback(async () => {
+    if (!id || runningWorkbenchTests) return;
+    setRunningWorkbenchTests(true);
+    try {
+      const res = await fetch(`/api/blueprints/${id}/test-runs`, { method: "POST" });
+      if (res.ok) {
+        const d = await res.json();
+        setLatestTestRun(d.testRun ?? null);
+      }
+    } catch { /* non-critical */ }
+    finally { setRunningWorkbenchTests(false); }
+  }, [id, runningWorkbenchTests]);
+
   const handleSubmitForReview = useCallback(async () => {
-    if (!agentId || submitting) return;
+    if (!agentIdState || submitting) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -167,7 +319,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
     } finally {
       setSubmitting(false);
     }
-  }, [id, agentId, submitting]);
+  }, [id, agentIdState, submitting]);
 
   // ── Derived state ──────────────────────────────────────────────────────────
   const sections = getSections(abp);
@@ -179,9 +331,10 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
 
   const canSubmit =
     !submitted &&
-    agentId &&
+    !!agentIdState &&
     !submitting &&
-    (blockerCount === null || blockerCount === 0);
+    !!validationReport &&
+    blockerCount === 0;
 
   const submitLabel = submitted
     ? "✓ Submitted for Review"
@@ -215,13 +368,31 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-            draft
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            blueprintStatus === "rejected"
+              ? "bg-red-100 text-red-700"
+              : blueprintStatus === "in_review"
+              ? "bg-amber-100 text-amber-700"
+              : blueprintStatus === "approved"
+              ? "bg-green-100 text-green-700"
+              : blueprintStatus === "deployed"
+              ? "bg-blue-100 text-blue-700"
+              : "bg-gray-100 text-gray-600"
+          }`}>
+            {blueprintStatus.replace("_", " ")}
           </span>
           <span className="text-xs text-gray-400 font-mono">{id.slice(0, 8)}</span>
-          {agentId && (
+          {sessionId && (
             <Link
-              href={`/registry/${agentId}`}
+              href={`/intake/${sessionId}`}
+              className="rounded-lg border border-gray-200 px-2.5 py-0.5 text-xs text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+            >
+              ← Intake Session
+            </Link>
+          )}
+          {agentIdState && (
+            <Link
+              href={`/registry/${agentIdState}`}
               className="rounded-lg border border-gray-200 px-2.5 py-0.5 text-xs text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
             >
               View in Registry →
@@ -229,6 +400,26 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           )}
         </div>
       </header>
+
+      {/* Rejection / feedback banner */}
+      {reviewComment && (
+        <div className={`shrink-0 border-b px-6 py-3 flex items-start gap-3 ${
+          blueprintStatus === "rejected"
+            ? "bg-red-50 border-red-200"
+            : "bg-amber-50 border-amber-200"
+        }`}>
+          <span className={`shrink-0 text-sm font-semibold ${
+            blueprintStatus === "rejected" ? "text-red-700" : "text-amber-700"
+          }`}>
+            {blueprintStatus === "rejected" ? "Rejected:" : "Changes requested:"}
+          </span>
+          <span className={`text-sm ${
+            blueprintStatus === "rejected" ? "text-red-700" : "text-amber-700"
+          }`}>
+            {reviewComment}
+          </span>
+        </div>
+      )}
 
       {/* Three-column body */}
       <div className="flex flex-1 overflow-hidden">
@@ -288,9 +479,17 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         <main className="flex-1 overflow-y-auto p-6">
           {loading && (
             <div className="flex h-full items-center justify-center text-gray-400 text-sm">
-              <div className="text-center">
-                <div className="mx-auto mb-3 h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-gray-600" />
-                Generating blueprint…
+              <div className="text-center space-y-3">
+                <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-gray-600" />
+                <p className="text-sm text-gray-500 font-medium">{GENERATION_STEPS[generationStep]}</p>
+                <div className="flex justify-center gap-1.5">
+                  {GENERATION_STEPS.map((_, i) => (
+                    <span
+                      key={i}
+                      className={`h-1.5 w-1.5 rounded-full transition-colors ${i <= generationStep ? "bg-indigo-400" : "bg-gray-200"}`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -310,7 +509,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         <aside className="w-80 shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-y-auto">
 
           {/* Submit for Review */}
-          {agentId && (
+          {agentIdState && (
             <div className="border-b border-gray-200 px-5 py-4">
               <h2 className="text-sm font-semibold">Submit for Review</h2>
 
@@ -321,7 +520,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                     This blueprint is now in the reviewer queue.
                   </p>
                   <Link
-                    href={`/registry/${agentId}`}
+                    href={`/registry/${agentIdState}`}
                     className="mt-2 inline-block text-xs text-green-700 underline hover:text-green-900"
                   >
                     View in Registry →
@@ -330,7 +529,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               ) : (
                 <>
                   {/* Validation status */}
-                  <div className="mt-2 mb-3">
+                  <div className={`mt-2 mb-3 space-y-2 transition-opacity ${(refining || validating) && validationReport ? "opacity-50 pointer-events-none" : ""}`}>
                     {!validationReport && (
                       <div className="flex items-center justify-between">
                         <p className="text-xs text-gray-400">
@@ -347,42 +546,53 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                       </div>
                     )}
                     {validationReport && (
-                      <div
-                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs ${
-                          validationReport.valid
-                            ? "bg-green-50 text-green-700"
-                            : blockerCount! > 0
-                            ? "bg-red-50 text-red-700"
-                            : "bg-yellow-50 text-yellow-700"
-                        }`}
-                      >
-                        <span>
-                          {validationReport.valid
-                            ? "✓ Passes governance"
-                            : blockerCount! > 0
-                            ? `✗ ${blockerCount} error${blockerCount === 1 ? "" : "s"} — must resolve`
-                            : `⚠ ${validationReport.violations.filter(v => v.severity === "warning").length} warning${validationReport.violations.filter(v => v.severity === "warning").length === 1 ? "" : "s"}`}
-                        </span>
-                        <button
-                          onClick={handleValidate}
-                          className="ml-auto underline opacity-60 hover:opacity-100"
+                      <>
+                        <div
+                          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs ${
+                            validationReport.valid
+                              ? "bg-green-50 text-green-700"
+                              : blockerCount! > 0
+                              ? "bg-red-50 text-red-700"
+                              : "bg-yellow-50 text-yellow-700"
+                          }`}
                         >
-                          Re-run
-                        </button>
-                      </div>
+                          <span>
+                            {validationReport.valid
+                              ? "✓ Passes governance"
+                              : blockerCount! > 0
+                              ? `✗ ${blockerCount} error${blockerCount === 1 ? "" : "s"} — must resolve`
+                              : `⚠ ${validationReport.violations.filter(v => v.severity === "warning").length} warning${validationReport.violations.filter(v => v.severity === "warning").length === 1 ? "" : "s"}`}
+                          </span>
+                          <button
+                            onClick={handleValidate}
+                            className="ml-auto underline opacity-60 hover:opacity-100"
+                          >
+                            Re-run
+                          </button>
+                        </div>
+                        {/* Staleness warning: report loaded from DB, policies may have changed */}
+                        {!reportIsFresh && (
+                          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                            <span className="shrink-0 mt-0.5">⚠</span>
+                            <span>
+                              Saved from a previous session — re-validate to check against current policies before submitting.
+                            </span>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 
                   <button
-                    onClick={handleSubmitForReview}
-                    disabled={!canSubmit || loading}
+                    onClick={!validationReport ? handleValidate : handleSubmitForReview}
+                    disabled={loading || validating || (!!validationReport && !canSubmit)}
                     className={`w-full rounded-lg py-2.5 text-sm font-medium transition-colors ${
-                      canSubmit && !loading
+                      !loading && !validating && (canSubmit || !validationReport)
                         ? "bg-yellow-600 text-white hover:bg-yellow-700"
                         : "bg-gray-100 text-gray-400 cursor-not-allowed"
                     }`}
                   >
-                    {submitLabel}
+                    {validating && !validationReport ? "Validating…" : submitLabel}
                   </button>
                   {error && (
                     <p className="mt-1.5 text-xs text-red-600">{error}</p>
@@ -419,7 +629,10 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                       <div>
                         <p className="font-medium text-gray-900">{v.message}</p>
                         {v.suggestion && (
-                          <p className="mt-0.5 text-gray-600">{v.suggestion}</p>
+                          <div className="mt-1.5 border-l-2 border-blue-300 bg-blue-50 rounded px-2 py-1">
+                            <p className="text-blue-600 text-xs font-medium mb-0.5">✦ Suggested fix</p>
+                            <p className="text-blue-800 text-xs">{v.suggestion}</p>
+                          </div>
                         )}
                         <p className="mt-0.5 font-mono text-gray-400">{v.field}</p>
                       </div>
@@ -445,7 +658,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           )}
 
           {/* Validate button if no report yet and no agentId CTA above */}
-          {!agentId && !validationReport && (
+          {!agentIdState && !validationReport && (
             <div className="border-b border-gray-200 px-5 py-4">
               <h2 className="text-sm font-semibold">Governance</h2>
               <div className="mt-3 flex items-center justify-between">
@@ -463,6 +676,148 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               </div>
             </div>
           )}
+
+          {/* Phase 23: Test Suite Widget — shown when we have an agentId (agent exists in registry) */}
+          {agentIdState && (
+            <div className="border-b border-gray-200 px-5 py-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold">Test Suite</h2>
+                {testCaseCount > 0 && (
+                  <button
+                    onClick={handleRunWorkbenchTests}
+                    disabled={runningWorkbenchTests}
+                    className="rounded-lg bg-gray-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                  >
+                    {runningWorkbenchTests ? "Running…" : "Run Tests"}
+                  </button>
+                )}
+              </div>
+              {testCaseCount === 0 ? (
+                <p className="mt-1.5 text-xs text-gray-400">
+                  No test cases defined.{" "}
+                  {agentIdState && (
+                    <Link href={`/registry/${agentIdState}?tab=tests`} className="underline hover:text-gray-700">
+                      Add test cases →
+                    </Link>
+                  )}
+                </p>
+              ) : (
+                <div className="mt-2 space-y-1.5">
+                  <p className="text-xs text-gray-500">
+                    {testCaseCount} case{testCaseCount !== 1 ? "s" : ""}
+                    {latestTestRun && (
+                      <> · Last run:{" "}
+                        <button
+                          onClick={() => setTestRunExpanded((e) => !e)}
+                          className={`font-medium underline decoration-dotted ${latestTestRun.status === "passed" ? "text-green-700" : "text-red-700"}`}
+                        >
+                          {latestTestRun.passedCases}/{latestTestRun.totalCases} passed
+                        </button>
+                        <span className="ml-1 text-gray-400">{testRunExpanded ? "▲" : "▼"}</span>
+                      </>
+                    )}
+                  </p>
+                  {/* Expandable judge rationale per test case */}
+                  {testRunExpanded && latestTestRun?.testResults && latestTestRun.testResults.length > 0 && (
+                    <div className="mt-2 space-y-1.5">
+                      {latestTestRun.testResults.map((tr) => (
+                        <div key={tr.testCaseId} className={`rounded-md border px-2.5 py-2 text-xs ${tr.status === "passed" ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
+                          <div className="flex items-center gap-1.5">
+                            <span>{tr.status === "passed" ? "✓" : "✗"}</span>
+                            <span className={`font-medium ${tr.status === "passed" ? "text-green-800" : "text-red-800"}`}>{tr.name}</span>
+                          </div>
+                          {tr.status !== "passed" && tr.evaluationRationale && (
+                            <p className="mt-1 text-gray-600 italic">Judge: {tr.evaluationRationale}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* Amber strip: test cases exist but no passing run */}
+                  {(!latestTestRun || latestTestRun.status !== "passed") && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                      ⚠ Run tests before submitting for review
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Ownership & Classification */}
+          <div className="border-b border-gray-200">
+            <button
+              onClick={() => setOwnershipOpen((o) => !o)}
+              className="flex w-full items-center justify-between px-5 py-4 text-left"
+            >
+              <div>
+                <h2 className="text-sm font-semibold">Ownership &amp; Classification</h2>
+                <p className="text-xs text-gray-400">
+                  {abp?.ownership?.businessUnit
+                    ? `${abp.ownership.businessUnit}${abp.ownership.ownerEmail ? ` · ${abp.ownership.ownerEmail}` : ""}`
+                    : "Not set"}
+                </p>
+              </div>
+              <span className="text-gray-400 text-xs">{ownershipOpen ? "▴" : "▾"}</span>
+            </button>
+            {ownershipOpen && (
+              <div className="border-t border-gray-100 px-5 pb-4 pt-3 space-y-3">
+                {(
+                  [
+                    { key: "businessUnit", label: "Business Unit", type: "text", placeholder: "e.g. Risk & Compliance" },
+                    { key: "ownerEmail", label: "Owner Email", type: "email", placeholder: "owner@company.com" },
+                    { key: "costCenter", label: "Cost Center", type: "text", placeholder: "e.g. CC-1234" },
+                  ] as { key: keyof typeof ownershipDraft; label: string; type: string; placeholder: string }[]
+                ).map(({ key, label, type, placeholder }) => (
+                  <div key={key}>
+                    <label className="text-xs font-medium text-gray-500">{label}</label>
+                    <input
+                      type={type}
+                      value={ownershipDraft[key]}
+                      onChange={(e) => setOwnershipDraft((d) => ({ ...d, [key]: e.target.value }))}
+                      placeholder={placeholder}
+                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-1.5 text-xs focus:border-gray-400 focus:outline-none"
+                    />
+                  </div>
+                ))}
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Deployment Environment</label>
+                  <select
+                    value={ownershipDraft.deploymentEnvironment}
+                    onChange={(e) => setOwnershipDraft((d) => ({ ...d, deploymentEnvironment: e.target.value }))}
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-1.5 text-xs focus:border-gray-400 focus:outline-none"
+                  >
+                    <option value="">— Select —</option>
+                    <option value="production">Production</option>
+                    <option value="staging">Staging</option>
+                    <option value="sandbox">Sandbox</option>
+                    <option value="internal">Internal</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Data Classification</label>
+                  <select
+                    value={ownershipDraft.dataClassification}
+                    onChange={(e) => setOwnershipDraft((d) => ({ ...d, dataClassification: e.target.value }))}
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-1.5 text-xs focus:border-gray-400 focus:outline-none"
+                  >
+                    <option value="">— Select —</option>
+                    <option value="public">Public</option>
+                    <option value="internal">Internal</option>
+                    <option value="confidential">Confidential</option>
+                    <option value="regulated">Regulated</option>
+                  </select>
+                </div>
+                <button
+                  onClick={handleSaveOwnership}
+                  disabled={savingOwnership}
+                  className="w-full rounded-lg bg-gray-900 py-1.5 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                >
+                  {savingOwnership ? "Saving…" : "Save Ownership"}
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Refinement */}
           <div className="border-b border-gray-200 px-5 py-4">

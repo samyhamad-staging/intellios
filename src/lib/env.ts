@@ -16,6 +16,8 @@ const EnvSchema = z.object({
   AUTH_SECRET: z.string().min(32, {
     message: "AUTH_SECRET must be at least 32 characters",
   }),
+  // Optional — enables Bearer token auth on cron routes (recommended in production)
+  CRON_SECRET: z.string().optional(),
 });
 
 function validateEnv() {
