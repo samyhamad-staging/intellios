@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -12,6 +11,15 @@ interface User {
   role: string;
   enterpriseId: string | null;
   createdAt: string;
+}
+
+interface Invitation {
+  id: string;
+  email: string;
+  role: string;
+  expiresAt: string;
+  createdAt: string;
+  invitedBy: { email: string; name: string };
 }
 
 const ROLES = [
@@ -38,6 +46,16 @@ function RoleBadge({ role }: { role: string }) {
       {label}
     </span>
   );
+}
+
+function timeUntil(dateStr: string): string {
+  const diff = new Date(dateStr).getTime() - Date.now();
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  if (hours < 1) return "< 1 hour";
+  if (hours === 1) return "1 hour";
+  if (hours < 24) return `${hours} hours`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? "1 day" : `${days} days`;
 }
 
 // ─── Create User Form ─────────────────────────────────────────────────────────
@@ -163,6 +181,106 @@ function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
   );
 }
 
+// ─── Invite User Form ─────────────────────────────────────────────────────────
+
+interface InviteFormProps {
+  onInvited: (invitation: Invitation) => void;
+  onCancel: () => void;
+}
+
+function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<string>("designer");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSending(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/admin/users/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, role }),
+      });
+
+      const data = await res.json() as { invitation?: Invitation; message?: string };
+      if (!res.ok) {
+        setError(data.message ?? "Failed to send invitation");
+        setSending(false);
+        return;
+      }
+
+      onInvited(data.invitation!);
+    } catch {
+      setError("Network error. Please try again.");
+      setSending(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="rounded-xl border border-violet-200 bg-violet-50 px-6 py-5 space-y-4">
+      <div>
+        <h3 className="text-sm font-semibold text-gray-900">Invite User</h3>
+        <p className="mt-0.5 text-xs text-gray-500">
+          The invitee will receive an email to create their own account. Invitation expires in 72 hours.
+        </p>
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Email address</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="jane@example.com"
+            required
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
+          >
+            {ROLES.map((r) => (
+              <option key={r.value} value={r.value}>{r.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          type="submit"
+          disabled={sending}
+          className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
+        >
+          {sending ? "Sending…" : "Send Invitation"}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
 // ─── Inline Role Editor ───────────────────────────────────────────────────────
 
 interface RoleEditorProps {
@@ -255,10 +373,14 @@ function InlineRoleEditor({ user, currentUserId, onUpdated }: RoleEditorProps) {
 
 export default function AdminUsersPage() {
   const [userList, setUserList] = useState<User[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [invitationsLoading, setInvitationsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [inviteSuccessToast, setInviteSuccessToast] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch current user ID for self-protection
@@ -281,6 +403,14 @@ export default function AdminUsersPage() {
         setError("Failed to load users");
         setLoading(false);
       });
+
+    fetch("/api/admin/users/invitations")
+      .then((r) => r.json())
+      .then((d: { invitations?: Invitation[] }) => {
+        if (d.invitations) setInvitations(d.invitations);
+        setInvitationsLoading(false);
+      })
+      .catch(() => setInvitationsLoading(false));
   }, []);
 
   function handleCreated(user: User) {
@@ -296,26 +426,50 @@ export default function AdminUsersPage() {
     );
   }
 
+  function handleInvited(invitation: Invitation) {
+    setInvitations((prev) => [...prev, invitation]);
+    setShowInvite(false);
+    setInviteSuccessToast(`Invitation sent to ${invitation.email}`);
+    setTimeout(() => setInviteSuccessToast(null), 4000);
+  }
+
   const roleCounts = ROLES.reduce(
     (acc, r) => ({ ...acc, [r.value]: userList.filter((u) => u.role === r.value).length }),
     {} as Record<string, number>
   );
 
+  const showingForm = showCreate || showInvite;
+
   return (
     <div className="px-8 py-8 space-y-6">
+      {/* Success toast */}
+      {inviteSuccessToast && (
+        <div className="fixed bottom-6 right-6 z-50 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800 shadow-lg">
+          ✓ {inviteSuccessToast}
+        </div>
+      )}
+
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">User Management</h1>
           <p className="mt-0.5 text-sm text-gray-500">Manage enterprise users, roles, and access</p>
         </div>
-        {!showCreate && (
-          <button
-            onClick={() => setShowCreate(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
-          >
-            + New User
-          </button>
+        {!showingForm && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowInvite(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-white px-4 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-50 transition-colors"
+            >
+              ✉ Invite User
+            </button>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+            >
+              + New User
+            </button>
+          </div>
         )}
       </div>
 
@@ -339,6 +493,14 @@ export default function AdminUsersPage() {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Invite form */}
+        {showInvite && (
+          <InviteUserForm
+            onInvited={handleInvited}
+            onCancel={() => setShowInvite(false)}
+          />
         )}
 
         {/* Create form */}
@@ -368,13 +530,21 @@ export default function AdminUsersPage() {
           {!loading && userList.length === 0 && (
             <div className="px-6 py-12 text-center">
               <p className="text-sm text-gray-400">No users yet.</p>
-              {!showCreate && (
-                <button
-                  onClick={() => setShowCreate(true)}
-                  className="mt-3 text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                >
-                  Create the first user →
-                </button>
+              {!showingForm && (
+                <div className="mt-3 flex justify-center gap-4">
+                  <button
+                    onClick={() => setShowInvite(true)}
+                    className="text-sm text-violet-600 hover:text-violet-800 transition-colors"
+                  >
+                    Invite a user →
+                  </button>
+                  <button
+                    onClick={() => setShowCreate(true)}
+                    className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    Create the first user →
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -421,6 +591,58 @@ export default function AdminUsersPage() {
           {userList.length} user{userList.length === 1 ? "" : "s"} in this enterprise.
           Password changes must be performed by each user individually.
         </p>
+
+        {/* Pending Invitations */}
+        <div>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">Pending Invitations</h2>
+
+          {invitationsLoading && (
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-gray-100 last:border-0">
+                  <div className="h-3 w-48 animate-pulse rounded bg-gray-100" />
+                  <div className="h-3 w-24 animate-pulse rounded bg-gray-100 ml-auto" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!invitationsLoading && invitations.length === 0 && (
+            <div className="rounded-xl border border-gray-200 bg-white px-6 py-8 text-center">
+              <p className="text-sm text-gray-400">No pending invitations.</p>
+            </div>
+          )}
+
+          {!invitationsLoading && invitations.length > 0 && (
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <div className="border-b border-gray-100 bg-gray-50 px-6 py-2.5">
+                <div className="grid grid-cols-[2fr_1.5fr_2fr_1fr] gap-4 text-xs font-medium uppercase tracking-wider text-gray-400">
+                  <span>Email</span>
+                  <span>Role</span>
+                  <span>Invited by</span>
+                  <span className="text-right">Expires in</span>
+                </div>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {invitations.map((inv) => (
+                  <div
+                    key={inv.id}
+                    className="grid grid-cols-[2fr_1.5fr_2fr_1fr] gap-4 items-center px-6 py-3"
+                  >
+                    <span className="truncate text-sm text-gray-700">{inv.email}</span>
+                    <RoleBadge role={inv.role} />
+                    <span className="truncate text-xs text-gray-500">
+                      {inv.invitedBy.name || inv.invitedBy.email}
+                    </span>
+                    <span className="text-right text-xs text-amber-600 font-medium">
+                      {timeUntil(inv.expiresAt)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

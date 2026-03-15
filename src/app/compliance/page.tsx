@@ -97,6 +97,12 @@ export default function CompliancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Complete Review modal state
+  const [completeModal, setCompleteModal] = useState<OverdueReviewItem | null>(null);
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [completeError, setCompleteError] = useState<string | null>(null);
+
   // Role gate — redirect non-authorized roles
   useEffect(() => {
     if (sessionStatus === "loading") return;
@@ -130,6 +136,36 @@ export default function CompliancePage() {
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionStatus]);
+
+  async function handleCompleteReview() {
+    if (!completeModal) return;
+    setCompleteError(null);
+    setCompletingId(completeModal.blueprintId);
+    try {
+      const res = await fetch(
+        `/api/blueprints/${completeModal.blueprintId}/periodic-review/complete`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notes: reviewNotes || undefined }),
+        }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setCompleteError((data as { error?: string }).error ?? "Failed to complete review.");
+        return;
+      }
+      // Refresh posture data and close modal
+      const postureData = await fetch("/api/compliance/posture").then((r) => r.json());
+      setPosture(postureData as PostureData);
+      setCompleteModal(null);
+      setReviewNotes("");
+    } catch {
+      setCompleteError("Something went wrong. Please try again.");
+    } finally {
+      setCompletingId(null);
+    }
+  }
 
   if (sessionStatus === "loading" || (loading && !error)) {
     return (
@@ -342,7 +378,15 @@ export default function CompliancePage() {
                                   : "Never"}
                               </td>
                               <td className="px-4 py-3">
-                                <Link href={`/registry/${item.agentId}`} className="text-xs text-blue-600 hover:underline">View →</Link>
+                                <div className="flex items-center gap-3">
+                                  <Link href={`/registry/${item.agentId}`} className="text-xs text-blue-600 hover:underline">View →</Link>
+                                  <button
+                                    onClick={() => { setCompleteModal(item); setReviewNotes(""); setCompleteError(null); }}
+                                    className="text-xs text-violet-700 hover:text-violet-900 font-medium"
+                                  >
+                                    Complete Review
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -670,6 +714,57 @@ export default function CompliancePage() {
           </>
         )}
       </div>
+
+      {/* ── Complete Review Modal ──────────────────────────────────────────── */}
+      {completeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-xl">
+            <h3 className="mb-1 text-base font-semibold text-gray-900">Mark periodic review complete</h3>
+            <p className="mb-4 text-sm text-gray-500">
+              This will record completion for{" "}
+              <span className="font-medium text-gray-900">{completeModal.agentName}</span>{" "}
+              and schedule the next review based on the configured cadence.
+            </p>
+
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Review notes <span className="text-gray-400">(optional)</span>
+              </label>
+              <textarea
+                value={reviewNotes}
+                onChange={(e) => setReviewNotes(e.target.value)}
+                rows={3}
+                maxLength={1000}
+                placeholder="Findings, actions taken, or conclusions from the review…"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 resize-none"
+              />
+            </div>
+
+            {completeError && (
+              <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                {completeError}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setCompleteModal(null); setReviewNotes(""); setCompleteError(null); }}
+                disabled={!!completingId}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCompleteReview}
+                disabled={!!completingId}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+              >
+                {completingId ? "Completing…" : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

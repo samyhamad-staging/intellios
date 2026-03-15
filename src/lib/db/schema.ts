@@ -91,6 +91,8 @@ export const agentBlueprints = pgTable(
     // Phase 36: SR 11-7 periodic review scheduling
     nextReviewDue:          timestamp("next_review_due", { withTimezone: true }),
     lastPeriodicReviewAt:   timestamp("last_periodic_review_at", { withTimezone: true }),
+    // Phase 37: Reminder tracking — prevents duplicate reminders within the same cycle
+    lastReminderSentAt:     timestamp("last_reminder_sent_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -379,4 +381,47 @@ export const intelligenceBriefings = pgTable(
     metricsSnapshot: jsonb("metrics_snapshot").notNull().default({}),
   },
   (t) => [index("ib_generated_idx").on(t.enterpriseId, t.generatedAt)]
+);
+
+// ─── Password Reset Tokens ────────────────────────────────────────────────────
+// Phase 37: Time-limited, single-use tokens for password recovery.
+// Raw token sent only via email; SHA-256 hash stored here.
+
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id:        uuid("id").primaryKey().defaultRandom(),
+    userId:    uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt:    timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_prt_user_id").on(t.userId),
+    index("idx_prt_token_hash").on(t.tokenHash),
+  ]
+);
+
+// ─── User Invitations ─────────────────────────────────────────────────────────
+// Phase 37: Admin-initiated invitations. Invitees set their own password.
+// Replaces insecure manual credential sharing.
+
+export const userInvitations = pgTable(
+  "user_invitations",
+  {
+    id:           uuid("id").primaryKey().defaultRandom(),
+    enterpriseId: text("enterprise_id"),
+    email:        text("email").notNull(),
+    role:         text("role").notNull(), // designer | reviewer | compliance_officer | admin
+    invitedBy:    uuid("invited_by").notNull().references(() => users.id),
+    tokenHash:    text("token_hash").notNull(),
+    expiresAt:    timestamp("expires_at", { withTimezone: true }).notNull(),
+    acceptedAt:   timestamp("accepted_at", { withTimezone: true }),
+    createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_ui_enterprise_id").on(t.enterpriseId),
+    index("idx_ui_token_hash").on(t.tokenHash),
+  ]
 );

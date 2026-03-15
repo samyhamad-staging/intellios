@@ -30,7 +30,8 @@ export type AuditAction =
   | "policy.simulated"
   | "settings.updated"
   | "blueprint.periodic_review_scheduled"
-  | "blueprint.periodic_review_completed";
+  | "blueprint.periodic_review_completed"
+  | "blueprint.periodic_review_reminder";
 
 export interface AuditEntry {
   entityType: "blueprint" | "intake_session" | "policy";

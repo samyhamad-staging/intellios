@@ -259,6 +259,33 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
     return;
   }
 
+  // ── blueprint.periodic_review_completed ──────────────────────────────────
+  if (event.type === "blueprint.periodic_review_completed") {
+    const complianceOfficers = await getComplianceOfficerEmails(event.enterpriseId);
+    const title = "Periodic review completed";
+    const message = `${agentName} periodic review was completed by ${event.actorEmail}. Next review scheduled.`;
+
+    for (const email of complianceOfficers) {
+      if (email === event.actorEmail) continue;
+      await createNotification({
+        recipientEmail: email,
+        enterpriseId: event.enterpriseId,
+        type: "blueprint.periodic_review_completed",
+        title,
+        message,
+        entityType: event.entityType,
+        entityId: event.entityId,
+        link,
+      });
+      void sendEmail({
+        to: email,
+        subject: `[Intellios] ${title}`,
+        html: buildNotificationEmail(title, message, link),
+      });
+    }
+    return;
+  }
+
   // ── blueprint.health_checked ─────────────────────────────────────────────
   // Notify compliance officers only on clean↔critical transitions to prevent
   // alert fatigue from repeated health checks with no status change.

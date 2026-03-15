@@ -1190,6 +1190,35 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 042 — 2026-03-15
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context recovery | Read schema, routes, email lib, admin users page; prior session summary absorbed | ~30k in / ~1k out |
+| Item 1: Periodic review completion (continued) | Completion API route; notifications handler; compliance page + registry detail modal (from prior context) | ~60k in / ~12k out |
+| Item 2: Password reset | Migration 0016; schema; forgot-password + reset-password routes + pages; login link | ~40k in / ~8k out |
+| Item 3: User invitation system | Migration 0017; schema; invite + invitations admin routes; validate + accept auth routes; invite page; admin users page refactor (Invite form, pending invitations section) | ~80k in / ~18k out |
+| Item 4: Periodic review reminders | Migration 0018; schema lastReminderSentAt; cron route; vercel.json; env.ts CRON_SECRET | ~30k in / ~6k out |
+| TypeScript verification | `tsc --noEmit` → 0 errors in production code | ~5k in / ~0.5k out |
+| Documentation | Session log 042, roadmap Phase 36+37 blocks, _index.md, effort log, project journal | ~12k in / ~5k out |
+| **Session total (est.)** | | **~257k in / ~50.5k out** |
+
+**Estimated session cost:** ~257K × $3/1M + ~50.5K × $15/1M = $0.77 + $0.76 = **~$1.53**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 86 | "proceed" | D-Approve | Approved Phase 37 plan (4 items, 3 DB migrations) |
+| 87 | "Continue from where you left off." | D-Approve | Resumed after context compaction mid-implementation |
+
+**Totals:** 2 messages · 2 D-Approve · ~2 min
+
+---
+
 ## Session 041 — 2026-03-15
 
 **Duration:** Two context windows (Phase 36 planned + approved in first; fully implemented and documented in second)
@@ -1222,14 +1251,14 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ## Running Totals
 
-| Metric | S001–S031 subtotal | S032 | S033–S037 | S038 | S039 | S040–S041 | Total |
-|---|---|---|---|---|---|---|---|
-| Est. Claude input tokens | ~2,546K | ~128K | ~720K | ~155K | ~120K | ~284K | ~3,953K |
-| Est. Claude output tokens | ~943.6K | ~47.5K | ~150K | ~43K | ~35K | ~56K | ~1,275.1K |
-| Est. Claude cost | ~$22.41 | ~$1.09 | ~$7.27 | ~$1.12 | ~$0.89 | ~$1.69 | ~$34.47 |
-| Samy messages | 77 | 2 | 10 | 1 | 2 | 2 | 94 |
-| Samy decisions | 90 | 2 | 9 | 1 | 2 | 2 | 106 |
-| Files created/modified | ~468 | ~15 | ~110 | ~15 | ~9 | ~20 | ~637 |
+| Metric | S001–S031 subtotal | S032 | S033–S037 | S038 | S039 | S040–S041 | S042 | Total |
+|---|---|---|---|---|---|---|---|---|
+| Est. Claude input tokens | ~2,546K | ~128K | ~720K | ~155K | ~120K | ~284K | ~257K | ~4,210K |
+| Est. Claude output tokens | ~943.6K | ~47.5K | ~150K | ~43K | ~35K | ~56K | ~50.5K | ~1,325.6K |
+| Est. Claude cost | ~$22.41 | ~$1.09 | ~$7.27 | ~$1.12 | ~$0.89 | ~$1.69 | ~$1.53 | ~$36.00 |
+| Samy messages | 77 | 2 | 10 | 1 | 2 | 2 | 2 | 96 |
+| Samy decisions | 90 | 2 | 9 | 1 | 2 | 2 | 2 | 108 |
+| Files created/modified | ~468 | ~15 | ~110 | ~15 | ~9 | ~20 | ~23 | ~660 |
 
 ---
 
