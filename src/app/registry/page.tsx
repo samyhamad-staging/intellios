@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { StatusBadge } from "@/components/registry/status-badge";
 
 interface RegistryEntry {
@@ -28,11 +29,26 @@ function matchesSearch(agent: RegistryEntry, query: string): boolean {
 }
 
 export default function RegistryPage() {
+  const router = useRouter();
   const [agents, setAgents] = useState<RegistryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [cloningId, setCloningId] = useState<string | null>(null);
+
+  const handleCloneFromList = useCallback(async (agent: RegistryEntry, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCloningId(agent.id);
+    try {
+      const res = await fetch(`/api/blueprints/${agent.id}/clone`, { method: "POST" });
+      if (!res.ok) return;
+      const cloned = await res.json();
+      router.push(`/registry/${cloned.agentId}`);
+    } catch { /* non-critical */ }
+    finally { setCloningId(null); }
+  }, [router]);
 
   useEffect(() => {
     fetch("/api/registry")
@@ -192,42 +208,55 @@ export default function RegistryPage() {
         {filtered.length > 0 && (
           <div className="space-y-3">
             {filtered.map((agent) => (
-              <Link
+              <div
                 key={agent.agentId}
-                href={`/registry/${agent.agentId}`}
-                className="block rounded-lg border border-gray-200 bg-white p-5 hover:border-gray-400 transition-colors"
+                className="rounded-lg border border-gray-200 bg-white hover:border-gray-400 transition-colors"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h2 className="font-medium text-gray-900 truncate">
-                        {agent.name ?? "Unnamed Agent"}
-                      </h2>
-                      <StatusBadge status={agent.status} />
-                    </div>
-                    <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
-                      <span>v{agent.version}</span>
-                      <span>·</span>
-                      <span className="font-mono">{agent.agentId.slice(0, 8)}</span>
-                      <span>·</span>
-                      <span>{new Date(agent.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    {Array.isArray(agent.tags) && agent.tags.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {(agent.tags as string[]).map((tag) => (
-                          <span
-                            key={tag}
-                            className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600"
-                          >
-                            {tag}
-                          </span>
-                        ))}
+                <Link
+                  href={`/registry/${agent.agentId}`}
+                  className="block p-5"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h2 className="font-medium text-gray-900 truncate">
+                          {agent.name ?? "Unnamed Agent"}
+                        </h2>
+                        <StatusBadge status={agent.status} />
                       </div>
-                    )}
+                      <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
+                        <span>v{agent.version}</span>
+                        <span>·</span>
+                        <span className="font-mono">{agent.agentId.slice(0, 8)}</span>
+                        <span>·</span>
+                        <span>{new Date(agent.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      {Array.isArray(agent.tags) && agent.tags.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {(agent.tags as string[]).map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button
+                        onClick={(e) => handleCloneFromList(agent, e)}
+                        disabled={cloningId === agent.id}
+                        className="rounded border border-gray-200 px-2.5 py-1 text-xs text-gray-500 hover:border-gray-400 hover:text-gray-700 disabled:opacity-50"
+                      >
+                        {cloningId === agent.id ? "Cloning…" : "Clone"}
+                      </button>
+                      <span className="text-sm text-gray-400">View →</span>
+                    </div>
                   </div>
-                  <span className="shrink-0 text-sm text-gray-400">View →</span>
-                </div>
-              </Link>
+                </Link>
+              </div>
             ))}
           </div>
         )}

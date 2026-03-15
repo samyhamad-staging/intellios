@@ -3,6 +3,7 @@ import "./globals.css";
 import { auth, signOut } from "@/auth";
 import Link from "next/link";
 import NotificationBell from "@/components/nav/notification-bell";
+import Providers from "@/components/providers";
 
 export const metadata: Metadata = {
   title: "Intellios",
@@ -66,9 +67,19 @@ export default async function RootLayout({
                       Deploy
                     </Link>
                   )}
+                  {(session.user.role === "reviewer" ||
+                    session.user.role === "compliance_officer" ||
+                    session.user.role === "admin") && (
+                    <Link href="/monitor" className="hover:text-gray-900">
+                      Monitor
+                    </Link>
+                  )}
                   {(session.user.role === "compliance_officer" ||
                     session.user.role === "admin") && (
                     <>
+                      <Link href="/compliance" className="hover:text-gray-900">
+                        Compliance
+                      </Link>
                       <Link href="/governance" className="hover:text-gray-900">
                         Governance
                       </Link>
@@ -81,9 +92,17 @@ export default async function RootLayout({
                     </>
                   )}
                   {session.user.role === "admin" && (
-                    <Link href="/admin/users" className="hover:text-gray-900">
-                      Users
-                    </Link>
+                    <>
+                      <Link href="/admin/users" className="hover:text-gray-900">
+                        Users
+                      </Link>
+                      <Link href="/admin/settings" className="hover:text-gray-900">
+                        Settings
+                      </Link>
+                      <Link href="/admin/webhooks" className="hover:text-gray-900">
+                        Webhooks
+                      </Link>
+                    </>
                   )}
                 </div>
               </div>
@@ -114,7 +133,7 @@ export default async function RootLayout({
             </div>
           </nav>
         )}
-        {children}
+        <Providers session={session}>{children}</Providers>
       </body>
     </html>
   );

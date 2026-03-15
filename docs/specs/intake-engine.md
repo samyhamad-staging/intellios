@@ -1,7 +1,7 @@
 # Intake Engine — Specification
 
 **Subsystem:** Design Studio
-**Status:** Complete — Phase 7 (stakeholder requirement lanes, 2026-03-13)
+**Status:** Complete — Phase 17 (generation intelligence — adaptive model selection, 2026-03-13)
 
 ## Purpose
 
@@ -166,6 +166,51 @@ interface StakeholderContribution {
 
 ---
 
+---
+
+## Phase 17 — Adaptive Model Selection
+
+### Problem
+
+All intake chat turns used `claude-sonnet-4-20250514` regardless of the complexity required. Approximately 75–80% of intake turns are routine requirement-capture exchanges that do not need Sonnet's capability ceiling.
+
+### Solution
+
+`selectIntakeModel(ctx: ModelSelectionContext): IntakeModel` in `src/lib/intake/model-selector.ts` routes each turn to either `claude-sonnet-4-20250514` or `claude-3-5-haiku-20241022`.
+
+### ModelSelectionContext
+
+Plain-data struct — no AI SDK type dependencies — allowing unit testing with literals:
+
+```typescript
+interface ModelSelectionContext {
+  messageCount: number;       // 1 = opening turn
+  lastUserText: string;       // pre-extracted text of last user message
+  context: IntakeContext | null;
+  payload: IntakePayload;
+}
+```
+
+### Routing Logic (priority order)
+
+| Condition | Model | Rationale |
+|---|---|---|
+| `messageCount <= 1` | Sonnet | Opening turn: synthesize payload state, Phase 1 context, active policies, and contributions into a focused first response |
+| `payload.identity.name` set AND `tools.length > 0` | Sonnet | Payload complete — any subsequent turn may finalize; keyword false-negatives on "yes" or "ok" are too costly |
+| Explicit finalization language in `lastUserText` | Sonnet | `mark_intake_complete` requires complete `captureVerification` and `policyQualityAssessment` enumeration |
+| Governance/regulatory keywords in `lastUserText` | Sonnet | Multi-constraint reasoning; `policy`, `compliance`, `regulation`, `FINRA`, `SOX`, `GDPR`, `HIPAA`, `PCI`, `audit`, `access control`, `data handling`, `PII`, etc. |
+| All other turns | Haiku | Standard requirement-capture turns (~75–80% of a typical session) |
+
+### Design Principle
+
+Conservative by design: false positives (Sonnet on a simple turn) cost money. False negatives (Haiku on a finalization or governance turn) risk quality loss at the most accuracy-sensitive steps. The asymmetry favors Sonnet on ambiguous signals. The primary finalization signal is payload completeness (structural), not keyword matching (linguistic) — this handles short affirmations like "yes", "ok", and "that's it" correctly.
+
+### Step Count Ceiling
+
+`stopWhen: stepCountIs(20)` — raised from 10 in Phase 17. In Vercel AI SDK v5, `stepCountIs` limits LLM inference *steps* (rounds of model call + tool execution), not individual tool calls. Each step can include multiple parallel tool calls. 20 steps protects against complex sessions with many back-and-forth reasoning cycles.
+
+---
+
 ## Resolved Decisions
 
 - **Intake format:** Conversational UI (chat-based, powered by Claude). See ADR-002.
@@ -173,6 +218,7 @@ interface StakeholderContribution {
 - **Templates:** No templates. Every agent starts from scratch. See ADR-003.
 - **Phase 1 context capture:** Structured form before conversation eliminates governance discovery blindspot. Context stored in `intake_sessions.intake_context` JSONB column.
 - **Governance enforcement model:** Dual-layer — prompted (system prompt probing rules) + hard (mark_intake_complete sufficiency check). Prevents silent governance gaps.
+- **Adaptive model selection:** Payload completeness is the primary finalization signal; keyword matching is a secondary layer. Conservative bias toward Sonnet when ambiguous. Haiku handles ~75–80% of turns.
 
 ## Implementation
 

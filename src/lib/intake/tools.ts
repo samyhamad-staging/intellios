@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { tool, zodSchema } from "ai";
-import { IntakePayload, IntakeContext } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext, CaptureVerificationItem, PolicyQualityItem } from "@/lib/types/intake";
 
 /**
  * Derive which governance policies are required given the intake context.
@@ -8,7 +8,8 @@ import { IntakePayload, IntakeContext } from "@/lib/types/intake";
  */
 function checkGovernanceSufficiency(
   payload: IntakePayload,
-  context: IntakeContext | null | undefined
+  context: IntakeContext | null | undefined,
+  captureVerification?: CaptureVerificationItem[]
 ): Array<{ type: string; reason: string }> {
   if (!context) return [];
 
@@ -87,6 +88,19 @@ function checkGovernanceSufficiency(
       gaps.push({
         type: `${requiredType}_substance`,
         reason: `"${matchingPolicy.name}" (${requiredType} policy) has no rules or description — add the specific controls it enforces`,
+      });
+    }
+  }
+
+  // ── Capture verification gate ───────────────────────────────────────────────
+  // Any requirement discussed but not captured in a tool call blocks finalization.
+  // Policy quality issues (adequate=false) are warnings only — stored and shown to
+  // reviewers in Phase 3 but do not block the designer from proceeding.
+  for (const item of captureVerification ?? []) {
+    if (item.capturedAs === null) {
+      gaps.push({
+        type: `uncaptured requirement`,
+        reason: `"${item.area}": ${item.mentioned} — was discussed but not captured in any tool call. Go back and capture it before finalizing.`,
       });
     }
   }
@@ -295,23 +309,20 @@ export function createIntakeTools(
         userStatement: z.string().describe("The exact or paraphrased statement from the user that is ambiguous"),
       })),
       execute: async ({ field, description, userStatement }) => {
-        await updatePayload((p) => {
-          const existingFlags = (p as Record<string, unknown>)._flags as Array<Record<string, unknown>> ?? [];
-          return {
-            ...p,
-            _flags: [
-              ...existingFlags,
-              {
-                id: `flag-${Date.now()}`,
-                field,
-                description,
-                userStatement,
-                flaggedAt: new Date().toISOString(),
-                resolved: false,
-              },
-            ],
-          } as IntakePayload;
-        });
+        await updatePayload((p) => ({
+          ...p,
+          _flags: [
+            ...(p._flags ?? []),
+            {
+              id: `flag-${Date.now()}`,
+              field,
+              description,
+              userStatement,
+              flaggedAt: new Date().toISOString(),
+              resolved: false,
+            },
+          ],
+        }));
         return { success: true, flagged: { field, description } };
       },
     }),
@@ -335,11 +346,24 @@ export function createIntakeTools(
 
     mark_intake_complete: tool({
       description:
-        "Mark the intake as complete. Only call this when the user has confirmed they are satisfied with the captured requirements.",
+        "Mark the intake as complete. Only call this when the user has confirmed they are satisfied with the captured requirements. " +
+        "You MUST provide: (1) captureVerification — for every significant requirement mentioned in the conversation, confirm whether it was captured in a tool call; " +
+        "(2) policyQualityAssessment — rate whether each governance policy is specific and operational (not abstract). " +
+        "Uncaptured requirements will block finalization. Inadequate policies are flagged as warnings for reviewers.",
       inputSchema: zodSchema(z.object({
         confirmation: z.string().describe("Brief note confirming the user agreed to finalize"),
+        captureVerification: z.array(z.object({
+          area: z.string().describe("Topic area (e.g., 'denied actions', 'data retention', 'safety guardrails', 'rate limits')"),
+          mentioned: z.string().describe("What the user said about this area during the conversation"),
+          capturedAs: z.string().nullable().describe("Tool + field used to capture it (e.g., 'set_constraints.denied_actions'). Set to null if NOT captured in any tool call."),
+        })).describe("Enumerate every significant requirement discussed in the conversation and whether it was captured in a tool call"),
+        policyQualityAssessment: z.array(z.object({
+          policyName: z.string().describe("Exact name of the captured governance policy"),
+          adequate: z.boolean().describe("True if the policy names specific behaviors or thresholds; false if it is too abstract to be enforced"),
+          reason: z.string().describe("One-sentence explanation of the rating"),
+        })).describe("Rate the content quality of each governance policy captured — adequate means specific and operational, not abstract goals like 'be safe'"),
       })),
-      execute: async ({ confirmation }) => {
+      execute: async ({ confirmation, captureVerification, policyQualityAssessment }) => {
         const payload = getPayload();
         if (!payload.identity?.name) {
           return { success: false, error: "Agent identity (name) is required before finalizing." };
@@ -348,16 +372,24 @@ export function createIntakeTools(
           return { success: false, error: "At least one capability/tool is required before finalizing." };
         }
 
-        // Context-driven governance sufficiency check
+        // Context-driven governance sufficiency check (includes capture verification gate)
         const context = getContext?.();
-        const governanceGaps = checkGovernanceSufficiency(payload, context);
+        const governanceGaps = checkGovernanceSufficiency(payload, context, captureVerification);
         if (governanceGaps.length > 0) {
           const gapList = governanceGaps.map((g) => `• ${g.type} (${g.reason})`).join("\n");
           return {
             success: false,
-            error: `The following governance requirements must be captured before finalizing:\n${gapList}\n\nPlease address each item above with the user.`,
+            error: `The following requirements must be addressed before finalizing:\n${gapList}\n\nPlease address each item above with the user.`,
           };
         }
+
+        // Persist the assessments into the payload so Phase 3 review can surface them.
+        // Policy quality issues (adequate=false) are warnings only — reviewers see them.
+        await updatePayload((p) => ({
+          ...p,
+          _captureVerification: captureVerification,
+          _policyQualityAssessment: policyQualityAssessment,
+        }));
 
         await finalizeSession();
         return { success: true, message: "Intake marked as complete.", confirmation };

@@ -11,11 +11,20 @@ export type EventType =
   | "blueprint.status_changed"
   | "blueprint.reviewed"
   | "blueprint.report_exported"
+  | "blueprint.health_checked"
+  | "blueprint.cloned"
+  | "blueprint.approval_step_completed"
+  | "blueprint.test_run_completed"
+  | "blueprint.agentcore_exported"
+  | "blueprint.agentcore_deployed"
+  | "blueprint.compliance_exported"
   | "intake.finalized"
   | "intake.contribution_submitted"
   | "policy.created"
   | "policy.updated"
-  | "policy.deleted";
+  | "policy.deleted"
+  | "policy.simulated"
+  | "settings.updated";
 
 export interface LifecycleEvent {
   /** Audit log row ID — can be used to correlate with the audit trail */

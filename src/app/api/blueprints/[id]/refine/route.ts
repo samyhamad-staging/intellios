@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { agentBlueprints, intakeSessions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { refineBlueprint } from "@/lib/generation/generate";
+import { loadPolicies } from "@/lib/governance/load-policies";
 import { ABP } from "@/lib/types/abp";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
@@ -63,10 +64,15 @@ export async function POST(
     const intake = (session?.intakePayload ?? {}) as IntakePayload;
     const currentAbp = blueprint.abp as ABP;
 
+    // Load policies so Claude can maintain governance compliance during refinement
+    // and avoid inadvertently dropping required policy sections during regeneration.
+    const enterpriseId = blueprint.enterpriseId ?? null;
+    const policies = await loadPolicies(enterpriseId);
+
     // Refine via Claude
     let updatedAbp: ABP;
     try {
-      updatedAbp = await refineBlueprint(currentAbp, change.trim(), intake);
+      updatedAbp = await refineBlueprint(currentAbp, change.trim(), intake, policies);
     } catch (err) {
       console.error(`[${requestId}] Claude refineBlueprint failed:`, err);
       return aiError(err, requestId);

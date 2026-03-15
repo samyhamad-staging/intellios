@@ -55,6 +55,27 @@ export async function getComplianceOfficerEmails(
 }
 
 /**
+ * Returns emails of all users with a specific role in the given enterprise.
+ * Used for multi-step approval workflow notifications (Phase 22) — notifies
+ * all users with the required role when an approval step becomes active.
+ */
+export async function getUsersByRole(
+  role: string,
+  enterpriseId: string | null
+): Promise<string[]> {
+  const enterpriseFilter = enterpriseId
+    ? eq(users.enterpriseId, enterpriseId)
+    : isNull(users.enterpriseId);
+
+  const rows = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(and(enterpriseFilter, eq(users.role, role)));
+
+  return rows.map((r) => r.email);
+}
+
+/**
  * Returns admin emails — used for critical alerts (future: SLA breaches,
  * governance failures on deployed agents).
  */

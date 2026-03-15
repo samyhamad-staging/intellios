@@ -8,6 +8,7 @@ import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
 import { writeAuditLog } from "@/lib/audit/log";
+import { randomUUID } from "crypto";
 
 const POLICY_TYPES = ["safety", "compliance", "data_handling", "access_control", "audit"] as const;
 
@@ -109,36 +110,54 @@ export async function PATCH(
       }
     }
 
-    const updates: Partial<{
-      name: string;
-      type: string;
-      description: string | null;
-      rules: unknown[];
-    }> = {};
+    // Phase 22: PATCH creates a new version row instead of updating in place.
+    // This preserves the exact policy snapshot evaluated by existing ValidationReports.
+    const newId = randomUUID();
+    const newName = body.name ?? policy.name;
+    const newType = body.type ?? policy.type;
+    const newDescription = "description" in body ? (body.description ?? null) : policy.description;
+    const newRules = body.rules !== undefined ? (body.rules as unknown[]) : (policy.rules as unknown[]);
 
-    if (body.name !== undefined) updates.name = body.name;
-    if (body.type !== undefined) updates.type = body.type;
-    if ("description" in body) updates.description = body.description ?? null;
-    if (body.rules !== undefined) updates.rules = body.rules as unknown[];
+    let newPolicy: typeof policy;
 
-    const [updated] = await db
-      .update(governancePolicies)
-      .set(updates)
-      .where(eq(governancePolicies.id, id))
-      .returning();
+    await db.transaction(async (tx) => {
+      // 1. Insert new version row
+      const [inserted] = await tx
+        .insert(governancePolicies)
+        .values({
+          id: newId,
+          enterpriseId: policy.enterpriseId,
+          name: newName,
+          type: newType,
+          description: newDescription,
+          rules: newRules,
+          policyVersion: policy.policyVersion + 1,
+          previousVersionId: policy.id,
+          supersededAt: null,
+          createdAt: new Date(),
+        })
+        .returning();
+      newPolicy = inserted;
+
+      // 2. Mark old row as superseded
+      await tx
+        .update(governancePolicies)
+        .set({ supersededAt: new Date() })
+        .where(eq(governancePolicies.id, id));
+    });
 
     void writeAuditLog({
       entityType: "policy",
-      entityId: id,
+      entityId: newId,
       action: "policy.updated",
       actorEmail: authSession.user.email!,
       actorRole: authSession.user.role!,
       enterpriseId: policy.enterpriseId,
-      fromState: { name: policy.name, type: policy.type, ruleCount: (policy.rules as unknown[]).length },
-      toState: { name: updated.name, type: updated.type, ruleCount: (updated.rules as unknown[]).length },
+      fromState: { id: policy.id, name: policy.name, type: policy.type, version: policy.policyVersion, ruleCount: (policy.rules as unknown[]).length },
+      toState: { id: newId, name: newPolicy!.name, type: newPolicy!.type, version: newPolicy!.policyVersion, ruleCount: (newPolicy!.rules as unknown[]).length },
     });
 
-    return NextResponse.json({ policy: updated });
+    return NextResponse.json({ policy: newPolicy! });
   } catch (error) {
     console.error(`[${requestId}] Failed to update policy:`, error);
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to update policy", undefined, requestId);

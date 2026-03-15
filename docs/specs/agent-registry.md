@@ -62,6 +62,25 @@ The `agent_blueprints` table serves as both the blueprint store (Generation Engi
 | GET | `/api/registry` | List all agents (latest version per `agent_id`, ordered by `updated_at` desc) |
 | GET | `/api/registry/[agentId]` | Get agent detail (latest version) + full version history |
 | PATCH | `/api/blueprints/[id]/status` | Lifecycle transition for a specific blueprint version |
+| POST | `/api/blueprints/[id]/clone` | Clone a blueprint into a new logical agent |
+| PATCH | `/api/blueprints/[id]/ownership` | Update the ownership metadata block (no AI, direct DB write) |
+
+### Clone Operation
+
+`POST /api/blueprints/[id]/clone` forks a blueprint into a new logical agent. The clone is **not** a new version of the same agent — it is an independent agent with its own `agentId`, its own version history, and its own MRM lifecycle.
+
+**Clone behavior:**
+- New `agentId` (UUID) + new blueprint `id` (UUID) — both random
+- `status: "draft"`, `version: "1.0.0"`, `refinementCount: "0"`
+- All review fields cleared (`reviewedBy`, `reviewedAt`, `reviewComment` = null)
+- `validationReport` cleared — the clone must be independently validated
+- `abp.identity.name` set to `"${source.name} (Clone)"` unless overridden by `name` in request body
+- `enterpriseId`, `sessionId`, `tags` preserved from source (sessionId kept for traceability to original intake)
+- `blueprint.cloned` audit entry written with `{ sourceBlueprint, sourceName, sourceVersion, newAgentId }` metadata
+
+**Access:** `designer | admin` only.
+
+**Why new logical agent, not new version?** A version increment implies the same agent evolved, and the MRM report should inherit the parent's reviewer/deployer evidence records. A clone is a conceptually different agent derived from a parent — it requires its own review, its own approvals, and its own deployment audit trail. Shared genealogy is captured in the audit metadata (`sourceBlueprint`), not in the lifecycle lineage.
 
 ### Lifecycle State Machine
 

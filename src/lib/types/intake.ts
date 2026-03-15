@@ -60,6 +60,49 @@ export interface StakeholderContribution {
   createdAt: string; // ISO 8601
 }
 
+/**
+ * AmbiguityFlag — a requirement flagged as ambiguous or contradictory during intake.
+ * Stored in IntakePayload._flags; surfaced in Phase 3 review.
+ */
+export interface AmbiguityFlag {
+  id: string;
+  field: string;
+  description: string;
+  userStatement: string;
+  flaggedAt: string;
+  resolved: boolean;
+}
+
+/**
+ * CaptureVerificationItem — one entry in Claude's self-assessment of requirement capture.
+ * For every significant requirement mentioned in the intake conversation, Claude records
+ * what was heard and how (or whether) it was captured via a tool call.
+ * Stored in IntakePayload._captureVerification; surfaced in Phase 3 review.
+ */
+export interface CaptureVerificationItem {
+  /** Topic area (e.g., "constraints", "data retention", "safety guardrails") */
+  area: string;
+  /** What the user said about this area during the conversation */
+  mentioned: string;
+  /** How it was captured — tool name + field (e.g., "set_constraints.denied_actions"). Null if not captured. */
+  capturedAs: string | null;
+}
+
+/**
+ * PolicyQualityItem — Claude's quality assessment for one governance policy.
+ * adequate=true means the policy contains specific, operational requirements.
+ * adequate=false is a warning (not a blocker) — surfaced in Phase 3 for reviewer attention.
+ * Stored in IntakePayload._policyQualityAssessment.
+ */
+export interface PolicyQualityItem {
+  /** Exact name of the governance policy as captured */
+  policyName: string;
+  /** True if specific and operational; false if too abstract to be enforced */
+  adequate: boolean;
+  /** One-sentence rationale for the rating */
+  reason: string;
+}
+
 export interface IntakePayload {
   identity?: {
     name?: string;
@@ -108,4 +151,12 @@ export interface IntakePayload {
       pii_redaction?: boolean;
     };
   };
+
+  // ── Internal metadata (underscore-prefixed, not part of the ABP) ───────────
+  /** Ambiguity flags raised during the intake conversation */
+  _flags?: AmbiguityFlag[];
+  /** Capture verification produced by Claude at finalization */
+  _captureVerification?: CaptureVerificationItem[];
+  /** Policy quality assessment produced by Claude at finalization */
+  _policyQualityAssessment?: PolicyQualityItem[];
 }

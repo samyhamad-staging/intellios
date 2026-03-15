@@ -2,21 +2,27 @@ import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { ABPContentSchema, ABPContent, ABP } from "@/lib/types/abp";
 import { IntakePayload } from "@/lib/types/intake";
-import { GENERATION_SYSTEM_PROMPT } from "./system-prompt";
+import { GovernancePolicy } from "@/lib/governance/types";
+import { buildGenerationSystemPrompt } from "./system-prompt";
 import { randomUUID } from "crypto";
 
 /**
  * Generate an initial Agent Blueprint Package from a completed intake payload.
  * Claude generates the content sections; system metadata is filled in here.
+ *
+ * When enterprise governance policies are provided, the generation system prompt
+ * includes a policy block so Claude can design the blueprint to satisfy them
+ * proactively — reducing post-generation violation loops.
  */
 export async function generateBlueprint(
   intake: IntakePayload,
-  sessionId: string
+  sessionId: string,
+  policies?: GovernancePolicy[]
 ): Promise<ABP> {
   const { object: content } = await generateObject({
     model: anthropic("claude-sonnet-4-20250514"),
     schema: ABPContentSchema,
-    system: GENERATION_SYSTEM_PROMPT,
+    system: buildGenerationSystemPrompt(policies),
     prompt: `Generate a complete Agent Blueprint Package from this intake data:\n\n${JSON.stringify(intake, null, 2)}`,
   });
 
@@ -26,16 +32,20 @@ export async function generateBlueprint(
 /**
  * Regenerate an ABP applying a natural-language change request.
  * The full current blueprint and original intake are provided for context.
+ *
+ * Policies are injected so Claude preserves governance compliance during
+ * refinement and does not inadvertently drop required policy sections.
  */
 export async function refineBlueprint(
   current: ABP,
   changeRequest: string,
-  intake: IntakePayload
+  intake: IntakePayload,
+  policies?: GovernancePolicy[]
 ): Promise<ABP> {
   const { object: content } = await generateObject({
     model: anthropic("claude-sonnet-4-20250514"),
     schema: ABPContentSchema,
-    system: GENERATION_SYSTEM_PROMPT,
+    system: buildGenerationSystemPrompt(policies),
     prompt: `You are refining an existing Agent Blueprint Package.
 
 Current blueprint:
