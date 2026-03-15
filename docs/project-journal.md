@@ -2,6 +2,42 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 040 — 2026-03-15: Closing the Last Gaps Before the Curtain Rises
+
+Phase 35 is the smallest phase in the project by line count. It is also among the most consequential for what the project is actually trying to do: convince a live audience.
+
+The framing is precise. A 9-stop showcase script had been written. The demo data had been seeded. The walkthrough had been tested in spirit. But systematic codebase audit of every stop revealed three blockers that would silently break the live demo — not with an error message, but with a missing button, a redirect, or a silent disappearance.
+
+The MRM Report access bug is illustrative of how good intentions create usability problems. The original access gate — compliance_officer and admin only — was conservative and defensible from a role-separation standpoint. The MRM report contains governance evidence, approval chain details, and regulatory assessment. It felt like the kind of document that should be restricted. But a closer look reveals that it is a *read-only evidence document* — not an action surface, not a mutation point. Restricting read access to it serves no security purpose while creating a concrete demo friction point: the designer who built the agent cannot read the compliance document that results from their work. The fix is not a security relaxation; it is a correction of an overly conservative classification.
+
+The inline simulation gap reveals how features built for one surface don't automatically transfer to another. The "Preview Impact" simulation existed — but only on the policy edit page, reachable only by compliance officers who navigate to a specific policy and enter edit mode. The governance hub policy cards — the primary browse surface — had no simulation capability. The demo script said "click Preview Impact on the SR 11-7 policy card." There was no such button. The fix adds the button inline, backed by the same existing API route, with results rendered below the card. No new route. No new backend logic. Just surfacing existing capability where users actually are.
+
+The step advancement toast is the most subtle of the three. The multi-step approval workflow is sophisticated — it tracks which step of the chain is complete, which role is next, and maintains a full evidence trail. But after submitting step 2 of 3, the panel closed with no explanation. For a demo audience watching the reviewer click "Approve", the item disappearing from the queue would read as a bug — "did the click register? Did something fail?" The toast adds two seconds of explicit confirmation: "Approval submitted — advancing to Final Sign-off." The item then clears. The audience now understands what just happened.
+
+Taken together, these three fixes share a common pattern: they are not feature additions. They are corrections of gaps between the system's actual behavior and the behavior that the demo script assumed. The system was built correctly. The script was written correctly. The gaps lived in the space between them — in assumptions about what buttons existed, what roles could access, and what transitions looked like.
+
+This phase marks the completion of the showcase infrastructure. The demo can now be run end-to-end, stop by stop, without surprises.
+
+---
+
+## Session 039 — 2026-03-15: Preparing the Stage
+
+For thirty-three phases, Intellios has been built for capability. Phase 34 is the first phase built entirely for *presentation*.
+
+The distinction matters. A system that works and a system that can be demonstrated are not the same thing. A system that works handles the happy path correctly. A system that can be demonstrated handles every observable moment — first load, error states, empty states, cold-start conditions, loading states — without looking broken, unfinished, or confusing to an audience watching for the first time.
+
+The demo data seed is the most structurally significant piece. Five agents at five different lifecycle stages, each designed to illustrate a specific capability. Not just status values — but complete supporting data: audit trails, validation reports, test cases, test runs, quality scores, health snapshots, governance violations, a pre-generated intelligence briefing. The idempotent UUID approach means the seed can be re-run safely; it skips existing rows without duplicating data. This matters for demo operations: if something looks wrong, you re-seed rather than diagnose.
+
+The choice to hardcode UUIDs is deliberate and worth noting. Random UUIDs at seed time mean the demo script's instructions — "navigate to the Customer Inquiry Bot" — would be meaningless across different database instances. Hardcoded UUIDs mean that every seeded database looks identical. The demo script can give exact navigation instructions. The seed is not a generator of demo data; it is a snapshot of a specific, curated state.
+
+The branded error pages address a real demo risk: if something goes wrong during a live showcase, the system should look like it's handling it gracefully rather than showing a Next.js stack trace. `error.tsx` and `not-found.tsx` with matching design system elements — violet accents, the same typeface, the same layout grammar — signal that the system was built by people who thought about edge cases. That signal is part of what the demo is selling.
+
+The generation success flash is a micro-interaction fix with outsized perceptual impact. Before this phase, clicking "Generate Blueprint" resulted in a redirect to the blueprint workbench with no acknowledgment that generation succeeded. The flash — a green confirmation message that appears for 900ms before the normal state — closes a feedback loop that users unconsciously expect. "Did it work? Oh, it worked."
+
+The DEMO_SETUP.md guide is the operational artifact that makes the demo infrastructure usable by anyone, not just the person who built it. Twelve minutes of structured stops, exact credentials, navigation paths, what to say at each stop, and what not to demo live. The existence of this document is itself a signal: this is a product that has been thought through, not just built.
+
+---
+
 ## Session 038 — 2026-03-15: From "It Works" to "We're Confident It Works"
 
 Phases 29 and 30 built the AgentCore integration. It worked. It passed manual testing. It was usable. But "usable" and "confident" are different levels of trust — especially when the integration involves live AWS API calls, IAM permissions, and a 5-step async deployment sequence where any step can fail.
