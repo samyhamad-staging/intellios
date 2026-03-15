@@ -362,7 +362,7 @@ export default function MonitorPage() {
           </Link>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
           <div className="border-b border-gray-100 px-5 py-2.5 text-xs text-gray-400">
             {filtered.length} agent{filtered.length === 1 ? "" : "s"}
             {filtered.length !== agents.length && ` (filtered from ${agents.length})`}

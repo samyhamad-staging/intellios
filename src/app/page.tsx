@@ -112,18 +112,18 @@ export default async function Home() {
         </div>
 
         {/* Quick action cards */}
-        <div className="mb-8 grid grid-cols-3 gap-4">
+        <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { href: "/pipeline", icon: Kanban,      label: "Pipeline Board",  sub: `${allAgents.length} agents`, color: "text-violet-600" },
             { href: "/registry", icon: Library,     label: "Agent Registry",  sub: "All versions",              color: "text-blue-600" },
             { href: "/intake",   icon: Plus,         label: "New Intake",      sub: "Start from scratch",        color: "text-green-600" },
           ].map(({ href, icon: Icon, label, sub, color }) => (
-            <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all">
+            <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all min-w-0">
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-violet-50 transition-colors ${color}`}>
                 <Icon size={16} />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">{label}</p>
+                <p className="text-sm font-medium text-gray-900 truncate">{label}</p>
                 <p className="text-xs text-gray-400">{sub}</p>
               </div>
               <ChevronRight size={14} className="ml-auto text-gray-300 group-hover:text-gray-400" />
@@ -195,18 +195,18 @@ export default async function Home() {
           </Link>
         </div>
 
-        <div className="mb-8 grid grid-cols-3 gap-4">
+        <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { href: "/review",   icon: ClipboardList, label: "Review Queue",   sub: `${inReviewAgents.length} pending`, color: "text-amber-600" },
             { href: "/pipeline", icon: Kanban,         label: "Pipeline Board", sub: `${allAgents.length} total`,        color: "text-violet-600" },
             { href: "/registry", icon: Library,        label: "Agent Registry", sub: "All versions",                     color: "text-blue-600" },
           ].map(({ href, icon: Icon, label, sub, color }) => (
-            <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all">
+            <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all min-w-0">
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-violet-50 transition-colors ${color}`}>
                 <Icon size={16} />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">{label}</p>
+                <p className="text-sm font-medium text-gray-900 truncate">{label}</p>
                 <p className="text-xs text-gray-400">{sub}</p>
               </div>
               <ChevronRight size={14} className="ml-auto text-gray-300 group-hover:text-gray-400" />
@@ -286,7 +286,7 @@ export default async function Home() {
               <Icon size={16} />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-900">{label}</p>
+              <p className="text-sm font-medium text-gray-900 truncate">{label}</p>
               <p className="text-xs text-gray-400 truncate">{sub}</p>
             </div>
             <ChevronRight size={14} className="ml-auto shrink-0 text-gray-300 group-hover:text-gray-400" />

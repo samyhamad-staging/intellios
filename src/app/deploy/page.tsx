@@ -594,7 +594,7 @@ export default function DeploymentConsolePage() {
               {readyToDeploy.map((agent) => (
                 <div
                   key={agent.agentId}
-                  className="flex items-center justify-between rounded-xl border border-green-200 bg-white px-5 py-4"
+                  className="flex flex-wrap items-center gap-y-3 rounded-xl border border-green-200 bg-white px-5 py-4"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -625,7 +625,7 @@ export default function DeploymentConsolePage() {
                       </p>
                     )}
                   </div>
-                  <div className="ml-4 flex shrink-0 items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 ml-auto">
                     <a
                       href={`/api/blueprints/${agent.id}/export/agentcore`}
                       download
@@ -675,7 +675,7 @@ export default function DeploymentConsolePage() {
           )}
 
           {!loading && deployed.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">

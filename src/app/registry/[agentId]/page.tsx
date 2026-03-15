@@ -391,7 +391,7 @@ export default function AgentDetailPage({
   return (
     <div className="flex h-screen flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-y-2 border-b border-gray-200 bg-white px-6 py-3">
         <div className="flex items-center gap-3 min-w-0">
           <Link href="/registry" className="text-sm text-gray-400 hover:text-gray-700 shrink-0">
             ← Registry
@@ -423,7 +423,7 @@ export default function AgentDetailPage({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
           <LifecycleControls
             blueprintId={latest.id}
             currentStatus={latest.status}
