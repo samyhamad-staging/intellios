@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Phase 33 ✓ Complete (2026-03-15) — AgentCore Integration Confidence
+## Current Phase: Phase 34 ✓ Complete (2026-03-15) — Showcase Readiness
 
 ---
 
@@ -672,6 +672,22 @@ Systematically hardens the AgentCore integration (Phases 29–30) to reach produ
 | Operator setup guide | P2 | ✓ Complete | `docs/guides/agentcore-setup.md` — IAM setup, credential sources, model access, settings config, export vs deploy paths, live monitoring, known limitations, troubleshooting |
 
 **Test results:** 49/49 passing (37 translation + 12 deploy). Coverage target: ≥80% lines on `lib/agentcore/**`.
+
+---
+
+## Phase 34 — Showcase Readiness ✓ Complete (2026-03-15 Session 039)
+
+Hardens Intellios for live demo showcasing. Six targeted deliverables that collectively eliminate blank error screens, loading gaps, empty states, and the absence of rich demo data. No DB migrations. No new npm dependencies.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| `src/app/error.tsx` — branded error boundary | P0 | ✓ Complete | Next.js client error boundary; `error.digest` reference ID; "Try again" reset + "Return home"; matching design system |
+| `src/app/not-found.tsx` — branded 404 | P0 | ✓ Complete | Static 404 page; no sidebar (unauthenticated layout); violet-600 "404" label; matching design system |
+| `src/lib/db/seed-demo.ts` — Acme Financial demo seed | P0 | ✓ Complete | ~530 lines; idempotent (hardcoded UUIDs); 5 agents at all lifecycle stages; 3 policies; 8-event audit trail; test cases; trend data; pre-written briefing; 3-step approval chain |
+| Blueprint generation success flash | P0 | ✓ Complete | 900ms green "✓ Blueprint ready — opening workbench…" state before `router.push()`; eliminates abrupt page change |
+| `src/app/blueprints/[id]/report/loading.tsx` — MRM skeleton | P1 | ✓ Complete | Co-located Suspense skeleton; prevents blank screen during 2–5s `assembleMRMReport()`; matches report structure |
+| Intelligence page cold-start message | P1 | ✓ Complete | Non-admins now see actionable message; only admins see "Generate Briefing" CTA |
+| `docs/demo/DEMO_SETUP.md` | P0 | ✓ Complete | Complete setup guide: prerequisites, env vars, DB commands, credentials, 12-min 9-stop demo flow, troubleshooting, what not to demo live |
 
 ---
 

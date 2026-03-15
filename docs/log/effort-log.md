@@ -1192,14 +1192,47 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ## Running Totals
 
-| Metric | S001–S031 subtotal | S032 | S033–S037 | S038 | Total |
-|---|---|---|---|---|---|
-| Est. Claude input tokens | ~2,546K | ~128K | ~720K | ~155K | ~3,549K |
-| Est. Claude output tokens | ~943.6K | ~47.5K | ~150K | ~43K | ~1,184.1K |
-| Est. Claude cost | ~$22.41 | ~$1.09 | ~$7.27 | ~$1.12 | ~$31.89 |
-| Samy messages | 77 | 2 | 10 | 1 | 90 |
-| Samy decisions | 90 | 2 | 9 | 1 | 102 |
-| Files created/modified | ~468 | ~15 | ~110 | ~15 | ~608 |
+| Metric | S001–S031 subtotal | S032 | S033–S037 | S038 | S039 | Total |
+|---|---|---|---|---|---|---|
+| Est. Claude input tokens | ~2,546K | ~128K | ~720K | ~155K | ~120K | ~3,669K |
+| Est. Claude output tokens | ~943.6K | ~47.5K | ~150K | ~43K | ~35K | ~1,219.1K |
+| Est. Claude cost | ~$22.41 | ~$1.09 | ~$7.27 | ~$1.12 | ~$0.89 | ~$32.78 |
+| Samy messages | 77 | 2 | 10 | 1 | 2 | 92 |
+| Samy decisions | 90 | 2 | 9 | 1 | 2 | 104 |
+| Files created/modified | ~468 | ~15 | ~110 | ~15 | ~9 | ~617 |
+
+---
+
+## Session 039 — 2026-03-15
+
+**Duration:** Two context windows (Phase 34 implemented, context hit limit, documentation and commit completed in resumed context)
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context recovery + planning | Read 4 files; full Phase 34 plan (showcase readiness, 6 deliverables) | ~30k in / ~5k out |
+| Branded error pages | `error.tsx` + `not-found.tsx` | ~8k in / ~2k out |
+| Demo seed script | `seed-demo.ts` ~530 lines (5 agents, policies, audit trail, test cases, snapshots, briefing) | ~25k in / ~10k out |
+| Generation success flash | `intake/[sessionId]/page.tsx` + `intake-review.tsx` | ~10k in / ~2k out |
+| MRM report loading skeleton | `blueprints/[id]/report/loading.tsx` | ~6k in / ~2k out |
+| Intelligence cold-start message | `monitor/intelligence/page.tsx` | ~5k in / ~1k out |
+| Demo setup guide | `docs/demo/DEMO_SETUP.md` | ~8k in / ~4k out |
+| INTELLIOS_SYSTEM_DESCRIPTION.md validation | MRM count fix, Section 4.5.3 rewrite, Section 4.9 UI Layer addition | ~20k in / ~6k out |
+| Documentation | Session log, _index, roadmap Phase 34, effort log | ~8k in / ~3k out |
+| **Session total (est.)** | | **~120k in / ~35k out** |
+
+**Estimated session cost:** ~120K × $3/1M + ~35K × $15/1M = $0.36 + $0.53 = **~$0.89**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | "Great. Now carefully think and plan the next body of work of the highest value. I need to be able to showcase Intellios without any bugs or hiccups" | D-Arch | Strategic direction: showcase readiness |
+| 2 | "Yes" | D-Approve | Approved Phase 34 plan |
+
+**Totals:** 2 messages · 1 architectural direction + 1 approval · ~0.15 hrs (plan review only — implementation fully autonomous)
 
 ---
 
