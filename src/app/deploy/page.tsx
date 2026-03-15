@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { Rocket, CheckCircle, Globe } from "lucide-react";
 
 interface Agent {
   id: string;
@@ -89,8 +90,8 @@ function DeployConfirmModal({
         {/* Modal header */}
         <div className="border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 text-sm">
-              🚀
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+              <Rocket size={16} />
             </span>
             <div>
               <h2 className="text-sm font-semibold text-gray-900">
@@ -467,7 +468,7 @@ export default function DeploymentConsolePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="px-8 py-8 space-y-8">
       {/* Standard deployment confirmation modal */}
       {modal && (
         <DeployConfirmModal
@@ -487,30 +488,24 @@ export default function DeploymentConsolePage() {
         />
       )}
 
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-5xl flex items-center justify-between">
-          <div>
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <Rocket size={20} className="text-violet-600" />
             <h1 className="text-xl font-semibold text-gray-900">Deployment Console</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Promote approved agents to production
-            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/pipeline"
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              Pipeline →
-            </Link>
-            <Link href="/" className="text-sm text-gray-400 hover:text-gray-700">
-              ← Home
-            </Link>
-          </div>
+          <p className="text-sm text-gray-500 pl-7">Promote approved agents to production</p>
         </div>
-      </header>
+        <Link
+          href="/pipeline"
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+        >
+          Pipeline →
+        </Link>
+      </div>
 
-      <main className="mx-auto max-w-5xl px-6 py-8 space-y-8">
+      <div className="space-y-8">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
@@ -721,7 +716,7 @@ export default function DeploymentConsolePage() {
             </div>
           )}
         </section>
-      </main>
+      </div>
     </div>
   );
 }

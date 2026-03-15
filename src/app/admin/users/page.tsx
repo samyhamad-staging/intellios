@@ -302,32 +302,24 @@ export default function AdminUsersPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-5xl flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">User Management</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Manage enterprise users, roles, and access
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {!showCreate && (
-              <button
-                onClick={() => setShowCreate(true)}
-                className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-              >
-                + New User
-              </button>
-            )}
-            <Link href="/" className="text-sm text-gray-400 hover:text-gray-700">
-              ← Home
-            </Link>
-          </div>
+    <div className="px-8 py-8 space-y-6">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">User Management</h1>
+          <p className="mt-0.5 text-sm text-gray-500">Manage enterprise users, roles, and access</p>
         </div>
-      </header>
+        {!showCreate && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+          >
+            + New User
+          </button>
+        )}
+      </div>
 
-      <main className="mx-auto max-w-5xl px-6 py-8 space-y-6">
+      <div className="space-y-6">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
@@ -429,7 +421,7 @@ export default function AdminUsersPage() {
           {userList.length} user{userList.length === 1 ? "" : "s"} in this enterprise.
           Password changes must be performed by each user individually.
         </p>
-      </main>
+      </div>
     </div>
   );
 }

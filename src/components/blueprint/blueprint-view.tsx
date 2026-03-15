@@ -1,6 +1,8 @@
 "use client";
 
 import { ABP } from "@/lib/types/abp";
+import { User, FileText, Wrench, Brain, Lock, Shield, Tag } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface BlueprintViewProps {
   abp: ABP;
@@ -10,7 +12,7 @@ export function BlueprintView({ abp }: BlueprintViewProps) {
   return (
     <div className="flex flex-col gap-6">
       {/* Identity */}
-      <Section title="Identity">
+      <Section title="Identity" icon={User}>
         <Row label="Name">{abp.identity.name}</Row>
         <Row label="Description">{abp.identity.description}</Row>
         {abp.identity.persona && (
@@ -40,7 +42,7 @@ export function BlueprintView({ abp }: BlueprintViewProps) {
 
       {/* Instructions */}
       {abp.capabilities.instructions && (
-        <Section title="System Instructions">
+        <Section title="System Instructions" icon={FileText}>
           <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
             {abp.capabilities.instructions}
           </pre>
@@ -48,7 +50,7 @@ export function BlueprintView({ abp }: BlueprintViewProps) {
       )}
 
       {/* Tools */}
-      <Section title={`Tools & Capabilities (${abp.capabilities.tools.length})`}>
+      <Section title={`Tools & Capabilities (${abp.capabilities.tools.length})`} icon={Wrench}>
         {abp.capabilities.tools.length === 0 ? (
           <p className="text-sm text-gray-400 italic">No tools defined</p>
         ) : (
@@ -77,7 +79,7 @@ export function BlueprintView({ abp }: BlueprintViewProps) {
 
       {/* Knowledge Sources */}
       {(abp.capabilities.knowledge_sources?.length ?? 0) > 0 && (
-        <Section title={`Knowledge Sources (${abp.capabilities.knowledge_sources!.length})`}>
+        <Section title={`Knowledge Sources (${abp.capabilities.knowledge_sources!.length})`} icon={Brain}>
           <div className="flex flex-col gap-2">
             {abp.capabilities.knowledge_sources!.map((src, i) => (
               <div key={i} className="flex items-start gap-2 text-sm">
@@ -95,7 +97,7 @@ export function BlueprintView({ abp }: BlueprintViewProps) {
       )}
 
       {/* Constraints */}
-      <Section title="Constraints">
+      <Section title="Constraints" icon={Lock}>
         {!abp.constraints.allowed_domains?.length &&
         !abp.constraints.denied_actions?.length &&
         !abp.constraints.max_tokens_per_response &&
@@ -143,7 +145,7 @@ export function BlueprintView({ abp }: BlueprintViewProps) {
       </Section>
 
       {/* Governance */}
-      <Section title={`Governance (${abp.governance.policies.length} polic${abp.governance.policies.length === 1 ? "y" : "ies"})`}>
+      <Section title={`Governance (${abp.governance.policies.length} polic${abp.governance.policies.length === 1 ? "y" : "ies"})`} icon={Shield}>
         {abp.governance.policies.length === 0 ? (
           <p className="text-sm text-gray-400 italic">No policies defined</p>
         ) : (
@@ -192,7 +194,7 @@ export function BlueprintView({ abp }: BlueprintViewProps) {
       </Section>
 
       {/* Metadata */}
-      <Section title="Metadata">
+      <Section title="Metadata" icon={Tag}>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <Row label="Blueprint ID">
             <span className="font-mono text-xs text-gray-600">{abp.metadata.id}</span>
@@ -220,10 +222,11 @@ export function BlueprintView({ abp }: BlueprintViewProps) {
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, icon: Icon, children }: { title: string; icon?: LucideIcon; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
+      <h3 className="mb-4 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider text-gray-500">
+        {Icon && <Icon size={13} className="text-gray-400" />}
         {title}
       </h3>
       {children}

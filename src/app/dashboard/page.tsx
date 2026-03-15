@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { BarChart3, TrendingUp, TrendingDown } from "lucide-react";
 
 interface Agent {
   id: string;
@@ -122,31 +123,25 @@ export default function ExecutiveDashboardPage() {
   const funnelMax = Math.max(...funnelStages.map((s) => s.count), 1);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-6xl flex items-center justify-between">
-          <div>
+    <div className="px-8 py-8 space-y-8">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <BarChart3 size={20} className="text-violet-600" />
             <h1 className="text-xl font-semibold text-gray-900">Executive Dashboard</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Platform health, pipeline throughput, and governance posture
-            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/governance"
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              Governance Hub →
-            </Link>
-            <Link href="/" className="text-sm text-gray-400 hover:text-gray-700">
-              ← Home
-            </Link>
-          </div>
+          <p className="text-sm text-gray-500 pl-7">Platform health, pipeline throughput, and governance posture</p>
         </div>
-      </header>
+        <Link
+          href="/governance"
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+        >
+          Governance Hub →
+        </Link>
+      </div>
 
-      <main className="mx-auto max-w-6xl px-6 py-8 space-y-8">
+      <div className="space-y-8">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
@@ -407,7 +402,7 @@ export default function ExecutiveDashboardPage() {
             </div>
           </div>
         </section>
-      </main>
+      </div>
     </div>
   );
 }

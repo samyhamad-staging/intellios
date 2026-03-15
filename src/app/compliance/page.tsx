@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { CheckSquare, AlertTriangle } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -122,7 +123,7 @@ export default function CompliancePage() {
 
   if (sessionStatus === "loading" || (loading && !error)) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex h-64 items-center justify-center">
         <p className="text-sm text-gray-400">Loading compliance posture…</p>
       </div>
     );
@@ -130,7 +131,7 @@ export default function CompliancePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex h-64 items-center justify-center">
         <div className="text-center">
           <p className="text-sm text-red-600 mb-3">{error}</p>
           <button
@@ -145,33 +146,25 @@ export default function CompliancePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-6xl flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">
-              Compliance Command Center
-            </h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Enterprise compliance posture, at-risk agents, and review queue
-            </p>
+    <div className="px-8 py-8 space-y-8">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <CheckSquare size={20} className="text-violet-600" />
+            <h1 className="text-xl font-semibold text-gray-900">Compliance Command Center</h1>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/governance"
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              Governance Hub →
-            </Link>
-            <Link href="/" className="text-sm text-gray-400 hover:text-gray-700">
-              ← Home
-            </Link>
-          </div>
+          <p className="text-sm text-gray-500 pl-7">Enterprise compliance posture, at-risk agents, and review queue</p>
         </div>
-      </header>
+        <Link
+          href="/governance"
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+        >
+          Governance Hub →
+        </Link>
+      </div>
 
-      <main className="mx-auto max-w-6xl px-6 py-8 space-y-8">
+      <div className="space-y-8">
         {posture && (
           <>
             {/* ── Section A: Enterprise Posture KPIs ─────────────────────── */}
@@ -602,7 +595,7 @@ export default function CompliancePage() {
             )}
           </>
         )}
-      </main>
+      </div>
     </div>
   );
 }
