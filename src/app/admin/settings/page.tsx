@@ -59,28 +59,23 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-3xl flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <Link href="/admin/users" className="hover:text-gray-700">← Admin</Link>
-            </div>
-            <h1 className="mt-1 text-xl font-semibold text-gray-900">Enterprise Settings</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Configure governance thresholds, SLA policies, and notification preferences.
-            </p>
-          </div>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
-          >
-            {saving ? "Saving…" : "Save Settings"}
-          </button>
+    <div className="px-8 py-8 space-y-6">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Enterprise Settings</h1>
+          <p className="mt-0.5 text-sm text-gray-500">
+            Configure governance thresholds, SLA policies, and notification preferences.
+          </p>
         </div>
-      </header>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save Settings"}
+        </button>
+      </div>
 
       {/* Toast */}
       {toast && (
@@ -95,7 +90,7 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      <main className="mx-auto max-w-3xl px-6 py-8 space-y-6">
+      <div className="space-y-6">
 
         {/* Review SLA */}
         <section className="rounded-xl border border-gray-200 bg-white p-6">
@@ -536,7 +531,7 @@ export default function AdminSettingsPage() {
             {saving ? "Saving…" : "Save Settings"}
           </button>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

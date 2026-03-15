@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { Activity, RefreshCw } from "lucide-react";
 
 interface AgentHealth {
   agentId: string;
@@ -174,12 +175,15 @@ export default function MonitorPage() {
   const canCheck = role === "compliance_officer" || role === "admin";
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-8">
+    <main className="px-8 py-8">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Deployment Monitor</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
+          <div className="flex items-center gap-2 mb-0.5">
+            <Activity size={20} className="text-violet-600" />
+            <h1 className="text-xl font-semibold text-gray-900">Deployment Monitor</h1>
+          </div>
+          <p className="text-sm text-gray-500 pl-7">
             Governance posture of deployed agents against the current enterprise policy set.
           </p>
         </div>
@@ -202,7 +206,7 @@ export default function MonitorPage() {
                   Checking…
                 </>
               ) : (
-                "↻ Check All Agents"
+                <><RefreshCw size={13} />Check All Agents</>
               )}
             </button>
           )}

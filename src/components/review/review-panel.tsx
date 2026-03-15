@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ValidationReport } from "@/lib/governance/types";
 import { VersionDiff } from "@/components/registry/version-diff";
+import { Sparkles, ThumbsUp, ThumbsDown } from "lucide-react";
 
 type ReviewAction = "approve" | "reject" | "request_changes";
 
@@ -146,13 +147,13 @@ export function ReviewPanel({
       {/* AI Risk Brief */}
       <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-indigo-700">✦ AI Risk Brief</span>
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700"><Sparkles size={12} />AI Risk Brief</span>
           {aiBrief === null && (
             <button
               onClick={generateAiBrief}
-              className="rounded-md border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 transition-colors"
+              className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 transition-colors"
             >
-              Generate Brief
+              <Sparkles size={11} />Generate Brief
             </button>
           )}
           {aiBrief !== null && aiBrief !== "loading" && (
@@ -375,7 +376,7 @@ export function ReviewPanel({
       <button
         onClick={submitReview}
         disabled={!selectedAction || !rationale.trim() || submitting}
-        className={`w-full rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-40 ${
+        className={`inline-flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-40 ${
           selectedAction === "approve"
             ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-green-600"
             : selectedAction === "reject"
@@ -385,6 +386,8 @@ export function ReviewPanel({
             : "bg-gray-900 text-white hover:bg-gray-800"
         }`}
       >
+        {selectedAction === "approve" && <ThumbsUp size={14} />}
+        {selectedAction === "reject" && <ThumbsDown size={14} />}
         {submitting
           ? "Submitting…"
           : selectedAction

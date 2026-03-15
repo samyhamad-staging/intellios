@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import { ScrollText, Download } from "lucide-react";
 
 interface AuditEntry {
   id: string;
@@ -160,36 +161,29 @@ export default function AuditTrailPage() {
   }, [entityType, actorEmail, from, to]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-6xl flex items-center justify-between">
-          <div>
+    <div className="px-8 py-8 space-y-4">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <ScrollText size={20} className="text-violet-600" />
             <h1 className="text-xl font-semibold text-gray-900">Audit Trail</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Immutable record of all platform actions. Records cannot be edited or deleted.
-            </p>
           </div>
-          <div className="flex items-center gap-3">
-            {entries.length > 0 && (
-              <button
-                onClick={() => exportCsv(entries)}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-              >
-                Export CSV ({entries.length})
-              </button>
-            )}
-            <Link
-              href="/governance"
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              ← Governance Hub
-            </Link>
-          </div>
+          <p className="text-sm text-gray-500 pl-7">
+            Immutable record of all platform actions. Records cannot be edited or deleted.
+          </p>
         </div>
-      </header>
+        {entries.length > 0 && (
+          <button
+            onClick={() => exportCsv(entries)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+          >
+            <Download size={13} />Export CSV ({entries.length})
+          </button>
+        )}
+      </div>
 
-      <main className="mx-auto max-w-6xl px-6 py-6 space-y-4">
+      <div className="space-y-4">
         {/* Filter bar */}
         <div className="flex flex-wrap gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4">
           <div className="flex flex-1 min-w-40 flex-col gap-1">
@@ -364,7 +358,7 @@ export default function AuditTrailPage() {
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

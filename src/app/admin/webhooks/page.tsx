@@ -420,7 +420,7 @@ export default function AdminWebhooksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="px-8 py-8 space-y-6">
       {/* Toast */}
       {toast && (
         <div
@@ -434,22 +434,23 @@ export default function AdminWebhooksPage() {
         </div>
       )}
 
-      <div className="mx-auto max-w-4xl px-6 py-8">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">Webhook Integrations</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Register HTTPS endpoints to receive signed lifecycle events from Intellios.
-            </p>
-          </div>
-          <button
-            onClick={() => setShowForm((v) => !v)}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
-          >
-            {showForm ? "Cancel" : "Add Webhook"}
-          </button>
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Webhook Integrations</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Register HTTPS endpoints to receive signed lifecycle events from Intellios.
+          </p>
         </div>
+        <button
+          onClick={() => setShowForm((v) => !v)}
+          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+        >
+          {showForm ? "Cancel" : "Add Webhook"}
+        </button>
+      </div>
+
+      <div>
 
         {/* Secret reveal banner */}
         {revealedSecret && (
@@ -657,6 +658,7 @@ function verifySignature(secret, body, header) {
             <code className="font-mono bg-gray-100 px-1 rounded">X-Intellios-Delivery</code> (delivery UUID).
           </p>
         </div>
+      </div>
       </div>
     </div>
   );

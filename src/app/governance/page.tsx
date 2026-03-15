@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { Shield, Plus, Download } from "lucide-react";
 
 interface Agent {
   id: string;
@@ -197,31 +198,25 @@ export default function GovernanceHubPage() {
     .sort((a, b) => (b.violationCount ?? 0) - (a.violationCount ?? 0));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-6xl flex items-center justify-between">
-          <div>
+    <div className="px-8 py-8 space-y-8">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <Shield size={20} className="text-violet-600" />
             <h1 className="text-xl font-semibold text-gray-900">Governance Hub</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Policy coverage, violations, and compliance posture
-            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/audit"
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              Audit Trail →
-            </Link>
-            <Link href="/" className="text-sm text-gray-400 hover:text-gray-700">
-              ← Home
-            </Link>
-          </div>
+          <p className="text-sm text-gray-500 pl-7">Policy coverage, violations, and compliance posture</p>
         </div>
-      </header>
+        <Link
+          href="/audit"
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+        >
+          Audit Trail →
+        </Link>
+      </div>
 
-      <main className="mx-auto max-w-6xl px-6 py-8 space-y-8">
+      <div className="space-y-8">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
@@ -565,9 +560,9 @@ export default function GovernanceHubPage() {
             {canManagePolicies && (
               <Link
                 href="/governance/policies/new"
-                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
               >
-                + New Policy
+                <Plus size={14} />New Policy
               </Link>
             )}
           </div>
@@ -586,7 +581,7 @@ export default function GovernanceHubPage() {
               {canManagePolicies ? (
                 <Link
                   href="/governance/policies/new"
-                  className="mt-3 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  className="mt-3 inline-block rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
                 >
                   Create first policy
                 </Link>
@@ -849,7 +844,7 @@ export default function GovernanceHubPage() {
             </div>
           </section>
         )}
-      </main>
+      </div>
     </div>
   );
 }
