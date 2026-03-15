@@ -119,17 +119,17 @@ Navigate to `/pipeline`. Show all 5 lifecycle columns populated. Highlight the D
 Click the Data Privacy Compliance Agent → "Open in Studio". Show the 3-column layout. Point out the 2 error violations in the right panel blocking submission. Click Re-validate to show the live governance engine. Explain what the designer needs to fix.
 
 ### Stop 4 — Deployed Agent — Full Story (2 min)
-Navigate to Registry → Customer Inquiry Bot. Walk through the tabs:
+Still signed in as `designer@intellios.dev`. Navigate to Registry → Customer Inquiry Bot. Walk through the tabs:
 - **Blueprint** — the complete 7-section agent spec
 - **Governance** — passes all 3 policies, zero violations
 - **Versions** — version history
-Then click **"View MRM Report"** to show the 13-section compliance evidence document. Point out the approval chain, SOD evidence, and Regulatory Framework Assessment.
+Then click **"View MRM Report"** (visible to all roles) to show the 13-section compliance evidence document. Point out the approval chain, SOD evidence, and Regulatory Framework Assessment.
 
 ### Stop 5 — Review Queue — Multi-Step Approval (2 min)
-Sign in as `officer@intellios.dev`. Navigate to `/review`. Show the Fraud Detection Advisor at Step 2/3. Open the review panel — show the prior approval from the Senior Reviewer. Show the AI Risk Brief generation (triggers a Claude call). Submit a Compliance Officer approval.
+Sign in as `officer@intellios.dev`. Navigate to `/review`. Show the Fraud Detection Advisor at Step 2/3. Open the review panel — show the prior approval from the Senior Reviewer. Show the AI Risk Brief generation (triggers a Claude call). Submit a Compliance Officer approval — a green "Approval submitted — advancing to Final Sign-off" confirmation appears, then the item clears from the queue.
 
 ### Stop 6 — Governance Hub (1.5 min)
-Navigate to `/governance`. Show the policy library with 3 policies. Click "Preview Impact" on the SR 11-7 policy to show the simulation (which agents would be affected). Show the governance analytics section.
+Navigate to `/governance`. Show the policy library with 3 policies. Click **"Preview Impact"** directly on the SR 11-7 policy card to show the inline simulation (no navigation required — results appear below the card). Show the governance analytics section.
 
 ### Stop 7 — Compliance Command Center (1 min)
 Navigate to `/compliance`. Show the 5-section posture overview: deployed agent clean, 1 in review, policy coverage, 30-day trends.
@@ -138,7 +138,7 @@ Navigate to `/compliance`. Show the 5-section posture overview: deployed agent c
 Sign in as `reviewer@intellios.dev`. Navigate to `/deploy`. Show the Loan Application Assistant in the Ready to Deploy queue. Open the deploy confirmation modal — show the change reference requirement and authorization checkbox. (You can cancel without deploying.)
 
 ### Stop 9 — Intelligence Briefing (0.5 min)
-Navigate to `/monitor/intelligence`. Show the pre-generated briefing with 5 structured sections, QI trend chart, and anomaly signal for the Data Privacy Agent.
+Click **Monitor** in the sidebar → then **"Intelligence →"** on the Monitor page. Show the pre-generated briefing with 5 structured sections, QI trend chart, and anomaly signal for the Data Privacy Agent.
 
 ---
 

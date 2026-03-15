@@ -26,6 +26,20 @@ interface Policy {
   createdAt: string;
 }
 
+interface SimBlueprint {
+  blueprintId: string;
+  agentName: string;
+  agentId: string;
+  status: "new_violations" | "resolved_violations" | "no_change";
+  newViolationCount: number;
+  resolvedViolationCount: number;
+}
+
+interface SimResult {
+  summary: { total: number; newViolations: number; resolvedViolations: number; noChange: number };
+  blueprints: SimBlueprint[];
+}
+
 interface PolicyHistoryEntry {
   id: string;
   policyVersion: number;
@@ -86,6 +100,8 @@ export default function GovernanceHubPage() {
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
   const [policyHistories, setPolicyHistories] = useState<Record<string, PolicyHistoryEntry[]>>({});
   const [historyLoading, setHistoryLoading] = useState<Record<string, boolean>>({});
+  const [simulatingId, setSimulatingId] = useState<string | null>(null);
+  const [simResults, setSimResults] = useState<Record<string, SimResult>>({});
 
   const loadPolicies = () =>
     fetch("/api/governance/policies")
@@ -128,6 +144,37 @@ export default function GovernanceHubPage() {
   const showToast = (message: string, type: "success" | "error") => {
     setImportToast({ message, type });
     setTimeout(() => setImportToast(null), 4000);
+  };
+
+  const handlePreviewImpact = async (policy: Policy) => {
+    if (simulatingId === policy.id) return;
+    // Toggle off if already shown
+    if (simResults[policy.id]) {
+      setSimResults((prev) => {
+        const next = { ...prev };
+        delete next[policy.id];
+        return next;
+      });
+      return;
+    }
+    setSimulatingId(policy.id);
+    try {
+      const res = await fetch("/api/governance/policies/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          policy: { name: policy.name, type: policy.type, description: policy.description ?? "", rules: policy.rules },
+          existingPolicyId: policy.id,
+        }),
+      });
+      if (!res.ok) throw new Error("Simulation failed");
+      const data: SimResult = await res.json();
+      setSimResults((prev) => ({ ...prev, [policy.id]: data }));
+    } catch {
+      showToast("Simulation failed — check console for details", "error");
+    } finally {
+      setSimulatingId(null);
+    }
   };
 
   const applyPack = async (packId: string, force = false) => {
@@ -632,6 +679,20 @@ export default function GovernanceHubPage() {
                         {new Date(policy.createdAt).toLocaleDateString()}
                       </div>
                       <div className="flex items-center justify-end gap-3">
+                        {canManagePolicies && (
+                          <button
+                            onClick={() => handlePreviewImpact(policy)}
+                            disabled={simulatingId === policy.id}
+                            className="text-xs text-violet-600 hover:text-violet-800 disabled:text-gray-400 transition-colors"
+                            title="Simulate impact on approved/deployed agents"
+                          >
+                            {simulatingId === policy.id
+                              ? "Simulating…"
+                              : simResults[policy.id]
+                              ? "× Clear"
+                              : "Preview Impact"}
+                          </button>
+                        )}
                         {canManagePolicies && policy.policyVersion > 1 && (
                           <button
                             onClick={() => toggleHistory(policy.id)}
@@ -651,6 +712,66 @@ export default function GovernanceHubPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* ── Inline simulation result panel ─────────────────── */}
+                  {simResults[policy.id] && (() => {
+                    const sim = simResults[policy.id];
+                    const affected = sim.blueprints.filter((b) => b.status !== "no_change");
+                    return (
+                      <div className="border-t border-violet-100 bg-violet-50 px-5 py-4">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-violet-700 mb-3">
+                          Impact Preview — {sim.summary.total} agent{sim.summary.total !== 1 ? "s" : ""} checked
+                        </p>
+                        {/* Summary stats */}
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                            sim.summary.newViolations > 0
+                              ? "bg-red-50 border-red-200 text-red-700"
+                              : "bg-gray-50 border-gray-200 text-gray-500"
+                          }`}>
+                            {sim.summary.newViolations} new violation{sim.summary.newViolations !== 1 ? "s" : ""}
+                          </span>
+                          <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                            sim.summary.resolvedViolations > 0
+                              ? "bg-green-50 border-green-200 text-green-700"
+                              : "bg-gray-50 border-gray-200 text-gray-500"
+                          }`}>
+                            {sim.summary.resolvedViolations} resolved
+                          </span>
+                          <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs font-medium text-gray-500">
+                            {sim.summary.noChange} no change
+                          </span>
+                        </div>
+                        {/* Affected agents list */}
+                        {affected.length === 0 ? (
+                          <p className="text-xs text-violet-600">No agents affected — all pass or fail with no change.</p>
+                        ) : (
+                          <div className="space-y-1">
+                            {affected.slice(0, 5).map((b) => (
+                              <div key={b.blueprintId} className="flex items-center gap-2">
+                                <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                                  b.status === "new_violations"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-green-100 text-green-700"
+                                }`}>
+                                  {b.status === "new_violations" ? `+${b.newViolationCount}` : `−${b.resolvedViolationCount}`}
+                                </span>
+                                <Link
+                                  href={`/registry/${b.agentId}`}
+                                  className="text-xs text-gray-700 hover:underline truncate"
+                                >
+                                  {b.agentName}
+                                </Link>
+                              </div>
+                            ))}
+                            {affected.length > 5 && (
+                              <p className="text-xs text-gray-400 pt-1">+{affected.length - 5} more affected agents</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Expandable version history */}
                   {expandedHistoryId === policy.id && (
