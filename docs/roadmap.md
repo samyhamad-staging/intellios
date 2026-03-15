@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Phase 31 ✓ Complete (2026-03-15) — AI Experience Optimization
+## Current Phase: Phase 33 ✓ Complete (2026-03-15) — AgentCore Integration Confidence
 
 ---
 
@@ -618,6 +618,60 @@ Makes Intellios's embedded AI capabilities visible, interpretable, and trustwort
 | Generation step progress | P1 | ✓ Complete | 4-step label cycling during `generateObject()` wait; indigo progress dots |
 | Structured briefing sections | P0 | ✓ Complete | `generateObject()` migration with 5-section Zod schema; section cards with icons + colored badges; `<pre>` fallback for old records; `BriefingSections` type in `types.ts` |
 | AI Risk Brief on review panel | P0 | ✓ Complete | New `POST /api/blueprints/[id]/review-brief` (Claude Haiku); structured `riskLevel`/`summary`/`keyPoints`/`recommendation` schema; "Generate Brief" button + shimmer loading + non-interactive recommendation badge |
+
+---
+
+## Phase 32 — UI Transformation ✓ Complete (2026-03-15 Session 037)
+
+Transforms Intellios from a gray prototype into a polished product-grade interface. Design direction: dark sidebar + light content (Linear/Vercel aesthetic). Installed `lucide-react` and `geist`. No DB migrations. No new API routes. No behavioral changes.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| Install lucide-react + geist | P0 | ✓ Complete | `lucide-react ^0.487.0` + `geist ^1.3.0` added to package.json |
+| CSS design tokens + Geist font | P0 | ✓ Complete | `--sidebar-bg/border/text/accent`, `--content-bg`, `--shadow-card/raised` in `:root`; WebKit scrollbar styles |
+| Dark sidebar layout | P0 | ✓ Complete | `slate-900` sidebar (240px); violet-500 accent; role-gated nav; user chip; replaces horizontal top-nav |
+| `sidebar.tsx` new component | P0 | ✓ Complete | Brand strip, grouped nav with Lucide icons, active state (`border-l-2 border-violet-500`), user chip + sign-out |
+| Layout.tsx sidebar integration | P0 | ✓ Complete | `flex h-screen overflow-hidden` layout; login page excluded; Geist Sans applied via `next/font` |
+| Overview page redesign | P1 | ✓ Complete | `LayoutDashboard` icon, stats row, quick-action cards, activity list |
+| Intake page redesign | P1 | ✓ Complete | `MessageSquare` icon, session rows, amber in-progress strip, `Inbox` empty state |
+| Pipeline page surgical edits | P1 | ✓ Complete | Removed `← Home`, layout constraint removed |
+| Registry page redesign | P1 | ✓ Complete | `Library` icon, `Search` in bar, `Bot` row icons, pill toggle status filter |
+| Review page redesign | P1 | ✓ Complete | `ClipboardList` icon, pending count badge, `ClipboardCheck` empty state |
+| Governance page redesign | P1 | ✓ Complete | `Shield` icon, `Plus` on New Policy (violet), `Download` on template import |
+| Compliance page redesign | P1 | ✓ Complete | `CheckSquare` icon, `AlertTriangle` on risk indicators, 3+2 KPI layout |
+| Dashboard page redesign | P1 | ✓ Complete | `BarChart3` icon, `TrendingUp`/`TrendingDown` on KPI cards |
+| Deploy page redesign | P1 | ✓ Complete | `Rocket` icon, green `border-l-2` ready rows, `Globe` on live rows, modal emoji→icon |
+| Monitor page redesign | P1 | ✓ Complete | `Activity` icon, `RefreshCw` on Check All, removed `max-w` constraint |
+| Audit page redesign | P1 | ✓ Complete | `ScrollText` icon, `Download` icon on Export CSV |
+| Admin pages redesign (users, settings, webhooks) | P1 | ✓ Complete | Consistent inline header pattern, violet-600 CTAs, removed breadcrumb links |
+| Governance sub-pages redesign (new, edit) | P1 | ✓ Complete | `px-8 py-8` + `max-w-3xl`, `h-64` loading states |
+| StatusBadge colored dot | P2 | ✓ Complete | `STATUS_DOT` record; `h-1.5 w-1.5 rounded-full` dot before label |
+| BlueprintView section icons | P2 | ✓ Complete | Optional `icon?: LucideIcon` prop; 7 sections mapped to Lucide icons |
+| ReviewPanel action icons | P2 | ✓ Complete | `Sparkles` on AI Brief; `ThumbsUp`/`ThumbsDown` on submit button |
+| ChatContainer prompt card icons | P2 | ✓ Complete | `ArrowRight` right-aligned; hover color violet |
+
+---
+
+## Phase 33 — AgentCore Integration Confidence ✓ Complete (2026-03-15 Session 038)
+
+Systematically hardens the AgentCore integration (Phases 29–30) to reach production-grade confidence. No DB migrations. No new runtime npm dependencies (vitest is devDependency only). Pre-existing webhooks.tsx TypeScript error unrelated to this phase.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| Settings Zod schema for agentcore config | P0 | ✓ Complete | `AgentCoreConfigSchema` in admin settings PUT; region regex, ARN regex, guardrail co-validation; HTTP 400 on malformed config |
+| Instruction padding fix | P0 | ✓ Complete | Short-but-real instructions padded (not replaced) to meet Bedrock's 40-char minimum |
+| Polling timeout 30s → 90s | P0 | ✓ Complete | `POLL_MAX_ATTEMPTS = 180`; UI copy updated; dynamic error message self-corrects |
+| Pre-flight config validation | P0 | ✓ Complete | `validateAgentCoreConfig()` called before `BedrockAgentClient` instantiation; fails with clear message before any AWS calls |
+| Error message enrichment | P0 | ✓ Complete | `enrichAgentCoreError()` maps 6 AWS error patterns to actionable operator guidance in the deploy modal |
+| vitest setup | P0 | ✓ Complete | `vitest ^3.0.0` + `@vitest/coverage-v8` devDependencies; `vitest.config.ts`; `test`, `test:watch`, `test:coverage` scripts |
+| Translation layer unit tests | P0 | ✓ Complete | 37 tests for `translateAbpToBedrockAgent()` + `buildAgentCoreExportManifest()`; zero AWS dependency; covers name sanitization, instruction padding, action groups, memory, tags, guardrails, manifest |
+| Deploy route integration tests | P1 | ✓ Complete | 12 tests with `vi.mock(@aws-sdk/client-bedrock-agent)`; covers happy path, all 3 failure steps, rollback, polling timeout, terminal state, pre-flight validation |
+| AgentCore live health endpoint | P1 | ✓ Complete | `GET /api/monitor/agentcore-health`; calls `GetAgent` per deployed agent; 5s timeout; `UNREACHABLE` on failure; summary object |
+| Monitor page AgentCore Live Status section | P1 | ✓ Complete | "Check Live AWS Status" button (compliance_officer + admin only); Bedrock status badges; only renders when AgentCore agents exist |
+| ADR-011 | P2 | ✓ Complete | Captures test runner choice, timeout rationale, padding behavior change, agentVersion limitation |
+| Operator setup guide | P2 | ✓ Complete | `docs/guides/agentcore-setup.md` — IAM setup, credential sources, model access, settings config, export vs deploy paths, live monitoring, known limitations, troubleshooting |
+
+**Test results:** 49/49 passing (37 translation + 12 deploy). Coverage target: ≥80% lines on `lib/agentcore/**`.
 
 ---
 

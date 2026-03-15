@@ -138,13 +138,22 @@ export function translateAbpToBedrockAgent(
     : undefined;
 
   // ── Instruction ─────────────────────────────────────────────────────────────
-  // Bedrock requires min 40 chars. Build from instructions + persona if available.
-  let instruction = abp.capabilities.instructions ?? "";
-  if (abp.identity.persona) {
-    instruction = `${abp.identity.persona}\n\n${instruction}`.trim();
-  }
+  // Bedrock requires min 40 chars. Build from persona + instructions if available.
+  // Pad short-but-real instructions rather than replacing them entirely, so ABP
+  // content is always preserved. Only fully empty ABPs use the full fallback.
+  let instruction = [abp.identity.persona, abp.capabilities.instructions]
+    .filter(Boolean)
+    .join("\n\n")
+    .trim();
+
   if (instruction.length < MIN_INSTRUCTION_LENGTH) {
-    instruction = FALLBACK_INSTRUCTION;
+    if (instruction.length === 0) {
+      instruction = FALLBACK_INSTRUCTION;
+    } else {
+      const pad =
+        "\n\nThis agent follows the organization's policies and acts professionally.";
+      instruction = (instruction + pad).slice(0, 4000);
+    }
   }
   // Bedrock max instruction length is 4000 chars
   instruction = instruction.slice(0, 4000);

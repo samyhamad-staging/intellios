@@ -27,15 +27,16 @@ export async function GET(request: NextRequest) {
     // Latest deployed version per logical agent
     const deployed = await db
       .selectDistinctOn([agentBlueprints.agentId], {
-        id:           agentBlueprints.id,
-        agentId:      agentBlueprints.agentId,
-        version:      agentBlueprints.version,
-        name:         agentBlueprints.name,
-        tags:         agentBlueprints.tags,
-        enterpriseId: agentBlueprints.enterpriseId,
-        createdBy:    agentBlueprints.createdBy,
-        createdAt:    agentBlueprints.createdAt,
-        updatedAt:    agentBlueprints.updatedAt,
+        id:               agentBlueprints.id,
+        agentId:          agentBlueprints.agentId,
+        version:          agentBlueprints.version,
+        name:             agentBlueprints.name,
+        tags:             agentBlueprints.tags,
+        enterpriseId:     agentBlueprints.enterpriseId,
+        createdBy:        agentBlueprints.createdBy,
+        createdAt:        agentBlueprints.createdAt,
+        updatedAt:        agentBlueprints.updatedAt,
+        deploymentTarget: agentBlueprints.deploymentTarget,
       })
       .from(agentBlueprints)
       .where(
@@ -62,16 +63,17 @@ export async function GET(request: NextRequest) {
     const agents = deployed.map((a) => {
       const health = healthMap.get(a.agentId);
       return {
-        agentId:       a.agentId,
-        blueprintId:   a.id,
-        name:          a.name,
-        version:       a.version,
-        tags:          (a.tags ?? []) as string[],
-        deployedAt:    a.updatedAt.toISOString(), // updatedAt = when status last changed to deployed
-        healthStatus:  (health?.healthStatus ?? "unknown") as "clean" | "critical" | "unknown",
-        errorCount:    health?.errorCount ?? 0,
-        warningCount:  health?.warningCount ?? 0,
-        lastCheckedAt: health?.lastCheckedAt?.toISOString() ?? null,
+        agentId:          a.agentId,
+        blueprintId:      a.id,
+        name:             a.name,
+        version:          a.version,
+        tags:             (a.tags ?? []) as string[],
+        deployedAt:       a.updatedAt.toISOString(), // updatedAt = when status last changed to deployed
+        deploymentTarget: a.deploymentTarget ?? null,
+        healthStatus:     (health?.healthStatus ?? "unknown") as "clean" | "critical" | "unknown",
+        errorCount:       health?.errorCount ?? 0,
+        warningCount:     health?.warningCount ?? 0,
+        lastCheckedAt:    health?.lastCheckedAt?.toISOString() ?? null,
       };
     });
 

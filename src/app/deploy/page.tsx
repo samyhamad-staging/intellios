@@ -5,6 +5,32 @@ import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Rocket, CheckCircle, Globe } from "lucide-react";
 
+/**
+ * Map raw AWS SDK / server error strings to actionable operator messages.
+ * Called before setting the error state in the AgentCore deploy modal.
+ */
+function enrichAgentCoreError(raw: string): string {
+  if (raw.includes("AccessDeniedException") || raw.includes("not authorized"))
+    return "AWS permission denied. Verify the IAM role has 'bedrock:CreateAgent' and 'bedrock:InvokeModel' permissions. Check Admin → Settings → Deployment Targets.";
+  if (raw.includes("agentResourceRoleArn") || raw.includes("Invalid agentResourceRoleArn"))
+    return "Invalid IAM role ARN. Update the agentResourceRoleArn in Admin → Settings → Deployment Targets.";
+  if (raw.includes("ValidationException"))
+    return `AWS validation error: ${raw.replace(/^.*?ValidationException:\s*/i, "")}. Check Admin → Settings → Deployment Targets.`;
+  if (raw.includes("ServiceQuotaExceededException"))
+    return "AWS Bedrock agent quota exceeded. Request a quota increase in the AWS console for your region, then retry.";
+  if (raw.includes("ResourceNotFoundException") || (raw.includes("model") && raw.includes("not found")))
+    return "Foundation model not found or not enabled in this region. Check the foundation model ID in Admin → Settings → Deployment Targets.";
+  if (raw.includes("foundationModel"))
+    return "Foundation model error. Verify the model ID is correct and enabled in your AWS region via Admin → Settings → Deployment Targets.";
+  if (raw.includes("did not reach PREPARED state"))
+    return "Agent preparation timed out (90s). The agent may still be preparing in AWS — check the Bedrock console. If the agent is not visible there, retry the deployment.";
+  if (raw.includes("AgentCore config missing") || raw.includes("Invalid agentResourceRoleArn format"))
+    return `Configuration error: ${raw}. Update deployment settings in Admin → Settings → Deployment Targets.`;
+  if (raw.includes("CreateAgent failed"))
+    return `Agent creation failed: ${raw.replace(/^.*?CreateAgent failed:\s*/i, "")}`;
+  return raw;
+}
+
 interface Agent {
   id: string;
   agentId: string;
@@ -246,7 +272,7 @@ function AgentCoreDeployModal({
                 </p>
               </div>
               <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                The deployment may take up to 30 seconds while Bedrock prepares the agent.
+                The deployment may take up to 90 seconds while Bedrock prepares the agent.
                 Do not close this window during deployment.
               </p>
             </div>
@@ -409,8 +435,8 @@ export default function DeploymentConsolePage() {
 
       const data = await res.json();
       if (!res.ok) {
-        const msg = data.message ?? data.error ?? "Deployment failed";
-        setAgcModal((m) => m && { ...m, phase: "error", error: msg });
+        const raw = data.message ?? data.error ?? "Deployment failed";
+        setAgcModal((m) => m && { ...m, phase: "error", error: enrichAgentCoreError(raw) });
         return;
       }
 
@@ -432,7 +458,7 @@ export default function DeploymentConsolePage() {
         m && {
           ...m,
           phase: "error",
-          error: err instanceof Error ? err.message : "Deployment failed",
+          error: enrichAgentCoreError(err instanceof Error ? err.message : "Deployment failed"),
         }
       );
     }
