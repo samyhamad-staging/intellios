@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 // ─── Validation schema ────────────────────────────────────────────────────────
 
 const ApprovalChainStepSchema = z.object({
-  step: z.number().int().min(0),
+  step: z.number().int().min(0).optional(),
   role: z.enum(["reviewer", "compliance_officer", "admin"]),
   label: z.string().min(1).max(100),
 });
@@ -135,7 +135,10 @@ export async function PUT(request: NextRequest) {
     if (body.sla) merged.sla = body.sla;
     if (body.governance) merged.governance = body.governance;
     if (body.notifications) merged.notifications = body.notifications;
-    if (body.approvalChain !== undefined) merged.approvalChain = body.approvalChain;
+    if (body.approvalChain !== undefined) {
+      // Normalize: fill in step from index if missing (handles legacy seed data)
+      merged.approvalChain = body.approvalChain.map((s, i) => ({ ...s, step: s.step ?? i }));
+    }
     if (body.branding !== undefined) {
       const existing_br = (existingSettings.branding ?? {}) as Record<string, unknown>;
       merged.branding = { ...existing_br, ...body.branding };
