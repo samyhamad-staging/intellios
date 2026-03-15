@@ -22,7 +22,7 @@
 import { registerHandler } from "@/lib/events/bus";
 import type { LifecycleEvent } from "@/lib/events/types";
 import { createNotification } from "./store";
-import { getReviewerEmails, getComplianceOfficerEmails } from "./recipients";
+import { getReviewerEmails, getComplianceOfficerEmails, getUsersByRole } from "./recipients";
 import { sendEmail, buildNotificationEmail } from "./email";
 
 interface Meta {
@@ -31,6 +31,13 @@ interface Meta {
   agentId?: string | null;
   reviewAction?: string | null;
   comment?: string | null;
+  // Health check fields (blueprint.health_checked events)
+  healthStatus?: string | null;
+  previousStatus?: string | null;
+  errorCount?: number | null;
+  // Multi-step approval fields (blueprint.approval_step_completed events)
+  completedStep?: number | null;
+  label?: string | null;
 }
 
 async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
@@ -213,6 +220,84 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
       subject: `[Intellios] ${template.title}`,
       html: buildNotificationEmail(template.title, fullMessage, link),
     });
+  }
+
+  // ── blueprint.approval_step_completed ────────────────────────────────────
+  // Notify all users with the next required role that a blueprint is awaiting
+  // their approval step.
+  if (event.type === "blueprint.approval_step_completed") {
+    const toState = event.toState as Record<string, unknown> | null;
+    const nextApproverRole = toState?.nextApproverRole as string | undefined;
+    const nextApproverLabel = toState?.nextApproverLabel as string | undefined;
+    const nextStep = (toState?.step as number | undefined) ?? 0;
+    const completedLabel = meta.label ?? "previous step";
+
+    if (nextApproverRole) {
+      const recipients = await getUsersByRole(nextApproverRole, event.enterpriseId);
+      const title = `Blueprint awaiting ${nextApproverLabel ?? "your review"}`;
+      const message = `${agentName} completed step "${completedLabel}" and is now awaiting step ${nextStep + 1} (${nextApproverLabel ?? nextApproverRole}) approval`;
+
+      for (const email of recipients) {
+        if (email === event.actorEmail) continue;
+        await createNotification({
+          recipientEmail: email,
+          enterpriseId: event.enterpriseId,
+          type: "blueprint.approval_step_pending",
+          title,
+          message,
+          entityType: event.entityType,
+          entityId: event.entityId,
+          link,
+        });
+        void sendEmail({
+          to: email,
+          subject: `[Intellios] ${title}`,
+          html: buildNotificationEmail(title, message, link),
+        });
+      }
+    }
+    return;
+  }
+
+  // ── blueprint.health_checked ─────────────────────────────────────────────
+  // Notify compliance officers only on clean↔critical transitions to prevent
+  // alert fatigue from repeated health checks with no status change.
+  if (event.type === "blueprint.health_checked") {
+    const prev    = meta.previousStatus as string | undefined;
+    const current = meta.healthStatus   as string | undefined;
+    const errors  = (meta.errorCount as number | undefined) ?? 0;
+
+    const degraded = prev !== "critical" && current === "critical";
+    const restored = prev === "critical" && current === "clean";
+    if (!degraded && !restored) return;
+
+    const complianceOfficers = await getComplianceOfficerEmails(event.enterpriseId);
+    const title   = degraded
+      ? "Deployed agent needs governance review"
+      : "Deployed agent governance restored";
+    const message = degraded
+      ? `"${agentName}" has ${errors} governance error(s) after a policy change. Review and remediate to restore compliance.`
+      : `"${agentName}" now passes all governance checks.`;
+    const type    = degraded ? "deployment.health_degraded" : "deployment.health_restored";
+
+    for (const email of complianceOfficers) {
+      await createNotification({
+        recipientEmail: email,
+        enterpriseId:   event.enterpriseId,
+        type,
+        title,
+        message,
+        entityType: event.entityType,
+        entityId:   event.entityId,
+        link,
+      });
+      void sendEmail({
+        to:      email,
+        subject: `[Intellios] ${title}`,
+        html:    buildNotificationEmail(title, message, link),
+      });
+    }
+    return;
   }
 }
 

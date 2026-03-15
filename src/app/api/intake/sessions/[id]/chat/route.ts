@@ -9,6 +9,8 @@ import { eq, asc } from "drizzle-orm";
 import { buildIntakeSystemPrompt } from "@/lib/intake/system-prompt";
 import { createIntakeTools } from "@/lib/intake/tools";
 import { IntakePayload, IntakeContext, ContributionDomain, StakeholderContribution } from "@/lib/types/intake";
+import { loadPolicies } from "@/lib/governance/load-policies";
+import { selectIntakeModel } from "@/lib/intake/model-selector";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
@@ -101,6 +103,11 @@ export async function POST(
       createdAt: row.createdAt.toISOString(),
     }));
 
+    // Fetch active governance policies for this enterprise so Claude can design
+    // blueprints that pre-satisfy them (Phase 15: Policy-Aware Intake).
+    const enterpriseId = session.enterpriseId ?? null;
+    const currentPolicies = await loadPolicies(enterpriseId);
+
     let updateQueue = Promise.resolve();
 
     // Create tools with payload access
@@ -128,13 +135,25 @@ export async function POST(
     // Convert UI messages to model messages for Claude
     const modelMessages = await convertToModelMessages(messages);
 
+    // Select model based on turn position and conversation state.
+    // Most turns route to Haiku; opening, governance-heavy, and post-completion
+    // turns route to Sonnet for accuracy. See model-selector.ts for routing rules.
+    const selectedModel = selectIntakeModel({
+      messageCount: messages.length,
+      lastUserText: messages.length > 0
+        ? extractTextContent(messages[messages.length - 1])
+        : "",
+      context: currentContext,
+      payload: currentPayload,
+    });
+
     // Stream response
     const result = streamText({
-      model: anthropic("claude-sonnet-4-20250514"),
-      system: buildIntakeSystemPrompt(currentPayload, currentContext, currentContributions),
+      model: anthropic(selectedModel),
+      system: buildIntakeSystemPrompt(currentPayload, currentContext, currentContributions, currentPolicies),
       messages: modelMessages,
       tools,
-      stopWhen: stepCountIs(10),
+      stopWhen: stepCountIs(20),
       onFinish: async ({ text }) => {
         if (text) {
           await db.insert(intakeMessages).values({

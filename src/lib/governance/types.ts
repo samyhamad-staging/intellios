@@ -55,5 +55,6 @@ export interface ValidationReport {
   valid: boolean;              // true if no error-severity violations
   violations: Violation[];
   policyCount: number;         // how many policies were evaluated
+  evaluatedPolicyIds: string[]; // IDs of policies evaluated in this run (for staleness detection)
   generatedAt: string;         // ISO timestamp
 }

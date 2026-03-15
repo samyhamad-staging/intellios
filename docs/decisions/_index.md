@@ -7,3 +7,8 @@
 | 003 | [MVP component behavior decisions](003-component-behavior-decisions.md) | accepted | 2026-03-12 |
 | 004 | [Implementation technology choices](004-implementation-tech-choices.md) | accepted | 2026-03-12 |
 | 005 | [Governance policy expression language](005-governance-policy-expression-language.md) | accepted | 2026-03-12 |
+| 006 | [Multi-step approval workflow and policy versioning](006-multi-step-approval-and-policy-versioning.md) | accepted | 2026-03-13 |
+| 007 | [Blueprint test harness](007-blueprint-test-harness.md) | accepted | 2026-03-14 |
+| 008 | [Proactive compliance intelligence](008-proactive-compliance.md) | accepted | 2026-03-14 |
+| 009 | [Outbound webhook integration](009-webhook-integration.md) | accepted | 2026-03-14 |
+| 010 | [Amazon Bedrock AgentCore integration strategy](010-agentcore-integration.md) | accepted | 2026-03-14 |

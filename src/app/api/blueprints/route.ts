@@ -4,6 +4,7 @@ import { intakeSessions, agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generateBlueprint } from "@/lib/generation/generate";
 import { validateBlueprint } from "@/lib/governance/validator";
+import { loadPolicies } from "@/lib/governance/load-policies";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -53,11 +54,16 @@ export async function POST(request: NextRequest) {
     }
 
     const intake = session.intakePayload as IntakePayload;
+    const enterpriseId = session.enterpriseId ?? null;
+
+    // Load enterprise policies once — passed to both generation (so Claude can satisfy
+    // them proactively) and validation (skips the redundant second DB query).
+    const policies = await loadPolicies(enterpriseId);
 
     // Generate the ABP via Claude
     let abp;
     try {
-      abp = await generateBlueprint(intake, sessionId);
+      abp = await generateBlueprint(intake, sessionId, policies);
     } catch (err) {
       console.error(`[${requestId}] Claude generateBlueprint failed:`, err);
       return aiError(err, requestId);
@@ -66,10 +72,10 @@ export async function POST(request: NextRequest) {
     // Denormalize searchable fields from the ABP for the registry
     const name = abp.identity.name ?? null;
     const tags = (abp.metadata.tags ?? []) as string[];
-    const enterpriseId = session.enterpriseId ?? null;
 
-    // Run governance validation synchronously (ADR-003, ADR-005)
-    const validationReport = await validateBlueprint(abp, enterpriseId);
+    // Run governance validation synchronously (ADR-003, ADR-005).
+    // Pre-loaded policies are passed to avoid a second DB round-trip.
+    const validationReport = await validateBlueprint(abp, enterpriseId, policies);
 
     // Persist — agentId defaults to a new UUID (first version of a new agent)
     const [blueprint] = await db

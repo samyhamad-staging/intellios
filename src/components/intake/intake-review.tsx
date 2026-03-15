@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { IntakePayload, IntakeContext, ContributionDomain, StakeholderContribution } from "@/lib/types/intake";
+import {
+  IntakePayload,
+  IntakeContext,
+  ContributionDomain,
+  StakeholderContribution,
+  AmbiguityFlag,
+  CaptureVerificationItem,
+  PolicyQualityItem,
+} from "@/lib/types/intake";
 import { getMissingContributionDomains } from "@/lib/intake/coverage";
 
 interface IntakeReviewProps {
@@ -61,15 +69,6 @@ function formatDate(iso: string): string {
     hour: "numeric",
     minute: "2-digit",
   });
-}
-
-interface AmbiguityFlag {
-  id: string;
-  field: string;
-  description: string;
-  userStatement: string;
-  flaggedAt: string;
-  resolved: boolean;
 }
 
 type SectionKey =
@@ -247,9 +246,14 @@ export function IntakeReview({
 }: IntakeReviewProps) {
   const [acknowledged, setAcknowledged] = useState<Set<SectionKey>>(new Set());
   const [expandedFlags, setExpandedFlags] = useState(false);
+  const [expandedCapture, setExpandedCapture] = useState(false);
 
-  const flags = ((payload as Record<string, unknown>)._flags as AmbiguityFlag[] | undefined) ?? [];
+  const flags: AmbiguityFlag[] = payload._flags ?? [];
   const unresolvedFlags = flags.filter((f) => !f.resolved);
+
+  const captureVerification: CaptureVerificationItem[] = payload._captureVerification ?? [];
+  const policyQualityAssessment: PolicyQualityItem[] = payload._policyQualityAssessment ?? [];
+  const inadequatePolicies = policyQualityAssessment.filter((p) => !p.adequate);
 
   const filledSections = SECTION_KEYS.filter((k) => isSectionFilled(k, payload));
   const requiredSections: SectionKey[] = ["identity", "capabilities"];
@@ -420,6 +424,88 @@ export function IntakeReview({
                 </div>
               );
             })()}
+          </div>
+        )}
+
+        {/* Capture verification — only shown when assessments are present */}
+        {captureVerification.length > 0 && (
+          <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  Capture Verification
+                </div>
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                  {captureVerification.length} requirement{captureVerification.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+              <button
+                onClick={() => setExpandedCapture((v) => !v)}
+                className="text-xs text-gray-500 hover:text-gray-700 underline"
+              >
+                {expandedCapture ? "Hide" : "Show details"}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              Claude confirmed every requirement discussed in the conversation was captured in a structured field before finalizing.
+            </p>
+            {expandedCapture && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="pb-2 text-left font-medium text-gray-400 w-1/4">Area</th>
+                      <th className="pb-2 text-left font-medium text-gray-400 w-2/5">What was discussed</th>
+                      <th className="pb-2 text-left font-medium text-gray-400">Captured as</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {captureVerification.map((item, i) => (
+                      <tr key={i} className="align-top">
+                        <td className="py-2 pr-3 font-medium text-gray-600">{item.area}</td>
+                        <td className="py-2 pr-3 text-gray-600">{item.mentioned}</td>
+                        <td className="py-2">
+                          {item.capturedAs ? (
+                            <span className="font-mono text-green-700">{item.capturedAs}</span>
+                          ) : (
+                            <span className="text-red-500 font-medium">Not captured</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Policy quality warnings — only shown when inadequate policies exist */}
+        {inadequatePolicies.length > 0 && (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-amber-600">⚠</span>
+              <div className="text-xs font-semibold uppercase tracking-wider text-amber-700">
+                Policy Quality Warnings
+              </div>
+              <span className="rounded-full bg-amber-100 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">
+                {inadequatePolicies.length} polic{inadequatePolicies.length !== 1 ? "ies" : "y"}
+              </span>
+            </div>
+            <p className="text-xs text-amber-700 mb-3">
+              The following policies were assessed as too abstract to be operationally enforceable. You may proceed, but reviewers will see these warnings.
+            </p>
+            <ul className="space-y-2">
+              {inadequatePolicies.map((item, i) => (
+                <li key={i} className="rounded-lg border border-amber-200 bg-white px-4 py-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-red-400">✗</span>
+                    <span className="text-sm font-medium text-gray-800">{item.policyName}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 ml-5">{item.reason}</p>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 

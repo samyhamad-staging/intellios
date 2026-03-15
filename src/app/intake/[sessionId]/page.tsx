@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect, useCallback } from "react";
+import { use, useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { UIMessage } from "ai";
 import { ChatContainer } from "@/components/chat/chat-container";
@@ -42,6 +42,14 @@ export default function IntakeSessionPage({
   const [intakeContext, setIntakeContext] = useState<IntakeContext | null>(null);
   const [currentPayload, setCurrentPayload] = useState<IntakePayload>({});
   const [contributions, setContributions] = useState<StakeholderContribution[]>([]);
+  const [intakeScore, setIntakeScore] = useState<{
+    overallScore: number | null;
+    dimensions: { breadthScore: number | null; ambiguityScore: number | null; riskIdScore: number | null; stakeholderScore: number | null };
+    evaluatedAt: string;
+  } | null>(null);
+  const [intakeScoreLoading, setIntakeScoreLoading] = useState(false);
+  const [scorePopoverOpen, setScorePopoverOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   // Load session status + message history + contributions on mount
   useEffect(() => {
@@ -66,16 +74,19 @@ export default function IntakeSessionPage({
         setIntakeContext(storedContext);
 
         if (session?.status === "completed") {
-          // Load payload for review screen
-          try {
-            const payloadRes = await fetch(`/api/intake/sessions/${sessionId}/payload`);
-            if (payloadRes.ok) {
-              const payload = (await payloadRes.json()) as IntakePayload;
-              setCurrentPayload(payload);
-            }
-          } catch {
-            // non-critical
-          }
+          // Load payload and quality score for review screen
+          setIntakeScoreLoading(true);
+          await Promise.all([
+            fetch(`/api/intake/sessions/${sessionId}/payload`)
+              .then((r) => r.ok ? r.json() : null)
+              .then((payload) => { if (payload) setCurrentPayload(payload as IntakePayload); })
+              .catch(() => {}),
+            fetch(`/api/intake/sessions/${sessionId}/quality-score`)
+              .then((r) => r.ok ? r.json() : null)
+              .then((data) => { if (data?.score) setIntakeScore(data.score); })
+              .catch(() => {})
+              .finally(() => setIntakeScoreLoading(false)),
+          ]);
           setPhase("review");
           return;
         }
@@ -106,16 +117,18 @@ export default function IntakeSessionPage({
         if (!res.ok) return;
         const { session } = await res.json();
         if (session?.status === "completed") {
-          // Fetch final payload for review screen
-          try {
-            const payloadRes = await fetch(`/api/intake/sessions/${sessionId}/payload`);
-            if (payloadRes.ok) {
-              const payload = (await payloadRes.json()) as IntakePayload;
-              setCurrentPayload(payload);
-            }
-          } catch {
-            // non-critical
-          }
+          setIntakeScoreLoading(true);
+          await Promise.all([
+            fetch(`/api/intake/sessions/${sessionId}/payload`)
+              .then((r) => r.ok ? r.json() : null)
+              .then((payload) => { if (payload) setCurrentPayload(payload as IntakePayload); })
+              .catch(() => {}),
+            fetch(`/api/intake/sessions/${sessionId}/quality-score`)
+              .then((r) => r.ok ? r.json() : null)
+              .then((data) => { if (data?.score) setIntakeScore(data.score); })
+              .catch(() => {})
+              .finally(() => setIntakeScoreLoading(false)),
+          ]);
           setPhase("review");
         }
       } catch {
@@ -124,6 +137,19 @@ export default function IntakeSessionPage({
     }
     checkStatus();
   }, [sessionId, refreshTick]);
+
+  // Close popover on outside click
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setScorePopoverOpen(false);
+      }
+    }
+    if (scorePopoverOpen) {
+      document.addEventListener("mousedown", handleOutside);
+      return () => document.removeEventListener("mousedown", handleOutside);
+    }
+  }, [scorePopoverOpen]);
 
   function handleResponseComplete() {
     setRefreshTick((t) => t + 1);
@@ -151,11 +177,8 @@ export default function IntakeSessionPage({
         const data = await res.json();
         throw new Error(data.error ?? "Generation failed");
       }
-      const { id, agentId, abp, validationReport } = await res.json();
-      const encodedAbp = btoa(JSON.stringify(abp));
-      const encodedVr = validationReport ? btoa(JSON.stringify(validationReport)) : "";
-      const url = `/blueprints/${id}?abp=${encodedAbp}&agentId=${agentId}${encodedVr ? `&vr=${encodedVr}` : ""}`;
-      router.push(url);
+      const { id, agentId } = await res.json();
+      router.push(`/blueprints/${id}?agentId=${agentId}`);
     } catch (err) {
       setGenerateError(err instanceof Error ? err.message : "Generation failed");
       setGenerating(false);
@@ -192,6 +215,12 @@ export default function IntakeSessionPage({
   // ─── Phase 3: Review ─────────────────────────────────────────────────────────
 
   if (phase === "review") {
+    const scoreColor =
+      intakeScore?.overallScore == null ? "text-gray-400"
+      : intakeScore.overallScore >= 70 ? "text-green-700"
+      : intakeScore.overallScore >= 50 ? "text-amber-700"
+      : "text-red-700";
+
     return (
       <div className="flex h-screen flex-col">
         <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
@@ -200,6 +229,59 @@ export default function IntakeSessionPage({
             <p className="text-xs text-gray-500">Agent Intake</p>
           </div>
           <div className="flex items-center gap-3">
+            {/* Intake quality score chip: loading pulse → real chip with popover */}
+            {intakeScoreLoading && !intakeScore ? (
+              <div className="flex animate-pulse items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1">
+                <span className="text-xs text-gray-400">Scoring…</span>
+                <span className="flex gap-0.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
+                </span>
+              </div>
+            ) : intakeScore ? (
+              <div ref={popoverRef} className="relative">
+                <button
+                  onClick={() => setScorePopoverOpen((o) => !o)}
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 hover:border-gray-300"
+                  title={`Evaluated at ${new Date(intakeScore.evaluatedAt).toLocaleString()}`}
+                >
+                  <span className="text-xs text-gray-500">Intake quality</span>
+                  <span className={`text-sm font-bold ${scoreColor}`}>
+                    {intakeScore.overallScore != null ? `${Math.round(intakeScore.overallScore)}/100` : "—"}
+                  </span>
+                  <span className="text-xs text-gray-400">{scorePopoverOpen ? "▲" : "▼"}</span>
+                </button>
+                {scorePopoverOpen && (
+                  <div className="absolute bottom-full right-0 mb-2 w-64 rounded-xl border border-gray-200 bg-white p-4 shadow-lg">
+                    <p className="mb-2.5 text-xs font-semibold text-gray-700">Quality Dimensions</p>
+                    {([
+                      { label: "Breadth", value: intakeScore.dimensions.breadthScore },
+                      { label: "Ambiguity", value: intakeScore.dimensions.ambiguityScore },
+                      { label: "Risk ID", value: intakeScore.dimensions.riskIdScore },
+                      { label: "Stakeholder", value: intakeScore.dimensions.stakeholderScore },
+                    ] as { label: string; value: number | null }[]).map((d) => {
+                      const val = d.value ?? 0;
+                      const below = val < 3.0;
+                      return (
+                        <div key={d.label} className="mb-2 flex items-center gap-2">
+                          <span className="w-20 shrink-0 text-xs text-gray-500">{d.label}</span>
+                          <div className="h-1.5 flex-1 rounded-full bg-gray-200">
+                            <div
+                              className={`h-1.5 rounded-full ${below ? "bg-amber-400" : "bg-indigo-400"}`}
+                              style={{ width: `${(val / 5) * 100}%` }}
+                            />
+                          </div>
+                          <span className={`w-8 shrink-0 text-right text-xs font-medium ${below ? "text-amber-600" : "text-gray-700"}`}>
+                            {d.value != null ? `${d.value.toFixed(1)}` : "—"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : null}
             <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
               Complete
             </span>

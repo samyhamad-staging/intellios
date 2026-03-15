@@ -8,6 +8,15 @@ import { MessageBubble } from "./message-bubble";
 import { ToolCallDisplay } from "./tool-call-display";
 import { ChatInput } from "./chat-input";
 
+const STREAMING_LABELS: Record<string, string> = {
+  set_agent_identity:    "Defining agent identity…",
+  add_tool:              "Capturing tool details…",
+  set_instructions:      "Writing behavioral instructions…",
+  add_governance_policy: "Recording governance policy…",
+  set_constraints:       "Setting operational constraints…",
+  finalize_requirements: "Finalizing requirements…",
+};
+
 const SUGGESTED_PROMPTS = [
   "I want to build a customer support agent",
   "I need an internal knowledge base assistant",
@@ -77,6 +86,24 @@ export function ChatContainer({
 
   const isEmpty = messages.length === 0;
 
+  // Derive last tool call name from message history for context-aware streaming label
+  const lastToolCallName = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const parts = messages[i].parts;
+      for (let j = parts.length - 1; j >= 0; j--) {
+        const part = parts[j];
+        if (part.type.startsWith("tool-") && "toolCallId" in part) {
+          return part.type.replace("tool-", "");
+        }
+      }
+    }
+    return null;
+  }, [messages]);
+
+  const streamingLabel = lastToolCallName
+    ? (STREAMING_LABELS[lastToolCallName] ?? "Thinking…")
+    : "Thinking…";
+
   return (
     <div className="flex h-full flex-1 flex-col">
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -131,10 +158,13 @@ export function ChatContainer({
         {isStreaming && (
           <div className="flex justify-start">
             <div className="rounded-2xl bg-white border border-gray-200 px-4 py-3">
-              <div className="flex gap-1">
-                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "0ms" }} />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "150ms" }} />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "300ms" }} />
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "0ms" }} />
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "150ms" }} />
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "300ms" }} />
+                </div>
+                <span className="text-xs text-gray-400">{streamingLabel}</span>
               </div>
             </div>
           </div>

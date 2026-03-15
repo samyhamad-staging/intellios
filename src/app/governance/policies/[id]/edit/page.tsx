@@ -158,6 +158,7 @@ export default function EditPolicyPage({
           submitLabel="Save Changes"
           saving={saving}
           readOnly={policy.enterpriseId === null}
+          existingPolicyId={id}
         />
 
         {/* Delete section — only shown for non-global policies */}
