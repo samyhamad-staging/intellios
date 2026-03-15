@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Phase 37 ✓ Complete (2026-03-15) — Operational Completeness
+## Current Phase: Phase 38 ✓ Complete (2026-03-15) — Classification-First Adaptive Intake
 
 ---
 

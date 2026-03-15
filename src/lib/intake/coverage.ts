@@ -9,7 +9,7 @@
  * stakeholdersConsulted provides direct domain signals as well.
  */
 
-import { IntakeContext, ContributionDomain, StakeholderContribution } from "@/lib/types/intake";
+import { IntakeContext, ContributionDomain, StakeholderContribution, IntakeRiskTier } from "@/lib/types/intake";
 
 /**
  * Returns the set of contribution domains that are expected to have input
@@ -17,8 +17,12 @@ import { IntakeContext, ContributionDomain, StakeholderContribution } from "@/li
  * appears at most once regardless of how many signals imply it.
  */
 export function getExpectedContributionDomains(
-  context: IntakeContext
+  context: IntakeContext,
+  riskTier?: IntakeRiskTier | null
 ): ContributionDomain[] {
+  // Low-risk agents: no required stakeholder domains regardless of context signals
+  if (riskTier === "low") return [];
+
   const expected = new Set<ContributionDomain>();
 
   // Regulatory scope → implied domains
@@ -80,6 +84,18 @@ export function getExpectedContributionDomains(
     }
   }
 
+  // Tier-based additions (after context-signal logic)
+  if (riskTier === "high") {
+    expected.add("compliance");
+    expected.add("security");
+  }
+  if (riskTier === "critical") {
+    expected.add("compliance");
+    expected.add("security");
+    expected.add("legal");
+    expected.add("risk");
+  }
+
   return Array.from(expected);
 }
 
@@ -89,9 +105,10 @@ export function getExpectedContributionDomains(
  */
 export function getMissingContributionDomains(
   context: IntakeContext,
-  contributions: StakeholderContribution[]
+  contributions: StakeholderContribution[],
+  riskTier?: IntakeRiskTier | null
 ): ContributionDomain[] {
-  const expected = getExpectedContributionDomains(context);
+  const expected = getExpectedContributionDomains(context, riskTier);
   const covered = new Set(contributions.map((c) => c.domain as ContributionDomain));
   return expected.filter((domain) => !covered.has(domain));
 }

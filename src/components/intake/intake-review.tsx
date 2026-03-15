@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   IntakePayload,
   IntakeContext,
+  IntakeRiskTier,
   ContributionDomain,
   StakeholderContribution,
   AmbiguityFlag,
@@ -17,6 +18,7 @@ interface IntakeReviewProps {
   payload: IntakePayload;
   context: IntakeContext | null;
   contributions?: StakeholderContribution[];
+  riskTier?: IntakeRiskTier | null;
   onGenerate: () => void;
   generating: boolean;
   generateSuccess?: boolean;
@@ -241,6 +243,7 @@ export function IntakeReview({
   payload,
   context,
   contributions = [],
+  riskTier,
   onGenerate,
   generating,
   generateSuccess = false,
@@ -350,7 +353,7 @@ export function IntakeReview({
         )}
 
         {/* Stakeholder contributions */}
-        {(contributions.length > 0 || (context && getMissingContributionDomains(context, contributions).length > 0)) && (
+        {(contributions.length > 0 || (context && getMissingContributionDomains(context, contributions, riskTier).length > 0)) && (
           <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
             <div className="flex items-baseline gap-2 mb-3">
               <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -400,7 +403,7 @@ export function IntakeReview({
             )}
             {/* Missing-domain callout */}
             {context && (() => {
-              const missing = getMissingContributionDomains(context, contributions);
+              const missing = getMissingContributionDomains(context, contributions, riskTier);
               if (missing.length === 0) return null;
               return (
                 <div className={`rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs ${contributions.length > 0 ? "mt-4" : ""}`}>

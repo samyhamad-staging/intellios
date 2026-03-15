@@ -8,7 +8,7 @@ import { intakeSessions, intakeMessages, intakeContributions } from "@/lib/db/sc
 import { eq, asc } from "drizzle-orm";
 import { buildIntakeSystemPrompt } from "@/lib/intake/system-prompt";
 import { createIntakeTools } from "@/lib/intake/tools";
-import { IntakePayload, IntakeContext, ContributionDomain, StakeholderContribution } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext, ContributionDomain, StakeholderContribution, IntakeClassification, AgentType, IntakeRiskTier } from "@/lib/types/intake";
 import { loadPolicies } from "@/lib/governance/load-policies";
 import { selectIntakeModel } from "@/lib/intake/model-selector";
 import { requireAuth } from "@/lib/auth/require";
@@ -86,6 +86,16 @@ export async function POST(
     let currentPayload = (session.intakePayload as IntakePayload) ?? {};
     const currentContext = (session.intakeContext as IntakeContext | null) ?? null;
 
+    // Build classification from session columns (null for unclassified sessions)
+    const currentClassification: IntakeClassification | null =
+      session.agentType && session.riskTier
+        ? {
+            agentType: session.agentType as AgentType,
+            riskTier: session.riskTier as IntakeRiskTier,
+            rationale: "",
+          }
+        : null;
+
     // Fetch stakeholder contributions for this session to inject into system prompt
     const contributionRows = await db
       .select()
@@ -129,7 +139,8 @@ export async function POST(
           .set({ status: "completed", updatedAt: new Date() })
           .where(eq(intakeSessions.id, sessionId));
       },
-      () => currentContext
+      () => currentContext,
+      () => (currentClassification?.riskTier ?? null)
     );
 
     // Convert UI messages to model messages for Claude
@@ -150,7 +161,7 @@ export async function POST(
     // Stream response
     const result = streamText({
       model: anthropic(selectedModel),
-      system: buildIntakeSystemPrompt(currentPayload, currentContext, currentContributions, currentPolicies),
+      system: buildIntakeSystemPrompt(currentPayload, currentContext, currentContributions, currentPolicies, currentClassification),
       messages: modelMessages,
       tools,
       stopWhen: stepCountIs(20),

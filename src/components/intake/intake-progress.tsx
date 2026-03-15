@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IntakeContext, IntakePayload, StakeholderContribution } from "@/lib/types/intake";
+import { IntakeContext, IntakePayload, IntakeRiskTier, StakeholderContribution } from "@/lib/types/intake";
 import { StakeholderContributionsPanel } from "./stakeholder-contributions-panel";
 
 interface Section {
@@ -113,9 +113,10 @@ interface IntakeProgressProps {
   contributions?: StakeholderContribution[];
   onContributionAdded?: (contribution: StakeholderContribution) => void;
   context?: IntakeContext;
+  riskTier?: IntakeRiskTier | null;
 }
 
-export function IntakeProgress({ sessionId, refreshTick, contributions = [], onContributionAdded, context }: IntakeProgressProps) {
+export function IntakeProgress({ sessionId, refreshTick, contributions = [], onContributionAdded, context, riskTier }: IntakeProgressProps) {
   const [sections, setSections] = useState<Section[]>(getSections({}));
   const [agentName, setAgentName] = useState<string | null>(null);
 
@@ -229,6 +230,7 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
           contributions={contributions}
           onContributionAdded={onContributionAdded}
           context={context}
+          riskTier={riskTier}
         />
       )}
     </aside>
