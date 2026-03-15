@@ -13,6 +13,21 @@ import { env } from "@/lib/env";
 const MIGRATIONS_DIR = join(import.meta.dirname ?? __dirname, "migrations");
 
 const files = [
+  "0000_initial_schema.sql",
+  "0001_agent_registry_fields.sql",
+  "0002_governance_validator.sql",
+  "0003_blueprint_review.sql",
+  "0004_multi_tenancy.sql",
+  "0005_notifications.sql",
+  "0006_intake_context.sql",
+  "0007_intake_contributions.sql",
+  "0008_deployment_health.sql",
+  "0009_enterprise_settings.sql",
+  "0010_multi_step_approval.sql",
+  "0011_test_harness.sql",
+  "0012_webhooks.sql",
+  "0013_agentcore_deployment.sql",
+  "0014_awareness_system.sql",
   "0015_periodic_review.sql",
   "0016_password_reset.sql",
   "0017_user_invitations.sql",
