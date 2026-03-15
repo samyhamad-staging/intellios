@@ -126,6 +126,11 @@ export default function AgentDetailPage({
   const [savingTestCase, setSavingTestCase] = useState(false);
   // Expanded test case result detail
   const [expandedResult, setExpandedResult] = useState<string | null>(null);
+  // Phase 37: Periodic review completion
+  const [reviewCompleteOpen, setReviewCompleteOpen] = useState(false);
+  const [reviewCompleteNotes, setReviewCompleteNotes] = useState("");
+  const [completingReview, setCompletingReview] = useState(false);
+  const [reviewCompleteError, setReviewCompleteError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -248,6 +253,40 @@ export default function AgentDetailPage({
       setCloning(false);
     }
   }, [latest, cloneName, router]);
+
+  const handleCompleteReview = useCallback(async () => {
+    if (!latest) return;
+    setReviewCompleteError(null);
+    setCompletingReview(true);
+    try {
+      const res = await fetch(
+        `/api/blueprints/${latest.id}/periodic-review/complete`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notes: reviewCompleteNotes || undefined }),
+        }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setReviewCompleteError((data as { error?: string }).error ?? "Failed to complete review.");
+        return;
+      }
+      const data = await res.json();
+      // Update local state with new review dates
+      setLatest((prev) => prev ? {
+        ...prev,
+        nextReviewDue: data.nextReviewDue,
+        lastPeriodicReviewAt: data.lastPeriodicReviewAt,
+      } : prev);
+      setReviewCompleteOpen(false);
+      setReviewCompleteNotes("");
+    } catch {
+      setReviewCompleteError("Something went wrong. Please try again.");
+    } finally {
+      setCompletingReview(false);
+    }
+  }, [latest, reviewCompleteNotes]);
 
   const handleExportReport = useCallback(async () => {
     if (!latest) return;
@@ -424,14 +463,27 @@ export default function AgentDetailPage({
                 ` · ${latest.refinementCount} refinement${latest.refinementCount === "1" ? "" : "s"}`}</span>
               {latest.status === "deployed" && latest.nextReviewDue && (() => {
                 const isOverdue = new Date(latest.nextReviewDue) < new Date();
-                return isOverdue ? (
-                  <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700">
-                    Review Overdue
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
-                    Next Review: {new Date(latest.nextReviewDue).toLocaleDateString(undefined, { dateStyle: "medium" })}
-                  </span>
+                const canComplete = currentUser?.role === "compliance_officer" || currentUser?.role === "admin";
+                return (
+                  <>
+                    {isOverdue ? (
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700">
+                        Review Overdue
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+                        Next Review: {new Date(latest.nextReviewDue).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                      </span>
+                    )}
+                    {canComplete && (
+                      <button
+                        onClick={() => { setReviewCompleteOpen(true); setReviewCompleteNotes(""); setReviewCompleteError(null); }}
+                        className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700 hover:bg-violet-100"
+                      >
+                        Complete Review
+                      </button>
+                    )}
+                  </>
                 );
               })()}
             </p>
@@ -1274,6 +1326,57 @@ export default function AgentDetailPage({
           </div>
         )}
       </div>
+
+      {/* ── Complete Review Modal ──────────────────────────────────────── */}
+      {reviewCompleteOpen && latest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-xl">
+            <h3 className="mb-1 text-base font-semibold text-gray-900">Mark periodic review complete</h3>
+            <p className="mb-4 text-sm text-gray-500">
+              This will record completion for{" "}
+              <span className="font-medium text-gray-900">{latest.name ?? "this agent"}</span>{" "}
+              and schedule the next review based on the configured cadence.
+            </p>
+
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Review notes <span className="text-gray-400">(optional)</span>
+              </label>
+              <textarea
+                value={reviewCompleteNotes}
+                onChange={(e) => setReviewCompleteNotes(e.target.value)}
+                rows={3}
+                maxLength={1000}
+                placeholder="Findings, actions taken, or conclusions from the review…"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 resize-none"
+              />
+            </div>
+
+            {reviewCompleteError && (
+              <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                {reviewCompleteError}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setReviewCompleteOpen(false); setReviewCompleteNotes(""); setReviewCompleteError(null); }}
+                disabled={completingReview}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCompleteReview}
+                disabled={completingReview}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+              >
+                {completingReview ? "Completing…" : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

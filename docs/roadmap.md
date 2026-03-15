@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Phase 36 ✓ Complete (2026-03-15) — First Customer Readiness
+## Current Phase: Phase 37 ✓ Complete (2026-03-15) — Operational Completeness
 
 ---
 
@@ -704,10 +704,33 @@ Fixes three demo-blocking gaps identified by systematic codebase audit of all 9 
 
 ---
 
+## Phase 36 — First Customer Readiness ✓ Complete (2026-03-15 Session 041)
+
+Three commercial viability gaps closed before a first enterprise customer engagement. No new npm dependencies.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| White-label branding | P0 | ✓ Complete | `branding` + `periodicReview` settings blocks; sidebar logo/name/color from DB; MRM report footer; admin settings live preview; server-side layout injection |
+| SR 11-7 periodic review scheduling | P0 | ✓ Complete | Migration 0015; `nextReviewDue` set on deploy; MRM Section 14; Compliance overdue table; registry overdue badge; 1 new audit action |
+| Audit trail pagination | P1 | ✓ Complete | API `offset`+`count` params; parallel count query; 50-row pages; prev/next UI; page X of Y indicator |
+
+---
+
+## Phase 37 — Operational Completeness ✓ Complete (2026-03-15 Session 042)
+
+Four operational gaps that block real-world deployment: the periodic review compliance loop, password reset, user invitations, and review reminder automation. Zero new npm dependencies. Three DB migrations (0016–0018).
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| Periodic review completion UI/API | P0 | ✓ Complete | `POST /api/blueprints/[id]/periodic-review/complete`; completion buttons on Compliance page + Registry detail; confirmation modal with notes; event → notification email to compliance officers |
+| Password reset | P0 | ✓ Complete | `forgot-password` + `reset-password` routes and pages; cryptographic token (raw sent by email, SHA-256 hash stored); 1h TTL; enumeration-safe 200 response; "Forgot your password?" link on login page |
+| User invitation system | P1 | ✓ Complete | `invite` + `invitations` admin API routes; `validate` + `accept` public auth routes; invite acceptance page; admin users page "Invite User" button + pending invitations table; 72h TTL; duplicate-invitation guard |
+| Periodic review reminders | P1 | ✓ Complete | Daily cron `GET /api/cron/review-reminders`; per-enterprise `reminderDaysBefore` setting honored; cycle-deduplication via `lastReminderSentAt`; `vercel.json` at 08:00 UTC daily; optional `CRON_SECRET` bearer auth |
+
+---
+
 ## Future Phases (not yet scoped)
 
-- Production hardening (pagination, webhook health banner, OQ-007 ABP schema evolution)
-- Periodic model review scheduling (SR 11-7 annual revalidation cadence)
+- Production hardening (OQ-007 ABP schema evolution, distributed rate limiting)
 - Agent marketplace / catalog
-- White-label branding customization
 - Agent-to-agent communication protocols
