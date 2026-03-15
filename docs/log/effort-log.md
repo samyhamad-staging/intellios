@@ -1192,18 +1192,83 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ## Running Totals
 
-| Metric | S001–S031 subtotal | S032 | Total |
+| Metric | S001–S031 subtotal | S032 | S033–S037 | S038 | Total |
+|---|---|---|---|---|---|
+| Est. Claude input tokens | ~2,546K | ~128K | ~720K | ~155K | ~3,549K |
+| Est. Claude output tokens | ~943.6K | ~47.5K | ~150K | ~43K | ~1,184.1K |
+| Est. Claude cost | ~$22.41 | ~$1.09 | ~$7.27 | ~$1.12 | ~$31.89 |
+| Samy messages | 77 | 2 | 10 | 1 | 90 |
+| Samy decisions | 90 | 2 | 9 | 1 | 102 |
+| Files created/modified | ~468 | ~15 | ~110 | ~15 | ~608 |
+
+---
+
+## Session 038 — 2026-03-15
+
+**Duration:** Two context windows (Phase 33 plan created in prior context, implementation resumed via summary)
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context recovery + planning | Read 6 files; plan mode with full 11-item Phase 33 design | ~40k in / ~6k out |
+| vitest setup | `package.json` + `vitest.config.ts` | ~5k in / ~1k out |
+| Settings Zod schema | `AgentCoreConfigSchema` + merge logic in settings route | ~8k in / ~2k out |
+| Instruction padding fix | `translate.ts` pad-not-replace logic | ~6k in / ~1k out |
+| Deploy hardening | `validateAgentCoreConfig()` + `POLL_MAX_ATTEMPTS` 60→180 | ~8k in / ~2k out |
+| Error enrichment + UI copy | `enrichAgentCoreError()` + "90 seconds" copy | ~10k in / ~3k out |
+| Translation unit tests (37) | `translate.test.ts` across 7 test groups; vitest API fix (`toEndWith` → `endsWith`) | ~15k in / ~6k out |
+| Deploy route tests (12) | `deploy-route.test.ts` + `runWithTimers()` helper for fake timer ordering | ~20k in / ~8k out |
+| agentcore-health route | New `GET /api/monitor/agentcore-health` + AbortController per-agent | ~8k in / ~3k out |
+| Monitor page updates | `deploymentTarget` field + AgentCore Live Status section + `BedrockStatusBadge` | ~15k in / ~5k out |
+| TypeScript verification | `npx tsc --noEmit`; pre-existing error confirmed pre-Phase-33 via git stash | ~5k in / ~0.5k out |
+| Documentation | ADR-011, `agentcore-setup.md`, `_index.md`, `roadmap.md`, session log, effort log, project journal | ~15k in / ~6k out |
+| **Session total (est.)** | | **~155k in / ~43.5k out** |
+
+**Estimated session cost:** ~155K × $3/1M + ~43.5K × $15/1M = $0.47 + $0.65 = **~$1.12**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
 |---|---|---|---|
-| Est. Claude input tokens | ~2,546K | ~128K | ~2,674K |
-| Est. Claude output tokens | ~943.6K | ~47.5K | ~991.1K |
-| Est. Claude cost | ~$22.41 | ~$1.09 | ~$23.50 |
-| Samy messages | 77 | 2 | 79 |
-| Samy decisions | 90 | 2 | 92 |
-| Files created/modified | ~468 | ~15 | ~483 |
+| 1 | "OK" | D-Approve | Approved Phase 33 plan: 7 risk areas, vitest, 11 items |
+
+**Totals:** 1 message · 1 D-Approve · ~0.1 hrs (plan review only — implementation fully autonomous)
 
 ---
 
 ## Template for Future Sessions
+
+## Session 037 — 2026-03-15
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context recovery + plan mode | Read 5 existing files; Explore + Plan agents; full UI transformation plan (25-file scope) | ~90k in / ~8k out |
+| Foundation: package.json + globals.css | lucide-react, geist, CSS tokens, scrollbar | ~8k in / ~3k out |
+| Layout: layout.tsx + sidebar.tsx | Sidebar component, role-gated nav, active state, user chip, login exclusion | ~20k in / ~8k out |
+| Pages 1–5: overview, intake, pipeline, registry, review | Full page redesigns with Lucide icons, violet CTAs | ~50k in / ~12k out |
+| Pages 6–10: governance, compliance, dashboard, deploy, monitor | Full page redesigns; audit, admin user/settings/webhooks, governance sub-pages | ~60k in / ~14k out |
+| Component upgrades (4 components) | StatusBadge, BlueprintView, ReviewPanel, ChatContainer | ~15k in / ~4k out |
+| Verification | preview_logs (0 errors), screenshots × 6 pages | ~10k in / ~2k out |
+| Documentation | Session 037 log, _index, roadmap Phase 32, effort-log | ~10k in / ~4k out |
+| **Session total (est.)** | | **~263k in / ~55k out** |
+
+**Estimated session cost:** ~$1.62 (263k × $3/1M + 55k × $15/1M ≈ $0.79 + $0.83)
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | "think carefully and plan a ui transformation" (prior session) | D-Arch | Requested UI transformation planning |
+| 2 | Plan approved via ExitPlanMode (prior session) | D-Approve | Approved full 25-file plan: dark sidebar, Lucide icons, Geist, design tokens |
+
+**Totals:** 2 messages · 1 architectural direction + 1 approval · ~0.25 hrs (plan review only — implementation fully autonomous)
+
+---
 
 ## Session 036 — 2026-03-15
 

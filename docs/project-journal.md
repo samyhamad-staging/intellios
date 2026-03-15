@@ -2,6 +2,50 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 038 — 2026-03-15: From "It Works" to "We're Confident It Works"
+
+Phases 29 and 30 built the AgentCore integration. It worked. It passed manual testing. It was usable. But "usable" and "confident" are different levels of trust — especially when the integration involves live AWS API calls, IAM permissions, and a 5-step async deployment sequence where any step can fail.
+
+Phase 33 addresses the gap between those two levels.
+
+The framing was precise: seven specific risk areas had been identified after shipping. Zero test coverage. A 30-second polling timeout that real Bedrock deployments regularly exceeded. Config validation that happened mid-sequence rather than pre-flight. Free-form JSON accepted by the settings API without validation — meaning bad configs could be silently persisted and only fail three deployment steps in. Raw AWS error strings surfacing directly in the UI with no guidance. Short ABP instructions being silently discarded rather than padded. And no way to verify that a deployed agent was actually operational in Bedrock.
+
+Each of these is a confidence problem, not a functionality problem. The deploy flow worked for well-configured, well-sized blueprints with valid credentials. The confidence gaps appear at the edges — on first-time setup, on terse blueprints, on ambiguous errors, on "did it actually deploy?" questions.
+
+The test suite is the most structural investment. 49 tests across two files — pure function tests for the translation layer (zero AWS dependency, fast, deterministic) and integration tests for the deploy sequence (mocked AWS SDK, fake timers, rollback verification). The fake timer work deserves particular mention: vitest's `useFakeTimers()` interacts with promise rejection handling in a subtle way — if you advance all 180 polling timers before attaching a rejection handler, the rejection is treated as unhandled. The `runWithTimers()` helper solves this by settling the promise immediately before advancing timers. This is the kind of discovery that only surfaces when you actually write tests rather than plan to write them.
+
+The pre-flight validation change has a side effect beyond catching errors early: it also improves auditability. When `validateAgentCoreConfig()` throws before `BedrockAgentClient` is instantiated, no AWS CloudTrail entry is created. An audit trail of CreateAgent attempts now represents only genuine deployment attempts, not configuration mistakes. That's a small thing, but it reflects a broader design philosophy: fail before you leave traces.
+
+The instruction padding fix corrects a silent data loss bug. When an operator's ABP had a real persona and real instructions that happened to be under 40 characters combined — Bedrock's minimum — the entire content was silently discarded and replaced with a generic fallback. The operator had no way to know this happened. Now the content is preserved, padded to meet the minimum. Only truly empty blueprints trigger the fallback. The distinction matters: the difference between "your 38-character instruction got replaced" and "your 38-character instruction got padded" is the difference between a system that loses data and a system that handles edge cases gracefully.
+
+The live health endpoint adds the final observability piece: you can now verify that a Bedrock agent is actually `PREPARED` after deployment, not just trust that the deploy API returned 200. Individual agent failures return `UNREACHABLE` — the endpoint never fails wholesale, because a health check that can't handle partial failures isn't a health check.
+
+This phase didn't add new capabilities. It made existing capabilities trustworthy. That distinction matters for where the product sits in its lifecycle: Intellios now has enough integration surface area that confidence in each layer is a precondition for confidently building the next one.
+
+---
+
+## Session 037 — 2026-03-15: From Prototype to Product
+
+For thirty-one phases, Intellios has been accumulating capability: intake, generation, governance, deployment, compliance, monitoring, intelligence, regulatory frameworks, test harnesses. Every phase added something the system could do.
+
+Phase 32 addressed something different: what the system looks like.
+
+The honest assessment before this phase is that Intellios looked like a prototype. Gray horizontal nav bar, flat border cards, no icons, no brand identity, no visual hierarchy. The functionality was enterprise-grade. The presentation was not.
+
+The design direction was deliberate: dark sidebar with violet accent, inspired by Linear and Vercel. This aesthetic has specific connotations — it signals developer-focused, product-grade tooling. It's the aesthetic used by companies that build for power users who need to trust the system they're working with. For an enterprise agent governance platform, that trust signal matters.
+
+The technical choices were equally deliberate. Lucide React was selected over alternatives for its tree-shaking, its MIT license, and its consistent icon family across ~1,000 icons. Geist Sans was selected for its clean, modern feel and the fact that it requires no external CDN — it ships as an npm package and is served from the same origin as the application. No component library was introduced; all components stay custom Tailwind, which keeps the bundle lean and the design fully controllable.
+
+The sidebar anatomy was designed around role-gated visibility. Designers see intake and pipeline. Reviewers see the review queue. Compliance officers see governance and compliance. Admins see everything. The sidebar makes role boundaries visible in the navigation itself, which reinforces the separation of duties that the backend enforces.
+
+Twenty pages were redesigned. Four components were upgraded. The single most impactful change was the layout itself — replacing the horizontal nav with a permanent sidebar changes the spatial grammar of the entire application. Every page now feels like it belongs to a coherent product rather than a collection of individually-built screens.
+
+The work was done in a single session spanning two context windows (037a and 037b), with the plan approved once at the start. Twenty-five files changed. Zero behavioral changes. Zero database migrations. Zero new API routes. The commit touched only the presentation layer — which is also why it was safe to do all at once.
+
+Intellios now looks like something you'd pay for.
+
+---
+
 ## Session 036 — 2026-03-15: Making the AI Legible
 
 Every previous phase of Intellios improved what the AI could do. Phase 31 improves what the human can see the AI doing.
