@@ -1,6 +1,6 @@
 # Intellios Roadmap
 
-## Current Phase: Phase 35 ✓ Complete (2026-03-15) — Demo Flow Fidelity
+## Current Phase: Phase 36 ✓ Complete (2026-03-15) — First Customer Readiness
 
 ---
 

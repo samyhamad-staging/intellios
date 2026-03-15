@@ -1190,16 +1190,46 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 041 — 2026-03-15
+
+**Duration:** Two context windows (Phase 36 planned + approved in first; fully implemented and documented in second)
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context recovery + plan authoring | Read 6 files; full Phase 36 plan (3 commercial viability gaps + webhooks fix) | ~40k in / ~8k out |
+| Item 0: Webhooks TS fix | `admin/webhooks/page.tsx` line 662 orphaned `</div>` | ~8k in / ~1k out |
+| Item 1: White-label branding | `settings/types.ts`, settings API Zod, admin settings UI, `layout.tsx`, `sidebar.tsx`, MRM report page | ~60k in / ~12k out |
+| Item 2: SR 11-7 periodic review | Migration 0015, schema, audit/event types, status route, MRM types/report/HTML, compliance posture API, compliance page, registry detail | ~100k in / ~20k out |
+| Item 3: Audit trail pagination | API offset+count, UI page navigation | ~20k in / ~4k out |
+| TS debugging | EventType/AuditAction sync; settings types duplicate fragment fix | ~15k in / ~3k out |
+| Documentation | Session log 041, roadmap, project journal, effort log, `_index.md` | ~10k in / ~4k out |
+| **Session total (est.)** | | **~253k in / ~52k out** |
+
+**Estimated session cost:** ~253K × $3/1M + ~52K × $15/1M = $0.76 + $0.78 = **~$1.54**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 85 | "Great plan. Proceed please." | D-Approve | Approved full Phase 36 implementation plan (18 files, 1 migration) |
+
+**Totals:** 1 message · 1 D-Approve · ~2 min
+
+---
+
 ## Running Totals
 
-| Metric | S001–S031 subtotal | S032 | S033–S037 | S038 | S039 | Total |
-|---|---|---|---|---|---|---|
-| Est. Claude input tokens | ~2,546K | ~128K | ~720K | ~155K | ~120K | ~3,669K |
-| Est. Claude output tokens | ~943.6K | ~47.5K | ~150K | ~43K | ~35K | ~1,219.1K |
-| Est. Claude cost | ~$22.41 | ~$1.09 | ~$7.27 | ~$1.12 | ~$0.89 | ~$32.78 |
-| Samy messages | 77 | 2 | 10 | 1 | 2 | 92 |
-| Samy decisions | 90 | 2 | 9 | 1 | 2 | 104 |
-| Files created/modified | ~468 | ~15 | ~110 | ~15 | ~9 | ~617 |
+| Metric | S001–S031 subtotal | S032 | S033–S037 | S038 | S039 | S040–S041 | Total |
+|---|---|---|---|---|---|---|---|
+| Est. Claude input tokens | ~2,546K | ~128K | ~720K | ~155K | ~120K | ~284K | ~3,953K |
+| Est. Claude output tokens | ~943.6K | ~47.5K | ~150K | ~43K | ~35K | ~56K | ~1,275.1K |
+| Est. Claude cost | ~$22.41 | ~$1.09 | ~$7.27 | ~$1.12 | ~$0.89 | ~$1.69 | ~$34.47 |
+| Samy messages | 77 | 2 | 10 | 1 | 2 | 2 | 94 |
+| Samy decisions | 90 | 2 | 9 | 1 | 2 | 2 | 106 |
+| Files created/modified | ~468 | ~15 | ~110 | ~15 | ~9 | ~20 | ~637 |
 
 ---
 

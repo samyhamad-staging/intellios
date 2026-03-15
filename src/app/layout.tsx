@@ -3,6 +3,7 @@ import "./globals.css";
 import { auth, signOut } from "@/auth";
 import Sidebar from "@/components/nav/sidebar";
 import Providers from "@/components/providers";
+import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 
 export const metadata: Metadata = {
   title: "Intellios",
@@ -15,6 +16,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+
+  const branding = session?.user?.enterpriseId
+    ? (await getEnterpriseSettings(session.user.enterpriseId)).branding
+    : null;
 
   async function handleSignOut() {
     "use server";
@@ -33,6 +38,7 @@ export default async function RootLayout({
                   email: session.user.email,
                   role: session.user.role,
                 }}
+                branding={branding}
                 signOutAction={handleSignOut}
               />
               <main className="flex-1 overflow-y-auto" style={{ backgroundColor: "var(--content-bg)" }}>

@@ -24,7 +24,9 @@ export type EventType =
   | "policy.updated"
   | "policy.deleted"
   | "policy.simulated"
-  | "settings.updated";
+  | "settings.updated"
+  | "blueprint.periodic_review_scheduled"
+  | "blueprint.periodic_review_completed";
 
 export interface LifecycleEvent {
   /** Audit log row ID — can be used to correlate with the audit trail */

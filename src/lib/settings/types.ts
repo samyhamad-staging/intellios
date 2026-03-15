@@ -103,6 +103,30 @@ export interface EnterpriseSettings {
      */
     briefingWebhookUrl: string | null;
   };
+  /** White-label branding configuration. */
+  branding: {
+    /** Company name shown in sidebar and reports. Default: "Intellios" */
+    companyName: string;
+    /** Optional logo URL. If set, shown in sidebar instead of the default SVG. */
+    logoUrl: string | null;
+    /** Hex color for sidebar logo background. Default: "#7c3aed" (violet-600) */
+    primaryColor: string;
+  };
+  /** SR 11-7 periodic model review scheduling. */
+  periodicReview: {
+    /** Whether periodic review scheduling is enabled. Default: true */
+    enabled: boolean;
+    /**
+     * Default review cadence in months for newly deployed agents.
+     * Common values: 6 (semi-annual), 12 (annual), 24 (biennial). Default: 12
+     */
+    defaultCadenceMonths: number;
+    /**
+     * Days before next_review_due at which a reminder notification is sent.
+     * Default: 30
+     */
+    reminderDaysBefore: number;
+  };
   /**
    * Phase 2: Deployment target configuration.
    * Each key represents a supported deployment target.
@@ -172,6 +196,16 @@ export const DEFAULT_ENTERPRISE_SETTINGS: EnterpriseSettings = {
       reviewQueueMax: 10,
     },
     briefingWebhookUrl: null,
+  },
+  branding: {
+    companyName: "Intellios",
+    logoUrl: null,
+    primaryColor: "#7c3aed",
+  },
+  periodicReview: {
+    enabled: true,
+    defaultCadenceMonths: 12,
+    reminderDaysBefore: 30,
   },
   deploymentTargets: {
     agentcore: null,
