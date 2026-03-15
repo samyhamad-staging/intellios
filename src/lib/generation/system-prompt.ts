@@ -1,4 +1,7 @@
-export const GENERATION_SYSTEM_PROMPT = `You are the Intellios Generation Engine. Your role is to produce a complete, production-ready Agent Blueprint Package (ABP) from enterprise intake data.
+import { GovernancePolicy } from "@/lib/governance/types";
+import { IntakeContext, IntakeClassification } from "@/lib/types/intake";
+
+const BASE_GENERATION_PROMPT = `You are the Intellios Generation Engine. Your role is to produce a complete, production-ready Agent Blueprint Package (ABP) from enterprise intake data.
 
 ## Your Task
 
@@ -39,3 +42,113 @@ Given structured intake data describing an agent's purpose, tools, constraints, 
 - Be specific and practical — this blueprint will be used to deploy a real agent
 - Do not add capabilities not mentioned or implied by intake
 - Preserve all governance policies from intake exactly`;
+
+/**
+ * Build the generation system prompt.
+ *
+ * When enterprise governance policies are provided, appends a policy block instructing
+ * Claude to satisfy all error-severity rules proactively during generation rather than
+ * discovering violations in the post-generation validation pass.
+ *
+ * This reduces generate → violate → refine cycles, which are the most common source
+ * of wasted API calls and increased time-to-review.
+ */
+/**
+ * Build a context + classification block for injection into the generation prompt.
+ * Improves blueprint quality by giving Claude the original context signals and risk tier
+ * so it can calibrate governance depth, data classification, and policy completeness.
+ */
+function buildContextClassificationBlock(
+  context: IntakeContext,
+  classification: IntakeClassification | null | undefined
+): string {
+  const dataSensitivityToDataClassification = (s: string): string => {
+    switch (s) {
+      case "public": return "public";
+      case "internal": return "internal";
+      case "confidential": return "confidential";
+      case "pii":
+      case "regulated": return "regulated";
+      default: return "internal";
+    }
+  };
+
+  const dataClassification = dataSensitivityToDataClassification(context.dataSensitivity);
+
+  const lines: string[] = [
+    "",
+    "## Agent Design Context",
+    "",
+    `Purpose: ${context.agentPurpose}`,
+    `Deployment: ${context.deploymentType}`,
+    `Data Sensitivity: ${context.dataSensitivity} → set ownership.dataClassification to "${dataClassification}"`,
+    `Regulatory Scope: ${context.regulatoryScope.join(", ") || "none"}`,
+    `Integrations: ${context.integrationTypes.join(", ") || "none"}`,
+  ];
+
+  if (classification) {
+    lines.push(`Agent Type: ${classification.agentType}`);
+    lines.push(`Risk Tier: ${classification.riskTier}`);
+    lines.push("");
+    lines.push("Apply governance depth appropriate to this risk tier:");
+    switch (classification.riskTier) {
+      case "low":
+        lines.push("- low: minimal governance section; one concise policy sufficient; keep blueprint lean");
+        break;
+      case "medium":
+        lines.push("- medium: standard governance depth (current default behavior)");
+        break;
+      case "high":
+        lines.push("- high: full governance required; ensure all relevant policy types present; include explicit audit config with retention_days and pii_redaction");
+        break;
+      case "critical":
+        lines.push("- critical: maximum governance; ALL 5 policy types required (safety, compliance, data_handling, access_control, audit); strict audit config with retention_days and pii_redaction=true; each policy must have specific rules");
+        break;
+    }
+  }
+
+  lines.push("");
+  return lines.join("\n");
+}
+
+export function buildGenerationSystemPrompt(
+  policies?: GovernancePolicy[],
+  context?: IntakeContext | null,
+  classification?: IntakeClassification | null
+): string {
+  const contextBlock = context ? buildContextClassificationBlock(context, classification) : "";
+
+  if (!policies || policies.length === 0) return BASE_GENERATION_PROMPT + contextBlock;
+
+  const lines: string[] = [
+    "",
+    "## Enterprise Governance Policies",
+    "",
+    `This enterprise has ${policies.length} governance polic${policies.length === 1 ? "y" : "ies"} that will be automatically validated against the blueprint you generate.`,
+    "Design the blueprint to satisfy all error-severity rules. Do not wait for the validation step to discover failures — satisfy them now.",
+    "",
+    "**[ERROR] rules** — the blueprint MUST satisfy these. A violation blocks the agent from being submitted for review.",
+    "**[WARN] rules** — the blueprint SHOULD satisfy these. A violation is flagged but does not block review.",
+    "",
+  ];
+
+  for (const policy of policies) {
+    lines.push(`### ${policy.name} (type: ${policy.type})`);
+    if (policy.description) {
+      lines.push(`*${policy.description}*`);
+      lines.push("");
+    }
+    if (policy.rules.length === 0) {
+      lines.push("_(No rules defined — policy presence check only.)_");
+    } else {
+      for (const rule of policy.rules) {
+        const valueStr = rule.value !== undefined ? ` \`${JSON.stringify(rule.value)}\`` : "";
+        const tag = rule.severity === "error" ? "[ERROR]" : "[WARN]";
+        lines.push(`- ${tag} \`${rule.field}\` must \`${rule.operator}\`${valueStr} — ${rule.message}`);
+      }
+    }
+    lines.push("");
+  }
+
+  return BASE_GENERATION_PROMPT + contextBlock + lines.join("\n");
+}

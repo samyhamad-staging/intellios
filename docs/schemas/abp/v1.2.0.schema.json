@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intellios.dev/schemas/abp/v1.2.0",
+  "title": "Agent Blueprint Package",
+  "description": "The core artifact of Intellios. Fully describes an AI agent's identity, capabilities, constraints, governance policies, and organizational ownership.",
+  "type": "object",
+  "required": ["version", "metadata", "identity", "capabilities", "constraints", "governance"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version of this ABP.",
+      "const": "1.0.0"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Provenance and lifecycle metadata.",
+      "required": ["id", "created_at", "created_by", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this blueprint."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of blueprint creation."
+        },
+        "created_by": {
+          "type": "string",
+          "description": "Identifier of the user or system that created this blueprint."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "in_review", "approved", "rejected", "deprecated", "deployed"],
+          "description": "Current lifecycle status."
+        },
+        "enterprise_id": {
+          "type": "string",
+          "description": "Identifier of the enterprise this agent belongs to."
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Freeform tags for categorization."
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "description": "The agent's identity and branding.",
+      "required": ["name", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name of the agent."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of what the agent does."
+        },
+        "persona": {
+          "type": "string",
+          "description": "Personality and communication style instructions."
+        },
+        "branding": {
+          "type": "object",
+          "description": "White-label branding configuration.",
+          "properties": {
+            "display_name": { "type": "string" },
+            "icon_url": { "type": "string", "format": "uri" },
+            "color_primary": { "type": "string" },
+            "color_secondary": { "type": "string" }
+          }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "What the agent can do.",
+      "required": ["tools"],
+      "properties": {
+        "tools": {
+          "type": "array",
+          "description": "List of tools/integrations the agent can use.",
+          "items": {
+            "type": "object",
+            "required": ["name", "type"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": "string", "enum": ["api", "function", "mcp_server", "plugin"] },
+              "description": { "type": "string" },
+              "config": { "type": "object" }
+            }
+          }
+        },
+        "instructions": {
+          "type": "string",
+          "description": "System prompt or behavioral instructions for the agent."
+        },
+        "knowledge_sources": {
+          "type": "array",
+          "description": "Data sources the agent can reference.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": "string", "enum": ["file", "database", "api", "vector_store"] },
+              "uri": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "description": "Limits and boundaries on agent behavior.",
+      "properties": {
+        "allowed_domains": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Domains/topics the agent is allowed to operate in."
+        },
+        "denied_actions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Actions the agent must never perform."
+        },
+        "max_tokens_per_response": {
+          "type": "integer",
+          "description": "Maximum response length."
+        },
+        "rate_limits": {
+          "type": "object",
+          "properties": {
+            "requests_per_minute": { "type": "integer" },
+            "requests_per_day": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "description": "Enterprise governance and compliance configuration.",
+      "required": ["policies"],
+      "properties": {
+        "policies": {
+          "type": "array",
+          "description": "Governance policies applied to this agent.",
+          "items": {
+            "type": "object",
+            "required": ["name", "type"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": "string", "enum": ["safety", "compliance", "data_handling", "access_control", "audit"] },
+              "description": { "type": "string" },
+              "rules": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "audit": {
+          "type": "object",
+          "description": "Audit and logging configuration.",
+          "properties": {
+            "log_interactions": { "type": "boolean" },
+            "retention_days": { "type": "integer" },
+            "pii_redaction": { "type": "boolean" }
+          }
+        },
+        "approval_chain": {
+          "type": "array",
+          "description": "Required approvers before agent deployment.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": { "type": "string" },
+              "user_id": { "type": "string" },
+              "approved": { "type": "boolean" },
+              "approved_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      }
+    },
+    "ownership": {
+      "type": "object",
+      "description": "Organizational ownership and data classification metadata. Set manually by the designer; not AI-generated.",
+      "properties": {
+        "businessUnit": {
+          "type": "string",
+          "description": "Business unit or department that owns this agent."
+        },
+        "ownerEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Primary accountable owner email address."
+        },
+        "costCenter": {
+          "type": "string",
+          "description": "Cost center code for budget tracking."
+        },
+        "deploymentEnvironment": {
+          "type": "string",
+          "enum": ["production", "staging", "sandbox", "internal"],
+          "description": "Intended deployment environment."
+        },
+        "dataClassification": {
+          "type": "string",
+          "enum": ["public", "internal", "confidential", "regulated"],
+          "description": "Highest data classification level this agent handles."
+        }
+      }
+    }
+  }
+}

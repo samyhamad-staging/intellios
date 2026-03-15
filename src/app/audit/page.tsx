@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import { ScrollText, Download } from "lucide-react";
 
 interface AuditEntry {
   id: string;
@@ -24,11 +25,21 @@ const ACTION_LABELS: Record<string, string> = {
   "blueprint.status_changed":      "Status changed",
   "blueprint.reviewed":            "Review submitted",
   "blueprint.report_exported":     "MRM report exported",
+  "blueprint.health_checked":      "Health checked",
+  "blueprint.cloned":              "Agent cloned",
+  "blueprint.approval_step_completed": "Approval step",
+  "blueprint.test_run_completed":  "Test run completed",
+  "blueprint.agentcore_exported":  "AgentCore exported",
+  "blueprint.agentcore_deployed":  "Deployed to AgentCore",
   "intake.finalized":              "Intake finalized",
   "intake.contribution_submitted": "Contribution submitted",
   "policy.created":                "Policy created",
   "policy.updated":                "Policy updated",
   "policy.deleted":                "Policy deleted",
+  "policy.simulated":              "Policy simulated",
+  "settings.updated":              "Settings updated",
+  "blueprint.periodic_review_scheduled": "Periodic review scheduled",
+  "blueprint.periodic_review_completed": "Periodic review completed",
 };
 
 const ACTION_COLORS: Record<string, string> = {
@@ -37,11 +48,21 @@ const ACTION_COLORS: Record<string, string> = {
   "blueprint.status_changed":      "bg-amber-50 text-amber-700",
   "blueprint.reviewed":            "bg-green-50 text-green-700",
   "blueprint.report_exported":     "bg-teal-50 text-teal-700",
+  "blueprint.health_checked":      "bg-cyan-50 text-cyan-700",
+  "blueprint.cloned":              "bg-indigo-50 text-indigo-700",
+  "blueprint.approval_step_completed": "bg-emerald-50 text-emerald-700",
+  "blueprint.test_run_completed":  "bg-violet-50 text-violet-700",
+  "blueprint.agentcore_exported":  "bg-orange-50 text-orange-600",
+  "blueprint.agentcore_deployed":  "bg-orange-100 text-orange-800",
   "intake.finalized":              "bg-gray-100 text-gray-600",
   "intake.contribution_submitted": "bg-sky-50 text-sky-700",
   "policy.created":                "bg-red-50 text-red-700",
   "policy.updated":                "bg-orange-50 text-orange-700",
   "policy.deleted":                "bg-rose-100 text-rose-800",
+  "policy.simulated":              "bg-yellow-50 text-yellow-700",
+  "settings.updated":              "bg-slate-100 text-slate-600",
+  "blueprint.periodic_review_scheduled": "bg-teal-50 text-teal-700",
+  "blueprint.periodic_review_completed": "bg-teal-100 text-teal-800",
 };
 
 function formatDate(iso: string): string {
@@ -76,12 +97,45 @@ function exportCsv(entries: AuditEntry[]) {
   URL.revokeObjectURL(url);
 }
 
+function AgentCoreInlineSummary({ metadata }: { metadata: Record<string, unknown> }) {
+  const agentId = typeof metadata.agentId === "string" ? metadata.agentId : null;
+  const region = typeof metadata.region === "string" ? metadata.region : null;
+  const agentArn = typeof metadata.agentArn === "string" ? metadata.agentArn : null;
+  if (!agentId && !region) return null;
+  return (
+    <div className="mt-2 flex flex-wrap gap-3 text-xs text-orange-700">
+      {agentId && (
+        <span>
+          <span className="font-medium">Agent ID:</span>{" "}
+          <span className="font-mono">{agentId}</span>
+        </span>
+      )}
+      {region && (
+        <span>
+          <span className="font-medium">Region:</span>{" "}
+          <span className="font-mono">{region}</span>
+        </span>
+      )}
+      {agentArn && (
+        <span className="truncate max-w-xs">
+          <span className="font-medium">ARN:</span>{" "}
+          <span className="font-mono">{agentArn}</span>
+        </span>
+      )}
+    </div>
+  );
+}
+
+const PAGE_SIZE = 50;
+
 export default function AuditTrailPage() {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
 
   // Filter state
   const [entityType, setEntityType] = useState("");
@@ -89,7 +143,8 @@ export default function AuditTrailPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
-  const fetchEntries = useCallback(async () => {
+  const fetchEntries = useCallback(async (pageOverride?: number) => {
+    const activePage = pageOverride ?? page;
     setLoading(true);
     setError(null);
     try {
@@ -98,6 +153,8 @@ export default function AuditTrailPage() {
       if (actorEmail.trim()) params.set("actorEmail", actorEmail.trim());
       if (from) params.set("from", from);
       if (to) params.set("to", to);
+      params.set("limit", String(PAGE_SIZE));
+      params.set("offset", String(activePage * PAGE_SIZE));
 
       const res = await fetch(`/api/audit?${params.toString()}`);
       if (!res.ok) {
@@ -106,45 +163,40 @@ export default function AuditTrailPage() {
       }
       const data = await res.json();
       setEntries(data.entries ?? []);
+      setTotal(data.total ?? 0);
       setLoaded(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch audit log");
     } finally {
       setLoading(false);
     }
-  }, [entityType, actorEmail, from, to]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entityType, actorEmail, from, to, page]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-6xl flex items-center justify-between">
-          <div>
+    <div className="px-8 py-8 space-y-4">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <ScrollText size={20} className="text-violet-600" />
             <h1 className="text-xl font-semibold text-gray-900">Audit Trail</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Immutable record of all platform actions. Records cannot be edited or deleted.
-            </p>
           </div>
-          <div className="flex items-center gap-3">
-            {entries.length > 0 && (
-              <button
-                onClick={() => exportCsv(entries)}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-              >
-                Export CSV ({entries.length})
-              </button>
-            )}
-            <Link
-              href="/governance"
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              ← Governance Hub
-            </Link>
-          </div>
+          <p className="text-sm text-gray-500 pl-7">
+            Immutable record of all platform actions. Records cannot be edited or deleted.
+          </p>
         </div>
-      </header>
+        {entries.length > 0 && (
+          <button
+            onClick={() => exportCsv(entries)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+          >
+            <Download size={13} />Export CSV ({entries.length})
+          </button>
+        )}
+      </div>
 
-      <main className="mx-auto max-w-6xl px-6 py-6 space-y-4">
+      <div className="space-y-4">
         {/* Filter bar */}
         <div className="flex flex-wrap gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4">
           <div className="flex flex-1 min-w-40 flex-col gap-1">
@@ -196,7 +248,7 @@ export default function AuditTrailPage() {
 
           <div className="flex items-end">
             <button
-              onClick={fetchEntries}
+              onClick={() => { setPage(0); fetchEntries(0); }}
               disabled={loading}
               className="rounded-lg bg-gray-900 px-5 py-1.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
             >
@@ -230,7 +282,7 @@ export default function AuditTrailPage() {
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
             {/* Result count */}
             <div className="border-b border-gray-100 px-5 py-2.5 text-xs text-gray-400">
-              {entries.length} event{entries.length === 1 ? "" : "s"} — sorted newest first
+              Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total} event{total === 1 ? "" : "s"} — sorted newest first
             </div>
 
             <div className="divide-y divide-gray-100">
@@ -299,6 +351,11 @@ export default function AuditTrailPage() {
                       )}
                     </div>
 
+                    {/* AgentCore inline summary — shown without expanding */}
+                    {(entry.action === "blueprint.agentcore_deployed" ||
+                      entry.action === "blueprint.agentcore_exported") &&
+                      !!entry.metadata && <AgentCoreInlineSummary metadata={entry.metadata as Record<string, unknown>} />}
+
                     {/* Expanded metadata */}
                     {isExpanded && !!entry.metadata && (
                       <div className="mt-3 rounded-lg bg-gray-50 border border-gray-200 p-3">
@@ -312,9 +369,41 @@ export default function AuditTrailPage() {
                 );
               })}
             </div>
+            {/* Pagination controls */}
+            {total > PAGE_SIZE && (
+              <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3">
+                <span className="text-xs text-gray-400">
+                  Page {page + 1} of {Math.ceil(total / PAGE_SIZE)}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={page === 0 || loading}
+                    onClick={() => {
+                      const prev = page - 1;
+                      setPage(prev);
+                      fetchEntries(prev);
+                    }}
+                    className="rounded-lg border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-gray-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    ← Previous
+                  </button>
+                  <button
+                    disabled={(page + 1) * PAGE_SIZE >= total || loading}
+                    onClick={() => {
+                      const next = page + 1;
+                      setPage(next);
+                      fetchEntries(next);
+                    }}
+                    className="rounded-lg border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-gray-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

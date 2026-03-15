@@ -141,6 +141,24 @@ export interface MRMReport {
     /** Change ticket reference from the enterprise change management system. */
     changeRef: string | null;
     deploymentNotes: string | null;
+    /**
+     * Identifies where the agent was deployed.
+     * "agentcore" = Amazon Bedrock AgentCore (Phase 2).
+     * null = deployed via Intellios Deploy Console (no external platform).
+     */
+    deploymentTarget: string | null;
+    /**
+     * Bedrock AgentCore deployment record — populated when deploymentTarget === "agentcore".
+     * Contains the AWS resource identifiers created during deployment.
+     */
+    agentcoreRecord: {
+      agentId: string;
+      agentArn: string;
+      region: string;
+      foundationModel: string;
+      deployedAt: string;
+      deployedBy: string;
+    } | null;
   };
 
   // ── Section 9: Model Lineage ──────────────────────────────────────────────
@@ -200,4 +218,46 @@ export interface MRMReport {
    * before Phase 8 was introduced (no intake context available).
    */
   stakeholderCoverageGaps: string[] | null;
+
+  // ── Section 12: Regulatory Framework Assessment ───────────────────────────
+  /**
+   * Deterministic per-requirement assessment against EU AI Act, SR 11-7, and
+   * NIST AI RMF — derived from blueprint content, intake context, governance
+   * validation, and deployment health. Null for blueprints whose reports were
+   * generated before Phase 20 (Regulatory Intelligence) was introduced.
+   */
+  regulatoryFrameworks: {
+    assessedAt: string;
+    frameworks: Array<{
+      frameworkId: string;
+      frameworkName: string;
+      overallStatus: string;
+      /** EU AI Act only — risk tier classification */
+      euAiActRiskTier?: string;
+      requirementsSatisfied: number;
+      requirementsTotal: number;
+      /** Titles of requirements whose evidenceStatus is "missing" */
+      gaps: string[];
+    }>;
+  } | null;
+
+  // ── Section 14: Periodic Review Schedule ─────────────────────────────────
+  /**
+   * SR 11-7 requires periodic model revalidation after initial deployment.
+   * This section records the enterprise's review schedule and current status.
+   * Populated from Phase 36 onwards; prior reports will have this section
+   * showing enabled:false and null dates.
+   */
+  periodicReviewSchedule: {
+    /** Whether periodic review is configured for this enterprise. */
+    enabled: boolean;
+    /** Configured cadence in months (e.g., 12 = annual). */
+    cadenceMonths: number;
+    /** ISO timestamp of last completed periodic review, or null if not yet reviewed. */
+    lastPeriodicReviewAt: string | null;
+    /** ISO timestamp of next scheduled review due date, or null if not scheduled. */
+    nextReviewDueAt: string | null;
+    /** Whether the next review due date has already passed. */
+    isOverdue: boolean;
+  };
 }

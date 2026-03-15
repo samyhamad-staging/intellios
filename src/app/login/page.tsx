@@ -102,6 +102,15 @@ function LoginForm() {
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
+
+            <div className="text-center">
+              <a
+                href="/auth/forgot-password"
+                className="text-xs text-gray-500 hover:text-gray-700 underline-offset-2 hover:underline"
+              >
+                Forgot your password?
+              </a>
+            </div>
           </form>
         </div>
 
@@ -110,21 +119,33 @@ function LoginForm() {
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
             Demo accounts
           </p>
-          <div className="space-y-1 text-xs text-gray-500">
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-700">designer@intellios.dev</span>
+          <div className="space-y-1.5 text-xs text-gray-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-medium text-gray-700">designer@intellios.dev</span>
+                <span className="ml-2 text-gray-400">Designer1234!</span>
+              </div>
               <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700">Designer</span>
             </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-700">reviewer@intellios.dev</span>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-medium text-gray-700">reviewer@intellios.dev</span>
+                <span className="ml-2 text-gray-400">Reviewer1234!</span>
+              </div>
               <span className="rounded bg-amber-50 px-1.5 py-0.5 text-amber-700">Reviewer</span>
             </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-700">officer@intellios.dev</span>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-medium text-gray-700">officer@intellios.dev</span>
+                <span className="ml-2 text-gray-400">Officer1234!</span>
+              </div>
               <span className="rounded bg-green-50 px-1.5 py-0.5 text-green-700">Compliance Officer</span>
             </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-700">admin@intellios.dev</span>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-medium text-gray-700">admin@intellios.dev</span>
+                <span className="ml-2 text-gray-400">Admin1234!</span>
+              </div>
               <span className="rounded bg-purple-50 px-1.5 py-0.5 text-purple-700">Admin</span>
             </div>
           </div>

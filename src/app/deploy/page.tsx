@@ -3,6 +3,33 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { Rocket, CheckCircle, Globe } from "lucide-react";
+
+/**
+ * Map raw AWS SDK / server error strings to actionable operator messages.
+ * Called before setting the error state in the AgentCore deploy modal.
+ */
+function enrichAgentCoreError(raw: string): string {
+  if (raw.includes("AccessDeniedException") || raw.includes("not authorized"))
+    return "AWS permission denied. Verify the IAM role has 'bedrock:CreateAgent' and 'bedrock:InvokeModel' permissions. Check Admin → Settings → Deployment Targets.";
+  if (raw.includes("agentResourceRoleArn") || raw.includes("Invalid agentResourceRoleArn"))
+    return "Invalid IAM role ARN. Update the agentResourceRoleArn in Admin → Settings → Deployment Targets.";
+  if (raw.includes("ValidationException"))
+    return `AWS validation error: ${raw.replace(/^.*?ValidationException:\s*/i, "")}. Check Admin → Settings → Deployment Targets.`;
+  if (raw.includes("ServiceQuotaExceededException"))
+    return "AWS Bedrock agent quota exceeded. Request a quota increase in the AWS console for your region, then retry.";
+  if (raw.includes("ResourceNotFoundException") || (raw.includes("model") && raw.includes("not found")))
+    return "Foundation model not found or not enabled in this region. Check the foundation model ID in Admin → Settings → Deployment Targets.";
+  if (raw.includes("foundationModel"))
+    return "Foundation model error. Verify the model ID is correct and enabled in your AWS region via Admin → Settings → Deployment Targets.";
+  if (raw.includes("did not reach PREPARED state"))
+    return "Agent preparation timed out (90s). The agent may still be preparing in AWS — check the Bedrock console. If the agent is not visible there, retry the deployment.";
+  if (raw.includes("AgentCore config missing") || raw.includes("Invalid agentResourceRoleArn format"))
+    return `Configuration error: ${raw}. Update deployment settings in Admin → Settings → Deployment Targets.`;
+  if (raw.includes("CreateAgent failed"))
+    return `Agent creation failed: ${raw.replace(/^.*?CreateAgent failed:\s*/i, "")}`;
+  return raw;
+}
 
 interface Agent {
   id: string;
@@ -22,6 +49,22 @@ interface DeployModalState {
   deploymentNotes: string;
   authorized: boolean;
   submitting: boolean;
+  error: string | null;
+}
+
+interface AgentCoreModalState {
+  agent: Agent;
+  phase: "confirm" | "deploying" | "success" | "error";
+  /** AgentCore deploy progress label shown during deployment */
+  progressLabel: string;
+  /** Deployment record returned on success */
+  deploymentRecord: {
+    agentId: string;
+    agentArn: string;
+    region: string;
+    foundationModel: string;
+    deployedAt: string;
+  } | null;
   error: string | null;
 }
 
@@ -73,8 +116,8 @@ function DeployConfirmModal({
         {/* Modal header */}
         <div className="border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 text-sm">
-              🚀
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+              <Rocket size={16} />
             </span>
             <div>
               <h2 className="text-sm font-semibold text-gray-900">
@@ -170,11 +213,163 @@ function DeployConfirmModal({
   );
 }
 
+/**
+ * AgentCoreDeployModal — confirm + execute direct deployment to Bedrock AgentCore.
+ * Shows region/model/roleARN from settings, then calls the deploy API and
+ * displays a progress indicator while awaiting agent preparation.
+ */
+function AgentCoreDeployModal({
+  agcModal,
+  onClose,
+  onSuccess,
+}: {
+  agcModal: AgentCoreModalState;
+  onClose: () => void;
+  onSuccess: (agentBlueprintId: string) => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && agcModal.phase !== "deploying") onClose();
+      }}
+    >
+      <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white shadow-2xl">
+        {/* Header */}
+        <div className="border-b border-orange-100 px-6 py-4">
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-orange-700 text-xs font-bold">
+              AC
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">Deploy to AgentCore</h2>
+              <p className="text-xs text-gray-500">
+                {agcModal.agent.name ?? "Unnamed Agent"} — v{agcModal.agent.version}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-5">
+          {/* Confirm phase */}
+          {agcModal.phase === "confirm" && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-700">
+                This will call the Amazon Bedrock Agent API to create and prepare this agent
+                directly in your AWS account. No credentials are stored in Intellios.
+              </p>
+              <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 space-y-2 text-xs">
+                <p className="text-gray-400 font-medium uppercase tracking-wider text-[10px]">
+                  Deployment configuration
+                </p>
+                <p className="text-gray-500">
+                  AWS credentials and deployment configuration (region, IAM role, model) are
+                  read from{" "}
+                  <a href="/admin/settings" className="underline hover:text-gray-700">
+                    Admin → Settings → Deployment Targets
+                  </a>
+                  .
+                </p>
+              </div>
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                The deployment may take up to 90 seconds while Bedrock prepares the agent.
+                Do not close this window during deployment.
+              </p>
+            </div>
+          )}
+
+          {/* Deploying phase */}
+          {agcModal.phase === "deploying" && (
+            <div className="flex flex-col items-center py-6 gap-4">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-orange-200 border-t-orange-500" />
+              <p className="text-sm font-medium text-gray-700">{agcModal.progressLabel}</p>
+              <p className="text-xs text-gray-400">Communicating with Amazon Bedrock…</p>
+            </div>
+          )}
+
+          {/* Success phase */}
+          {agcModal.phase === "success" && agcModal.deploymentRecord && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-green-700">
+                <span className="text-lg">✓</span>
+                <p className="text-sm font-semibold">Agent deployed to AgentCore</p>
+              </div>
+              <div className="rounded-lg border border-green-100 bg-green-50 p-4 space-y-1.5 text-xs font-mono">
+                <div className="flex gap-2">
+                  <span className="text-gray-400 min-w-[100px]">Agent ID</span>
+                  <span className="text-gray-700">{agcModal.deploymentRecord.agentId}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-gray-400 min-w-[100px]">Region</span>
+                  <span className="text-gray-700">{agcModal.deploymentRecord.region}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-gray-400 min-w-[100px]">Model</span>
+                  <span className="text-gray-700">{agcModal.deploymentRecord.foundationModel}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-gray-400 min-w-[100px]">ARN</span>
+                  <span className="text-gray-700 break-all">{agcModal.deploymentRecord.agentArn}</span>
+                </div>
+              </div>
+              <a
+                href={`https://console.aws.amazon.com/bedrock/home?region=${agcModal.deploymentRecord.region}#/agents/${agcModal.deploymentRecord.agentId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-center text-xs text-orange-700 underline hover:text-orange-900"
+              >
+                Open in AWS Console →
+              </a>
+            </div>
+          )}
+
+          {/* Error phase */}
+          {agcModal.phase === "error" && agcModal.error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+              <p className="text-sm font-medium text-red-800 mb-1">Deployment failed</p>
+              <p className="text-xs text-red-700">{agcModal.error}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+          {agcModal.phase === "confirm" && (
+            <>
+              <button
+                onClick={onClose}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => onSuccess(agcModal.agent.id)}
+                className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 transition-colors"
+              >
+                Deploy to AgentCore
+              </button>
+            </>
+          )}
+          {(agcModal.phase === "success" || agcModal.phase === "error") && (
+            <button
+              onClick={onClose}
+              className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+            >
+              Close
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DeploymentConsolePage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<DeployModalState | null>(null);
+  const [agcModal, setAgcModal] = useState<AgentCoreModalState | null>(null);
 
   useEffect(() => {
     fetch("/api/registry")
@@ -201,6 +396,72 @@ export default function DeploymentConsolePage() {
       submitting: false,
       error: null,
     });
+  }
+
+  function openAgcModal(agent: Agent) {
+    setAgcModal({
+      agent,
+      phase: "confirm",
+      progressLabel: "Creating agent…",
+      deploymentRecord: null,
+      error: null,
+    });
+  }
+
+  async function handleAgcDeploy(blueprintId: string) {
+    if (!agcModal) return;
+    setAgcModal((m) =>
+      m && { ...m, phase: "deploying", progressLabel: "Creating agent in Bedrock…" }
+    );
+
+    // Progress label cycling so the user knows things are happening
+    const labels = [
+      "Creating agent in Bedrock…",
+      "Attaching action groups…",
+      "Preparing agent…",
+      "Waiting for PREPARED status…",
+    ];
+    let labelIdx = 0;
+    const labelTimer = setInterval(() => {
+      labelIdx = Math.min(labelIdx + 1, labels.length - 1);
+      setAgcModal((m) => m && m.phase === "deploying" ? { ...m, progressLabel: labels[labelIdx] } : m);
+    }, 7000);
+
+    try {
+      const res = await fetch(`/api/blueprints/${blueprintId}/deploy/agentcore`, {
+        method: "POST",
+      });
+      clearInterval(labelTimer);
+
+      const data = await res.json();
+      if (!res.ok) {
+        const raw = data.message ?? data.error ?? "Deployment failed";
+        setAgcModal((m) => m && { ...m, phase: "error", error: enrichAgentCoreError(raw) });
+        return;
+      }
+
+      const record = data.deployment;
+      setAgcModal((m) =>
+        m && {
+          ...m,
+          phase: "success",
+          deploymentRecord: record,
+        }
+      );
+      // Update agent list — mark blueprint as deployed
+      setAgents((prev) =>
+        prev.map((a) => (a.id === blueprintId ? { ...a, status: "deployed" } : a))
+      );
+    } catch (err) {
+      clearInterval(labelTimer);
+      setAgcModal((m) =>
+        m && {
+          ...m,
+          phase: "error",
+          error: enrichAgentCoreError(err instanceof Error ? err.message : "Deployment failed"),
+        }
+      );
+    }
   }
 
   async function handleConfirmDeploy() {
@@ -233,8 +494,8 @@ export default function DeploymentConsolePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Deployment confirmation modal */}
+    <div className="px-8 py-8 space-y-8">
+      {/* Standard deployment confirmation modal */}
       {modal && (
         <DeployConfirmModal
           modal={modal}
@@ -244,30 +505,33 @@ export default function DeploymentConsolePage() {
         />
       )}
 
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-5xl flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">Deployment Console</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Promote approved agents to production
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/pipeline"
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              Pipeline →
-            </Link>
-            <Link href="/" className="text-sm text-gray-400 hover:text-gray-700">
-              ← Home
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* AgentCore direct deploy modal */}
+      {agcModal && (
+        <AgentCoreDeployModal
+          agcModal={agcModal}
+          onClose={() => setAgcModal(null)}
+          onSuccess={handleAgcDeploy}
+        />
+      )}
 
-      <main className="mx-auto max-w-5xl px-6 py-8 space-y-8">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <Rocket size={20} className="text-violet-600" />
+            <h1 className="text-xl font-semibold text-gray-900">Deployment Console</h1>
+          </div>
+          <p className="text-sm text-gray-500 pl-7">Promote approved agents to production</p>
+        </div>
+        <Link
+          href="/pipeline"
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+        >
+          Pipeline →
+        </Link>
+      </div>
+
+      <div className="space-y-8">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
@@ -330,7 +594,7 @@ export default function DeploymentConsolePage() {
               {readyToDeploy.map((agent) => (
                 <div
                   key={agent.agentId}
-                  className="flex items-center justify-between rounded-xl border border-green-200 bg-white px-5 py-4"
+                  className="flex flex-wrap items-center gap-y-3 rounded-xl border border-green-200 bg-white px-5 py-4"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -361,12 +625,29 @@ export default function DeploymentConsolePage() {
                       </p>
                     )}
                   </div>
-                  <button
-                    onClick={() => openModal(agent)}
-                    className="ml-4 shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
-                  >
-                    Deploy to Production…
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2 ml-auto">
+                    <a
+                      href={`/api/blueprints/${agent.id}/export/agentcore`}
+                      download
+                      className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+                      title="Download Amazon Bedrock AgentCore deployment manifest"
+                    >
+                      Export for AgentCore ↓
+                    </a>
+                    <button
+                      onClick={() => openAgcModal(agent)}
+                      className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-medium text-orange-700 hover:border-orange-400 hover:bg-orange-100 transition-colors"
+                      title="Deploy directly to Amazon Bedrock AgentCore"
+                    >
+                      Deploy to AgentCore…
+                    </button>
+                    <button
+                      onClick={() => openModal(agent)}
+                      className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+                    >
+                      Deploy to Production…
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -394,7 +675,7 @@ export default function DeploymentConsolePage() {
           )}
 
           {!loading && deployed.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -437,12 +718,22 @@ export default function DeploymentConsolePage() {
                         )}
                       </td>
                       <td className="px-5 py-3 text-right">
-                        <Link
-                          href={`/registry/${agent.agentId}`}
-                          className="text-xs text-gray-400 hover:text-gray-700 underline"
-                        >
-                          View →
-                        </Link>
+                        <div className="flex items-center justify-end gap-3">
+                          <a
+                            href={`/api/blueprints/${agent.id}/export/agentcore`}
+                            download
+                            className="text-xs text-gray-400 hover:text-gray-700 underline"
+                            title="Export AgentCore manifest"
+                          >
+                            AgentCore ↓
+                          </a>
+                          <Link
+                            href={`/registry/${agent.agentId}`}
+                            className="text-xs text-gray-400 hover:text-gray-700 underline"
+                          >
+                            View →
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -451,7 +742,7 @@ export default function DeploymentConsolePage() {
             </div>
           )}
         </section>
-      </main>
+      </div>
     </div>
   );
 }

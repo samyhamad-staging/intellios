@@ -9,6 +9,7 @@ import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
 import { IntakeContext } from "@/lib/types/intake";
+import { classifyIntake } from "@/lib/intake/classify";
 
 const IntakeContextBody = z.object({
   agentPurpose: z.string().min(1).max(500),
@@ -54,6 +55,16 @@ export async function PATCH(
       .update(intakeSessions)
       .set({ intakeContext: context, updatedAt: new Date() })
       .where(eq(intakeSessions.id, sessionId));
+
+    // Fire-and-forget classification — does not block the context save response.
+    // Results (agentType + riskTier) are written to the session row and picked up
+    // by the UI via polling the session GET endpoint.
+    void classifyIntake(context).then(async ({ agentType, riskTier }) => {
+      await db
+        .update(intakeSessions)
+        .set({ agentType, riskTier, updatedAt: new Date() })
+        .where(eq(intakeSessions.id, sessionId));
+    }).catch((err) => console.error("[classify] Failed to write classification:", err));
 
     return NextResponse.json({ success: true, context });
   } catch (err) {
