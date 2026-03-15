@@ -37,6 +37,7 @@ export default function IntakeSessionPage({
   const [refreshTick, setRefreshTick] = useState(0);
   const [phase, setPhase] = useState<Phase>("loading");
   const [generating, setGenerating] = useState(false);
+  const [generateSuccess, setGenerateSuccess] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | undefined>(undefined);
   const [intakeContext, setIntakeContext] = useState<IntakeContext | null>(null);
@@ -178,7 +179,11 @@ export default function IntakeSessionPage({
         throw new Error(data.error ?? "Generation failed");
       }
       const { id, agentId } = await res.json();
-      router.push(`/blueprints/${id}?agentId=${agentId}`);
+      // Brief success flash before redirect — gives the user a clear "done" signal
+      // before the page changes to the workbench loading state.
+      setGenerateSuccess(true);
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      router.push(`/blueprints/${id}?agentId=${agentId}&new=1`);
     } catch (err) {
       setGenerateError(err instanceof Error ? err.message : "Generation failed");
       setGenerating(false);
@@ -295,6 +300,7 @@ export default function IntakeSessionPage({
           contributions={contributions}
           onGenerate={handleGenerate}
           generating={generating}
+          generateSuccess={generateSuccess}
           generateError={generateError}
         />
       </div>

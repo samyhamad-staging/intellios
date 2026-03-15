@@ -19,6 +19,7 @@ interface IntakeReviewProps {
   contributions?: StakeholderContribution[];
   onGenerate: () => void;
   generating: boolean;
+  generateSuccess?: boolean;
   generateError: string | null;
 }
 
@@ -242,6 +243,7 @@ export function IntakeReview({
   contributions = [],
   onGenerate,
   generating,
+  generateSuccess = false,
   generateError,
 }: IntakeReviewProps) {
   const [acknowledged, setAcknowledged] = useState<Set<SectionKey>>(new Set());
@@ -590,10 +592,18 @@ export function IntakeReview({
           )}
           <button
             onClick={onGenerate}
-            disabled={!canGenerate || generating}
-            className="rounded-lg bg-gray-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled={!canGenerate || generating || generateSuccess}
+            className={`rounded-lg px-6 py-2.5 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed ${
+              generateSuccess
+                ? "bg-green-600 disabled:opacity-100"
+                : "bg-gray-900 hover:bg-gray-800 disabled:opacity-40"
+            }`}
           >
-            {generating ? "Generating blueprint…" : "Generate Blueprint →"}
+            {generateSuccess
+              ? "✓ Blueprint ready — opening workbench…"
+              : generating
+                ? "Generating blueprint…"
+                : "Generate Blueprint →"}
           </button>
         </div>
       </div>
