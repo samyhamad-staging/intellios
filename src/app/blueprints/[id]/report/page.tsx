@@ -17,6 +17,7 @@ import type { IntakeContext } from "@/lib/types/intake";
 import type { ValidationReport } from "@/lib/governance/types";
 import type { ApprovalStepRecord } from "@/lib/settings/types";
 import type { TestRun } from "@/lib/testing/types";
+import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -83,6 +84,11 @@ export default async function MRMReportPage({
 
   const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, session.user);
   if (enterpriseError) redirect("/registry");
+
+  // Fetch branding for white-label header
+  const companyName = blueprint.enterpriseId
+    ? (await getEnterpriseSettings(blueprint.enterpriseId)).branding?.companyName ?? "Intellios"
+    : "Intellios";
 
   // Assemble report + regulatory assessment in parallel
   const [report, intakeSession] = await Promise.all([
@@ -164,6 +170,7 @@ export default async function MRMReportPage({
       policyVersionRows={policyVersionRows}
       validationGeneratedAt={validationReport?.generatedAt ?? null}
       latestTestRun={latestTestRun}
+      companyName={companyName}
     />
   );
 }
@@ -186,6 +193,7 @@ function ReportDocument({
   policyVersionRows,
   validationGeneratedAt,
   latestTestRun,
+  companyName,
 }: {
   report: MRMReport;
   blueprintId: string;
@@ -195,6 +203,7 @@ function ReportDocument({
   policyVersionRows: PolicyVersionRow[];
   validationGeneratedAt: string | null;
   latestTestRun: TestRun | null;
+  companyName: string;
 }) {
   const r = report;
 
@@ -1131,10 +1140,66 @@ function ReportDocument({
           )}
         </section>
 
+        {/* Section 14: Periodic Review Schedule */}
+        <section className="space-y-4">
+          <SectionHeader number={14} title="Periodic Review Schedule" />
+          <div className="rounded-lg border border-gray-200 bg-white">
+            <dl className="divide-y divide-gray-100 px-5">
+              <Field
+                label="Periodic Review"
+                value={r.periodicReviewSchedule.enabled ? "Enabled" : "Disabled"}
+              />
+              {r.periodicReviewSchedule.enabled && (
+                <>
+                  <Field
+                    label="Review Cadence"
+                    value={`${r.periodicReviewSchedule.cadenceMonths === 12 ? "Annual" : r.periodicReviewSchedule.cadenceMonths === 6 ? "Semi-Annual" : r.periodicReviewSchedule.cadenceMonths === 24 ? "Biennial" : `Every ${r.periodicReviewSchedule.cadenceMonths} months`} (${r.periodicReviewSchedule.cadenceMonths} months)`}
+                  />
+                  <Field
+                    label="Next Review Due"
+                    value={
+                      r.periodicReviewSchedule.nextReviewDueAt ? (
+                        <span className={`inline-flex items-center gap-2 ${r.periodicReviewSchedule.isOverdue ? "text-red-700" : "text-gray-900"}`}>
+                          {fmtDate(r.periodicReviewSchedule.nextReviewDueAt)}
+                          {r.periodicReviewSchedule.isOverdue && (
+                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">OVERDUE</span>
+                          )}
+                        </span>
+                      ) : "Not yet scheduled"
+                    }
+                  />
+                  <Field
+                    label="Last Periodic Review"
+                    value={r.periodicReviewSchedule.lastPeriodicReviewAt
+                      ? fmtDate(r.periodicReviewSchedule.lastPeriodicReviewAt)
+                      : "Not yet completed"}
+                  />
+                  <Field
+                    label="SR 11-7 Compliance Status"
+                    value={
+                      r.periodicReviewSchedule.isOverdue ? (
+                        <Chip label="Review Overdue" color="bg-red-100 text-red-800 border border-red-200" />
+                      ) : r.periodicReviewSchedule.nextReviewDueAt ? (
+                        <Chip label="On Schedule" color="bg-green-100 text-green-800 border border-green-200" />
+                      ) : (
+                        <Chip label="Not Deployed" color="bg-gray-100 text-gray-600 border border-gray-200" />
+                      )
+                    }
+                  />
+                </>
+              )}
+            </dl>
+          </div>
+          <p className="text-xs text-gray-400">
+            SR 11-7 requires periodic model performance revalidation after initial deployment.
+            Review cadence is configured in Enterprise Settings. Overdue reviews require immediate remediation.
+          </p>
+        </section>
+
         {/* Footer */}
         <footer className="border-t border-gray-200 py-8 text-center text-xs text-gray-400 print:pt-4">
           <p>
-            Intellios MRM Compliance Report · Generated {fmt(r.generatedAt)} by {r.generatedBy}
+            {companyName} MRM Compliance Report · Generated {fmt(r.generatedAt)} by {r.generatedBy}
           </p>
           <p className="mt-1">
             This report is an evidence package for SR 11-7 model risk documentation.

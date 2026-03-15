@@ -92,6 +92,151 @@ export default function AdminSettingsPage() {
 
       <div className="space-y-6">
 
+        {/* Branding */}
+        <section className="rounded-xl border border-gray-200 bg-white p-6">
+          <h2 className="text-base font-semibold text-gray-900">Branding</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Customize how Intellios appears to your users.
+          </p>
+          <div className="mt-5 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Company Name</label>
+              <p className="text-xs text-gray-400 mt-0.5">Shown in the sidebar and compliance reports.</p>
+              <input
+                type="text"
+                value={settings.branding?.companyName ?? "Intellios"}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    branding: { ...s.branding, companyName: e.target.value },
+                  }))
+                }
+                placeholder="Intellios"
+                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Logo URL <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <p className="text-xs text-gray-400 mt-0.5">If set, displayed in the sidebar instead of the default icon.</p>
+              <input
+                type="url"
+                value={settings.branding?.logoUrl ?? ""}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    branding: { ...s.branding, logoUrl: e.target.value || null },
+                  }))
+                }
+                placeholder="https://your-company.com/logo.png"
+                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Brand Color</label>
+              <p className="text-xs text-gray-400 mt-0.5">Used as the sidebar logo background color.</p>
+              <div className="mt-2 flex items-center gap-3">
+                <input
+                  type="color"
+                  value={settings.branding?.primaryColor ?? "#7c3aed"}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      branding: { ...s.branding, primaryColor: e.target.value },
+                    }))
+                  }
+                  className="h-9 w-12 cursor-pointer rounded border border-gray-200 p-0.5"
+                />
+                <code className="text-sm text-gray-600">{settings.branding?.primaryColor ?? "#7c3aed"}</code>
+              </div>
+            </div>
+            {/* Live preview */}
+            <div className="mt-3 flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <div
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
+                style={{ backgroundColor: settings.branding?.primaryColor ?? "#7c3aed" }}
+              >
+                {(settings.branding?.companyName ?? "Intellios").charAt(0).toUpperCase()}
+              </div>
+              <span className="text-sm font-semibold text-gray-900">
+                {settings.branding?.companyName ?? "Intellios"}
+              </span>
+              <span className="ml-auto text-xs text-gray-400">Preview</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Periodic Review */}
+        <section className="rounded-xl border border-gray-200 bg-white p-6">
+          <h2 className="text-base font-semibold text-gray-900">Periodic Model Review</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            SR 11-7 requires periodic model revalidation after initial deployment.
+            Agents are automatically scheduled for review when deployed.
+          </p>
+          <div className="mt-5 space-y-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.periodicReview?.enabled ?? true}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    periodicReview: { ...s.periodicReview, enabled: e.target.checked },
+                  }))
+                }
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+              />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Enable periodic review scheduling</p>
+                <p className="text-xs text-gray-500">When enabled, a review due date is set when an agent is deployed.</p>
+              </div>
+            </label>
+            {(settings.periodicReview?.enabled ?? true) && (
+              <div className="grid grid-cols-2 gap-5 pl-7">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Default review cadence (months)
+                  </label>
+                  <p className="text-xs text-gray-400 mt-0.5">SR 11-7 typically requires annual (12) review for high-risk models.</p>
+                  <input
+                    type="number"
+                    min={1}
+                    max={60}
+                    value={settings.periodicReview?.defaultCadenceMonths ?? 12}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        periodicReview: { ...s.periodicReview, defaultCadenceMonths: Number(e.target.value) },
+                      }))
+                    }
+                    className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Reminder (days before due)
+                  </label>
+                  <p className="text-xs text-gray-400 mt-0.5">Send a reminder notification this many days in advance.</p>
+                  <input
+                    type="number"
+                    min={1}
+                    max={180}
+                    value={settings.periodicReview?.reminderDaysBefore ?? 30}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        periodicReview: { ...s.periodicReview, reminderDaysBefore: Number(e.target.value) },
+                      }))
+                    }
+                    className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* Review SLA */}
         <section className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Review SLA</h2>

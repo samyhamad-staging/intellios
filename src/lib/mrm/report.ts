@@ -6,6 +6,7 @@ import { ValidationReport } from "@/lib/governance/types";
 import { IntakeContext, StakeholderContribution } from "@/lib/types/intake";
 import { getMissingContributionDomains } from "@/lib/intake/coverage";
 import { assessAllFrameworks } from "@/lib/regulatory/classifier";
+import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import { MRMReport } from "./types";
 
 /**
@@ -154,6 +155,13 @@ export async function assembleMRMReport(
     if (blueprint.status === "draft") return "changes_requested";
     return "approved";
   })();
+
+  // ── Section 14: Periodic Review Schedule ─────────────────────────────────
+  const enterpriseSettings = await getEnterpriseSettings(blueprint.enterpriseId ?? null);
+  const periodicReviewSettings = enterpriseSettings.periodicReview;
+  const nextReviewDueAt = blueprint.nextReviewDue?.toISOString() ?? null;
+  const lastPeriodicReviewAt = blueprint.lastPeriodicReviewAt?.toISOString() ?? null;
+  const isOverdue = nextReviewDueAt != null && new Date(nextReviewDueAt) < new Date();
 
   // ── Section 12: Regulatory Framework Assessment ──────────────────────────
   const regulatoryAssessment = assessAllFrameworks({
@@ -330,5 +338,13 @@ export async function assembleMRMReport(
       : null,
 
     regulatoryFrameworks,
+
+    periodicReviewSchedule: {
+      enabled: periodicReviewSettings.enabled,
+      cadenceMonths: periodicReviewSettings.defaultCadenceMonths,
+      lastPeriodicReviewAt,
+      nextReviewDueAt,
+      isOverdue,
+    },
   };
 }

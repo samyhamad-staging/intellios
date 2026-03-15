@@ -6,7 +6,7 @@ import {
   blueprintTestRuns,
   governancePolicies,
 } from "@/lib/db/schema";
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
@@ -321,7 +321,37 @@ export async function GET(request: NextRequest) {
       (a, b) => b.violationCount - a.violationCount
     );
 
-    // ── 8. Summary KPIs ────────────────────────────────────────────────────
+    // ── 8. Overdue periodic reviews ────────────────────────────────────────
+    const overdueBlueprints = await db
+      .selectDistinctOn([agentBlueprints.agentId], {
+        blueprintId: agentBlueprints.id,
+        agentId: agentBlueprints.agentId,
+        agentName: agentBlueprints.name,
+        version: agentBlueprints.version,
+        nextReviewDue: agentBlueprints.nextReviewDue,
+        lastPeriodicReviewAt: agentBlueprints.lastPeriodicReviewAt,
+      })
+      .from(agentBlueprints)
+      .where(
+        and(
+          bpCondition,
+          eq(agentBlueprints.status, "deployed"),
+          isNotNull(agentBlueprints.nextReviewDue),
+          lt(agentBlueprints.nextReviewDue, new Date()),
+        )
+      )
+      .orderBy(agentBlueprints.agentId, agentBlueprints.nextReviewDue);
+
+    const overdueReviews = overdueBlueprints.map((bp) => ({
+      blueprintId: bp.blueprintId,
+      agentId: bp.agentId,
+      agentName: bp.agentName ?? "Unnamed Agent",
+      version: bp.version,
+      nextReviewDue: bp.nextReviewDue!.toISOString(),
+      lastPeriodicReviewAt: bp.lastPeriodicReviewAt?.toISOString() ?? null,
+    }));
+
+    // ── 9. Summary KPIs ────────────────────────────────────────────────────
     const deployedCount = (statusCounts["deployed"] ?? 0) + (statusCounts["approved"] ?? 0);
     const prodWithErrors = prodBlueprints.filter((bp) => {
       const report = bp.validationReport as ValidationReport | null;
@@ -348,6 +378,7 @@ export async function GET(request: NextRequest) {
       atRiskAgents,
       reviewQueue,
       policyCoverage,
+      overdueReviews,
     });
   } catch (err) {
     console.error(`[${requestId}] Failed to fetch compliance posture:`, err);

@@ -240,4 +240,24 @@ export interface MRMReport {
       gaps: string[];
     }>;
   } | null;
+
+  // ── Section 14: Periodic Review Schedule ─────────────────────────────────
+  /**
+   * SR 11-7 requires periodic model revalidation after initial deployment.
+   * This section records the enterprise's review schedule and current status.
+   * Populated from Phase 36 onwards; prior reports will have this section
+   * showing enabled:false and null dates.
+   */
+  periodicReviewSchedule: {
+    /** Whether periodic review is configured for this enterprise. */
+    enabled: boolean;
+    /** Configured cadence in months (e.g., 12 = annual). */
+    cadenceMonths: number;
+    /** ISO timestamp of last completed periodic review, or null if not yet reviewed. */
+    lastPeriodicReviewAt: string | null;
+    /** ISO timestamp of next scheduled review due date, or null if not scheduled. */
+    nextReviewDueAt: string | null;
+    /** Whether the next review due date has already passed. */
+    isOverdue: boolean;
+  };
 }

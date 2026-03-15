@@ -36,6 +36,15 @@ interface PolicyCoverageItem {
   affectedAgentCount: number;
 }
 
+interface OverdueReviewItem {
+  blueprintId: string;
+  agentId: string;
+  agentName: string;
+  version: string;
+  nextReviewDue: string;
+  lastPeriodicReviewAt: string | null;
+}
+
 interface PostureData {
   // KPIs
   deployedCount: number;
@@ -50,6 +59,7 @@ interface PostureData {
   atRiskAgents: AtRiskAgent[];
   reviewQueue: ReviewQueueItem[];
   policyCoverage: PolicyCoverageItem[];
+  overdueReviews: OverdueReviewItem[];
 }
 
 interface AnalyticsData {
@@ -278,6 +288,70 @@ export default function CompliancePage() {
                   </div>
                 ))}
               </div>
+            </section>
+
+            {/* ── Section A2: Periodic Review Status ─────────────────────── */}
+            <section>
+              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
+                Periodic Review Status (SR 11-7)
+              </h2>
+              {(posture.overdueReviews?.length ?? 0) === 0 ? (
+                <div className="rounded-xl border border-green-200 bg-green-50 p-5 text-center">
+                  <p className="text-sm font-medium text-green-800">✓ All deployments on schedule</p>
+                  <p className="mt-0.5 text-xs text-green-600">No deployed agents have overdue periodic reviews.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5">
+                    <AlertTriangle size={14} className="text-red-600 shrink-0" />
+                    <span className="text-sm font-medium text-red-800">
+                      {posture.overdueReviews.length} agent{posture.overdueReviews.length !== 1 ? "s" : ""} with overdue periodic review
+                    </span>
+                  </div>
+                  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 bg-gray-50">
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Agent</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Review Due</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Days Overdue</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Last Review</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {posture.overdueReviews.map((item) => {
+                          const daysOverdue = Math.floor((Date.now() - new Date(item.nextReviewDue).getTime()) / (1000 * 60 * 60 * 24));
+                          return (
+                            <tr key={item.blueprintId} className="hover:bg-gray-50">
+                              <td className="px-4 py-3">
+                                <div className="font-medium text-gray-900">{item.agentName}</div>
+                                <div className="text-xs text-gray-400">v{item.version}</div>
+                              </td>
+                              <td className="px-4 py-3 text-sm text-red-700">
+                                {new Date(item.nextReviewDue).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                                  {daysOverdue}d overdue
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-xs text-gray-500">
+                                {item.lastPeriodicReviewAt
+                                  ? new Date(item.lastPeriodicReviewAt).toLocaleDateString(undefined, { dateStyle: "medium" })
+                                  : "Never"}
+                              </td>
+                              <td className="px-4 py-3">
+                                <Link href={`/registry/${item.agentId}`} className="text-xs text-blue-600 hover:underline">View →</Link>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </section>
 
             {/* ── Section B: At-Risk Agents ───────────────────────────────── */}

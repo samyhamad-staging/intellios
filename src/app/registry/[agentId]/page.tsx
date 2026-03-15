@@ -70,6 +70,9 @@ interface BlueprintVersion {
     deployedAt: string;
     deployedBy: string;
   } | null;
+  // Phase 36: SR 11-7 periodic review scheduling
+  nextReviewDue: string | null;
+  lastPeriodicReviewAt: string | null;
   enterpriseId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -415,10 +418,22 @@ export default function AgentDetailPage({
                 </a>
               )}
             </div>
-            <p className="text-xs text-gray-400">
-              v{latest.version} · {versions.length} version{versions.length !== 1 ? "s" : ""}
+            <p className="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
+              <span>v{latest.version} · {versions.length} version{versions.length !== 1 ? "s" : ""}
               {parseInt(latest.refinementCount ?? "0") > 0 &&
-                ` · ${latest.refinementCount} refinement${latest.refinementCount === "1" ? "" : "s"}`}
+                ` · ${latest.refinementCount} refinement${latest.refinementCount === "1" ? "" : "s"}`}</span>
+              {latest.status === "deployed" && latest.nextReviewDue && (() => {
+                const isOverdue = new Date(latest.nextReviewDue) < new Date();
+                return isOverdue ? (
+                  <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700">
+                    Review Overdue
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+                    Next Review: {new Date(latest.nextReviewDue).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                  </span>
+                );
+              })()}
             </p>
           </div>
         </div>

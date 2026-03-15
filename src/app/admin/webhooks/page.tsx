@@ -659,7 +659,6 @@ function verifySignature(secret, body, header) {
           </p>
         </div>
       </div>
-      </div>
     </div>
   );
 }

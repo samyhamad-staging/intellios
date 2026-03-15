@@ -88,6 +88,9 @@ export const agentBlueprints = pgTable(
     // Phase 26: deployment target tracking
     deploymentTarget:   text("deployment_target"),   // "agentcore" | null — which platform the agent was deployed to
     deploymentMetadata: jsonb("deployment_metadata"), // AgentCoreDeploymentRecord | null
+    // Phase 36: SR 11-7 periodic review scheduling
+    nextReviewDue:          timestamp("next_review_due", { withTimezone: true }),
+    lastPeriodicReviewAt:   timestamp("last_periodic_review_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
