@@ -77,12 +77,20 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="border-b border-gray-100 px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
         <span className="text-lg font-semibold text-gray-900 tracking-tight">Intellios</span>
-        <Link
-          href="/login"
-          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
-        >
-          Sign In →
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/register"
+            className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+          >
+            Start Free Trial
+          </Link>
+          <Link
+            href="/login"
+            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Sign In
+          </Link>
+        </div>
       </nav>
 
       {/* Hero */}
@@ -100,17 +108,17 @@ export default function LandingPage() {
         </p>
         <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
           <Link
-            href="/login"
+            href="/register"
             className="rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700 transition-colors shadow-sm"
           >
-            Sign In to Your Account
+            Start Free Trial
           </Link>
-          <a
-            href="mailto:hello@intellios.ai?subject=Demo Request"
+          <Link
+            href="/login"
             className="rounded-xl border border-gray-200 px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            Request a Demo
-          </a>
+            Sign In →
+          </Link>
         </div>
       </section>
 
@@ -178,7 +186,15 @@ export default function LandingPage() {
 
       {/* Footer CTA */}
       <footer className="border-t border-gray-100 px-6 py-10 text-center">
-        <p className="text-sm text-gray-400">
+        <div className="flex items-center justify-center gap-6 mb-4">
+          <Link href="/register" className="text-sm font-medium text-violet-600 hover:text-violet-700">
+            Start Free Trial →
+          </Link>
+          <Link href="/login" className="text-sm text-gray-400 hover:text-gray-600">
+            Sign In
+          </Link>
+        </div>
+        <p className="text-xs text-gray-400">
           Already have access?{" "}
           <Link href="/login" className="font-medium text-violet-600 hover:text-violet-700">
             Sign in →

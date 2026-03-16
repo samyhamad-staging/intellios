@@ -8,6 +8,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const justRegistered = searchParams.get("registered") === "1";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,6 +45,13 @@ function LoginForm() {
           </h1>
           <p className="mt-1 text-sm text-gray-500">Enterprise Agent Factory</p>
         </div>
+
+        {/* Registration success banner */}
+        {justRegistered && (
+          <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            Account created successfully. Sign in to get started.
+          </div>
+        )}
 
         {/* Card */}
         <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
@@ -110,6 +118,18 @@ function LoginForm() {
               >
                 Forgot your password?
               </a>
+            </div>
+
+            <div className="text-center">
+              <span className="text-xs text-gray-500">
+                Don&apos;t have an account?{" "}
+                <a
+                  href="/register"
+                  className="font-medium text-violet-600 hover:text-violet-700 underline-offset-2 hover:underline"
+                >
+                  Start free trial
+                </a>
+              </span>
             </div>
           </form>
         </div>

@@ -27,9 +27,10 @@ export default auth((req) => {
 
   const isLoginPage = pathname === "/login";
   const isLandingPage = pathname === "/landing";
+  const isRegisterPage = pathname === "/register";
 
-  // Landing page is public — no auth required
-  if (isLandingPage) {
+  // Public pages — no auth required
+  if (isLandingPage || isRegisterPage) {
     return withId(NextResponse.next({ request: { headers: requestHeaders } }), requestId);
   }
 

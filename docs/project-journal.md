@@ -2,6 +2,22 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 049 — 2026-03-16: Growth and Security
+
+Phase 40 closed the factory loop — deployed blueprints became things you could simulate and download. Phase 41 asks the next two questions: who can get in, and how secure is what gets deployed?
+
+The registration system answers the first. Before this session, getting into Intellios required knowing someone — the demo accounts existed, the login page existed, but there was no path from "I found intellios.vercel.app" to "I have a workspace." That gap matters enormously for a product positioning itself as enterprise-ready. An enterprise AI governance platform that can't self-serve enterprise sign-up is asking every prospect to become a sales lead. The registration flow is simple on the surface — company name, name, email, password — but the back-end does substantive work: new enterprise UUID, settings upserted with a sensible default approval chain, SR 11-7 Core policies seeded. A new customer arrives with a governance framework already in place. That's not just convenient; it's part of the product promise. Intellios is compliance-ready on day one.
+
+The landing page CTA change from "Request a Demo" to "Start Free Trial" is a small text edit with a large strategic implication. It changes the funnel from "ask a human to let you in" to "walk in yourself." The infrastructure to support that was the whole point of the registration work.
+
+The adversarial red-teaming component answers the second question. The Simulate tab now has two modes: Chat (the Phase 40 playground) and Red Team (Phase 41). Red Team runs a two-phase evaluation: Sonnet generates 10 attacks tailored to this specific agent — its identity, instructions, constraints, and denied actions — then Haiku evaluates all 10 in parallel by actually running each attack against the agent's system prompt and judging whether the agent resisted. The result is a scored report with a risk tier (LOW/MEDIUM/HIGH/CRITICAL), individual attack rows you can expand to see the prompt and verdict, and a guidance banner for high-risk results.
+
+The architecture decision that matters most here is the split between generation and evaluation. Attack generation uses Sonnet because quality matters — a generic jailbreak prompt is noise; a prompt that specifically targets this agent's defined scope is signal. Evaluation uses Haiku because it's a batch job — 10 parallel calls, cost efficiency matters more than generation quality at the evaluation stage. The result is a red-team suite that's both cheap to run and meaningfully tailored to the blueprint.
+
+The stateless design decision parallels the Agent Playground: no DB table, no persistent conversation. The report is returned in the response and rendered client-side. One audit entry captures that a run happened, with score and risk tier in metadata. This keeps the schema clean and puts the artifact where it belongs — in the hands of the human reviewing the blueprint, not in a table that needs to be queried.
+
+Together, these two additions change what the product is. Before: a pipeline for existing customers. After: a pipeline that acquires and immediately equips new customers, and gives them a security tool to validate what they build before it ships.
+
 ## Session 048 — 2026-03-16: Closing the Factory Loop
 
 Forty phases of work had produced something that felt complete from the inside but had a quiet gap at its center. The product is called an enterprise agent factory. But until this session, a deployed agent was a document — a well-governed, multi-approved, compliance-validated document, but a document. Nothing ran. A prospect who completed a demo walkthrough left having seen an impressive pipeline, and then had to imagine the part where the factory actually made something.
