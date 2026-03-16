@@ -25,6 +25,7 @@ export type AuditAction =
   | "blueprint.simulated"
   | "blueprint.code_exported"
   | "blueprint.red_team_run"
+  | "blueprint.created_from_template"
   | "intake.finalized"
   | "intake.contribution_submitted"
   | "policy.created"

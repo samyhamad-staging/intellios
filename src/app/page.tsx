@@ -15,6 +15,7 @@ import {
   Inbox,
   CheckCircle,
 } from "lucide-react";
+import { ActivityFeed } from "@/components/dashboard/activity-feed";
 
 function timeAgo(dateStr: string | Date): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -358,6 +359,16 @@ export default async function Home() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Workspace activity feed */}
+      <section className="mt-8">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+          Workspace Activity
+        </h2>
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <ActivityFeed />
+        </div>
       </section>
     </div>
   );

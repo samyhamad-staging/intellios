@@ -1,9 +1,16 @@
 import Link from "next/link";
-import { CheckCircle2, Users, ShieldCheck, Settings } from "lucide-react";
+import { CheckCircle2, Users, ShieldCheck, Settings, LayoutTemplate } from "lucide-react";
 
 export const metadata = { title: "Welcome to Intellios" };
 
 const STEPS = [
+  {
+    icon: LayoutTemplate,
+    title: "Browse the Template Library",
+    description: "Get started instantly with a production-ready agent template. Clone any starter into your workspace in one click.",
+    href: "/templates",
+    cta: "Browse Templates",
+  },
   {
     icon: Settings,
     title: "Configure your workspace",
