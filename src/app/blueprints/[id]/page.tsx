@@ -686,7 +686,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                   <button
                     onClick={handleRunWorkbenchTests}
                     disabled={runningWorkbenchTests}
-                    className="rounded-lg bg-gray-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                    className="rounded-lg bg-violet-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
                   >
                     {runningWorkbenchTests ? "Running…" : "Run Tests"}
                   </button>
@@ -811,7 +811,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                 <button
                   onClick={handleSaveOwnership}
                   disabled={savingOwnership}
-                  className="w-full rounded-lg bg-gray-900 py-1.5 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                  className="w-full rounded-lg bg-violet-600 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
                 >
                   {savingOwnership ? "Saving…" : "Save Ownership"}
                 </button>
@@ -839,7 +839,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               }}
               placeholder="e.g. Add a rate limit of 50 requests per minute. Make the persona more formal."
               disabled={refining || loading}
-              className="flex-1 resize-none rounded-lg border border-gray-200 p-3 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50"
+              className="flex-1 resize-none rounded-lg border border-gray-200 p-3 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50"
               rows={4}
             />
 
@@ -850,7 +850,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             <button
               onClick={handleRefine}
               disabled={!change.trim() || refining || loading}
-              className="rounded-lg bg-gray-900 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-40"
+              className="rounded-lg bg-violet-600 py-2 text-sm text-white hover:bg-violet-700 disabled:opacity-40"
             >
               {refining ? "Refining…" : "Apply Changes"}
             </button>

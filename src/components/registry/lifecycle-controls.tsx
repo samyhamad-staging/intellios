@@ -22,7 +22,7 @@ const ACTIONS: Record<Status, Action[]> = {
     { label: "Deprecate", next: "deprecated", style: "bg-gray-400 hover:bg-gray-500 text-white" },
   ],
   approved: [
-    { label: "Deploy to Production", next: "deployed", style: "bg-indigo-600 hover:bg-indigo-700 text-white" },
+    { label: "Deploy to Production", next: "deployed", style: "bg-violet-600 hover:bg-violet-700 text-white" },
     { label: "Deprecate", next: "deprecated", style: "bg-gray-400 hover:bg-gray-500 text-white" },
   ],
   deployed: [

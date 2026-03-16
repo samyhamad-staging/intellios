@@ -316,13 +316,25 @@ export default function CompliancePage() {
                         ? "text-amber-600"
                         : "text-green-600",
                   },
-                ].map(({ label, value, sub, color, subColor }) => (
-                  <div key={label} className={`rounded-xl border p-4 ${color}`}>
-                    <div className="text-2xl font-bold">{value}</div>
-                    <div className="mt-0.5 text-xs font-medium">{label}</div>
-                    <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
-                  </div>
-                ))}
+                ].map(({ label, value, sub, color, subColor }) => {
+                  const anchor = label === "At-Risk Agents" ? "#at-risk" : label === "Compliance Rate" ? "#policy-coverage" : label === "Review Queue" ? "#review-queue" : undefined;
+                  const inner = (
+                    <>
+                      <div className="text-2xl font-bold">{value}</div>
+                      <div className="mt-0.5 text-xs font-medium">{label}</div>
+                      <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
+                    </>
+                  );
+                  return anchor ? (
+                    <a key={label} href={anchor} className={`block rounded-xl border p-4 hover:shadow-sm hover:border-violet-200 transition-all ${color}`}>
+                      {inner}
+                    </a>
+                  ) : (
+                    <div key={label} className={`rounded-xl border p-4 ${color}`}>
+                      {inner}
+                    </div>
+                  );
+                })}
               </div>
             </section>
 
@@ -399,10 +411,13 @@ export default function CompliancePage() {
             </section>
 
             {/* ── Section B: At-Risk Agents ───────────────────────────────── */}
-            <section>
-              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
-                At-Risk Agents ({posture.atRiskCount})
-              </h2>
+            <section id="at-risk">
+              <div className="mb-4">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+                  At-Risk Agents ({posture.atRiskCount})
+                </h2>
+                <p className="text-xs text-gray-400 mt-0.5">Agents with unresolved validation errors</p>
+              </div>
               {posture.atRiskAgents.length === 0 ? (
                 <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
                   <p className="text-sm font-medium text-green-800">
@@ -497,7 +512,7 @@ export default function CompliancePage() {
             </section>
 
             {/* ── Section C: Review Queue Pressure ───────────────────────── */}
-            <section>
+            <section id="review-queue">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
                   Review Queue ({posture.reviewQueueCount})
@@ -558,7 +573,7 @@ export default function CompliancePage() {
             </section>
 
             {/* ── Section D: Policy Coverage Gaps ────────────────────────── */}
-            <section>
+            <section id="policy-coverage">
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
                 Policy Coverage ({posture.policyCoverage.length} active policies)
               </h2>
@@ -619,11 +634,14 @@ export default function CompliancePage() {
                           </td>
                           <td className="px-4 py-3 text-right">
                             {policy.affectedAgentCount > 0 ? (
-                              <span className="text-xs font-medium text-red-700">
-                                {policy.affectedAgentCount}
-                              </span>
+                              <Link
+                                href="/registry"
+                                className="text-xs font-medium text-violet-600 hover:text-violet-700"
+                              >
+                                {policy.affectedAgentCount} agent{policy.affectedAgentCount !== 1 ? "s" : ""}
+                              </Link>
                             ) : (
-                              <span className="text-xs text-gray-400">0</span>
+                              <span className="text-xs text-gray-400">0 agents</span>
                             )}
                           </td>
                         </tr>

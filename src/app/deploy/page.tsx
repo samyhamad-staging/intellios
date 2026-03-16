@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
-import { Rocket, CheckCircle, Globe } from "lucide-react";
+import { Rocket } from "lucide-react";
 
 /**
  * Map raw AWS SDK / server error strings to actionable operator messages.
@@ -124,7 +124,7 @@ function DeployConfirmModal({
                 Deploy to Production
               </h2>
               <p className="text-xs text-gray-500">
-                {modal.agent.name ?? "Unnamed Agent"} — v{modal.agent.version}
+                {modal.agent.name ?? `Agent ${modal.agent.agentId.slice(0, 8)}`} — v{modal.agent.version}
               </p>
             </div>
           </div>
@@ -244,7 +244,7 @@ function AgentCoreDeployModal({
             <div>
               <h2 className="text-sm font-semibold text-gray-900">Deploy to AgentCore</h2>
               <p className="text-xs text-gray-500">
-                {agcModal.agent.name ?? "Unnamed Agent"} — v{agcModal.agent.version}
+                {agcModal.agent.name ?? `Agent ${agcModal.agent.agentId.slice(0, 8)}`} — v{agcModal.agent.version}
               </p>
             </div>
           </div>
@@ -351,12 +351,22 @@ function AgentCoreDeployModal({
             </>
           )}
           {(agcModal.phase === "success" || agcModal.phase === "error") && (
-            <button
-              onClick={onClose}
-              className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              Close
-            </button>
+            <div className="flex items-center gap-3">
+              {agcModal.phase === "success" && (
+                <Link
+                  href={`/registry/${agcModal.agent.agentId}`}
+                  className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+                >
+                  View in Registry →
+                </Link>
+              )}
+              <button
+                onClick={onClose}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+              >
+                Done
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -515,20 +525,9 @@ export default function DeploymentConsolePage() {
       )}
 
       {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-0.5">
-            <Rocket size={20} className="text-violet-600" />
-            <h1 className="text-xl font-semibold text-gray-900">Deployment Console</h1>
-          </div>
-          <p className="text-sm text-gray-500 pl-7">Promote approved agents to production</p>
-        </div>
-        <Link
-          href="/pipeline"
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-        >
-          Pipeline →
-        </Link>
+      <div>
+        <h1 className="text-xl font-semibold text-gray-900">Deployment Console</h1>
+        <p className="mt-0.5 text-sm text-gray-500">Promote approved agents to production</p>
       </div>
 
       <div className="space-y-8">
@@ -539,7 +538,7 @@ export default function DeploymentConsolePage() {
         )}
 
         {/* ── Summary stats ───────────────────────────────────────────────── */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {[
             {
               label: "Deployed",
@@ -556,13 +555,6 @@ export default function DeploymentConsolePage() {
                 ? "bg-green-50 border-green-200 text-green-900"
                 : "bg-white border-gray-200 text-gray-900",
               subColor: readyToDeploy.length > 0 ? "text-green-600" : "text-gray-400",
-            },
-            {
-              label: "Total Agents",
-              value: loading ? "–" : agents.length,
-              sub: "in registry",
-              color: "bg-white border-gray-200 text-gray-900",
-              subColor: "text-gray-400",
             },
           ].map(({ label, value, sub, color, subColor }) => (
             <div key={label} className={`rounded-xl border p-5 ${color}`}>
@@ -602,7 +594,7 @@ export default function DeploymentConsolePage() {
                         href={`/registry/${agent.agentId}`}
                         className="font-medium text-gray-900 hover:underline"
                       >
-                        {agent.name ?? "Unnamed Agent"}
+                        {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
                       </Link>
                       <StatusBadge status={agent.status} />
                     </div>
@@ -691,7 +683,7 @@ export default function DeploymentConsolePage() {
                   {deployed.map((agent) => (
                     <tr key={agent.agentId} className="hover:bg-gray-50">
                       <td className="px-5 py-3">
-                        <span className="font-medium text-gray-900">{agent.name ?? "Unnamed Agent"}</span>
+                        <span className="font-medium text-gray-900">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</span>
                       </td>
                       <td className="px-5 py-3 font-mono text-gray-500 text-xs">v{agent.version}</td>
                       <td className="px-5 py-3">

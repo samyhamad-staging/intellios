@@ -1,6 +1,16 @@
 # Intellios Roadmap
 
-## Current Phase: Phase 38 ✓ Complete (2026-03-15) — Classification-First Adaptive Intake
+## Current Phase: Phase 39 ✓ Complete (2026-03-15) — Role-Optimized UX
+
+---
+
+## ✓ Phase 39 Complete (2026-03-15) — Role-Optimized UX
+
+12 targeted UX fixes across Designer, Reviewer, Compliance Officer, and all roles. No new routes, migrations, or dependencies. Key changes: intake form submit button violet+spinner, quality popover dimension descriptions, classification rationale display, pipeline Draft empty CTA, review step badge role-awareness, violations→Governance Hub link, approval history in Versions tab, compliance KPI card anchors + subtitles + count links, null agent name fallback shows short ID, AgentCore success modal "View in Registry".
+
+---
+
+## ✓ Phase 38 Complete (2026-03-15) — Classification-First Adaptive Intake
 
 ---
 

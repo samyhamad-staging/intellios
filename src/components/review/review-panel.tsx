@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ValidationReport } from "@/lib/governance/types";
 import { VersionDiff } from "@/components/registry/version-diff";
 import { Sparkles, ThumbsUp, ThumbsDown, CheckCircle } from "lucide-react";
@@ -302,6 +303,11 @@ export function ReviewPanel({
                   <span className="text-red-800">{v.message}</span>
                 </div>
               ))}
+            </div>
+            <div className="mt-3 border-t border-red-100 pt-2">
+              <Link href="/compliance" className="text-xs text-violet-600 hover:text-violet-700">
+                View policies in Governance Hub →
+              </Link>
             </div>
           </div>
         )}

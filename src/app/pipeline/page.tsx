@@ -86,7 +86,7 @@ export default function PipelinePage() {
   const allTags = Array.from(new Set(agents.flatMap((a) => a.tags ?? []))).sort();
 
   return (
-    <div className="flex h-[calc(100vh-0px)] flex-col">
+    <div className="flex h-[calc(100vh-0px)] flex-col overflow-hidden">
       {/* Header */}
       <header className="shrink-0 border-b border-gray-200 bg-white px-6 py-4">
         <div className="flex items-center justify-between">
@@ -96,7 +96,7 @@ export default function PipelinePage() {
               {loading ? "Loading…" : `${agents.length} agent${agents.length === 1 ? "" : "s"} across all stages`}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -154,7 +154,13 @@ export default function PipelinePage() {
                 )}
                 {!loading && cards.length === 0 && (
                   <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-gray-200">
-                    <p className="text-xs text-gray-400">Empty</p>
+                    {status === "draft" ? (
+                      <Link href="/intake" className="text-xs text-violet-500 hover:text-violet-600">
+                        Start an intake →
+                      </Link>
+                    ) : (
+                      <p className="text-xs text-gray-400">Empty</p>
+                    )}
                   </div>
                 )}
                 {!loading && cards.map((agent) => {
@@ -167,7 +173,7 @@ export default function PipelinePage() {
                       className={`block rounded-lg border bg-white p-3 shadow-sm hover:shadow-md transition-all ${slaBorder}`}
                     >
                       <div className="flex items-start justify-between gap-1">
-                        <span className="text-sm font-medium text-gray-900 leading-snug line-clamp-2">{agent.name ?? "Unnamed Agent"}</span>
+                        <span className="text-sm font-medium text-gray-900 leading-snug line-clamp-2">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</span>
                         {agent.violationCount !== null && agent.violationCount > 0 ? (
                           <ShieldAlert size={14} className="shrink-0 mt-0.5 text-red-500" />
                         ) : agent.violationCount === 0 ? (

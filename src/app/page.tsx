@@ -9,9 +9,7 @@ import {
   Plus,
   Kanban,
   Library,
-  Rocket,
   ClipboardList,
-  BarChart3,
   ChevronRight,
   Bot,
   Inbox,
@@ -250,48 +248,85 @@ export default async function Home() {
     statuses.map((s) => [s, allAgents.filter((a) => a.status === s).length])
   ) as Record<typeof statuses[number], number>;
 
+  const actionCallouts = [
+    counts.in_review > 0 && {
+      href: "/review",
+      label: `${counts.in_review} blueprint${counts.in_review !== 1 ? "s" : ""} awaiting review`,
+      cta: "Go to Review Queue →",
+      color: "border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-300",
+    },
+    counts.approved > 0 && {
+      href: "/deploy",
+      label: `${counts.approved} approved agent${counts.approved !== 1 ? "s" : ""} ready to deploy`,
+      cta: "Go to Deploy →",
+      color: "border-green-200 bg-green-50 text-green-800 hover:border-green-300",
+    },
+  ].filter(Boolean) as { href: string; label: string; cta: string; color: string }[];
+
+  const activeStageLinks: Record<string, string> = {
+    draft: "/pipeline",
+    in_review: "/review",
+    approved: "/deploy",
+    deployed: "/registry",
+  };
+
   return (
     <div className="px-8 py-8">
       {/* Header */}
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Overview</h1>
+          <p className="mt-0.5 text-sm text-gray-500">
+            {allAgents.length} agent{allAgents.length === 1 ? "" : "s"} across all teams
+          </p>
+        </div>
+        <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors disabled:opacity-50" />
+      </div>
+
+      {/* Action callouts — only shown when something needs attention */}
+      {actionCallouts.length > 0 && (
+        <div className="mb-6 flex flex-col gap-2">
+          {actionCallouts.map(({ href, label, cta, color }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`flex items-center justify-between rounded-lg border px-4 py-2.5 text-sm transition-colors ${color}`}
+            >
+              <span className="font-medium">{label}</span>
+              <span className="text-xs font-semibold opacity-80">{cta}</span>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Pipeline status — active stages link to relevant pages */}
       <div className="mb-8">
-        <h1 className="text-xl font-semibold text-gray-900">Overview</h1>
-        <p className="mt-0.5 text-sm text-gray-500">
-          {allAgents.length} agent{allAgents.length === 1 ? "" : "s"} across all teams
-        </p>
-      </div>
-
-      {/* Stats grid */}
-      <div className="mb-8 grid grid-cols-6 gap-3">
-        {statuses.map((s) => {
-          const cfg = STATUS_CONFIG[s];
-          return (
-            <div key={s} className={`rounded-xl border ${cfg.border} ${cfg.bg} p-4`} style={{ boxShadow: "var(--shadow-card)" }}>
-              <div className={`text-2xl font-bold ${cfg.text}`}>{counts[s]}</div>
-              <div className={`mt-0.5 text-xs font-medium ${cfg.text} opacity-80`}>{cfg.label}</div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Quick action cards */}
-      <div className="mb-8 grid grid-cols-4 gap-4">
-        {[
-          { href: "/pipeline", icon: Kanban,      label: "Pipeline Board",                    sub: `${allAgents.length} agents`,            color: "text-violet-600" },
-          { href: "/deploy",   icon: Rocket,       label: "Deploy",                            sub: counts.approved > 0 ? `${counts.approved} ready` : "No agents ready", color: "text-green-600" },
-          { href: "/review",   icon: ClipboardList,label: "Review Queue",                      sub: counts.in_review > 0 ? `${counts.in_review} pending` : "Queue clear",  color: "text-amber-600" },
-          { href: "/dashboard",icon: BarChart3,    label: "Dashboard",                         sub: "Analytics & KPIs",                      color: "text-blue-600" },
-        ].map(({ href, icon: Icon, label, sub, color }) => (
-          <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all">
-            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-violet-50 transition-colors ${color}`}>
-              <Icon size={16} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{label}</p>
-              <p className="text-xs text-gray-400 truncate">{sub}</p>
-            </div>
-            <ChevronRight size={14} className="ml-auto shrink-0 text-gray-300 group-hover:text-gray-400" />
-          </Link>
-        ))}
+        <div className="grid grid-cols-4 gap-3">
+          {(["draft", "in_review", "approved", "deployed"] as const).map((s) => {
+            const cfg = STATUS_CONFIG[s];
+            return (
+              <Link
+                key={s}
+                href={activeStageLinks[s]}
+                className={`rounded-xl border ${cfg.border} ${cfg.bg} p-4 hover:shadow-sm transition-shadow`}
+              >
+                <div className={`text-2xl font-bold ${cfg.text}`}>{counts[s]}</div>
+                <div className={`mt-0.5 text-xs font-medium ${cfg.text} opacity-80`}>{cfg.label}</div>
+              </Link>
+            );
+          })}
+        </div>
+        {/* Terminal states — compact, low-emphasis */}
+        <div className="mt-2.5 flex items-center gap-4 px-1">
+          {(["rejected", "deprecated"] as const).map((s) => {
+            const cfg = STATUS_CONFIG[s];
+            return (
+              <span key={s} className={`text-xs font-medium ${cfg.text} opacity-70`}>
+                {counts[s]} {cfg.label}
+              </span>
+            );
+          })}
+        </div>
       </div>
 
       {/* Recent activity */}
@@ -314,7 +349,7 @@ export default async function Home() {
                 className={`flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-100" : ""}`}
               >
                 <Bot size={15} className="shrink-0 text-gray-400" />
-                <span className="flex-1 truncate text-sm font-medium text-gray-900">{agent.name ?? "Unnamed Agent"}</span>
+                <span className="flex-1 truncate text-sm font-medium text-gray-900">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</span>
                 <StatusBadge status={agent.status} />
                 <span className="text-xs text-gray-400">{agent.createdBy ?? "—"}</span>
                 <span className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</span>
