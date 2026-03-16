@@ -165,7 +165,7 @@ function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
         >
           {saving ? "Creating…" : "Create User"}
         </button>

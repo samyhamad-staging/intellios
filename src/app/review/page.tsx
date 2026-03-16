@@ -17,6 +17,7 @@ interface QueueEntry {
 export default function ReviewQueuePage() {
   const [blueprints, setBlueprints] = useState<QueueEntry[]>([]);
   const [settings, setSettings] = useState<EnterpriseSettings>(DEFAULT_ENTERPRISE_SETTINGS);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +26,7 @@ export default function ReviewQueuePage() {
       .then((r) => r.json())
       .then((data) => {
         const role = data?.user?.role ?? null;
+        setUserRole(role);
         if (role === "admin") {
           fetch("/api/admin/settings")
             .then((r) => r.json())
@@ -110,7 +112,7 @@ export default function ReviewQueuePage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-gray-900 truncate">{bp.name ?? "Unnamed Agent"}</span>
+                      <span className="font-medium text-gray-900 truncate">{bp.name ?? `Agent ${bp.agentId.slice(0, 8)}`}</span>
                       <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs ${govStatus.color}`}>
                         <GovIcon size={11} /> {govStatus.label}
                       </span>
@@ -153,11 +155,14 @@ export default function ReviewQueuePage() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    {activeStep ? (
-                      <span className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
-                        Step {bp.currentApprovalStep + 1}/{chain.length}: {activeStep.label}
-                      </span>
-                    ) : (
+                    {activeStep ? (() => {
+                      const isYourStep = userRole != null && activeStep.role === userRole;
+                      return (
+                        <span className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${isYourStep ? "border-violet-200 bg-violet-50 text-violet-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+                          {isYourStep ? `Your step: ${activeStep.label}` : `Waiting: ${activeStep.label}`}
+                        </span>
+                      );
+                    })() : (
                       <span className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">Pending</span>
                     )}
                     <ChevronRight size={14} className="text-gray-300" />

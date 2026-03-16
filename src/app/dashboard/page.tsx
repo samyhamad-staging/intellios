@@ -2,26 +2,30 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { StatusBadge } from "@/components/registry/status-badge";
-import { BarChart3, TrendingUp, TrendingDown } from "lucide-react";
 
-interface Agent {
+interface AgentSummary {
   id: string;
   agentId: string;
-  version: string;
   name: string | null;
+  version: string;
   tags: string[];
   status: string;
-  violationCount: number | null;
-  createdAt: string;
   updatedAt: string;
 }
 
-interface Policy {
+interface AttentionItem {
   id: string;
-  name: string;
-  type: string;
-  rules: unknown[];
+  agentId: string;
+  name: string | null;
+  violationCount: number | null;
+}
+
+interface DashboardSummary {
+  counts: { total: number; deployed: number; approved: number; inReview: number; draft: number; rejected: number; deprecated: number };
+  governance: { clean: number; withErrors: number; notValidated: number; complianceRate: number | null };
+  policyCount: number;
+  recentDeployed: AgentSummary[];
+  needingAttention: AttentionItem[];
 }
 
 function timeAgo(dateStr: string): string {
@@ -56,19 +60,15 @@ function KpiCard({ label, value, sub, color, subColor, href }: KpiCardProps) {
 }
 
 export default function ExecutiveDashboardPage() {
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [policies, setPolicies] = useState<Policy[]>([]);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/registry").then((r) => r.json()),
-      fetch("/api/governance/policies").then((r) => r.json()),
-    ])
-      .then(([registryData, govData]) => {
-        setAgents(registryData.agents ?? []);
-        setPolicies(govData.policies ?? []);
+    fetch("/api/dashboard/summary")
+      .then((r) => r.json())
+      .then((data: DashboardSummary) => {
+        setSummary(data);
         setLoading(false);
       })
       .catch(() => {
@@ -77,41 +77,15 @@ export default function ExecutiveDashboardPage() {
       });
   }, []);
 
-  // ── Pipeline counts ──────────────────────────────────────────────────────
-  const total       = agents.length;
-  const deployed    = agents.filter((a) => a.status === "deployed").length;
-  const approved    = agents.filter((a) => a.status === "approved").length;
-  const inReview    = agents.filter((a) => a.status === "in_review").length;
-  const draft       = agents.filter((a) => a.status === "draft").length;
-  const rejected    = agents.filter((a) => a.status === "rejected").length;
-  const deprecated  = agents.filter((a) => a.status === "deprecated").length;
-
-  // ── Governance health ────────────────────────────────────────────────────
-  const validated       = agents.filter((a) => a.violationCount !== null);
-  const clean           = agents.filter((a) => a.violationCount === 0).length;
-  const withErrors      = agents.filter((a) => (a.violationCount ?? 0) > 0).length;
-  const notValidated    = agents.filter((a) => a.violationCount === null).length;
-  const complianceRate  = validated.length > 0
-    ? Math.round((clean / validated.length) * 100)
-    : null;
+  const { total, deployed, approved, inReview, draft, rejected, deprecated } = summary?.counts ?? { total: 0, deployed: 0, approved: 0, inReview: 0, draft: 0, rejected: 0, deprecated: 0 };
+  const { clean, withErrors, notValidated, complianceRate } = summary?.governance ?? { clean: 0, withErrors: 0, notValidated: 0, complianceRate: null };
+  const recentDeployed = summary?.recentDeployed ?? [];
+  const needingAttention = summary?.needingAttention ?? [];
+  const policyCount = summary?.policyCount ?? 0;
 
   // ── Deployment rate ──────────────────────────────────────────────────────
-  const nonDraft          = agents.filter((a) => a.status !== "draft").length;
-  const deploymentRate    = nonDraft > 0
-    ? Math.round((deployed / nonDraft) * 100)
-    : null;
-
-  // ── Recent deployments ───────────────────────────────────────────────────
-  const recentDeployed = agents
-    .filter((a) => a.status === "deployed")
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 5);
-
-  // ── Agents needing attention ─────────────────────────────────────────────
-  const needingAttention = agents
-    .filter((a) => (a.violationCount ?? 0) > 0)
-    .sort((a, b) => (b.violationCount ?? 0) - (a.violationCount ?? 0))
-    .slice(0, 5);
+  const nonDraft       = total - draft;
+  const deploymentRate = nonDraft > 0 ? Math.round((deployed / nonDraft) * 100) : null;
 
   // ── Pipeline funnel data ─────────────────────────────────────────────────
   const funnelStages = [
@@ -125,20 +99,9 @@ export default function ExecutiveDashboardPage() {
   return (
     <div className="px-8 py-8 space-y-8">
       {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-0.5">
-            <BarChart3 size={20} className="text-violet-600" />
-            <h1 className="text-xl font-semibold text-gray-900">Executive Dashboard</h1>
-          </div>
-          <p className="text-sm text-gray-500 pl-7">Platform health, pipeline throughput, and governance posture</p>
-        </div>
-        <Link
-          href="/governance"
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-        >
-          Governance Hub →
-        </Link>
+      <div>
+        <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+        <p className="mt-0.5 text-sm text-gray-500">Platform health and governance posture</p>
       </div>
 
       <div className="space-y-8">
@@ -150,9 +113,7 @@ export default function ExecutiveDashboardPage() {
 
         {/* ── Top-line KPIs ─────────────────────────────────────────────── */}
         <section>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
-            Platform Overview
-          </h2>
+          <h2 className="mb-4 text-xs font-semibold text-gray-400">Platform Overview</h2>
           <div className="grid grid-cols-4 gap-4">
             <KpiCard
               label="Deployed Agents"
@@ -172,7 +133,7 @@ export default function ExecutiveDashboardPage() {
             <KpiCard
               label="Compliance Rate"
               value={loading ? "–" : complianceRate !== null ? `${complianceRate}%` : "—"}
-              sub={`${policies.length} polic${policies.length === 1 ? "y" : "ies"} active`}
+              sub={`${policyCount} polic${policyCount === 1 ? "y" : "ies"} active`}
               color={
                 complianceRate !== null && complianceRate >= 80
                   ? "bg-green-50 border-green-200 text-green-900"
@@ -203,9 +164,7 @@ export default function ExecutiveDashboardPage() {
         <div className="grid grid-cols-2 gap-8">
           {/* ── Pipeline funnel ────────────────────────────────────────── */}
           <section>
-            <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Pipeline Funnel
-            </h2>
+            <h2 className="mb-4 text-xs font-semibold text-gray-400">Pipeline Funnel</h2>
             <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
               {funnelStages.map((stage) => (
                 <div key={stage.label}>
@@ -242,9 +201,7 @@ export default function ExecutiveDashboardPage() {
 
           {/* ── Governance health ──────────────────────────────────────── */}
           <section>
-            <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Governance Health
-            </h2>
+            <h2 className="mb-4 text-xs font-semibold text-gray-400">Governance Health</h2>
             <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
               {/* Donut-style summary */}
               <div className="grid grid-cols-3 gap-3 text-center">
@@ -274,7 +231,7 @@ export default function ExecutiveDashboardPage() {
                         className="flex items-center justify-between rounded-lg border border-red-100 bg-white px-3 py-2 hover:border-red-300 transition-colors"
                       >
                         <span className="text-sm text-gray-800 truncate">
-                          {agent.name ?? "Unnamed Agent"}
+                          {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
                         </span>
                         <span className="shrink-0 ml-2 text-xs font-medium text-red-600">
                           {agent.violationCount} error{agent.violationCount !== 1 ? "s" : ""}
@@ -298,9 +255,7 @@ export default function ExecutiveDashboardPage() {
         {/* ── Recent deployments ──────────────────────────────────────────── */}
         <section>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Recent Deployments
-            </h2>
+            <h2 className="text-xs font-semibold text-gray-400">Recent Deployments</h2>
             <Link href="/deploy" className="text-xs text-gray-400 hover:text-gray-700">
               View all →
             </Link>
@@ -337,7 +292,6 @@ export default function ExecutiveDashboardPage() {
                     <th className="px-5 py-3 text-left">Version</th>
                     <th className="px-5 py-3 text-left">Tags</th>
                     <th className="px-5 py-3 text-left">Deployed</th>
-                    <th className="px-5 py-3 text-left">Status</th>
                     <th className="px-5 py-3"></th>
                   </tr>
                 </thead>
@@ -345,7 +299,7 @@ export default function ExecutiveDashboardPage() {
                   {recentDeployed.map((agent) => (
                     <tr key={agent.agentId} className="hover:bg-gray-50">
                       <td className="px-5 py-3 font-medium text-gray-900">
-                        {agent.name ?? "Unnamed Agent"}
+                        {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
                       </td>
                       <td className="px-5 py-3 font-mono text-xs text-gray-500">v{agent.version}</td>
                       <td className="px-5 py-3">
@@ -358,9 +312,6 @@ export default function ExecutiveDashboardPage() {
                         </div>
                       </td>
                       <td className="px-5 py-3 text-xs text-gray-400">{timeAgo(agent.updatedAt)}</td>
-                      <td className="px-5 py-3">
-                        <StatusBadge status={agent.status} />
-                      </td>
                       <td className="px-5 py-3 text-right">
                         <Link
                           href={`/registry/${agent.agentId}`}
@@ -377,31 +328,6 @@ export default function ExecutiveDashboardPage() {
           )}
         </section>
 
-        {/* ── Platform summary ─────────────────────────────────────────────── */}
-        <section>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
-            Platform Summary
-          </h2>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <div className="text-2xl font-bold text-gray-900">{loading ? "–" : total}</div>
-              <div className="text-sm font-medium text-gray-700 mt-1">Total Agents</div>
-              <div className="text-xs text-gray-400 mt-0.5">across all stages</div>
-            </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <div className="text-2xl font-bold text-gray-900">{loading ? "–" : policies.length}</div>
-              <div className="text-sm font-medium text-gray-700 mt-1">Active Policies</div>
-              <div className="text-xs text-gray-400 mt-0.5">governance rules enforced</div>
-            </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <div className="text-2xl font-bold text-gray-900">
-                {loading ? "–" : notValidated === 0 && total > 0 ? "100%" : notValidated > 0 ? `${total - notValidated}/${total}` : "—"}
-              </div>
-              <div className="text-sm font-medium text-gray-700 mt-1">Validation Coverage</div>
-              <div className="text-xs text-gray-400 mt-0.5">agents run against policies</div>
-            </div>
-          </div>
-        </section>
       </div>
     </div>
   );

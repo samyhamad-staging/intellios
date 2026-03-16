@@ -442,7 +442,7 @@ export default function AgentDetailPage({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-semibold text-gray-900 truncate">
-                {latest.name ?? "Unnamed Agent"}
+                {latest.name ?? `Agent ${latest.agentId.slice(0, 8)}`}
               </h1>
               <StatusBadge status={latest.status} />
               {latest.deploymentTarget === "agentcore" && latest.deploymentMetadata && (
@@ -1293,6 +1293,39 @@ export default function AgentDetailPage({
                 ))}
               </tbody>
             </table>
+
+            {/* Approval History */}
+            {(() => {
+              const approvalSteps = (latest.approvalProgress ?? []) as ApprovalStepRecord[];
+              if (approvalSteps.length === 0) return null;
+              return (
+                <div className="border border-gray-200 rounded-lg p-5">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">
+                    Approval History
+                  </h3>
+                  <ol className="space-y-1.5">
+                    {approvalSteps.map((step, i) => (
+                      <li key={i} className="flex items-center gap-2 text-xs text-gray-600">
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${
+                          step.decision === "approved" ? "bg-green-500" :
+                          step.decision === "rejected" ? "bg-red-500" : "bg-gray-300"
+                        }`} />
+                        <span className="capitalize font-medium">{step.role ?? `Step ${i + 1}`}</span>
+                        <span className="text-gray-400">—</span>
+                        <span className={`capitalize ${step.decision === "approved" ? "text-green-700" : step.decision === "rejected" ? "text-red-700" : "text-gray-500"}`}>
+                          {step.decision ?? "pending"}
+                        </span>
+                        {step.approvedAt && (
+                          <span className="text-gray-400">
+                            · {new Date(step.approvedAt).toLocaleDateString()}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              );
+            })()}
 
             {/* Version comparison — only shown when there are at least 2 versions */}
             {versions.length >= 2 && (

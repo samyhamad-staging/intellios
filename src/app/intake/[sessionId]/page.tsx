@@ -263,7 +263,13 @@ export default function IntakeSessionPage({
   if (phase === "loading") {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="text-sm text-gray-400">Loading session…</div>
+        <div className="flex items-center gap-2.5 text-sm text-gray-400">
+          <svg className="h-4 w-4 animate-spin text-violet-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Loading session…
+        </div>
       </div>
     );
   }
@@ -325,34 +331,52 @@ export default function IntakeSessionPage({
                   </span>
                   <span className="text-xs text-gray-400">{scorePopoverOpen ? "▲" : "▼"}</span>
                 </button>
-                {scorePopoverOpen && (
-                  <div className="absolute bottom-full right-0 mb-2 w-64 rounded-xl border border-gray-200 bg-white p-4 shadow-lg">
-                    <p className="mb-2.5 text-xs font-semibold text-gray-700">Quality Dimensions</p>
-                    {([
-                      { label: "Breadth", value: intakeScore.dimensions.breadthScore },
-                      { label: "Ambiguity", value: intakeScore.dimensions.ambiguityScore },
-                      { label: "Risk ID", value: intakeScore.dimensions.riskIdScore },
-                      { label: "Stakeholder", value: intakeScore.dimensions.stakeholderScore },
-                    ] as { label: string; value: number | null }[]).map((d) => {
-                      const val = d.value ?? 0;
-                      const below = val < 3.0;
-                      return (
-                        <div key={d.label} className="mb-2 flex items-center gap-2">
-                          <span className="w-20 shrink-0 text-xs text-gray-500">{d.label}</span>
-                          <div className="h-1.5 flex-1 rounded-full bg-gray-200">
-                            <div
-                              className={`h-1.5 rounded-full ${below ? "bg-amber-400" : "bg-indigo-400"}`}
-                              style={{ width: `${(val / 5) * 100}%` }}
-                            />
+                {scorePopoverOpen && (() => {
+                  const DIMENSION_DESCRIPTIONS: Record<string, string> = {
+                    "Breadth": "How many distinct requirement areas were captured",
+                    "Ambiguity": "How clearly the agent's purpose and boundaries are defined",
+                    "Risk ID": "Whether key risks (safety, data, compliance) have been surfaced",
+                    "Stakeholder": "Diversity and relevance of stakeholder contributions",
+                  };
+                  const dims = [
+                    { label: "Breadth", value: intakeScore.dimensions.breadthScore },
+                    { label: "Ambiguity", value: intakeScore.dimensions.ambiguityScore },
+                    { label: "Risk ID", value: intakeScore.dimensions.riskIdScore },
+                    { label: "Stakeholder", value: intakeScore.dimensions.stakeholderScore },
+                  ] as { label: string; value: number | null }[];
+                  const hasLowScore = dims.some((d) => (d.value ?? 0) < 3.0 && d.value != null);
+                  return (
+                    <div className="absolute bottom-full right-0 mb-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-lg">
+                      <p className="mb-2.5 text-xs font-semibold text-gray-700">Quality Dimensions</p>
+                      {dims.map((d) => {
+                        const val = d.value ?? 0;
+                        const below = val < 3.0;
+                        return (
+                          <div key={d.label} className="mb-3">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="w-20 shrink-0 text-xs text-gray-600 font-medium">{d.label}</span>
+                              <div className="h-1.5 flex-1 rounded-full bg-gray-200">
+                                <div
+                                  className={`h-1.5 rounded-full ${below ? "bg-amber-400" : "bg-indigo-400"}`}
+                                  style={{ width: `${(val / 5) * 100}%` }}
+                                />
+                              </div>
+                              <span className={`w-8 shrink-0 text-right text-xs font-medium ${below ? "text-amber-600" : "text-gray-700"}`}>
+                                {d.value != null ? `${d.value.toFixed(1)}` : "—"}
+                              </span>
+                            </div>
+                            <p className="pl-[88px] text-[11px] text-gray-400 leading-snug">{DIMENSION_DESCRIPTIONS[d.label]}</p>
                           </div>
-                          <span className={`w-8 shrink-0 text-right text-xs font-medium ${below ? "text-amber-600" : "text-gray-700"}`}>
-                            {d.value != null ? `${d.value.toFixed(1)}` : "—"}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                        );
+                      })}
+                      {hasLowScore && (
+                        <p className="mt-1 text-xs text-amber-600 border-t border-gray-100 pt-2">
+                          Some areas need more depth — continue the conversation to strengthen coverage.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             ) : null}
             <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
@@ -415,23 +439,28 @@ export default function IntakeSessionPage({
               <span className="text-xs text-gray-400">Classifying…</span>
             </div>
           ) : classification && !editingClassification ? (
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-                {AGENT_TYPE_LABELS[classification.agentType]}
-              </span>
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${RISK_TIER_BADGE_COLORS[classification.riskTier]}`}>
-                {classification.riskTier.toUpperCase()}
-              </span>
-              <button
-                onClick={() => {
-                  setEditAgentType(classification.agentType);
-                  setEditRiskTier(classification.riskTier);
-                  setEditingClassification(true);
-                }}
-                className="ml-1 text-xs text-gray-400 hover:text-gray-600 underline-offset-2 hover:underline"
-              >
-                Edit
-              </button>
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                  {AGENT_TYPE_LABELS[classification.agentType]}
+                </span>
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${RISK_TIER_BADGE_COLORS[classification.riskTier]}`}>
+                  {classification.riskTier.toUpperCase()}
+                </span>
+                <button
+                  onClick={() => {
+                    setEditAgentType(classification.agentType);
+                    setEditRiskTier(classification.riskTier);
+                    setEditingClassification(true);
+                  }}
+                  className="ml-1 text-xs text-gray-400 hover:text-gray-600 underline-offset-2 hover:underline"
+                >
+                  Edit
+                </button>
+              </div>
+              {classification.rationale && (
+                <p className="text-xs italic text-gray-400">{classification.rationale}</p>
+              )}
             </div>
           ) : classification && editingClassification ? (
             <div className="flex items-center gap-2">

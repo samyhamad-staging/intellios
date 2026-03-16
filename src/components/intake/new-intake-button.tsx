@@ -27,7 +27,7 @@ export function NewIntakeButton({ className }: { className?: string }) {
       <button
         onClick={handleClick}
         disabled={loading}
-        className={className ?? "rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"}
+        className={className ?? "rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"}
       >
         {loading ? "Creating session…" : "Design a New Agent"}
       </button>
