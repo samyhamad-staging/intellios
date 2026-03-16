@@ -26,8 +26,18 @@ export default auth((req) => {
   }
 
   const isLoginPage = pathname === "/login";
+  const isLandingPage = pathname === "/landing";
+
+  // Landing page is public — no auth required
+  if (isLandingPage) {
+    return withId(NextResponse.next({ request: { headers: requestHeaders } }), requestId);
+  }
 
   if (!isLoggedIn && !isLoginPage) {
+    // Unauthenticated visitors to / see the landing page instead of login
+    if (pathname === "/") {
+      return withId(NextResponse.redirect(new URL("/landing", req.url)), requestId);
+    }
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return withId(NextResponse.redirect(loginUrl), requestId);

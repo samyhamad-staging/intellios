@@ -22,6 +22,8 @@ export type AuditAction =
   | "blueprint.agentcore_exported"
   | "blueprint.agentcore_deployed"
   | "blueprint.compliance_exported"
+  | "blueprint.simulated"
+  | "blueprint.code_exported"
   | "intake.finalized"
   | "intake.contribution_submitted"
   | "policy.created"

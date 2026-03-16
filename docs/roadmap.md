@@ -1,6 +1,12 @@
 # Intellios Roadmap
 
-## Current Phase: Phase 39 ✓ Complete (2026-03-15) — Role-Optimized UX
+## Current Phase: Phase 40 ✓ Complete (2026-03-16) — Close the Factory Loop
+
+---
+
+## ✓ Phase 40 Complete (2026-03-16) — Close the Factory Loop
+
+Three components that make "deploy" mean something. **Agent Playground**: "Simulate" tab on Registry detail — live sandboxed Claude chat using the blueprint's system prompt, tools as narrative context, and governance rules as constraints. Stateless (messages client-side only). **Agent Code Export**: "Export Agent Code ↓" button downloads a single-file TypeScript agent with system prompt, tool stubs, and a working agentic loop. **Public Landing Page**: `/landing` serves unauthenticated visitors; unauthenticated `/` redirects there. 5 new files. 0 DB migrations. 0 new npm dependencies. TypeScript: 0 errors.
 
 ---
 

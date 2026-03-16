@@ -17,6 +17,7 @@ import { ValidationReport } from "@/lib/governance/types";
 import type { ApprovalChainStep, ApprovalStepRecord, EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 import type { TestCase, TestRun } from "@/lib/testing/types";
+import { SimulatePanel } from "@/components/registry/simulate-panel";
 
 interface CurrentUser {
   email: string;
@@ -80,7 +81,7 @@ interface BlueprintVersion {
 }
 
 type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
-type Tab = "blueprint" | "summary" | "governance" | "review" | "versions" | "regulatory" | "tests";
+type Tab = "blueprint" | "summary" | "governance" | "review" | "versions" | "regulatory" | "tests" | "simulate";
 
 export default function AgentDetailPage({
   params,
@@ -105,7 +106,7 @@ export default function AgentDetailPage({
   const [enterpriseSettings, setEnterpriseSettings] = useState<EnterpriseSettings>(DEFAULT_ENTERPRISE_SETTINGS);
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const tab = searchParams.get("tab");
-    if (tab === "review" || tab === "governance" || tab === "versions" || tab === "summary" || tab === "regulatory" || tab === "tests") return tab;
+    if (tab === "review" || tab === "governance" || tab === "versions" || tab === "summary" || tab === "regulatory" || tab === "tests" || tab === "simulate") return tab;
     return "blueprint";
   });
   const [compareVersionId, setCompareVersionId] = useState<string | null>(null);
@@ -426,6 +427,7 @@ export default function AgentDetailPage({
     { id: "governance", label: "Governance" },
     { id: "regulatory", label: "Regulatory" },
     { id: "tests", label: `Tests${testCases.length > 0 ? ` (${testCases.length})` : ""}` },
+    { id: "simulate", label: "Simulate" },
     ...(isInReview ? [{ id: "review" as Tab, label: "Review" }] : []),
     { id: "versions", label: `Versions (${versions.length})` },
   ];
@@ -504,6 +506,15 @@ export default function AgentDetailPage({
             View MRM Report
           </Link>
           {/* Compliance exports — restricted to compliance_officer + admin */}
+          {/* Export Agent Code — all roles */}
+          <a
+            href={`/api/blueprints/${latest.id}/export/code`}
+            download
+            className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm text-violet-700 hover:border-violet-400 hover:bg-violet-100 transition-colors"
+            title="Download a ready-to-run TypeScript agent generated from this blueprint"
+          >
+            Export Agent Code ↓
+          </a>
           {(currentUser?.role === "compliance_officer" || currentUser?.role === "admin") && (
             <>
               {(latest.status === "approved" || latest.status === "deployed") && (
@@ -1257,6 +1268,14 @@ export default function AgentDetailPage({
             </div>
           );
         })()}
+
+        {activeTab === "simulate" && (
+          <SimulatePanel
+            blueprintId={latest.id}
+            agentName={latest.name}
+            version={latest.version}
+          />
+        )}
 
       {activeTab === "versions" && (
           <div className="p-6 space-y-6">

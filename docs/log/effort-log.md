@@ -1224,6 +1224,38 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 047 — 2026-03-15
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context recovery | Absorbed prior session summary; verified Vercel deployment state | ~20k in / ~0.5k out |
+| Admin Overview redesign | page.tsx — removed 4 quick-action cards, linked pipeline stage cards, action callouts, compact terminal states | ~25k in / ~3k out |
+| Dashboard cleanup | dashboard/page.tsx — removed header icon, Platform Summary section, Status column, import cleanup | ~15k in / ~2k out |
+| Deploy Console cleanup | deploy/page.tsx — simplified header, removed Total Agents KPI card | ~12k in / ~1.5k out |
+| Vercel build failure diagnosis | Checked build logs, identified wrong root directory (`./` vs `src`) | ~15k in / ~1k out |
+| Vercel root directory fix | Settings → Build and Deployment → Root Directory: `./` → `src`; empty commit push | ~5k in / ~0.5k out |
+| Production verification | Confirmed `7Duhy5Z8f` Ready → `intellios.vercel.app` updated | ~8k in / ~0.5k out |
+| Documentation | Session log 047, _index.md, effort log, project journal | ~10k in / ~3k out |
+| **Session total (est.)** | | **~110k in / ~12k out** |
+
+**Estimated session cost:** ~110K × $3/1M + ~12K × $15/1M = $0.33 + $0.18 = **~$0.51**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 91 | [screenshot] "optimize how this is organized" | D-Direction | Directed Overview redesign for conciseness |
+| 92 | "update the website" → "More UI improvements" | D-Direction | Extended cleanup to Dashboard + Deploy |
+| 93 | [screenshot] "I'm still seeing this" | D-Correct | Identified production not updating — root cause: Git not connected |
+| 94 | "walk me through Connect Git in Vercel" | D-Direction | Directed Git/Vercel connection workflow |
+
+**Totals:** 4 messages · 3 D-Direction · 1 D-Correct · ~15 min
+
+---
+
 ## Session 043 — 2026-03-15
 
 ### Claude Effort
@@ -1564,6 +1596,43 @@ Tracks resource consumption per session for post-project cost estimation.
 | 2 | "Continue from where you left off" | D-Approve | Resumed session after context compaction |
 
 **Totals:** 2 messages · 1 direction · ~0.5 hrs
+
+---
+
+## Session 048 — 2026-03-16
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Vigil loop fix | Health dir seeding (2 files) | ~5k in / ~0.5k out |
+| Strategic planning | Phase analysis, 3-component plan, architecture design | ~20k in / ~6k out |
+| `buildSimulationSystemPrompt` | executor.ts extension, tool + governance sections | ~6k in / ~1k out |
+| Simulate chat route | POST endpoint, auth, rate limit, streaming, audit | ~10k in / ~2k out |
+| `simulate-panel.tsx` | Full UI component (first pass + TypeScript fix rewrite) | ~15k in / ~4k out |
+| `code-generator.ts` | Full TypeScript agent code generation function | ~8k in / ~3k out |
+| Code export route | GET endpoint, filename, audit | ~5k in / ~1k out |
+| `landing/page.tsx` | Full marketing landing page (5 sections) | ~8k in / ~2k out |
+| Middleware update | `/landing` bypass + `/` redirect | ~3k in / ~0.5k out |
+| Registry detail page updates | Simulate tab + Export Agent Code button | ~6k in / ~1k out |
+| Audit type sync | AuditAction + EventType additions | ~3k in / ~0.5k out |
+| TypeScript debug + fix | `maxOutputTokens`, `DefaultChatTransport`, URL type | ~8k in / ~2k out |
+| Documentation | Session log, _index, roadmap, effort log, project journal | ~12k in / ~6k out |
+| **Session total (est.)** | | **~109k in / ~29k out** |
+
+**Estimated session cost:** Sonnet ~109k in × $3/1M + ~29k out × $15/1M = **$0.33 + $0.44 = ~$0.77**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | "Yes fix it please" (Vigil loop) | D-Approve | Directed infrastructure fix |
+| 2 | "Think and plan the next body of work with the highest value" | D-Scope | Strategic planning request — highest-leverage input |
+| 3 | "Proceed after validation and landing on the optimum approach" | D-Execute | Full Phase 40 implementation delegated |
+| 4 | "OK" (plan approval) | D-Approve | Approved 3-component plan |
+
+**Totals:** 4 messages · 1 D-Scope · 1 D-Arch · 2 D-Execute/Approve · ~15 min
 
 ---
 
