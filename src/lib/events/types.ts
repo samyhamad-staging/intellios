@@ -20,6 +20,7 @@ export type EventType =
   | "blueprint.compliance_exported"
   | "blueprint.simulated"
   | "blueprint.code_exported"
+  | "blueprint.red_team_run"
   | "intake.finalized"
   | "intake.contribution_submitted"
   | "policy.created"

@@ -1,6 +1,12 @@
 # Intellios Roadmap
 
-## Current Phase: Phase 40 ✓ Complete (2026-03-16) — Close the Factory Loop
+## Current Phase: Phase 41 ✓ Complete (2026-03-16) — Growth & Security
+
+---
+
+## ✓ Phase 41 Complete (2026-03-16) — Growth & Security
+
+Self-Service Enterprise Registration: any organization can create a workspace from the landing page — admin account created, enterprise settings seeded, SR 11-7 governance policies pre-loaded, `/welcome` onboarding checklist. Adversarial Red-Teaming: two-phase AI security evaluation in the Simulate tab — Sonnet generates 10 tailored attack prompts (2 per category: scope_creep, jailbreak, data_exfiltration, instruction_override, governance_bypass), Haiku evaluates all 10 in parallel, produces a scored RedTeamReport with risk tier (LOW/MEDIUM/HIGH/CRITICAL) and expandable attack rows. Landing + login CTAs updated to drive registrations. 5 new files. 0 DB migrations. 0 new npm dependencies. TypeScript: 0 errors.
 
 ---
 
