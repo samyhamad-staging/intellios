@@ -2,6 +2,22 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 050 — 2026-03-16: Reducing Friction, Adding Transparency
+
+The product acquired its first two growth mechanisms last session: self-service registration (anyone can sign up) and adversarial red-teaming (anyone can test what they build). Phase 42 addresses the inevitable next problem: a new customer signs up, lands on an empty registry, and has to figure out what to build first. The activation gap — the distance between "account created" and "value experienced" — is where most B2B SaaS products lose new customers.
+
+The Blueprint Template Library closes that gap. Six production-ready agent starters cover the domains that matter to Intellios's target customer: retail banking customer service, regulatory Q&A, contract document review, loan pre-screening, AML alert triage, and HR policy support. Each template ships with a complete ABP — real system prompts that capture actual operational scope boundaries, 2–3 tool stubs that represent how these agents actually integrate with enterprise systems, and constraint sets that reflect the regulatory and governance requirements of the domain. These are not toy examples. The AML Alert Triage template's denied actions include things like "File a SAR or make a final determination on suspicious activity" — constraints that a compliance team would actually need.
+
+The one-click use flow has an interesting constraint: the `agentBlueprints.sessionId` column is NOT NULL with a foreign key to `intakeSessions`. This design reflects the original assumption that every blueprint must trace to an intake session — a governance requirement. Templates don't have a source intake session, but the constraint still applies. The solution is a stub intake session row inserted inside the same transaction, with `intakePayload.source = "template"` as a marker. The blueprint traces to something; it's just not an interactive intake conversation.
+
+This design preserves the invariant (every blueprint has an intake session) while being transparent about what happened (it was a template use, not an intake session). The audit log entry captures `templateId` and `templateName` in metadata, so the lineage is complete.
+
+The gallery page is deliberately public — no authentication required to browse templates. This serves the acquisition funnel: a prospect following a link to `/templates` can see what the product does without creating an account. The CTAs adapt: unauthenticated visitors see "Sign in to use →"; authenticated users see the "Use Template" button. The middleware bypass follows the same pattern as `/landing` and `/register`.
+
+The Workspace Activity Feed addresses a different problem: once a team is using the product, the audit log captures everything that happens, but it's completely invisible. The admin dashboard shows pipeline counts — static numbers. The activity feed makes the workspace feel alive. The `humanizeAction()` function in the API route translates all 28 `AuditAction` values into first-person verb phrases ("refined Customer Service Agent", "ran red-team on AML Alert Triage Agent — HIGH risk"). The client component shows initials avatars color-hashed by actor name, so a busy workspace looks like a team working together rather than a log file.
+
+Together, Phase 42 completes the new-customer loop: sign up, see the landing page, go to the template gallery, clone a starter, have a working draft in 30 seconds. The transparency side — seeing what your team has done — is what converts that first draft into ongoing engagement.
+
 ## Session 049 — 2026-03-16: Growth and Security
 
 Phase 40 closed the factory loop — deployed blueprints became things you could simulate and download. Phase 41 asks the next two questions: who can get in, and how secure is what gets deployed?

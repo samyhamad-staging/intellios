@@ -132,6 +132,7 @@ export default function RegistryPage() {
           <Inbox size={32} className="mb-4 text-gray-300" />
           <p className="mb-1 text-sm font-medium text-gray-500">No agents in the registry yet</p>
           <Link href="/intake" className="mt-2 text-xs text-violet-600 hover:text-violet-700">Start an intake session →</Link>
+          <Link href="/templates" className="mt-1 text-xs text-violet-600 hover:text-violet-700">Browse templates →</Link>
         </div>
       )}
 
