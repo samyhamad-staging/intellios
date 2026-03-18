@@ -6,6 +6,7 @@ import type { UIMessage } from "ai";
 import { ChatContainer } from "@/components/chat/chat-container";
 import { IntakeProgress } from "@/components/intake/intake-progress";
 import { IntakeContextForm } from "@/components/intake/intake-context-form";
+import { IntakeQuickStart } from "@/components/intake/intake-quick-start";
 import { IntakeReview } from "@/components/intake/intake-review";
 import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
 
@@ -25,7 +26,7 @@ function mapToUIMessages(dbMessages: DBMessage[]): UIMessage[] {
 }
 
 /** Which phase the UI is currently showing */
-type Phase = "loading" | "context-form" | "conversation" | "review";
+type Phase = "loading" | "context-form" | "quick-start" | "conversation" | "review";
 
 export default function IntakeSessionPage({
   params,
@@ -107,9 +108,9 @@ export default function IntakeSessionPage({
           return;
         }
 
-        // If no context yet → show Phase 1 form
+        // If no context yet → show AI quick-start (replaces form-first flow)
         if (!storedContext) {
-          setPhase("context-form");
+          setPhase("quick-start");
           return;
         }
 
@@ -118,7 +119,7 @@ export default function IntakeSessionPage({
         setInitialMessages(uiMessages.length > 0 ? uiMessages : undefined);
         setPhase("conversation");
       } catch {
-        setPhase("context-form");
+        setPhase("quick-start");
       }
     }
     loadSession();
@@ -274,7 +275,28 @@ export default function IntakeSessionPage({
     );
   }
 
-  // ─── Phase 1: Context Form ───────────────────────────────────────────────────
+  // ─── Phase 1a: AI Quick Start (default) ──────────────────────────────────────
+
+  if (phase === "quick-start") {
+    return (
+      <div className="flex h-screen flex-col">
+        <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
+          <div>
+            <h1 className="text-lg font-semibold">Intellios</h1>
+            <p className="text-xs text-gray-500">Agent Intake</p>
+          </div>
+          <div className="text-xs text-gray-400 font-mono">{sessionId.slice(0, 8)}</div>
+        </header>
+        <IntakeQuickStart
+          sessionId={sessionId}
+          onComplete={(context) => handleContextComplete(context as unknown as IntakeContext)}
+          onSwitchToForm={() => setPhase("context-form")}
+        />
+      </div>
+    );
+  }
+
+  // ─── Phase 1b: Manual Context Form (fallback) ──────────────────────────────────
 
   if (phase === "context-form") {
     return (
@@ -284,7 +306,15 @@ export default function IntakeSessionPage({
             <h1 className="text-lg font-semibold">Intellios</h1>
             <p className="text-xs text-gray-500">Agent Intake</p>
           </div>
-          <div className="text-xs text-gray-400 font-mono">{sessionId.slice(0, 8)}</div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setPhase("quick-start")}
+              className="text-xs text-violet-600 hover:text-violet-800 transition-colors"
+            >
+              ← Back to Quick Start
+            </button>
+            <div className="text-xs text-gray-400 font-mono">{sessionId.slice(0, 8)}</div>
+          </div>
         </header>
         <IntakeContextForm sessionId={sessionId} onComplete={handleContextComplete} />
       </div>

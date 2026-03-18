@@ -4,9 +4,11 @@ import { use, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
 import { ValidationReportView } from "@/components/governance/validation-report";
+import { CompanionChat } from "@/components/blueprint/companion-chat";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
 import type { TestRun } from "@/lib/testing/types";
+import { diffABP, type ABPDiff } from "@/lib/diff/abp-diff";
 
 interface BlueprintPageProps {
   params: Promise<{ id: string }>;
@@ -113,6 +115,9 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   const [reviewComment, setReviewComment] = useState<string | null>(null);
   const [exportingEvidence, setExportingEvidence] = useState(false);
 
+  const [companionOpen, setCompanionOpen] = useState(false);
+  const [lastRefinementDiff, setLastRefinementDiff] = useState<ABPDiff | null>(null);
+  const [diffOpen, setDiffOpen] = useState(false);
   const [ownershipOpen, setOwnershipOpen] = useState(false);
   const [ownershipDraft, setOwnershipDraft] = useState<{
     businessUnit: string;
@@ -162,6 +167,8 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
     if (!change.trim() || refining) return;
     setRefining(true);
     setError(null);
+    // Capture pre-refinement snapshot for diff
+    const preAbp = abp ? structuredClone(abp) : null;
     try {
       const res = await fetch(`/api/blueprints/${id}/refine`, {
         method: "POST",
@@ -173,9 +180,18 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         throw new Error(data.message ?? "Refinement failed");
       }
       const data = await res.json();
-      setAbp(data.abp as ABP);
+      const newAbp = data.abp as ABP;
+      setAbp(newAbp);
       setRefinementCount(parseInt(data.refinementCount ?? "0", 10));
       setChange("");
+      // Compute and show the diff
+      if (preAbp) {
+        const diff = diffABP(preAbp, newAbp);
+        if (diff.totalChanges > 0) {
+          setLastRefinementDiff(diff);
+          setDiffOpen(true);
+        }
+      }
       // Auto-validate so the designer doesn't need a manual click before submitting.
       setValidating(true);
       try {
@@ -452,6 +468,16 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               View in Registry →
             </Link>
           )}
+          <button
+            onClick={() => setCompanionOpen(!companionOpen)}
+            className={`rounded-lg px-2.5 py-0.5 text-xs font-medium transition-colors ${
+              companionOpen
+                ? "bg-violet-100 text-violet-700 border border-violet-300"
+                : "border border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-700"
+            }`}
+          >
+            ✦ Companion
+          </button>
         </div>
       </header>
 
@@ -472,6 +498,67 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           }`}>
             {reviewComment}
           </span>
+        </div>
+      )}
+
+      {/* Refinement diff banner */}
+      {lastRefinementDiff && lastRefinementDiff.totalChanges > 0 && (
+        <div className="shrink-0 border-b border-violet-200 bg-violet-50">
+          <button
+            onClick={() => setDiffOpen(!diffOpen)}
+            className="flex w-full items-center justify-between px-6 py-2.5"
+          >
+            <div className="flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                lastRefinementDiff.significance === "major"
+                  ? "bg-red-100 text-red-700"
+                  : lastRefinementDiff.significance === "minor"
+                  ? "bg-amber-100 text-amber-700"
+                  : "bg-blue-100 text-blue-700"
+              }`}>
+                {lastRefinementDiff.significance}
+              </span>
+              <span className="text-xs font-medium text-violet-800">
+                {lastRefinementDiff.totalChanges} change{lastRefinementDiff.totalChanges !== 1 ? "s" : ""} from last refinement
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); setLastRefinementDiff(null); }}
+                className="text-[10px] text-violet-500 hover:text-violet-700"
+              >
+                Dismiss
+              </button>
+              <span className="text-xs text-violet-400">{diffOpen ? "▼" : "▶"}</span>
+            </div>
+          </button>
+          {diffOpen && (
+            <div className="border-t border-violet-200 px-6 py-3 max-h-64 overflow-y-auto">
+              {lastRefinementDiff.sections
+                .filter((s) => s.changes.length > 0)
+                .map((section) => (
+                  <div key={section.section} className="mb-3 last:mb-0">
+                    <h4 className="text-xs font-semibold text-violet-900 mb-1">{section.label}</h4>
+                    <div className="space-y-1">
+                      {section.changes.map((change, i) => (
+                        <div key={i} className="flex items-start gap-2 text-xs">
+                          <span className={`shrink-0 mt-0.5 font-mono text-[10px] font-bold ${
+                            change.changeType === "added"
+                              ? "text-green-600"
+                              : change.changeType === "removed"
+                              ? "text-red-600"
+                              : "text-amber-600"
+                          }`}>
+                            {change.changeType === "added" ? "+" : change.changeType === "removed" ? "−" : "~"}
+                          </span>
+                          <span className="text-gray-700">{change.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -985,6 +1072,26 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             <p className="text-center text-xs text-gray-400">⌘ Enter to apply</p>
           </div>
         </aside>
+
+        {/* Companion Chat panel */}
+        {companionOpen && (
+          <aside className="w-80 shrink-0 border-l border-gray-200 bg-gray-50 flex flex-col">
+            <CompanionChat
+              blueprintId={id}
+              onApplyChange={(prompt) => {
+                setChange(prompt);
+                setCompanionOpen(false);
+                // Scroll to refinement textarea
+                setTimeout(() => {
+                  const textarea = document.querySelector<HTMLTextAreaElement>(
+                    'textarea[placeholder*="rate limit"]'
+                  );
+                  textarea?.focus();
+                }, 100);
+              }}
+            />
+          </aside>
+        )}
       </div>
     </div>
   );
