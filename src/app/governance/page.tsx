@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Shield, Plus, Download } from "lucide-react";
+import { Shield, Plus, Download, ShieldAlert } from "lucide-react";
 
 interface Agent {
   id: string;
@@ -268,6 +268,27 @@ export default function GovernanceHubPage() {
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
           </div>
+        )}
+
+        {/* Active violations banner */}
+        {!loading && withErrors > 0 && (
+          <a
+            href="#violations"
+            className="flex items-center justify-between rounded-lg border badge-gov-error px-4 py-3 transition-opacity hover:opacity-90"
+          >
+            <div className="flex items-center gap-3">
+              <ShieldAlert size={16} strokeWidth={2} />
+              <div>
+                <p className="text-sm font-semibold">
+                  {withErrors} agent{withErrors !== 1 ? "s" : ""} with active governance violations
+                </p>
+                <p className="text-xs opacity-70 mt-0.5">
+                  {withErrors !== 1 ? "These agents require" : "This agent requires"} remediation before deployment
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-semibold shrink-0">View violations ↓</span>
+          </a>
         )}
 
         {/* ── Governance Analytics ─────────────────────────────────────────── */}
@@ -556,7 +577,7 @@ export default function GovernanceHubPage() {
 
         {/* ── Agents with violations ──────────────────────────────────────── */}
         {!loading && agentsWithViolations.length > 0 && (
-          <section>
+          <section id="violations">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
               Agents Requiring Attention ({agentsWithViolations.length})
             </h2>

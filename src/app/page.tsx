@@ -307,17 +307,18 @@ export default async function Home() {
         )}
       </div>
 
-      {/* Action callouts — only shown when something needs attention */}
+      {/* Notification strip — compact inline alerts when action is needed */}
       {actionCallouts.length > 0 && (
-        <div className="mb-6 flex flex-col gap-2">
-          {actionCallouts.map(({ href, label, cta, color }) => (
+        <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2">
+          {actionCallouts.map(({ href, label, cta, color: _ }) => (
             <Link
               key={href}
               href={href}
-              className={`flex items-center justify-between rounded-lg border px-4 py-2.5 text-sm transition-colors ${color}`}
+              className="inline-flex items-center gap-2 text-xs text-gray-600 transition-colors hover:text-gray-900"
             >
-              <span className="font-medium">{label}</span>
-              <span className="text-xs font-semibold opacity-80">{cta}</span>
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+              <span>{label}</span>
+              <span className="font-semibold text-violet-600">{cta}</span>
             </Link>
           ))}
         </div>

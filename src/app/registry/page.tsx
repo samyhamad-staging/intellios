@@ -70,45 +70,47 @@ export default function RegistryPage() {
         </div>
       </div>
 
-      {/* Search + filter bar */}
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="relative max-w-sm flex-1">
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name, ID, or tag…"
-            className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-8 text-sm placeholder-gray-400 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/10"
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-              <X size={13} />
-            </button>
-          )}
-        </div>
-
-        {/* Status pills */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <button
-            onClick={() => setStatusFilter("")}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${!statusFilter ? "bg-violet-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
-          >
-            All
+      {/* Search bar */}
+      <div className="mb-4 relative max-w-sm">
+        <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by name, ID, or tag…"
+          className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-8 text-sm placeholder-gray-400 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/10"
+        />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <X size={13} />
           </button>
-          {ALL_STATUSES.map((s) => (
+        )}
+      </div>
+
+      {/* Status tab filter */}
+      <div className="mb-6 flex items-center gap-0 border-b border-gray-200">
+        <button
+          onClick={() => setStatusFilter("")}
+          className={`px-4 py-2 text-xs font-medium transition-colors border-b-2 -mb-px ${!statusFilter ? "border-violet-600 text-violet-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+        >
+          All
+          {!loading && <span className="ml-1.5 text-[10px] opacity-60">{agents.length}</span>}
+        </button>
+        {ALL_STATUSES.map((s) => {
+          const count = agents.filter((a) => a.status === s).length;
+          return (
             <button
               key={s}
               onClick={() => setStatusFilter(statusFilter === s ? "" : s)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${statusFilter === s ? "bg-violet-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+              className={`px-4 py-2 text-xs font-medium transition-colors border-b-2 -mb-px ${statusFilter === s ? "border-violet-600 text-violet-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}
             >
               {STATUS_LABELS[s]}
+              {!loading && count > 0 && <span className="ml-1.5 text-[10px] opacity-60">{count}</span>}
             </button>
-          ))}
-        </div>
-
+          );
+        })}
         {hasFilters && !loading && (
-          <span className="text-xs text-gray-400">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</span>
+          <span className="ml-auto pr-1 text-xs text-gray-400">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</span>
         )}
       </div>
 

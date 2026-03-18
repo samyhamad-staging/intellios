@@ -1,6 +1,12 @@
 # Intellios Roadmap
 
-## Current Phase: Phase 53 ✓ Complete (2026-03-17) — Viewer Role + Role Model Optimization
+## Current Phase: Session 064 ✓ Complete (2026-03-18) — Design System + UX Improvements
+
+Design system fully token-based (no raw Tailwind color classes remaining in UI). Status badges and risk tier indicators use icon shape + color. Five information hierarchy improvements across main pages. KpiCard extracted as shared component. Remaining design audit items: component consolidation (DataTable, SectionCard, AgentRow), typography/spacing/shadow token sets, empty-state component.
+
+---
+
+## ✓ Phase 53 Complete (2026-03-17) — Viewer Role + Role Model Optimization
 
 ---
 

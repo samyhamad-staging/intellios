@@ -137,6 +137,24 @@ export default function PipelinePage() {
         <InsightsStrip agents={agents} />
       )}
 
+      {/* Stage totals bar */}
+      {!loading && !error && (
+        <div className="shrink-0 flex items-center gap-1 border-b border-gray-100 bg-white px-6 py-2">
+          {COLUMNS.map(({ status, label, badgeCls }, i) => {
+            const count = byStatus(status).length;
+            return (
+              <span key={status} className="flex items-center gap-1.5 text-xs">
+                {i > 0 && <span className="text-gray-200 select-none">·</span>}
+                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${badgeCls}`}>
+                  {count}
+                </span>
+                <span className="text-gray-500">{label}</span>
+              </span>
+            );
+          })}
+        </div>
+      )}
+
       {/* Board */}
       <div className="flex flex-1 gap-0 overflow-x-auto">
         {error && (
