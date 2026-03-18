@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ContributionDomain, IntakeContext, IntakeRiskTier, StakeholderContribution } from "@/lib/types/intake";
 import { StakeholderAIChat } from "./stakeholder-ai-chat";
 
@@ -100,35 +100,113 @@ export function StakeholderContributionsPanel({
   const [aiInterviewDomain, setAIInterviewDomain] = useState<ContributionDomain | null>(null);
   const [expandedContribution, setExpandedContribution] = useState<string | null>(null);
 
+  // Live feed state
+  const [orchestratorRunning, setOrchestratorRunning] = useState(false);
+  const [newInsightCount, setNewInsightCount] = useState(0);
+
+  // Refs for tracking what's been seen across polling cycles
+  const seenInsightIdsRef = useRef<Set<string>>(new Set());
+  const seenContributionDomainsRef = useRef<Set<string>>(new Set());
+  const isFirstFetchRef = useRef(true);
+  const orchestratorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Stable ref to onContributionAdded so fetchData doesn't need it as a dep
+  const onContributionAddedRef = useRef(onContributionAdded);
+  onContributionAddedRef.current = onContributionAdded;
+
   const resolvedAgentName = agentName ?? context?.agentPurpose ?? undefined;
 
   const fetchData = useCallback(async () => {
     try {
-      const [invRes, insRes] = await Promise.all([
+      const [invRes, insRes, conRes] = await Promise.all([
         fetch(`/api/intake/sessions/${sessionId}/invitations`),
         fetch(`/api/intake/sessions/${sessionId}/insights`),
+        fetch(`/api/intake/sessions/${sessionId}/contributions`),
       ]);
+
       if (invRes.ok) {
         const data = await invRes.json();
         setInvitations(data.invitations ?? []);
       }
+
       if (insRes.ok) {
         const data = await insRes.json();
-        setInsights(data.insights ?? []);
+        const allInsights: Insight[] = data.insights ?? [];
+        setInsights(allInsights);
+
+        if (isFirstFetchRef.current) {
+          // First load — mark all existing insights as seen; don't count as new
+          for (const ins of allInsights) seenInsightIdsRef.current.add(ins.id);
+        } else {
+          // Subsequent polls — find genuinely new pending insights
+          const newOnes = allInsights.filter(
+            (ins) => ins.status === "pending" && !seenInsightIdsRef.current.has(ins.id)
+          );
+          if (newOnes.length > 0) {
+            for (const ins of newOnes) seenInsightIdsRef.current.add(ins.id);
+            setNewInsightCount((n) => n + newOnes.length);
+            setOrchestratorRunning(false);
+            if (orchestratorTimerRef.current) {
+              clearTimeout(orchestratorTimerRef.current);
+              orchestratorTimerRef.current = null;
+            }
+          }
+          // Always mark everything seen so dismissed/approved don't re-trigger
+          for (const ins of allInsights) seenInsightIdsRef.current.add(ins.id);
+        }
       }
+
+      if (conRes.ok) {
+        const data = await conRes.json();
+        const allContributions: StakeholderContribution[] = data.contributions ?? [];
+
+        if (isFirstFetchRef.current) {
+          // First load — seed the seen set from existing contributions
+          for (const c of allContributions) seenContributionDomainsRef.current.add(c.domain);
+        } else {
+          // Subsequent polls — detect external stakeholder contributions
+          for (const c of allContributions) {
+            if (!seenContributionDomainsRef.current.has(c.domain)) {
+              seenContributionDomainsRef.current.add(c.domain);
+              onContributionAddedRef.current(c);
+            }
+          }
+        }
+      }
+
+      isFirstFetchRef.current = false;
     } catch (err) {
       console.error("[stakeholder-contributions] fetchData failed:", err);
     }
   }, [sessionId]);
 
+  // Initial fetch on mount
   useEffect(() => {
     void fetchData();
-  }, [fetchData, contributions.length]);
+  }, [fetchData]);
+
+  // Visibility-aware interval polling — detects external contributions and new insights
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") void fetchData();
+    }, 7000);
+    return () => clearInterval(id);
+  }, [fetchData]);
 
   function handleContributionSubmitted(contribution: StakeholderContribution) {
+    seenContributionDomainsRef.current.add(contribution.domain);
     onContributionAdded(contribution);
     setAIInterviewDomain(null);
-    setTimeout(() => void fetchData(), 2000); // re-fetch insights after orchestrator runs
+
+    // Show orchestrator processing indicator
+    setOrchestratorRunning(true);
+    if (orchestratorTimerRef.current) clearTimeout(orchestratorTimerRef.current);
+    orchestratorTimerRef.current = setTimeout(() => {
+      setOrchestratorRunning(false);
+      orchestratorTimerRef.current = null;
+    }, 20_000);
+
+    // Re-fetch after 4s to catch orchestrator output
+    setTimeout(() => void fetchData(), 4000);
   }
 
   async function handleInsightAction(insightId: string, status: "approved" | "dismissed") {
@@ -174,8 +252,32 @@ export function StakeholderContributionsPanel({
               {contributions.length}
             </span>
           )}
+          {/* Live polling indicator */}
+          <span
+            className="h-1.5 w-1.5 rounded-full bg-green-400"
+            title="Live — updates automatically"
+          />
         </div>
+
+        {/* New insights badge — clears on click */}
+        {newInsightCount > 0 && (
+          <button
+            onClick={() => setNewInsightCount(0)}
+            className="flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700 hover:bg-violet-200 transition-colors"
+            title="New AI Orchestrator insights arrived"
+          >
+            ✦ {newInsightCount} new
+          </button>
+        )}
       </div>
+
+      {/* Orchestrator processing indicator */}
+      {orchestratorRunning && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg bg-violet-50 border border-violet-100 px-3 py-2 text-[11px] text-violet-600">
+          <span className="h-3 w-3 animate-spin rounded-full border-2 border-violet-300 border-t-violet-600 shrink-0" />
+          AI Orchestrator is analyzing contributions…
+        </div>
+      )}
 
       {/* AI Interview panel (designer-side) */}
       {aiInterviewDomain && (
