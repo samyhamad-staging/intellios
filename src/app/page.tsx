@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { agentBlueprints } from "@/lib/db/schema";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { agentBlueprints, intakeSessions } from "@/lib/db/schema";
+import { and, desc, eq, isNull, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { NewIntakeButton } from "@/components/intake/new-intake-button";
 import { StatusBadge } from "@/components/registry/status-badge";
@@ -16,10 +16,16 @@ import {
   CheckCircle,
   TrendingUp,
   TrendingDown,
+  AlertTriangle,
+  Clock,
+  ShieldAlert,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { FleetGovernanceDashboard } from "@/components/dashboard/fleet-governance-dashboard";
 import { getRecentSnapshots } from "@/lib/awareness/metrics-worker";
+import type { ValidationReport } from "@/lib/governance/types";
 
 function timeAgo(dateStr: string | Date): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -64,6 +70,8 @@ export default async function Home() {
           tags: agentBlueprints.tags,
           createdBy: agentBlueprints.createdBy,
           updatedAt: agentBlueprints.updatedAt,
+          validationReport: agentBlueprints.validationReport,
+          sessionId: agentBlueprints.sessionId,
         })
         .from(agentBlueprints)
         .where(enterpriseFilter)
@@ -76,9 +84,30 @@ export default async function Home() {
 
   const inReviewAgents = allAgents.filter((a) => a.status === "in_review");
   const draftAgents = allAgents.filter((a) => a.status === "draft");
+  const approvedAgents = allAgents.filter((a) => a.status === "approved");
+  const deployedAgents = allAgents.filter((a) => a.status === "deployed");
   const myAgents = user?.email
     ? allAgents.filter((a) => a.createdBy === user.email)
     : allAgents;
+
+  // Compute action items for designer command center
+  const blockedByGovernance = myAgents.filter((a) => {
+    if (a.status !== "draft") return false;
+    const report = a.validationReport as ValidationReport | null;
+    return report && !report.valid;
+  });
+  const readyToSubmit = myAgents.filter((a) => {
+    if (a.status !== "draft") return false;
+    const report = a.validationReport as ValidationReport | null;
+    return report?.valid === true;
+  });
+  const myInReview = myAgents.filter((a) => a.status === "in_review");
+  const myApproved = myAgents.filter((a) => a.status === "approved");
+  const staleDrafts = myAgents.filter((a) => {
+    if (a.status !== "draft") return false;
+    const daysSinceUpdate = (Date.now() - new Date(a.updatedAt).getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceUpdate > 7;
+  });
 
   const role = user?.role ?? "designer";
 
@@ -104,25 +133,105 @@ export default async function Home() {
     );
   }
 
-  // ── Designer ──────────────────────────────────────────────────────────────
+  // ── Designer — Architect Command Center ──────────────────────────────────
   if (role === "designer") {
+    const actionItems = [
+      ...blockedByGovernance.map((a) => ({
+        agent: a,
+        type: "governance" as const,
+        icon: ShieldAlert,
+        label: `${a.name ?? "Unnamed"} has governance violations`,
+        cta: "Fix violations",
+        href: `/blueprints/${a.id}`,
+        color: "text-red-600",
+        bgColor: "bg-red-50 border-red-200",
+      })),
+      ...readyToSubmit.map((a) => ({
+        agent: a,
+        type: "ready" as const,
+        icon: CheckCircle,
+        label: `${a.name ?? "Unnamed"} is ready for review`,
+        cta: "Submit now",
+        href: `/blueprints/${a.id}`,
+        color: "text-green-600",
+        bgColor: "bg-green-50 border-green-200",
+      })),
+      ...staleDrafts.filter((a) => !blockedByGovernance.includes(a) && !readyToSubmit.includes(a)).map((a) => ({
+        agent: a,
+        type: "stale" as const,
+        icon: Clock,
+        label: `${a.name ?? "Unnamed"} hasn't been updated in ${Math.floor((Date.now() - new Date(a.updatedAt).getTime()) / (1000 * 60 * 60 * 24))} days`,
+        cta: "Resume",
+        href: `/blueprints/${a.id}`,
+        color: "text-amber-600",
+        bgColor: "bg-amber-50 border-amber-200",
+      })),
+    ];
+
+    const hasWork = myAgents.length > 0;
+
     return (
       <div className="px-8 py-8">
         {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
+        <div className="mb-6 flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">My Work</h1>
-            <p className="mt-0.5 text-sm text-gray-500">Design, refine, and submit agent blueprints for review.</p>
+            <h1 className="text-xl font-semibold text-gray-900">Architect Command Center</h1>
+            <p className="mt-0.5 text-sm text-gray-500">
+              {hasWork
+                ? `${myAgents.length} agent${myAgents.length === 1 ? "" : "s"} in your portfolio`
+                : "Design your first agentic solution"}
+            </p>
           </div>
           <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors disabled:opacity-50" />
         </div>
 
-        {/* Quick action cards */}
-        <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Action Items — the intelligence layer */}
+        {actionItems.length > 0 && (
+          <section className="mb-6">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Needs Your Attention
+            </h2>
+            <div className="space-y-2">
+              {actionItems.map((item, i) => (
+                <Link
+                  key={`${item.type}-${item.agent.agentId}`}
+                  href={item.href}
+                  className={`flex items-center gap-3 rounded-lg border px-4 py-3 transition-opacity hover:opacity-80 ${item.bgColor}`}
+                >
+                  <item.icon size={15} className={`shrink-0 ${item.color}`} />
+                  <span className="flex-1 text-sm text-gray-800">{item.label}</span>
+                  <span className={`text-xs font-semibold ${item.color} shrink-0 flex items-center gap-1`}>
+                    {item.cta} <ArrowRight size={11} />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Portfolio KPI strip */}
+        {hasWork && (
+          <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Drafts",      count: draftAgents.filter(a => myAgents.includes(a)).length, color: "kpi-neutral",    href: "/pipeline" },
+              { label: "In Review",   count: myInReview.length,   color: "kpi-review",    href: "/pipeline" },
+              { label: "Approved",    count: myApproved.length,   color: "kpi-compliant", href: "/registry" },
+              { label: "Deployed",    count: deployedAgents.filter(a => myAgents.includes(a)).length,  color: "kpi-deployed",  href: "/registry" },
+            ].map(({ label, count, color, href }) => (
+              <Link key={label} href={href} className={`rounded-card border p-4 text-center hover:shadow-md transition-shadow ${color} ${count === 0 ? "opacity-50 border-dashed" : ""}`}>
+                <div className="text-2xl font-bold">{count}</div>
+                <div className="mt-0.5 text-xs font-medium">{label}</div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Quick actions */}
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { href: "/pipeline", icon: Kanban,      label: "Pipeline Board",  sub: `${allAgents.length} agents`, color: "text-violet-600" },
-            { href: "/registry", icon: Library,     label: "Agent Registry",  sub: "All versions",              color: "text-blue-600" },
-            { href: "/intake",   icon: Plus,         label: "New Intake",      sub: "Start from scratch",        color: "text-green-600" },
+            { href: "/pipeline", icon: Kanban,  label: "Pipeline Board",  sub: `${allAgents.length} agents`, color: "text-violet-600" },
+            { href: "/registry", icon: Library, label: "Agent Registry",  sub: "All versions",              color: "text-blue-600" },
+            { href: "/intake",   icon: Plus,    label: "New Agent",       sub: "Start from scratch",        color: "text-green-600" },
           ].map(({ href, icon: Icon, label, sub, color }) => (
             <Link key={href} href={href} className="group flex items-center gap-3 rounded-card border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all min-w-0">
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-violet-50 transition-colors ${color}`}>
@@ -137,42 +246,45 @@ export default async function Home() {
           ))}
         </div>
 
-        {/* Drafts callout */}
-        {draftAgents.length > 0 && (
-          <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-            <span className="text-sm text-amber-800">
-              <strong>{draftAgents.length} draft{draftAgents.length === 1 ? "" : "s"}</strong> not yet submitted for review.
-            </span>
-            <Link href="/pipeline" className="ml-auto text-xs font-medium text-amber-700 underline hover:text-amber-900">
-              View in pipeline →
-            </Link>
-          </div>
-        )}
-
-        {/* Recent agents */}
+        {/* My agents — grouped by status priority */}
         <section>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Recent Agents</h2>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">My Agents</h2>
           {myAgents.length === 0 ? (
             <div className="flex flex-col items-center rounded-card border border-dashed border-gray-200 bg-white py-14 text-center">
-              <Inbox size={28} className="mb-3 text-gray-300" />
+              <Sparkles size={28} className="mb-3 text-violet-300" />
               <p className="text-sm font-medium text-gray-500">No agents yet</p>
-              <p className="mt-1 text-xs text-gray-400">Start an intake session to design your first agent.</p>
+              <p className="mt-1 text-xs text-gray-400">Describe the agent you want to build to get started.</p>
+              <NewIntakeButton className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors disabled:opacity-50" />
             </div>
           ) : (
             <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
-              {myAgents.slice(0, 8).map((agent, i) => (
-                <Link
-                  key={agent.agentId}
-                  href={`/registry/${agent.agentId}`}
-                  className={`flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-100" : ""}`}
-                >
-                  <Bot size={15} className="shrink-0 text-gray-400" />
-                  <span className="flex-1 truncate text-sm font-medium text-gray-900" title={agent.name ?? "Unnamed Agent"}>{agent.name ?? "Unnamed Agent"}</span>
-                  <StatusBadge status={agent.status} />
-                  <span className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</span>
-                  <ChevronRight size={13} className="text-gray-300" />
-                </Link>
-              ))}
+              {myAgents.slice(0, 12).map((agent, i) => {
+                const report = agent.validationReport as ValidationReport | null;
+                const hasViolations = report && !report.valid;
+                const errorCount = report?.violations?.filter((v) => v.severity === "error").length ?? 0;
+
+                return (
+                  <Link
+                    key={agent.agentId}
+                    href={agent.status === "draft" ? `/blueprints/${agent.id}` : `/registry/${agent.agentId}`}
+                    className={`flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-100" : ""}`}
+                  >
+                    <Bot size={15} className="shrink-0 text-gray-400" />
+                    <span className="flex-1 truncate text-sm font-medium text-gray-900" title={agent.name ?? "Unnamed Agent"}>
+                      {agent.name ?? "Unnamed Agent"}
+                    </span>
+                    {hasViolations && agent.status === "draft" && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700">
+                        <ShieldAlert size={9} />
+                        {errorCount} violation{errorCount !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                    <StatusBadge status={agent.status} />
+                    <span className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</span>
+                    <ChevronRight size={13} className="text-gray-300" />
+                  </Link>
+                );
+              })}
             </div>
           )}
         </section>
