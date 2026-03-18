@@ -1,4 +1,5 @@
 import { GovernancePolicy } from "@/lib/governance/types";
+import { IntakeContext, IntakeClassification } from "@/lib/types/intake";
 
 const BASE_GENERATION_PROMPT = `You are the Intellios Generation Engine. Your role is to produce a complete, production-ready Agent Blueprint Package (ABP) from enterprise intake data.
 
@@ -52,8 +53,72 @@ Given structured intake data describing an agent's purpose, tools, constraints, 
  * This reduces generate → violate → refine cycles, which are the most common source
  * of wasted API calls and increased time-to-review.
  */
-export function buildGenerationSystemPrompt(policies?: GovernancePolicy[]): string {
-  if (!policies || policies.length === 0) return BASE_GENERATION_PROMPT;
+/**
+ * Build a context + classification block for injection into the generation prompt.
+ * Improves blueprint quality by giving Claude the original context signals and risk tier
+ * so it can calibrate governance depth, data classification, and policy completeness.
+ */
+function buildContextClassificationBlock(
+  context: IntakeContext,
+  classification: IntakeClassification | null | undefined
+): string {
+  const dataSensitivityToDataClassification = (s: string): string => {
+    switch (s) {
+      case "public": return "public";
+      case "internal": return "internal";
+      case "confidential": return "confidential";
+      case "pii":
+      case "regulated": return "regulated";
+      default: return "internal";
+    }
+  };
+
+  const dataClassification = dataSensitivityToDataClassification(context.dataSensitivity);
+
+  const lines: string[] = [
+    "",
+    "## Agent Design Context",
+    "",
+    `Purpose: ${context.agentPurpose}`,
+    `Deployment: ${context.deploymentType}`,
+    `Data Sensitivity: ${context.dataSensitivity} → set ownership.dataClassification to "${dataClassification}"`,
+    `Regulatory Scope: ${context.regulatoryScope.join(", ") || "none"}`,
+    `Integrations: ${context.integrationTypes.join(", ") || "none"}`,
+  ];
+
+  if (classification) {
+    lines.push(`Agent Type: ${classification.agentType}`);
+    lines.push(`Risk Tier: ${classification.riskTier}`);
+    lines.push("");
+    lines.push("Apply governance depth appropriate to this risk tier:");
+    switch (classification.riskTier) {
+      case "low":
+        lines.push("- low: minimal governance section; one concise policy sufficient; keep blueprint lean");
+        break;
+      case "medium":
+        lines.push("- medium: standard governance depth (current default behavior)");
+        break;
+      case "high":
+        lines.push("- high: full governance required; ensure all relevant policy types present; include explicit audit config with retention_days and pii_redaction");
+        break;
+      case "critical":
+        lines.push("- critical: maximum governance; ALL 5 policy types required (safety, compliance, data_handling, access_control, audit); strict audit config with retention_days and pii_redaction=true; each policy must have specific rules");
+        break;
+    }
+  }
+
+  lines.push("");
+  return lines.join("\n");
+}
+
+export function buildGenerationSystemPrompt(
+  policies?: GovernancePolicy[],
+  context?: IntakeContext | null,
+  classification?: IntakeClassification | null
+): string {
+  const contextBlock = context ? buildContextClassificationBlock(context, classification) : "";
+
+  if (!policies || policies.length === 0) return BASE_GENERATION_PROMPT + contextBlock;
 
   const lines: string[] = [
     "",
@@ -85,5 +150,5 @@ export function buildGenerationSystemPrompt(policies?: GovernancePolicy[]): stri
     lines.push("");
   }
 
-  return BASE_GENERATION_PROMPT + lines.join("\n");
+  return BASE_GENERATION_PROMPT + contextBlock + lines.join("\n");
 }

@@ -3,6 +3,33 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { Rocket } from "lucide-react";
+
+/**
+ * Map raw AWS SDK / server error strings to actionable operator messages.
+ * Called before setting the error state in the AgentCore deploy modal.
+ */
+function enrichAgentCoreError(raw: string): string {
+  if (raw.includes("AccessDeniedException") || raw.includes("not authorized"))
+    return "AWS permission denied. Verify the IAM role has 'bedrock:CreateAgent' and 'bedrock:InvokeModel' permissions. Check Admin → Settings → Deployment Targets.";
+  if (raw.includes("agentResourceRoleArn") || raw.includes("Invalid agentResourceRoleArn"))
+    return "Invalid IAM role ARN. Update the agentResourceRoleArn in Admin → Settings → Deployment Targets.";
+  if (raw.includes("ValidationException"))
+    return `AWS validation error: ${raw.replace(/^.*?ValidationException:\s*/i, "")}. Check Admin → Settings → Deployment Targets.`;
+  if (raw.includes("ServiceQuotaExceededException"))
+    return "AWS Bedrock agent quota exceeded. Request a quota increase in the AWS console for your region, then retry.";
+  if (raw.includes("ResourceNotFoundException") || (raw.includes("model") && raw.includes("not found")))
+    return "Foundation model not found or not enabled in this region. Check the foundation model ID in Admin → Settings → Deployment Targets.";
+  if (raw.includes("foundationModel"))
+    return "Foundation model error. Verify the model ID is correct and enabled in your AWS region via Admin → Settings → Deployment Targets.";
+  if (raw.includes("did not reach PREPARED state"))
+    return "Agent preparation timed out (90s). The agent may still be preparing in AWS — check the Bedrock console. If the agent is not visible there, retry the deployment.";
+  if (raw.includes("AgentCore config missing") || raw.includes("Invalid agentResourceRoleArn format"))
+    return `Configuration error: ${raw}. Update deployment settings in Admin → Settings → Deployment Targets.`;
+  if (raw.includes("CreateAgent failed"))
+    return `Agent creation failed: ${raw.replace(/^.*?CreateAgent failed:\s*/i, "")}`;
+  return raw;
+}
 
 interface Agent {
   id: string;
@@ -89,15 +116,15 @@ function DeployConfirmModal({
         {/* Modal header */}
         <div className="border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 text-sm">
-              🚀
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+              <Rocket size={16} />
             </span>
             <div>
               <h2 className="text-sm font-semibold text-gray-900">
                 Deploy to Production
               </h2>
               <p className="text-xs text-gray-500">
-                {modal.agent.name ?? "Unnamed Agent"} — v{modal.agent.version}
+                {modal.agent.name ?? `Agent ${modal.agent.agentId.slice(0, 8)}`} — v{modal.agent.version}
               </p>
             </div>
           </div>
@@ -217,7 +244,7 @@ function AgentCoreDeployModal({
             <div>
               <h2 className="text-sm font-semibold text-gray-900">Deploy to AgentCore</h2>
               <p className="text-xs text-gray-500">
-                {agcModal.agent.name ?? "Unnamed Agent"} — v{agcModal.agent.version}
+                {agcModal.agent.name ?? `Agent ${agcModal.agent.agentId.slice(0, 8)}`} — v{agcModal.agent.version}
               </p>
             </div>
           </div>
@@ -245,7 +272,7 @@ function AgentCoreDeployModal({
                 </p>
               </div>
               <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                The deployment may take up to 30 seconds while Bedrock prepares the agent.
+                The deployment may take up to 90 seconds while Bedrock prepares the agent.
                 Do not close this window during deployment.
               </p>
             </div>
@@ -324,12 +351,22 @@ function AgentCoreDeployModal({
             </>
           )}
           {(agcModal.phase === "success" || agcModal.phase === "error") && (
-            <button
-              onClick={onClose}
-              className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              Close
-            </button>
+            <div className="flex items-center gap-3">
+              {agcModal.phase === "success" && (
+                <Link
+                  href={`/registry/${agcModal.agent.agentId}`}
+                  className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+                >
+                  View in Registry →
+                </Link>
+              )}
+              <button
+                onClick={onClose}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+              >
+                Done
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -408,8 +445,8 @@ export default function DeploymentConsolePage() {
 
       const data = await res.json();
       if (!res.ok) {
-        const msg = data.message ?? data.error ?? "Deployment failed";
-        setAgcModal((m) => m && { ...m, phase: "error", error: msg });
+        const raw = data.message ?? "Deployment failed";
+        setAgcModal((m) => m && { ...m, phase: "error", error: enrichAgentCoreError(raw) });
         return;
       }
 
@@ -431,7 +468,7 @@ export default function DeploymentConsolePage() {
         m && {
           ...m,
           phase: "error",
-          error: err instanceof Error ? err.message : "Deployment failed",
+          error: enrichAgentCoreError(err instanceof Error ? err.message : "Deployment failed"),
         }
       );
     }
@@ -452,7 +489,7 @@ export default function DeploymentConsolePage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Deployment failed");
+        throw new Error(data.message ?? "Deployment failed");
       }
       const agentId = modal.agent.id;
       setAgents((prev) =>
@@ -467,7 +504,7 @@ export default function DeploymentConsolePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="px-8 py-8 space-y-8">
       {/* Standard deployment confirmation modal */}
       {modal && (
         <DeployConfirmModal
@@ -487,30 +524,13 @@ export default function DeploymentConsolePage() {
         />
       )}
 
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-5xl flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">Deployment Console</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Promote approved agents to production
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/pipeline"
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              Pipeline →
-            </Link>
-            <Link href="/" className="text-sm text-gray-400 hover:text-gray-700">
-              ← Home
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Page header */}
+      <div>
+        <h1 className="text-xl font-semibold text-gray-900">Deployment Console</h1>
+        <p className="mt-0.5 text-sm text-gray-500">Promote approved agents to production</p>
+      </div>
 
-      <main className="mx-auto max-w-5xl px-6 py-8 space-y-8">
+      <div className="space-y-8">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
@@ -518,7 +538,7 @@ export default function DeploymentConsolePage() {
         )}
 
         {/* ── Summary stats ───────────────────────────────────────────────── */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {[
             {
               label: "Deployed",
@@ -536,15 +556,8 @@ export default function DeploymentConsolePage() {
                 : "bg-white border-gray-200 text-gray-900",
               subColor: readyToDeploy.length > 0 ? "text-green-600" : "text-gray-400",
             },
-            {
-              label: "Total Agents",
-              value: loading ? "–" : agents.length,
-              sub: "in registry",
-              color: "bg-white border-gray-200 text-gray-900",
-              subColor: "text-gray-400",
-            },
           ].map(({ label, value, sub, color, subColor }) => (
-            <div key={label} className={`rounded-xl border p-5 ${color}`}>
+            <div key={label} className={`rounded-card border p-5 ${color}`}>
               <div className="text-3xl font-bold">{value}</div>
               <div className="mt-1 text-sm font-medium">{label}</div>
               <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
@@ -559,7 +572,7 @@ export default function DeploymentConsolePage() {
           </h2>
 
           {!loading && readyToDeploy.length === 0 && (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
+            <div className="rounded-card border border-dashed border-gray-300 bg-white p-10 text-center">
               <p className="text-sm text-gray-400">No agents are currently approved and awaiting deployment.</p>
               <p className="mt-1 text-xs text-gray-400">
                 Agents must pass review before they can be deployed.{" "}
@@ -573,7 +586,7 @@ export default function DeploymentConsolePage() {
               {readyToDeploy.map((agent) => (
                 <div
                   key={agent.agentId}
-                  className="flex items-center justify-between rounded-xl border border-green-200 bg-white px-5 py-4"
+                  className="flex flex-wrap items-center gap-y-3 rounded-card border border-green-200 bg-white px-5 py-4"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -581,7 +594,7 @@ export default function DeploymentConsolePage() {
                         href={`/registry/${agent.agentId}`}
                         className="font-medium text-gray-900 hover:underline"
                       >
-                        {agent.name ?? "Unnamed Agent"}
+                        {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
                       </Link>
                       <StatusBadge status={agent.status} />
                     </div>
@@ -604,7 +617,7 @@ export default function DeploymentConsolePage() {
                       </p>
                     )}
                   </div>
-                  <div className="ml-4 flex shrink-0 items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 ml-auto">
                     <a
                       href={`/api/blueprints/${agent.id}/export/agentcore`}
                       download
@@ -642,19 +655,19 @@ export default function DeploymentConsolePage() {
           {loading && (
             <div className="space-y-2">
               {[1, 2].map((i) => (
-                <div key={i} className="h-16 animate-pulse rounded-xl bg-gray-100" />
+                <div key={i} className="h-16 animate-pulse rounded-card bg-gray-100" />
               ))}
             </div>
           )}
 
           {!loading && deployed.length === 0 && (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
+            <div className="rounded-card border border-dashed border-gray-300 bg-white p-10 text-center">
               <p className="text-sm text-gray-400">No agents are currently deployed.</p>
             </div>
           )}
 
           {!loading && deployed.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-x-auto rounded-card border border-gray-200 bg-white">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -670,7 +683,7 @@ export default function DeploymentConsolePage() {
                   {deployed.map((agent) => (
                     <tr key={agent.agentId} className="hover:bg-gray-50">
                       <td className="px-5 py-3">
-                        <span className="font-medium text-gray-900">{agent.name ?? "Unnamed Agent"}</span>
+                        <span className="font-medium text-gray-900">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</span>
                       </td>
                       <td className="px-5 py-3 font-mono text-gray-500 text-xs">v{agent.version}</td>
                       <td className="px-5 py-3">
@@ -721,7 +734,7 @@ export default function DeploymentConsolePage() {
             </div>
           )}
         </section>
-      </main>
+      </div>
     </div>
   );
 }

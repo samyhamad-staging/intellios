@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   IntakePayload,
   IntakeContext,
+  IntakeRiskTier,
   ContributionDomain,
   StakeholderContribution,
   AmbiguityFlag,
@@ -11,14 +12,17 @@ import {
   PolicyQualityItem,
 } from "@/lib/types/intake";
 import { getMissingContributionDomains } from "@/lib/intake/coverage";
+import { CompletenessMap } from "./completeness-map";
 
 interface IntakeReviewProps {
   sessionId: string;
   payload: IntakePayload;
   context: IntakeContext | null;
   contributions?: StakeholderContribution[];
+  riskTier?: IntakeRiskTier | null;
   onGenerate: () => void;
   generating: boolean;
+  generateSuccess?: boolean;
   generateError: string | null;
 }
 
@@ -240,8 +244,10 @@ export function IntakeReview({
   payload,
   context,
   contributions = [],
+  riskTier,
   onGenerate,
   generating,
+  generateSuccess = false,
   generateError,
 }: IntakeReviewProps) {
   const [acknowledged, setAcknowledged] = useState<Set<SectionKey>>(new Set());
@@ -286,7 +292,7 @@ export function IntakeReview({
 
         {/* Context summary strip */}
         {context && (
-          <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-card border border-gray-200 bg-white px-5 py-4 shadow-sm">
             <div className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Enterprise Context</div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
               <div>
@@ -299,23 +305,31 @@ export function IntakeReview({
               </div>
               <div>
                 <div className="text-xs text-gray-400">Regulatory scope</div>
-                <div className="text-gray-800 font-medium">{context.regulatoryScope.join(", ") || "None"}</div>
+                <div className="text-gray-800 font-medium">{(context.regulatoryScope ?? []).join(", ") || "None"}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-400">Integrations</div>
-                <div className="text-gray-800 font-medium">{context.integrationTypes.join(", ") || "None"}</div>
+                <div className="text-gray-800 font-medium">{(context.integrationTypes ?? []).join(", ") || "None"}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-400">Stakeholders consulted</div>
-                <div className="text-gray-800 font-medium">{context.stakeholdersConsulted.join(", ") || "None"}</div>
+                <div className="text-gray-800 font-medium">{(context.stakeholdersConsulted ?? []).join(", ") || "None"}</div>
               </div>
             </div>
           </div>
         )}
 
+        {/* Completeness map — Phase 49 */}
+        <CompletenessMap
+          payload={payload}
+          context={context}
+          riskTier={riskTier}
+          contributions={contributions}
+        />
+
         {/* Ambiguity flags */}
         {unresolvedFlags.length > 0 && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-card border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-amber-600">⚠</span>
@@ -348,8 +362,8 @@ export function IntakeReview({
         )}
 
         {/* Stakeholder contributions */}
-        {(contributions.length > 0 || (context && getMissingContributionDomains(context, contributions).length > 0)) && (
-          <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+        {(contributions.length > 0 || (context && getMissingContributionDomains(context, contributions, riskTier).length > 0)) && (
+          <div className="mb-6 rounded-card border border-gray-200 bg-white px-5 py-4 shadow-sm">
             <div className="flex items-baseline gap-2 mb-3">
               <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Stakeholder Input
@@ -398,7 +412,7 @@ export function IntakeReview({
             )}
             {/* Missing-domain callout */}
             {context && (() => {
-              const missing = getMissingContributionDomains(context, contributions);
+              const missing = getMissingContributionDomains(context, contributions, riskTier);
               if (missing.length === 0) return null;
               return (
                 <div className={`rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs ${contributions.length > 0 ? "mt-4" : ""}`}>
@@ -429,7 +443,7 @@ export function IntakeReview({
 
         {/* Capture verification — only shown when assessments are present */}
         {captureVerification.length > 0 && (
-          <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-card border border-gray-200 bg-white px-5 py-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -482,7 +496,7 @@ export function IntakeReview({
 
         {/* Policy quality warnings — only shown when inadequate policies exist */}
         {inadequatePolicies.length > 0 && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-card border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-amber-600">⚠</span>
               <div className="text-xs font-semibold uppercase tracking-wider text-amber-700">
@@ -519,7 +533,7 @@ export function IntakeReview({
             return (
               <div
                 key={key}
-                className={`rounded-xl border bg-white shadow-sm transition-colors ${
+                className={`rounded-card border bg-white shadow-sm transition-colors ${
                   !filled
                     ? "border-gray-200 opacity-60"
                     : isAcknowledged
@@ -585,15 +599,40 @@ export function IntakeReview({
               Check all filled sections to confirm their content before generating.
             </p>
           )}
+          {/* Soft warning: unresolved ambiguity flags indicate tentative requirements.
+              Does NOT block generation — designer can proceed, reviewers will see flags. */}
+          {canGenerate && unresolvedFlags.length > 0 && (
+            <div className="w-full rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+              <div className="flex items-start gap-2">
+                <span className="text-amber-500 mt-0.5 shrink-0">⚠</span>
+                <div>
+                  <span className="font-medium text-amber-800">
+                    {unresolvedFlags.length} requirement{unresolvedFlags.length > 1 ? "s" : ""} flagged as uncertain
+                  </span>
+                  <span className="text-amber-700">
+                    {" "}— consider revisiting the intake conversation to resolve them. You can still generate, but reviewers will see these flags in the governance report.
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
           {generateError && (
             <p className="text-sm text-red-600">{generateError}</p>
           )}
           <button
             onClick={onGenerate}
-            disabled={!canGenerate || generating}
-            className="rounded-lg bg-gray-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled={!canGenerate || generating || generateSuccess}
+            className={`rounded-lg px-6 py-2.5 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed ${
+              generateSuccess
+                ? "bg-green-600 disabled:opacity-100"
+                : "bg-gray-900 hover:bg-gray-800 disabled:opacity-40"
+            }`}
           >
-            {generating ? "Generating blueprint…" : "Generate Blueprint →"}
+            {generateSuccess
+              ? "✓ Blueprint ready — opening workbench…"
+              : generating
+                ? "Generating blueprint…"
+                : "Generate Blueprint →"}
           </button>
         </div>
       </div>

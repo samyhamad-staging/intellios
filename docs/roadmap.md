@@ -1,6 +1,114 @@
 # Intellios Roadmap
 
-## Current Phase: Phase 31 ✓ Complete (2026-03-15) — AI Experience Optimization
+## Current Phase: Session 064 ✓ Complete (2026-03-18) — Design System + UX Improvements
+
+Design system fully token-based (no raw Tailwind color classes remaining in UI). Status badges and risk tier indicators use icon shape + color. Five information hierarchy improvements across main pages. KpiCard extracted as shared component. Remaining design audit items: component consolidation (DataTable, SectionCard, AgentRow), typography/spacing/shadow token sets, empty-state component.
+
+---
+
+## ✓ Phase 53 Complete (2026-03-17) — Viewer Role + Role Model Optimization
+
+---
+
+## ✓ Phase 53 Complete (2026-03-17) — Viewer Role + Role Model Optimization
+
+New 5th role `viewer` added to the Intellios role model (previously: `designer | reviewer | compliance_officer | admin`). **Context:** Phase 49 evaluation identified that giving a CRO/CISO/external auditor fleet-posture visibility required making them `admin` — granting user management, enterprise settings, and AgentCore deployment authority, which no enterprise security team would accept. **Viewer capabilities (read-only):** fleet governance dashboard, compliance posture page, monitoring intelligence, audit trail (enterprise-scoped), governance analytics, MRM reports, evidence packages, agent registry. **Viewer cannot:** create/edit blueprints, approve/reject/deploy, create/edit governance policies, trigger health checks, manage users or enterprise settings. **Implementation:** `"viewer"` added to `Role` type; 8 API read-gates updated; 3 admin user-management routes updated (viewer is now an assignable role in the invite/create/update flows); sidebar updated with Governance + Monitor nav sections for viewer; home page hides `NewIntakeButton` for viewer (falls through to fleet overview); compliance page client-side gate updated; governance page `canViewAnalytics` extended to viewer. **Rec 4 fix (same session):** `GET /api/blueprints/[id]/export/code` was missing the `approved | deployed` status gate that compliance and AgentCore exports already enforce — now added. **Rec 3 (non-issue):** `GET /api/blueprints/[id]/test-runs` already uses `requireAuth()` with no role restriction; compliance officers already had access. 17 files modified, 0 migrations, 0 new deps. TypeScript: 0 new errors (pre-existing errors in test files unchanged).
+
+---
+
+## ✓ Phase 52 Complete (2026-03-17) — Blueprint Lineage with Governance Diff
+
+When a blueprint spawns a new version via "Create New Version," the system now automatically computes and permanently stores the governance diff between source and new blueprint. **Schema**: two new columns on `agent_blueprints` — `previous_blueprint_id UUID` (FK, null for v1) and `governance_diff JSONB` (null for v1). **Diff engine**: existing `diffABP()` function (added in Phase 23) called in the new-version route at creation time; diff includes per-section breakdown (governance/capabilities/constraints/identity), per-change type (added/removed/modified), significance (major/minor/patch), and totalChanges. **Audit enhancement**: `governanceDiffSignificance` and `governanceDiffChangeCount` stored in the blueprint.created audit event for every new version. **Registry UI**: "VERSION LINEAGE" panel in Versions tab renders when at least one version has `governanceDiff != null`; shows v{from}→v{to} arrow, colored significance badge (major=red, minor=amber, patch=gray), change count, "View changes ↓" toggle, expandable per-section breakdown with per-change type icons (+/−/~), and governance implication notes (re-validation required for governance section changes; safety policy review triggered for instruction changes; constraint re-validation recommended for tool changes). Verified end-to-end: created v2.0.0 from deployed v1.0.0 Credit Risk Assessment Agent — "Patch — identity or metadata only", 0 changes (correct for metadata-only new version). 1 new migration (0023), 4 files modified. **Completes the three-action strategic plan from Phase 49 evaluation.** TypeScript: 0 errors.
+
+---
+
+## ✓ Phase 51 Complete (2026-03-17) — Fleet Governance Dashboard
+
+CRO/CISO-facing aggregate risk posture view on the admin Overview page. **New component** `FleetGovernanceDashboard` (async server component) — joins `agentBlueprints` with `intakeSessions` to get `riskTier`; filters to `approved | deployed` status; enterprise-scoped. **Risk tier derivation**: uses intake classification when available; falls back to governance policy-type logic (safety + compliance → high, one → medium, neither → low) for older agents without intake context. **Renders**: 4 risk tier KPI cards (Critical/High/Medium/Low counts, color-coded), governance alert chips (overdue for review, with governance errors, not yet validated), per-agent fleet table (agent name + version + status + policy count, risk tier badge, governance health ✓/⚠/✗, next review date or "Overdue" badge, "View Report" evidence link). Admin sees all agents; non-admin roles are enterprise-filtered. No new data model — pure query + presentation layer over existing governance infrastructure. 1 new file, 1 modified.
+
+---
+
+## ✓ Phase 50 Complete (2026-03-17) — Evidence Package Export
+
+One-click regulatory evidence bundle for approved and deployed agents. **New route** `GET /api/blueprints/[id]/evidence-package` — accessible to `designer | reviewer | compliance_officer | admin` (broader than the existing compliance export, which required `compliance_officer | admin`). Status gate: `approved | deployed` only. **Bundle contents**: full 14-section MRM compliance report (assembled by `assembleMRMReport()`), multi-step approval chain (`approvalProgress` records with decision/actor/timestamp/comment), AI quality evaluation (5 scored dimensions), and all behavioral test run evidence. **Blueprint Studio integration**: new "Audit Evidence" section in the right rail for approved/deployed blueprints — "EXAM-READY" badge, framing copy, "View Compliance Report" link (to print-optimized MRM report page), "↓ Export Evidence Package" button (triggers download). Audit: `blueprint.evidence_package_exported` written on every export. No new data model — all data existed. 1 new file, 1 modified.
+
+---
+
+## ✓ Phase 49 Complete (2026-03-17) — Intake Confidence Engine
+
+Intake reads the room. **Expertise detection**: after turn 2, `detectExpertiseLevel()` scores user messages for technical vs. business vocabulary and uncertainty signals — returning `"guided"`, `"adaptive"`, or `"expert"`. The detected level persists to `intakeSessions.expertise_level` and adapts Claude's communication register: Guided mode gets structured sub-questions, examples, and plain-language framing; Expert mode gets concise validation-focused exchanges without hand-holding; Adaptive mirrors the designer's vocabulary. **Adaptive model routing**: Guided mode routes to Sonnet for first 6 turns (richer language quality for non-technical designers). **Topic-specific probing rules**: `buildTopicProbingRules()` generates 0-8 soft advisory rules from context + agent type — customer-facing agents get fallback/rate-limiting/error-messaging probes; external API agents get auth/retry probes; PII data gets masking-scope probes; autonomous agents get human-oversight/override/escalation probes. These inject after the existing governance probing block in the system prompt. **Live Readiness Score**: Phase 2 sidebar shows a 0-100 score (section coverage + governance depth + specificity) with color-coded progress bar and label ("Getting started" → "Building requirements…" → "Nearly complete" → "✓ Ready to finalize"); updates on every payload poll. **Completeness Map**: Phase 3 review shows a 7-domain grid — status-colored cards (required/optional × filled/sparse/empty) with stakeholder-contribution indicators and trigger-reason labels that explain why a domain is required. **Tentative-items warning**: soft amber callout on the generate button when `unresolvedFlags > 0` — non-blocking, surfaces uncertainty without preventing generation. 1 schema migration (0022), 5 new files, 6 modified. TypeScript: 0 new errors.
+
+---
+
+## ✓ Phase 48 Complete (2026-03-17) — Stakeholder Collaboration Workspace
+
+## ✓ Phase 48 Complete (2026-03-17) — Stakeholder Collaboration Workspace
+
+Full multi-stakeholder AI-orchestrated collaboration system. **External domain experts** (Compliance, Legal, IT, etc.) can now contribute requirements without an Intellios account via token-gated public workspaces. **RACI authority model** per domain: each stakeholder's AI interview is tonally adapted — Accountable owners focus on non-negotiables, Responsible owners on implementation concerns, Consulted experts on domain requirements, Informed stakeholders on concerns/dependencies. **Shared synthesis**: stakeholders see a live AI-generated summary of what's already been agreed, so each interview builds on prior contributions rather than repeating them. **AI Orchestrator** (`claude-haiku-4-5-20251001`) runs fire-and-forget after every contribution: generates synthesis + conflict detection + gap analysis + suggested next invitations; saves as `intakeAIInsights` rows. **Designer insights panel**: per-domain rows with RACI badge, invitee name, status; inline invite form; AI Orchestrator section with collapse/expand insight cards, dismiss, approve-to-act. **Auto-invitation on insight approval**: when a designer approves a "suggest invite" insight, the system auto-creates the invitation and sends the email — closing the orchestrator→action loop. 10 new files, 8 modified, 2 DB migrations (0020/0021). TypeScript: 0 errors.
+
+---
+
+## ✓ Session 056 Complete (2026-03-16) — UI/UX Polish Pass
+
+Four targeted improvements to data-dense screens. **Workspace Activity deduplication:** `groupItems()` collapses consecutive identical `(actorName, description)` pairs with `×N` count badge — 25 identical rows → 1 with ×25. **User Management redesign:** 3-column `[3fr_2fr_1fr]` grid; two-line user cell (name + email); role-colored `border-l-2` stat cards; hover-reveal PenLine edit icon; Mail icon invite button; self-row `bg-violet-50/40` highlight; human-readable dates with `whitespace-nowrap`. **Compliance Activity Trends:** all-zero early exit to clean empty state (no empty bars); combined overlapping bar per month (blue-100 background + green-400/70 fill); `[80px_1fr_72px]` grid; `"Oct 2025"` month labels from ISO `"2025-10"`; right-aligned `submitted / approved` counts. **Intake Sessions rows:** `"by [username] · [timeAgo]"` as third content line (username from email before `@`); removed right-side metadata div; tags + chevron remain. 0 new files, 4 rewrites, 0 migrations, 0 deps. TypeScript: 0 errors.
+
+---
+
+## ✓ Phase 47 Complete (2026-03-16) — Help Copilot
+
+One-shot Q&A had no conversation memory — follow-up questions lost all context. **Multi-turn copilot:** `/api/help/ask` replaced by `/api/help/chat` accepting full `UIMessage[]` history + pathname; `convertToModelMessages()` + `toUIMessageStreamResponse()` (same pattern as Blueprint Simulate). Client upgraded from manual `ReadableStream` decoding to `useChat()` hook with `DefaultChatTransport({ body: { pathname } })` in `useMemo([pathname])`. `MessageBubble` renders user (dark right) + assistant (light left) bubbles. Three-dot streaming indicator. Trash2 clear button in header resets to suggestion cards. System prompt updated to instruct multi-turn behavior and proactive follow-up suggestions. Token limit doubled to 800. Panel widened to 400px. 1 new file, 1 rewrite, 1 deleted, 0 migrations, 0 deps. TypeScript: 0 production errors.
+
+---
+
+## ✓ Phase 46 Complete (2026-03-16) — Contextual Help Panel
+
+Zero help infrastructure existed. Users had no way to understand features or workflows without leaving the page. **"Ask Intellios" help panel:** `?` (HelpCircle) button in sidebar footer triggers a 360px right-side overlay. Suggested questions are computed entirely client-side (no API call) using `usePathname()` + role — 8 pathname prefixes × role → 4 tailored questions, with a global fallback. Users can also type any free-form question. Streaming AI answers via `claude-haiku-4-5-20251001` with `toTextStreamResponse()` — responses feel instant. ReactMarkdown renders formatted answers. Backdrop click or Escape key closes the panel. `buildHelpSystemPrompt()` covers all 5 subsystems, agent lifecycle, 4 roles, risk tiers, agent types, and governance concepts. 2 new files, 1 modified, 0 migrations, 0 deps. TypeScript: 0 production errors.
+
+---
+
+## ✓ Phase 45 Complete (2026-03-16) — Notification Settings, Blueprint Regeneration + Status Polling
+
+Three behavioral gaps closed. **Notification settings wired:** `handler.ts` now loads `getEnterpriseSettings()` and gates all `sendEmail()` calls behind `notifyOnApproval`; `adminEmail` CC added for approved/deployed events. `createNotification()` remains unconditional — in-app notifications always fire. **Blueprint regeneration:** `POST /api/blueprints/[id]/regenerate` re-runs `generateBlueprint()` + `validateBlueprint()` from stored intake session, updates draft row in-place (no insert), resets `refinementCount` to 0. "Regenerate Blueprint" button in Blueprint Studio right rail (draft only) with two-step amber confirm state. **Status polling:** 30s visibility-aware `setInterval` polling `useEffect` added to registry detail page using the existing `load()` callback — catches external status changes without manual refresh. 1 new file, 5 modified, 0 migrations, 0 deps. TypeScript: 0 errors.
+
+---
+
+## ✓ Phase 44 Complete (2026-03-16) — Surface Latent Data + Activate Middleware
+
+Three gaps closed using existing data and infrastructure: **Auth middleware activated** — `proxy.ts` renamed to `middleware.ts` (git mv, no content change); edge auth was never running. **Governance scores in Versions tab** — `validationReport` was already fetched but not displayed; added Governance column with pass/fail badge and error/warning counts from `violations` by severity. **Quality Index KPI on admin Overview** — `getRecentSnapshots()` called directly from server component; Governance Health section with score/100 and delta now visible on the first page admins see. 0 new files, 3 modified, 0 migrations, 0 deps. TypeScript: 0 errors.
+
+---
+
+## ✓ Phase 43 Complete (2026-03-16) — Last-Mile Completions + Blueprint Iteration
+
+Three orphaned/broken features closed. **Notification Bell wired**: `NotificationBell` (Phase 3) added to sidebar header — was fully built but never imported. **Version diff confirmed complete**: `GET /api/blueprints/[id]/diff` + `diffABP()` engine + `VersionDiff` component were all already built; feature is end-to-end functional. **Blueprint iteration**: `POST /api/blueprints/[id]/new-version` creates a new draft version of the same logical agent (same `agentId`, major semver bump, lifecycle state reset); "Create New Version" button in `LifecycleControls` for approved/deployed status. 1 new file, 3 modified. 0 DB migrations. 0 new npm dependencies. TypeScript: 0 errors.
+
+---
+
+## ✓ Phase 42 Complete (2026-03-16) — Activation & Visibility
+
+Blueprint Template Library (6 production-ready starters, `/templates` gallery, one-click use flow, welcome page step 1) + Workspace Activity Feed (humanized audit log on admin Overview). 7 new files, 6 modified, 0 migrations, 0 deps. TypeScript: 0 errors.
+
+---
+
+## ✓ Phase 41 Complete (2026-03-16) — Growth & Security
+
+Self-Service Enterprise Registration: any organization can create a workspace from the landing page — admin account created, enterprise settings seeded, SR 11-7 governance policies pre-loaded, `/welcome` onboarding checklist. Adversarial Red-Teaming: two-phase AI security evaluation in the Simulate tab — Sonnet generates 10 tailored attack prompts (2 per category: scope_creep, jailbreak, data_exfiltration, instruction_override, governance_bypass), Haiku evaluates all 10 in parallel, produces a scored RedTeamReport with risk tier (LOW/MEDIUM/HIGH/CRITICAL) and expandable attack rows. Landing + login CTAs updated to drive registrations. 5 new files. 0 DB migrations. 0 new npm dependencies. TypeScript: 0 errors.
+
+---
+
+## ✓ Phase 40 Complete (2026-03-16) — Close the Factory Loop
+
+Three components that make "deploy" mean something. **Agent Playground**: "Simulate" tab on Registry detail — live sandboxed Claude chat using the blueprint's system prompt, tools as narrative context, and governance rules as constraints. Stateless (messages client-side only). **Agent Code Export**: "Export Agent Code ↓" button downloads a single-file TypeScript agent with system prompt, tool stubs, and a working agentic loop. **Public Landing Page**: `/landing` serves unauthenticated visitors; unauthenticated `/` redirects there. 5 new files. 0 DB migrations. 0 new npm dependencies. TypeScript: 0 errors.
+
+---
+
+## ✓ Phase 39 Complete (2026-03-15) — Role-Optimized UX
+
+12 targeted UX fixes across Designer, Reviewer, Compliance Officer, and all roles. No new routes, migrations, or dependencies. Key changes: intake form submit button violet+spinner, quality popover dimension descriptions, classification rationale display, pipeline Draft empty CTA, review step badge role-awareness, violations→Governance Hub link, approval history in Versions tab, compliance KPI card anchors + subtitles + count links, null agent name fallback shows short ID, AgentCore success modal "View in Registry".
+
+---
+
+## ✓ Phase 38 Complete (2026-03-15) — Classification-First Adaptive Intake
 
 ---
 
@@ -621,10 +729,116 @@ Makes Intellios's embedded AI capabilities visible, interpretable, and trustwort
 
 ---
 
+## Phase 32 — UI Transformation ✓ Complete (2026-03-15 Session 037)
+
+Transforms Intellios from a gray prototype into a polished product-grade interface. Design direction: dark sidebar + light content (Linear/Vercel aesthetic). Installed `lucide-react` and `geist`. No DB migrations. No new API routes. No behavioral changes.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| Install lucide-react + geist | P0 | ✓ Complete | `lucide-react ^0.487.0` + `geist ^1.3.0` added to package.json |
+| CSS design tokens + Geist font | P0 | ✓ Complete | `--sidebar-bg/border/text/accent`, `--content-bg`, `--shadow-card/raised` in `:root`; WebKit scrollbar styles |
+| Dark sidebar layout | P0 | ✓ Complete | `slate-900` sidebar (240px); violet-500 accent; role-gated nav; user chip; replaces horizontal top-nav |
+| `sidebar.tsx` new component | P0 | ✓ Complete | Brand strip, grouped nav with Lucide icons, active state (`border-l-2 border-violet-500`), user chip + sign-out |
+| Layout.tsx sidebar integration | P0 | ✓ Complete | `flex h-screen overflow-hidden` layout; login page excluded; Geist Sans applied via `next/font` |
+| Overview page redesign | P1 | ✓ Complete | `LayoutDashboard` icon, stats row, quick-action cards, activity list |
+| Intake page redesign | P1 | ✓ Complete | `MessageSquare` icon, session rows, amber in-progress strip, `Inbox` empty state |
+| Pipeline page surgical edits | P1 | ✓ Complete | Removed `← Home`, layout constraint removed |
+| Registry page redesign | P1 | ✓ Complete | `Library` icon, `Search` in bar, `Bot` row icons, pill toggle status filter |
+| Review page redesign | P1 | ✓ Complete | `ClipboardList` icon, pending count badge, `ClipboardCheck` empty state |
+| Governance page redesign | P1 | ✓ Complete | `Shield` icon, `Plus` on New Policy (violet), `Download` on template import |
+| Compliance page redesign | P1 | ✓ Complete | `CheckSquare` icon, `AlertTriangle` on risk indicators, 3+2 KPI layout |
+| Dashboard page redesign | P1 | ✓ Complete | `BarChart3` icon, `TrendingUp`/`TrendingDown` on KPI cards |
+| Deploy page redesign | P1 | ✓ Complete | `Rocket` icon, green `border-l-2` ready rows, `Globe` on live rows, modal emoji→icon |
+| Monitor page redesign | P1 | ✓ Complete | `Activity` icon, `RefreshCw` on Check All, removed `max-w` constraint |
+| Audit page redesign | P1 | ✓ Complete | `ScrollText` icon, `Download` icon on Export CSV |
+| Admin pages redesign (users, settings, webhooks) | P1 | ✓ Complete | Consistent inline header pattern, violet-600 CTAs, removed breadcrumb links |
+| Governance sub-pages redesign (new, edit) | P1 | ✓ Complete | `px-8 py-8` + `max-w-3xl`, `h-64` loading states |
+| StatusBadge colored dot | P2 | ✓ Complete | `STATUS_DOT` record; `h-1.5 w-1.5 rounded-full` dot before label |
+| BlueprintView section icons | P2 | ✓ Complete | Optional `icon?: LucideIcon` prop; 7 sections mapped to Lucide icons |
+| ReviewPanel action icons | P2 | ✓ Complete | `Sparkles` on AI Brief; `ThumbsUp`/`ThumbsDown` on submit button |
+| ChatContainer prompt card icons | P2 | ✓ Complete | `ArrowRight` right-aligned; hover color violet |
+
+---
+
+## Phase 33 — AgentCore Integration Confidence ✓ Complete (2026-03-15 Session 038)
+
+Systematically hardens the AgentCore integration (Phases 29–30) to reach production-grade confidence. No DB migrations. No new runtime npm dependencies (vitest is devDependency only). Pre-existing webhooks.tsx TypeScript error unrelated to this phase.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| Settings Zod schema for agentcore config | P0 | ✓ Complete | `AgentCoreConfigSchema` in admin settings PUT; region regex, ARN regex, guardrail co-validation; HTTP 400 on malformed config |
+| Instruction padding fix | P0 | ✓ Complete | Short-but-real instructions padded (not replaced) to meet Bedrock's 40-char minimum |
+| Polling timeout 30s → 90s | P0 | ✓ Complete | `POLL_MAX_ATTEMPTS = 180`; UI copy updated; dynamic error message self-corrects |
+| Pre-flight config validation | P0 | ✓ Complete | `validateAgentCoreConfig()` called before `BedrockAgentClient` instantiation; fails with clear message before any AWS calls |
+| Error message enrichment | P0 | ✓ Complete | `enrichAgentCoreError()` maps 6 AWS error patterns to actionable operator guidance in the deploy modal |
+| vitest setup | P0 | ✓ Complete | `vitest ^3.0.0` + `@vitest/coverage-v8` devDependencies; `vitest.config.ts`; `test`, `test:watch`, `test:coverage` scripts |
+| Translation layer unit tests | P0 | ✓ Complete | 37 tests for `translateAbpToBedrockAgent()` + `buildAgentCoreExportManifest()`; zero AWS dependency; covers name sanitization, instruction padding, action groups, memory, tags, guardrails, manifest |
+| Deploy route integration tests | P1 | ✓ Complete | 12 tests with `vi.mock(@aws-sdk/client-bedrock-agent)`; covers happy path, all 3 failure steps, rollback, polling timeout, terminal state, pre-flight validation |
+| AgentCore live health endpoint | P1 | ✓ Complete | `GET /api/monitor/agentcore-health`; calls `GetAgent` per deployed agent; 5s timeout; `UNREACHABLE` on failure; summary object |
+| Monitor page AgentCore Live Status section | P1 | ✓ Complete | "Check Live AWS Status" button (compliance_officer + admin only); Bedrock status badges; only renders when AgentCore agents exist |
+| ADR-011 | P2 | ✓ Complete | Captures test runner choice, timeout rationale, padding behavior change, agentVersion limitation |
+| Operator setup guide | P2 | ✓ Complete | `docs/guides/agentcore-setup.md` — IAM setup, credential sources, model access, settings config, export vs deploy paths, live monitoring, known limitations, troubleshooting |
+
+**Test results:** 49/49 passing (37 translation + 12 deploy). Coverage target: ≥80% lines on `lib/agentcore/**`.
+
+---
+
+## Phase 34 — Showcase Readiness ✓ Complete (2026-03-15 Session 039)
+
+Hardens Intellios for live demo showcasing. Six targeted deliverables that collectively eliminate blank error screens, loading gaps, empty states, and the absence of rich demo data. No DB migrations. No new npm dependencies.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| `src/app/error.tsx` — branded error boundary | P0 | ✓ Complete | Next.js client error boundary; `error.digest` reference ID; "Try again" reset + "Return home"; matching design system |
+| `src/app/not-found.tsx` — branded 404 | P0 | ✓ Complete | Static 404 page; no sidebar (unauthenticated layout); violet-600 "404" label; matching design system |
+| `src/lib/db/seed-demo.ts` — Acme Financial demo seed | P0 | ✓ Complete | ~530 lines; idempotent (hardcoded UUIDs); 5 agents at all lifecycle stages; 3 policies; 8-event audit trail; test cases; trend data; pre-written briefing; 3-step approval chain |
+| Blueprint generation success flash | P0 | ✓ Complete | 900ms green "✓ Blueprint ready — opening workbench…" state before `router.push()`; eliminates abrupt page change |
+| `src/app/blueprints/[id]/report/loading.tsx` — MRM skeleton | P1 | ✓ Complete | Co-located Suspense skeleton; prevents blank screen during 2–5s `assembleMRMReport()`; matches report structure |
+| Intelligence page cold-start message | P1 | ✓ Complete | Non-admins now see actionable message; only admins see "Generate Briefing" CTA |
+| `docs/demo/DEMO_SETUP.md` | P0 | ✓ Complete | Complete setup guide: prerequisites, env vars, DB commands, credentials, 12-min 9-stop demo flow, troubleshooting, what not to demo live |
+
+---
+
+## Phase 35 — Demo Flow Fidelity ✓ Complete (2026-03-15 Session 040)
+
+Fixes three demo-blocking gaps identified by systematic codebase audit of all 9 showcase stops. No DB migrations. No new npm dependencies.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| MRM Report access — extend to all roles | P0 | ✓ Complete | Removed role restriction on report page + registry link; compliance exports remain gated to compliance_officer + admin |
+| Governance Hub — inline "Preview Impact" on policy cards | P0 | ✓ Complete | `SimResult` type + `simulatingId`/`simResults` state + `handlePreviewImpact()` + button + inline result panel (counts + agent list with registry links); reuses existing simulate API |
+| Review panel — step advancement toast | P1 | ✓ Complete | 2s green toast "Approval submitted — advancing to [label]" on intermediate step; checks `data.nextApproverLabel` in API response |
+| DEMO_SETUP.md corrections | P1 | ✓ Complete | Stops 4, 5, 6, 9 updated to reflect working flows |
+
+---
+
+## Phase 36 — First Customer Readiness ✓ Complete (2026-03-15 Session 041)
+
+Three commercial viability gaps closed before a first enterprise customer engagement. No new npm dependencies.
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| White-label branding | P0 | ✓ Complete | `branding` + `periodicReview` settings blocks; sidebar logo/name/color from DB; MRM report footer; admin settings live preview; server-side layout injection |
+| SR 11-7 periodic review scheduling | P0 | ✓ Complete | Migration 0015; `nextReviewDue` set on deploy; MRM Section 14; Compliance overdue table; registry overdue badge; 1 new audit action |
+| Audit trail pagination | P1 | ✓ Complete | API `offset`+`count` params; parallel count query; 50-row pages; prev/next UI; page X of Y indicator |
+
+---
+
+## Phase 37 — Operational Completeness ✓ Complete (2026-03-15 Session 042)
+
+Four operational gaps that block real-world deployment: the periodic review compliance loop, password reset, user invitations, and review reminder automation. Zero new npm dependencies. Three DB migrations (0016–0018).
+
+| Item | Priority | Status | Notes |
+|---|---|---|---|
+| Periodic review completion UI/API | P0 | ✓ Complete | `POST /api/blueprints/[id]/periodic-review/complete`; completion buttons on Compliance page + Registry detail; confirmation modal with notes; event → notification email to compliance officers |
+| Password reset | P0 | ✓ Complete | `forgot-password` + `reset-password` routes and pages; cryptographic token (raw sent by email, SHA-256 hash stored); 1h TTL; enumeration-safe 200 response; "Forgot your password?" link on login page |
+| User invitation system | P1 | ✓ Complete | `invite` + `invitations` admin API routes; `validate` + `accept` public auth routes; invite acceptance page; admin users page "Invite User" button + pending invitations table; 72h TTL; duplicate-invitation guard |
+| Periodic review reminders | P1 | ✓ Complete | Daily cron `GET /api/cron/review-reminders`; per-enterprise `reminderDaysBefore` setting honored; cycle-deduplication via `lastReminderSentAt`; `vercel.json` at 08:00 UTC daily; optional `CRON_SECRET` bearer auth |
+
+---
+
 ## Future Phases (not yet scoped)
 
-- Production hardening (pagination, webhook health banner, OQ-007 ABP schema evolution)
-- Periodic model review scheduling (SR 11-7 annual revalidation cadence)
+- Production hardening (OQ-007 ABP schema evolution, distributed rate limiting)
 - Agent marketplace / catalog
-- White-label branding customization
 - Agent-to-agent communication protocols

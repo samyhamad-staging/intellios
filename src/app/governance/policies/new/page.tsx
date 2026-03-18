@@ -36,22 +36,21 @@ export default function NewPolicyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-3xl flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">New Policy</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Define a governance policy with rules that apply to agent blueprints
-            </p>
-          </div>
-          <Link href="/governance" className="text-sm text-gray-400 hover:text-gray-700">
-            ← Governance
-          </Link>
+    <div className="px-8 py-8">
+      {/* Page header */}
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">New Policy</h1>
+          <p className="mt-0.5 text-sm text-gray-500">
+            Define a governance policy with rules that apply to agent blueprints
+          </p>
         </div>
-      </header>
+        <Link href="/governance" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
+          ← Governance
+        </Link>
+      </div>
 
-      <main className="mx-auto max-w-3xl px-6 py-8">
+      <div className="max-w-3xl">
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
@@ -62,7 +61,7 @@ export default function NewPolicyPage() {
           submitLabel="Create Policy"
           saving={saving}
         />
-      </main>
+      </div>
     </div>
   );
 }

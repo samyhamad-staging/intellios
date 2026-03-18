@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { Activity, RefreshCw, Cpu } from "lucide-react";
 
 interface AgentHealth {
   agentId: string;
@@ -11,10 +12,36 @@ interface AgentHealth {
   version: string;
   tags: string[];
   deployedAt: string;
+  deploymentTarget: string | null;
   healthStatus: "clean" | "critical" | "unknown";
   errorCount: number;
   warningCount: number;
   lastCheckedAt: string | null;
+}
+
+type BedrockAgentStatus =
+  | "PREPARED"
+  | "FAILED"
+  | "CREATING"
+  | "PREPARING"
+  | "NOT_PREPARED"
+  | "DELETING"
+  | "UNREACHABLE";
+
+interface AgentCoreHealthEntry {
+  blueprintId: string;
+  agentId: string;
+  agentName: string | null;
+  region: string;
+  bedrockStatus: BedrockAgentStatus;
+  lastDeployedAt: string;
+}
+
+interface AgentCoreHealthSummary {
+  total: number;
+  prepared: number;
+  unreachable: number;
+  other: number;
 }
 
 interface MonitorSummary {
@@ -74,7 +101,7 @@ function KpiCard({
   subColor: string;
 }) {
   return (
-    <div className={`rounded-xl border p-5 ${color}`}>
+    <div className={`rounded-card border p-5 ${color}`}>
       <div className="text-3xl font-bold">{value}</div>
       <div className="mt-1 text-sm font-semibold">{label}</div>
       <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
@@ -91,6 +118,12 @@ export default function MonitorPage() {
   const [role, setRole] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [healthFilter, setHealthFilter] = useState<"all" | "clean" | "critical" | "unknown">("all");
+
+  // AgentCore live status
+  const [agcHealth, setAgcHealth] = useState<AgentCoreHealthEntry[]>([]);
+  const [agcSummary, setAgcSummary] = useState<AgentCoreHealthSummary | null>(null);
+  const [checkingAgc, setCheckingAgc] = useState(false);
+  const [agcError, setAgcError] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch current user role for gating "Check Now" and "Check All" buttons
@@ -173,13 +206,39 @@ export default function MonitorPage() {
 
   const canCheck = role === "compliance_officer" || role === "admin";
 
+  // Whether any agents are deployed to AgentCore (controls section visibility)
+  const hasAgentCoreAgents = agents.some((a) => a.deploymentTarget === "agentcore");
+
+  async function handleCheckAgcHealth() {
+    setCheckingAgc(true);
+    setAgcError(null);
+    try {
+      const res = await fetch("/api/monitor/agentcore-health");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setAgcError(data.message ?? "Failed to check AgentCore health");
+        return;
+      }
+      const data = await res.json();
+      setAgcHealth(data.agents ?? []);
+      setAgcSummary(data.summary ?? null);
+    } catch {
+      setAgcError("Network error — unable to reach AgentCore health endpoint");
+    } finally {
+      setCheckingAgc(false);
+    }
+  }
+
   return (
-    <main className="mx-auto max-w-6xl px-6 py-8">
+    <main className="px-8 py-8">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Deployment Monitor</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
+          <div className="flex items-center gap-2 mb-0.5">
+            <Activity size={20} className="text-violet-600" />
+            <h1 className="text-xl font-semibold text-gray-900">Deployment Monitor</h1>
+          </div>
+          <p className="text-sm text-gray-500 pl-7">
             Governance posture of deployed agents against the current enterprise policy set.
           </p>
         </div>
@@ -202,7 +261,7 @@ export default function MonitorPage() {
                   Checking…
                 </>
               ) : (
-                "↻ Check All Agents"
+                <><RefreshCw size={13} />Check All Agents</>
               )}
             </button>
           )}
@@ -242,7 +301,7 @@ export default function MonitorPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4">
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-card border border-gray-200 bg-white px-5 py-4">
         <div className="flex flex-1 min-w-48 flex-col gap-1">
           <label className="text-xs font-medium text-gray-500">Search</label>
           <input
@@ -280,7 +339,7 @@ export default function MonitorPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="flex items-center gap-4 border-b border-gray-100 px-5 py-4">
               <div className="h-4 w-48 animate-pulse rounded bg-gray-100" />
@@ -290,7 +349,7 @@ export default function MonitorPage() {
           ))}
         </div>
       ) : agents.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
+        <div className="rounded-card border-2 border-dashed border-gray-200 bg-white p-12 text-center">
           <p className="text-sm font-medium text-gray-500">No deployed agents yet.</p>
           <p className="mt-1 text-xs text-gray-400">
             Deploy an approved agent to begin monitoring its governance health.
@@ -303,7 +362,7 @@ export default function MonitorPage() {
           </Link>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-card border border-gray-200 bg-white">
           <div className="border-b border-gray-100 px-5 py-2.5 text-xs text-gray-400">
             {filtered.length} agent{filtered.length === 1 ? "" : "s"}
             {filtered.length !== agents.length && ` (filtered from ${agents.length})`}
@@ -420,6 +479,137 @@ export default function MonitorPage() {
           </table>
         </div>
       )}
+
+      {/* AgentCore Live Status Section */}
+      {hasAgentCoreAgents && (
+        <div className="mt-8">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Cpu size={18} className="text-violet-600" />
+              <h2 className="text-base font-semibold text-gray-900">AgentCore Live Status</h2>
+              <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+                AWS Bedrock
+              </span>
+            </div>
+            {canCheck && (
+              <button
+                onClick={handleCheckAgcHealth}
+                disabled={checkingAgc}
+                className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors"
+              >
+                {checkingAgc ? (
+                  <>
+                    <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
+                    Checking AWS…
+                  </>
+                ) : (
+                  <><RefreshCw size={13} />Check Live AWS Status</>
+                )}
+              </button>
+            )}
+          </div>
+
+          {agcError && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {agcError}
+            </div>
+          )}
+
+          {agcSummary === null ? (
+            <div className="rounded-card border-2 border-dashed border-gray-200 bg-white px-6 py-8 text-center">
+              <p className="text-sm text-gray-500">
+                Click <strong>Check Live AWS Status</strong> to query the live Bedrock agent status for each deployed agent.
+              </p>
+              <p className="mt-1 text-xs text-gray-400">
+                Requires AWS credentials configured in the server environment.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Summary strip */}
+              <div className="mb-4 grid grid-cols-3 gap-3">
+                <div className="rounded-card border border-gray-200 bg-white p-4">
+                  <div className="text-2xl font-bold text-gray-900">{agcSummary.total}</div>
+                  <div className="mt-0.5 text-xs text-gray-500">AgentCore agents</div>
+                </div>
+                <div className={`rounded-card border p-4 ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "border-green-200 bg-green-50" : "border-gray-200 bg-white"}`}>
+                  <div className={`text-2xl font-bold ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "text-green-700" : "text-gray-900"}`}>{agcSummary.prepared}</div>
+                  <div className="mt-0.5 text-xs text-gray-500">PREPARED (callable)</div>
+                </div>
+                <div className={`rounded-card border p-4 ${agcSummary.unreachable > 0 ? "border-red-200 bg-red-50" : "border-gray-200 bg-white"}`}>
+                  <div className={`text-2xl font-bold ${agcSummary.unreachable > 0 ? "text-red-700" : "text-gray-900"}`}>{agcSummary.unreachable}</div>
+                  <div className="mt-0.5 text-xs text-gray-500">Unreachable</div>
+                </div>
+              </div>
+
+              {/* Per-agent table */}
+              <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
+                      <th className="px-5 py-3 text-left">Agent</th>
+                      <th className="px-4 py-3 text-left">AWS Agent ID</th>
+                      <th className="px-4 py-3 text-left">Region</th>
+                      <th className="px-4 py-3 text-left">Bedrock Status</th>
+                      <th className="px-4 py-3 text-left">Last Deployed</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {agcHealth.map((entry) => (
+                      <tr key={entry.blueprintId} className="hover:bg-gray-50">
+                        <td className="px-5 py-3 font-medium text-gray-900">
+                          {entry.agentName ?? "Unnamed Agent"}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs text-gray-500">
+                          {entry.agentId}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-600">
+                          {entry.region}
+                        </td>
+                        <td className="px-4 py-3">
+                          <BedrockStatusBadge status={entry.bedrockStatus} />
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-500">
+                          {timeAgo(entry.lastDeployedAt)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </main>
+  );
+}
+
+function BedrockStatusBadge({ status }: { status: BedrockAgentStatus }) {
+  if (status === "PREPARED") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+        ● PREPARED
+      </span>
+    );
+  }
+  if (status === "PREPARING" || status === "CREATING") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+        ◌ {status}
+      </span>
+    );
+  }
+  if (status === "FAILED" || status === "UNREACHABLE") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
+        ✕ {status}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
+      {status}
+    </span>
   );
 }

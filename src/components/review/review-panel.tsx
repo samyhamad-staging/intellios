@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ValidationReport } from "@/lib/governance/types";
 import { VersionDiff } from "@/components/registry/version-diff";
+import { Sparkles, ThumbsUp, ThumbsDown, CheckCircle } from "lucide-react";
 
 type ReviewAction = "approve" | "reject" | "request_changes";
 
@@ -79,6 +81,7 @@ export function ReviewPanel({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiBrief, setAiBrief] = useState<null | "loading" | RiskBrief>(null);
+  const [stepToast, setStepToast] = useState<string | null>(null);
 
   // ── AI Risk Brief ───────────────────────────────────────────────────────────
   async function generateAiBrief() {
@@ -86,7 +89,7 @@ export function ReviewPanel({
     try {
       const res = await fetch(`/api/blueprints/${blueprintId}/review-brief`, { method: "POST" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to generate brief");
+      if (!res.ok) throw new Error(data.message ?? "Failed to generate brief");
       setAiBrief(data.brief as RiskBrief);
     } catch {
       setAiBrief(null);
@@ -120,9 +123,19 @@ export function ReviewPanel({
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error ?? "Review submission failed");
+        throw new Error(data.message ?? "Review submission failed");
       }
-      onReviewComplete(data.status);
+      if (data.nextApproverLabel) {
+        // Intermediate step — show advancement toast, then notify parent
+        setStepToast(`Approval submitted — advancing to ${data.nextApproverLabel}`);
+        setTimeout(() => {
+          setStepToast(null);
+          onReviewComplete(data.status);
+        }, 2000);
+      } else {
+        // Final step — close immediately
+        onReviewComplete(data.status);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Review submission failed");
     } finally {
@@ -146,13 +159,13 @@ export function ReviewPanel({
       {/* AI Risk Brief */}
       <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-indigo-700">✦ AI Risk Brief</span>
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700"><Sparkles size={12} />AI Risk Brief</span>
           {aiBrief === null && (
             <button
               onClick={generateAiBrief}
-              className="rounded-md border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 transition-colors"
+              className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 transition-colors"
             >
-              Generate Brief
+              <Sparkles size={11} />Generate Brief
             </button>
           )}
           {aiBrief !== null && aiBrief !== "loading" && (
@@ -291,6 +304,11 @@ export function ReviewPanel({
                 </div>
               ))}
             </div>
+            <div className="mt-3 border-t border-red-100 pt-2">
+              <Link href="/compliance" className="text-xs text-violet-600 hover:text-violet-700">
+                View policies in Governance Hub →
+              </Link>
+            </div>
           </div>
         )}
       </div>
@@ -364,6 +382,14 @@ export function ReviewPanel({
         </p>
       </div>
 
+      {/* Step advancement toast */}
+      {stepToast && (
+        <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800 flex items-center gap-2">
+          <CheckCircle size={14} className="shrink-0 text-green-600" />
+          {stepToast}
+        </div>
+      )}
+
       {/* Error */}
       {error && (
         <p className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
@@ -375,7 +401,7 @@ export function ReviewPanel({
       <button
         onClick={submitReview}
         disabled={!selectedAction || !rationale.trim() || submitting}
-        className={`w-full rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-40 ${
+        className={`inline-flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-40 ${
           selectedAction === "approve"
             ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-green-600"
             : selectedAction === "reject"
@@ -385,6 +411,8 @@ export function ReviewPanel({
             : "bg-gray-900 text-white hover:bg-gray-800"
         }`}
       >
+        {selectedAction === "approve" && <ThumbsUp size={14} />}
+        {selectedAction === "reject" && <ThumbsDown size={14} />}
         {submitting
           ? "Submitting…"
           : selectedAction

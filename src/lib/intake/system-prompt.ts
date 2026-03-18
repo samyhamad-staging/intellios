@@ -1,5 +1,6 @@
-import { IntakePayload, IntakeContext, StakeholderContribution } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext, StakeholderContribution, IntakeClassification, AgentType, IntakeRiskTier } from "@/lib/types/intake";
 import { GovernancePolicy } from "@/lib/governance/types";
+import { ExpertiseLevel } from "@/lib/intake/model-selector";
 
 const BASE_PROMPT = `You are the Intellios Intake Assistant. Your role is to help enterprise users define the requirements for a new AI agent through natural conversation.
 
@@ -213,11 +214,101 @@ function buildPoliciesBlock(policies: GovernancePolicy[]): string {
   return lines.join("\n");
 }
 
+const AGENT_TYPE_DESCRIPTIONS: Record<AgentType, string> = {
+  "automation": "executes predefined workflows and process orchestration with no direct human-facing output",
+  "decision-support": "analyzes data and presents recommendations or insights to human decision-makers",
+  "autonomous": "takes consequential actions without human approval in the loop",
+  "data-access": "queries, retrieves, and summarizes data in a read-only capacity",
+};
+
+const RISK_TIER_DESCRIPTIONS: Record<IntakeRiskTier, string> = {
+  "low": "internal-only, minimal data sensitivity, no regulatory scope — lightweight governance required",
+  "medium": "customer/partner-facing or handling confidential data — standard governance required",
+  "high": "customer-facing with PII/confidential data or regulated scope — deep governance required",
+  "critical": "HIPAA, FINRA/SOX customer-facing, or regulated data in external deployment — exhaustive governance required",
+};
+
+const RISK_TIER_DEPTH_INSTRUCTIONS: Record<IntakeRiskTier, string> = {
+  "low": `## Conversation Depth (LOW RISK)
+This is a low-risk agent. Apply a streamlined governance approach:
+- Capture functionality quickly (target 5–8 conversation turns)
+- Governance: capture agent identity, tools, and a brief safety acknowledgment
+- No mandatory stakeholder domain coverage required
+- Aim for concise, rapid finalization — do not probe for compliance/legal/security policies unless the user raises them`,
+
+  "medium": `## Conversation Depth (MEDIUM RISK)
+This is a medium-risk agent. Apply standard governance depth:
+- Follow normal conversation flow and complete domain coverage guidelines
+- Governance rules derived from context signals apply (see Mandatory Governance Probing Rules above)
+- Complete stakeholder domain contributions are expected before finalization`,
+
+  "high": `## Conversation Depth (HIGH RISK)
+This is a high-risk agent. Apply deep governance capture:
+- Probe for every governance policy type relevant to the context — do not leave gaps
+- Explicitly remind the designer that compliance and security stakeholder contributions are expected before finalization
+- Do NOT rush to finalize — ensure all governance areas are substantively addressed
+- All context-signal governance rules above are mandatory; also look for data_handling and audit gaps`,
+
+  "critical": `## Conversation Depth (CRITICAL RISK)
+This is a critical-risk agent. Apply exhaustive governance capture:
+- ALL five policy types are required: safety, compliance, data_handling, access_control, audit
+- Every governance gap MUST be flagged and addressed before finalization
+- Explicitly remind the designer that legal, compliance, security, and risk domain contributions are required
+- Do not accept vague or abstract policies — enforce the per-type quality standards strictly
+- Finalization will be blocked unless all five policy types are present and substantive`,
+};
+
+function buildClassificationBlock(classification: IntakeClassification): string {
+  return [
+    "",
+    "## Agent Classification",
+    "",
+    `Type: **${classification.agentType}** — ${AGENT_TYPE_DESCRIPTIONS[classification.agentType]}`,
+    `Risk Tier: **${classification.riskTier.toUpperCase()}** — ${RISK_TIER_DESCRIPTIONS[classification.riskTier]}`,
+    "",
+    RISK_TIER_DEPTH_INSTRUCTIONS[classification.riskTier],
+    "",
+  ].join("\n");
+}
+
+const ADAPTIVE_MODE_INSTRUCTIONS: Record<ExpertiseLevel, string> = {
+  guided: `## Communication Style — Guided Mode
+
+The designer is approaching this from a business or non-technical perspective. Adapt your communication accordingly:
+
+- Break questions into focused sub-steps: instead of "describe your agent's capabilities", ask "Let's start with who will use this agent — is it internal staff, or will customers interact with it directly?"
+- Offer concrete examples when asking questions: "For example, many agents like this use tools like email sending, database lookup, or web search — which of these sounds relevant?"
+- When technical terms are necessary, briefly explain them in plain language
+- Summarize what you've understood after each major topic before moving on
+- Proactively suggest standard patterns rather than leaving open-ended questions unanswered`,
+
+  adaptive: `## Communication Style — Adaptive Mode
+
+Mirror the designer's vocabulary and level of detail. If they speak in technical terms, match that register. If they describe outcomes and business goals, respond in kind. Ask one focused question at a time, follow their lead, and deepen your probing based on the specificity of their answers.`,
+
+  expert: `## Communication Style — Expert Mode
+
+The designer is technically experienced. Adapt accordingly:
+
+- Accept dense, technical input without restating or paraphrasing it back
+- Target edge cases and non-obvious requirements; skip well-understood basics
+- Validate rather than re-explain: "Got it — OAuth 2.0 client credentials for the API auth; I'll capture that in the access_control policy."
+- If the designer covers multiple requirements in one message, capture all of them efficiently before asking the next question
+- Move at pace — avoid unnecessary acknowledgment or filler before capturing information`,
+};
+
+function buildAdaptiveModeBlock(expertiseLevel: ExpertiseLevel): string {
+  return "\n\n" + ADAPTIVE_MODE_INSTRUCTIONS[expertiseLevel];
+}
+
 export function buildIntakeSystemPrompt(
   payload: IntakePayload,
   context?: IntakeContext | null,
   contributions?: StakeholderContribution[],
-  policies?: GovernancePolicy[]
+  policies?: GovernancePolicy[],
+  classification?: IntakeClassification | null,
+  expertiseLevel?: ExpertiseLevel | null,
+  topicProbingRules?: string
 ): string {
   const identity = payload.identity;
   const capabilities = payload.capabilities;
@@ -317,8 +408,14 @@ export function buildIntakeSystemPrompt(
     lines.push("**All required sections are filled.** When the user is satisfied, summarize and offer to finalize.");
   }
 
-  // Inject context block if context was provided in Phase 1
-  const contextBlock = context ? buildContextBlock(context) : "";
+  // Inject context block if context was provided in Phase 1.
+  // Topic-specific probing rules (Phase 49) are appended after governance probing.
+  const contextBlock = context
+    ? buildContextBlock(context) + (topicProbingRules ?? "")
+    : "";
+
+  // Inject classification block (after context, before policies) when available
+  const classificationBlock = classification ? buildClassificationBlock(classification) : "";
 
   // Inject active enterprise policies so Claude designs blueprints pre-adapted to them
   const policiesBlock = policies && policies.length > 0 ? buildPoliciesBlock(policies) : "";
@@ -327,5 +424,8 @@ export function buildIntakeSystemPrompt(
   const contributionsBlock =
     contributions && contributions.length > 0 ? buildContributionsBlock(contributions) : "";
 
-  return BASE_PROMPT + contextBlock + policiesBlock + contributionsBlock + lines.join("\n");
+  // Inject adaptive communication style block (Phase 49) — appended after current state
+  const adaptiveModeBlock = expertiseLevel ? buildAdaptiveModeBlock(expertiseLevel) : "";
+
+  return BASE_PROMPT + contextBlock + classificationBlock + policiesBlock + contributionsBlock + lines.join("\n") + adaptiveModeBlock;
 }

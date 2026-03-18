@@ -32,10 +32,29 @@ export async function GET(request: NextRequest) {
 // ─── Validation schema ────────────────────────────────────────────────────────
 
 const ApprovalChainStepSchema = z.object({
-  step: z.number().int().min(0),
+  step: z.number().int().min(0).optional(),
   role: z.enum(["reviewer", "compliance_officer", "admin"]),
   label: z.string().min(1).max(100),
 });
+
+const AgentCoreConfigSchema = z.union([
+  z.null(),
+  z.object({
+    enabled: z.boolean(),
+    region: z
+      .string()
+      .regex(/^[a-z]{2}-[a-z]+-\d+$/, "Must be a valid AWS region (e.g. us-east-1)"),
+    agentResourceRoleArn: z
+      .string()
+      .regex(/^arn:aws:iam::\d{12}:role\/.+$/, "Must be a valid IAM role ARN"),
+    foundationModel: z.string().min(1),
+    guardrailId: z.string().optional(),
+    guardrailVersion: z.string().optional(),
+  }).refine(
+    (d) => !d.guardrailId || !!d.guardrailVersion,
+    { message: "guardrailVersion is required when guardrailId is set", path: ["guardrailVersion"] }
+  ),
+]);
 
 const SettingsBody = z.object({
   sla: z.object({
@@ -54,6 +73,14 @@ const SettingsBody = z.object({
     notifyOnApproval: z.boolean(),
   }).optional(),
   approvalChain: z.array(ApprovalChainStepSchema).optional(),
+  periodicReview: z.object({
+    enabled: z.boolean().optional(),
+    defaultCadenceMonths: z.number().int().min(1).max(60).optional(),
+    reminderDaysBefore: z.number().int().min(1).max(180).optional(),
+  }).optional(),
+  deploymentTargets: z.object({
+    agentcore: AgentCoreConfigSchema,
+  }).optional(),
 }).refine(
   (data) => {
     if (data.sla) {
@@ -103,7 +130,18 @@ export async function PUT(request: NextRequest) {
     if (body.sla) merged.sla = body.sla;
     if (body.governance) merged.governance = body.governance;
     if (body.notifications) merged.notifications = body.notifications;
-    if (body.approvalChain !== undefined) merged.approvalChain = body.approvalChain;
+    if (body.approvalChain !== undefined) {
+      // Normalize: fill in step from index if missing (handles legacy seed data)
+      merged.approvalChain = body.approvalChain.map((s, i) => ({ ...s, step: s.step ?? i }));
+    }
+    if (body.periodicReview !== undefined) {
+      const existing_pr = (existingSettings.periodicReview ?? {}) as Record<string, unknown>;
+      merged.periodicReview = { ...existing_pr, ...body.periodicReview };
+    }
+    if (body.deploymentTargets !== undefined) {
+      const existing_dt = (existingSettings.deploymentTargets ?? {}) as Record<string, unknown>;
+      merged.deploymentTargets = { ...existing_dt, ...body.deploymentTargets };
+    }
 
     // Upsert
     await db

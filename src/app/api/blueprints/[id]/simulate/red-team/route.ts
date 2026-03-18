@@ -1,0 +1,96 @@
+/**
+ * Adversarial Red-Team endpoint — Phase 41.
+ * POST /api/blueprints/[id]/simulate/red-team
+ *
+ * Runs a full two-phase red-team evaluation against a blueprint:
+ *   Phase A: Sonnet generates 10 adversarial prompts (2 per category)
+ *   Phase B: Haiku evaluates all 10 in parallel against the simulation system prompt
+ *
+ * Results are stateless — returned in the response, not persisted.
+ * One audit entry is written per run.
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { apiError, aiError, ErrorCode } from "@/lib/errors";
+import { db } from "@/lib/db";
+import { agentBlueprints } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { runRedTeam } from "@/lib/testing/red-team";
+import { requireAuth } from "@/lib/auth/require";
+import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
+import { writeAuditLog } from "@/lib/audit/log";
+import { getRequestId } from "@/lib/request-id";
+import { rateLimit } from "@/lib/rate-limit";
+import type { ABP } from "@/lib/types/abp";
+
+// Red-team runs are expensive — limit to 5 per minute per user
+const MAX_PER_MINUTE = 5;
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { session: authSession, error } = await requireAuth([
+    "designer",
+    "reviewer",
+    "compliance_officer",
+    "admin",
+  ]);
+  if (error) return error;
+
+  const requestId = getRequestId(request);
+
+  const rateLimitResponse = rateLimit(authSession.user.email!, {
+    endpoint: "red-team",
+    max: MAX_PER_MINUTE,
+    windowMs: 60_000,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
+  try {
+    const { id: blueprintId } = await params;
+
+    const blueprint = await db.query.agentBlueprints.findFirst({
+      where: eq(agentBlueprints.id, blueprintId),
+    });
+    if (!blueprint) {
+      return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
+    }
+
+    const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, authSession.user);
+    if (enterpriseError) return enterpriseError;
+
+    const abp = blueprint.abp as ABP;
+
+    // Run evaluation (may take 15–30s)
+    const report = await runRedTeam(
+      abp,
+      blueprintId,
+      blueprint.name ?? `Agent ${blueprintId.slice(0, 8)}`,
+      blueprint.version
+    );
+
+    // Audit trail
+    void writeAuditLog({
+      entityType: "blueprint",
+      entityId: blueprintId,
+      action: "blueprint.red_team_run",
+      actorEmail: authSession.user.email!,
+      actorRole: authSession.user.role,
+      enterpriseId: blueprint.enterpriseId,
+      metadata: {
+        agentId: blueprint.agentId,
+        agentName: blueprint.name ?? `Agent ${blueprintId.slice(0, 8)}`,
+        version: blueprint.version,
+        score: report.score,
+        riskTier: report.riskTier,
+        attackCount: report.attacks.length,
+      },
+    });
+
+    return NextResponse.json(report);
+  } catch (err) {
+    console.error(`[${requestId}] Red-team error:`, err);
+    return aiError(err, requestId);
+  }
+}

@@ -26,6 +26,26 @@ export default auth((req) => {
   }
 
   const isLoginPage = pathname === "/login";
+  const isRegisterPage = pathname === "/register";
+  const isTemplatesPage = pathname === "/templates";
+
+  // Public-only pages — redirect logged-in users to the app
+  if (isRegisterPage) {
+    if (isLoggedIn) {
+      return withId(NextResponse.redirect(new URL("/", req.url)), requestId);
+    }
+    return withId(NextResponse.next({ request: { headers: requestHeaders } }), requestId);
+  }
+
+  // Templates page — public, accessible regardless of auth state
+  if (isTemplatesPage) {
+    return withId(NextResponse.next({ request: { headers: requestHeaders } }), requestId);
+  }
+
+  // Public contribution workspace — no Intellios account required
+  if (pathname.startsWith("/contribute") || pathname.startsWith("/api/intake/invitations")) {
+    return withId(NextResponse.next({ request: { headers: requestHeaders } }), requestId);
+  }
 
   if (!isLoggedIn && !isLoginPage) {
     const loginUrl = new URL("/login", req.url);

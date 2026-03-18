@@ -13,7 +13,7 @@
  */
 
 import type { ABP } from "@/lib/types/abp";
-import type { IntakeContext } from "@/lib/types/intake";
+import type { IntakeContext, IntakeRiskTier } from "@/lib/types/intake";
 import type { ValidationReport } from "@/lib/governance/types";
 import type {
   EvidenceStatus,
@@ -507,9 +507,9 @@ export function classifyNISTRMF(
         intakeContext.agentPurpose,
         intakeContext.deploymentType,
         intakeContext.dataSensitivity,
-        intakeContext.regulatoryScope.length > 0,
-        intakeContext.integrationTypes.length > 0,
-        intakeContext.stakeholdersConsulted.length > 0,
+        (intakeContext.regulatoryScope?.length ?? 0) > 0,
+        (intakeContext.integrationTypes?.length ?? 0) > 0,
+        (intakeContext.stakeholdersConsulted?.length ?? 0) > 0,
       ].filter(Boolean).length
     : 0;
   const map1Strength: NISTStrength =
@@ -688,4 +688,26 @@ export function assessAllFrameworks(params: {
       classifyNISTRMF(abp, intakeContext, validationReport, deploymentHealthStatus),
     ],
   };
+}
+
+/**
+ * Derive an IntakeRiskTier from IntakeContext alone — no ABP required.
+ * Used during intake classification (before a blueprint exists) to determine
+ * conversation depth, required stakeholder domains, and finalization gating.
+ *
+ * Maps EU AI Act risk tiers deterministically:
+ *   "minimal-risk"    → "low"
+ *   "limited-risk"    → "medium"
+ *   "high-risk"       → "high"
+ *   "review-required" → "critical"
+ */
+export function deriveRiskTierFromContext(ctx: IntakeContext): IntakeRiskTier {
+  const tier = euAiActRiskTier({} as ABP, ctx);
+  const map: Record<EUAIActRiskTier, IntakeRiskTier> = {
+    "minimal-risk": "low",
+    "limited-risk": "medium",
+    "high-risk": "high",
+    "review-required": "critical",
+  };
+  return map[tier];
 }

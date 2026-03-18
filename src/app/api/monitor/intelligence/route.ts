@@ -15,10 +15,10 @@ import type { IntelligencePayload, QualityScoreResult, IntakeScoreResult } from 
  * Combined data endpoint for the /monitor/intelligence page.
  * Returns: latest briefing, last 14 snapshots, last 10 quality scores, KPIs.
  *
- * Roles: compliance_officer | admin
+ * Roles: compliance_officer | admin | viewer
  */
 export async function GET(request: NextRequest) {
-  const { session: authSession, error } = await requireAuth(["compliance_officer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["compliance_officer", "admin", "viewer"]);
   if (error) return error;
   void getRequestId(request);
 

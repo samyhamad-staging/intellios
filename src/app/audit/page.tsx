@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import { ScrollText, Download } from "lucide-react";
 
 interface AuditEntry {
   id: string;
@@ -37,6 +38,8 @@ const ACTION_LABELS: Record<string, string> = {
   "policy.deleted":                "Policy deleted",
   "policy.simulated":              "Policy simulated",
   "settings.updated":              "Settings updated",
+  "blueprint.periodic_review_scheduled": "Periodic review scheduled",
+  "blueprint.periodic_review_completed": "Periodic review completed",
 };
 
 const ACTION_COLORS: Record<string, string> = {
@@ -58,6 +61,8 @@ const ACTION_COLORS: Record<string, string> = {
   "policy.deleted":                "bg-rose-100 text-rose-800",
   "policy.simulated":              "bg-yellow-50 text-yellow-700",
   "settings.updated":              "bg-slate-100 text-slate-600",
+  "blueprint.periodic_review_scheduled": "bg-teal-50 text-teal-700",
+  "blueprint.periodic_review_completed": "bg-teal-100 text-teal-800",
 };
 
 function formatDate(iso: string): string {
@@ -121,12 +126,16 @@ function AgentCoreInlineSummary({ metadata }: { metadata: Record<string, unknown
   );
 }
 
+const PAGE_SIZE = 50;
+
 export default function AuditTrailPage() {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
 
   // Filter state
   const [entityType, setEntityType] = useState("");
@@ -134,7 +143,8 @@ export default function AuditTrailPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
-  const fetchEntries = useCallback(async () => {
+  const fetchEntries = useCallback(async (pageOverride?: number) => {
+    const activePage = pageOverride ?? page;
     setLoading(true);
     setError(null);
     try {
@@ -143,55 +153,52 @@ export default function AuditTrailPage() {
       if (actorEmail.trim()) params.set("actorEmail", actorEmail.trim());
       if (from) params.set("from", from);
       if (to) params.set("to", to);
+      params.set("limit", String(PAGE_SIZE));
+      params.set("offset", String(activePage * PAGE_SIZE));
 
       const res = await fetch(`/api/audit?${params.toString()}`);
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Failed to fetch audit log");
+        throw new Error(data.message ?? "Failed to fetch audit log");
       }
       const data = await res.json();
       setEntries(data.entries ?? []);
+      setTotal(data.total ?? 0);
       setLoaded(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch audit log");
     } finally {
       setLoading(false);
     }
-  }, [entityType, actorEmail, from, to]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entityType, actorEmail, from, to, page]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-6xl flex items-center justify-between">
-          <div>
+    <div className="px-8 py-8 space-y-4">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <ScrollText size={20} className="text-violet-600" />
             <h1 className="text-xl font-semibold text-gray-900">Audit Trail</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Immutable record of all platform actions. Records cannot be edited or deleted.
-            </p>
           </div>
-          <div className="flex items-center gap-3">
-            {entries.length > 0 && (
-              <button
-                onClick={() => exportCsv(entries)}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-              >
-                Export CSV ({entries.length})
-              </button>
-            )}
-            <Link
-              href="/governance"
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              ← Governance Hub
-            </Link>
-          </div>
+          <p className="text-sm text-gray-500 pl-7">
+            Immutable record of all platform actions. Records cannot be edited or deleted.
+          </p>
         </div>
-      </header>
+        {entries.length > 0 && (
+          <button
+            onClick={() => exportCsv(entries)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+          >
+            <Download size={13} />Export CSV ({entries.length})
+          </button>
+        )}
+      </div>
 
-      <main className="mx-auto max-w-6xl px-6 py-6 space-y-4">
+      <div className="space-y-4">
         {/* Filter bar */}
-        <div className="flex flex-wrap gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4">
+        <div className="flex flex-wrap gap-3 rounded-card border border-gray-200 bg-white px-5 py-4">
           <div className="flex flex-1 min-w-40 flex-col gap-1">
             <label className="text-xs font-medium text-gray-500">Entity Type</label>
             <select
@@ -241,7 +248,7 @@ export default function AuditTrailPage() {
 
           <div className="flex items-end">
             <button
-              onClick={fetchEntries}
+              onClick={() => { setPage(0); fetchEntries(0); }}
               disabled={loading}
               className="rounded-lg bg-gray-900 px-5 py-1.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
             >
@@ -259,23 +266,23 @@ export default function AuditTrailPage() {
 
         {/* Empty state before first load */}
         {!loaded && !loading && !error && (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
+          <div className="rounded-card border border-dashed border-gray-300 bg-white p-12 text-center">
             <p className="text-sm text-gray-400">Apply filters and click Load Log to view audit events.</p>
           </div>
         )}
 
         {/* Results */}
         {loaded && entries.length === 0 && (
-          <div className="rounded-xl border border-gray-200 bg-white p-10 text-center">
+          <div className="rounded-card border border-gray-200 bg-white p-10 text-center">
             <p className="text-sm text-gray-400">No audit events match your filters.</p>
           </div>
         )}
 
         {loaded && entries.length > 0 && (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
             {/* Result count */}
             <div className="border-b border-gray-100 px-5 py-2.5 text-xs text-gray-400">
-              {entries.length} event{entries.length === 1 ? "" : "s"} — sorted newest first
+              Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total} event{total === 1 ? "" : "s"} — sorted newest first
             </div>
 
             <div className="divide-y divide-gray-100">
@@ -362,9 +369,41 @@ export default function AuditTrailPage() {
                 );
               })}
             </div>
+            {/* Pagination controls */}
+            {total > PAGE_SIZE && (
+              <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3">
+                <span className="text-xs text-gray-400">
+                  Page {page + 1} of {Math.ceil(total / PAGE_SIZE)}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={page === 0 || loading}
+                    onClick={() => {
+                      const prev = page - 1;
+                      setPage(prev);
+                      fetchEntries(prev);
+                    }}
+                    className="rounded-lg border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-gray-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    ← Previous
+                  </button>
+                  <button
+                    disabled={(page + 1) * PAGE_SIZE >= total || loading}
+                    onClick={() => {
+                      const next = page + 1;
+                      setPage(next);
+                      fetchEntries(next);
+                    }}
+                    className="rounded-lg border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-gray-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

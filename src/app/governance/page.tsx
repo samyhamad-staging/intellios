@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { Shield, Plus, Download, ShieldAlert } from "lucide-react";
 
 interface Agent {
   id: string;
@@ -23,6 +24,20 @@ interface Policy {
   enterpriseId: string | null;
   policyVersion: number;
   createdAt: string;
+}
+
+interface SimBlueprint {
+  blueprintId: string;
+  agentName: string;
+  agentId: string;
+  status: "new_violations" | "resolved_violations" | "no_change";
+  newViolationCount: number;
+  resolvedViolationCount: number;
+}
+
+interface SimResult {
+  summary: { total: number; newViolations: number; resolvedViolations: number; noChange: number };
+  blueprints: SimBlueprint[];
 }
 
 interface PolicyHistoryEntry {
@@ -71,7 +86,7 @@ export default function GovernanceHubPage() {
   const canManagePolicies =
     session?.user?.role === "admin" || session?.user?.role === "compliance_officer";
   const canViewAnalytics =
-    session?.user?.role === "admin" || session?.user?.role === "compliance_officer";
+    session?.user?.role === "admin" || session?.user?.role === "compliance_officer" || session?.user?.role === "viewer";
   const [agents, setAgents] = useState<Agent[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [templatePacks, setTemplatePacks] = useState<TemplatePack[]>([]);
@@ -85,6 +100,8 @@ export default function GovernanceHubPage() {
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
   const [policyHistories, setPolicyHistories] = useState<Record<string, PolicyHistoryEntry[]>>({});
   const [historyLoading, setHistoryLoading] = useState<Record<string, boolean>>({});
+  const [simulatingId, setSimulatingId] = useState<string | null>(null);
+  const [simResults, setSimResults] = useState<Record<string, SimResult>>({});
 
   const loadPolicies = () =>
     fetch("/api/governance/policies")
@@ -129,6 +146,37 @@ export default function GovernanceHubPage() {
     setTimeout(() => setImportToast(null), 4000);
   };
 
+  const handlePreviewImpact = async (policy: Policy) => {
+    if (simulatingId === policy.id) return;
+    // Toggle off if already shown
+    if (simResults[policy.id]) {
+      setSimResults((prev) => {
+        const next = { ...prev };
+        delete next[policy.id];
+        return next;
+      });
+      return;
+    }
+    setSimulatingId(policy.id);
+    try {
+      const res = await fetch("/api/governance/policies/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          policy: { name: policy.name, type: policy.type, description: policy.description ?? "", rules: policy.rules },
+          existingPolicyId: policy.id,
+        }),
+      });
+      if (!res.ok) throw new Error("Simulation failed");
+      const data: SimResult = await res.json();
+      setSimResults((prev) => ({ ...prev, [policy.id]: data }));
+    } catch {
+      showToast("Simulation failed — check console for details", "error");
+    } finally {
+      setSimulatingId(null);
+    }
+  };
+
   const applyPack = async (packId: string, force = false) => {
     setImportingPack(packId);
     setDuplicatePrompt(null);
@@ -145,7 +193,7 @@ export default function GovernanceHubPage() {
       }
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Import failed");
+        throw new Error(data.message ?? "Import failed");
       }
       const data = await res.json();
       showToast(`✓ Imported ${data.created} polic${data.created === 1 ? "y" : "ies"} from pack`, "success");
@@ -197,35 +245,50 @@ export default function GovernanceHubPage() {
     .sort((a, b) => (b.violationCount ?? 0) - (a.violationCount ?? 0));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-6xl flex items-center justify-between">
-          <div>
+    <div className="px-8 py-8 space-y-8">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <Shield size={20} className="text-violet-600" />
             <h1 className="text-xl font-semibold text-gray-900">Governance Hub</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Policy coverage, violations, and compliance posture
-            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/audit"
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              Audit Trail →
-            </Link>
-            <Link href="/" className="text-sm text-gray-400 hover:text-gray-700">
-              ← Home
-            </Link>
-          </div>
+          <p className="text-sm text-gray-500 pl-7">Policy coverage, violations, and compliance posture</p>
         </div>
-      </header>
+        <Link
+          href="/audit"
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+        >
+          Audit Trail →
+        </Link>
+      </div>
 
-      <main className="mx-auto max-w-6xl px-6 py-8 space-y-8">
+      <div className="space-y-8">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
           </div>
+        )}
+
+        {/* Active violations banner */}
+        {!loading && withErrors > 0 && (
+          <a
+            href="#violations"
+            className="flex items-center justify-between rounded-lg border badge-gov-error px-4 py-3 transition-opacity hover:opacity-90"
+          >
+            <div className="flex items-center gap-3">
+              <ShieldAlert size={16} strokeWidth={2} />
+              <div>
+                <p className="text-sm font-semibold">
+                  {withErrors} agent{withErrors !== 1 ? "s" : ""} with active governance violations
+                </p>
+                <p className="text-xs opacity-70 mt-0.5">
+                  {withErrors !== 1 ? "These agents require" : "This agent requires"} remediation before deployment
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-semibold shrink-0">View violations ↓</span>
+          </a>
         )}
 
         {/* ── Governance Analytics ─────────────────────────────────────────── */}
@@ -248,19 +311,19 @@ export default function GovernanceHubPage() {
                   sub: "of validated agents",
                   color:
                     analytics?.validationPassRate != null && analytics.validationPassRate >= 80
-                      ? "bg-green-50 border-green-200 text-green-900"
+                      ? "badge-gov-pass"
                       : analytics?.validationPassRate != null && analytics.validationPassRate >= 50
-                      ? "bg-amber-50 border-amber-200 text-amber-900"
+                      ? "badge-gov-warn"
                       : analytics?.validationPassRate != null
-                      ? "bg-red-50 border-red-200 text-red-900"
-                      : "bg-white border-gray-200 text-gray-900",
+                      ? "badge-gov-error"
+                      : "kpi-neutral",
                   subColor:
                     analytics?.validationPassRate != null && analytics.validationPassRate >= 80
-                      ? "text-green-600"
+                      ? "text-[color:var(--gov-pass-icon)]"
                       : analytics?.validationPassRate != null && analytics.validationPassRate >= 50
-                      ? "text-amber-600"
+                      ? "text-[color:var(--gov-warn-icon)]"
                       : analytics?.validationPassRate != null
-                      ? "text-red-600"
+                      ? "text-[color:var(--gov-error-text)]"
                       : "text-gray-400",
                 },
                 {
@@ -273,7 +336,7 @@ export default function GovernanceHubPage() {
                       : `${Math.round(analytics.avgTimeToApprovalHours / 24)}d`
                     : "N/A",
                   sub: "from review submission",
-                  color: "bg-white border-gray-200 text-gray-900",
+                  color: "kpi-neutral",
                   subColor: "text-gray-400",
                 },
                 {
@@ -288,17 +351,17 @@ export default function GovernanceHubPage() {
                     !analyticsLoading &&
                     analytics &&
                     analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0) > 0
-                      ? "bg-red-50 border-red-200 text-red-900"
-                      : "bg-white border-gray-200 text-gray-900",
+                      ? "badge-gov-error"
+                      : "kpi-neutral",
                   subColor:
                     !analyticsLoading &&
                     analytics &&
                     analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0) > 0
-                      ? "text-red-600"
+                      ? "text-[color:var(--gov-error-text)]"
                       : "text-gray-400",
                 },
               ].map(({ label, value, sub, color, subColor }) => (
-                <div key={label} className={`rounded-xl border p-5 ${color}`}>
+                <div key={label} className={`rounded-card border p-5 ${color}`}>
                   <div className="text-3xl font-bold">{value}</div>
                   <div className="mt-1 text-sm font-medium">{label}</div>
                   <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
@@ -309,7 +372,7 @@ export default function GovernanceHubPage() {
             {!analyticsLoading && analytics && (
               <div className="grid grid-cols-2 gap-6">
                 {/* Monthly Submissions vs Approvals bar chart */}
-                <div className="rounded-xl border border-gray-200 bg-white p-5">
+                <div className="rounded-card border border-gray-200 bg-white p-5">
                   <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
                     Monthly Activity (last 6 months)
                   </h3>
@@ -371,7 +434,7 @@ export default function GovernanceHubPage() {
                 {/* Right column: Top Violated Policies + Agent Status Distribution */}
                 <div className="space-y-6">
                   {/* Top Violated Policies */}
-                  <div className="rounded-xl border border-gray-200 bg-white p-5">
+                  <div className="rounded-card border border-gray-200 bg-white p-5">
                     <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
                       Top Violated Policies
                     </h3>
@@ -397,7 +460,7 @@ export default function GovernanceHubPage() {
                   </div>
 
                   {/* Agent Status Distribution */}
-                  <div className="rounded-xl border border-gray-200 bg-white p-5">
+                  <div className="rounded-card border border-gray-200 bg-white p-5">
                     <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
                       Agent Status Distribution
                     </h3>
@@ -453,10 +516,10 @@ export default function GovernanceHubPage() {
 
             {analyticsLoading && (
               <div className="grid grid-cols-2 gap-6">
-                <div className="h-64 animate-pulse rounded-xl bg-gray-100" />
+                <div className="h-64 animate-pulse rounded-card bg-gray-100" />
                 <div className="space-y-4">
-                  <div className="h-28 animate-pulse rounded-xl bg-gray-100" />
-                  <div className="h-32 animate-pulse rounded-xl bg-gray-100" />
+                  <div className="h-28 animate-pulse rounded-card bg-gray-100" />
+                  <div className="h-32 animate-pulse rounded-card bg-gray-100" />
                 </div>
               </div>
             )}
@@ -503,7 +566,7 @@ export default function GovernanceHubPage() {
                 subColor: notValidated > 0 ? "text-amber-600" : "text-gray-400",
               },
             ].map(({ label, value, sub, color, subColor }) => (
-              <div key={label} className={`rounded-xl border p-5 ${color}`}>
+              <div key={label} className={`rounded-card border p-5 ${color}`}>
                 <div className="text-3xl font-bold">{value}</div>
                 <div className="mt-1 text-sm font-medium">{label}</div>
                 <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
@@ -514,7 +577,7 @@ export default function GovernanceHubPage() {
 
         {/* ── Agents with violations ──────────────────────────────────────── */}
         {!loading && agentsWithViolations.length > 0 && (
-          <section>
+          <section id="violations">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
               Agents Requiring Attention ({agentsWithViolations.length})
             </h2>
@@ -547,7 +610,7 @@ export default function GovernanceHubPage() {
 
         {!loading && agentsWithViolations.length === 0 && total > 0 && notValidated === 0 && (
           <section>
-            <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
+            <div className="rounded-card border border-green-200 bg-green-50 p-6 text-center">
               <p className="text-lg font-medium text-green-800">✓ All validated agents pass governance</p>
               <p className="mt-1 text-sm text-green-600">
                 {clean} agent{clean === 1 ? "" : "s"} validated against {policies.length} polic{policies.length === 1 ? "y" : "ies"}
@@ -565,9 +628,9 @@ export default function GovernanceHubPage() {
             {canManagePolicies && (
               <Link
                 href="/governance/policies/new"
-                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
               >
-                + New Policy
+                <Plus size={14} />New Policy
               </Link>
             )}
           </div>
@@ -581,12 +644,12 @@ export default function GovernanceHubPage() {
           )}
 
           {!loading && policies.length === 0 && (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
+            <div className="rounded-card border border-dashed border-gray-300 bg-white p-10 text-center">
               <p className="text-sm text-gray-400">No governance policies defined.</p>
               {canManagePolicies ? (
                 <Link
                   href="/governance/policies/new"
-                  className="mt-3 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  className="mt-3 inline-block rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
                 >
                   Create first policy
                 </Link>
@@ -637,6 +700,20 @@ export default function GovernanceHubPage() {
                         {new Date(policy.createdAt).toLocaleDateString()}
                       </div>
                       <div className="flex items-center justify-end gap-3">
+                        {canManagePolicies && (
+                          <button
+                            onClick={() => handlePreviewImpact(policy)}
+                            disabled={simulatingId === policy.id}
+                            className="text-xs text-violet-600 hover:text-violet-800 disabled:text-gray-400 transition-colors"
+                            title="Simulate impact on approved/deployed agents"
+                          >
+                            {simulatingId === policy.id
+                              ? "Simulating…"
+                              : simResults[policy.id]
+                              ? "× Clear"
+                              : "Preview Impact"}
+                          </button>
+                        )}
                         {canManagePolicies && policy.policyVersion > 1 && (
                           <button
                             onClick={() => toggleHistory(policy.id)}
@@ -656,6 +733,66 @@ export default function GovernanceHubPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* ── Inline simulation result panel ─────────────────── */}
+                  {simResults[policy.id] && (() => {
+                    const sim = simResults[policy.id];
+                    const affected = sim.blueprints.filter((b) => b.status !== "no_change");
+                    return (
+                      <div className="border-t border-violet-100 bg-violet-50 px-5 py-4">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-violet-700 mb-3">
+                          Impact Preview — {sim.summary.total} agent{sim.summary.total !== 1 ? "s" : ""} checked
+                        </p>
+                        {/* Summary stats */}
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                            sim.summary.newViolations > 0
+                              ? "bg-red-50 border-red-200 text-red-700"
+                              : "bg-gray-50 border-gray-200 text-gray-500"
+                          }`}>
+                            {sim.summary.newViolations} new violation{sim.summary.newViolations !== 1 ? "s" : ""}
+                          </span>
+                          <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                            sim.summary.resolvedViolations > 0
+                              ? "bg-green-50 border-green-200 text-green-700"
+                              : "bg-gray-50 border-gray-200 text-gray-500"
+                          }`}>
+                            {sim.summary.resolvedViolations} resolved
+                          </span>
+                          <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs font-medium text-gray-500">
+                            {sim.summary.noChange} no change
+                          </span>
+                        </div>
+                        {/* Affected agents list */}
+                        {affected.length === 0 ? (
+                          <p className="text-xs text-violet-600">No agents affected — all pass or fail with no change.</p>
+                        ) : (
+                          <div className="space-y-1">
+                            {affected.slice(0, 5).map((b) => (
+                              <div key={b.blueprintId} className="flex items-center gap-2">
+                                <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                                  b.status === "new_violations"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-green-100 text-green-700"
+                                }`}>
+                                  {b.status === "new_violations" ? `+${b.newViolationCount}` : `−${b.resolvedViolationCount}`}
+                                </span>
+                                <Link
+                                  href={`/registry/${b.agentId}`}
+                                  className="text-xs text-gray-700 hover:underline truncate"
+                                >
+                                  {b.agentName}
+                                </Link>
+                              </div>
+                            ))}
+                            {affected.length > 5 && (
+                              <p className="text-xs text-gray-400 pt-1">+{affected.length - 5} more affected agents</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Expandable version history */}
                   {expandedHistoryId === policy.id && (
@@ -729,7 +866,7 @@ export default function GovernanceHubPage() {
               {templatePacks.map((pack) => (
                 <div
                   key={pack.id}
-                  className="rounded-xl border border-gray-200 bg-white p-5 flex flex-col gap-3"
+                  className="rounded-card border border-gray-200 bg-white p-5 flex flex-col gap-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -765,7 +902,7 @@ export default function GovernanceHubPage() {
 
             {/* Duplicate conflict prompt */}
             {duplicatePrompt && (
-              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+              <div className="mt-4 rounded-card border border-amber-200 bg-amber-50 px-5 py-4">
                 <p className="text-sm font-medium text-amber-800 mb-1">
                   {duplicatePrompt.duplicates.length} existing polic{duplicatePrompt.duplicates.length === 1 ? "y" : "ies"} would be replaced:
                 </p>
@@ -813,7 +950,7 @@ export default function GovernanceHubPage() {
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
               Compliance by Stage
             </h2>
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -849,7 +986,7 @@ export default function GovernanceHubPage() {
             </div>
           </section>
         )}
-      </main>
+      </div>
     </div>
   );
 }

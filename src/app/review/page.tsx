@@ -5,22 +5,13 @@ import Link from "next/link";
 import { ValidationReport } from "@/lib/governance/types";
 import type { ApprovalStepRecord, ApprovalChainStep, EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
+import { ClipboardList, CheckCircle, ChevronRight, ShieldCheck, ShieldAlert, AlertCircle } from "lucide-react";
 
 interface QueueEntry {
-  id: string;
-  agentId: string;
-  version: string;
-  name: string | null;
-  tags: string[];
-  status: string;
-  validationReport: ValidationReport | null;
-  reviewComment: string | null;
-  reviewedAt: string | null;
-  currentApprovalStep: number;
-  approvalProgress: ApprovalStepRecord[];
-  enterpriseId: string | null;
-  createdAt: string;
-  updatedAt: string;
+  id: string; agentId: string; version: string; name: string | null; tags: string[];
+  status: string; validationReport: ValidationReport | null; reviewComment: string | null;
+  reviewedAt: string | null; currentApprovalStep: number; approvalProgress: ApprovalStepRecord[];
+  enterpriseId: string | null; createdAt: string; updatedAt: string;
 }
 
 export default function ReviewQueuePage() {
@@ -31,189 +22,157 @@ export default function ReviewQueuePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch session to determine role for filtering
     fetch("/api/auth/session")
       .then((r) => r.json())
       .then((data) => {
         const role = data?.user?.role ?? null;
         setUserRole(role);
-
-        // Fetch settings for approval chain context (admin-only endpoint)
         if (role === "admin") {
           fetch("/api/admin/settings")
             .then((r) => r.json())
             .then((d) => setSettings(d.settings ?? DEFAULT_ENTERPRISE_SETTINGS))
-            .catch(() => {/* best-effort */});
+            .catch(() => {});
         }
-
-        // Fetch queue, filtering by role when a chain is relevant
         const roleParam = role ? `?role=${encodeURIComponent(role)}` : "";
         return fetch(`/api/review${roleParam}`);
       })
       .then((r) => r?.json())
-      .then((data) => {
-        if (data) {
-          setBlueprints(data.blueprints ?? []);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Failed to load review queue");
-        setLoading(false);
-      });
+      .then((data) => { if (data) setBlueprints(data.blueprints ?? []); setLoading(false); })
+      .catch(() => { setError("Failed to load review queue"); setLoading(false); });
   }, []);
 
   const chain: ApprovalChainStep[] = settings.approvalChain ?? [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-5xl flex items-center justify-between">
-          <div>
+    <div className="px-8 py-8">
+      {/* Header */}
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-2.5">
             <h1 className="text-xl font-semibold text-gray-900">Review Queue</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              {chain.length > 0
-                ? `Showing blueprints awaiting your approval step`
-                : "Agent Blueprint Packages awaiting review"}
-            </p>
+            {!loading && blueprints.length > 0 && (
+              <span className="rounded-full badge-gov-warn px-2.5 py-0.5 text-xs font-semibold">
+                {blueprints.length}
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-4 text-sm text-gray-500">
-            <Link href="/registry" className="hover:text-gray-900">
-              Registry
-            </Link>
-            <Link href="/" className="hover:text-gray-900">
-              ← Home
-            </Link>
-          </div>
+          <p className="mt-0.5 text-sm text-gray-500">
+            {chain.length > 0 ? "Showing blueprints awaiting your approval step" : "Agent Blueprint Packages awaiting review"}
+          </p>
         </div>
-      </header>
+      </div>
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        {loading && (
-          <p className="text-center text-sm text-gray-400">Loading queue…</p>
-        )}
-        {error && (
-          <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-        {!loading && !error && blueprints.length === 0 && (
-          <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-            <p className="text-2xl mb-3">✓</p>
-            <p className="text-gray-700 font-medium">Review queue is empty</p>
-            <p className="mt-1 text-sm text-gray-400">
-              No blueprints are currently awaiting your review.
-            </p>
-            <Link
-              href="/registry"
-              className="mt-4 inline-block text-sm text-gray-900 underline"
-            >
-              View Agent Registry
-            </Link>
-          </div>
-        )}
+      {/* Loading */}
+      {loading && (
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => <div key={i} className="h-24 animate-pulse rounded-card bg-gray-100" />)}
+        </div>
+      )}
 
-        {blueprints.length > 0 && (
-          <div className="space-y-3">
-            {blueprints.map((bp) => {
-              const govStatus = bp.validationReport
-                ? bp.validationReport.valid
-                  ? { label: "Passes governance", color: "text-green-600 bg-green-50 border-green-200" }
-                  : {
-                      label: `${bp.validationReport.violations.filter((v) => v.severity === "error").length} governance error(s)`,
-                      color: "text-red-600 bg-red-50 border-red-200",
-                    }
-                : { label: "Not validated", color: "text-gray-500 bg-gray-50 border-gray-200" };
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-2 rounded-lg border badge-gov-error p-4 text-sm">
+          <AlertCircle size={15} /> {error}
+        </div>
+      )}
 
-              // Determine step context
-              const activeStep = chain.length > 0 ? chain[bp.currentApprovalStep] : null;
-              const priorApprovals = (bp.approvalProgress ?? []) as ApprovalStepRecord[];
+      {/* Empty */}
+      {!loading && !error && blueprints.length === 0 && (
+        <div className="flex flex-col items-center rounded-card border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
+          <CheckCircle size={32} className="mb-4 text-[color:var(--gov-pass-icon)]" />
+          <p className="mb-1 text-sm font-medium text-gray-700">Review queue is clear</p>
+          <p className="text-xs text-gray-400">No blueprints are currently awaiting your review.</p>
+          <Link href="/registry" className="mt-4 text-xs text-[color:var(--sidebar-accent)] hover:text-[color:#7c3aed]">View Agent Registry →</Link>
+        </div>
+      )}
 
-              return (
-                <Link
-                  key={bp.id}
-                  href={`/registry/${bp.agentId}?tab=review`}
-                  className="block rounded-lg border border-gray-200 bg-white p-5 hover:border-gray-400 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="font-medium text-gray-900 truncate">
-                          {bp.name ?? "Unnamed Agent"}
-                        </h2>
-                        <span className={`rounded-full border px-2 py-0.5 text-xs ${govStatus.color}`}>
-                          {govStatus.label}
-                        </span>
-                      </div>
-                      <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
-                        <span>v{bp.version}</span>
-                        <span>·</span>
-                        <span className="font-mono">{bp.agentId.slice(0, 8)}</span>
-                        <span>·</span>
-                        <span>Submitted {new Date(bp.updatedAt).toLocaleString()}</span>
-                      </div>
+      {/* Queue items */}
+      {blueprints.length > 0 && (
+        <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
+          {blueprints.map((bp, i) => {
+            const govStatus = bp.validationReport
+              ? bp.validationReport.valid
+                ? { label: "Passes governance", color: "badge-gov-pass", icon: ShieldCheck }
+                : { label: `${bp.validationReport.violations.filter((v) => v.severity === "error").length} governance error(s)`, color: "badge-gov-error", icon: ShieldAlert }
+              : { label: "Not validated", color: "badge-draft", icon: AlertCircle };
 
-                      {/* Multi-step progress indicator */}
-                      {chain.length > 0 && (
-                        <div className="mt-2 flex items-center gap-1.5">
-                          {chain.map((step, idx) => {
-                            const completed = priorApprovals.find(
-                              (p) => p.step === idx && p.decision === "approved"
-                            );
-                            const isActive = idx === bp.currentApprovalStep;
-                            return (
-                              <span key={idx} className="flex items-center gap-1">
-                                {idx > 0 && <span className="text-gray-300 text-xs">→</span>}
-                                <span
-                                  className={`rounded px-1.5 py-0.5 text-xs font-medium ${
-                                    completed
-                                      ? "bg-green-100 text-green-700"
-                                      : isActive
-                                      ? "bg-amber-100 text-amber-700 ring-1 ring-amber-300"
-                                      : "bg-gray-100 text-gray-400"
-                                  }`}
-                                >
-                                  {completed ? "✓ " : isActive ? "→ " : "○ "}
-                                  {step.label}
-                                </span>
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
+            const GovIcon = govStatus.icon;
+            const activeStep = chain.length > 0 ? chain[bp.currentApprovalStep] : null;
+            const priorApprovals = (bp.approvalProgress ?? []) as ApprovalStepRecord[];
 
-                      {/* Prior approval chips */}
-                      {priorApprovals.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {priorApprovals.map((p, i) => (
-                            <span
-                              key={i}
-                              className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500"
-                            >
-                              ✓ {p.label} · {p.approvedBy}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+            return (
+              <Link
+                key={bp.id}
+                href={`/registry/${bp.agentId}?tab=review`}
+                className={`block px-5 py-4 hover:bg-gray-50 transition-colors border-l-2 border-[color:var(--status-review-btn-bg)] ${i > 0 ? "border-t border-gray-100" : ""}`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[color:var(--status-review-col-bg)] text-[color:var(--status-review-btn-bg)]">
+                    <ClipboardList size={15} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-gray-900 truncate">{bp.name ?? `Agent ${bp.agentId.slice(0, 8)}`}</span>
+                      <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs ${govStatus.color}`}>
+                        <GovIcon size={11} /> {govStatus.label}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-400">
+                      <span>v{bp.version}</span>
+                      <span>·</span>
+                      <span className="font-mono">{bp.agentId.slice(0, 8)}</span>
+                      <span>·</span>
+                      <span>{new Date(bp.updatedAt).toLocaleString()}</span>
                     </div>
 
-                    {/* Step badge */}
-                    {activeStep ? (
-                      <span className="shrink-0 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-1 text-xs font-medium text-amber-700">
-                        Step {bp.currentApprovalStep + 1} of {chain.length}: {activeStep.label}
-                      </span>
-                    ) : (
-                      <span className="shrink-0 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-1 text-xs font-medium text-amber-700">
-                        Pending Review
-                      </span>
+                    {/* Multi-step progress */}
+                    {chain.length > 0 && (
+                      <div className="mt-2 flex items-center gap-1">
+                        {chain.map((step, idx) => {
+                          const completed = priorApprovals.find((p) => p.step === idx && p.decision === "approved");
+                          const isActive = idx === bp.currentApprovalStep;
+                          return (
+                            <span key={idx} className="flex items-center gap-1">
+                              {idx > 0 && <ChevronRight size={11} className="text-gray-300" />}
+                              <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${completed ? "badge-approved" : isActive ? "badge-review ring-1 ring-[color:var(--status-review-border)]" : "badge-draft"}`}>
+                                {completed ? "✓ " : isActive ? "› " : "○ "}{step.label}
+                              </span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {priorApprovals.length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {priorApprovals.map((p, pi) => (
+                          <span key={pi} className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                            ✓ {p.label} · {p.approvedBy}
+                          </span>
+                        ))}
+                      </div>
                     )}
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </main>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {activeStep ? (() => {
+                      const isYourStep = userRole != null && activeStep.role === userRole;
+                      return (
+                        <span className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${isYourStep ? "badge-deployed" : "badge-gov-warn"}`}>
+                          {isYourStep ? `Your step: ${activeStep.label}` : `Waiting: ${activeStep.label}`}
+                        </span>
+                      );
+                    })() : (
+                      <span className="rounded-lg border badge-gov-warn px-2.5 py-1 text-xs font-medium">Pending</span>
+                    )}
+                    <ChevronRight size={14} className="text-gray-300" />
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

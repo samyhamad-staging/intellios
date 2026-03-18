@@ -52,6 +52,44 @@ export function buildAgentSystemPrompt(abp: ABP): string {
   return lines.join("\n");
 }
 
+/**
+ * Extends buildAgentSystemPrompt with tool descriptions (narrative, not tool_use calls),
+ * governance rules from policies, and a simulation frame.
+ * Used by the Agent Playground to power live sandbox conversations.
+ */
+export function buildSimulationSystemPrompt(abp: ABP): string {
+  const base = buildAgentSystemPrompt(abp);
+  const lines: string[] = [];
+
+  // Simulation frame prepended
+  lines.push(
+    "You are operating in a governed sandbox simulation. Behave exactly as your blueprint specifies.",
+    "You cannot access real external systems, databases, or APIs in this simulation — describe how you would use them instead.",
+    ""
+  );
+  lines.push(base);
+
+  // Tools as behavioral context
+  const tools = abp.capabilities?.tools ?? [];
+  if (tools.length > 0) {
+    lines.push("", "## Available Capabilities");
+    lines.push("When relevant, describe how you would use these capabilities:");
+    for (const tool of tools) {
+      lines.push(`- **${tool.name}**: ${tool.description ?? tool.type}`);
+    }
+  }
+
+  // Governance rules as behavioral constraints
+  const policies = abp.governance?.policies ?? [];
+  const rules = policies.flatMap((p) => p.rules ?? []).filter(Boolean);
+  if (rules.length > 0) {
+    lines.push("", "## Governance Rules (must be followed)");
+    for (const rule of rules) lines.push(`- ${rule}`);
+  }
+
+  return lines.join("\n");
+}
+
 // ─── Single test case execution ───────────────────────────────────────────────
 
 /** Step 1: run the agent with the test input and return the actual output. */
@@ -60,7 +98,7 @@ async function executeTestCase(
   inputPrompt: string
 ): Promise<string> {
   const { text } = await generateText({
-    model: anthropic("claude-3-5-haiku-20241022"),
+    model: anthropic("claude-haiku-4-5-20251001"),
     system: systemPrompt,
     prompt: inputPrompt,
     maxOutputTokens: 500,
@@ -75,7 +113,7 @@ async function evaluateOutput(
   actualOutput: string
 ): Promise<{ pass: boolean; rationale: string }> {
   const { text } = await generateText({
-    model: anthropic("claude-3-5-haiku-20241022"),
+    model: anthropic("claude-haiku-4-5-20251001"),
     system:
       "You are a test evaluator for AI agent outputs. " +
       "Assess whether the actual output satisfies the expected behavior. " +

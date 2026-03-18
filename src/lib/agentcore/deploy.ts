@@ -13,7 +13,7 @@
  *   1. CreateAgent           → agentId, agentArn (status: CREATING → NOT_PREPARED)
  *   2. CreateAgentActionGroup (once per tool in ABP)
  *   3. PrepareAgent          → triggers async preparation (status: PREPARING)
- *   4. Poll GetAgent every 500ms until agentStatus === "PREPARED" (max 30s)
+ *   4. Poll GetAgent every 500ms until agentStatus === "PREPARED" (max 90s)
  *   5. On timeout → DeleteAgent (rollback) + throw
  */
 
@@ -36,7 +36,7 @@ import { translateAbpToBedrockAgent } from "./translate";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const POLL_INTERVAL_MS = 500;
-const POLL_MAX_ATTEMPTS = 60; // 30 seconds total
+const POLL_MAX_ATTEMPTS = 180; // 90 seconds total (Bedrock prep can take 60-90s for complex agents)
 
 // ─── Deploy function ──────────────────────────────────────────────────────────
 
@@ -53,11 +53,47 @@ interface DeployActor {
  * @returns      AgentCoreDeploymentRecord — stored in agent_blueprints.deployment_metadata
  * @throws       Error if AWS API calls fail or preparation times out
  */
+/**
+ * Validate AgentCore config fields before making any AWS SDK calls.
+ * Throws a descriptive error on the first invalid field so failures are
+ * immediately actionable (no CloudTrail entries for bad configs).
+ */
+function validateAgentCoreConfig(config: AgentCoreConfig): void {
+  if (!config.region) {
+    throw new Error("AgentCore config missing: region");
+  }
+  if (!config.agentResourceRoleArn) {
+    throw new Error("AgentCore config missing: agentResourceRoleArn");
+  }
+  if (!/^arn:aws:iam::\d{12}:role\/.+$/.test(config.agentResourceRoleArn)) {
+    throw new Error(
+      `Invalid agentResourceRoleArn format: ${config.agentResourceRoleArn}`
+    );
+  }
+  if (!config.foundationModel) {
+    throw new Error("AgentCore config missing: foundationModel");
+  }
+  // Soft-check for explicit credentials; instance/task profiles won't have these
+  if (
+    !process.env.AWS_ACCESS_KEY_ID &&
+    !process.env.AWS_SECRET_ACCESS_KEY &&
+    !process.env.AWS_PROFILE &&
+    !process.env.ECS_CONTAINER_METADATA_URI_V4
+  ) {
+    console.warn(
+      "[agentcore] No explicit AWS credentials found — relying on instance/task profile"
+    );
+  }
+}
+
 export async function deployToAgentCore(
   abp: ABP,
   config: AgentCoreConfig,
   actor: DeployActor
 ): Promise<AgentCoreDeploymentRecord> {
+  // Pre-flight: validate config before touching AWS
+  validateAgentCoreConfig(config);
+
   const client = new BedrockAgentClient({ region: config.region });
 
   // Translate ABP into Bedrock's CreateAgent request shape

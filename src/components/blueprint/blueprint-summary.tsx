@@ -18,7 +18,7 @@ const STATUS_PROSE: Record<string, string> = {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
+    <div className="rounded-card border border-gray-200 bg-white p-5">
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">{title}</h3>
       {children}
     </div>
@@ -53,7 +53,7 @@ export function BlueprintSummary({ abp, status }: BlueprintSummaryProps) {
   return (
     <div className="space-y-4">
       {/* Status callout */}
-      <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-3">
+      <div className="rounded-card border border-gray-200 bg-gray-50 px-5 py-3">
         <p className="text-sm text-gray-600">{STATUS_PROSE[status] ?? `Status: ${status}`}</p>
       </div>
 

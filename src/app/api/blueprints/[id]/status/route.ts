@@ -367,6 +367,29 @@ export async function PATCH(
     // Uses evaluatePolicies() — pure rule engine, no AI cost.
     if (newStatus === "deployed") {
       void checkDeploymentHealth(id, blueprint.enterpriseId ?? null, new Date());
+
+      // Phase 36: SR 11-7 — schedule periodic review due date if enabled
+      const deploySettings = await getEnterpriseSettings(blueprint.enterpriseId ?? null);
+      if (deploySettings.periodicReview.enabled) {
+        const cadenceMs = deploySettings.periodicReview.defaultCadenceMonths * 30.44 * 24 * 60 * 60 * 1000;
+        const nextReviewDue = new Date(Date.now() + cadenceMs);
+        await db
+          .update(agentBlueprints)
+          .set({ nextReviewDue })
+          .where(eq(agentBlueprints.id, id));
+        void writeAuditLog({
+          entityType: "blueprint",
+          entityId: id,
+          action: "blueprint.periodic_review_scheduled",
+          actorEmail: userEmail,
+          actorRole: userRole,
+          enterpriseId: blueprint.enterpriseId ?? null,
+          toState: {
+            nextReviewDue: nextReviewDue.toISOString(),
+            cadenceMonths: deploySettings.periodicReview.defaultCadenceMonths,
+          },
+        });
+      }
     }
 
     return NextResponse.json({ id: updated.id, status: updated.status });

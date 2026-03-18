@@ -38,7 +38,7 @@ function KpiCard({
   color?: string; deltaColor?: string; href?: string;
 }) {
   const inner = (
-    <div className={`rounded-xl border p-5 ${color} ${href ? "cursor-pointer hover:shadow-sm transition-shadow" : ""}`}>
+    <div className={`rounded-card border p-5 ${color} ${href ? "cursor-pointer hover:shadow-sm transition-shadow" : ""}`}>
       <div className="text-3xl font-bold tabular-nums">{value}</div>
       {delta != null && <div className={`mt-0.5 text-sm font-medium ${deltaColor}`}>{delta}</div>}
       <div className="mt-1 text-sm font-semibold">{label}</div>
@@ -74,7 +74,7 @@ function MetricSparkline({
 
   if (nonNull.length < 2) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white px-5 py-4">
+      <div className="rounded-card border border-gray-200 bg-white px-5 py-4">
         <div className="mb-2 text-sm font-semibold text-gray-900">{label}</div>
         <div className="flex h-20 items-center justify-center text-xs text-gray-400">
           Not enough data (need ≥ 2 snapshots)
@@ -124,7 +124,7 @@ function MetricSparkline({
   const fmt = (v: number) => pctFmt ? `${(v * 100).toFixed(0)}%` : v.toFixed(1);
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white px-5 py-4">
+    <div className="rounded-card border border-gray-200 bg-white px-5 py-4">
       <div className="mb-1 flex items-center justify-between">
         <div className="text-sm font-semibold text-gray-900">{label}</div>
         <div className="text-xs text-gray-400">{fmt(nonNull[nonNull.length - 1])}</div>
@@ -330,10 +330,10 @@ export default function IntelligencePage() {
         <div className="space-y-4">
           <div className="grid grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-28 animate-pulse rounded-xl bg-gray-100" />
+              <div key={i} className="h-28 animate-pulse rounded-card bg-gray-100" />
             ))}
           </div>
-          <div className="h-48 animate-pulse rounded-xl bg-gray-100" />
+          <div className="h-48 animate-pulse rounded-card bg-gray-100" />
         </div>
       ) : (
         <div className="space-y-6">
@@ -395,7 +395,7 @@ export default function IntelligencePage() {
 
           {/* Anomaly action strip */}
           {kpiLinks.length > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
+            <div className="rounded-card border border-amber-200 bg-amber-50 px-5 py-3">
               <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">
                 Action Required
               </div>
@@ -422,7 +422,7 @@ export default function IntelligencePage() {
           )}
 
           {/* Briefing history strip + panel */}
-          <div className="rounded-xl border border-gray-200 bg-white">
+          <div className="rounded-card border border-gray-200 bg-white">
             {/* Date strip */}
             {briefingHistory.length > 0 && (
               <div className="flex items-center gap-1 border-b border-gray-100 px-5 py-2 overflow-x-auto">
@@ -521,10 +521,19 @@ export default function IntelligencePage() {
               )
             ) : (
               <div className="px-5 py-12 text-center">
-                <p className="text-sm text-gray-400">No briefing generated yet.</p>
-                {isAdmin && (
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <p className="text-sm font-medium text-gray-600">No briefing generated yet</p>
+                {isAdmin ? (
                   <p className="mt-1 text-xs text-gray-400">
-                    Click &ldquo;Generate Briefing&rdquo; to create today&apos;s brief.
+                    Click &ldquo;Generate Briefing&rdquo; above to create today&apos;s intelligence brief.
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-gray-400">
+                    Intelligence briefings are generated daily. Check back tomorrow, or ask your administrator to generate today&apos;s brief.
                   </p>
                 )}
               </div>
@@ -577,7 +586,7 @@ export default function IntelligencePage() {
           )}
 
           {/* Recent Blueprint Quality Scores */}
-          <div className="rounded-xl border border-gray-200 bg-white">
+          <div className="rounded-card border border-gray-200 bg-white">
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
               <h2 className="text-sm font-semibold text-gray-900">Recent Blueprint Quality Scores</h2>
               {scores.length === 0 && isAdmin && (
@@ -709,7 +718,7 @@ export default function IntelligencePage() {
           </div>
 
           {/* Recent Intake Quality Scores */}
-          <div className="rounded-xl border border-gray-200 bg-white">
+          <div className="rounded-card border border-gray-200 bg-white">
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
               <h2 className="text-sm font-semibold text-gray-900">Recent Intake Quality Scores</h2>
               <Link href="/intake" className="text-xs text-gray-400 hover:text-gray-700">

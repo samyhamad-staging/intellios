@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { CheckSquare, AlertTriangle } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,6 +36,15 @@ interface PolicyCoverageItem {
   affectedAgentCount: number;
 }
 
+interface OverdueReviewItem {
+  blueprintId: string;
+  agentId: string;
+  agentName: string;
+  version: string;
+  nextReviewDue: string;
+  lastPeriodicReviewAt: string | null;
+}
+
 interface PostureData {
   // KPIs
   deployedCount: number;
@@ -49,6 +59,7 @@ interface PostureData {
   atRiskAgents: AtRiskAgent[];
   reviewQueue: ReviewQueueItem[];
   policyCoverage: PolicyCoverageItem[];
+  overdueReviews: OverdueReviewItem[];
 }
 
 interface AnalyticsData {
@@ -86,6 +97,12 @@ export default function CompliancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Complete Review modal state
+  const [completeModal, setCompleteModal] = useState<OverdueReviewItem | null>(null);
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [completeError, setCompleteError] = useState<string | null>(null);
+
   // Role gate — redirect non-authorized roles
   useEffect(() => {
     if (sessionStatus === "loading") return;
@@ -94,7 +111,7 @@ export default function CompliancePage() {
       return;
     }
     const role = session.user.role;
-    if (role !== "compliance_officer" && role !== "admin") {
+    if (role !== "compliance_officer" && role !== "admin" && role !== "viewer") {
       router.push("/");
     }
   }, [session, sessionStatus, router]);
@@ -102,7 +119,7 @@ export default function CompliancePage() {
   useEffect(() => {
     if (sessionStatus !== "authenticated") return;
     const role = session?.user?.role;
-    if (role !== "compliance_officer" && role !== "admin") return;
+    if (role !== "compliance_officer" && role !== "admin" && role !== "viewer") return;
 
     Promise.all([
       fetch("/api/compliance/posture").then((r) => r.json()),
@@ -120,9 +137,39 @@ export default function CompliancePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionStatus]);
 
+  async function handleCompleteReview() {
+    if (!completeModal) return;
+    setCompleteError(null);
+    setCompletingId(completeModal.blueprintId);
+    try {
+      const res = await fetch(
+        `/api/blueprints/${completeModal.blueprintId}/periodic-review/complete`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notes: reviewNotes || undefined }),
+        }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setCompleteError((data as { error?: string }).error ?? "Failed to complete review.");
+        return;
+      }
+      // Refresh posture data and close modal
+      const postureData = await fetch("/api/compliance/posture").then((r) => r.json());
+      setPosture(postureData as PostureData);
+      setCompleteModal(null);
+      setReviewNotes("");
+    } catch {
+      setCompleteError("Something went wrong. Please try again.");
+    } finally {
+      setCompletingId(null);
+    }
+  }
+
   if (sessionStatus === "loading" || (loading && !error)) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex h-64 items-center justify-center">
         <p className="text-sm text-gray-400">Loading compliance posture…</p>
       </div>
     );
@@ -130,7 +177,7 @@ export default function CompliancePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex h-64 items-center justify-center">
         <div className="text-center">
           <p className="text-sm text-red-600 mb-3">{error}</p>
           <button
@@ -145,33 +192,25 @@ export default function CompliancePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-6xl flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">
-              Compliance Command Center
-            </h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Enterprise compliance posture, at-risk agents, and review queue
-            </p>
+    <div className="px-8 py-8 space-y-8">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <CheckSquare size={20} className="text-violet-600" />
+            <h1 className="text-xl font-semibold text-gray-900">Compliance Command Center</h1>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/governance"
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              Governance Hub →
-            </Link>
-            <Link href="/" className="text-sm text-gray-400 hover:text-gray-700">
-              ← Home
-            </Link>
-          </div>
+          <p className="text-sm text-gray-500 pl-7">Enterprise compliance posture, at-risk agents, and review queue</p>
         </div>
-      </header>
+        <Link
+          href="/governance"
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+        >
+          Governance Hub →
+        </Link>
+      </div>
 
-      <main className="mx-auto max-w-6xl px-6 py-8 space-y-8">
+      <div className="space-y-8">
         {posture && (
           <>
             {/* ── Section A: Enterprise Posture KPIs ─────────────────────── */}
@@ -277,23 +316,110 @@ export default function CompliancePage() {
                         ? "text-amber-600"
                         : "text-green-600",
                   },
-                ].map(({ label, value, sub, color, subColor }) => (
-                  <div key={label} className={`rounded-xl border p-4 ${color}`}>
-                    <div className="text-2xl font-bold">{value}</div>
-                    <div className="mt-0.5 text-xs font-medium">{label}</div>
-                    <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
-                  </div>
-                ))}
+                ].map(({ label, value, sub, color, subColor }) => {
+                  const anchor = label === "At-Risk Agents" ? "#at-risk" : label === "Compliance Rate" ? "#policy-coverage" : label === "Review Queue" ? "#review-queue" : undefined;
+                  const inner = (
+                    <>
+                      <div className="text-2xl font-bold">{value}</div>
+                      <div className="mt-0.5 text-xs font-medium">{label}</div>
+                      <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
+                    </>
+                  );
+                  return anchor ? (
+                    <a key={label} href={anchor} className={`block rounded-card border p-4 hover:shadow-sm hover:border-violet-200 transition-all ${color}`}>
+                      {inner}
+                    </a>
+                  ) : (
+                    <div key={label} className={`rounded-card border p-4 ${color}`}>
+                      {inner}
+                    </div>
+                  );
+                })}
               </div>
             </section>
 
-            {/* ── Section B: At-Risk Agents ───────────────────────────────── */}
+            {/* ── Section A2: Periodic Review Status ─────────────────────── */}
             <section>
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
-                At-Risk Agents ({posture.atRiskCount})
+                Periodic Review Status (SR 11-7)
               </h2>
+              {(posture.overdueReviews?.length ?? 0) === 0 ? (
+                <div className="rounded-card border border-green-200 bg-green-50 p-5 text-center">
+                  <p className="text-sm font-medium text-green-800">✓ All deployments on schedule</p>
+                  <p className="mt-0.5 text-xs text-green-600">No deployed agents have overdue periodic reviews.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5">
+                    <AlertTriangle size={14} className="text-red-600 shrink-0" />
+                    <span className="text-sm font-medium text-red-800">
+                      {posture.overdueReviews.length} agent{posture.overdueReviews.length !== 1 ? "s" : ""} with overdue periodic review
+                    </span>
+                  </div>
+                  <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 bg-gray-50">
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Agent</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Review Due</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Days Overdue</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Last Review</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {posture.overdueReviews.map((item) => {
+                          const daysOverdue = Math.floor((Date.now() - new Date(item.nextReviewDue).getTime()) / (1000 * 60 * 60 * 24));
+                          return (
+                            <tr key={item.blueprintId} className="hover:bg-gray-50">
+                              <td className="px-4 py-3">
+                                <div className="font-medium text-gray-900">{item.agentName}</div>
+                                <div className="text-xs text-gray-400">v{item.version}</div>
+                              </td>
+                              <td className="px-4 py-3 text-sm text-red-700">
+                                {new Date(item.nextReviewDue).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                                  {daysOverdue}d overdue
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-xs text-gray-500">
+                                {item.lastPeriodicReviewAt
+                                  ? new Date(item.lastPeriodicReviewAt).toLocaleDateString(undefined, { dateStyle: "medium" })
+                                  : "Never"}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-3">
+                                  <Link href={`/registry/${item.agentId}`} className="text-xs text-blue-600 hover:underline">View →</Link>
+                                  <button
+                                    onClick={() => { setCompleteModal(item); setReviewNotes(""); setCompleteError(null); }}
+                                    className="text-xs text-violet-700 hover:text-violet-900 font-medium"
+                                  >
+                                    Complete Review
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* ── Section B: At-Risk Agents ───────────────────────────────── */}
+            <section id="at-risk">
+              <div className="mb-4">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+                  At-Risk Agents ({posture.atRiskCount})
+                </h2>
+                <p className="text-xs text-gray-400 mt-0.5">Agents with unresolved validation errors</p>
+              </div>
               {posture.atRiskAgents.length === 0 ? (
-                <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
+                <div className="rounded-card border border-green-200 bg-green-50 p-6 text-center">
                   <p className="text-sm font-medium text-green-800">
                     ✓ No agents at risk
                   </p>
@@ -303,7 +429,7 @@ export default function CompliancePage() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50">
@@ -386,7 +512,7 @@ export default function CompliancePage() {
             </section>
 
             {/* ── Section C: Review Queue Pressure ───────────────────────── */}
-            <section>
+            <section id="review-queue">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
                   Review Queue ({posture.reviewQueueCount})
@@ -402,7 +528,7 @@ export default function CompliancePage() {
               </div>
 
               {posture.reviewQueue.length === 0 ? (
-                <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+                <div className="rounded-card border border-gray-200 bg-white p-6 text-center">
                   <p className="text-sm text-gray-400">
                     No blueprints pending review
                   </p>
@@ -447,13 +573,13 @@ export default function CompliancePage() {
             </section>
 
             {/* ── Section D: Policy Coverage Gaps ────────────────────────── */}
-            <section>
+            <section id="policy-coverage">
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
                 Policy Coverage ({posture.policyCoverage.length} active policies)
               </h2>
 
               {posture.policyCoverage.length === 0 ? (
-                <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+                <div className="rounded-card border border-gray-200 bg-white p-6 text-center">
                   <p className="text-sm text-gray-400">
                     No active governance policies.{" "}
                     <Link
@@ -465,7 +591,7 @@ export default function CompliancePage() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50">
@@ -508,11 +634,14 @@ export default function CompliancePage() {
                           </td>
                           <td className="px-4 py-3 text-right">
                             {policy.affectedAgentCount > 0 ? (
-                              <span className="text-xs font-medium text-red-700">
-                                {policy.affectedAgentCount}
-                              </span>
+                              <Link
+                                href="/registry"
+                                className="text-xs font-medium text-violet-600 hover:text-violet-700"
+                              >
+                                {policy.affectedAgentCount} agent{policy.affectedAgentCount !== 1 ? "s" : ""}
+                              </Link>
                             ) : (
-                              <span className="text-xs text-gray-400">0</span>
+                              <span className="text-xs text-gray-400">0 agents</span>
                             )}
                           </td>
                         </tr>
@@ -530,70 +659,72 @@ export default function CompliancePage() {
               )}
             </section>
 
-            {/* ── Section E: 30-Day Trends ────────────────────────────────── */}
+            {/* ── Section E: Activity Trends ──────────────────────────────── */}
             {analytics && (
               <section>
-                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
-                  Activity Trends (last 6 months)
-                </h2>
-                <div className="rounded-xl border border-gray-200 bg-white p-5">
-                  {(() => {
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+                    Activity Trends (last 6 months)
+                  </h2>
+                  <div className="flex items-center gap-4 text-xs text-gray-400">
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block h-2 w-2 rounded-full bg-blue-400" />
+                      Submitted
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block h-2 w-2 rounded-full bg-green-400" />
+                      Approved
+                    </span>
+                  </div>
+                </div>
+                <div className="rounded-card border border-gray-200 bg-white p-5">
+                  {analytics.monthlySubmissions.every((m) => m.count === 0) &&
+                  analytics.monthlyApprovals.every((m) => m.count === 0) ? (
+                    <div className="flex flex-col items-center gap-1 py-6 text-center">
+                      <p className="text-sm text-gray-400">No submission activity in the last 6 months</p>
+                      <p className="text-xs text-gray-300">Data will appear here once agents are submitted for review</p>
+                    </div>
+                  ) : (() => {
                     const maxCount = Math.max(
                       ...analytics.monthlySubmissions.map((m) => m.count),
                       ...analytics.monthlyApprovals.map((m) => m.count),
                       1
                     );
                     return (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {analytics.monthlySubmissions.map((sub, i) => {
                           const appr = analytics.monthlyApprovals[i];
-                          const subPct = Math.round(
-                            (sub.count / maxCount) * 100
-                          );
-                          const apprPct = Math.round(
-                            ((appr?.count ?? 0) / maxCount) * 100
-                          );
+                          const subCount = sub.count;
+                          const apprCount = appr?.count ?? 0;
+                          const subPct = Math.round((subCount / maxCount) * 100);
+                          const apprPct = Math.round((apprCount / maxCount) * 100);
+                          // Format "2025-10" → "Oct 2025"
+                          const [yr, mo] = sub.month.split("-");
+                          const label = new Date(Number(yr), Number(mo) - 1, 1)
+                            .toLocaleDateString("en-US", { month: "short", year: "numeric" });
                           return (
-                            <div key={sub.month}>
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs text-gray-500">
-                                  {sub.month}
-                                </span>
-                                <div className="flex items-center gap-4 text-xs text-gray-400">
-                                  <span className="flex items-center gap-1">
-                                    <span className="inline-block w-2 h-2 rounded-full bg-blue-400" />
-                                    {sub.count} submitted
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <span className="inline-block w-2 h-2 rounded-full bg-green-400" />
-                                    {appr?.count ?? 0} approved
-                                  </span>
-                                </div>
+                            <div key={sub.month} className="grid grid-cols-[80px_1fr_72px] items-center gap-3">
+                              <span className="text-xs text-gray-400 text-right whitespace-nowrap">{label}</span>
+                              <div className="relative h-5 rounded bg-gray-50 overflow-hidden">
+                                <div
+                                  className="absolute inset-y-0 left-0 rounded bg-blue-100 transition-all"
+                                  style={{ width: `${subPct}%` }}
+                                />
+                                <div
+                                  className="absolute inset-y-0 left-0 rounded bg-green-400/70 transition-all"
+                                  style={{ width: `${apprPct}%` }}
+                                />
                               </div>
-                              <div className="space-y-1">
-                                <div className="h-2 w-full rounded-full bg-gray-100">
-                                  <div
-                                    className="h-2 rounded-full bg-blue-400 transition-all"
-                                    style={{ width: `${subPct}%` }}
-                                  />
-                                </div>
-                                <div className="h-2 w-full rounded-full bg-gray-100">
-                                  <div
-                                    className="h-2 rounded-full bg-green-400 transition-all"
-                                    style={{ width: `${apprPct}%` }}
-                                  />
-                                </div>
+                              <div className="text-right text-xs text-gray-400 whitespace-nowrap">
+                                {subCount} / {apprCount}
                               </div>
                             </div>
                           );
                         })}
-                        {analytics.monthlySubmissions.every(
-                          (m) => m.count === 0
-                        ) && (
-                          <p className="text-center text-xs text-gray-400 py-4">
-                            No submission activity in the last 6 months
-                          </p>
-                        )}
+                        <div className="mt-1 grid grid-cols-[80px_1fr_72px] gap-3">
+                          <span />
+                          <div className="text-xs text-gray-300">submitted / approved</div>
+                        </div>
                       </div>
                     );
                   })()}
@@ -602,7 +733,58 @@ export default function CompliancePage() {
             )}
           </>
         )}
-      </main>
+      </div>
+
+      {/* ── Complete Review Modal ──────────────────────────────────────────── */}
+      {completeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-xl">
+            <h3 className="mb-1 text-base font-semibold text-gray-900">Mark periodic review complete</h3>
+            <p className="mb-4 text-sm text-gray-500">
+              This will record completion for{" "}
+              <span className="font-medium text-gray-900">{completeModal.agentName}</span>{" "}
+              and schedule the next review based on the configured cadence.
+            </p>
+
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Review notes <span className="text-gray-400">(optional)</span>
+              </label>
+              <textarea
+                value={reviewNotes}
+                onChange={(e) => setReviewNotes(e.target.value)}
+                rows={3}
+                maxLength={1000}
+                placeholder="Findings, actions taken, or conclusions from the review…"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 resize-none"
+              />
+            </div>
+
+            {completeError && (
+              <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                {completeError}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setCompleteModal(null); setReviewNotes(""); setCompleteError(null); }}
+                disabled={!!completingId}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCompleteReview}
+                disabled={!!completingId}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+              >
+                {completingId ? "Completing…" : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -18,13 +18,23 @@ export type EventType =
   | "blueprint.agentcore_exported"
   | "blueprint.agentcore_deployed"
   | "blueprint.compliance_exported"
+  | "blueprint.simulated"
+  | "blueprint.code_exported"
+  | "blueprint.red_team_run"
+  | "blueprint.created_from_template"
+  | "blueprint.regenerated"
   | "intake.finalized"
   | "intake.contribution_submitted"
+  | "intake.invitation_sent"
   | "policy.created"
   | "policy.updated"
   | "policy.deleted"
   | "policy.simulated"
-  | "settings.updated";
+  | "settings.updated"
+  | "blueprint.periodic_review_scheduled"
+  | "blueprint.periodic_review_completed"
+  | "blueprint.periodic_review_reminder"
+  | "blueprint.evidence_package_exported";
 
 export interface LifecycleEvent {
   /** Audit log row ID — can be used to correlate with the audit trail */

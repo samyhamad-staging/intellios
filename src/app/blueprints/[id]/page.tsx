@@ -98,6 +98,8 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [validating, setValidating] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   // Phase 23: Test Harness state for workbench widget
   const [testCaseCount, setTestCaseCount] = useState<number>(0);
@@ -109,6 +111,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
 
   const [blueprintStatus, setBlueprintStatus] = useState<string>("draft");
   const [reviewComment, setReviewComment] = useState<string | null>(null);
+  const [exportingEvidence, setExportingEvidence] = useState(false);
 
   const [ownershipOpen, setOwnershipOpen] = useState(false);
   const [ownershipDraft, setOwnershipDraft] = useState<{
@@ -167,7 +170,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Refinement failed");
+        throw new Error(data.message ?? "Refinement failed");
       }
       const data = await res.json();
       setAbp(data.abp as ABP);
@@ -204,6 +207,57 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       setError(err instanceof Error ? err.message : "Validation failed");
     } finally { setValidating(false); }
   }, [id]);
+
+  const handleRegenerate = useCallback(async () => {
+    setRegenerating(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/blueprints/${id}/regenerate`, { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message ?? "Regeneration failed");
+      }
+      const data = await res.json();
+      setAbp(data.abp as ABP);
+      setValidationReport(data.validationReport ?? null);
+      setReportIsFresh(true);
+      setRefinementCount(0);
+      setConfirmRegenerate(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Regeneration failed");
+    } finally {
+      setRegenerating(false);
+    }
+  }, [id]);
+
+  const handleExportEvidence = useCallback(async () => {
+    if (exportingEvidence) return;
+    setExportingEvidence(true);
+    try {
+      const res = await fetch(`/api/blueprints/${id}/evidence-package`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(`Export failed: ${(err as { error?: string }).error ?? res.statusText}`);
+        return;
+      }
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const match = disposition.match(/filename="([^"]+)"/);
+      const filename = match ? match[1] : `evidence-package-${id}.json`;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Export failed. Please try again.");
+    } finally {
+      setExportingEvidence(false);
+    }
+  }, [id, exportingEvidence]);
 
   const handleSaveOwnership = useCallback(async () => {
     setSavingOwnership(true);
@@ -311,7 +365,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Submit failed");
+        throw new Error(data.message ?? "Submit failed");
       }
       setSubmitted(true);
     } catch (err) {
@@ -597,6 +651,42 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                   {error && (
                     <p className="mt-1.5 text-xs text-red-600">{error}</p>
                   )}
+
+                  {/* Regenerate Blueprint — draft only, for when generation needs a fresh start */}
+                  {blueprintStatus === "draft" && (
+                    <div className="mt-3 border-t border-gray-100 pt-3">
+                      {!confirmRegenerate ? (
+                        <button
+                          onClick={() => setConfirmRegenerate(true)}
+                          disabled={regenerating || refining || validating}
+                          className="w-full rounded-lg border border-gray-200 py-1.5 text-xs font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 transition-colors disabled:opacity-40"
+                        >
+                          Regenerate Blueprint
+                        </button>
+                      ) : (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                          <p className="mb-2 font-medium">Replace this blueprint with a fresh generation?</p>
+                          <p className="mb-3 text-amber-700">All refinements will be lost. The new blueprint will be generated from your original intake session.</p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={handleRegenerate}
+                              disabled={regenerating}
+                              className="flex-1 rounded-md bg-red-600 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                            >
+                              {regenerating ? "Regenerating…" : "Yes, Regenerate"}
+                            </button>
+                            <button
+                              onClick={() => setConfirmRegenerate(false)}
+                              disabled={regenerating}
+                              className="flex-1 rounded-md border border-gray-300 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -686,7 +776,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                   <button
                     onClick={handleRunWorkbenchTests}
                     disabled={runningWorkbenchTests}
-                    className="rounded-lg bg-gray-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                    className="rounded-lg bg-violet-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
                   >
                     {runningWorkbenchTests ? "Running…" : "Run Tests"}
                   </button>
@@ -811,13 +901,50 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                 <button
                   onClick={handleSaveOwnership}
                   disabled={savingOwnership}
-                  className="w-full rounded-lg bg-gray-900 py-1.5 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                  className="w-full rounded-lg bg-violet-600 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
                 >
                   {savingOwnership ? "Saving…" : "Save Ownership"}
                 </button>
               </div>
             )}
           </div>
+
+          {/* Evidence Package — shown for approved and deployed blueprints */}
+          {(blueprintStatus === "approved" || blueprintStatus === "deployed") && (
+            <div className="border-b border-gray-200 px-5 py-4">
+              <div className="flex items-center gap-2 mb-2">
+                <h2 className="text-sm font-semibold">Audit Evidence</h2>
+                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700 uppercase tracking-wide">
+                  Exam-Ready
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mb-3">
+                This agent has a complete governance record — identity, capabilities,
+                validation, approvals, stakeholder contributions, and regulatory
+                framework assessment are all on record.
+              </p>
+              <div className="space-y-2">
+                <Link
+                  href={`/blueprints/${id}/report`}
+                  className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+                >
+                  <span>View Compliance Report</span>
+                  <span className="text-gray-400">→</span>
+                </Link>
+                <button
+                  onClick={handleExportEvidence}
+                  disabled={exportingEvidence}
+                  className="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 transition-colors text-left"
+                >
+                  {exportingEvidence ? "Exporting…" : "↓ Export Evidence Package"}
+                </button>
+                <p className="text-[10px] text-gray-400 leading-tight">
+                  JSON bundle: MRM report, approval chain, quality evaluation,
+                  test evidence, stakeholder contributions.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Refinement */}
           <div className="border-b border-gray-200 px-5 py-4">
@@ -839,7 +966,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               }}
               placeholder="e.g. Add a rate limit of 50 requests per minute. Make the persona more formal."
               disabled={refining || loading}
-              className="flex-1 resize-none rounded-lg border border-gray-200 p-3 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50"
+              className="flex-1 resize-none rounded-lg border border-gray-200 p-3 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50"
               rows={4}
             />
 
@@ -850,7 +977,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             <button
               onClick={handleRefine}
               disabled={!change.trim() || refining || loading}
-              className="rounded-lg bg-gray-900 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-40"
+              className="rounded-lg bg-violet-600 py-2 text-sm text-white hover:bg-violet-700 disabled:opacity-40"
             >
               {refining ? "Refining…" : "Apply Changes"}
             </button>

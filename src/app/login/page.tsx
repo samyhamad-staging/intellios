@@ -8,6 +8,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const justRegistered = searchParams.get("registered") === "1";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,8 +46,15 @@ function LoginForm() {
           <p className="mt-1 text-sm text-gray-500">Enterprise Agent Factory</p>
         </div>
 
+        {/* Registration success banner */}
+        {justRegistered && (
+          <div className="mb-4 rounded-card border banner-success px-4 py-3 text-sm">
+            Account created successfully. Sign in to get started.
+          </div>
+        )}
+
         {/* Card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="rounded-card border border-gray-200 bg-white p-8 shadow-sm">
           <h2 className="mb-6 text-lg font-semibold text-gray-900">
             Sign in to your account
           </h2>
@@ -66,7 +74,7 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus-accent"
                 placeholder="you@intellios.dev"
               />
             </div>
@@ -85,12 +93,12 @@ function LoginForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus-accent"
               />
             </div>
 
             {error && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="rounded-lg badge-gov-error px-3 py-2 text-sm">
                 {error}
               </p>
             )}
@@ -98,10 +106,31 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-gray-900 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+              className="w-full rounded-lg btn-primary py-2 text-sm font-medium"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
+
+            <div className="text-center">
+              <a
+                href="/auth/forgot-password"
+                className="text-xs text-gray-500 hover:text-gray-700 underline-offset-2 hover:underline"
+              >
+                Forgot your password?
+              </a>
+            </div>
+
+            <div className="text-center">
+              <span className="text-xs text-gray-500">
+                Don&apos;t have an account?{" "}
+                <a
+                  href="/register"
+                  className="font-medium text-[color:var(--sidebar-accent)] hover:text-[color:#7c3aed] underline-offset-2 hover:underline"
+                >
+                  Start free trial
+                </a>
+              </span>
+            </div>
           </form>
         </div>
 
@@ -110,22 +139,34 @@ function LoginForm() {
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
             Demo accounts
           </p>
-          <div className="space-y-1 text-xs text-gray-500">
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-700">designer@intellios.dev</span>
-              <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700">Designer</span>
+          <div className="space-y-1.5 text-xs text-gray-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-medium text-gray-700">designer@intellios.dev</span>
+                <span className="ml-2 text-gray-400">Designer1234!</span>
+              </div>
+              <span className="rounded badge-role-designer px-1.5 py-0.5">Designer</span>
             </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-700">reviewer@intellios.dev</span>
-              <span className="rounded bg-amber-50 px-1.5 py-0.5 text-amber-700">Reviewer</span>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-medium text-gray-700">reviewer@intellios.dev</span>
+                <span className="ml-2 text-gray-400">Reviewer1234!</span>
+              </div>
+              <span className="rounded badge-role-reviewer px-1.5 py-0.5">Reviewer</span>
             </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-700">officer@intellios.dev</span>
-              <span className="rounded bg-green-50 px-1.5 py-0.5 text-green-700">Compliance Officer</span>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-medium text-gray-700">officer@intellios.dev</span>
+                <span className="ml-2 text-gray-400">Officer1234!</span>
+              </div>
+              <span className="rounded badge-role-officer px-1.5 py-0.5">Compliance Officer</span>
             </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-700">admin@intellios.dev</span>
-              <span className="rounded bg-purple-50 px-1.5 py-0.5 text-purple-700">Admin</span>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-medium text-gray-700">admin@intellios.dev</span>
+                <span className="ml-2 text-gray-400">Admin1234!</span>
+              </div>
+              <span className="rounded badge-role-admin px-1.5 py-0.5">Admin</span>
             </div>
           </div>
         </div>

@@ -29,7 +29,7 @@ export function ValidationReportView({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Validation failed");
+        throw new Error(data.message ?? "Validation failed");
       }
       const data = await res.json();
       onRevalidate(data.report as ValidationReport);
@@ -46,12 +46,12 @@ export function ValidationReportView({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {report.valid ? (
-            <span className="flex items-center gap-1.5 text-sm font-medium text-green-700">
-              <span className="text-green-500">✓</span> Passes governance
+            <span className="flex items-center gap-1.5 text-sm font-medium text-[color:var(--gov-pass-text)]">
+              <span className="text-[color:var(--gov-pass-icon)]">✓</span> Passes governance
             </span>
           ) : (
-            <span className="flex items-center gap-1.5 text-sm font-medium text-red-700">
-              <span className="text-red-500">✗</span>
+            <span className="flex items-center gap-1.5 text-sm font-medium text-[color:var(--gov-error-text)]">
+              <span className="text-[color:var(--gov-error-icon)]">✗</span>
               {errorViolations.length} error{errorViolations.length !== 1 ? "s" : ""}
               {warnViolations.length > 0 && `, ${warnViolations.length} warning${warnViolations.length !== 1 ? "s" : ""}`}
             </span>
@@ -69,7 +69,7 @@ export function ValidationReportView({
         </button>
       </div>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-[color:var(--gov-error-text)]">{error}</p>}
 
       {/* Violations */}
       {report.violations.length > 0 && (
@@ -101,24 +101,16 @@ function ViolationCard({ violation }: { violation: Violation }) {
 
   return (
     <div
-      className={`rounded-lg border p-3 ${
-        isError
-          ? "border-red-200 bg-red-50"
-          : "border-yellow-200 bg-yellow-50"
-      }`}
+      className={`rounded-lg border p-3 ${isError ? "badge-gov-error" : "badge-gov-warn"}`}
     >
       <div className="flex items-start gap-2">
         <span
-          className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-xs font-medium ${
-            isError
-              ? "bg-red-100 text-red-700"
-              : "bg-yellow-100 text-yellow-700"
-          }`}
+          className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-xs font-medium ${isError ? "badge-gov-error" : "badge-gov-warn"}`}
         >
           {isError ? "error" : "warn"}
         </span>
         <div className="min-w-0 flex-1">
-          <p className={`text-xs font-medium ${isError ? "text-red-800" : "text-yellow-800"}`}>
+          <p className={`text-xs font-medium ${isError ? "text-[color:var(--gov-error-text)]" : "text-[color:var(--gov-warn-text)]"}`}>
             {violation.message}
           </p>
           <p className="mt-0.5 text-xs text-gray-500">

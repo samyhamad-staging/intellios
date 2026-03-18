@@ -38,7 +38,7 @@ export default function AdminSettingsPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Save failed");
+        throw new Error(data.message ?? "Save failed");
       }
       const data = await res.json();
       setSettings(data.settings);
@@ -59,28 +59,23 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto max-w-3xl flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <Link href="/admin/users" className="hover:text-gray-700">← Admin</Link>
-            </div>
-            <h1 className="mt-1 text-xl font-semibold text-gray-900">Enterprise Settings</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
-              Configure governance thresholds, SLA policies, and notification preferences.
-            </p>
-          </div>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
-          >
-            {saving ? "Saving…" : "Save Settings"}
-          </button>
+    <div className="px-8 py-8 space-y-6">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Enterprise Settings</h1>
+          <p className="mt-0.5 text-sm text-gray-500">
+            Configure governance thresholds, SLA policies, and notification preferences.
+          </p>
         </div>
-      </header>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save Settings"}
+        </button>
+      </div>
 
       {/* Toast */}
       {toast && (
@@ -95,10 +90,80 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      <main className="mx-auto max-w-3xl px-6 py-8 space-y-6">
+      <div className="space-y-6">
+
+        {/* Periodic Review */}
+        <section className="rounded-card border border-gray-200 bg-white p-6">
+          <h2 className="text-base font-semibold text-gray-900">Periodic Model Review</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            SR 11-7 requires periodic model revalidation after initial deployment.
+            Agents are automatically scheduled for review when deployed.
+          </p>
+          <div className="mt-5 space-y-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.periodicReview?.enabled ?? true}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    periodicReview: { ...s.periodicReview, enabled: e.target.checked },
+                  }))
+                }
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+              />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Enable periodic review scheduling</p>
+                <p className="text-xs text-gray-500">When enabled, a review due date is set when an agent is deployed.</p>
+              </div>
+            </label>
+            {(settings.periodicReview?.enabled ?? true) && (
+              <div className="grid grid-cols-2 gap-5 pl-7">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Default review cadence (months)
+                  </label>
+                  <p className="text-xs text-gray-400 mt-0.5">SR 11-7 typically requires annual (12) review for high-risk models.</p>
+                  <input
+                    type="number"
+                    min={1}
+                    max={60}
+                    value={settings.periodicReview?.defaultCadenceMonths ?? 12}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        periodicReview: { ...s.periodicReview, defaultCadenceMonths: Number(e.target.value) },
+                      }))
+                    }
+                    className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Reminder (days before due)
+                  </label>
+                  <p className="text-xs text-gray-400 mt-0.5">Send a reminder notification this many days in advance.</p>
+                  <input
+                    type="number"
+                    min={1}
+                    max={180}
+                    value={settings.periodicReview?.reminderDaysBefore ?? 30}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        periodicReview: { ...s.periodicReview, reminderDaysBefore: Number(e.target.value) },
+                      }))
+                    }
+                    className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* Review SLA */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section className="rounded-card border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Review SLA</h2>
           <p className="mt-1 text-sm text-gray-500">
             Time thresholds for blueprints in the <code className="text-xs bg-gray-100 px-1 rounded">in_review</code> state.
@@ -152,7 +217,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Governance Rules */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section className="rounded-card border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Governance Rules</h2>
           <p className="mt-1 text-sm text-gray-500">
             Control which governance gates are enforced in the design and review workflow.
@@ -208,7 +273,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Notifications */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section className="rounded-card border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Notifications</h2>
           <p className="mt-1 text-sm text-gray-500">
             Configure who receives email alerts for governance events.
@@ -273,7 +338,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Approval Chain */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section className="rounded-card border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Approval Chain</h2>
           <p className="mt-1 text-sm text-gray-500">
             Define a sequential multi-step approval workflow. Each step requires a reviewer with the specified role
@@ -348,7 +413,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Deployment Targets */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section className="rounded-card border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Deployment Targets</h2>
           <p className="mt-1 text-sm text-gray-500">
             Configure direct deployment targets. AWS credentials are read from server environment
@@ -536,7 +601,7 @@ export default function AdminSettingsPage() {
             {saving ? "Saving…" : "Save Settings"}
           </button>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

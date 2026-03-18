@@ -5,21 +5,47 @@ import { and, desc, eq, isNull } from "drizzle-orm";
 import Link from "next/link";
 import { NewIntakeButton } from "@/components/intake/new-intake-button";
 import { StatusBadge } from "@/components/registry/status-badge";
+import {
+  Plus,
+  Kanban,
+  Library,
+  ClipboardList,
+  ChevronRight,
+  Bot,
+  Inbox,
+  CheckCircle,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
+import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { FleetGovernanceDashboard } from "@/components/dashboard/fleet-governance-dashboard";
+import { getRecentSnapshots } from "@/lib/awareness/metrics-worker";
 
 function timeAgo(dateStr: string | Date): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   if (diffDays === 0) return "today";
-  if (diffDays === 1) return "1 day ago";
-  if (diffDays < 30) return `${diffDays} days ago`;
+  if (diffDays === 1) return "1d ago";
+  if (diffDays < 30) return `${diffDays}d ago`;
   return `${Math.floor(diffDays / 7)}w ago`;
 }
+
+const STATUS_STAGE_CONFIG = {
+  draft:      { label: "Draft",      kpi: "kpi-neutral"   },
+  in_review:  { label: "In Review",  kpi: "kpi-review"    },
+  approved:   { label: "Approved",   kpi: "kpi-compliant" },
+  deployed:   { label: "Deployed",   kpi: "kpi-deployed"  },
+} as const;
+
+const TERMINAL_TEXT = {
+  rejected:   "text-[color:var(--status-rejected-text)]",
+  deprecated: "text-[color:var(--status-deprecated-text)]",
+} as const;
 
 export default async function Home() {
   const session = await auth();
   const user = session?.user;
 
-  // Fetch agents scoped to the user's enterprise
   const enterpriseFilter =
     user?.role === "admin"
       ? undefined
@@ -44,7 +70,6 @@ export default async function Home() {
         .orderBy(agentBlueprints.agentId, desc(agentBlueprints.updatedAt))
     : [];
 
-  // Sort by updatedAt desc
   allAgents.sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   );
@@ -57,17 +82,21 @@ export default async function Home() {
 
   const role = user?.role ?? "designer";
 
-  // ── No session (unauthenticated) ───────────────────────────────────────────
   if (!user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="mb-2 text-4xl font-bold tracking-tight">Intellios</h1>
-          <p className="mb-8 text-lg text-gray-600">Enterprise Agent Factory</p>
-          <Link
-            href="/login"
-            className="rounded-lg bg-gray-900 px-6 py-3 text-white hover:bg-gray-800 transition-colors"
-          >
+          <div className="mb-4 flex justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-card bg-violet-500">
+              <svg width="20" height="20" viewBox="0 0 14 14" fill="none">
+                <path d="M2 11L7 3L12 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4.5 8H9.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <h1 className="mb-1 text-2xl font-semibold text-gray-900">Intellios</h1>
+          <p className="mb-8 text-sm text-gray-500">Enterprise Agent Factory</p>
+          <Link href="/login" className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors">
             Sign in
           </Link>
         </div>
@@ -75,270 +104,334 @@ export default async function Home() {
     );
   }
 
-  // ── Designer ───────────────────────────────────────────────────────────────
+  // ── Designer ──────────────────────────────────────────────────────────────
   if (role === "designer") {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-5xl px-6 py-10">
-          {/* Hero */}
-          <div className="mb-10">
-            <h1 className="text-2xl font-bold text-gray-900">
-              My Work
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Design, refine, and submit agent blueprints for review.
-            </p>
+      <div className="px-8 py-8">
+        {/* Header */}
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">My Work</h1>
+            <p className="mt-0.5 text-sm text-gray-500">Design, refine, and submit agent blueprints for review.</p>
           </div>
-
-          {/* Primary CTA */}
-          <div className="mb-8 flex items-center gap-4">
-            <NewIntakeButton className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 transition-colors" />
-            <Link
-              href="/pipeline"
-              className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              Pipeline Board
-            </Link>
-            <Link
-              href="/registry"
-              className="text-sm text-gray-500 hover:text-gray-900"
-            >
-              Agent Registry →
-            </Link>
-          </div>
-
-          {/* My Recent Work */}
-          <section>
-            <h2 className="mb-3 text-sm font-semibold text-gray-700">
-              {myAgents.length > 0 ? `Recent Agents (${myAgents.length})` : "Recent Agents"}
-            </h2>
-            {myAgents.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
-                <p className="text-sm text-gray-400">No agents yet.</p>
-                <p className="mt-1 text-xs text-gray-400">
-                  Start an intake session to design your first agent.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {myAgents.slice(0, 8).map((agent) => (
-                  <Link
-                    key={agent.agentId}
-                    href={`/registry/${agent.agentId}`}
-                    className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-5 py-3 hover:border-gray-400 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="truncate font-medium text-sm text-gray-900">
-                        {agent.name ?? "Unnamed Agent"}
-                      </span>
-                      <StatusBadge status={agent.status} />
-                    </div>
-                    <div className="flex items-center gap-4 shrink-0">
-                      <span className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</span>
-                      <span className="text-xs text-gray-400">→</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* In-review count callout */}
-          {draftAgents.length > 0 && (
-            <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 px-5 py-3">
-              <p className="text-sm text-yellow-800">
-                <strong>{draftAgents.length} draft{draftAgents.length === 1 ? "" : "s"}</strong> not yet submitted for review.{" "}
-                <Link href="/pipeline" className="underline hover:text-yellow-900">
-                  View in pipeline →
-                </Link>
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // ── Reviewer / Compliance Officer ──────────────────────────────────────────
-  if (role === "reviewer" || role === "compliance_officer") {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-5xl px-6 py-10">
-          {/* Hero */}
-          <div className="mb-10">
-            <h1 className="text-2xl font-bold text-gray-900">
-              {role === "compliance_officer" ? "Governance & Compliance" : "Review Queue"}
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {inReviewAgents.length > 0
-                ? `${inReviewAgents.length} agent${inReviewAgents.length === 1 ? "" : "s"} pending review`
-                : "No agents pending review"}
-            </p>
-          </div>
-
-          {/* Primary CTA */}
-          <div className="mb-8 flex items-center gap-4">
-            <Link
-              href="/review"
-              className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
-            >
-              {inReviewAgents.length > 0
-                ? `Open Review Queue (${inReviewAgents.length})`
-                : "Open Review Queue"}
-            </Link>
-            <Link
-              href="/pipeline"
-              className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              Pipeline Board
-            </Link>
-            <Link
-              href="/registry"
-              className="text-sm text-gray-500 hover:text-gray-900"
-            >
-              Agent Registry →
-            </Link>
-          </div>
-
-          {/* Pending Reviews */}
-          <section>
-            <h2 className="mb-3 text-sm font-semibold text-gray-700">
-              Pending Reviews
-            </h2>
-            {inReviewAgents.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
-                <p className="text-sm text-gray-400">✓ Review queue is empty.</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {inReviewAgents.slice(0, 8).map((agent) => (
-                  <Link
-                    key={agent.agentId}
-                    href={`/registry/${agent.agentId}?tab=review`}
-                    className="flex items-center justify-between rounded-lg border border-blue-200 bg-white px-5 py-3 hover:border-blue-400 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="truncate font-medium text-sm text-gray-900">
-                        {agent.name ?? "Unnamed Agent"}
-                      </span>
-                      <StatusBadge status={agent.status} />
-                    </div>
-                    <div className="flex items-center gap-4 shrink-0">
-                      <span className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</span>
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                        Review →
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Admin ──────────────────────────────────────────────────────────────────
-  const statuses = ["draft", "in_review", "approved", "deployed", "rejected", "deprecated"] as const;
-  const counts = Object.fromEntries(
-    statuses.map((s) => [s, allAgents.filter((a) => a.status === s).length])
-  ) as Record<typeof statuses[number], number>;
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-5xl px-6 py-10">
-        {/* Hero */}
-        <div className="mb-10">
-          <h1 className="text-2xl font-bold text-gray-900">Intellios</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Enterprise Agent Factory — {allAgents.length} agent{allAgents.length === 1 ? "" : "s"} across all teams
-          </p>
+          <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors disabled:opacity-50" />
         </div>
 
-        {/* Stats row */}
-        <div className="mb-8 grid grid-cols-6 gap-3">
+        {/* Quick action cards */}
+        <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { label: "Draft",      count: counts.draft,       color: "text-gray-700 bg-gray-50 border-gray-200" },
-            { label: "In Review",  count: counts.in_review,   color: "text-blue-700 bg-blue-50 border-blue-200" },
-            { label: "Approved",   count: counts.approved,    color: "text-green-700 bg-green-50 border-green-200" },
-            { label: "Deployed",   count: counts.deployed,    color: "text-indigo-700 bg-indigo-50 border-indigo-200" },
-            { label: "Rejected",   count: counts.rejected,    color: "text-red-700 bg-red-50 border-red-200" },
-            { label: "Deprecated", count: counts.deprecated,  color: "text-amber-700 bg-amber-50 border-amber-200" },
-          ].map(({ label, count, color }) => (
-            <div key={label} className={`rounded-lg border px-4 py-3 text-center ${color}`}>
-              <div className="text-2xl font-bold">{count}</div>
-              <div className="text-xs font-medium">{label}</div>
-            </div>
+            { href: "/pipeline", icon: Kanban,      label: "Pipeline Board",  sub: `${allAgents.length} agents`, color: "text-violet-600" },
+            { href: "/registry", icon: Library,     label: "Agent Registry",  sub: "All versions",              color: "text-blue-600" },
+            { href: "/intake",   icon: Plus,         label: "New Intake",      sub: "Start from scratch",        color: "text-green-600" },
+          ].map(({ href, icon: Icon, label, sub, color }) => (
+            <Link key={href} href={href} className="group flex items-center gap-3 rounded-card border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all min-w-0">
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-violet-50 transition-colors ${color}`}>
+                <Icon size={16} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900 truncate">{label}</p>
+                <p className="text-xs text-gray-400">{sub}</p>
+              </div>
+              <ChevronRight size={14} className="ml-auto text-gray-300 group-hover:text-gray-400" />
+            </Link>
           ))}
         </div>
 
-        {/* Quick actions */}
-        <div className="mb-8 flex items-center gap-3">
-          <Link
-            href="/pipeline"
-            className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
-          >
-            Pipeline Board
-          </Link>
-          <Link
-            href="/deploy"
-            className="rounded-lg border border-indigo-200 bg-indigo-50 px-5 py-2.5 text-sm font-medium text-indigo-700 hover:border-indigo-400 hover:bg-indigo-100 transition-colors"
-          >
-            Deploy {counts.approved > 0 && `(${counts.approved} ready)`}
-          </Link>
-          <Link
-            href="/review"
-            className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
-          >
-            Review Queue {counts.in_review > 0 && `(${counts.in_review})`}
-          </Link>
-          <Link
-            href="/dashboard"
-            className="text-sm text-gray-500 hover:text-gray-900"
-          >
-            Dashboard →
-          </Link>
-          <Link
-            href="/registry"
-            className="text-sm text-gray-500 hover:text-gray-900"
-          >
-            Registry →
-          </Link>
-        </div>
+        {/* Drafts callout */}
+        {draftAgents.length > 0 && (
+          <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+            <span className="text-sm text-amber-800">
+              <strong>{draftAgents.length} draft{draftAgents.length === 1 ? "" : "s"}</strong> not yet submitted for review.
+            </span>
+            <Link href="/pipeline" className="ml-auto text-xs font-medium text-amber-700 underline hover:text-amber-900">
+              View in pipeline →
+            </Link>
+          </div>
+        )}
 
         {/* Recent agents */}
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">Recent Activity</h2>
-          {allAgents.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
-              <p className="text-sm text-gray-400">No agents in the system yet.</p>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Recent Agents</h2>
+          {myAgents.length === 0 ? (
+            <div className="flex flex-col items-center rounded-card border border-dashed border-gray-200 bg-white py-14 text-center">
+              <Inbox size={28} className="mb-3 text-gray-300" />
+              <p className="text-sm font-medium text-gray-500">No agents yet</p>
+              <p className="mt-1 text-xs text-gray-400">Start an intake session to design your first agent.</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {allAgents.slice(0, 8).map((agent) => (
+            <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
+              {myAgents.slice(0, 8).map((agent, i) => (
                 <Link
                   key={agent.agentId}
                   href={`/registry/${agent.agentId}`}
-                  className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-5 py-3 hover:border-gray-400 transition-colors"
+                  className={`flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-100" : ""}`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="truncate font-medium text-sm text-gray-900">
-                      {agent.name ?? "Unnamed Agent"}
-                    </span>
-                    <StatusBadge status={agent.status} />
-                  </div>
-                  <div className="flex items-center gap-4 shrink-0">
-                    <span className="text-xs text-gray-400">{agent.createdBy ?? "—"}</span>
-                    <span className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</span>
-                    <span className="text-xs text-gray-400">→</span>
-                  </div>
+                  <Bot size={15} className="shrink-0 text-gray-400" />
+                  <span className="flex-1 truncate text-sm font-medium text-gray-900" title={agent.name ?? "Unnamed Agent"}>{agent.name ?? "Unnamed Agent"}</span>
+                  <StatusBadge status={agent.status} />
+                  <span className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</span>
+                  <ChevronRight size={13} className="text-gray-300" />
                 </Link>
               ))}
             </div>
           )}
         </section>
       </div>
+    );
+  }
+
+  // ── Reviewer / Compliance Officer ─────────────────────────────────────────
+  if (role === "reviewer" || role === "compliance_officer") {
+    return (
+      <div className="px-8 py-8">
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">
+              {role === "compliance_officer" ? "Governance & Compliance" : "Review Queue"}
+            </h1>
+            <p className="mt-0.5 text-sm text-gray-500">
+              {inReviewAgents.length > 0
+                ? `${inReviewAgents.length} agent${inReviewAgents.length === 1 ? "" : "s"} pending review`
+                : "Queue is clear"}
+            </p>
+          </div>
+          <Link href="/review" className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors">
+            <ClipboardList size={14} />
+            Review Queue{inReviewAgents.length > 0 && ` (${inReviewAgents.length})`}
+          </Link>
+        </div>
+
+        <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { href: "/review",   icon: ClipboardList, label: "Review Queue",   sub: `${inReviewAgents.length} pending`, color: "text-amber-600" },
+            { href: "/pipeline", icon: Kanban,         label: "Pipeline Board", sub: `${allAgents.length} total`,        color: "text-violet-600" },
+            { href: "/registry", icon: Library,        label: "Agent Registry", sub: "All versions",                     color: "text-blue-600" },
+          ].map(({ href, icon: Icon, label, sub, color }) => (
+            <Link key={href} href={href} className="group flex items-center gap-3 rounded-card border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all min-w-0">
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-violet-50 transition-colors ${color}`}>
+                <Icon size={16} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900 truncate">{label}</p>
+                <p className="text-xs text-gray-400">{sub}</p>
+              </div>
+              <ChevronRight size={14} className="ml-auto text-gray-300 group-hover:text-gray-400" />
+            </Link>
+          ))}
+        </div>
+
+        <section>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Pending Reviews</h2>
+          {inReviewAgents.length === 0 ? (
+            <div className="flex flex-col items-center rounded-card border border-dashed border-gray-200 bg-white py-14 text-center">
+              <CheckCircle size={28} className="mb-3 text-green-400" />
+              <p className="text-sm font-medium text-gray-500">Review queue is clear</p>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
+              {inReviewAgents.slice(0, 8).map((agent, i) => (
+                <Link
+                  key={agent.agentId}
+                  href={`/registry/${agent.agentId}?tab=review`}
+                  className={`flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-100" : ""}`}
+                >
+                  <Bot size={15} className="shrink-0 text-gray-400" />
+                  <span className="flex-1 truncate text-sm font-medium text-gray-900" title={agent.name ?? "Unnamed Agent"}>{agent.name ?? "Unnamed Agent"}</span>
+                  <StatusBadge status={agent.status} />
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Review</span>
+                  <span className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</span>
+                  <ChevronRight size={13} className="text-gray-300" />
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    );
+  }
+
+  // ── Admin ─────────────────────────────────────────────────────────────────
+  const statuses = ["draft", "in_review", "approved", "deployed", "rejected", "deprecated"] as const;
+  const counts = Object.fromEntries(
+    statuses.map((s) => [s, allAgents.filter((a) => a.status === s).length])
+  ) as Record<typeof statuses[number], number>;
+
+  // Quality Index from awareness snapshots
+  let qualityIndex: number | null = null;
+  let qualityIndexDelta: number | null = null;
+  try {
+    const enterpriseId = user.enterpriseId ?? null;
+    const snapshots = await getRecentSnapshots(enterpriseId, 2);
+    const latest = snapshots[0] ?? null;
+    const previous = snapshots[1] ?? null;
+    qualityIndex = latest?.qualityIndex ?? null;
+    qualityIndexDelta =
+      latest?.qualityIndex != null && previous?.qualityIndex != null
+        ? parseFloat((latest.qualityIndex - previous.qualityIndex).toFixed(1))
+        : null;
+  } catch (err) {
+    console.error("[dashboard] Failed to fetch quality snapshots:", err);
+  }
+
+  const actionCallouts = [
+    counts.in_review > 0 && {
+      href: "/review",
+      label: `${counts.in_review} blueprint${counts.in_review !== 1 ? "s" : ""} awaiting review`,
+      cta: "Go to Review Queue →",
+      color: "border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-300",
+    },
+    counts.approved > 0 && {
+      href: "/deploy",
+      label: `${counts.approved} approved agent${counts.approved !== 1 ? "s" : ""} ready to deploy`,
+      cta: "Go to Deploy →",
+      color: "border-green-200 bg-green-50 text-green-800 hover:border-green-300",
+    },
+  ].filter(Boolean) as { href: string; label: string; cta: string; color: string }[];
+
+  const activeStageLinks: Record<string, string> = {
+    draft: "/pipeline",
+    in_review: "/review",
+    approved: "/deploy",
+    deployed: "/registry",
+  };
+
+  return (
+    <div className="px-8 py-8">
+      {/* Header */}
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Overview</h1>
+          <p className="mt-0.5 text-sm text-gray-500">
+            {allAgents.length} agent{allAgents.length === 1 ? "" : "s"} across all teams
+          </p>
+        </div>
+        {role !== "viewer" && (
+          <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors disabled:opacity-50" />
+        )}
+      </div>
+
+      {/* Notification strip — compact inline alerts when action is needed */}
+      {actionCallouts.length > 0 && (
+        <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2">
+          {actionCallouts.map(({ href, label, cta, color: _ }) => (
+            <Link
+              key={href}
+              href={href}
+              className="inline-flex items-center gap-2 text-xs text-gray-600 transition-colors hover:text-gray-900"
+            >
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+              <span>{label}</span>
+              <span className="font-semibold text-violet-600">{cta}</span>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Pipeline status — active stages link to relevant pages */}
+      <div className="mb-6">
+        <div className="grid grid-cols-4 gap-3">
+          {(["draft", "in_review", "approved", "deployed"] as const).map((s) => {
+            const cfg = STATUS_STAGE_CONFIG[s];
+            return (
+              <Link
+                key={s}
+                href={activeStageLinks[s]}
+                className={`rounded-card border p-4 hover:shadow-sm transition-shadow ${cfg.kpi}`}
+              >
+                <div className="text-2xl font-bold">{counts[s]}</div>
+                <div className="mt-0.5 text-xs font-medium opacity-80">{cfg.label}</div>
+              </Link>
+            );
+          })}
+        </div>
+        {/* Terminal states — compact, low-emphasis */}
+        <div className="mt-2.5 flex items-center gap-4 px-1">
+          {(["rejected", "deprecated"] as const).map((s) => (
+            <span key={s} className={`text-xs font-medium opacity-70 ${TERMINAL_TEXT[s]}`}>
+              {counts[s]} {s === "rejected" ? "Rejected" : "Deprecated"}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Governance Health KPI + Fleet Posture */}
+      <div className="mb-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Governance Health</h2>
+          {qualityIndex != null && (
+            <div className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+              qualityIndex >= 80 ? "badge-gov-pass" :
+              qualityIndex >= 60 ? "badge-gov-warn" :
+              "badge-gov-error"
+            }`}>
+              {qualityIndexDelta != null && (
+                qualityIndexDelta >= 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />
+              )}
+              Quality Index: {qualityIndex}/100
+              {qualityIndexDelta != null && (
+                <span className="ml-0.5 opacity-70">
+                  ({qualityIndexDelta >= 0 ? "+" : ""}{qualityIndexDelta})
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        <FleetGovernanceDashboard
+          enterpriseId={user.enterpriseId}
+          userRole={role}
+        />
+      </div>
+
+      {/* Recent activity */}
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Recent Activity</h2>
+          <Link href="/registry" className="text-xs text-violet-600 hover:text-violet-700">View all →</Link>
+        </div>
+        {allAgents.length === 0 ? (
+          <div className="flex flex-col items-center rounded-card border border-dashed border-gray-200 bg-white py-14 text-center">
+            <Inbox size={28} className="mb-3 text-gray-300" />
+            <p className="text-sm font-medium text-gray-500">No agents in the system yet</p>
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
+            {allAgents.slice(0, 8).map((agent, i) => {
+              const author = agent.createdBy
+                ? agent.createdBy.includes("@")
+                  ? agent.createdBy.split("@")[0]
+                  : agent.createdBy
+                : null;
+              return (
+                <Link
+                  key={agent.agentId}
+                  href={`/registry/${agent.agentId}`}
+                  className={`flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-100" : ""}`}
+                >
+                  <Bot size={15} className="shrink-0 text-gray-400" />
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate text-sm font-medium text-gray-900" title={agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}>{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {author ? `by ${author} · ` : ""}{timeAgo(agent.updatedAt)}
+                    </p>
+                  </div>
+                  <StatusBadge status={agent.status} />
+                  <ChevronRight size={13} className="shrink-0 text-gray-300" />
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Workspace activity feed */}
+      <section className="mt-8">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+          Workspace Activity
+        </h2>
+        <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
+          <ActivityFeed />
+        </div>
+      </section>
     </div>
   );
 }

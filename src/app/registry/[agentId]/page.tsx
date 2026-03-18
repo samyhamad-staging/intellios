@@ -14,9 +14,11 @@ import { RegulatoryPanel } from "@/components/registry/regulatory-panel";
 import { VersionDiff } from "@/components/registry/version-diff";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
+import { CheckCircle, XCircle } from "lucide-react";
 import type { ApprovalChainStep, ApprovalStepRecord, EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 import type { TestCase, TestRun } from "@/lib/testing/types";
+import { SimulatePanel } from "@/components/registry/simulate-panel";
 
 interface CurrentUser {
   email: string;
@@ -70,14 +72,20 @@ interface BlueprintVersion {
     deployedAt: string;
     deployedBy: string;
   } | null;
+  // Phase 36: SR 11-7 periodic review scheduling
+  nextReviewDue: string | null;
+  lastPeriodicReviewAt: string | null;
   enterpriseId: string | null;
+  // Phase 52: Blueprint lineage
+  previousBlueprintId: string | null;
+  governanceDiff: import("@/lib/diff/abp-diff").ABPDiff | null;
   createdAt: string;
   updatedAt: string;
   abp: ABP;
 }
 
 type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
-type Tab = "blueprint" | "summary" | "governance" | "review" | "versions" | "regulatory" | "tests";
+type Tab = "blueprint" | "summary" | "governance" | "review" | "versions" | "regulatory" | "tests" | "simulate";
 
 export default function AgentDetailPage({
   params,
@@ -102,10 +110,12 @@ export default function AgentDetailPage({
   const [enterpriseSettings, setEnterpriseSettings] = useState<EnterpriseSettings>(DEFAULT_ENTERPRISE_SETTINGS);
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const tab = searchParams.get("tab");
-    if (tab === "review" || tab === "governance" || tab === "versions" || tab === "summary" || tab === "regulatory" || tab === "tests") return tab;
+    if (tab === "review" || tab === "governance" || tab === "versions" || tab === "summary" || tab === "regulatory" || tab === "tests" || tab === "simulate") return tab;
     return "blueprint";
   });
   const [compareVersionId, setCompareVersionId] = useState<string | null>(null);
+  // Phase 52: Blueprint lineage — which version's governance diff is expanded
+  const [expandedDiffId, setExpandedDiffId] = useState<string | null>(null);
 
   // Phase 23: Test Harness state
   const [testCases, setTestCases] = useState<TestCase[]>([]);
@@ -123,13 +133,18 @@ export default function AgentDetailPage({
   const [savingTestCase, setSavingTestCase] = useState(false);
   // Expanded test case result detail
   const [expandedResult, setExpandedResult] = useState<string | null>(null);
+  // Phase 37: Periodic review completion
+  const [reviewCompleteOpen, setReviewCompleteOpen] = useState(false);
+  const [reviewCompleteNotes, setReviewCompleteNotes] = useState("");
+  const [completingReview, setCompletingReview] = useState(false);
+  const [reviewCompleteError, setReviewCompleteError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       const res = await fetch(`/api/registry/${agentId}`);
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Not found");
+        throw new Error(data.message ?? "Not found");
       }
       const data = await res.json();
       setLatest(data.agent);
@@ -179,6 +194,16 @@ export default function AgentDetailPage({
         }
       })
       .catch(() => {}); // non-critical
+  }, [load]);
+
+  // Poll every 30s when the tab is visible to reflect status changes by other users.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void load();
+      }
+    }, 30_000);
+    return () => clearInterval(interval);
   }, [load]);
 
   const handleStatusChange = useCallback((newStatus: Status) => {
@@ -233,7 +258,7 @@ export default function AgentDetailPage({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Clone failed");
+        throw new Error(data.message ?? "Clone failed");
       }
       const cloned = await res.json();
       setCloneModalOpen(false);
@@ -246,6 +271,40 @@ export default function AgentDetailPage({
     }
   }, [latest, cloneName, router]);
 
+  const handleCompleteReview = useCallback(async () => {
+    if (!latest) return;
+    setReviewCompleteError(null);
+    setCompletingReview(true);
+    try {
+      const res = await fetch(
+        `/api/blueprints/${latest.id}/periodic-review/complete`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notes: reviewCompleteNotes || undefined }),
+        }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setReviewCompleteError((data as { error?: string }).error ?? "Failed to complete review.");
+        return;
+      }
+      const data = await res.json();
+      // Update local state with new review dates
+      setLatest((prev) => prev ? {
+        ...prev,
+        nextReviewDue: data.nextReviewDue,
+        lastPeriodicReviewAt: data.lastPeriodicReviewAt,
+      } : prev);
+      setReviewCompleteOpen(false);
+      setReviewCompleteNotes("");
+    } catch {
+      setReviewCompleteError("Something went wrong. Please try again.");
+    } finally {
+      setCompletingReview(false);
+    }
+  }, [latest, reviewCompleteNotes]);
+
   const handleExportReport = useCallback(async () => {
     if (!latest) return;
     setExporting(true);
@@ -253,7 +312,7 @@ export default function AgentDetailPage({
       const res = await fetch(`/api/blueprints/${latest.id}/report`);
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Export failed");
+        throw new Error(data.message ?? "Export failed");
       }
       const report = await res.json();
       const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
@@ -384,6 +443,7 @@ export default function AgentDetailPage({
     { id: "governance", label: "Governance" },
     { id: "regulatory", label: "Regulatory" },
     { id: "tests", label: `Tests${testCases.length > 0 ? ` (${testCases.length})` : ""}` },
+    { id: "simulate", label: "Simulate" },
     ...(isInReview ? [{ id: "review" as Tab, label: "Review" }] : []),
     { id: "versions", label: `Versions (${versions.length})` },
   ];
@@ -391,7 +451,7 @@ export default function AgentDetailPage({
   return (
     <div className="flex h-screen flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-y-2 border-b border-gray-200 bg-white px-6 py-3">
         <div className="flex items-center gap-3 min-w-0">
           <Link href="/registry" className="text-sm text-gray-400 hover:text-gray-700 shrink-0">
             ← Registry
@@ -400,7 +460,7 @@ export default function AgentDetailPage({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-semibold text-gray-900 truncate">
-                {latest.name ?? "Unnamed Agent"}
+                {latest.name ?? `Agent ${latest.agentId.slice(0, 8)}`}
               </h1>
               <StatusBadge status={latest.status} />
               {latest.deploymentTarget === "agentcore" && latest.deploymentMetadata && (
@@ -415,28 +475,65 @@ export default function AgentDetailPage({
                 </a>
               )}
             </div>
-            <p className="text-xs text-gray-400">
-              v{latest.version} · {versions.length} version{versions.length !== 1 ? "s" : ""}
+            <p className="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
+              <span>v{latest.version} · {versions.length} version{versions.length !== 1 ? "s" : ""}
               {parseInt(latest.refinementCount ?? "0") > 0 &&
-                ` · ${latest.refinementCount} refinement${latest.refinementCount === "1" ? "" : "s"}`}
+                ` · ${latest.refinementCount} refinement${latest.refinementCount === "1" ? "" : "s"}`}</span>
+              {latest.status === "deployed" && latest.nextReviewDue && (() => {
+                const isOverdue = new Date(latest.nextReviewDue) < new Date();
+                const canComplete = currentUser?.role === "compliance_officer" || currentUser?.role === "admin";
+                return (
+                  <>
+                    {isOverdue ? (
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700">
+                        Review Overdue
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+                        Next Review: {new Date(latest.nextReviewDue).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                      </span>
+                    )}
+                    {canComplete && (
+                      <button
+                        onClick={() => { setReviewCompleteOpen(true); setReviewCompleteNotes(""); setReviewCompleteError(null); }}
+                        className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700 hover:bg-violet-100"
+                      >
+                        Complete Review
+                      </button>
+                    )}
+                  </>
+                );
+              })()}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
           <LifecycleControls
             blueprintId={latest.id}
+            agentId={latest.agentId}
             currentStatus={latest.status}
             onStatusChange={handleStatusChange}
           />
+          {/* MRM Report — visible to all authenticated users */}
+          <Link
+            href={`/blueprints/${latest.id}/report`}
+            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+          >
+            View MRM Report
+          </Link>
+          {/* Compliance exports — restricted to compliance_officer + admin */}
+          {/* Export Agent Code — all roles */}
+          <a
+            href={`/api/blueprints/${latest.id}/export/code`}
+            download
+            className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm text-violet-700 hover:border-violet-400 hover:bg-violet-100 transition-colors"
+            title="Download a ready-to-run TypeScript agent generated from this blueprint"
+          >
+            Export Agent Code ↓
+          </a>
           {(currentUser?.role === "compliance_officer" || currentUser?.role === "admin") && (
             <>
-              <Link
-                href={`/blueprints/${latest.id}/report`}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-              >
-                View MRM Report
-              </Link>
               {(latest.status === "approved" || latest.status === "deployed") && (
                 <a
                   href={`/api/blueprints/${latest.id}/export/compliance`}
@@ -532,7 +629,7 @@ export default function AgentDetailPage({
       {/* Clone Modal */}
       {cloneModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-card border border-gray-200 bg-white p-6 shadow-xl">
             <h2 className="text-base font-semibold text-gray-900">Clone Agent</h2>
             <p className="mt-1 text-sm text-gray-500">
               Creates a new draft agent pre-populated with this blueprint&apos;s content. The clone
@@ -931,7 +1028,7 @@ export default function AgentDetailPage({
           return (
             <div className="p-6 max-w-3xl space-y-6">
               {/* ── Test Suite ── */}
-              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+              <div className="rounded-card border border-gray-200 bg-white overflow-hidden">
                 <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900">Test Suite</p>
@@ -1064,7 +1161,7 @@ export default function AgentDetailPage({
               </div>
 
               {/* ── Test Runs ── */}
-              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+              <div className="rounded-card border border-gray-200 bg-white overflow-hidden">
                 <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900">Test Runs</p>
@@ -1189,6 +1286,14 @@ export default function AgentDetailPage({
           );
         })()}
 
+        {activeTab === "simulate" && (
+          <SimulatePanel
+            blueprintId={latest.id}
+            agentName={latest.name}
+            version={latest.version}
+          />
+        )}
+
       {activeTab === "versions" && (
           <div className="p-6 space-y-6">
             <table className="w-full text-sm">
@@ -1196,6 +1301,7 @@ export default function AgentDetailPage({
                 <tr className="border-b border-gray-200 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <th className="pb-3 pr-4">Version</th>
                   <th className="pb-3 pr-4">Status</th>
+                  <th className="pb-3 pr-4">Governance</th>
                   <th className="pb-3 pr-4">Refinements</th>
                   <th className="pb-3 pr-4">Created</th>
                   <th className="pb-3">Actions</th>
@@ -1207,6 +1313,37 @@ export default function AgentDetailPage({
                     <td className="py-3 pr-4 font-mono text-gray-700">v{v.version}</td>
                     <td className="py-3 pr-4">
                       <StatusBadge status={v.status} />
+                    </td>
+                    <td className="py-3 pr-4">
+                      {v.validationReport == null ? (
+                        <span className="text-gray-300">—</span>
+                      ) : (() => {
+                        const errorCount = v.validationReport.violations.filter(x => x.severity === "error").length;
+                        const warnCount = v.validationReport.violations.filter(x => x.severity === "warning").length;
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            {v.validationReport.valid ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                                <CheckCircle size={10} />Pass
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                                <XCircle size={10} />Fail
+                              </span>
+                            )}
+                            {errorCount > 0 && (
+                              <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
+                                {errorCount}E
+                              </span>
+                            )}
+                            {warnCount > 0 && (
+                              <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700">
+                                {warnCount}W
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="py-3 pr-4 text-gray-500">{v.refinementCount ?? "0"}</td>
                     <td className="py-3 pr-4 text-gray-500">
@@ -1224,6 +1361,148 @@ export default function AgentDetailPage({
                 ))}
               </tbody>
             </table>
+
+            {/* Version Lineage — governance diff per version */}
+            {versions.some((v) => v.governanceDiff != null) && (
+              <div className="rounded-card border border-gray-200 bg-white overflow-hidden">
+                <div className="border-b border-gray-100 bg-gray-50 px-5 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Version Lineage
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Governance changes computed at version-creation time — required for regulatory change management documentation.
+                  </p>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {versions
+                    .filter((v) => v.governanceDiff != null)
+                    .map((v) => {
+                      const diff = v.governanceDiff!;
+                      const isExpanded = expandedDiffId === v.id;
+                      const sigColor =
+                        diff.significance === "major"
+                          ? "bg-red-50 text-red-700 border-red-200"
+                          : diff.significance === "minor"
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-gray-50 text-gray-500 border-gray-200";
+                      const sigLabel =
+                        diff.significance === "major"
+                          ? "Major — compliance posture changed"
+                          : diff.significance === "minor"
+                          ? "Minor — capabilities or constraints changed"
+                          : "Patch — identity or metadata only";
+                      const hasSections = diff.sections.some((s) => s.changes.length > 0);
+                      return (
+                        <div key={v.id} className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono text-sm font-medium text-gray-700">
+                              v{diff.versionFrom}
+                            </span>
+                            <span className="text-gray-300">→</span>
+                            <span className="font-mono text-sm font-medium text-gray-700">
+                              v{diff.versionTo}
+                            </span>
+                            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${sigColor}`}>
+                              {sigLabel}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {diff.totalChanges} change{diff.totalChanges !== 1 ? "s" : ""}
+                            </span>
+                            {hasSections && (
+                              <button
+                                onClick={() => setExpandedDiffId(isExpanded ? null : v.id)}
+                                className="ml-auto text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                              >
+                                {isExpanded ? "Collapse ↑" : "View changes ↓"}
+                              </button>
+                            )}
+                            {!hasSections && (
+                              <span className="ml-auto text-xs text-gray-400 italic">No structural changes</span>
+                            )}
+                          </div>
+
+                          {isExpanded && hasSections && (
+                            <div className="mt-3 space-y-3">
+                              {diff.sections
+                                .filter((s) => s.changes.length > 0)
+                                .map((section) => (
+                                  <div key={section.section} className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                                    <p className="text-xs font-semibold text-gray-600 mb-2">{section.label}</p>
+                                    <ul className="space-y-1.5">
+                                      {section.changes.map((change, ci) => (
+                                        <li key={ci} className="flex items-start gap-2 text-xs">
+                                          <span className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 font-medium ${
+                                            change.changeType === "added"
+                                              ? "bg-green-100 text-green-700"
+                                              : change.changeType === "removed"
+                                              ? "bg-red-100 text-red-700"
+                                              : "bg-amber-100 text-amber-700"
+                                          }`}>
+                                            {change.changeType === "added" ? "+" : change.changeType === "removed" ? "−" : "~"}
+                                          </span>
+                                          <span className="text-gray-700">{change.label}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                    {/* Governance implication for major changes */}
+                                    {section.section === "governance" && section.changes.length > 0 && (
+                                      <p className="mt-2 text-xs text-red-600 font-medium">
+                                        ⚠ Compliance posture changed — re-validation required before approval.
+                                      </p>
+                                    )}
+                                    {section.section === "capabilities" && section.changes.some(c => c.path === "capabilities.instructions") && (
+                                      <p className="mt-2 text-xs text-amber-600 font-medium">
+                                        ⚠ System prompt changed — safety policy review triggered.
+                                      </p>
+                                    )}
+                                    {section.section === "capabilities" && section.changes.some(c => c.path === "capabilities.tools") && (
+                                      <p className="mt-2 text-xs text-amber-600 font-medium">
+                                        ⚠ Tool set changed — constraint re-validation recommended.
+                                      </p>
+                                    )}
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {/* Approval History */}
+            {(() => {
+              const approvalSteps = (latest.approvalProgress ?? []) as ApprovalStepRecord[];
+              if (approvalSteps.length === 0) return null;
+              return (
+                <div className="border border-gray-200 rounded-lg p-5">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">
+                    Approval History
+                  </h3>
+                  <ol className="space-y-1.5">
+                    {approvalSteps.map((step, i) => (
+                      <li key={i} className="flex items-center gap-2 text-xs text-gray-600">
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${
+                          step.decision === "approved" ? "bg-green-500" :
+                          step.decision === "rejected" ? "bg-red-500" : "bg-gray-300"
+                        }`} />
+                        <span className="capitalize font-medium">{step.role ?? `Step ${i + 1}`}</span>
+                        <span className="text-gray-400">—</span>
+                        <span className={`capitalize ${step.decision === "approved" ? "text-green-700" : step.decision === "rejected" ? "text-red-700" : "text-gray-500"}`}>
+                          {step.decision ?? "pending"}
+                        </span>
+                        {step.approvedAt && (
+                          <span className="text-gray-400">
+                            · {new Date(step.approvedAt).toLocaleDateString()}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              );
+            })()}
 
             {/* Version comparison — only shown when there are at least 2 versions */}
             {versions.length >= 2 && (
@@ -1257,6 +1536,57 @@ export default function AgentDetailPage({
           </div>
         )}
       </div>
+
+      {/* ── Complete Review Modal ──────────────────────────────────────── */}
+      {reviewCompleteOpen && latest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-xl">
+            <h3 className="mb-1 text-base font-semibold text-gray-900">Mark periodic review complete</h3>
+            <p className="mb-4 text-sm text-gray-500">
+              This will record completion for{" "}
+              <span className="font-medium text-gray-900">{latest.name ?? "this agent"}</span>{" "}
+              and schedule the next review based on the configured cadence.
+            </p>
+
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Review notes <span className="text-gray-400">(optional)</span>
+              </label>
+              <textarea
+                value={reviewCompleteNotes}
+                onChange={(e) => setReviewCompleteNotes(e.target.value)}
+                rows={3}
+                maxLength={1000}
+                placeholder="Findings, actions taken, or conclusions from the review…"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 resize-none"
+              />
+            </div>
+
+            {reviewCompleteError && (
+              <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                {reviewCompleteError}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setReviewCompleteOpen(false); setReviewCompleteNotes(""); setReviewCompleteError(null); }}
+                disabled={completingReview}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCompleteReview}
+                disabled={completingReview}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+              >
+                {completingReview ? "Completing…" : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

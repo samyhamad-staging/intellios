@@ -9,7 +9,7 @@
  * stakeholdersConsulted provides direct domain signals as well.
  */
 
-import { IntakeContext, ContributionDomain, StakeholderContribution } from "@/lib/types/intake";
+import { IntakeContext, ContributionDomain, StakeholderContribution, IntakeRiskTier } from "@/lib/types/intake";
 
 /**
  * Returns the set of contribution domains that are expected to have input
@@ -17,19 +17,27 @@ import { IntakeContext, ContributionDomain, StakeholderContribution } from "@/li
  * appears at most once regardless of how many signals imply it.
  */
 export function getExpectedContributionDomains(
-  context: IntakeContext
+  context: IntakeContext,
+  riskTier?: IntakeRiskTier | null
 ): ContributionDomain[] {
+  // Low-risk agents: no required stakeholder domains regardless of context signals
+  if (riskTier === "low") return [];
+
   const expected = new Set<ContributionDomain>();
 
+  const regulatoryScope = context.regulatoryScope ?? [];
+  const integrationTypes = context.integrationTypes ?? [];
+  const stakeholdersConsulted = context.stakeholdersConsulted ?? [];
+
   // Regulatory scope → implied domains
-  if (context.regulatoryScope.includes("FINRA") || context.regulatoryScope.includes("SOX")) {
+  if (regulatoryScope.includes("FINRA") || regulatoryScope.includes("SOX")) {
     expected.add("compliance");
   }
-  if (context.regulatoryScope.includes("GDPR") || context.regulatoryScope.includes("HIPAA")) {
+  if (regulatoryScope.includes("GDPR") || regulatoryScope.includes("HIPAA")) {
     expected.add("compliance");
     expected.add("legal");
   }
-  if (context.regulatoryScope.includes("PCI-DSS")) {
+  if (regulatoryScope.includes("PCI-DSS")) {
     expected.add("compliance");
     expected.add("security");
   }
@@ -51,16 +59,16 @@ export function getExpectedContributionDomains(
   }
 
   // Integration types → implied domains
-  if (context.integrationTypes.includes("external-apis")) {
+  if (integrationTypes.includes("external-apis")) {
     expected.add("security");
     expected.add("it");
   }
-  if (context.integrationTypes.includes("databases") || context.integrationTypes.includes("file-systems")) {
+  if (integrationTypes.includes("databases") || integrationTypes.includes("file-systems")) {
     expected.add("it");
   }
 
   // Stakeholders consulted → direct domain mapping
-  for (const stakeholder of context.stakeholdersConsulted) {
+  for (const stakeholder of stakeholdersConsulted) {
     switch (stakeholder) {
       case "legal":
         expected.add("legal");
@@ -80,6 +88,18 @@ export function getExpectedContributionDomains(
     }
   }
 
+  // Tier-based additions (after context-signal logic)
+  if (riskTier === "high") {
+    expected.add("compliance");
+    expected.add("security");
+  }
+  if (riskTier === "critical") {
+    expected.add("compliance");
+    expected.add("security");
+    expected.add("legal");
+    expected.add("risk");
+  }
+
   return Array.from(expected);
 }
 
@@ -89,9 +109,10 @@ export function getExpectedContributionDomains(
  */
 export function getMissingContributionDomains(
   context: IntakeContext,
-  contributions: StakeholderContribution[]
+  contributions: StakeholderContribution[],
+  riskTier?: IntakeRiskTier | null
 ): ContributionDomain[] {
-  const expected = getExpectedContributionDomains(context);
+  const expected = getExpectedContributionDomains(context, riskTier);
   const covered = new Set(contributions.map((c) => c.domain as ContributionDomain));
   return expected.filter((domain) => !covered.has(domain));
 }

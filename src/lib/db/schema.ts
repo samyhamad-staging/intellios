@@ -22,6 +22,10 @@ export const intakeSessions = pgTable("intake_sessions", {
   status: text("status").notNull().default("active"), // active | completed | abandoned
   intakePayload: jsonb("intake_payload").notNull().default({}),
   intakeContext: jsonb("intake_context"), // Phase 1 structured context — null until Phase 1 is submitted
+  agentType: text("agent_type"),      // "automation" | "decision-support" | "autonomous" | "data-access" | null
+  riskTier:  text("risk_tier"),       // "low" | "medium" | "high" | "critical" | null
+  // Phase 49: Intake Confidence Engine
+  expertiseLevel: text("expertise_level"), // "guided" | "adaptive" | "expert" | null (set after turn 2)
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -88,6 +92,14 @@ export const agentBlueprints = pgTable(
     // Phase 26: deployment target tracking
     deploymentTarget:   text("deployment_target"),   // "agentcore" | null — which platform the agent was deployed to
     deploymentMetadata: jsonb("deployment_metadata"), // AgentCoreDeploymentRecord | null
+    // Phase 36: SR 11-7 periodic review scheduling
+    nextReviewDue:          timestamp("next_review_due", { withTimezone: true }),
+    lastPeriodicReviewAt:   timestamp("last_periodic_review_at", { withTimezone: true }),
+    // Phase 37: Reminder tracking — prevents duplicate reminders within the same cycle
+    lastReminderSentAt:     timestamp("last_reminder_sent_at", { withTimezone: true }),
+    // Phase 52: Blueprint lineage — records predecessor + governance diff computed at version creation
+    previousBlueprintId:   uuid("previous_blueprint_id"),  // which blueprint this was forked from (null for v1)
+    governanceDiff:        jsonb("governance_diff"),         // ABPDiff stored at creation time; null for v1
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -376,4 +388,94 @@ export const intelligenceBriefings = pgTable(
     metricsSnapshot: jsonb("metrics_snapshot").notNull().default({}),
   },
   (t) => [index("ib_generated_idx").on(t.enterpriseId, t.generatedAt)]
+);
+
+// ─── Password Reset Tokens ────────────────────────────────────────────────────
+// Phase 37: Time-limited, single-use tokens for password recovery.
+// Raw token sent only via email; SHA-256 hash stored here.
+
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id:        uuid("id").primaryKey().defaultRandom(),
+    userId:    uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt:    timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_prt_user_id").on(t.userId),
+    index("idx_prt_token_hash").on(t.tokenHash),
+  ]
+);
+
+// ─── Intake Invitations ───────────────────────────────────────────────────────
+// Phase 43: Stakeholder Collaboration Workspace.
+// Per-domain invitations to external stakeholders. Token-based; no Intellios
+// account required. raciRole reflects the stakeholder's decision authority.
+
+export const intakeInvitations = pgTable(
+  "intake_invitations",
+  {
+    id:             uuid("id").primaryKey().defaultRandom(),
+    sessionId:      uuid("session_id").notNull().references(() => intakeSessions.id, { onDelete: "cascade" }),
+    domain:         text("domain").notNull(),
+    inviteeEmail:   text("invitee_email").notNull(),
+    inviteeName:    text("invitee_name"),
+    roleTitle:      text("role_title"),
+    raciRole:       text("raci_role").notNull().default("consulted"), // responsible|accountable|consulted|informed
+    token:          text("token").notNull().unique(),
+    status:         text("status").notNull().default("pending"), // pending|completed|expired
+    expiresAt:      timestamp("expires_at", { withTimezone: true }).notNull(),
+    contributionId: uuid("contribution_id").references(() => intakeContributions.id),
+    sentAt:         timestamp("sent_at", { withTimezone: true }),
+    createdAt:      timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_intake_invitations_token").on(t.token),
+    index("idx_intake_invitations_session").on(t.sessionId),
+  ]
+);
+
+// ─── Intake AI Insights ───────────────────────────────────────────────────────
+// Phase 43: AI-generated synthesis, conflict detection, gap analysis, and
+// suggested next actions. Produced by the orchestrator after each contribution.
+
+export const intakeAIInsights = pgTable(
+  "intake_ai_insights",
+  {
+    id:        uuid("id").primaryKey().defaultRandom(),
+    sessionId: uuid("session_id").notNull().references(() => intakeSessions.id, { onDelete: "cascade" }),
+    type:      text("type").notNull(), // synthesis|conflict|gap|suggestion
+    title:     text("title").notNull(),
+    body:      text("body").notNull(),
+    metadata:  jsonb("metadata"), // { action?, domain?, suggestedEmail?, suggestedRoleTitle? }
+    status:    text("status").notNull().default("pending"), // pending|approved|dismissed
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("idx_intake_ai_insights_session").on(t.sessionId, t.createdAt)]
+);
+
+// ─── User Invitations ─────────────────────────────────────────────────────────
+// Phase 37: Admin-initiated invitations. Invitees set their own password.
+// Replaces insecure manual credential sharing.
+
+export const userInvitations = pgTable(
+  "user_invitations",
+  {
+    id:           uuid("id").primaryKey().defaultRandom(),
+    enterpriseId: text("enterprise_id"),
+    email:        text("email").notNull(),
+    role:         text("role").notNull(), // designer | reviewer | compliance_officer | admin
+    invitedBy:    uuid("invited_by").notNull().references(() => users.id),
+    tokenHash:    text("token_hash").notNull(),
+    expiresAt:    timestamp("expires_at", { withTimezone: true }).notNull(),
+    acceptedAt:   timestamp("accepted_at", { withTimezone: true }),
+    createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_ui_enterprise_id").on(t.enterpriseId),
+    index("idx_ui_token_hash").on(t.tokenHash),
+  ]
 );
