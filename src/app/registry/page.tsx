@@ -116,7 +116,7 @@ export default function RegistryPage() {
       {loading && (
         <div className="space-y-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-xl bg-gray-100" />
+            <div key={i} className="h-20 animate-pulse rounded-card bg-gray-100" />
           ))}
         </div>
       )}
@@ -128,7 +128,7 @@ export default function RegistryPage() {
 
       {/* Empty registry */}
       {!loading && !error && agents.length === 0 && (
-        <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
+        <div className="flex flex-col items-center rounded-card border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
           <Inbox size={32} className="mb-4 text-gray-300" />
           <p className="mb-1 text-sm font-medium text-gray-500">No agents in the registry yet</p>
           <Link href="/intake" className="mt-2 text-xs text-violet-600 hover:text-violet-700">Start an intake session →</Link>
@@ -138,7 +138,7 @@ export default function RegistryPage() {
 
       {/* No results */}
       {!loading && !error && agents.length > 0 && filtered.length === 0 && (
-        <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
+        <div className="flex flex-col items-center rounded-card border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
           <Search size={28} className="mb-3 text-gray-300" />
           <p className="text-sm text-gray-500">No agents match your filters</p>
           <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="mt-2 text-xs text-violet-600 hover:text-violet-700 underline">
@@ -149,7 +149,7 @@ export default function RegistryPage() {
 
       {/* Agent list */}
       {filtered.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
           {filtered.map((agent, i) => (
             <div key={agent.agentId} className={`${i > 0 ? "border-t border-gray-100" : ""}`}>
               <Link href={`/registry/${agent.agentId}`} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
@@ -158,7 +158,7 @@ export default function RegistryPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className="truncate text-sm font-medium text-gray-900">{agent.name ?? "Unnamed Agent"}</span>
+                    <span className="truncate text-sm font-medium text-gray-900" title={agent.name ?? "Unnamed Agent"}>{agent.name ?? "Unnamed Agent"}</span>
                     <StatusBadge status={agent.status} />
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-400">

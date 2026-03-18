@@ -162,7 +162,7 @@ export default function EditPolicyPage({
 
         {/* Delete section — only shown for non-global policies */}
         {policy.enterpriseId !== null && (
-          <div className="mt-10 rounded-xl border border-red-200 bg-white px-6 py-5">
+          <div className="mt-10 rounded-card border border-red-200 bg-white px-6 py-5">
             <h3 className="text-sm font-semibold text-red-700 mb-1">Delete Policy</h3>
             <p className="text-xs text-gray-500 mb-4">
               Permanently remove this policy. Existing validation reports are not affected, but

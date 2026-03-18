@@ -38,7 +38,7 @@ function KpiCard({
   color?: string; deltaColor?: string; href?: string;
 }) {
   const inner = (
-    <div className={`rounded-xl border p-5 ${color} ${href ? "cursor-pointer hover:shadow-sm transition-shadow" : ""}`}>
+    <div className={`rounded-card border p-5 ${color} ${href ? "cursor-pointer hover:shadow-sm transition-shadow" : ""}`}>
       <div className="text-3xl font-bold tabular-nums">{value}</div>
       {delta != null && <div className={`mt-0.5 text-sm font-medium ${deltaColor}`}>{delta}</div>}
       <div className="mt-1 text-sm font-semibold">{label}</div>
@@ -74,7 +74,7 @@ function MetricSparkline({
 
   if (nonNull.length < 2) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white px-5 py-4">
+      <div className="rounded-card border border-gray-200 bg-white px-5 py-4">
         <div className="mb-2 text-sm font-semibold text-gray-900">{label}</div>
         <div className="flex h-20 items-center justify-center text-xs text-gray-400">
           Not enough data (need ≥ 2 snapshots)
@@ -124,7 +124,7 @@ function MetricSparkline({
   const fmt = (v: number) => pctFmt ? `${(v * 100).toFixed(0)}%` : v.toFixed(1);
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white px-5 py-4">
+    <div className="rounded-card border border-gray-200 bg-white px-5 py-4">
       <div className="mb-1 flex items-center justify-between">
         <div className="text-sm font-semibold text-gray-900">{label}</div>
         <div className="text-xs text-gray-400">{fmt(nonNull[nonNull.length - 1])}</div>
@@ -330,10 +330,10 @@ export default function IntelligencePage() {
         <div className="space-y-4">
           <div className="grid grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-28 animate-pulse rounded-xl bg-gray-100" />
+              <div key={i} className="h-28 animate-pulse rounded-card bg-gray-100" />
             ))}
           </div>
-          <div className="h-48 animate-pulse rounded-xl bg-gray-100" />
+          <div className="h-48 animate-pulse rounded-card bg-gray-100" />
         </div>
       ) : (
         <div className="space-y-6">
@@ -395,7 +395,7 @@ export default function IntelligencePage() {
 
           {/* Anomaly action strip */}
           {kpiLinks.length > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
+            <div className="rounded-card border border-amber-200 bg-amber-50 px-5 py-3">
               <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">
                 Action Required
               </div>
@@ -422,7 +422,7 @@ export default function IntelligencePage() {
           )}
 
           {/* Briefing history strip + panel */}
-          <div className="rounded-xl border border-gray-200 bg-white">
+          <div className="rounded-card border border-gray-200 bg-white">
             {/* Date strip */}
             {briefingHistory.length > 0 && (
               <div className="flex items-center gap-1 border-b border-gray-100 px-5 py-2 overflow-x-auto">
@@ -586,7 +586,7 @@ export default function IntelligencePage() {
           )}
 
           {/* Recent Blueprint Quality Scores */}
-          <div className="rounded-xl border border-gray-200 bg-white">
+          <div className="rounded-card border border-gray-200 bg-white">
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
               <h2 className="text-sm font-semibold text-gray-900">Recent Blueprint Quality Scores</h2>
               {scores.length === 0 && isAdmin && (
@@ -718,7 +718,7 @@ export default function IntelligencePage() {
           </div>
 
           {/* Recent Intake Quality Scores */}
-          <div className="rounded-xl border border-gray-200 bg-white">
+          <div className="rounded-card border border-gray-200 bg-white">
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
               <h2 className="text-sm font-semibold text-gray-900">Recent Intake Quality Scores</h2>
               <Link href="/intake" className="text-xs text-gray-400 hover:text-gray-700">

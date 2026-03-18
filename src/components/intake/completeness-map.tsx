@@ -252,7 +252,7 @@ export function CompletenessMap({
   const sparseCount = domains.filter((d) => d.status === "optional-sparse").length;
 
   return (
-    <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+    <div className="mb-6 rounded-card border border-gray-200 bg-white px-5 py-4 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">

@@ -49,11 +49,12 @@ interface KpiCardProps {
 }
 
 function KpiCard({ label, value, sub, color, subColor, href }: KpiCardProps) {
+  const isEmpty = value === 0;
   const inner = (
-    <div className={`rounded-xl border p-5 ${color} ${href ? "hover:shadow-md transition-shadow cursor-pointer" : ""}`}>
+    <div className={`rounded-card border p-5 min-w-0 ${color} ${isEmpty ? "opacity-50 border-dashed" : ""} ${href ? "hover:shadow-md transition-shadow cursor-pointer" : ""}`}>
       <div className="text-3xl font-bold">{value}</div>
-      <div className="mt-1 text-sm font-medium">{label}</div>
-      <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
+      <div className="mt-1 text-sm font-medium leading-tight">{label}</div>
+      <div className={`mt-0.5 text-xs truncate ${subColor}`}>{sub}</div>
     </div>
   );
   return href ? <Link href={href}>{inner}</Link> : inner;
@@ -165,7 +166,7 @@ export default function ExecutiveDashboardPage() {
           {/* ── Pipeline funnel ────────────────────────────────────────── */}
           <section>
             <h2 className="mb-4 text-xs font-semibold text-gray-400">Pipeline Funnel</h2>
-            <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+            <div className="rounded-card border border-gray-200 bg-white p-5 space-y-4">
               {funnelStages.map((stage) => (
                 <div key={stage.label}>
                   <div className="flex items-center justify-between mb-1">
@@ -202,7 +203,7 @@ export default function ExecutiveDashboardPage() {
           {/* ── Governance health ──────────────────────────────────────── */}
           <section>
             <h2 className="mb-4 text-xs font-semibold text-gray-400">Governance Health</h2>
-            <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+            <div className="rounded-card border border-gray-200 bg-white p-5 space-y-4">
               {/* Donut-style summary */}
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="rounded-lg badge-gov-pass p-3">
@@ -270,7 +271,7 @@ export default function ExecutiveDashboardPage() {
           )}
 
           {!loading && recentDeployed.length === 0 && (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center">
+            <div className="rounded-card border border-dashed border-gray-300 bg-white p-8 text-center">
               <p className="text-sm text-gray-400">No agents deployed yet.</p>
               {approved > 0 && (
                 <p className="mt-1 text-xs text-gray-400">
@@ -284,7 +285,7 @@ export default function ExecutiveDashboardPage() {
           )}
 
           {!loading && recentDeployed.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">

@@ -345,7 +345,7 @@ export default function PolicyForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* ── Name ──────────────────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-gray-200 bg-white px-6 py-5 space-y-4">
+      <div className="rounded-card border border-gray-200 bg-white px-6 py-5 space-y-4">
         <h2 className="text-sm font-semibold text-gray-900">Policy Details</h2>
 
         <div>
@@ -398,7 +398,7 @@ export default function PolicyForm({
       </div>
 
       {/* ── Rules ─────────────────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-gray-200 bg-white px-6 py-5">
+      <div className="rounded-card border border-gray-200 bg-white px-6 py-5">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-sm font-semibold text-gray-900">
@@ -466,7 +466,7 @@ export default function PolicyForm({
 
       {/* ── Impact Simulation ─────────────────────────────────────────────────── */}
       {!readOnly && (
-        <div className="rounded-xl border border-gray-200 bg-white px-6 py-5">
+        <div className="rounded-card border border-gray-200 bg-white px-6 py-5">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-sm font-semibold text-gray-900">Impact Preview</h2>

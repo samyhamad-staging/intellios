@@ -211,7 +211,7 @@ function Column({ status, label, colBg, dotColor, badgeCls, cards, loading }: Co
       </div>
 
       {/* Card list */}
-      <div className={`flex flex-col gap-2 rounded-xl border p-2 ${colBg} min-h-32 flex-1`}>
+      <div className={`flex flex-col gap-2 rounded-card border p-2 ${colBg} min-h-32 flex-1`}>
         {loading && (
           <div className="flex h-24 items-center justify-center">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-violet-600" />
@@ -337,18 +337,18 @@ function AgentCard({ agent }: { agent: Agent }) {
     "border-gray-200 hover:border-violet-300";
 
   const shadowCls =
-    sla === "alert" ? "shadow-sm hover:shadow-red-100" :
-    sla === "warn"  ? "shadow-sm hover:shadow-amber-100" :
+    sla === "alert" ? "shadow-sm hover:shadow-md hover:shadow-red-100" :
+    sla === "warn"  ? "shadow-sm hover:shadow-md hover:shadow-amber-100" :
     "shadow-sm hover:shadow-md hover:shadow-violet-50";
 
   return (
     <Link
       href={`/registry/${agent.agentId}`}
-      className={`block rounded-lg border bg-white p-3 transition-all hover:-translate-y-px ${borderCls} ${shadowCls}`}
+      className={`block rounded-lg border bg-white p-3 transition-all hover:-translate-y-px hover:border-gray-300 ${borderCls} ${shadowCls}`}
     >
       {/* Name + governance shield */}
       <div className="flex items-start gap-2">
-        <span className="flex-1 text-sm font-semibold leading-snug text-gray-900 line-clamp-2">
+        <span className="flex-1 text-sm font-semibold leading-snug text-gray-900 line-clamp-2" title={agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}>
           {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
         </span>
         {agent.violationCount !== null && agent.violationCount > 0 ? (

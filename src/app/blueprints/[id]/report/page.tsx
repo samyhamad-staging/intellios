@@ -282,7 +282,7 @@ function ReportDocument({
         {/* ── Section 2: Risk Classification ───────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={2} title="Risk Classification" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
+          <div className="rounded-card border border-gray-200 bg-white p-6">
             <div className="flex items-start gap-6">
               <div className="shrink-0">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Risk Tier</p>
@@ -324,7 +324,7 @@ function ReportDocument({
         {/* ── Section 3: Agent Identity ─────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={3} title="Agent Identity" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
+          <div className="rounded-card border border-gray-200 bg-white p-6">
             <dl className="grid grid-cols-1 gap-y-0">
               <Field label="Name" value={r.identity.name} />
               <Field label="Description" value={r.identity.description} />
@@ -348,7 +348,7 @@ function ReportDocument({
         {/* ── Section 4: Capabilities ───────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={4} title="Capabilities" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+          <div className="rounded-card border border-gray-200 bg-white p-6 space-y-5">
             <div className="flex gap-6">
               <div className="text-center">
                 <p className="text-3xl font-bold text-gray-900">{r.capabilities.toolCount}</p>
@@ -417,7 +417,7 @@ function ReportDocument({
         {/* ── Section 5: Governance Validation ─────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={5} title="Governance Validation" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+          <div className="rounded-card border border-gray-200 bg-white p-6 space-y-5">
             {!r.governanceValidation.validated ? (
               <p className="text-sm text-[color:var(--gov-warn-text)]">No validation has been run for this blueprint version.</p>
             ) : (
@@ -529,7 +529,7 @@ function ReportDocument({
         {/* ── Section 6: Review Decision ────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={6} title="Review Decision" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+          <div className="rounded-card border border-gray-200 bg-white p-6 space-y-5">
             <div className="flex items-start gap-4">
               <span
                 className={`inline-block rounded-lg border px-3 py-1.5 text-sm font-semibold ${outcomeColor}`}
@@ -592,7 +592,7 @@ function ReportDocument({
         {/* ── Section 7: SOD Evidence ───────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={7} title="Separation of Duties Evidence" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
+          <div className="rounded-card border border-gray-200 bg-white p-6">
             <div className="mb-4 flex items-center gap-2">
               <span
                 className={`text-sm font-semibold ${r.sodEvidence.sodSatisfied ? "text-[color:var(--gov-pass-text)]" : "text-[color:var(--gov-error-text)]"}`}
@@ -613,7 +613,7 @@ function ReportDocument({
         {/* ── Section 8: Deployment Record ─────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={8} title="Deployment Change Record" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+          <div className="rounded-card border border-gray-200 bg-white p-6 space-y-5">
             <div className="flex items-center gap-3">
               <span
                 className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${r.deploymentRecord.deployed ? "badge-approved" : "badge-draft"}`}
@@ -684,7 +684,7 @@ function ReportDocument({
         {/* ── Section 9: Model Lineage ──────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={9} title="Model Lineage" />
-          <div className="space-y-5 rounded-xl border border-gray-200 bg-white p-6">
+          <div className="space-y-5 rounded-card border border-gray-200 bg-white p-6">
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Version History ({r.modelLineage.versionHistory.length})
@@ -748,7 +748,7 @@ function ReportDocument({
         {/* ── Section 10: Audit Chain ───────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={10} title="Audit Chain" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
+          <div className="rounded-card border border-gray-200 bg-white p-6">
             {r.auditChain.length === 0 ? (
               <p className="text-sm text-gray-400">No audit events recorded for this version.</p>
             ) : (
@@ -787,7 +787,7 @@ function ReportDocument({
         {/* ── Section 11: Stakeholder Contributions ────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={11} title="Stakeholder Contributions" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
+          <div className="rounded-card border border-gray-200 bg-white p-6 space-y-4">
 
             {/* Coverage gaps callout */}
             {r.stakeholderCoverageGaps && r.stakeholderCoverageGaps.length > 0 && (
@@ -840,7 +840,7 @@ function ReportDocument({
         <section className="mb-10">
           <SectionHeader number={12} title="Regulatory Framework Assessment" />
           {!regulatoryAssessment ? (
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
+            <div className="rounded-card border border-gray-200 bg-white p-6">
               <p className="text-sm text-amber-700">
                 Not available — this report was generated before Phase 20 (Regulatory Intelligence)
                 was introduced. Re-generate the report to include the regulatory framework assessment.
@@ -902,7 +902,7 @@ function ReportDocument({
                 return (
                   <div
                     key={fw.frameworkId}
-                    className="rounded-xl border border-gray-200 bg-white p-6"
+                    className="rounded-card border border-gray-200 bg-white p-6"
                   >
                     {/* Framework header */}
                     <div className="mb-4 flex flex-wrap items-start gap-3 border-b border-gray-100 pb-4">

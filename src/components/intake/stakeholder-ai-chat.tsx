@@ -165,7 +165,7 @@ export function StakeholderAIChat({
           return (
             <div key={i} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
               <div
-                className={`max-w-[86%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
+                className={`max-w-[86%] rounded-card px-3 py-2 text-xs leading-relaxed ${
                   isUser
                     ? "bg-violet-600 text-white"
                     : "bg-gray-100 text-gray-700"
@@ -180,7 +180,7 @@ export function StakeholderAIChat({
         {/* Thinking dots */}
         {isLoading && !isSaved && (
           <div className="flex justify-start">
-            <div className="flex items-center gap-1 rounded-xl bg-gray-100 px-3 py-2.5">
+            <div className="flex items-center gap-1 rounded-card bg-gray-100 px-3 py-2.5">
               <span
                 className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400"
                 style={{ animationDelay: "0ms" }}

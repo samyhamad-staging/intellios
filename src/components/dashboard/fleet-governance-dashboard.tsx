@@ -158,7 +158,7 @@ export async function FleetGovernanceDashboard({
 
   if (agents.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-200 bg-white px-6 py-10 text-center text-sm text-gray-400">
+      <div className="rounded-card border border-dashed border-gray-200 bg-white px-6 py-10 text-center text-sm text-gray-400">
         No approved or deployed agents yet. Fleet governance posture will appear here once agents are approved.
       </div>
     );
@@ -174,7 +174,7 @@ export async function FleetGovernanceDashboard({
           return (
             <div
               key={tier}
-              className={`rounded-xl border ${cfg.cardCls} px-4 py-3`}
+              className={`rounded-card border ${cfg.cardCls} px-4 py-3`}
             >
               <div className="text-2xl font-bold">{count}</div>
               <div className="mt-0.5 text-xs font-medium opacity-80">
@@ -210,7 +210,7 @@ export async function FleetGovernanceDashboard({
       )}
 
       {/* Per-agent fleet table */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50 text-left">

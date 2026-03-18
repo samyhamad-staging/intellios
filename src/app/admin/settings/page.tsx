@@ -93,7 +93,7 @@ export default function AdminSettingsPage() {
       <div className="space-y-6">
 
         {/* Periodic Review */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section className="rounded-card border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Periodic Model Review</h2>
           <p className="mt-1 text-sm text-gray-500">
             SR 11-7 requires periodic model revalidation after initial deployment.
@@ -163,7 +163,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Review SLA */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section className="rounded-card border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Review SLA</h2>
           <p className="mt-1 text-sm text-gray-500">
             Time thresholds for blueprints in the <code className="text-xs bg-gray-100 px-1 rounded">in_review</code> state.
@@ -217,7 +217,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Governance Rules */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section className="rounded-card border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Governance Rules</h2>
           <p className="mt-1 text-sm text-gray-500">
             Control which governance gates are enforced in the design and review workflow.
@@ -273,7 +273,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Notifications */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section className="rounded-card border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Notifications</h2>
           <p className="mt-1 text-sm text-gray-500">
             Configure who receives email alerts for governance events.
@@ -338,7 +338,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Approval Chain */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section className="rounded-card border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Approval Chain</h2>
           <p className="mt-1 text-sm text-gray-500">
             Define a sequential multi-step approval workflow. Each step requires a reviewer with the specified role
@@ -413,7 +413,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Deployment Targets */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section className="rounded-card border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Deployment Targets</h2>
           <p className="mt-1 text-sm text-gray-500">
             Configure direct deployment targets. AWS credentials are read from server environment

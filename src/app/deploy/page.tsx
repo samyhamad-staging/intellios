@@ -557,7 +557,7 @@ export default function DeploymentConsolePage() {
               subColor: readyToDeploy.length > 0 ? "text-green-600" : "text-gray-400",
             },
           ].map(({ label, value, sub, color, subColor }) => (
-            <div key={label} className={`rounded-xl border p-5 ${color}`}>
+            <div key={label} className={`rounded-card border p-5 ${color}`}>
               <div className="text-3xl font-bold">{value}</div>
               <div className="mt-1 text-sm font-medium">{label}</div>
               <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
@@ -572,7 +572,7 @@ export default function DeploymentConsolePage() {
           </h2>
 
           {!loading && readyToDeploy.length === 0 && (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
+            <div className="rounded-card border border-dashed border-gray-300 bg-white p-10 text-center">
               <p className="text-sm text-gray-400">No agents are currently approved and awaiting deployment.</p>
               <p className="mt-1 text-xs text-gray-400">
                 Agents must pass review before they can be deployed.{" "}
@@ -586,7 +586,7 @@ export default function DeploymentConsolePage() {
               {readyToDeploy.map((agent) => (
                 <div
                   key={agent.agentId}
-                  className="flex flex-wrap items-center gap-y-3 rounded-xl border border-green-200 bg-white px-5 py-4"
+                  className="flex flex-wrap items-center gap-y-3 rounded-card border border-green-200 bg-white px-5 py-4"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -655,19 +655,19 @@ export default function DeploymentConsolePage() {
           {loading && (
             <div className="space-y-2">
               {[1, 2].map((i) => (
-                <div key={i} className="h-16 animate-pulse rounded-xl bg-gray-100" />
+                <div key={i} className="h-16 animate-pulse rounded-card bg-gray-100" />
               ))}
             </div>
           )}
 
           {!loading && deployed.length === 0 && (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
+            <div className="rounded-card border border-dashed border-gray-300 bg-white p-10 text-center">
               <p className="text-sm text-gray-400">No agents are currently deployed.</p>
             </div>
           )}
 
           {!loading && deployed.length > 0 && (
-            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-x-auto rounded-card border border-gray-200 bg-white">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">

@@ -65,7 +65,7 @@ export default function ReviewQueuePage() {
       {/* Loading */}
       {loading && (
         <div className="space-y-3">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-24 animate-pulse rounded-xl bg-gray-100" />)}
+          {[...Array(3)].map((_, i) => <div key={i} className="h-24 animate-pulse rounded-card bg-gray-100" />)}
         </div>
       )}
 
@@ -78,7 +78,7 @@ export default function ReviewQueuePage() {
 
       {/* Empty */}
       {!loading && !error && blueprints.length === 0 && (
-        <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
+        <div className="flex flex-col items-center rounded-card border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
           <CheckCircle size={32} className="mb-4 text-[color:var(--gov-pass-icon)]" />
           <p className="mb-1 text-sm font-medium text-gray-700">Review queue is clear</p>
           <p className="text-xs text-gray-400">No blueprints are currently awaiting your review.</p>
@@ -88,7 +88,7 @@ export default function ReviewQueuePage() {
 
       {/* Queue items */}
       {blueprints.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
           {blueprints.map((bp, i) => {
             const govStatus = bp.validationReport
               ? bp.validationReport.valid

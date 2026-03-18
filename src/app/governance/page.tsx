@@ -340,7 +340,7 @@ export default function GovernanceHubPage() {
                       : "text-gray-400",
                 },
               ].map(({ label, value, sub, color, subColor }) => (
-                <div key={label} className={`rounded-xl border p-5 ${color}`}>
+                <div key={label} className={`rounded-card border p-5 ${color}`}>
                   <div className="text-3xl font-bold">{value}</div>
                   <div className="mt-1 text-sm font-medium">{label}</div>
                   <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
@@ -351,7 +351,7 @@ export default function GovernanceHubPage() {
             {!analyticsLoading && analytics && (
               <div className="grid grid-cols-2 gap-6">
                 {/* Monthly Submissions vs Approvals bar chart */}
-                <div className="rounded-xl border border-gray-200 bg-white p-5">
+                <div className="rounded-card border border-gray-200 bg-white p-5">
                   <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
                     Monthly Activity (last 6 months)
                   </h3>
@@ -413,7 +413,7 @@ export default function GovernanceHubPage() {
                 {/* Right column: Top Violated Policies + Agent Status Distribution */}
                 <div className="space-y-6">
                   {/* Top Violated Policies */}
-                  <div className="rounded-xl border border-gray-200 bg-white p-5">
+                  <div className="rounded-card border border-gray-200 bg-white p-5">
                     <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
                       Top Violated Policies
                     </h3>
@@ -439,7 +439,7 @@ export default function GovernanceHubPage() {
                   </div>
 
                   {/* Agent Status Distribution */}
-                  <div className="rounded-xl border border-gray-200 bg-white p-5">
+                  <div className="rounded-card border border-gray-200 bg-white p-5">
                     <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
                       Agent Status Distribution
                     </h3>
@@ -495,10 +495,10 @@ export default function GovernanceHubPage() {
 
             {analyticsLoading && (
               <div className="grid grid-cols-2 gap-6">
-                <div className="h-64 animate-pulse rounded-xl bg-gray-100" />
+                <div className="h-64 animate-pulse rounded-card bg-gray-100" />
                 <div className="space-y-4">
-                  <div className="h-28 animate-pulse rounded-xl bg-gray-100" />
-                  <div className="h-32 animate-pulse rounded-xl bg-gray-100" />
+                  <div className="h-28 animate-pulse rounded-card bg-gray-100" />
+                  <div className="h-32 animate-pulse rounded-card bg-gray-100" />
                 </div>
               </div>
             )}
@@ -545,7 +545,7 @@ export default function GovernanceHubPage() {
                 subColor: notValidated > 0 ? "text-amber-600" : "text-gray-400",
               },
             ].map(({ label, value, sub, color, subColor }) => (
-              <div key={label} className={`rounded-xl border p-5 ${color}`}>
+              <div key={label} className={`rounded-card border p-5 ${color}`}>
                 <div className="text-3xl font-bold">{value}</div>
                 <div className="mt-1 text-sm font-medium">{label}</div>
                 <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
@@ -589,7 +589,7 @@ export default function GovernanceHubPage() {
 
         {!loading && agentsWithViolations.length === 0 && total > 0 && notValidated === 0 && (
           <section>
-            <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
+            <div className="rounded-card border border-green-200 bg-green-50 p-6 text-center">
               <p className="text-lg font-medium text-green-800">✓ All validated agents pass governance</p>
               <p className="mt-1 text-sm text-green-600">
                 {clean} agent{clean === 1 ? "" : "s"} validated against {policies.length} polic{policies.length === 1 ? "y" : "ies"}
@@ -623,7 +623,7 @@ export default function GovernanceHubPage() {
           )}
 
           {!loading && policies.length === 0 && (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
+            <div className="rounded-card border border-dashed border-gray-300 bg-white p-10 text-center">
               <p className="text-sm text-gray-400">No governance policies defined.</p>
               {canManagePolicies ? (
                 <Link
@@ -845,7 +845,7 @@ export default function GovernanceHubPage() {
               {templatePacks.map((pack) => (
                 <div
                   key={pack.id}
-                  className="rounded-xl border border-gray-200 bg-white p-5 flex flex-col gap-3"
+                  className="rounded-card border border-gray-200 bg-white p-5 flex flex-col gap-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -881,7 +881,7 @@ export default function GovernanceHubPage() {
 
             {/* Duplicate conflict prompt */}
             {duplicatePrompt && (
-              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+              <div className="mt-4 rounded-card border border-amber-200 bg-amber-50 px-5 py-4">
                 <p className="text-sm font-medium text-amber-800 mb-1">
                   {duplicatePrompt.duplicates.length} existing polic{duplicatePrompt.duplicates.length === 1 ? "y" : "ies"} would be replaced:
                 </p>
@@ -929,7 +929,7 @@ export default function GovernanceHubPage() {
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
               Compliance by Stage
             </h2>
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">

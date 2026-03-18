@@ -323,7 +323,7 @@ export function HelpPanel({ role }: HelpPanelProps) {
                                 router.push(action.href);
                                 setOpen(false);
                               }}
-                              className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-left hover:bg-violet-100 hover:border-violet-300 transition-colors"
+                              className="flex items-center gap-2 rounded-card border border-violet-200 bg-violet-50 px-4 py-2.5 text-left hover:bg-violet-100 hover:border-violet-300 transition-colors"
                             >
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-violet-700">

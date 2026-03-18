@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* ── Border-radius tokens ───────────────────────────────────────────────── */
+@theme {
+  --radius-card: 0.75rem;   /* main card containers — replaces rounded-xl  */
+  --radius-inner: 0.5rem;   /* inner elements       — replaces rounded-lg  */
+}
+
 /* ── Geist Sans font ───────────────────────────────────────────────────── */
 @font-face {
   font-family: "GeistSans";

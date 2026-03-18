@@ -153,7 +153,7 @@ function CompletedPage({
         </p>
 
         {synthesis && (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 text-left mb-4">
+          <div className="rounded-card border border-gray-200 bg-white p-6 text-left mb-4">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
               Team Summary
             </h3>
@@ -166,7 +166,7 @@ function CompletedPage({
         )}
 
         {collaborators.length > 0 && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 text-left">
+          <div className="rounded-card border border-gray-200 bg-white p-4 text-left">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Team</h3>
             <div className="space-y-2">
               {collaborators.map((c, i) => {

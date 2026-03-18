@@ -48,13 +48,13 @@ function LoginForm() {
 
         {/* Registration success banner */}
         {justRegistered && (
-          <div className="mb-4 rounded-xl border banner-success px-4 py-3 text-sm">
+          <div className="mb-4 rounded-card border banner-success px-4 py-3 text-sm">
             Account created successfully. Sign in to get started.
           </div>
         )}
 
         {/* Card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="rounded-card border border-gray-200 bg-white p-8 shadow-sm">
           <h2 className="mb-6 text-lg font-semibold text-gray-900">
             Sign in to your account
           </h2>

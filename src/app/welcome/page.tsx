@@ -45,7 +45,7 @@ export default function WelcomePage() {
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
       {/* Hero */}
-      <div className="mb-10 rounded-xl border border-violet-200 bg-violet-50 p-8 text-center">
+      <div className="mb-10 rounded-card border border-violet-200 bg-violet-50 p-8 text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-violet-600">
           <CheckCircle2 className="h-7 w-7 text-white" />
         </div>
@@ -65,7 +65,7 @@ export default function WelcomePage() {
           return (
             <div
               key={step.href}
-              className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5"
+              className="flex items-start gap-4 rounded-card border border-gray-200 bg-white p-5"
             >
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50">
                 <Icon className="h-4.5 w-4.5 text-violet-600" />

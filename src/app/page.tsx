@@ -84,7 +84,7 @@ export default async function Home() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="mb-4 flex justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500">
+            <div className="flex h-12 w-12 items-center justify-center rounded-card bg-violet-500">
               <svg width="20" height="20" viewBox="0 0 14 14" fill="none">
                 <path d="M2 11L7 3L12 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M4.5 8H9.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
@@ -121,7 +121,7 @@ export default async function Home() {
             { href: "/registry", icon: Library,     label: "Agent Registry",  sub: "All versions",              color: "text-blue-600" },
             { href: "/intake",   icon: Plus,         label: "New Intake",      sub: "Start from scratch",        color: "text-green-600" },
           ].map(({ href, icon: Icon, label, sub, color }) => (
-            <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all min-w-0">
+            <Link key={href} href={href} className="group flex items-center gap-3 rounded-card border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all min-w-0">
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-violet-50 transition-colors ${color}`}>
                 <Icon size={16} />
               </div>
@@ -150,13 +150,13 @@ export default async function Home() {
         <section>
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Recent Agents</h2>
           {myAgents.length === 0 ? (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-14 text-center">
+            <div className="flex flex-col items-center rounded-card border border-dashed border-gray-200 bg-white py-14 text-center">
               <Inbox size={28} className="mb-3 text-gray-300" />
               <p className="text-sm font-medium text-gray-500">No agents yet</p>
               <p className="mt-1 text-xs text-gray-400">Start an intake session to design your first agent.</p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
               {myAgents.slice(0, 8).map((agent, i) => (
                 <Link
                   key={agent.agentId}
@@ -164,7 +164,7 @@ export default async function Home() {
                   className={`flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-100" : ""}`}
                 >
                   <Bot size={15} className="shrink-0 text-gray-400" />
-                  <span className="flex-1 truncate text-sm font-medium text-gray-900">{agent.name ?? "Unnamed Agent"}</span>
+                  <span className="flex-1 truncate text-sm font-medium text-gray-900" title={agent.name ?? "Unnamed Agent"}>{agent.name ?? "Unnamed Agent"}</span>
                   <StatusBadge status={agent.status} />
                   <span className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</span>
                   <ChevronRight size={13} className="text-gray-300" />
@@ -204,7 +204,7 @@ export default async function Home() {
             { href: "/pipeline", icon: Kanban,         label: "Pipeline Board", sub: `${allAgents.length} total`,        color: "text-violet-600" },
             { href: "/registry", icon: Library,        label: "Agent Registry", sub: "All versions",                     color: "text-blue-600" },
           ].map(({ href, icon: Icon, label, sub, color }) => (
-            <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all min-w-0">
+            <Link key={href} href={href} className="group flex items-center gap-3 rounded-card border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all min-w-0">
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-violet-50 transition-colors ${color}`}>
                 <Icon size={16} />
               </div>
@@ -220,12 +220,12 @@ export default async function Home() {
         <section>
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Pending Reviews</h2>
           {inReviewAgents.length === 0 ? (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-14 text-center">
+            <div className="flex flex-col items-center rounded-card border border-dashed border-gray-200 bg-white py-14 text-center">
               <CheckCircle size={28} className="mb-3 text-green-400" />
               <p className="text-sm font-medium text-gray-500">Review queue is clear</p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
               {inReviewAgents.slice(0, 8).map((agent, i) => (
                 <Link
                   key={agent.agentId}
@@ -233,7 +233,7 @@ export default async function Home() {
                   className={`flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-100" : ""}`}
                 >
                   <Bot size={15} className="shrink-0 text-gray-400" />
-                  <span className="flex-1 truncate text-sm font-medium text-gray-900">{agent.name ?? "Unnamed Agent"}</span>
+                  <span className="flex-1 truncate text-sm font-medium text-gray-900" title={agent.name ?? "Unnamed Agent"}>{agent.name ?? "Unnamed Agent"}</span>
                   <StatusBadge status={agent.status} />
                   <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Review</span>
                   <span className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</span>
@@ -332,7 +332,7 @@ export default async function Home() {
               <Link
                 key={s}
                 href={activeStageLinks[s]}
-                className={`rounded-xl border ${cfg.border} ${cfg.bg} p-4 hover:shadow-sm transition-shadow`}
+                className={`rounded-card border ${cfg.border} ${cfg.bg} p-4 hover:shadow-sm transition-shadow`}
               >
                 <div className={`text-2xl font-bold ${cfg.text}`}>{counts[s]}</div>
                 <div className={`mt-0.5 text-xs font-medium ${cfg.text} opacity-80`}>{cfg.label}</div>
@@ -388,12 +388,12 @@ export default async function Home() {
           <Link href="/registry" className="text-xs text-violet-600 hover:text-violet-700">View all →</Link>
         </div>
         {allAgents.length === 0 ? (
-          <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-14 text-center">
+          <div className="flex flex-col items-center rounded-card border border-dashed border-gray-200 bg-white py-14 text-center">
             <Inbox size={28} className="mb-3 text-gray-300" />
             <p className="text-sm font-medium text-gray-500">No agents in the system yet</p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
             {allAgents.slice(0, 8).map((agent, i) => {
               const author = agent.createdBy
                 ? agent.createdBy.includes("@")
@@ -408,7 +408,7 @@ export default async function Home() {
                 >
                   <Bot size={15} className="shrink-0 text-gray-400" />
                   <div className="flex-1 min-w-0">
-                    <p className="truncate text-sm font-medium text-gray-900">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</p>
+                    <p className="truncate text-sm font-medium text-gray-900" title={agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}>{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {author ? `by ${author} · ` : ""}{timeAgo(agent.updatedAt)}
                     </p>
@@ -427,7 +427,7 @@ export default async function Home() {
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
           Workspace Activity
         </h2>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
           <ActivityFeed />
         </div>
       </section>
