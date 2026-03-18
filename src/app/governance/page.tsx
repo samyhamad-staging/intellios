@@ -311,19 +311,19 @@ export default function GovernanceHubPage() {
                   sub: "of validated agents",
                   color:
                     analytics?.validationPassRate != null && analytics.validationPassRate >= 80
-                      ? "bg-green-50 border-green-200 text-green-900"
+                      ? "badge-gov-pass"
                       : analytics?.validationPassRate != null && analytics.validationPassRate >= 50
-                      ? "bg-amber-50 border-amber-200 text-amber-900"
+                      ? "badge-gov-warn"
                       : analytics?.validationPassRate != null
-                      ? "bg-red-50 border-red-200 text-red-900"
-                      : "bg-white border-gray-200 text-gray-900",
+                      ? "badge-gov-error"
+                      : "kpi-neutral",
                   subColor:
                     analytics?.validationPassRate != null && analytics.validationPassRate >= 80
-                      ? "text-green-600"
+                      ? "text-[color:var(--gov-pass-icon)]"
                       : analytics?.validationPassRate != null && analytics.validationPassRate >= 50
-                      ? "text-amber-600"
+                      ? "text-[color:var(--gov-warn-icon)]"
                       : analytics?.validationPassRate != null
-                      ? "text-red-600"
+                      ? "text-[color:var(--gov-error-text)]"
                       : "text-gray-400",
                 },
                 {
@@ -336,7 +336,7 @@ export default function GovernanceHubPage() {
                       : `${Math.round(analytics.avgTimeToApprovalHours / 24)}d`
                     : "N/A",
                   sub: "from review submission",
-                  color: "bg-white border-gray-200 text-gray-900",
+                  color: "kpi-neutral",
                   subColor: "text-gray-400",
                 },
                 {
@@ -351,13 +351,13 @@ export default function GovernanceHubPage() {
                     !analyticsLoading &&
                     analytics &&
                     analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0) > 0
-                      ? "bg-red-50 border-red-200 text-red-900"
-                      : "bg-white border-gray-200 text-gray-900",
+                      ? "badge-gov-error"
+                      : "kpi-neutral",
                   subColor:
                     !analyticsLoading &&
                     analytics &&
                     analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0) > 0
-                      ? "text-red-600"
+                      ? "text-[color:var(--gov-error-text)]"
                       : "text-gray-400",
                 },
               ].map(({ label, value, sub, color, subColor }) => (

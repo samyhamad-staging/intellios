@@ -30,13 +30,16 @@ function timeAgo(dateStr: string | Date): string {
   return `${Math.floor(diffDays / 7)}w ago`;
 }
 
-const STATUS_CONFIG = {
-  draft:      { label: "Draft",      bg: "bg-slate-100",  text: "text-slate-600",  border: "border-slate-200" },
-  in_review:  { label: "In Review",  bg: "bg-blue-50",    text: "text-blue-700",   border: "border-blue-200"  },
-  approved:   { label: "Approved",   bg: "bg-green-50",   text: "text-green-700",  border: "border-green-200" },
-  deployed:   { label: "Deployed",   bg: "bg-violet-50",  text: "text-violet-700", border: "border-violet-200"},
-  rejected:   { label: "Rejected",   bg: "bg-red-50",     text: "text-red-700",    border: "border-red-200"   },
-  deprecated: { label: "Deprecated", bg: "bg-amber-50",   text: "text-amber-700",  border: "border-amber-200" },
+const STATUS_STAGE_CONFIG = {
+  draft:      { label: "Draft",      kpi: "kpi-neutral"   },
+  in_review:  { label: "In Review",  kpi: "kpi-review"    },
+  approved:   { label: "Approved",   kpi: "kpi-compliant" },
+  deployed:   { label: "Deployed",   kpi: "kpi-deployed"  },
+} as const;
+
+const TERMINAL_TEXT = {
+  rejected:   "text-[color:var(--status-rejected-text)]",
+  deprecated: "text-[color:var(--status-deprecated-text)]",
 } as const;
 
 export default async function Home() {
@@ -328,29 +331,26 @@ export default async function Home() {
       <div className="mb-6">
         <div className="grid grid-cols-4 gap-3">
           {(["draft", "in_review", "approved", "deployed"] as const).map((s) => {
-            const cfg = STATUS_CONFIG[s];
+            const cfg = STATUS_STAGE_CONFIG[s];
             return (
               <Link
                 key={s}
                 href={activeStageLinks[s]}
-                className={`rounded-card border ${cfg.border} ${cfg.bg} p-4 hover:shadow-sm transition-shadow`}
+                className={`rounded-card border p-4 hover:shadow-sm transition-shadow ${cfg.kpi}`}
               >
-                <div className={`text-2xl font-bold ${cfg.text}`}>{counts[s]}</div>
-                <div className={`mt-0.5 text-xs font-medium ${cfg.text} opacity-80`}>{cfg.label}</div>
+                <div className="text-2xl font-bold">{counts[s]}</div>
+                <div className="mt-0.5 text-xs font-medium opacity-80">{cfg.label}</div>
               </Link>
             );
           })}
         </div>
         {/* Terminal states — compact, low-emphasis */}
         <div className="mt-2.5 flex items-center gap-4 px-1">
-          {(["rejected", "deprecated"] as const).map((s) => {
-            const cfg = STATUS_CONFIG[s];
-            return (
-              <span key={s} className={`text-xs font-medium ${cfg.text} opacity-70`}>
-                {counts[s]} {cfg.label}
-              </span>
-            );
-          })}
+          {(["rejected", "deprecated"] as const).map((s) => (
+            <span key={s} className={`text-xs font-medium opacity-70 ${TERMINAL_TEXT[s]}`}>
+              {counts[s]} {s === "rejected" ? "Rejected" : "Deprecated"}
+            </span>
+          ))}
         </div>
       </div>
 
@@ -360,9 +360,9 @@ export default async function Home() {
           <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Governance Health</h2>
           {qualityIndex != null && (
             <div className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
-              qualityIndex >= 80 ? "bg-green-50 text-green-700 border-green-200" :
-              qualityIndex >= 60 ? "bg-amber-50 text-amber-700 border-amber-200" :
-              "bg-red-50 text-red-700 border-red-200"
+              qualityIndex >= 80 ? "badge-gov-pass" :
+              qualityIndex >= 60 ? "badge-gov-warn" :
+              "badge-gov-error"
             }`}>
               {qualityIndexDelta != null && (
                 qualityIndexDelta >= 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />
