@@ -36,22 +36,26 @@ const ACTIONS: Record<Status, Action[]> = {
 
 interface LifecycleControlsProps {
   blueprintId: string;
+  agentId: string;
   currentStatus: string;
   onStatusChange: (newStatus: Status) => void;
 }
 
 export function LifecycleControls({
   blueprintId,
+  agentId,
   currentStatus,
   onStatusChange,
 }: LifecycleControlsProps) {
   const router = useRouter();
   const [transitioning, setTransitioning] = useState(false);
+  const [creatingVersion, setCreatingVersion] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const actions = ACTIONS[currentStatus as Status] ?? [];
+  const canCreateNewVersion = currentStatus === "approved" || currentStatus === "deployed";
 
-  if (actions.length === 0) return null;
+  if (actions.length === 0 && !canCreateNewVersion) return null;
 
   const handleTransition = async (next: Status) => {
     // Deployments must go through the Deployment Console where a change
@@ -72,13 +76,32 @@ export function LifecycleControls({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Transition failed");
+        throw new Error(data.message ?? "Transition failed");
       }
       onStatusChange(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Transition failed");
     } finally {
       setTransitioning(false);
+    }
+  };
+
+  const handleCreateNewVersion = async () => {
+    setCreatingVersion(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/blueprints/${blueprintId}/new-version`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message ?? "Failed to create new version");
+      }
+      router.push(`/registry/${agentId}`);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create new version");
+      setCreatingVersion(false);
     }
   };
 
@@ -89,12 +112,21 @@ export function LifecycleControls({
           <button
             key={action.next}
             onClick={() => handleTransition(action.next)}
-            disabled={transitioning}
+            disabled={transitioning || creatingVersion}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${action.style}`}
           >
             {transitioning ? "..." : action.label}
           </button>
         ))}
+        {canCreateNewVersion && (
+          <button
+            onClick={handleCreateNewVersion}
+            disabled={transitioning || creatingVersion}
+            className="rounded-lg border border-violet-300 px-3 py-1.5 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-50 disabled:opacity-50"
+          >
+            {creatingVersion ? "Creating…" : "Create New Version"}
+          </button>
+        )}
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>

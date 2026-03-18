@@ -38,6 +38,145 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 058 — 2026-03-17
+
+**Phase 48: Stakeholder Collaboration Workspace (verification + docs)**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context carry-over + cache fix | Turbopack stale cache diagnosis, server restart, migration application | ~30K in / ~3K out |
+| End-to-end verification | 7 verification steps: panel, invite form, API, public workspace, AI interview | ~20K in / ~4K out |
+| Documentation | Session log, roadmap, effort log, project journal | ~15K in / ~6K out |
+| **Session total (est.)** | | **~65K in / ~13K out** |
+
+**Estimated session cost (Sonnet 4.6):** ~65K × $3/1M + ~13K × $15/1M ≈ **$0.20 + $0.20 = ~$0.40**
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | ~2 (session resumed from summary) |
+| Decisions made | 0 new (all implementation decisions made in session 057) |
+| Engagement type | Passive observation — session was verification + docs only |
+| Estimated time | ~5 min |
+
+---
+
+## Session 063 — 2026-03-17
+
+**Phase 53: Viewer Role + Role Model Optimization (Recs 1, 3, 4)**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Analysis | Plan mode: role model diagnosis, 7 recommendations, priority ordering | ~80K in / ~15K out |
+| Rec 3 investigation | Read test-runs route — confirmed non-issue (no change needed) | ~10K in / ~1K out |
+| Rec 4 + Phase 53 implementation | 17 file changes: auth type, 8 API routes, 3 admin user routes, sidebar, home, compliance, governance pages | ~60K in / ~12K out |
+| Documentation | Session log, roadmap, effort log, index, project journal | ~15K in / ~6K out |
+| **Session total (est.)** | | **~165K in / ~34K out** |
+
+**Estimated session cost (Sonnet 4.6):** ~165K × $3/1M + ~34K × $15/1M ≈ **$0.50 + $0.51 = ~$1.01**
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | ~4 (scope analysis request, plan mode entry, plan approval, continuation) |
+| Decisions made | 2 (D-Scope: "scope all users" analysis request; D-Approve: 7-recommendation plan approval) |
+| Engagement type | Strategic direction-setting + plan review; implementation fully autonomous |
+| Estimated time | ~15 min |
+
+---
+
+## Session 062 — 2026-03-17
+
+**Phase 52: Blueprint Lineage with Governance Diff**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Exploration | Read diff engine, new-version route, schema, registry page | ~30K in / ~1K out |
+| Implementation | Migration, schema, route update, registry UI Version Lineage panel | ~25K in / ~8K out |
+| Verification | Create New Version flow, snapshot, screenshot, lineage panel check | ~25K in / ~3K out |
+| Documentation | Session log, roadmap, effort log, index, project journal | ~15K in / ~6K out |
+| **Session total (est.)** | | **~95K in / ~18K out** |
+
+**Estimated session cost (Sonnet 4.6):** ~95K × $3/1M + ~18K × $15/1M ≈ **$0.29 + $0.27 = ~$0.56**
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | ~1 (single "Proceed" instruction after Phase 51) |
+| Decisions made | 1 (D-Approve: "Proceed" → Phase 52) |
+| Engagement type | Direction-setting only; implementation fully autonomous |
+| Estimated time | ~3 min |
+
+---
+
+## Session 061 — 2026-03-17
+
+**Phase 51: Fleet Governance Dashboard**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Exploration | Read Overview page, schema, existing query patterns | ~25K in / ~1K out |
+| Implementation | FleetGovernanceDashboard component + page wiring | ~20K in / ~6K out |
+| Verification | Sign-out/sign-in flow, screenshot, snapshot analysis | ~30K in / ~3K out |
+| Documentation | Session log, roadmap, effort log, index, project journal | ~15K in / ~6K out |
+| **Session total (est.)** | | **~90K in / ~16K out** |
+
+**Estimated session cost (Sonnet 4.6):** ~90K × $3/1M + ~16K × $15/1M ≈ **$0.27 + $0.24 = ~$0.51**
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | ~1 (continuation from context window break) |
+| Decisions made | 1 (D-Approve: "move to phase 51" instruction in prior session) |
+| Engagement type | Direction-setting in prior session; passive in this session |
+| Estimated time | ~5 min |
+
+---
+
+## Session 060 — 2026-03-17
+
+**Phase 50: Evidence Package Export**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Exploration | Read 8 files (schema, existing routes, Blueprint Studio page, MRM assembler, types) | ~40K in / ~2K out |
+| Implementation | New route + Blueprint Studio right rail section + state/handler | ~25K in / ~8K out |
+| Verification | Preview screenshot, route eval, DB migration check | ~15K in / ~3K out |
+| Documentation | Session log, roadmap, effort log, index, project journal | ~15K in / ~6K out |
+| **Session total (est.)** | | **~95K in / ~19K out** |
+
+**Estimated session cost (Sonnet 4.6):** ~95K × $3/1M + ~19K × $15/1M ≈ **$0.29 + $0.29 = ~$0.58**
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | ~1 (continuation from context window break) |
+| Decisions made | 1 (D-Arch: Phase 50 build sequence approved in prior session) |
+| Engagement type | Direction-setting in prior session; passive in this session |
+| Estimated time | ~5 min |
+
+---
+
 ## Session 001 — 2026-03-12
 
 **Duration:** Single calendar day (multi-context, session hit context limit and continued)
@@ -1700,6 +1839,187 @@ Tracks resource consumption per session for post-project cost estimation.
 | 2 | Approved Phase 42 plan (ExitPlanMode) | D-Approve | — |
 
 **Totals:** 2 messages · 1 D-Scope · 1 D-Approve · ~10 min
+
+---
+
+## Session 051 — 2026-03-16
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Codebase audit (plan mode) | Read sidebar, notification-bell, version-diff, diff route, lifecycle-controls, registry page, abp-diff engine | ~40k in / ~1k out |
+| Plan writing | Phase 43 plan → ethereal-discovering-dolphin.md | ~5k in / ~2k out |
+| sidebar.tsx wiring | Import NotificationBell, ml-auto placement, remove Bell | ~3k in / ~0.3k out |
+| new-version route | POST route, semver increment, duplicate guard, audit log | ~10k in / ~1.5k out |
+| lifecycle-controls.tsx | agentId prop, Create New Version button, creatingVersion state | ~5k in / ~1k out |
+| registry page prop update | agentId={latest.agentId} passed to LifecycleControls | ~3k in / ~0.1k out |
+| TypeScript check + verification | tsc --noEmit, dev server compile check | ~3k in / ~0.2k out |
+| Documentation | Session log 051, _index, effort log, project journal, roadmap | ~10k in / ~4k out |
+| **Session total (est.)** | | **~79k in / ~10k out** |
+
+**Estimated session cost:** Sonnet ~79k in × $3/1M + ~10k out × $15/1M = **$0.24 + $0.15 = ~$0.39**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | "Carefully think of and plan the next body of work that will have the highest value" | D-Scope | Strategic planning — Phase 43 last-mile completions |
+| 2 | Approved Phase 43 plan (ExitPlanMode) | D-Approve | — |
+
+**Totals:** 2 messages · 1 D-Scope · 1 D-Approve · ~5 min
+
+## Session 052 — 2026-03-16
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Codebase exploration (plan mode) | Read proxy.ts, registry page, page.tsx, intelligence route, governance types, metrics-worker | ~60k in / ~1k out |
+| Plan writing | Phase 44 plan → ethereal-discovering-dolphin.md | ~5k in / ~2k out |
+| Middleware rename | `git mv src/proxy.ts src/middleware.ts` | ~1k in / ~0.1k out |
+| Governance column (registry page) | Added GOVERNANCE th/td, pass/fail badges, error/warning counts; fixed ValidationReport field names | ~8k in / ~1.5k out |
+| Quality Index KPI (page.tsx) | Import getRecentSnapshots, data fetch, Governance Health section + stat card | ~6k in / ~1k out |
+| TypeScript check + browser verify | tsc --noEmit, snapshot confirms 76/100 +6 and Governance column Pass badge | ~4k in / ~0.5k out |
+| Documentation | Session log 052, _index, effort log, project journal, roadmap | ~10k in / ~4k out |
+| **Session total (est.)** | | **~94k in / ~10k out** |
+
+**Estimated session cost:** Sonnet ~94k in × $3/1M + ~10k out × $15/1M = **$0.28 + $0.15 = ~$0.43**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Approved Phase 44 plan (ExitPlanMode) | D-Approve | Strategic planning carried from prior session |
+| 2 | (Implementation completed autonomously) | — | — |
+
+**Totals:** 1 message · 1 D-Approve · ~2 min
+
+---
+
+## Session 056 — 2026-03-16
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context restore | Read activity-feed.tsx, admin/users/page.tsx, compliance/page.tsx, intake/page.tsx, session-055 log | ~30k in / ~0.2k out |
+| Workspace Activity deduplication | `groupItems()` + `×N` badge in `activity-feed.tsx` | ~5k in / ~0.8k out |
+| User Management redesign | 3-column grid, two-line user cell, role borders, hover PenLine, Mail icon, self-row, date formatting | ~8k in / ~1.5k out |
+| Date wrapping fix | Added `whitespace-nowrap` after date wrapped in narrow viewport | ~3k in / ~0.2k out |
+| Compliance Trends redesign | All-zero empty state, combined bar, human-readable month labels, submitted/approved counts | ~8k in / ~1.5k out |
+| Intake Sessions row redesign | `"by [username] · [timeAgo]"` third content line, removed right-side metadata div | ~5k in / ~0.8k out |
+| Preview verification | Accessibility snapshots confirming all four improvements | ~10k in / ~0.4k out |
+| Documentation | Session log 056, effort log, index, project journal | ~8k in / ~2k out |
+| **Session total (est.)** | | **~77k in / ~7.4k out** |
+
+**Estimated session cost:** Sonnet ~77k in × $3/1M + ~7.4k out × $15/1M = **$0.23 + $0.11 = ~$0.34**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Screenshot + red circle on Workspace Activity | D-Correct | Requested deduplication / better presentation |
+| 2 | Screenshot + "optimize the ui and ux here" (Users) | D-Correct | Requested full User Management UI redesign |
+| 3 | Screenshot + "this needs a better design" (Compliance Trends) | D-Correct | Requested Trends section redesign |
+| 4 | Screenshot + "optimize the design of this" (Intake Sessions right side) | D-Correct | Requested metadata consolidation |
+
+**Totals:** 4 messages · 0 D-Arch · 0 D-Approve · 4 D-Correct · ~10 min
+
+---
+
+## Session 055 — 2026-03-16
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context restore + exploration | Read simulate/chat, chat-container, message-bubble, chat-input, help/ask for patterns | ~35k in / ~0.3k out |
+| Plan mode | Explore agent, plan file write | ~15k in / ~1.5k out |
+| `src/app/api/help/chat/route.ts` | New multi-turn endpoint, `convertToModelMessages`, `toUIMessageStreamResponse`, updated system prompt | ~5k in / ~1.8k out |
+| `src/components/help/help-panel.tsx` | Rewrite — `useChat`, `DefaultChatTransport`, `MessageBubble`, streaming dots, clear button, auto-scroll | ~8k in / ~2k out |
+| Delete `src/app/api/help/ask/route.ts` | Removed old one-shot endpoint | ~1k in / ~0.1k out |
+| TypeScript errors (3 rounds) | `maxSteps`→`stopWhen`; `parameters:`→`inputSchema: zodSchema`; null guard on `part.input` | ~12k in / ~1.5k out |
+| Action-capable copilot | `suggest_action` tool in route; `extractAction()` + violet nav card in panel | ~8k in / ~1.5k out |
+| Role-aware suggestions fix | Expanded `SUGGESTED_QUESTIONS["/"]` to 4 roles; `FALLBACK_QUESTIONS` → role-keyed Record | ~4k in / ~0.8k out |
+| Recent Activity redesign | `src/app/page.tsx` — two-line rows, username extraction, remove raw emails | ~5k in / ~0.8k out |
+| TypeScript check | `tsc --noEmit` — 0 production errors | ~3k in / ~0.2k out |
+| Preview verification | Screenshots confirming two-line rows, action card, role suggestions | ~10k in / ~0.5k out |
+| Documentation | Session log 055, effort log, project journal updates | ~12k in / ~3k out |
+| **Session total (est.)** | | **~118k in / ~14k out** |
+
+**Estimated session cost:** Sonnet ~118k in × $3/1M + ~14k out × $15/1M = **$0.35 + $0.21 = ~$0.56**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | "Can the help chat evolve to become a productive and helpful copilot for any role?" | D-Arch | Defined the upgrade direction |
+| 2 | Approved Phase 47 plan | D-Approve | Multi-turn + useChat + MessageBubble |
+| 3 | Screenshot + "Is the copilot able to assist me in creating an agent?" | D-Correct | Surfaced role-awareness bug |
+| 4 | "yes I would like it to be action capable" | D-Arch | Defined action navigation feature |
+| 5 | Screenshot with red circle on Recent Activity | D-Correct | Requested layout redesign |
+
+**Totals:** 5 messages · 2 D-Arch · 1 D-Approve · 2 D-Correct · ~15 min
+
+---
+
+## Session 054 — 2026-03-16
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context restore | Read chat route, sidebar, require.ts, rate-limit.ts as pattern reference | ~25k in / ~0.3k out |
+| `src/app/api/help/ask/route.ts` | New streaming endpoint, `buildHelpSystemPrompt()`, rate limit wiring | ~5k in / ~1.5k out |
+| `src/components/help/help-panel.tsx` | New client component — SUGGESTED_QUESTIONS map, getSuggestions, streaming, overlay UI | ~5k in / ~2k out |
+| `src/components/nav/sidebar.tsx` | Import + render HelpPanel in footer | ~3k in / ~0.3k out |
+| TypeScript check | `tsc --noEmit` — 0 production errors | ~3k in / ~0.3k out |
+| Documentation | Session log 054, _index, roadmap, effort log, project journal | ~12k in / ~3k out |
+| **Session total (est.)** | | **~53k in / ~7.5k out** |
+
+**Estimated session cost:** Sonnet ~53k in × $3/1M + ~7.5k out × $15/1M = **$0.16 + $0.11 = ~$0.27**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | UX help system planning prompt: "Carefully think and plan the ux through which roles can find answers" | D-Arch | Defined the entire help infrastructure direction |
+| 2 | Approved Phase 46 plan | D-Approve | — |
+| 3 | "Continue from where you left off" / "execute plan" | D-Approve | — |
+
+**Totals:** 3 messages · 3 decisions · ~5 min
+
+---
+
+## Session 053 — 2026-03-16
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context restore | Read handler.ts, regenerate/route.ts (from prior session context via summary) | ~30k in / ~0.5k out |
+| Fix EventType union | Added `\| "blueprint.regenerated"` to `src/lib/events/types.ts` | ~2k in / ~0.2k out |
+| TypeScript check | `tsc --noEmit` — 0 production errors | ~3k in / ~0.3k out |
+| Browser verification | Pipeline Board → Blueprint Studio → Regenerate button + confirm state | ~5k in / ~0.5k out |
+| Documentation | Session log 053, _index, roadmap, effort log, project journal | ~8k in / ~3k out |
+| **Session total (est.)** | | **~48k in / ~4.5k out** |
+
+**Estimated session cost:** Sonnet ~48k in × $3/1M + ~4.5k out × $15/1M = **$0.14 + $0.07 = ~$0.21**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | (Session resumed mid-task from prior context; no new decisions required) | — | Fully autonomous completion |
+
+**Totals:** 0 active messages · 0 decisions · ~1 min
 
 ---
 

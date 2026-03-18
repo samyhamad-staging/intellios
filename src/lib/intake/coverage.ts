@@ -25,15 +25,19 @@ export function getExpectedContributionDomains(
 
   const expected = new Set<ContributionDomain>();
 
+  const regulatoryScope = context.regulatoryScope ?? [];
+  const integrationTypes = context.integrationTypes ?? [];
+  const stakeholdersConsulted = context.stakeholdersConsulted ?? [];
+
   // Regulatory scope → implied domains
-  if (context.regulatoryScope.includes("FINRA") || context.regulatoryScope.includes("SOX")) {
+  if (regulatoryScope.includes("FINRA") || regulatoryScope.includes("SOX")) {
     expected.add("compliance");
   }
-  if (context.regulatoryScope.includes("GDPR") || context.regulatoryScope.includes("HIPAA")) {
+  if (regulatoryScope.includes("GDPR") || regulatoryScope.includes("HIPAA")) {
     expected.add("compliance");
     expected.add("legal");
   }
-  if (context.regulatoryScope.includes("PCI-DSS")) {
+  if (regulatoryScope.includes("PCI-DSS")) {
     expected.add("compliance");
     expected.add("security");
   }
@@ -55,16 +59,16 @@ export function getExpectedContributionDomains(
   }
 
   // Integration types → implied domains
-  if (context.integrationTypes.includes("external-apis")) {
+  if (integrationTypes.includes("external-apis")) {
     expected.add("security");
     expected.add("it");
   }
-  if (context.integrationTypes.includes("databases") || context.integrationTypes.includes("file-systems")) {
+  if (integrationTypes.includes("databases") || integrationTypes.includes("file-systems")) {
     expected.add("it");
   }
 
   // Stakeholders consulted → direct domain mapping
-  for (const stakeholder of context.stakeholdersConsulted) {
+  for (const stakeholder of stakeholdersConsulted) {
     switch (stakeholder) {
       case "legal":
         expected.add("legal");

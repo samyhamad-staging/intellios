@@ -10,7 +10,8 @@ import { buildIntakeSystemPrompt } from "@/lib/intake/system-prompt";
 import { createIntakeTools } from "@/lib/intake/tools";
 import { IntakePayload, IntakeContext, ContributionDomain, StakeholderContribution, IntakeClassification, AgentType, IntakeRiskTier } from "@/lib/types/intake";
 import { loadPolicies } from "@/lib/governance/load-policies";
-import { selectIntakeModel } from "@/lib/intake/model-selector";
+import { selectIntakeModel, detectExpertiseLevel, ExpertiseLevel } from "@/lib/intake/model-selector";
+import { buildTopicProbingRules } from "@/lib/intake/probing";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
@@ -96,6 +97,21 @@ export async function POST(
           }
         : null;
 
+    // ── Expertise level detection (Phase 49) ──────────────────────────────
+    // Read persisted expertise level from session. If not yet set and we have
+    // at least 2 user messages, detect from message history and persist.
+    let currentExpertiseLevel = (session.expertiseLevel as ExpertiseLevel | null) ?? null;
+    const userMessages = messages.filter((m) => m.role === "user");
+    if (!currentExpertiseLevel && userMessages.length >= 2) {
+      const userTexts = userMessages.map((m) => extractTextContent(m));
+      currentExpertiseLevel = detectExpertiseLevel(userTexts);
+      // Fire-and-forget persistence — does not block the streaming response
+      db.update(intakeSessions)
+        .set({ expertiseLevel: currentExpertiseLevel, updatedAt: new Date() })
+        .where(eq(intakeSessions.id, sessionId))
+        .catch((err) => console.error("[intake/chat] Failed to save expertiseLevel:", err));
+    }
+
     // Fetch stakeholder contributions for this session to inject into system prompt
     const contributionRows = await db
       .select()
@@ -146,9 +162,16 @@ export async function POST(
     // Convert UI messages to model messages for Claude
     const modelMessages = await convertToModelMessages(messages);
 
-    // Select model based on turn position and conversation state.
-    // Most turns route to Haiku; opening, governance-heavy, and post-completion
-    // turns route to Sonnet for accuracy. See model-selector.ts for routing rules.
+    // Build topic-specific probing rules from context + agent type (Phase 49)
+    const topicProbingRules = currentContext
+      ? buildTopicProbingRules(
+          currentContext,
+          currentClassification?.agentType ?? null
+        )
+      : "";
+
+    // Select model based on turn position, conversation state, and expertise level.
+    // See model-selector.ts for full routing rules.
     const selectedModel = selectIntakeModel({
       messageCount: messages.length,
       lastUserText: messages.length > 0
@@ -156,12 +179,21 @@ export async function POST(
         : "",
       context: currentContext,
       payload: currentPayload,
+      expertiseLevel: currentExpertiseLevel,
     });
 
     // Stream response
     const result = streamText({
       model: anthropic(selectedModel),
-      system: buildIntakeSystemPrompt(currentPayload, currentContext, currentContributions, currentPolicies, currentClassification),
+      system: buildIntakeSystemPrompt(
+        currentPayload,
+        currentContext,
+        currentContributions,
+        currentPolicies,
+        currentClassification,
+        currentExpertiseLevel,
+        topicProbingRules,
+      ),
       messages: modelMessages,
       tools,
       stopWhen: stepCountIs(20),

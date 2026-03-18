@@ -26,20 +26,28 @@ export default auth((req) => {
   }
 
   const isLoginPage = pathname === "/login";
-  const isLandingPage = pathname === "/landing";
   const isRegisterPage = pathname === "/register";
   const isTemplatesPage = pathname === "/templates";
 
-  // Public pages — no auth required
-  if (isLandingPage || isRegisterPage || isTemplatesPage) {
+  // Public-only pages — redirect logged-in users to the app
+  if (isRegisterPage) {
+    if (isLoggedIn) {
+      return withId(NextResponse.redirect(new URL("/", req.url)), requestId);
+    }
+    return withId(NextResponse.next({ request: { headers: requestHeaders } }), requestId);
+  }
+
+  // Templates page — public, accessible regardless of auth state
+  if (isTemplatesPage) {
+    return withId(NextResponse.next({ request: { headers: requestHeaders } }), requestId);
+  }
+
+  // Public contribution workspace — no Intellios account required
+  if (pathname.startsWith("/contribute") || pathname.startsWith("/api/intake/invitations")) {
     return withId(NextResponse.next({ request: { headers: requestHeaders } }), requestId);
   }
 
   if (!isLoggedIn && !isLoginPage) {
-    // Unauthenticated visitors to / see the landing page instead of login
-    if (pathname === "/") {
-      return withId(NextResponse.redirect(new URL("/landing", req.url)), requestId);
-    }
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return withId(NextResponse.redirect(loginUrl), requestId);

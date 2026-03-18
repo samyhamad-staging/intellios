@@ -102,7 +102,7 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Failed to save context");
+        throw new Error(data.message ?? "Failed to save context");
       }
       onComplete(context);
     } catch (err) {

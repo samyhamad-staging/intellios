@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { IntakeContext, IntakePayload, IntakeRiskTier, StakeholderContribution } from "@/lib/types/intake";
 import { StakeholderContributionsPanel } from "./stakeholder-contributions-panel";
+import { computeReadinessScore, ReadinessResult } from "@/lib/intake/readiness";
 
 interface Section {
   key: string;
@@ -119,6 +120,7 @@ interface IntakeProgressProps {
 export function IntakeProgress({ sessionId, refreshTick, contributions = [], onContributionAdded, context, riskTier }: IntakeProgressProps) {
   const [sections, setSections] = useState<Section[]>(getSections({}));
   const [agentName, setAgentName] = useState<string | null>(null);
+  const [readiness, setReadiness] = useState<ReadinessResult | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -131,6 +133,7 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
         if (!cancelled) {
           setSections(getSections(payload));
           setAgentName(payload.identity?.name ?? null);
+          setReadiness(computeReadinessScore(payload, riskTier ?? null));
         }
       } catch {
         // Silently ignore — sidebar is non-critical
@@ -139,7 +142,7 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
 
     fetchPayload();
     return () => { cancelled = true; };
-  }, [sessionId, refreshTick]);
+  }, [sessionId, refreshTick, riskTier]);
 
   const filled = sections.filter((s) => s.filled).length;
   const requiredFilled = sections.filter((s) => s.required && s.filled).length;
@@ -211,15 +214,63 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
         ))}
       </ul>
 
+      {/* Live Readiness Score — Phase 49 */}
+      {readiness !== null && (
+        <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-gray-500">Intake Readiness</span>
+            <span
+              className={`text-sm font-bold tabular-nums ${
+                readiness.score >= 80
+                  ? "text-green-700"
+                  : readiness.score >= 50
+                  ? "text-amber-700"
+                  : "text-gray-500"
+              }`}
+            >
+              {readiness.score}%
+            </span>
+          </div>
+          {/* Progress bar */}
+          <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden mb-2">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                readiness.score >= 80
+                  ? "bg-green-500"
+                  : readiness.score >= 50
+                  ? "bg-amber-400"
+                  : "bg-gray-400"
+              }`}
+              style={{ width: `${readiness.score}%` }}
+            />
+          </div>
+          {/* Label */}
+          <div
+            className={`text-[11px] text-center font-medium ${
+              readiness.label === "ready"
+                ? "text-green-700"
+                : readiness.label === "near-complete"
+                ? "text-amber-700"
+                : "text-gray-400"
+            }`}
+          >
+            {readiness.label === "not-started" && "Getting started"}
+            {readiness.label === "building" && "Building requirements…"}
+            {readiness.label === "near-complete" && "Nearly complete"}
+            {readiness.label === "ready" && "✓ Ready to finalize"}
+          </div>
+        </div>
+      )}
+
       <div
-        className={`mt-auto rounded-lg px-3 py-2 text-xs text-center ${
+        className={`rounded-lg px-3 py-2 text-xs text-center ${
           requiredFilled === requiredTotal
             ? "bg-green-50 text-green-700"
             : "bg-gray-50 text-gray-500"
         }`}
       >
         {requiredFilled === requiredTotal
-          ? "Ready to finalize"
+          ? "All required sections filled"
           : `${requiredTotal - requiredFilled} required section${requiredTotal - requiredFilled === 1 ? "" : "s"} remaining`}
       </div>
 

@@ -59,7 +59,7 @@ function InvitePage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setFormError(data.error ?? "Failed to create account. Please try again.");
+        setFormError(data.message ?? "Failed to create account. Please try again.");
         return;
       }
 

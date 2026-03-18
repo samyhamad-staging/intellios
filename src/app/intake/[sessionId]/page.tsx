@@ -244,7 +244,7 @@ export default function IntakeSessionPage({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Generation failed");
+        throw new Error(data.message ?? "Generation failed");
       }
       const { id, agentId } = await res.json();
       // Brief success flash before redirect — gives the user a clear "done" signal
@@ -441,11 +441,18 @@ export default function IntakeSessionPage({
           ) : classification && !editingClassification ? (
             <div className="flex flex-col gap-0.5">
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                <span className="text-xs text-gray-400 mr-1">Agent classification:</span>
+                <span
+                  className="rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-600"
+                  title="Agent type — how this agent operates (auto-classified from your description)"
+                >
                   {AGENT_TYPE_LABELS[classification.agentType]}
                 </span>
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${RISK_TIER_BADGE_COLORS[classification.riskTier]}`}>
-                  {classification.riskTier.toUpperCase()}
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${RISK_TIER_BADGE_COLORS[classification.riskTier]}`}
+                  title="Risk tier — governs review requirements and governance policies applied"
+                >
+                  {classification.riskTier.toUpperCase()} risk
                 </span>
                 <button
                   onClick={() => {
@@ -455,7 +462,7 @@ export default function IntakeSessionPage({
                   }}
                   className="ml-1 text-xs text-gray-400 hover:text-gray-600 underline-offset-2 hover:underline"
                 >
-                  Edit
+                  Override
                 </button>
               </div>
               {classification.rationale && (
@@ -464,10 +471,12 @@ export default function IntakeSessionPage({
             </div>
           ) : classification && editingClassification ? (
             <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400">Override classification:</span>
               <select
                 value={editAgentType}
                 onChange={(e) => setEditAgentType(e.target.value as AgentType)}
                 className="rounded border border-gray-300 px-2 py-0.5 text-xs focus:border-gray-500 focus:outline-none"
+                title="Agent type"
               >
                 <option value="automation">Automation</option>
                 <option value="decision-support">Decision Support</option>
@@ -478,18 +487,19 @@ export default function IntakeSessionPage({
                 value={editRiskTier}
                 onChange={(e) => setEditRiskTier(e.target.value as IntakeRiskTier)}
                 className="rounded border border-gray-300 px-2 py-0.5 text-xs focus:border-gray-500 focus:outline-none"
+                title="Risk tier"
               >
-                <option value="low">LOW</option>
-                <option value="medium">MEDIUM</option>
-                <option value="high">HIGH</option>
-                <option value="critical">CRITICAL</option>
+                <option value="low">LOW risk</option>
+                <option value="medium">MEDIUM risk</option>
+                <option value="high">HIGH risk</option>
+                <option value="critical">CRITICAL risk</option>
               </select>
               <button
                 onClick={handleSaveClassification}
                 disabled={classificationSaving}
                 className="rounded bg-gray-900 px-2.5 py-0.5 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50"
               >
-                {classificationSaving ? "Saving…" : "Save"}
+                {classificationSaving ? "Saving…" : "Save classification"}
               </button>
               <button
                 onClick={() => setEditingClassification(false)}

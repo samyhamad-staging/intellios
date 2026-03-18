@@ -14,8 +14,12 @@ import {
   Bot,
   Inbox,
   CheckCircle,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { FleetGovernanceDashboard } from "@/components/dashboard/fleet-governance-dashboard";
+import { getRecentSnapshots } from "@/lib/awareness/metrics-worker";
 
 function timeAgo(dateStr: string | Date): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -249,6 +253,23 @@ export default async function Home() {
     statuses.map((s) => [s, allAgents.filter((a) => a.status === s).length])
   ) as Record<typeof statuses[number], number>;
 
+  // Quality Index from awareness snapshots
+  let qualityIndex: number | null = null;
+  let qualityIndexDelta: number | null = null;
+  try {
+    const enterpriseId = user.enterpriseId ?? null;
+    const snapshots = await getRecentSnapshots(enterpriseId, 2);
+    const latest = snapshots[0] ?? null;
+    const previous = snapshots[1] ?? null;
+    qualityIndex = latest?.qualityIndex ?? null;
+    qualityIndexDelta =
+      latest?.qualityIndex != null && previous?.qualityIndex != null
+        ? parseFloat((latest.qualityIndex - previous.qualityIndex).toFixed(1))
+        : null;
+  } catch (err) {
+    console.error("[dashboard] Failed to fetch quality snapshots:", err);
+  }
+
   const actionCallouts = [
     counts.in_review > 0 && {
       href: "/review",
@@ -281,7 +302,9 @@ export default async function Home() {
             {allAgents.length} agent{allAgents.length === 1 ? "" : "s"} across all teams
           </p>
         </div>
-        <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors disabled:opacity-50" />
+        {role !== "viewer" && (
+          <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors disabled:opacity-50" />
+        )}
       </div>
 
       {/* Action callouts — only shown when something needs attention */}
@@ -301,7 +324,7 @@ export default async function Home() {
       )}
 
       {/* Pipeline status — active stages link to relevant pages */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="grid grid-cols-4 gap-3">
           {(["draft", "in_review", "approved", "deployed"] as const).map((s) => {
             const cfg = STATUS_CONFIG[s];
@@ -330,6 +353,34 @@ export default async function Home() {
         </div>
       </div>
 
+      {/* Governance Health KPI + Fleet Posture */}
+      <div className="mb-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Governance Health</h2>
+          {qualityIndex != null && (
+            <div className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+              qualityIndex >= 80 ? "bg-green-50 text-green-700 border-green-200" :
+              qualityIndex >= 60 ? "bg-amber-50 text-amber-700 border-amber-200" :
+              "bg-red-50 text-red-700 border-red-200"
+            }`}>
+              {qualityIndexDelta != null && (
+                qualityIndexDelta >= 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />
+              )}
+              Quality Index: {qualityIndex}/100
+              {qualityIndexDelta != null && (
+                <span className="ml-0.5 opacity-70">
+                  ({qualityIndexDelta >= 0 ? "+" : ""}{qualityIndexDelta})
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        <FleetGovernanceDashboard
+          enterpriseId={user.enterpriseId}
+          userRole={role}
+        />
+      </div>
+
       {/* Recent activity */}
       <section>
         <div className="mb-3 flex items-center justify-between">
@@ -343,20 +394,30 @@ export default async function Home() {
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-            {allAgents.slice(0, 8).map((agent, i) => (
-              <Link
-                key={agent.agentId}
-                href={`/registry/${agent.agentId}`}
-                className={`flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-100" : ""}`}
-              >
-                <Bot size={15} className="shrink-0 text-gray-400" />
-                <span className="flex-1 truncate text-sm font-medium text-gray-900">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</span>
-                <StatusBadge status={agent.status} />
-                <span className="text-xs text-gray-400">{agent.createdBy ?? "—"}</span>
-                <span className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</span>
-                <ChevronRight size={13} className="text-gray-300" />
-              </Link>
-            ))}
+            {allAgents.slice(0, 8).map((agent, i) => {
+              const author = agent.createdBy
+                ? agent.createdBy.includes("@")
+                  ? agent.createdBy.split("@")[0]
+                  : agent.createdBy
+                : null;
+              return (
+                <Link
+                  key={agent.agentId}
+                  href={`/registry/${agent.agentId}`}
+                  className={`flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-100" : ""}`}
+                >
+                  <Bot size={15} className="shrink-0 text-gray-400" />
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate text-sm font-medium text-gray-900">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {author ? `by ${author} · ` : ""}{timeAgo(agent.updatedAt)}
+                    </p>
+                  </div>
+                  <StatusBadge status={agent.status} />
+                  <ChevronRight size={13} className="shrink-0 text-gray-300" />
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>

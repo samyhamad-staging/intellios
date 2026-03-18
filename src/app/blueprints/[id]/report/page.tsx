@@ -17,7 +17,6 @@ import type { IntakeContext } from "@/lib/types/intake";
 import type { ValidationReport } from "@/lib/governance/types";
 import type { ApprovalStepRecord } from "@/lib/settings/types";
 import type { TestRun } from "@/lib/testing/types";
-import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -85,10 +84,7 @@ export default async function MRMReportPage({
   const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, session.user);
   if (enterpriseError) redirect("/registry");
 
-  // Fetch branding for white-label header
-  const companyName = blueprint.enterpriseId
-    ? (await getEnterpriseSettings(blueprint.enterpriseId)).branding?.companyName ?? "Intellios"
-    : "Intellios";
+  const companyName = "Intellios";
 
   // Assemble report + regulatory assessment in parallel
   const [report, intakeSession] = await Promise.all([

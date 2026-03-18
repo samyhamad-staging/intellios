@@ -86,7 +86,7 @@ export default function GovernanceHubPage() {
   const canManagePolicies =
     session?.user?.role === "admin" || session?.user?.role === "compliance_officer";
   const canViewAnalytics =
-    session?.user?.role === "admin" || session?.user?.role === "compliance_officer";
+    session?.user?.role === "admin" || session?.user?.role === "compliance_officer" || session?.user?.role === "viewer";
   const [agents, setAgents] = useState<Agent[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [templatePacks, setTemplatePacks] = useState<TemplatePack[]>([]);
@@ -193,7 +193,7 @@ export default function GovernanceHubPage() {
       }
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Import failed");
+        throw new Error(data.message ?? "Import failed");
       }
       const data = await res.json();
       showToast(`✓ Imported ${data.created} polic${data.created === 1 ? "y" : "ies"} from pack`, "success");

@@ -24,6 +24,7 @@ import type { LifecycleEvent } from "@/lib/events/types";
 import { createNotification } from "./store";
 import { getReviewerEmails, getComplianceOfficerEmails, getUsersByRole } from "./recipients";
 import { sendEmail, buildNotificationEmail } from "./email";
+import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 
 interface Meta {
   createdBy?: string | null;
@@ -38,6 +39,11 @@ interface Meta {
   // Multi-step approval fields (blueprint.approval_step_completed events)
   completedStep?: number | null;
   label?: string | null;
+  // Intake contribution + invitation fields
+  domain?: string | null;
+  inviteeEmail?: string | null;
+  raciRole?: string | null;
+  sessionCreatedBy?: string | null;
 }
 
 async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
@@ -45,6 +51,11 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
   const agentName = meta.agentName ?? "A blueprint";
   const agentId = meta.agentId;
   const link = agentId ? `/registry/${agentId}` : null;
+
+  // Load enterprise settings once — used to gate email sending and resolve adminEmail.
+  const settings = await getEnterpriseSettings(event.enterpriseId);
+  const emailEnabled = settings.notifications.notifyOnApproval;
+  const adminEmail = settings.notifications.adminEmail ?? null;
 
   // ── blueprint.status_changed ─────────────────────────────────────────────
   if (event.type === "blueprint.status_changed") {
@@ -68,11 +79,13 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
           entityId: event.entityId,
           link,
         });
-        void sendEmail({
-          to: email,
-          subject: `[Intellios] ${title}`,
-          html: buildNotificationEmail(title, message, link),
-        });
+        if (emailEnabled) {
+          void sendEmail({
+            to: email,
+            subject: `[Intellios] ${title}`,
+            html: buildNotificationEmail(title, message, link),
+          });
+        }
       }
       return;
     }
@@ -92,11 +105,21 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
           entityId: event.entityId,
           link,
         });
-        void sendEmail({
-          to: createdBy,
-          subject: `[Intellios] ${title}`,
-          html: buildNotificationEmail(title, message, link),
-        });
+        if (emailEnabled) {
+          void sendEmail({
+            to: createdBy,
+            subject: `[Intellios] ${title}`,
+            html: buildNotificationEmail(title, message, link),
+          });
+          // CC admin when configured
+          if (adminEmail && adminEmail !== createdBy && adminEmail !== event.actorEmail) {
+            void sendEmail({
+              to: adminEmail,
+              subject: `[Intellios] ${title}`,
+              html: buildNotificationEmail(title, message, link),
+            });
+          }
+        }
       }
       return;
     }
@@ -116,11 +139,13 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
           entityId: event.entityId,
           link,
         });
-        void sendEmail({
-          to: createdBy,
-          subject: `[Intellios] ${title}`,
-          html: buildNotificationEmail(title, message, link),
-        });
+        if (emailEnabled) {
+          void sendEmail({
+            to: createdBy,
+            subject: `[Intellios] ${title}`,
+            html: buildNotificationEmail(title, message, link),
+          });
+        }
       }
       return;
     }
@@ -141,11 +166,21 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
           entityId: event.entityId,
           link,
         });
-        void sendEmail({
-          to: createdBy,
-          subject: `[Intellios] ${title}`,
-          html: buildNotificationEmail(title, message, link),
-        });
+        if (emailEnabled) {
+          void sendEmail({
+            to: createdBy,
+            subject: `[Intellios] ${title}`,
+            html: buildNotificationEmail(title, message, link),
+          });
+          // CC admin when configured
+          if (adminEmail && adminEmail !== createdBy && adminEmail !== event.actorEmail) {
+            void sendEmail({
+              to: adminEmail,
+              subject: `[Intellios] ${title}`,
+              html: buildNotificationEmail(title, message, link),
+            });
+          }
+        }
       }
 
       // Also notify compliance officers
@@ -164,11 +199,13 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
           entityId: event.entityId,
           link,
         });
-        void sendEmail({
-          to: email,
-          subject: `[Intellios] ${title}`,
-          html: buildNotificationEmail(title, message, link),
-        });
+        if (emailEnabled) {
+          void sendEmail({
+            to: email,
+            subject: `[Intellios] ${title}`,
+            html: buildNotificationEmail(title, message, link),
+          });
+        }
       }
       return;
     }
@@ -215,11 +252,13 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
       entityId: event.entityId,
       link,
     });
-    void sendEmail({
-      to: createdBy,
-      subject: `[Intellios] ${template.title}`,
-      html: buildNotificationEmail(template.title, fullMessage, link),
-    });
+    if (emailEnabled) {
+      void sendEmail({
+        to: createdBy,
+        subject: `[Intellios] ${template.title}`,
+        html: buildNotificationEmail(template.title, fullMessage, link),
+      });
+    }
   }
 
   // ── blueprint.approval_step_completed ────────────────────────────────────
@@ -249,11 +288,13 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
           entityId: event.entityId,
           link,
         });
-        void sendEmail({
-          to: email,
-          subject: `[Intellios] ${title}`,
-          html: buildNotificationEmail(title, message, link),
-        });
+        if (emailEnabled) {
+          void sendEmail({
+            to: email,
+            subject: `[Intellios] ${title}`,
+            html: buildNotificationEmail(title, message, link),
+          });
+        }
       }
     }
     return;
@@ -324,6 +365,30 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
         html:    buildNotificationEmail(title, message, link),
       });
     }
+    return;
+  }
+
+  // ── intake.contribution_submitted ────────────────────────────────────────
+  // Notify the session designer that a stakeholder has submitted requirements.
+  if (event.type === "intake.contribution_submitted") {
+    const designerEmail = meta.sessionCreatedBy ?? null;
+    if (!designerEmail || designerEmail === event.actorEmail) return;
+
+    const domain = (meta.domain as string | undefined) ?? "a domain";
+    const raciRole = (meta.raciRole as string | undefined) ?? "stakeholder";
+    const title = "Stakeholder contribution received";
+    const message = `${event.actorEmail} (${raciRole}) submitted ${domain} requirements. The AI orchestrator is updating insights.`;
+
+    await createNotification({
+      recipientEmail: designerEmail,
+      enterpriseId: event.enterpriseId,
+      type: "intake.contribution_submitted",
+      title,
+      message,
+      entityType: event.entityType,
+      entityId: event.entityId,
+      link: `/intake/${event.entityId}`,
+    });
     return;
   }
 }

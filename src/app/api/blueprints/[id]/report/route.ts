@@ -13,8 +13,8 @@ import { assembleMRMReport } from "@/lib/mrm/report";
  * GET /api/blueprints/[id]/report
  * Assembles and returns a full MRM Compliance Report for a blueprint version.
  *
- * Access: compliance_officer and admin only — these roles are accountable for
- * model risk documentation and regulatory submissions.
+ * Access: compliance_officer | admin | viewer — viewer role enables CRO/CISO
+ * and external auditors to read governance reports without approval authority.
  *
  * Side-effect: writes a blueprint.report_exported audit log entry so that
  * every report export is permanently traceable (who pulled it, when).
@@ -23,7 +23,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["compliance_officer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["compliance_officer", "admin", "viewer"]);
   if (error) return error;
   const requestId = getRequestId(request);
 

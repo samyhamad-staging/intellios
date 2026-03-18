@@ -8,7 +8,7 @@ import { getRequestId } from "@/lib/request-id";
 
 /**
  * GET /api/audit
- * Returns audit log entries. Restricted to compliance_officer and admin.
+ * Returns audit log entries. Restricted to compliance_officer, admin, and viewer.
  *
  * Query params:
  *   entityType  — filter by entity type (blueprint | intake_session | policy)
@@ -20,7 +20,7 @@ import { getRequestId } from "@/lib/request-id";
  *   offset      — pagination offset (default 0)
  */
 export async function GET(request: NextRequest) {
-  const { session: authSession, error } = await requireAuth(["compliance_officer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["compliance_officer", "admin", "viewer"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
