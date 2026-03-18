@@ -445,7 +445,7 @@ export default function DeploymentConsolePage() {
 
       const data = await res.json();
       if (!res.ok) {
-        const raw = data.message ?? data.error ?? "Deployment failed";
+        const raw = data.message ?? "Deployment failed";
         setAgcModal((m) => m && { ...m, phase: "error", error: enrichAgentCoreError(raw) });
         return;
       }
@@ -489,7 +489,7 @@ export default function DeploymentConsolePage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Deployment failed");
+        throw new Error(data.message ?? "Deployment failed");
       }
       const agentId = modal.agent.id;
       setAgents((prev) =>

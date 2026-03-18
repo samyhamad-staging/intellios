@@ -76,7 +76,7 @@ export function LifecycleControls({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Transition failed");
+        throw new Error(data.message ?? "Transition failed");
       }
       onStatusChange(next);
     } catch (err) {
@@ -95,7 +95,7 @@ export function LifecycleControls({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Failed to create new version");
+        throw new Error(data.message ?? "Failed to create new version");
       }
       router.push(`/registry/${agentId}`);
       router.refresh();

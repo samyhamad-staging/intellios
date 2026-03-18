@@ -170,7 +170,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Refinement failed");
+        throw new Error(data.message ?? "Refinement failed");
       }
       const data = await res.json();
       setAbp(data.abp as ABP);
@@ -215,7 +215,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       const res = await fetch(`/api/blueprints/${id}/regenerate`, { method: "POST" });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Regeneration failed");
+        throw new Error(data.message ?? "Regeneration failed");
       }
       const data = await res.json();
       setAbp(data.abp as ABP);
@@ -365,7 +365,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Submit failed");
+        throw new Error(data.message ?? "Submit failed");
       }
       setSubmitted(true);
     } catch (err) {

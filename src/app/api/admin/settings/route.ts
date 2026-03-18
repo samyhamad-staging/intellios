@@ -73,11 +73,6 @@ const SettingsBody = z.object({
     notifyOnApproval: z.boolean(),
   }).optional(),
   approvalChain: z.array(ApprovalChainStepSchema).optional(),
-  branding: z.object({
-    companyName: z.string().min(1).max(60).optional(),
-    logoUrl: z.string().url().nullable().optional(),
-    primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a valid hex color").optional(),
-  }).optional(),
   periodicReview: z.object({
     enabled: z.boolean().optional(),
     defaultCadenceMonths: z.number().int().min(1).max(60).optional(),
@@ -138,10 +133,6 @@ export async function PUT(request: NextRequest) {
     if (body.approvalChain !== undefined) {
       // Normalize: fill in step from index if missing (handles legacy seed data)
       merged.approvalChain = body.approvalChain.map((s, i) => ({ ...s, step: s.step ?? i }));
-    }
-    if (body.branding !== undefined) {
-      const existing_br = (existingSettings.branding ?? {}) as Record<string, unknown>;
-      merged.branding = { ...existing_br, ...body.branding };
     }
     if (body.periodicReview !== undefined) {
       const existing_pr = (existingSettings.periodicReview ?? {}) as Record<string, unknown>;

@@ -103,15 +103,6 @@ export interface EnterpriseSettings {
      */
     briefingWebhookUrl: string | null;
   };
-  /** White-label branding configuration. */
-  branding: {
-    /** Company name shown in sidebar and reports. Default: "Intellios" */
-    companyName: string;
-    /** Optional logo URL. If set, shown in sidebar instead of the default SVG. */
-    logoUrl: string | null;
-    /** Hex color for sidebar logo background. Default: "#7c3aed" (violet-600) */
-    primaryColor: string;
-  };
   /** SR 11-7 periodic model review scheduling. */
   periodicReview: {
     /** Whether periodic review scheduling is enabled. Default: true */
@@ -196,11 +187,6 @@ export const DEFAULT_ENTERPRISE_SETTINGS: EnterpriseSettings = {
       reviewQueueMax: 10,
     },
     briefingWebhookUrl: null,
-  },
-  branding: {
-    companyName: "Intellios",
-    logoUrl: null,
-    primaryColor: "#7c3aed",
   },
   periodicReview: {
     enabled: true,

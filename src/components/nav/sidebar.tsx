@@ -32,11 +32,6 @@ interface SidebarProps {
     email?: string | null;
     role?: string | null;
   };
-  branding?: {
-    companyName: string;
-    logoUrl: string | null;
-    primaryColor: string;
-  } | null;
   signOutAction: () => Promise<void>;
 }
 
@@ -106,7 +101,7 @@ function getNavSections(role: string | null | undefined): NavSection[] {
   return sections;
 }
 
-export default function Sidebar({ user, branding, signOutAction }: SidebarProps) {
+export default function Sidebar({ user, signOutAction }: SidebarProps) {
   const pathname = usePathname();
   const sections = getNavSections(user.role);
   const roleInfo = user.role
@@ -147,26 +142,17 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
         className="flex h-14 shrink-0 items-center gap-2.5 px-4"
         style={{ borderBottom: "1px solid var(--sidebar-border)" }}
       >
-        {branding?.logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={branding.logoUrl}
-            alt=""
-            className="h-7 w-7 rounded-lg object-cover shrink-0"
-          />
-        ) : (
-          <div
-            className="flex h-7 w-7 items-center justify-center rounded-lg shrink-0"
-            style={{ backgroundColor: branding?.primaryColor ?? "#7c3aed" }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M2 11L7 3L12 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M4.5 8H9.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </div>
-        )}
+        <div
+          className="flex h-7 w-7 items-center justify-center rounded-lg shrink-0"
+          style={{ backgroundColor: "#7c3aed" }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 11L7 3L12 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M4.5 8H9.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </div>
         <span className="text-sm font-semibold text-white tracking-tight">
-          {branding?.companyName ?? "Intellios"}
+          Intellios
         </span>
         <div className="ml-auto">
           <NotificationBell />

@@ -7,7 +7,6 @@ import Link from "next/link";
 export function RegisterForm() {
   const router = useRouter();
   const [form, setForm] = useState({
-    companyName: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -37,7 +36,6 @@ export function RegisterForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          companyName: form.companyName,
           firstName: form.firstName,
           lastName: form.lastName,
           email: form.email,
@@ -72,23 +70,6 @@ export function RegisterForm() {
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Company */}
-        <div>
-          <label htmlFor="companyName" className="mb-1 block text-sm font-medium text-gray-700">
-            Company name
-          </label>
-          <input
-            id="companyName"
-            type="text"
-            required
-            maxLength={80}
-            value={form.companyName}
-            onChange={set("companyName")}
-            placeholder="Acme Financial"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-          />
-        </div>
-
         {/* Name */}
         <div className="grid grid-cols-2 gap-3">
           <div>

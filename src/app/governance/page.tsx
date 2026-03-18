@@ -193,7 +193,7 @@ export default function GovernanceHubPage() {
       }
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Import failed");
+        throw new Error(data.message ?? "Import failed");
       }
       const data = await res.json();
       showToast(`✓ Imported ${data.created} polic${data.created === 1 ? "y" : "ies"} from pack`, "success");

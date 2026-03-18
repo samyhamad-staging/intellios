@@ -159,7 +159,7 @@ export default function AuditTrailPage() {
       const res = await fetch(`/api/audit?${params.toString()}`);
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Failed to fetch audit log");
+        throw new Error(data.message ?? "Failed to fetch audit log");
       }
       const data = await res.json();
       setEntries(data.entries ?? []);

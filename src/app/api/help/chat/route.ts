@@ -37,7 +37,7 @@ Respond in 2–5 sentences per turn. Use plain language. If the question is outs
 ---
 
 ## What is Intellios?
-Intellios is a white-label enterprise platform for designing, generating, governing, and deploying AI agents under an enterprise's own brand and policies.
+Intellios is an enterprise platform for designing, generating, governing, and deploying AI agents.
 
 ## Key Subsystems
 - **Intake Engine**: Guided conversational intake where designers define agent requirements (name, description, purpose, agent type, risk tier, stakeholders, inputs/outputs, constraints).

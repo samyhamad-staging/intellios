@@ -144,7 +144,7 @@ export default function AgentDetailPage({
       const res = await fetch(`/api/registry/${agentId}`);
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Not found");
+        throw new Error(data.message ?? "Not found");
       }
       const data = await res.json();
       setLatest(data.agent);
@@ -258,7 +258,7 @@ export default function AgentDetailPage({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Clone failed");
+        throw new Error(data.message ?? "Clone failed");
       }
       const cloned = await res.json();
       setCloneModalOpen(false);
@@ -312,7 +312,7 @@ export default function AgentDetailPage({
       const res = await fetch(`/api/blueprints/${latest.id}/report`);
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Export failed");
+        throw new Error(data.message ?? "Export failed");
       }
       const report = await res.json();
       const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
