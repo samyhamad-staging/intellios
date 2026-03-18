@@ -4,6 +4,8 @@ import { and, eq, inArray, isNull, lt, isNotNull } from "drizzle-orm";
 import Link from "next/link";
 import type { ValidationReport } from "@/lib/governance/types";
 import type { ABP } from "@/lib/types/abp";
+import { Shield, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 /**
  * FleetGovernanceDashboard — Phase 51.
@@ -71,11 +73,11 @@ function deriveGovernanceHealth(
   return { health: "pass", errorCount: 0, warningCount: 0 };
 }
 
-const TIER_CONFIG: Record<RiskTier, { label: string; cardCls: string; badgeCls: string }> = {
-  critical: { label: "Critical", cardCls: "card-risk-critical", badgeCls: "badge-risk-critical" },
-  high:     { label: "High",     cardCls: "card-risk-high",     badgeCls: "badge-risk-high" },
-  medium:   { label: "Medium",   cardCls: "card-risk-medium",   badgeCls: "badge-risk-medium" },
-  low:      { label: "Low",      cardCls: "card-risk-low",      badgeCls: "badge-risk-low" },
+const TIER_CONFIG: Record<RiskTier, { label: string; cardCls: string; badgeCls: string; icon: LucideIcon }> = {
+  critical: { label: "Critical", cardCls: "card-risk-critical", badgeCls: "badge-risk-critical", icon: ShieldX     },
+  high:     { label: "High",     cardCls: "card-risk-high",     badgeCls: "badge-risk-high",     icon: ShieldAlert },
+  medium:   { label: "Medium",   cardCls: "card-risk-medium",   badgeCls: "badge-risk-medium",   icon: Shield      },
+  low:      { label: "Low",      cardCls: "card-risk-low",      badgeCls: "badge-risk-low",      icon: ShieldCheck },
 };
 
 const TIERS: RiskTier[] = ["critical", "high", "medium", "low"];
@@ -176,7 +178,10 @@ export async function FleetGovernanceDashboard({
               key={tier}
               className={`rounded-card border ${cfg.cardCls} px-4 py-3`}
             >
-              <div className="text-2xl font-bold">{count}</div>
+              <div className="flex items-start justify-between">
+                <div className="text-2xl font-bold">{count}</div>
+                <cfg.icon size={14} strokeWidth={2} className="mt-1 opacity-50" />
+              </div>
               <div className="mt-0.5 text-xs font-medium opacity-80">
                 {cfg.label} Risk
               </div>
@@ -190,19 +195,19 @@ export async function FleetGovernanceDashboard({
         <div className="flex flex-wrap gap-2">
           {overdueCount > 0 && (
             <span className="inline-flex items-center gap-1.5 rounded-full border badge-gov-error px-3 py-1 text-xs font-medium">
-              <span className="h-1.5 w-1.5 rounded-full dot-alert-critical" />
+              <ShieldX size={11} strokeWidth={2.5} />
               {overdueCount} overdue for periodic review
             </span>
           )}
           {errorCount > 0 && (
             <span className="inline-flex items-center gap-1.5 rounded-full border badge-risk-high px-3 py-1 text-xs font-medium">
-              <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--risk-high-dot)]" />
+              <ShieldAlert size={11} strokeWidth={2.5} />
               {errorCount} with governance errors
             </span>
           )}
           {unvalidatedCount > 0 && (
             <span className="inline-flex items-center gap-1.5 rounded-full border badge-draft px-3 py-1 text-xs font-medium">
-              <span className="h-1.5 w-1.5 rounded-full dot-draft" />
+              <Shield size={11} strokeWidth={2.5} />
               {unvalidatedCount} not yet validated
             </span>
           )}
@@ -261,8 +266,9 @@ export async function FleetGovernanceDashboard({
                   {/* Risk tier badge */}
                   <td className="px-4 py-3">
                     <span
-                      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium border ${tierCfg.badgeCls}`}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium border ${tierCfg.badgeCls}`}
                     >
+                      <tierCfg.icon size={10} strokeWidth={2.5} />
                       {tierCfg.label}
                     </span>
                   </td>
