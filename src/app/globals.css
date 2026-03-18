@@ -212,16 +212,11 @@
 @utility badge-gov-error { background-color: var(--gov-error-bg); color: var(--gov-error-text); border-color: var(--gov-error-border); }
 
 /* Lifecycle action buttons */
-@utility btn-action-review    { background-color: var(--status-review-btn-bg);    color: #fff; }
-@utility btn-action-review:hover    { background-color: var(--status-review-btn-hover); }
-@utility btn-action-approve   { background-color: var(--status-approved-btn-bg);  color: #fff; }
-@utility btn-action-approve:hover   { background-color: var(--status-approved-btn-hover); }
-@utility btn-action-reject    { background-color: var(--status-rejected-btn-bg);  color: #fff; }
-@utility btn-action-reject:hover    { background-color: var(--status-rejected-btn-hover); }
-@utility btn-action-deploy    { background-color: var(--status-deployed-btn-bg);  color: #fff; }
-@utility btn-action-deploy:hover    { background-color: var(--status-deployed-btn-hover); }
-@utility btn-action-deprecate { background-color: var(--status-draft-btn-bg);     color: #fff; }
-@utility btn-action-deprecate:hover { background-color: var(--status-draft-btn-hover); }
+@utility btn-action-review    { background-color: var(--status-review-btn-bg);    color: #fff; &:hover { background-color: var(--status-review-btn-hover); } }
+@utility btn-action-approve   { background-color: var(--status-approved-btn-bg);  color: #fff; &:hover { background-color: var(--status-approved-btn-hover); } }
+@utility btn-action-reject    { background-color: var(--status-rejected-btn-bg);  color: #fff; &:hover { background-color: var(--status-rejected-btn-hover); } }
+@utility btn-action-deploy    { background-color: var(--status-deployed-btn-bg);  color: #fff; &:hover { background-color: var(--status-deployed-btn-hover); } }
+@utility btn-action-deprecate { background-color: var(--status-draft-btn-bg);     color: #fff; &:hover { background-color: var(--status-draft-btn-hover); } }
 
 /* ── Base ──────────────────────────────────────────────────────────────── */
 html,
