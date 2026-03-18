@@ -9,6 +9,7 @@ import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
 import type { TestRun } from "@/lib/testing/types";
 import { diffABP, type ABPDiff } from "@/lib/diff/abp-diff";
+import type { ApprovalStepRecord } from "@/lib/settings/types";
 
 interface BlueprintPageProps {
   params: Promise<{ id: string }>;
@@ -114,6 +115,12 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   const [blueprintStatus, setBlueprintStatus] = useState<string>("draft");
   const [reviewComment, setReviewComment] = useState<string | null>(null);
   const [exportingEvidence, setExportingEvidence] = useState(false);
+  const [approvalProgress, setApprovalProgress] = useState<ApprovalStepRecord[]>([]);
+  const [currentApprovalStep, setCurrentApprovalStep] = useState<number>(0);
+  const [reviewedBy, setReviewedBy] = useState<string | null>(null);
+  const [reviewedAt, setReviewedAt] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const [resumeBannerDismissed, setResumeBannerDismissed] = useState(false);
 
   const [companionOpen, setCompanionOpen] = useState(false);
   const [lastRefinementDiff, setLastRefinementDiff] = useState<ABPDiff | null>(null);
@@ -140,6 +147,11 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         if (data.sessionId) setSessionId(data.sessionId as string);
         if (data.status) setBlueprintStatus(data.status as string);
         setReviewComment((data.reviewComment as string | null) ?? null);
+        if (data.approvalProgress) setApprovalProgress(data.approvalProgress as ApprovalStepRecord[]);
+        if (data.currentApprovalStep != null) setCurrentApprovalStep(data.currentApprovalStep as number);
+        if (data.reviewedBy) setReviewedBy(data.reviewedBy as string);
+        if (data.reviewedAt) setReviewedAt(data.reviewedAt as string);
+        if (data.updatedAt) setUpdatedAt(data.updatedAt as string);
         // Pre-populate ownership draft from existing ABP
         if (loadedAbp.ownership) {
           setOwnershipDraft({
@@ -501,6 +513,44 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         </div>
       )}
 
+      {/* Resume banner — shown when returning to a stale draft */}
+      {!resumeBannerDismissed && !loading && blueprintStatus === "draft" && updatedAt && (() => {
+        const hoursSinceUpdate = (Date.now() - new Date(updatedAt).getTime()) / (1000 * 60 * 60);
+        if (hoursSinceUpdate < 24) return null;
+        const daysSince = Math.floor(hoursSinceUpdate / 24);
+        const report = validationReport;
+        const errors = report?.violations?.filter((v) => v.severity === "error").length ?? 0;
+        const filled = sections.filter((s) => s.filled).length;
+        const total = sections.length;
+
+        return (
+          <div className="shrink-0 border-b border-blue-200 bg-blue-50 px-6 py-3">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-2">
+                <span className="text-sm shrink-0">👋</span>
+                <div>
+                  <p className="text-xs font-semibold text-blue-900">
+                    Welcome back — last edited {daysSince} day{daysSince !== 1 ? "s" : ""} ago
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-blue-700 leading-snug">
+                    {filled}/{total} sections filled
+                    {errors > 0 ? ` · ${errors} governance violation${errors !== 1 ? "s" : ""}` : ""}
+                    {refinementCount > 0 ? ` · ${refinementCount} refinement${refinementCount !== 1 ? "s" : ""} applied` : ""}
+                    {report?.valid ? " · Ready to submit" : ""}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setResumeBannerDismissed(true)}
+                className="text-[10px] text-blue-500 hover:text-blue-700 shrink-0"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Refinement diff banner */}
       {lastRefinementDiff && lastRefinementDiff.totalChanges > 0 && (
         <div className="shrink-0 border-b border-violet-200 bg-violet-50">
@@ -694,12 +744,80 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             <div className="border-b border-gray-200 px-5 py-4">
               <h2 className="text-sm font-semibold">Submit for Review</h2>
 
-              {submitted ? (
+              {(submitted || blueprintStatus === "in_review") ? (
+                <div className="mt-3 space-y-3">
+                  {/* Status badge */}
+                  <div className="rounded-lg bg-violet-50 border border-violet-200 px-4 py-3">
+                    <p className="text-sm font-medium text-violet-800">🔍 In Review</p>
+                    <p className="mt-0.5 text-xs text-violet-600">
+                      {approvalProgress.length > 0
+                        ? `Step ${currentApprovalStep + 1} — ${approvalProgress.length} step${approvalProgress.length !== 1 ? "s" : ""} completed`
+                        : "Awaiting reviewer action"}
+                    </p>
+                  </div>
+
+                  {/* Approval timeline */}
+                  {approvalProgress.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Approval Progress</p>
+                      {approvalProgress.map((step, i) => (
+                        <div key={i} className="flex items-start gap-2.5 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+                          <span className={`mt-0.5 shrink-0 text-xs ${step.decision === "approved" ? "text-green-600" : "text-red-600"}`}>
+                            {step.decision === "approved" ? "✓" : "✗"}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium text-gray-800 truncate">{step.label}</p>
+                            <p className="text-[10px] text-gray-500">
+                              {step.decision === "approved" ? "Approved" : "Rejected"} by {step.approvedBy?.split("@")[0] ?? "unknown"}
+                              {step.approvedAt && (
+                                <> · {new Date(step.approvedAt).toLocaleDateString()}</>
+                              )}
+                            </p>
+                            {step.comment && (
+                              <p className="mt-1 text-[10px] text-gray-600 italic">"{step.comment}"</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Final review info (for approved/rejected) */}
+                  {(blueprintStatus === "approved" || blueprintStatus === "rejected") && reviewedBy && (
+                    <div className={`rounded-lg border px-3 py-2 ${
+                      blueprintStatus === "approved"
+                        ? "bg-green-50 border-green-200"
+                        : "bg-red-50 border-red-200"
+                    }`}>
+                      <p className={`text-xs font-medium ${blueprintStatus === "approved" ? "text-green-800" : "text-red-800"}`}>
+                        {blueprintStatus === "approved" ? "✓ Approved" : "✗ Rejected"} by {reviewedBy.split("@")[0]}
+                      </p>
+                      {reviewedAt && (
+                        <p className={`text-[10px] ${blueprintStatus === "approved" ? "text-green-600" : "text-red-600"}`}>
+                          {new Date(reviewedAt).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <Link
+                    href={`/registry/${agentIdState}`}
+                    className="inline-block text-xs text-violet-600 underline hover:text-violet-800"
+                  >
+                    View in Registry →
+                  </Link>
+                </div>
+              ) : blueprintStatus === "approved" || blueprintStatus === "deployed" ? (
                 <div className="mt-3 rounded-lg bg-green-50 border border-green-200 px-4 py-3">
-                  <p className="text-sm font-medium text-green-800">✓ Submitted for review</p>
-                  <p className="mt-0.5 text-xs text-green-700">
-                    This blueprint is now in the reviewer queue.
+                  <p className="text-sm font-medium text-green-800">
+                    {blueprintStatus === "deployed" ? "🚀 Deployed" : "✓ Approved"}
                   </p>
+                  {reviewedBy && (
+                    <p className="mt-0.5 text-xs text-green-600">
+                      Approved by {reviewedBy.split("@")[0]}
+                      {reviewedAt && <> · {new Date(reviewedAt).toLocaleDateString()}</>}
+                    </p>
+                  )}
                   <Link
                     href={`/registry/${agentIdState}`}
                     className="mt-2 inline-block text-xs text-green-700 underline hover:text-green-900"
