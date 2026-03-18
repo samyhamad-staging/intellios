@@ -128,11 +128,15 @@ function SessionRow({ session: s, isLast }: SessionRowProps) {
   const badge = STATUS_BADGE[s.status] ?? STATUS_BADGE.active;
   const displayName = s.agentName ?? (s.hasContext ? "Untitled agent" : "New session");
   const isActive = s.status === "active";
+  const author = s.createdBy
+    ? s.createdBy.includes("@") ? s.createdBy.split("@")[0] : s.createdBy
+    : null;
+  const meta = [author ? `by ${author}` : null, timeAgo(s.updatedAt)].filter(Boolean).join(" · ");
 
   return (
     <Link
       href={`/intake/${s.id}`}
-      className={`flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors ${!isLast ? "border-b border-gray-100" : ""} ${isActive ? "border-l-2 border-amber-400" : "border-l-2 border-transparent"}`}
+      className={`flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors ${!isLast ? "border-b border-gray-100" : ""} ${isActive ? "border-l-2 border-amber-400" : "border-l-2 border-transparent"}`}
     >
       <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${isActive ? "bg-amber-50 text-amber-600" : "bg-gray-100 text-gray-400"}`}>
         <MessageSquare size={14} />
@@ -147,18 +151,15 @@ function SessionRow({ session: s, isLast }: SessionRowProps) {
         ) : (
           <p className="text-xs text-gray-400 italic">{s.hasContext ? "No purpose captured" : "Phase 1 context not yet submitted"}</p>
         )}
+        <p className="mt-0.5 text-xs text-gray-300">{meta}</p>
       </div>
       <div className="hidden sm:flex items-center gap-1.5 shrink-0">
         {s.deploymentType && (
-          <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-500 capitalize">{s.deploymentType.replace(/-/g, " ")}</span>
+          <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-400 capitalize">{s.deploymentType.replace(/-/g, " ")}</span>
         )}
         {s.dataSensitivity && (
-          <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-500">{SENSITIVITY_LABELS[s.dataSensitivity] ?? s.dataSensitivity}</span>
+          <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-400">{SENSITIVITY_LABELS[s.dataSensitivity] ?? s.dataSensitivity}</span>
         )}
-      </div>
-      <div className="text-right shrink-0">
-        <div className="text-xs text-gray-400">{timeAgo(s.updatedAt)}</div>
-        {s.createdBy && <div className="text-xs text-gray-400 truncate max-w-[120px]">{s.createdBy}</div>}
       </div>
       <ChevronRight size={14} className="shrink-0 text-gray-300" />
     </Link>

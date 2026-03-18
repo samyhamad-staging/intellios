@@ -10,7 +10,7 @@ import { sendEmail, buildNotificationEmail } from "@/lib/notifications/email";
 import crypto from "node:crypto";
 import { z } from "zod";
 
-const ROLES = ["designer", "reviewer", "compliance_officer", "admin"] as const;
+const ROLES = ["designer", "reviewer", "compliance_officer", "admin", "viewer"] as const;
 
 const InviteBody = z.object({
   email: z.string().email().max(300),

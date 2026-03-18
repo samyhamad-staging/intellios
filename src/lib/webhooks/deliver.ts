@@ -152,8 +152,8 @@ export async function deliverWebhookTest(
       status: "pending",
       attempts: 0,
     });
-  } catch {
-    // Continue even if logging fails
+  } catch (err) {
+    console.error("[webhooks/test] Failed to insert delivery log:", err);
   }
 
   let responseStatus: number | null = null;
@@ -193,8 +193,8 @@ export async function deliverWebhookTest(
         lastAttemptedAt: new Date(),
       })
       .where(eq(webhookDeliveries.webhookId, webhookId));
-  } catch {
-    // Best-effort
+  } catch (err) {
+    console.error("[webhooks/test] Failed to update delivery record:", err);
   }
 
   return { status: succeeded ? "success" : "failed", responseStatus, responseBody };

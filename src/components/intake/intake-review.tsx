@@ -12,6 +12,7 @@ import {
   PolicyQualityItem,
 } from "@/lib/types/intake";
 import { getMissingContributionDomains } from "@/lib/intake/coverage";
+import { CompletenessMap } from "./completeness-map";
 
 interface IntakeReviewProps {
   sessionId: string;
@@ -304,19 +305,27 @@ export function IntakeReview({
               </div>
               <div>
                 <div className="text-xs text-gray-400">Regulatory scope</div>
-                <div className="text-gray-800 font-medium">{context.regulatoryScope.join(", ") || "None"}</div>
+                <div className="text-gray-800 font-medium">{(context.regulatoryScope ?? []).join(", ") || "None"}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-400">Integrations</div>
-                <div className="text-gray-800 font-medium">{context.integrationTypes.join(", ") || "None"}</div>
+                <div className="text-gray-800 font-medium">{(context.integrationTypes ?? []).join(", ") || "None"}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-400">Stakeholders consulted</div>
-                <div className="text-gray-800 font-medium">{context.stakeholdersConsulted.join(", ") || "None"}</div>
+                <div className="text-gray-800 font-medium">{(context.stakeholdersConsulted ?? []).join(", ") || "None"}</div>
               </div>
             </div>
           </div>
         )}
+
+        {/* Completeness map — Phase 49 */}
+        <CompletenessMap
+          payload={payload}
+          context={context}
+          riskTier={riskTier}
+          contributions={contributions}
+        />
 
         {/* Ambiguity flags */}
         {unresolvedFlags.length > 0 && (
@@ -589,6 +598,23 @@ export function IntakeReview({
             <p className="text-sm text-gray-500">
               Check all filled sections to confirm their content before generating.
             </p>
+          )}
+          {/* Soft warning: unresolved ambiguity flags indicate tentative requirements.
+              Does NOT block generation — designer can proceed, reviewers will see flags. */}
+          {canGenerate && unresolvedFlags.length > 0 && (
+            <div className="w-full rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+              <div className="flex items-start gap-2">
+                <span className="text-amber-500 mt-0.5 shrink-0">⚠</span>
+                <div>
+                  <span className="font-medium text-amber-800">
+                    {unresolvedFlags.length} requirement{unresolvedFlags.length > 1 ? "s" : ""} flagged as uncertain
+                  </span>
+                  <span className="text-amber-700">
+                    {" "}— consider revisiting the intake conversation to resolve them. You can still generate, but reviewers will see these flags in the governance report.
+                  </span>
+                </div>
+              </div>
+            </div>
           )}
           {generateError && (
             <p className="text-sm text-red-600">{generateError}</p>

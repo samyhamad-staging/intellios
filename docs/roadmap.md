@@ -1,6 +1,86 @@
 # Intellios Roadmap
 
-## Current Phase: Phase 41 ✓ Complete (2026-03-16) — Growth & Security
+## Current Phase: Phase 53 ✓ Complete (2026-03-17) — Viewer Role + Role Model Optimization
+
+---
+
+## ✓ Phase 53 Complete (2026-03-17) — Viewer Role + Role Model Optimization
+
+New 5th role `viewer` added to the Intellios role model (previously: `designer | reviewer | compliance_officer | admin`). **Context:** Phase 49 evaluation identified that giving a CRO/CISO/external auditor fleet-posture visibility required making them `admin` — granting user management, enterprise settings, and AgentCore deployment authority, which no enterprise security team would accept. **Viewer capabilities (read-only):** fleet governance dashboard, compliance posture page, monitoring intelligence, audit trail (enterprise-scoped), governance analytics, MRM reports, evidence packages, agent registry. **Viewer cannot:** create/edit blueprints, approve/reject/deploy, create/edit governance policies, trigger health checks, manage users or enterprise settings. **Implementation:** `"viewer"` added to `Role` type; 8 API read-gates updated; 3 admin user-management routes updated (viewer is now an assignable role in the invite/create/update flows); sidebar updated with Governance + Monitor nav sections for viewer; home page hides `NewIntakeButton` for viewer (falls through to fleet overview); compliance page client-side gate updated; governance page `canViewAnalytics` extended to viewer. **Rec 4 fix (same session):** `GET /api/blueprints/[id]/export/code` was missing the `approved | deployed` status gate that compliance and AgentCore exports already enforce — now added. **Rec 3 (non-issue):** `GET /api/blueprints/[id]/test-runs` already uses `requireAuth()` with no role restriction; compliance officers already had access. 17 files modified, 0 migrations, 0 new deps. TypeScript: 0 new errors (pre-existing errors in test files unchanged).
+
+---
+
+## ✓ Phase 52 Complete (2026-03-17) — Blueprint Lineage with Governance Diff
+
+When a blueprint spawns a new version via "Create New Version," the system now automatically computes and permanently stores the governance diff between source and new blueprint. **Schema**: two new columns on `agent_blueprints` — `previous_blueprint_id UUID` (FK, null for v1) and `governance_diff JSONB` (null for v1). **Diff engine**: existing `diffABP()` function (added in Phase 23) called in the new-version route at creation time; diff includes per-section breakdown (governance/capabilities/constraints/identity), per-change type (added/removed/modified), significance (major/minor/patch), and totalChanges. **Audit enhancement**: `governanceDiffSignificance` and `governanceDiffChangeCount` stored in the blueprint.created audit event for every new version. **Registry UI**: "VERSION LINEAGE" panel in Versions tab renders when at least one version has `governanceDiff != null`; shows v{from}→v{to} arrow, colored significance badge (major=red, minor=amber, patch=gray), change count, "View changes ↓" toggle, expandable per-section breakdown with per-change type icons (+/−/~), and governance implication notes (re-validation required for governance section changes; safety policy review triggered for instruction changes; constraint re-validation recommended for tool changes). Verified end-to-end: created v2.0.0 from deployed v1.0.0 Credit Risk Assessment Agent — "Patch — identity or metadata only", 0 changes (correct for metadata-only new version). 1 new migration (0023), 4 files modified. **Completes the three-action strategic plan from Phase 49 evaluation.** TypeScript: 0 errors.
+
+---
+
+## ✓ Phase 51 Complete (2026-03-17) — Fleet Governance Dashboard
+
+CRO/CISO-facing aggregate risk posture view on the admin Overview page. **New component** `FleetGovernanceDashboard` (async server component) — joins `agentBlueprints` with `intakeSessions` to get `riskTier`; filters to `approved | deployed` status; enterprise-scoped. **Risk tier derivation**: uses intake classification when available; falls back to governance policy-type logic (safety + compliance → high, one → medium, neither → low) for older agents without intake context. **Renders**: 4 risk tier KPI cards (Critical/High/Medium/Low counts, color-coded), governance alert chips (overdue for review, with governance errors, not yet validated), per-agent fleet table (agent name + version + status + policy count, risk tier badge, governance health ✓/⚠/✗, next review date or "Overdue" badge, "View Report" evidence link). Admin sees all agents; non-admin roles are enterprise-filtered. No new data model — pure query + presentation layer over existing governance infrastructure. 1 new file, 1 modified.
+
+---
+
+## ✓ Phase 50 Complete (2026-03-17) — Evidence Package Export
+
+One-click regulatory evidence bundle for approved and deployed agents. **New route** `GET /api/blueprints/[id]/evidence-package` — accessible to `designer | reviewer | compliance_officer | admin` (broader than the existing compliance export, which required `compliance_officer | admin`). Status gate: `approved | deployed` only. **Bundle contents**: full 14-section MRM compliance report (assembled by `assembleMRMReport()`), multi-step approval chain (`approvalProgress` records with decision/actor/timestamp/comment), AI quality evaluation (5 scored dimensions), and all behavioral test run evidence. **Blueprint Studio integration**: new "Audit Evidence" section in the right rail for approved/deployed blueprints — "EXAM-READY" badge, framing copy, "View Compliance Report" link (to print-optimized MRM report page), "↓ Export Evidence Package" button (triggers download). Audit: `blueprint.evidence_package_exported` written on every export. No new data model — all data existed. 1 new file, 1 modified.
+
+---
+
+## ✓ Phase 49 Complete (2026-03-17) — Intake Confidence Engine
+
+Intake reads the room. **Expertise detection**: after turn 2, `detectExpertiseLevel()` scores user messages for technical vs. business vocabulary and uncertainty signals — returning `"guided"`, `"adaptive"`, or `"expert"`. The detected level persists to `intakeSessions.expertise_level` and adapts Claude's communication register: Guided mode gets structured sub-questions, examples, and plain-language framing; Expert mode gets concise validation-focused exchanges without hand-holding; Adaptive mirrors the designer's vocabulary. **Adaptive model routing**: Guided mode routes to Sonnet for first 6 turns (richer language quality for non-technical designers). **Topic-specific probing rules**: `buildTopicProbingRules()` generates 0-8 soft advisory rules from context + agent type — customer-facing agents get fallback/rate-limiting/error-messaging probes; external API agents get auth/retry probes; PII data gets masking-scope probes; autonomous agents get human-oversight/override/escalation probes. These inject after the existing governance probing block in the system prompt. **Live Readiness Score**: Phase 2 sidebar shows a 0-100 score (section coverage + governance depth + specificity) with color-coded progress bar and label ("Getting started" → "Building requirements…" → "Nearly complete" → "✓ Ready to finalize"); updates on every payload poll. **Completeness Map**: Phase 3 review shows a 7-domain grid — status-colored cards (required/optional × filled/sparse/empty) with stakeholder-contribution indicators and trigger-reason labels that explain why a domain is required. **Tentative-items warning**: soft amber callout on the generate button when `unresolvedFlags > 0` — non-blocking, surfaces uncertainty without preventing generation. 1 schema migration (0022), 5 new files, 6 modified. TypeScript: 0 new errors.
+
+---
+
+## ✓ Phase 48 Complete (2026-03-17) — Stakeholder Collaboration Workspace
+
+## ✓ Phase 48 Complete (2026-03-17) — Stakeholder Collaboration Workspace
+
+Full multi-stakeholder AI-orchestrated collaboration system. **External domain experts** (Compliance, Legal, IT, etc.) can now contribute requirements without an Intellios account via token-gated public workspaces. **RACI authority model** per domain: each stakeholder's AI interview is tonally adapted — Accountable owners focus on non-negotiables, Responsible owners on implementation concerns, Consulted experts on domain requirements, Informed stakeholders on concerns/dependencies. **Shared synthesis**: stakeholders see a live AI-generated summary of what's already been agreed, so each interview builds on prior contributions rather than repeating them. **AI Orchestrator** (`claude-haiku-4-5-20251001`) runs fire-and-forget after every contribution: generates synthesis + conflict detection + gap analysis + suggested next invitations; saves as `intakeAIInsights` rows. **Designer insights panel**: per-domain rows with RACI badge, invitee name, status; inline invite form; AI Orchestrator section with collapse/expand insight cards, dismiss, approve-to-act. **Auto-invitation on insight approval**: when a designer approves a "suggest invite" insight, the system auto-creates the invitation and sends the email — closing the orchestrator→action loop. 10 new files, 8 modified, 2 DB migrations (0020/0021). TypeScript: 0 errors.
+
+---
+
+## ✓ Session 056 Complete (2026-03-16) — UI/UX Polish Pass
+
+Four targeted improvements to data-dense screens. **Workspace Activity deduplication:** `groupItems()` collapses consecutive identical `(actorName, description)` pairs with `×N` count badge — 25 identical rows → 1 with ×25. **User Management redesign:** 3-column `[3fr_2fr_1fr]` grid; two-line user cell (name + email); role-colored `border-l-2` stat cards; hover-reveal PenLine edit icon; Mail icon invite button; self-row `bg-violet-50/40` highlight; human-readable dates with `whitespace-nowrap`. **Compliance Activity Trends:** all-zero early exit to clean empty state (no empty bars); combined overlapping bar per month (blue-100 background + green-400/70 fill); `[80px_1fr_72px]` grid; `"Oct 2025"` month labels from ISO `"2025-10"`; right-aligned `submitted / approved` counts. **Intake Sessions rows:** `"by [username] · [timeAgo]"` as third content line (username from email before `@`); removed right-side metadata div; tags + chevron remain. 0 new files, 4 rewrites, 0 migrations, 0 deps. TypeScript: 0 errors.
+
+---
+
+## ✓ Phase 47 Complete (2026-03-16) — Help Copilot
+
+One-shot Q&A had no conversation memory — follow-up questions lost all context. **Multi-turn copilot:** `/api/help/ask` replaced by `/api/help/chat` accepting full `UIMessage[]` history + pathname; `convertToModelMessages()` + `toUIMessageStreamResponse()` (same pattern as Blueprint Simulate). Client upgraded from manual `ReadableStream` decoding to `useChat()` hook with `DefaultChatTransport({ body: { pathname } })` in `useMemo([pathname])`. `MessageBubble` renders user (dark right) + assistant (light left) bubbles. Three-dot streaming indicator. Trash2 clear button in header resets to suggestion cards. System prompt updated to instruct multi-turn behavior and proactive follow-up suggestions. Token limit doubled to 800. Panel widened to 400px. 1 new file, 1 rewrite, 1 deleted, 0 migrations, 0 deps. TypeScript: 0 production errors.
+
+---
+
+## ✓ Phase 46 Complete (2026-03-16) — Contextual Help Panel
+
+Zero help infrastructure existed. Users had no way to understand features or workflows without leaving the page. **"Ask Intellios" help panel:** `?` (HelpCircle) button in sidebar footer triggers a 360px right-side overlay. Suggested questions are computed entirely client-side (no API call) using `usePathname()` + role — 8 pathname prefixes × role → 4 tailored questions, with a global fallback. Users can also type any free-form question. Streaming AI answers via `claude-haiku-4-5-20251001` with `toTextStreamResponse()` — responses feel instant. ReactMarkdown renders formatted answers. Backdrop click or Escape key closes the panel. `buildHelpSystemPrompt()` covers all 5 subsystems, agent lifecycle, 4 roles, risk tiers, agent types, and governance concepts. 2 new files, 1 modified, 0 migrations, 0 deps. TypeScript: 0 production errors.
+
+---
+
+## ✓ Phase 45 Complete (2026-03-16) — Notification Settings, Blueprint Regeneration + Status Polling
+
+Three behavioral gaps closed. **Notification settings wired:** `handler.ts` now loads `getEnterpriseSettings()` and gates all `sendEmail()` calls behind `notifyOnApproval`; `adminEmail` CC added for approved/deployed events. `createNotification()` remains unconditional — in-app notifications always fire. **Blueprint regeneration:** `POST /api/blueprints/[id]/regenerate` re-runs `generateBlueprint()` + `validateBlueprint()` from stored intake session, updates draft row in-place (no insert), resets `refinementCount` to 0. "Regenerate Blueprint" button in Blueprint Studio right rail (draft only) with two-step amber confirm state. **Status polling:** 30s visibility-aware `setInterval` polling `useEffect` added to registry detail page using the existing `load()` callback — catches external status changes without manual refresh. 1 new file, 5 modified, 0 migrations, 0 deps. TypeScript: 0 errors.
+
+---
+
+## ✓ Phase 44 Complete (2026-03-16) — Surface Latent Data + Activate Middleware
+
+Three gaps closed using existing data and infrastructure: **Auth middleware activated** — `proxy.ts` renamed to `middleware.ts` (git mv, no content change); edge auth was never running. **Governance scores in Versions tab** — `validationReport` was already fetched but not displayed; added Governance column with pass/fail badge and error/warning counts from `violations` by severity. **Quality Index KPI on admin Overview** — `getRecentSnapshots()` called directly from server component; Governance Health section with score/100 and delta now visible on the first page admins see. 0 new files, 3 modified, 0 migrations, 0 deps. TypeScript: 0 errors.
+
+---
+
+## ✓ Phase 43 Complete (2026-03-16) — Last-Mile Completions + Blueprint Iteration
+
+Three orphaned/broken features closed. **Notification Bell wired**: `NotificationBell` (Phase 3) added to sidebar header — was fully built but never imported. **Version diff confirmed complete**: `GET /api/blueprints/[id]/diff` + `diffABP()` engine + `VersionDiff` component were all already built; feature is end-to-end functional. **Blueprint iteration**: `POST /api/blueprints/[id]/new-version` creates a new draft version of the same logical agent (same `agentId`, major semver bump, lifecycle state reset); "Create New Version" button in `LifecycleControls` for approved/deployed status. 1 new file, 3 modified. 0 DB migrations. 0 new npm dependencies. TypeScript: 0 errors.
+
+---
+
+## ✓ Phase 42 Complete (2026-03-16) — Activation & Visibility
+
+Blueprint Template Library (6 production-ready starters, `/templates` gallery, one-click use flow, welcome page step 1) + Workspace Activity Feed (humanized audit log on admin Overview). 7 new files, 6 modified, 0 migrations, 0 deps. TypeScript: 0 errors.
 
 ---
 

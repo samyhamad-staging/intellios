@@ -225,14 +225,13 @@ export function StakeholderContributionForm({ sessionId, onSubmitted, onCancel }
               <button
                 key={domain}
                 onClick={() => handleDomainSelect(domain)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium border transition-colors text-left ${
+                className={`px-2.5 py-1.5 rounded text-xs font-medium border transition-colors text-left ${
                   selectedDomain === domain
-                    ? "bg-gray-900 text-white border-gray-900"
+                    ? "bg-violet-600 text-white border-violet-600"
                     : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
                 }`}
               >
-                <span>{dc.icon}</span>
-                <span>{dc.label}</span>
+                {dc.label}
               </button>
             );
           })}
@@ -255,7 +254,7 @@ export function StakeholderContributionForm({ sessionId, onSubmitted, onCancel }
                 onChange={(e) => handleFieldChange(field.key, e.target.value)}
                 placeholder={field.placeholder}
                 rows={2}
-                className="w-full text-xs border border-gray-200 rounded px-2.5 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-gray-400 placeholder:text-gray-300"
+                className="w-full text-xs border border-gray-200 rounded px-2.5 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-violet-400 focus:border-violet-300 placeholder:text-gray-300"
               />
             </div>
           ))}
@@ -268,14 +267,14 @@ export function StakeholderContributionForm({ sessionId, onSubmitted, onCancel }
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="flex-1 py-1.5 rounded text-xs font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 py-1.5 rounded text-xs font-medium bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {submitting ? "Submitting…" : "Submit Contribution"}
             </button>
             {onCancel && (
               <button
                 onClick={onCancel}
-                className="px-3 py-1.5 rounded text-xs font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                className="text-xs text-gray-400 hover:text-gray-700 transition-colors px-1"
               >
                 Cancel
               </button>

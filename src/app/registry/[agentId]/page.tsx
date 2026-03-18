@@ -14,6 +14,7 @@ import { RegulatoryPanel } from "@/components/registry/regulatory-panel";
 import { VersionDiff } from "@/components/registry/version-diff";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
+import { CheckCircle, XCircle } from "lucide-react";
 import type { ApprovalChainStep, ApprovalStepRecord, EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 import type { TestCase, TestRun } from "@/lib/testing/types";
@@ -75,6 +76,9 @@ interface BlueprintVersion {
   nextReviewDue: string | null;
   lastPeriodicReviewAt: string | null;
   enterpriseId: string | null;
+  // Phase 52: Blueprint lineage
+  previousBlueprintId: string | null;
+  governanceDiff: import("@/lib/diff/abp-diff").ABPDiff | null;
   createdAt: string;
   updatedAt: string;
   abp: ABP;
@@ -110,6 +114,8 @@ export default function AgentDetailPage({
     return "blueprint";
   });
   const [compareVersionId, setCompareVersionId] = useState<string | null>(null);
+  // Phase 52: Blueprint lineage — which version's governance diff is expanded
+  const [expandedDiffId, setExpandedDiffId] = useState<string | null>(null);
 
   // Phase 23: Test Harness state
   const [testCases, setTestCases] = useState<TestCase[]>([]);
@@ -188,6 +194,16 @@ export default function AgentDetailPage({
         }
       })
       .catch(() => {}); // non-critical
+  }, [load]);
+
+  // Poll every 30s when the tab is visible to reflect status changes by other users.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void load();
+      }
+    }, 30_000);
+    return () => clearInterval(interval);
   }, [load]);
 
   const handleStatusChange = useCallback((newStatus: Status) => {
@@ -495,6 +511,7 @@ export default function AgentDetailPage({
         <div className="flex flex-wrap items-center gap-2">
           <LifecycleControls
             blueprintId={latest.id}
+            agentId={latest.agentId}
             currentStatus={latest.status}
             onStatusChange={handleStatusChange}
           />
@@ -1284,6 +1301,7 @@ export default function AgentDetailPage({
                 <tr className="border-b border-gray-200 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <th className="pb-3 pr-4">Version</th>
                   <th className="pb-3 pr-4">Status</th>
+                  <th className="pb-3 pr-4">Governance</th>
                   <th className="pb-3 pr-4">Refinements</th>
                   <th className="pb-3 pr-4">Created</th>
                   <th className="pb-3">Actions</th>
@@ -1295,6 +1313,37 @@ export default function AgentDetailPage({
                     <td className="py-3 pr-4 font-mono text-gray-700">v{v.version}</td>
                     <td className="py-3 pr-4">
                       <StatusBadge status={v.status} />
+                    </td>
+                    <td className="py-3 pr-4">
+                      {v.validationReport == null ? (
+                        <span className="text-gray-300">—</span>
+                      ) : (() => {
+                        const errorCount = v.validationReport.violations.filter(x => x.severity === "error").length;
+                        const warnCount = v.validationReport.violations.filter(x => x.severity === "warning").length;
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            {v.validationReport.valid ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                                <CheckCircle size={10} />Pass
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                                <XCircle size={10} />Fail
+                              </span>
+                            )}
+                            {errorCount > 0 && (
+                              <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
+                                {errorCount}E
+                              </span>
+                            )}
+                            {warnCount > 0 && (
+                              <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700">
+                                {warnCount}W
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="py-3 pr-4 text-gray-500">{v.refinementCount ?? "0"}</td>
                     <td className="py-3 pr-4 text-gray-500">
@@ -1312,6 +1361,115 @@ export default function AgentDetailPage({
                 ))}
               </tbody>
             </table>
+
+            {/* Version Lineage — governance diff per version */}
+            {versions.some((v) => v.governanceDiff != null) && (
+              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+                <div className="border-b border-gray-100 bg-gray-50 px-5 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Version Lineage
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Governance changes computed at version-creation time — required for regulatory change management documentation.
+                  </p>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {versions
+                    .filter((v) => v.governanceDiff != null)
+                    .map((v) => {
+                      const diff = v.governanceDiff!;
+                      const isExpanded = expandedDiffId === v.id;
+                      const sigColor =
+                        diff.significance === "major"
+                          ? "bg-red-50 text-red-700 border-red-200"
+                          : diff.significance === "minor"
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-gray-50 text-gray-500 border-gray-200";
+                      const sigLabel =
+                        diff.significance === "major"
+                          ? "Major — compliance posture changed"
+                          : diff.significance === "minor"
+                          ? "Minor — capabilities or constraints changed"
+                          : "Patch — identity or metadata only";
+                      const hasSections = diff.sections.some((s) => s.changes.length > 0);
+                      return (
+                        <div key={v.id} className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono text-sm font-medium text-gray-700">
+                              v{diff.versionFrom}
+                            </span>
+                            <span className="text-gray-300">→</span>
+                            <span className="font-mono text-sm font-medium text-gray-700">
+                              v{diff.versionTo}
+                            </span>
+                            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${sigColor}`}>
+                              {sigLabel}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {diff.totalChanges} change{diff.totalChanges !== 1 ? "s" : ""}
+                            </span>
+                            {hasSections && (
+                              <button
+                                onClick={() => setExpandedDiffId(isExpanded ? null : v.id)}
+                                className="ml-auto text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                              >
+                                {isExpanded ? "Collapse ↑" : "View changes ↓"}
+                              </button>
+                            )}
+                            {!hasSections && (
+                              <span className="ml-auto text-xs text-gray-400 italic">No structural changes</span>
+                            )}
+                          </div>
+
+                          {isExpanded && hasSections && (
+                            <div className="mt-3 space-y-3">
+                              {diff.sections
+                                .filter((s) => s.changes.length > 0)
+                                .map((section) => (
+                                  <div key={section.section} className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                                    <p className="text-xs font-semibold text-gray-600 mb-2">{section.label}</p>
+                                    <ul className="space-y-1.5">
+                                      {section.changes.map((change, ci) => (
+                                        <li key={ci} className="flex items-start gap-2 text-xs">
+                                          <span className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 font-medium ${
+                                            change.changeType === "added"
+                                              ? "bg-green-100 text-green-700"
+                                              : change.changeType === "removed"
+                                              ? "bg-red-100 text-red-700"
+                                              : "bg-amber-100 text-amber-700"
+                                          }`}>
+                                            {change.changeType === "added" ? "+" : change.changeType === "removed" ? "−" : "~"}
+                                          </span>
+                                          <span className="text-gray-700">{change.label}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                    {/* Governance implication for major changes */}
+                                    {section.section === "governance" && section.changes.length > 0 && (
+                                      <p className="mt-2 text-xs text-red-600 font-medium">
+                                        ⚠ Compliance posture changed — re-validation required before approval.
+                                      </p>
+                                    )}
+                                    {section.section === "capabilities" && section.changes.some(c => c.path === "capabilities.instructions") && (
+                                      <p className="mt-2 text-xs text-amber-600 font-medium">
+                                        ⚠ System prompt changed — safety policy review triggered.
+                                      </p>
+                                    )}
+                                    {section.section === "capabilities" && section.changes.some(c => c.path === "capabilities.tools") && (
+                                      <p className="mt-2 text-xs text-amber-600 font-medium">
+                                        ⚠ Tool set changed — constraint re-validation recommended.
+                                      </p>
+                                    )}
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
 
             {/* Approval History */}
             {(() => {

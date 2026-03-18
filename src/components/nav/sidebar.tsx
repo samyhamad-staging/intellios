@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -17,9 +19,12 @@ import {
   Users,
   Settings,
   Webhook,
-  Bell,
   LogOut,
+  Search,
 } from "lucide-react";
+import NotificationBell from "@/components/nav/notification-bell";
+import { HelpPanel } from "@/components/help/help-panel";
+import { CommandPalette } from "@/components/nav/command-palette";
 
 interface SidebarProps {
   user: {
@@ -52,6 +57,7 @@ const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   reviewer: { label: "Reviewer", color: "bg-amber-500/20 text-amber-300" },
   compliance_officer: { label: "Compliance", color: "bg-green-500/20 text-green-300" },
   admin: { label: "Admin", color: "bg-violet-500/20 text-violet-300" },
+  viewer: { label: "Viewer", color: "bg-slate-500/20 text-slate-300" },
 };
 
 function getNavSections(role: string | null | undefined): NavSection[] {
@@ -59,6 +65,7 @@ function getNavSections(role: string | null | undefined): NavSection[] {
   const isDesigner = r === "designer" || r === "admin";
   const isReviewer = r === "reviewer" || r === "compliance_officer" || r === "admin";
   const isCompliance = r === "compliance_officer" || r === "admin";
+  const isViewer = r === "viewer";
   const isAdmin = r === "admin";
 
   const sections: NavSection[] = [
@@ -72,22 +79,22 @@ function getNavSections(role: string | null | undefined): NavSection[] {
     },
   ];
 
-  if (isReviewer) {
+  if (isReviewer || isViewer) {
     sections.push({
       label: "Governance",
       items: [
         ...(isReviewer ? [{ label: "Review Queue", href: "/review", icon: ClipboardList }] : []),
-        ...(isCompliance ? [{ label: "Governance", href: "/governance", icon: Shield }] : []),
-        ...(isCompliance ? [{ label: "Compliance", href: "/compliance", icon: CheckSquare }] : []),
+        ...(isCompliance || isViewer ? [{ label: "Governance", href: "/governance", icon: Shield }] : []),
+        ...(isCompliance || isViewer ? [{ label: "Compliance", href: "/compliance", icon: CheckSquare }] : []),
       ],
     });
   }
 
   const opsItems: NavItem[] = [];
   if (isReviewer) opsItems.push({ label: "Deploy", href: "/deploy", icon: Rocket });
-  if (isReviewer) opsItems.push({ label: "Monitor", href: "/monitor", icon: Activity });
-  if (isCompliance) opsItems.push({ label: "Dashboard", href: "/dashboard", icon: BarChart3 });
-  if (isCompliance) opsItems.push({ label: "Audit", href: "/audit", icon: ScrollText });
+  if (isReviewer || isViewer) opsItems.push({ label: "Monitor", href: "/monitor", icon: Activity });
+  if (isCompliance || isViewer) opsItems.push({ label: "Dashboard", href: "/dashboard", icon: BarChart3 });
+  if (isCompliance || isViewer) opsItems.push({ label: "Audit", href: "/audit", icon: ScrollText });
   if (isAdmin) opsItems.push({ label: "Users", href: "/admin/users", icon: Users });
   if (isAdmin) opsItems.push({ label: "Settings", href: "/admin/settings", icon: Settings });
   if (isAdmin) opsItems.push({ label: "Webhooks", href: "/admin/webhooks", icon: Webhook });
@@ -110,12 +117,27 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
     ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "?";
 
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // Global Cmd+K / Ctrl+K shortcut
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(href + "/");
   }
 
   return (
+    <>
     <aside
       className="flex h-screen w-60 shrink-0 flex-col overflow-hidden"
       style={{ backgroundColor: "var(--sidebar-bg)", borderRight: "1px solid var(--sidebar-border)" }}
@@ -146,6 +168,26 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
         <span className="text-sm font-semibold text-white tracking-tight">
           {branding?.companyName ?? "Intellios"}
         </span>
+        <div className="ml-auto">
+          <NotificationBell />
+        </div>
+      </div>
+
+      {/* Command search bar */}
+      <div className="px-3 pt-3 pb-1">
+        <button
+          onClick={() => setPaletteOpen(true)}
+          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors"
+          style={{
+            backgroundColor: "var(--sidebar-active-bg)",
+            color: "var(--sidebar-text)",
+            opacity: 0.7,
+          }}
+        >
+          <Search size={12} className="shrink-0" />
+          <span className="flex-1 text-left">Search…</span>
+          <kbd className="rounded border px-1 py-0.5 text-[9px] font-medium" style={{ borderColor: "var(--sidebar-border)", opacity: 0.6 }}>⌘K</kbd>
+        </button>
       </div>
 
       {/* Nav */}
@@ -207,18 +249,32 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
               </span>
             )}
           </div>
-          <form action={signOutAction}>
-            <button
-              type="submit"
-              title="Sign out"
-              className="rounded p-1 transition-colors hover:bg-white/10"
-              style={{ color: "var(--sidebar-text)" }}
-            >
-              <LogOut size={13} />
-            </button>
-          </form>
+          <div className="flex items-center gap-0.5">
+            <HelpPanel role={user.role ?? "designer"} />
+            <form action={signOutAction}>
+              <button
+                type="submit"
+                title="Sign out"
+                className="rounded p-1 transition-colors hover:bg-white/10"
+                style={{ color: "var(--sidebar-text)" }}
+              >
+                <LogOut size={13} />
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </aside>
+
+    {/* Command palette — rendered at document.body level via portal */}
+    {paletteOpen && typeof document !== "undefined" &&
+      createPortal(
+        <CommandPalette
+          role={user.role ?? "designer"}
+          onClose={() => setPaletteOpen(false)}
+        />,
+        document.body
+      )}
+    </>
   );
 }

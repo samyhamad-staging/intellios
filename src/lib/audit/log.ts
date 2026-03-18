@@ -26,8 +26,10 @@ export type AuditAction =
   | "blueprint.code_exported"
   | "blueprint.red_team_run"
   | "blueprint.created_from_template"
+  | "blueprint.regenerated"
   | "intake.finalized"
   | "intake.contribution_submitted"
+  | "intake.invitation_sent"
   | "policy.created"
   | "policy.updated"
   | "policy.deleted"
@@ -35,7 +37,8 @@ export type AuditAction =
   | "settings.updated"
   | "blueprint.periodic_review_scheduled"
   | "blueprint.periodic_review_completed"
-  | "blueprint.periodic_review_reminder";
+  | "blueprint.periodic_review_reminder"
+  | "blueprint.evidence_package_exported";
 
 export interface AuditEntry {
   entityType: "blueprint" | "intake_session" | "policy";

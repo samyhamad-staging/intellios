@@ -1,5 +1,6 @@
 import { IntakePayload, IntakeContext, StakeholderContribution, IntakeClassification, AgentType, IntakeRiskTier } from "@/lib/types/intake";
 import { GovernancePolicy } from "@/lib/governance/types";
+import { ExpertiseLevel } from "@/lib/intake/model-selector";
 
 const BASE_PROMPT = `You are the Intellios Intake Assistant. Your role is to help enterprise users define the requirements for a new AI agent through natural conversation.
 
@@ -270,12 +271,44 @@ function buildClassificationBlock(classification: IntakeClassification): string 
   ].join("\n");
 }
 
+const ADAPTIVE_MODE_INSTRUCTIONS: Record<ExpertiseLevel, string> = {
+  guided: `## Communication Style — Guided Mode
+
+The designer is approaching this from a business or non-technical perspective. Adapt your communication accordingly:
+
+- Break questions into focused sub-steps: instead of "describe your agent's capabilities", ask "Let's start with who will use this agent — is it internal staff, or will customers interact with it directly?"
+- Offer concrete examples when asking questions: "For example, many agents like this use tools like email sending, database lookup, or web search — which of these sounds relevant?"
+- When technical terms are necessary, briefly explain them in plain language
+- Summarize what you've understood after each major topic before moving on
+- Proactively suggest standard patterns rather than leaving open-ended questions unanswered`,
+
+  adaptive: `## Communication Style — Adaptive Mode
+
+Mirror the designer's vocabulary and level of detail. If they speak in technical terms, match that register. If they describe outcomes and business goals, respond in kind. Ask one focused question at a time, follow their lead, and deepen your probing based on the specificity of their answers.`,
+
+  expert: `## Communication Style — Expert Mode
+
+The designer is technically experienced. Adapt accordingly:
+
+- Accept dense, technical input without restating or paraphrasing it back
+- Target edge cases and non-obvious requirements; skip well-understood basics
+- Validate rather than re-explain: "Got it — OAuth 2.0 client credentials for the API auth; I'll capture that in the access_control policy."
+- If the designer covers multiple requirements in one message, capture all of them efficiently before asking the next question
+- Move at pace — avoid unnecessary acknowledgment or filler before capturing information`,
+};
+
+function buildAdaptiveModeBlock(expertiseLevel: ExpertiseLevel): string {
+  return "\n\n" + ADAPTIVE_MODE_INSTRUCTIONS[expertiseLevel];
+}
+
 export function buildIntakeSystemPrompt(
   payload: IntakePayload,
   context?: IntakeContext | null,
   contributions?: StakeholderContribution[],
   policies?: GovernancePolicy[],
-  classification?: IntakeClassification | null
+  classification?: IntakeClassification | null,
+  expertiseLevel?: ExpertiseLevel | null,
+  topicProbingRules?: string
 ): string {
   const identity = payload.identity;
   const capabilities = payload.capabilities;
@@ -375,8 +408,11 @@ export function buildIntakeSystemPrompt(
     lines.push("**All required sections are filled.** When the user is satisfied, summarize and offer to finalize.");
   }
 
-  // Inject context block if context was provided in Phase 1
-  const contextBlock = context ? buildContextBlock(context) : "";
+  // Inject context block if context was provided in Phase 1.
+  // Topic-specific probing rules (Phase 49) are appended after governance probing.
+  const contextBlock = context
+    ? buildContextBlock(context) + (topicProbingRules ?? "")
+    : "";
 
   // Inject classification block (after context, before policies) when available
   const classificationBlock = classification ? buildClassificationBlock(classification) : "";
@@ -388,5 +424,8 @@ export function buildIntakeSystemPrompt(
   const contributionsBlock =
     contributions && contributions.length > 0 ? buildContributionsBlock(contributions) : "";
 
-  return BASE_PROMPT + contextBlock + classificationBlock + policiesBlock + contributionsBlock + lines.join("\n");
+  // Inject adaptive communication style block (Phase 49) — appended after current state
+  const adaptiveModeBlock = expertiseLevel ? buildAdaptiveModeBlock(expertiseLevel) : "";
+
+  return BASE_PROMPT + contextBlock + classificationBlock + policiesBlock + contributionsBlock + lines.join("\n") + adaptiveModeBlock;
 }

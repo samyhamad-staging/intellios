@@ -9,7 +9,7 @@ import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
 
-const ROLES = ["designer", "reviewer", "compliance_officer", "admin"] as const;
+const ROLES = ["designer", "reviewer", "compliance_officer", "admin", "viewer"] as const;
 const MIN_PASSWORD_LENGTH = 8;
 
 const CreateUserBody = z.object({

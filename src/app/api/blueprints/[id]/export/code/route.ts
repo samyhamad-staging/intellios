@@ -44,6 +44,15 @@ export async function GET(
     const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, authSession.user);
     if (enterpriseError) return enterpriseError;
 
+    // Status gate: only export approved or deployed blueprints.
+    // Prevents distribution of unreviewed code with active governance violations.
+    if (blueprint.status !== "approved" && blueprint.status !== "deployed") {
+      return apiError(
+        ErrorCode.BAD_REQUEST,
+        "Code export is only available for approved or deployed blueprints"
+      );
+    }
+
     const abp = blueprint.abp as ABP;
 
     const code = generateAgentCode(abp, {

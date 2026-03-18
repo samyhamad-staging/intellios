@@ -86,7 +86,7 @@ export default function GovernanceHubPage() {
   const canManagePolicies =
     session?.user?.role === "admin" || session?.user?.role === "compliance_officer";
   const canViewAnalytics =
-    session?.user?.role === "admin" || session?.user?.role === "compliance_officer";
+    session?.user?.role === "admin" || session?.user?.role === "compliance_officer" || session?.user?.role === "viewer";
   const [agents, setAgents] = useState<Agent[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [templatePacks, setTemplatePacks] = useState<TemplatePack[]>([]);

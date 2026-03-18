@@ -1,8 +1,8 @@
 # INTELLIOS_SYSTEM_DESCRIPTION.md
 
-**Version:** 1.1.0
-**Date:** 2026-03-15
-**Status:** Canonical — reflects implementation through Phase 33
+**Version:** 1.2.0
+**Date:** 2026-03-17
+**Status:** Canonical — reflects implementation through Phase 48
 **Purpose:** Primary system description and source of truth for Intellios. Written for LLM ingestion, architectural reasoning, development guidance, and system evaluation.
 
 ---
@@ -22,6 +22,9 @@
    - 4.7 [AgentCore Integration](#47-agentcore-integration)
    - 4.8 [Awareness and Measurement System](#48-awareness-and-measurement-system)
    - 4.9 [User Interface Layer](#49-user-interface-layer)
+   - 4.10 [Stakeholder Collaboration Workspace](#410-stakeholder-collaboration-workspace)
+   - 4.11 [Help System](#411-help-system)
+   - 4.12 [Blueprint Template Library](#412-blueprint-template-library)
 5. [Agent Generation Lifecycle](#5-agent-generation-lifecycle)
 6. [Data and Knowledge Model](#6-data-and-knowledge-model)
 7. [Governance and Safety Model](#7-governance-and-safety-model)
@@ -173,7 +176,7 @@ The following systems operate across both subsystems:
 | Language | TypeScript 5 |
 | Database | PostgreSQL with Drizzle ORM |
 | AI SDK | Vercel AI SDK v5 (`streamText`, `generateObject`) |
-| AI Models | Anthropic Claude: Sonnet 4.6 (generation, review brief, briefings), Haiku 3.5 (remediation, test evaluation, quality scoring) |
+| AI Models | Anthropic Claude: Sonnet 4.6 `claude-sonnet-4-6` (generation, review brief, briefings), Haiku 4.5 `claude-haiku-4-5-20251001` (remediation, test evaluation, quality scoring, AI orchestrator, intake turns) |
 | Auth | NextAuth v5, bcrypt, 8-hour JWT sessions |
 | Validation | Zod on all POST/PATCH routes |
 | Testing | vitest ^3.0.0, @vitest/coverage-v8 |
@@ -299,6 +302,12 @@ This achieves an estimated 8× cost reduction on routine turns without compromis
 | POST | `/api/intake/sessions/[id]/contributions` | Submit stakeholder contribution |
 | GET | `/api/intake/sessions/[id]/contributions` | List all contributions for session |
 | GET | `/api/intake/sessions/[id]/quality-score` | Most recent AI quality score |
+| POST | `/api/intake/sessions/[id]/invitations` | Create stakeholder invitation (generates token + sends email) |
+| GET | `/api/intake/sessions/[id]/invitations` | List all invitations for session |
+| GET | `/api/intake/sessions/[id]/insights` | List AI Orchestrator insights for session |
+| PATCH | `/api/intake/sessions/[id]/insights/[insightId]` | Approve or dismiss an AI Orchestrator insight |
+| GET | `/api/intake/invitations/[token]` | Validate invitation token; returns session context and prior synthesis |
+| POST | `/api/intake/invitations/[token]/chat` | Token-gated stakeholder AI interview (no Intellios account required) |
 
 #### 4.1.5 Data Model
 
@@ -307,6 +316,8 @@ This achieves an estimated 8× cost reduction on routine turns without compromis
 | `intake_sessions` | One row per session; `intake_payload` (JSONB), `intake_context` (JSONB), status |
 | `intake_messages` | One row per message; role, content, ordering |
 | `intake_contributions` | One row per stakeholder contribution; domain, contributor, fields (JSONB) |
+| `intake_invitations` | Token-based invitations to external stakeholders; domain, RACI role, invitee name/email, token, expiry, status |
+| `intake_ai_insights` | AI Orchestrator outputs per session; type (synthesis/conflict/gap/suggest_invite), content, status (pending/approved/dismissed) |
 
 ---
 
@@ -347,6 +358,8 @@ Designers can request natural-language changes to an existing blueprint:
 | POST | `/api/blueprints` | Generate ABP from completed intake session |
 | GET | `/api/blueprints/[id]` | Fetch stored blueprint |
 | POST | `/api/blueprints/[id]/refine` | Apply natural-language change, regenerate |
+| POST | `/api/blueprints/[id]/regenerate` | Full regeneration from the originating intake payload |
+| POST | `/api/blueprints/[id]/new-version` | Fork a new blueprint version under the same `agentId` |
 
 ---
 
@@ -829,7 +842,7 @@ Anomalies are deduplicated via the `notifications` table to prevent alert fatigu
 
 ### 4.9 User Interface Layer
 
-Intellios exposes a set of role-gated pages. Below is the complete page inventory as of Phase 33.
+Intellios exposes a set of role-gated pages. Below is the complete page inventory as of Phase 48.
 
 #### 4.9.1 Role-Differentiated Home Screens (`/`)
 
@@ -967,21 +980,122 @@ Access: `admin` (settings, users); `admin` + `compliance_officer` (webhooks).
 - `/admin/webhooks` — register/pause/resume endpoint; secret rotation; per-event-type subscriptions; delivery history log
 - `/admin/users` — user list with role management (role assignment, invite)
 
+#### 4.9.14 Blueprint Template Library (`/templates`)
+
+Access: All authenticated roles.
+
+Pre-built blueprint templates that designers can instantiate as a starting point. Each template is a validated ABP stub with common identity, capabilities, and governance pre-filled for a specific use case. Instantiation creates a new `draft` blueprint via `POST /api/templates/[id]/use`.
+
+#### 4.9.15 Welcome / Onboarding (`/welcome`)
+
+Access: All authenticated roles (new users).
+
+Onboarding walkthrough presented to newly registered users before their first session. Covers the agent factory pipeline, role-specific entry points, and first-action CTA.
+
+---
+
+### 4.10 Stakeholder Collaboration Workspace
+
+**Purpose:** Enables external domain stakeholders (Compliance, Legal, IT, Risk, Operations, Business, Security) to contribute requirements to an intake session without an Intellios account, through token-gated AI interviews adapted to their RACI authority role.
+
+#### 4.10.1 Invitation System
+
+Designers send invitations from the Designer Insights Panel. Each invitation:
+- Targets a specific domain and RACI role
+- Generates a unique UUID token stored in `intake_invitations`
+- Triggers an email with a link to `/contribute/[token]`
+- Has an expiry (configurable; default 7 days) and status: `pending`, `accepted`, `expired`
+
+No Intellios account or authentication is required to accept an invitation and contribute.
+
+#### 4.10.2 RACI Authority Model
+
+The AI interview at `/contribute/[token]` adapts its system prompt and tone to the invitee's RACI role:
+
+| RACI Role | Interview Focus |
+|---|---|
+| Accountable | Non-negotiables; what the agent must never do; decision authority boundaries |
+| Responsible | Implementation concerns; integration requirements; operational constraints |
+| Consulted | Domain-specific requirements; compliance rules; expert knowledge capture |
+| Informed | Concerns and dependencies; notification requirements; downstream impacts |
+
+This ensures each interview extracts the most relevant information for that stakeholder's level of authority over the agent.
+
+#### 4.10.3 AI Orchestrator
+
+After every stakeholder contribution, the AI Orchestrator (Claude Haiku 4.5) fires asynchronously (fire-and-forget) and produces up to four insight types:
+
+| Insight Type | Description |
+|---|---|
+| `synthesis` | Plain-language summary of all agreed requirements across all contributors so far |
+| `conflict` | Detected contradictions between contributions (e.g., Compliance says "no PII" vs. Business says "personalize by customer") |
+| `gap` | Requirement areas not yet covered by any contribution |
+| `suggest_invite` | Recommended additional stakeholders to invite based on identified gaps |
+
+Insights are stored in `intake_ai_insights` with status `pending`. The designer reviews them in the Designer Insights Panel and approves or dismisses each. Approving a `suggest_invite` insight auto-creates the invitation and triggers the email.
+
+#### 4.10.4 Shared Synthesis
+
+Each stakeholder AI interview starts with the current synthesis injected into the system prompt, so each contributor builds on — not repeats — prior work. This creates a progressive, collaborative requirements capture process rather than isolated siloed inputs.
+
+#### 4.10.5 Designer Insights Panel
+
+The intake session page includes a collapsible Insights Panel showing:
+- Per-domain rows with RACI badge, invitee name, invitation status, and an inline invitation form
+- AI Orchestrator insight cards (expandable) with approve/dismiss actions
+- Real-time refresh after each contribution (2-second delay for orchestrator to complete)
+
+#### 4.10.6 API Routes
+
+| Method | Route | Purpose |
+|---|---|---|
+| POST | `/api/intake/sessions/[id]/invitations` | Create invitation; generate token; send email |
+| GET | `/api/intake/sessions/[id]/invitations` | List all invitations for session |
+| GET | `/api/intake/sessions/[id]/insights` | List AI Orchestrator insights |
+| PATCH | `/api/intake/sessions/[id]/insights/[insightId]` | Approve or dismiss insight |
+| GET | `/api/intake/invitations/[token]` | Validate token; return session context + current synthesis |
+| POST | `/api/intake/invitations/[token]/chat` | Token-gated stakeholder AI interview (streaming) |
+
+---
+
+### 4.11 Help System
+
+**Purpose:** Contextual AI help chat available throughout the application for all authenticated users.
+
+- **Routes:** `GET /api/help/ask` (single-turn), `POST /api/help/chat` (streaming multi-turn)
+- **Model:** Claude Haiku 4.5
+- **Context:** Help system prompt includes the user's current role and relevant Intellios feature context
+- **UI:** `HelpChat` component surfaced via a help icon in the global nav; renders in a side panel
+
+---
+
+### 4.12 Blueprint Template Library
+
+**Purpose:** Pre-built, validated blueprint stubs that accelerate agent creation for common use cases.
+
+- Templates are stored as static definitions; each is a partial ABP with identity, capabilities, and governance pre-filled
+- `GET /api/templates` — list available templates
+- `POST /api/templates/[id]/use` — instantiate template as a new `draft` blueprint (new `agentId`, new `id`, status `draft`); redirects designer to Blueprint Workbench
+- Accessible from the `/templates` page and from the intake session "Start from Template" CTA
+
 ---
 
 ## 5. AGENT GENERATION LIFECYCLE
 
 ### Stage 1: Stakeholder Input
 
-**Actor:** Designer (and optional domain stakeholders)
-**Location:** `/intake/[sessionId]`
+**Actor:** Designer (and optional domain stakeholders, including external contributors without Intellios accounts)
+**Location:** `/intake/[sessionId]`, `/contribute/[token]` (external stakeholders)
 
 1. Designer creates a new intake session at `/intake`
 2. Designer fills Phase 1 structured context form (6 domain-signal fields)
-3. Domain stakeholders submit contributions via the stakeholder contribution form (7 domains)
-4. Designer conducts Phase 2 conversation with Claude; Claude uses 11 tools to build the `IntakePayload`
-5. Governance sufficiency check runs on `mark_intake_complete` — finalization is blocked if required governance is missing
-6. Designer reviews Phase 3 review screen, acknowledges all sections, clicks Generate
+3. Designer optionally invites external domain stakeholders via token-gated links (no Intellios account required); each invitee receives an email with a unique token and conducts a RACI-adapted AI interview at `/contribute/[token]`
+4. After each stakeholder contribution, the AI Orchestrator fires asynchronously: generates synthesis, conflict detection, gap analysis, and suggested next invitations; results surface as insight cards in the Designer Insights Panel
+5. Designer reviews and acts on AI Orchestrator insights; approving a "suggest invite" insight auto-creates the invitation and sends the email
+6. Domain stakeholders may also submit structured contributions via the in-session stakeholder contribution form (7 domain lanes)
+7. Designer conducts Phase 2 conversation with Claude; Claude uses 11 tools to build the `IntakePayload`; prior stakeholder contributions and AI synthesis are injected into Claude's system prompt
+8. Governance sufficiency check runs on `mark_intake_complete` — finalization is blocked if required governance is missing
+9. Designer reviews Phase 3 review screen, acknowledges all sections, clicks Generate
 
 ### Stage 2: Intent Interpretation
 
@@ -1068,7 +1182,9 @@ Access: `admin` (settings, users); `admin` + `compliance_officer` (webhooks).
 | `governance_policies` | Versioned governance policy rules |
 | `intake_sessions` | Intake sessions with payload and context JSONB |
 | `intake_messages` | Chat messages within intake sessions |
-| `intake_contributions` | Attributed stakeholder requirement contributions |
+| `intake_contributions` | Attributed stakeholder requirement contributions by domain |
+| `intake_invitations` | Token-based invitations to external domain stakeholders; domain, RACI role, invitee name/email, token (UUID), expiry, status |
+| `intake_ai_insights` | AI Orchestrator outputs: type (synthesis/conflict/gap/suggest_invite), content (JSONB), status (pending/approved/dismissed) |
 | `agent_blueprints` | All blueprint versions with ABP JSONB, validation report, deployment metadata |
 | `audit_log` | Append-only event record for all lifecycle actions |
 | `notifications` | Routing inbox for lifecycle event notifications |
@@ -1077,10 +1193,12 @@ Access: `admin` (settings, users); `admin` + `compliance_officer` (webhooks).
 | `deployment_health` | Latest governance health state per deployed agent |
 | `blueprint_test_cases` | Behavioral test case definitions per logical agent |
 | `blueprint_test_runs` | Behavioral test execution results per blueprint version |
-| `blueprint_quality_scores` | AI quality dimension scores per blueprint |
-| `intake_quality_scores` | AI quality dimension scores per intake session |
-| `system_health_snapshots` | Daily aggregated platform metrics |
-| `intelligence_briefings` | Daily AI-generated briefing text (structured JSON) |
+| `blueprint_quality_scores` | AI quality dimension scores per blueprint (5 dimensions) |
+| `intake_quality_scores` | AI quality dimension scores per intake session (4 dimensions) |
+| `system_health_snapshots` | Daily aggregated platform metrics (8 metrics) |
+| `intelligence_briefings` | Daily AI-generated briefing text (structured JSON, 5 sections) |
+| `password_reset_tokens` | Time-limited tokens for password recovery flows |
+| `user_invitations` | Admin-initiated user invitations with tokenized acceptance |
 
 ### 6.2 Agent Blueprint Package (ABP) Schema
 
@@ -1363,11 +1481,11 @@ Intellios exposes a comprehensive REST API under the Next.js App Router (`/api/*
 |---|---|
 | Production hardening | Pagination for large registries, webhook health banner, ABP schema evolution strategy (OQ-007) |
 | Periodic model review | SR 11-7 annual revalidation scheduling — automated reminders and evidence collection |
-| Agent marketplace | Catalog of approved agent templates for enterprise reuse |
-| White-label branding | Full brand customization of Intellios UI per enterprise tenant |
+| White-label branding | Full UI brand customization (logo, color scheme, domain) per enterprise tenant |
 | Agent-to-agent protocols | Communication and coordination standards for multi-agent workflows |
 | Distributed rate limiting | Redis-backed rate limiting for multi-instance deployments |
 | Additional deployment targets | Azure AI Foundry, Google Vertex AI, OpenAI Assistants API |
+| Stakeholder workspace enhancements | Async threading, multi-round stakeholder sessions, contribution version tracking |
 
 ### 11.2 Known Limitations (Current)
 
@@ -1413,6 +1531,14 @@ Intellios exposes a comprehensive REST API under the Next.js App Router (`/api/*
 | **Validation Report** | The output of the Governance Validator: `{ valid, violations[], policyCount, evaluatedPolicyIds, generatedAt }`. Stored with each blueprint in `agent_blueprints.validation_report`. |
 | **Violation** | A single policy rule failure in a Validation Report. Contains: policy name, rule ID, field path, severity, message, and optional Claude-generated remediation suggestion. |
 | **White-label** | The capability for enterprises to brand Intellios-generated agents under their own brand identity and policies. |
+| **AI Orchestrator** | A fire-and-forget Claude Haiku 4.5 module that runs after every stakeholder contribution. Produces four insight types: synthesis (agreed requirements summary), conflict (contradictions between contributors), gap (uncovered requirement areas), and suggest_invite (recommended additional stakeholders). |
+| **RACI Authority Model** | The framework for adapting stakeholder AI interviews based on the invitee's authority role: Accountable (non-negotiables), Responsible (implementation concerns), Consulted (domain requirements), Informed (concerns and dependencies). |
+| **Stakeholder Workspace** | The public, token-gated page at `/contribute/[token]` where invited external domain stakeholders conduct RACI-adapted AI interviews without an Intellios account. |
+| **Token-Gated Invitation** | An invitation to an external stakeholder that grants access via a unique UUID token in a URL. No Intellios account required. Stored in `intake_invitations`. Expires after a configurable period. |
+| **Insight** | An AI Orchestrator output stored in `intake_ai_insights`. Types: synthesis, conflict, gap, suggest_invite. Has a status of pending, approved, or dismissed. Surfaced in the Designer Insights Panel. |
+| **Designer Insights Panel** | The collapsible panel in the intake session page showing per-domain stakeholder rows (RACI badge, invitee, status, inline invite form) and AI Orchestrator insight cards with approve/dismiss actions. |
+| **Shared Synthesis** | The current AI-generated synthesis of all stakeholder contributions, injected into each new stakeholder's interview system prompt so contributors build progressively on prior requirements rather than repeating them. |
+| **Blueprint Template** | A pre-built, validated ABP stub covering a common use case. Instantiated via `/api/templates/[id]/use` to create a new `draft` blueprint as a starting point. |
 
 ---
 
