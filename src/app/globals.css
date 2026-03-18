@@ -65,7 +65,210 @@
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-raised: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.04);
   --shadow-modal: 0 20px 25px rgba(0, 0, 0, 0.1), 0 8px 10px rgba(0, 0, 0, 0.06);
+
+  /* ── Status lifecycle colors ─────────────────────────────────────────── */
+  /* draft */
+  --status-draft-bg:           #f3f4f6; /* gray-100  */
+  --status-draft-text:         #4b5563; /* gray-600  */
+  --status-draft-border:       #e5e7eb; /* gray-200  */
+  --status-draft-dot:          #9ca3af; /* gray-400  */
+  --status-draft-col-bg:       #f9fafb; /* gray-50   */
+  --status-draft-col-border:   #e5e7eb; /* gray-200  */
+  --status-draft-btn-bg:       #9ca3af; /* gray-400  */
+  --status-draft-btn-hover:    #6b7280; /* gray-500  */
+
+  /* in_review */
+  --status-review-bg:          #fef9c3; /* yellow-100 */
+  --status-review-text:        #a16207; /* yellow-700 */
+  --status-review-border:      #fef08a; /* yellow-200 */
+  --status-review-dot:         #eab308; /* yellow-500 */
+  --status-review-col-bg:      #eff6ff; /* blue-50   */
+  --status-review-col-border:  #bfdbfe; /* blue-200  */
+  --status-review-badge-bg:    #dbeafe; /* blue-100  */
+  --status-review-badge-text:  #1d4ed8; /* blue-700  */
+  --status-review-badge-dot:   #3b82f6; /* blue-500  */
+  --status-review-btn-bg:      #ca8a04; /* yellow-600 */
+  --status-review-btn-hover:   #a16207; /* yellow-700 */
+
+  /* approved */
+  --status-approved-bg:        #dcfce7; /* green-100  */
+  --status-approved-text:      #15803d; /* green-700  */
+  --status-approved-border:    #bbf7d0; /* green-200  */
+  --status-approved-dot:       #22c55e; /* green-500  */
+  --status-approved-col-bg:    #f0fdf4; /* green-50   */
+  --status-approved-col-border:#bbf7d0; /* green-200  */
+  --status-approved-btn-bg:    #16a34a; /* green-600  */
+  --status-approved-btn-hover: #15803d; /* green-700  */
+
+  /* deployed */
+  --status-deployed-bg:        #e0e7ff; /* indigo-100 */
+  --status-deployed-text:      #4338ca; /* indigo-700 */
+  --status-deployed-border:    #c7d2fe; /* indigo-200 */
+  --status-deployed-dot:       #6366f1; /* indigo-500 */
+  --status-deployed-col-bg:    #eef2ff; /* indigo-50  */
+  --status-deployed-col-border:#c7d2fe; /* indigo-200 */
+  --status-deployed-btn-bg:    #7c3aed; /* violet-600 */
+  --status-deployed-btn-hover: #6d28d9; /* violet-700 */
+
+  /* rejected */
+  --status-rejected-bg:        #fee2e2; /* red-100    */
+  --status-rejected-text:      #b91c1c; /* red-700    */
+  --status-rejected-border:    #fecaca; /* red-200    */
+  --status-rejected-dot:       #ef4444; /* red-500    */
+  --status-rejected-col-bg:    #fef2f2; /* red-50     */
+  --status-rejected-col-border:#fecaca; /* red-200    */
+  --status-rejected-btn-bg:    #dc2626; /* red-600    */
+  --status-rejected-btn-hover: #b91c1c; /* red-700    */
+
+  /* deprecated */
+  --status-deprecated-bg:        #e5e7eb; /* gray-200 */
+  --status-deprecated-text:      #6b7280; /* gray-500 */
+  --status-deprecated-border:    #d1d5db; /* gray-300 */
+  --status-deprecated-dot:       #9ca3af; /* gray-400 */
+  --status-deprecated-col-bg:    #fffbeb; /* amber-50  */
+  --status-deprecated-col-border:#fde68a; /* amber-200 */
+  --status-deprecated-badge-bg:  #fef3c7; /* amber-100 */
+  --status-deprecated-badge-text:#b45309; /* amber-700 */
+  --status-deprecated-badge-dot: #fbbf24; /* amber-400 */
+
+  /* ── Risk tier colors ───────────────────────────────────────────────── */
+  --risk-critical-bg:     #fef2f2; /* red-50     */
+  --risk-critical-text:   #b91c1c; /* red-700    */
+  --risk-critical-border: #fecaca; /* red-200    */
+  --risk-critical-dot:    #ef4444; /* red-500    */
+
+  --risk-high-bg:         #fff7ed; /* orange-50  */
+  --risk-high-text:       #c2410c; /* orange-700 */
+  --risk-high-border:     #fed7aa; /* orange-200 */
+  --risk-high-dot:        #f97316; /* orange-500 */
+
+  --risk-medium-bg:       #fffbeb; /* amber-50   */
+  --risk-medium-text:     #b45309; /* amber-700  */
+  --risk-medium-border:   #fde68a; /* amber-200  */
+  --risk-medium-dot:      #f59e0b; /* amber-500  */
+
+  --risk-low-bg:          #f0fdf4; /* green-50   */
+  --risk-low-text:        #15803d; /* green-700  */
+  --risk-low-border:      #bbf7d0; /* green-200  */
+  --risk-low-dot:         #22c55e; /* green-500  */
+
+  /* ── Governance / validation colors ────────────────────────────────── */
+  --gov-pass-bg:      #f0fdf4; /* green-50   */
+  --gov-pass-text:    #15803d; /* green-700  */
+  --gov-pass-border:  #bbf7d0; /* green-200  */
+  --gov-pass-icon:    #22c55e; /* green-500  */
+
+  --gov-warn-bg:      #fffbeb; /* amber-50   */
+  --gov-warn-text:    #b45309; /* amber-700  */
+  --gov-warn-border:  #fde68a; /* amber-200  */
+  --gov-warn-icon:    #f59e0b; /* amber-500  */
+
+  --gov-error-bg:     #fef2f2; /* red-50     */
+  --gov-error-text:   #b91c1c; /* red-700    */
+  --gov-error-border: #fecaca; /* red-200    */
+  --gov-error-icon:   #ef4444; /* red-500    */
+
+  /* ── Alert / insight strip colors ──────────────────────────────────── */
+  --alert-critical-text: #dc2626; /* red-600   */
+  --alert-critical-dot:  #f87171; /* red-400   */
+  --alert-warn-text:     #d97706; /* amber-600 */
+  --alert-warn-dot:      #fbbf24; /* amber-400 */
+  --alert-info-text:     #6b7280; /* gray-500  */
+  --alert-info-dot:      #d1d5db; /* gray-300  */
 }
+
+/* ── Semantic badge utilities ───────────────────────────────────────────── */
+/* Status badges */
+@utility badge-draft      { background-color: var(--status-draft-bg);      color: var(--status-draft-text); }
+@utility badge-review     { background-color: var(--status-review-badge-bg,var(--status-review-bg)); color: var(--status-review-badge-text,var(--status-review-text)); }
+@utility badge-approved   { background-color: var(--status-approved-bg);   color: var(--status-approved-text); }
+@utility badge-deployed   { background-color: var(--status-deployed-bg);   color: var(--status-deployed-text); }
+@utility badge-rejected   { background-color: var(--status-rejected-bg);   color: var(--status-rejected-text); }
+@utility badge-deprecated { background-color: var(--status-deprecated-bg); color: var(--status-deprecated-text); }
+
+/* Status dots */
+@utility dot-draft      { background-color: var(--status-draft-dot); }
+@utility dot-review     { background-color: var(--status-review-dot); }
+@utility dot-approved   { background-color: var(--status-approved-dot); }
+@utility dot-deployed   { background-color: var(--status-deployed-dot); }
+@utility dot-rejected   { background-color: var(--status-rejected-dot); }
+@utility dot-deprecated { background-color: var(--status-deprecated-dot); }
+
+/* Risk badges */
+@utility badge-risk-critical { background-color: var(--risk-critical-bg); color: var(--risk-critical-text); border-color: var(--risk-critical-border); }
+@utility badge-risk-high     { background-color: var(--risk-high-bg);     color: var(--risk-high-text);     border-color: var(--risk-high-border); }
+@utility badge-risk-medium   { background-color: var(--risk-medium-bg);   color: var(--risk-medium-text);   border-color: var(--risk-medium-border); }
+@utility badge-risk-low      { background-color: var(--risk-low-bg);      color: var(--risk-low-text);      border-color: var(--risk-low-border); }
+
+/* Risk stat cards */
+@utility card-risk-critical { background-color: var(--risk-critical-bg); color: var(--risk-critical-text); border-color: var(--risk-critical-border); }
+@utility card-risk-high     { background-color: var(--risk-high-bg);     color: var(--risk-high-text);     border-color: var(--risk-high-border); }
+@utility card-risk-medium   { background-color: var(--risk-medium-bg);   color: var(--risk-medium-text);   border-color: var(--risk-medium-border); }
+@utility card-risk-low      { background-color: var(--risk-low-bg);      color: var(--risk-low-text);      border-color: var(--risk-low-border); }
+
+/* Governance status badges */
+@utility badge-gov-pass  { background-color: var(--gov-pass-bg);  color: var(--gov-pass-text);  border-color: var(--gov-pass-border); }
+@utility badge-gov-warn  { background-color: var(--gov-warn-bg);  color: var(--gov-warn-text);  border-color: var(--gov-warn-border); }
+@utility badge-gov-error { background-color: var(--gov-error-bg); color: var(--gov-error-text); border-color: var(--gov-error-border); }
+
+/* Pipeline column backgrounds */
+@utility col-draft      { background-color: var(--status-draft-col-bg);      border-color: var(--status-draft-col-border); }
+@utility col-review     { background-color: var(--status-review-col-bg);     border-color: var(--status-review-col-border); }
+@utility col-approved   { background-color: var(--status-approved-col-bg);   border-color: var(--status-approved-col-border); }
+@utility col-deployed   { background-color: var(--status-deployed-col-bg);   border-color: var(--status-deployed-col-border); }
+@utility col-rejected   { background-color: var(--status-rejected-col-bg);   border-color: var(--status-rejected-col-border); }
+@utility col-deprecated { background-color: var(--status-deprecated-col-bg); border-color: var(--status-deprecated-col-border); }
+
+/* Alert / insight strip */
+@utility text-alert-critical { color: var(--alert-critical-text); }
+@utility text-alert-warn     { color: var(--alert-warn-text); }
+@utility text-alert-info     { color: var(--alert-info-text); }
+@utility dot-alert-critical  { background-color: var(--alert-critical-dot); }
+@utility dot-alert-warn      { background-color: var(--alert-warn-dot); }
+@utility dot-alert-info      { background-color: var(--alert-info-dot); }
+
+/* KPI / stat cards */
+@utility kpi-deployed  { background-color: var(--status-deployed-col-bg); border-color: var(--status-deployed-col-border); color: var(--status-deployed-text); }
+@utility kpi-review    { background-color: var(--status-review-col-bg);   border-color: var(--status-review-col-border);   color: var(--status-review-badge-text); }
+@utility kpi-compliant { background-color: var(--gov-pass-bg);  border-color: var(--gov-pass-border);  color: var(--gov-pass-text); }
+@utility kpi-caution   { background-color: var(--gov-warn-bg);  border-color: var(--gov-warn-border);  color: var(--gov-warn-text); }
+@utility kpi-neutral   { background-color: #ffffff; border-color: #e5e7eb; color: #111827; }
+
+/* Overdue / periodic review badge */
+@utility badge-overdue { background-color: var(--risk-critical-bg); color: var(--risk-critical-text); }
+
+/* User role badges */
+@utility badge-role-designer  { background-color: var(--status-review-col-bg);   color: var(--status-review-badge-text); }
+@utility badge-role-reviewer  { background-color: var(--gov-warn-bg);             color: var(--gov-warn-text); }
+@utility badge-role-officer   { background-color: var(--gov-pass-bg);             color: var(--gov-pass-text); }
+@utility badge-role-admin     { background-color: #f5f3ff;                        color: #6d28d9; }
+
+/* Primary action button — uses the global accent */
+@utility btn-primary {
+  background-color: var(--sidebar-accent);
+  color: #fff;
+  &:hover { background-color: #7c3aed; }
+  &:disabled { opacity: 0.5; }
+}
+
+/* Accent focus ring — used on inputs */
+@utility focus-accent {
+  &:focus {
+    outline: none;
+    border-color: var(--sidebar-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sidebar-accent) 15%, transparent);
+  }
+}
+
+/* Success banner */
+@utility banner-success { background-color: var(--gov-pass-bg); border-color: var(--gov-pass-border); color: var(--gov-pass-text); }
+
+/* Lifecycle action buttons */
+@utility btn-action-review    { background-color: var(--status-review-btn-bg);    color: #fff; &:hover { background-color: var(--status-review-btn-hover); } }
+@utility btn-action-approve   { background-color: var(--status-approved-btn-bg);  color: #fff; &:hover { background-color: var(--status-approved-btn-hover); } }
+@utility btn-action-reject    { background-color: var(--status-rejected-btn-bg);  color: #fff; &:hover { background-color: var(--status-rejected-btn-hover); } }
+@utility btn-action-deploy    { background-color: var(--status-deployed-btn-bg);  color: #fff; &:hover { background-color: var(--status-deployed-btn-hover); } }
+@utility btn-action-deprecate { background-color: var(--status-draft-btn-bg);     color: #fff; &:hover { background-color: var(--status-draft-btn-hover); } }
 
 /* ── Base ──────────────────────────────────────────────────────────────── */
 html,

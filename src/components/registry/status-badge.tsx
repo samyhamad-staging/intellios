@@ -3,21 +3,21 @@
 type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
 
 const STATUS_STYLES: Record<Status, string> = {
-  draft:      "bg-gray-100 text-gray-600",
-  in_review:  "bg-yellow-100 text-yellow-700",
-  approved:   "bg-green-100 text-green-700",
-  deployed:   "bg-indigo-100 text-indigo-700",
-  rejected:   "bg-red-100 text-red-700",
-  deprecated: "bg-gray-200 text-gray-500",
+  draft:      "badge-draft",
+  in_review:  "badge-review",
+  approved:   "badge-approved",
+  deployed:   "badge-deployed",
+  rejected:   "badge-rejected",
+  deprecated: "badge-deprecated",
 };
 
 const STATUS_DOT: Record<Status, string> = {
-  draft:      "bg-gray-400",
-  in_review:  "bg-yellow-500",
-  approved:   "bg-green-500",
-  deployed:   "bg-indigo-500",
-  rejected:   "bg-red-500",
-  deprecated: "bg-gray-400",
+  draft:      "dot-draft",
+  in_review:  "dot-review",
+  approved:   "dot-approved",
+  deployed:   "dot-deployed",
+  rejected:   "dot-rejected",
+  deprecated: "dot-deprecated",
 };
 
 const STATUS_LABELS: Record<Status, string> = {

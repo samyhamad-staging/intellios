@@ -28,12 +28,12 @@ const COLUMNS: {
   badgeCls: string;
   group: "active" | "terminal";
 }[] = [
-  { status: "draft",      label: "Draft",      colBg: "bg-gray-50 border-gray-200",     dotColor: "bg-gray-400",   badgeCls: "bg-gray-200 text-gray-600",     group: "active" },
-  { status: "in_review",  label: "In Review",  colBg: "bg-blue-50 border-blue-200",     dotColor: "bg-blue-500",   badgeCls: "bg-blue-100 text-blue-700",     group: "active" },
-  { status: "approved",   label: "Approved",   colBg: "bg-green-50 border-green-200",   dotColor: "bg-green-500",  badgeCls: "bg-green-100 text-green-700",   group: "active" },
-  { status: "deployed",   label: "Deployed",   colBg: "bg-indigo-50 border-indigo-200", dotColor: "bg-indigo-500", badgeCls: "bg-indigo-100 text-indigo-700", group: "terminal" },
-  { status: "rejected",   label: "Rejected",   colBg: "bg-red-50 border-red-200",       dotColor: "bg-red-500",    badgeCls: "bg-red-100 text-red-700",       group: "terminal" },
-  { status: "deprecated", label: "Deprecated", colBg: "bg-amber-50 border-amber-200",   dotColor: "bg-amber-400",  badgeCls: "bg-amber-100 text-amber-700",   group: "terminal" },
+  { status: "draft",      label: "Draft",      colBg: "col-draft",      dotColor: "dot-draft",      badgeCls: "badge-draft",      group: "active" },
+  { status: "in_review",  label: "In Review",  colBg: "col-review",     dotColor: "dot-review",     badgeCls: "badge-review",     group: "active" },
+  { status: "approved",   label: "Approved",   colBg: "col-approved",   dotColor: "dot-approved",   badgeCls: "badge-approved",   group: "active" },
+  { status: "deployed",   label: "Deployed",   colBg: "col-deployed",   dotColor: "dot-deployed",   badgeCls: "badge-deployed",   group: "terminal" },
+  { status: "rejected",   label: "Rejected",   colBg: "col-rejected",   dotColor: "dot-rejected",   badgeCls: "badge-rejected",   group: "terminal" },
+  { status: "deprecated", label: "Deprecated", colBg: "col-deprecated", dotColor: "dot-deprecated", badgeCls: "badge-deprecated", group: "terminal" },
 ];
 
 function timeAgo(dateStr: string): string {
@@ -140,7 +140,7 @@ export default function PipelinePage() {
       {/* Board */}
       <div className="flex flex-1 gap-0 overflow-x-auto">
         {error && (
-          <div className="m-6 w-full rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="m-6 w-full rounded-lg border badge-gov-error p-4 text-sm">
             {error}
           </div>
         )}
@@ -298,15 +298,15 @@ function InsightsStrip({ agents }: { agents: Agent[] }) {
   if (insights.length === 0) return null;
 
   const STYLES: Record<Insight["type"], string> = {
-    alert: "text-red-600",
-    warn: "text-amber-600",
-    info: "text-gray-500",
+    alert: "text-alert-critical",
+    warn:  "text-alert-warn",
+    info:  "text-alert-info",
   };
 
   const DOTS: Record<Insight["type"], string> = {
-    alert: "bg-red-400",
-    warn: "bg-amber-400",
-    info: "bg-gray-300",
+    alert: "dot-alert-critical",
+    warn:  "dot-alert-warn",
+    info:  "dot-alert-info",
   };
 
   return (
@@ -379,13 +379,13 @@ function AgentCard({ agent }: { agent: Agent }) {
         <span className="font-mono text-[11px]">v{agent.version}</span>
         <div className="flex items-center gap-1.5">
           {sla === "alert" && (
-            <span className="flex items-center gap-0.5 rounded-md bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
+            <span className="flex items-center gap-0.5 rounded-md badge-gov-error border px-1.5 py-0.5 text-[10px] font-semibold">
               <AlertCircle size={9} />
               SLA breach
             </span>
           )}
           {sla === "warn" && (
-            <span className="flex items-center gap-0.5 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600">
+            <span className="flex items-center gap-0.5 rounded-md badge-gov-warn border px-1.5 py-0.5 text-[10px] font-semibold">
               <Clock size={9} />
               Nearing SLA
             </span>
