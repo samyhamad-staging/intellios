@@ -71,10 +71,10 @@ export default function ExecutiveDashboardPage() {
 
   // ── Pipeline funnel data ─────────────────────────────────────────────────
   const funnelStages = [
-    { label: "Draft",       count: draft,       color: "bg-gray-300" },
-    { label: "In Review",   count: inReview,    color: "bg-blue-400" },
-    { label: "Approved",    count: approved,    color: "bg-green-400" },
-    { label: "Deployed",    count: deployed,    color: "bg-indigo-500" },
+    { label: "Draft",       count: draft,       color: "dot-draft"    },
+    { label: "In Review",   count: inReview,    color: "dot-review"   },
+    { label: "Approved",    count: approved,    color: "dot-approved" },
+    { label: "Deployed",    count: deployed,    color: "dot-deployed" },
   ];
   const funnelMax = Math.max(...funnelStages.map((s) => s.count), 1);
 
