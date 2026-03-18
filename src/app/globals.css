@@ -237,6 +237,32 @@
 /* Overdue / periodic review badge */
 @utility badge-overdue { background-color: var(--risk-critical-bg); color: var(--risk-critical-text); }
 
+/* User role badges */
+@utility badge-role-designer  { background-color: var(--status-review-col-bg);   color: var(--status-review-badge-text); }
+@utility badge-role-reviewer  { background-color: var(--gov-warn-bg);             color: var(--gov-warn-text); }
+@utility badge-role-officer   { background-color: var(--gov-pass-bg);             color: var(--gov-pass-text); }
+@utility badge-role-admin     { background-color: #f5f3ff;                        color: #6d28d9; }
+
+/* Primary action button — uses the global accent */
+@utility btn-primary {
+  background-color: var(--sidebar-accent);
+  color: #fff;
+  &:hover { background-color: #7c3aed; }
+  &:disabled { opacity: 0.5; }
+}
+
+/* Accent focus ring — used on inputs */
+@utility focus-accent {
+  &:focus {
+    outline: none;
+    border-color: var(--sidebar-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sidebar-accent) 15%, transparent);
+  }
+}
+
+/* Success banner */
+@utility banner-success { background-color: var(--gov-pass-bg); border-color: var(--gov-pass-border); color: var(--gov-pass-text); }
+
 /* Lifecycle action buttons */
 @utility btn-action-review    { background-color: var(--status-review-btn-bg);    color: #fff; &:hover { background-color: var(--status-review-btn-hover); } }
 @utility btn-action-approve   { background-color: var(--status-approved-btn-bg);  color: #fff; &:hover { background-color: var(--status-approved-btn-hover); } }

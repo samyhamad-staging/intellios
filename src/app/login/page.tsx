@@ -48,7 +48,7 @@ function LoginForm() {
 
         {/* Registration success banner */}
         {justRegistered && (
-          <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          <div className="mb-4 rounded-xl border banner-success px-4 py-3 text-sm">
             Account created successfully. Sign in to get started.
           </div>
         )}
@@ -74,7 +74,7 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus-accent"
                 placeholder="you@intellios.dev"
               />
             </div>
@@ -93,12 +93,12 @@ function LoginForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus-accent"
               />
             </div>
 
             {error && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="rounded-lg badge-gov-error px-3 py-2 text-sm">
                 {error}
               </p>
             )}
@@ -106,7 +106,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-violet-600 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+              className="w-full rounded-lg btn-primary py-2 text-sm font-medium"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
@@ -125,7 +125,7 @@ function LoginForm() {
                 Don&apos;t have an account?{" "}
                 <a
                   href="/register"
-                  className="font-medium text-violet-600 hover:text-violet-700 underline-offset-2 hover:underline"
+                  className="font-medium text-[color:var(--sidebar-accent)] hover:text-[color:#7c3aed] underline-offset-2 hover:underline"
                 >
                   Start free trial
                 </a>
@@ -145,28 +145,28 @@ function LoginForm() {
                 <span className="font-medium text-gray-700">designer@intellios.dev</span>
                 <span className="ml-2 text-gray-400">Designer1234!</span>
               </div>
-              <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700">Designer</span>
+              <span className="rounded badge-role-designer px-1.5 py-0.5">Designer</span>
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <span className="font-medium text-gray-700">reviewer@intellios.dev</span>
                 <span className="ml-2 text-gray-400">Reviewer1234!</span>
               </div>
-              <span className="rounded bg-amber-50 px-1.5 py-0.5 text-amber-700">Reviewer</span>
+              <span className="rounded badge-role-reviewer px-1.5 py-0.5">Reviewer</span>
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <span className="font-medium text-gray-700">officer@intellios.dev</span>
                 <span className="ml-2 text-gray-400">Officer1234!</span>
               </div>
-              <span className="rounded bg-green-50 px-1.5 py-0.5 text-green-700">Compliance Officer</span>
+              <span className="rounded badge-role-officer px-1.5 py-0.5">Compliance Officer</span>
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <span className="font-medium text-gray-700">admin@intellios.dev</span>
                 <span className="ml-2 text-gray-400">Admin1234!</span>
               </div>
-              <span className="rounded bg-purple-50 px-1.5 py-0.5 text-purple-700">Admin</span>
+              <span className="rounded badge-role-admin px-1.5 py-0.5">Admin</span>
             </div>
           </div>
         </div>
