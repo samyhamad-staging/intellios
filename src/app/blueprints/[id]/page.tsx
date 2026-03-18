@@ -649,6 +649,46 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         {/* Right rail: Submit + Governance + Refinement */}
         <aside className="w-80 shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-y-auto">
 
+          {/* Next Best Action — proactive guidance */}
+          {!loading && !submitted && abp && (() => {
+            const report = validationReport;
+            const errors = report?.violations?.filter((v) => v.severity === "error") ?? [];
+            const warnings = report?.violations?.filter((v) => v.severity === "warning") ?? [];
+            const missingInstructions = !abp.capabilities?.instructions;
+            const missingTools = (abp.capabilities?.tools?.length ?? 0) === 0;
+            const hasErrors = errors.length > 0;
+            const isReady = report?.valid === true;
+
+            // Priority-ordered guidance
+            let action: { icon: string; label: string; detail: string; color: string } | null = null;
+
+            if (missingInstructions && missingTools) {
+              action = { icon: "📝", label: "Add instructions and tools", detail: "The blueprint needs behavioral instructions and at least one tool before it can be reviewed.", color: "bg-amber-50 border-amber-200 text-amber-800" };
+            } else if (missingInstructions) {
+              action = { icon: "📝", label: "Add behavioral instructions", detail: "Instructions define how the agent should behave. Use the companion or refinement to add them.", color: "bg-amber-50 border-amber-200 text-amber-800" };
+            } else if (!report) {
+              action = { icon: "🔍", label: "Run governance validation", detail: "Validate against enterprise policies to identify any issues before submission.", color: "bg-blue-50 border-blue-200 text-blue-800" };
+            } else if (hasErrors) {
+              action = { icon: "🛡️", label: `Fix ${errors.length} governance violation${errors.length !== 1 ? "s" : ""}`, detail: "Resolve blocking violations to unlock submission. Check the violations list below.", color: "bg-red-50 border-red-200 text-red-800" };
+            } else if (warnings.length > 0) {
+              action = { icon: "⚠️", label: `Review ${warnings.length} warning${warnings.length !== 1 ? "s" : ""}`, detail: "Warnings won't block submission but should be reviewed. Consider addressing them for quality.", color: "bg-amber-50 border-amber-200 text-amber-800" };
+            } else if (isReady) {
+              action = { icon: "✅", label: "Ready to submit for review", detail: "All governance checks pass. Submit when you're satisfied with the design.", color: "bg-green-50 border-green-200 text-green-800" };
+            }
+
+            return action ? (
+              <div className={`border-b px-5 py-3 ${action.color}`}>
+                <div className="flex items-start gap-2">
+                  <span className="text-sm shrink-0">{action.icon}</span>
+                  <div>
+                    <p className="text-xs font-semibold">{action.label}</p>
+                    <p className="mt-0.5 text-[11px] opacity-80 leading-snug">{action.detail}</p>
+                  </div>
+                </div>
+              </div>
+            ) : null;
+          })()}
+
           {/* Submit for Review */}
           {agentIdState && (
             <div className="border-b border-gray-200 px-5 py-4">
