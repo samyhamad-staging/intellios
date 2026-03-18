@@ -51,7 +51,7 @@ export default function ReviewQueuePage() {
           <div className="flex items-center gap-2.5">
             <h1 className="text-xl font-semibold text-gray-900">Review Queue</h1>
             {!loading && blueprints.length > 0 && (
-              <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+              <span className="rounded-full badge-gov-warn px-2.5 py-0.5 text-xs font-semibold">
                 {blueprints.length}
               </span>
             )}
@@ -71,7 +71,7 @@ export default function ReviewQueuePage() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="flex items-center gap-2 rounded-lg border badge-gov-error p-4 text-sm">
           <AlertCircle size={15} /> {error}
         </div>
       )}
@@ -79,10 +79,10 @@ export default function ReviewQueuePage() {
       {/* Empty */}
       {!loading && !error && blueprints.length === 0 && (
         <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
-          <CheckCircle size={32} className="mb-4 text-green-400" />
+          <CheckCircle size={32} className="mb-4 text-[color:var(--gov-pass-icon)]" />
           <p className="mb-1 text-sm font-medium text-gray-700">Review queue is clear</p>
           <p className="text-xs text-gray-400">No blueprints are currently awaiting your review.</p>
-          <Link href="/registry" className="mt-4 text-xs text-violet-600 hover:text-violet-700">View Agent Registry →</Link>
+          <Link href="/registry" className="mt-4 text-xs text-[color:var(--sidebar-accent)] hover:text-[color:#7c3aed]">View Agent Registry →</Link>
         </div>
       )}
 
@@ -92,9 +92,9 @@ export default function ReviewQueuePage() {
           {blueprints.map((bp, i) => {
             const govStatus = bp.validationReport
               ? bp.validationReport.valid
-                ? { label: "Passes governance", color: "text-green-700 bg-green-50 border-green-200", icon: ShieldCheck }
-                : { label: `${bp.validationReport.violations.filter((v) => v.severity === "error").length} governance error(s)`, color: "text-red-700 bg-red-50 border-red-200", icon: ShieldAlert }
-              : { label: "Not validated", color: "text-gray-500 bg-gray-50 border-gray-200", icon: AlertCircle };
+                ? { label: "Passes governance", color: "badge-gov-pass", icon: ShieldCheck }
+                : { label: `${bp.validationReport.violations.filter((v) => v.severity === "error").length} governance error(s)`, color: "badge-gov-error", icon: ShieldAlert }
+              : { label: "Not validated", color: "badge-draft", icon: AlertCircle };
 
             const GovIcon = govStatus.icon;
             const activeStep = chain.length > 0 ? chain[bp.currentApprovalStep] : null;
@@ -104,10 +104,10 @@ export default function ReviewQueuePage() {
               <Link
                 key={bp.id}
                 href={`/registry/${bp.agentId}?tab=review`}
-                className={`block px-5 py-4 hover:bg-gray-50 transition-colors border-l-2 border-amber-400 ${i > 0 ? "border-t border-gray-100" : ""}`}
+                className={`block px-5 py-4 hover:bg-gray-50 transition-colors border-l-2 border-[color:var(--status-review-btn-bg)] ${i > 0 ? "border-t border-gray-100" : ""}`}
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[color:var(--status-review-col-bg)] text-[color:var(--status-review-btn-bg)]">
                     <ClipboardList size={15} />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -134,7 +134,7 @@ export default function ReviewQueuePage() {
                           return (
                             <span key={idx} className="flex items-center gap-1">
                               {idx > 0 && <ChevronRight size={11} className="text-gray-300" />}
-                              <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${completed ? "bg-green-100 text-green-700" : isActive ? "bg-amber-100 text-amber-700 ring-1 ring-amber-300" : "bg-gray-100 text-gray-400"}`}>
+                              <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${completed ? "badge-approved" : isActive ? "badge-review ring-1 ring-[color:var(--status-review-border)]" : "badge-draft"}`}>
                                 {completed ? "✓ " : isActive ? "› " : "○ "}{step.label}
                               </span>
                             </span>
@@ -158,12 +158,12 @@ export default function ReviewQueuePage() {
                     {activeStep ? (() => {
                       const isYourStep = userRole != null && activeStep.role === userRole;
                       return (
-                        <span className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${isYourStep ? "border-violet-200 bg-violet-50 text-violet-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+                        <span className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${isYourStep ? "badge-deployed" : "badge-gov-warn"}`}>
                           {isYourStep ? `Your step: ${activeStep.label}` : `Waiting: ${activeStep.label}`}
                         </span>
                       );
                     })() : (
-                      <span className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">Pending</span>
+                      <span className="rounded-lg border badge-gov-warn px-2.5 py-1 text-xs font-medium">Pending</span>
                     )}
                     <ChevronRight size={14} className="text-gray-300" />
                   </div>
