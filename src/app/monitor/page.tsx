@@ -101,7 +101,7 @@ function KpiCard({
   subColor: string;
 }) {
   return (
-    <div className={`rounded-xl border p-5 ${color}`}>
+    <div className={`rounded-card border p-5 ${color}`}>
       <div className="text-3xl font-bold">{value}</div>
       <div className="mt-1 text-sm font-semibold">{label}</div>
       <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
@@ -301,7 +301,7 @@ export default function MonitorPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4">
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-card border border-gray-200 bg-white px-5 py-4">
         <div className="flex flex-1 min-w-48 flex-col gap-1">
           <label className="text-xs font-medium text-gray-500">Search</label>
           <input
@@ -339,7 +339,7 @@ export default function MonitorPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="flex items-center gap-4 border-b border-gray-100 px-5 py-4">
               <div className="h-4 w-48 animate-pulse rounded bg-gray-100" />
@@ -349,7 +349,7 @@ export default function MonitorPage() {
           ))}
         </div>
       ) : agents.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
+        <div className="rounded-card border-2 border-dashed border-gray-200 bg-white p-12 text-center">
           <p className="text-sm font-medium text-gray-500">No deployed agents yet.</p>
           <p className="mt-1 text-xs text-gray-400">
             Deploy an approved agent to begin monitoring its governance health.
@@ -362,7 +362,7 @@ export default function MonitorPage() {
           </Link>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-card border border-gray-200 bg-white">
           <div className="border-b border-gray-100 px-5 py-2.5 text-xs text-gray-400">
             {filtered.length} agent{filtered.length === 1 ? "" : "s"}
             {filtered.length !== agents.length && ` (filtered from ${agents.length})`}
@@ -516,7 +516,7 @@ export default function MonitorPage() {
           )}
 
           {agcSummary === null ? (
-            <div className="rounded-xl border-2 border-dashed border-gray-200 bg-white px-6 py-8 text-center">
+            <div className="rounded-card border-2 border-dashed border-gray-200 bg-white px-6 py-8 text-center">
               <p className="text-sm text-gray-500">
                 Click <strong>Check Live AWS Status</strong> to query the live Bedrock agent status for each deployed agent.
               </p>
@@ -528,22 +528,22 @@ export default function MonitorPage() {
             <>
               {/* Summary strip */}
               <div className="mb-4 grid grid-cols-3 gap-3">
-                <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <div className="rounded-card border border-gray-200 bg-white p-4">
                   <div className="text-2xl font-bold text-gray-900">{agcSummary.total}</div>
                   <div className="mt-0.5 text-xs text-gray-500">AgentCore agents</div>
                 </div>
-                <div className={`rounded-xl border p-4 ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "border-green-200 bg-green-50" : "border-gray-200 bg-white"}`}>
+                <div className={`rounded-card border p-4 ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "border-green-200 bg-green-50" : "border-gray-200 bg-white"}`}>
                   <div className={`text-2xl font-bold ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "text-green-700" : "text-gray-900"}`}>{agcSummary.prepared}</div>
                   <div className="mt-0.5 text-xs text-gray-500">PREPARED (callable)</div>
                 </div>
-                <div className={`rounded-xl border p-4 ${agcSummary.unreachable > 0 ? "border-red-200 bg-red-50" : "border-gray-200 bg-white"}`}>
+                <div className={`rounded-card border p-4 ${agcSummary.unreachable > 0 ? "border-red-200 bg-red-50" : "border-gray-200 bg-white"}`}>
                   <div className={`text-2xl font-bold ${agcSummary.unreachable > 0 ? "text-red-700" : "text-gray-900"}`}>{agcSummary.unreachable}</div>
                   <div className="mt-0.5 text-xs text-gray-500">Unreachable</div>
                 </div>
               </div>
 
               {/* Per-agent table */}
-              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">

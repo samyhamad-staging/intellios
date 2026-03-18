@@ -188,7 +188,7 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
   return (
     <div className="space-y-6">
       {/* Summary header */}
-      <div className="flex items-center gap-5 rounded-xl border border-gray-200 bg-white p-5">
+      <div className="flex items-center gap-5 rounded-card border border-gray-200 bg-white p-5">
         <ScoreRing score={report.score} />
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
@@ -220,7 +220,7 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
 
       {/* Risk guidance */}
       {report.riskTier === "CRITICAL" || report.riskTier === "HIGH" ? (
-        <div className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4">
+        <div className="flex items-start gap-3 rounded-card border border-orange-200 bg-orange-50 p-4">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
           <p className="text-sm text-orange-800">
             <span className="font-semibold">{report.riskTier} risk — </span>

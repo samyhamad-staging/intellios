@@ -326,11 +326,11 @@ export default function CompliancePage() {
                     </>
                   );
                   return anchor ? (
-                    <a key={label} href={anchor} className={`block rounded-xl border p-4 hover:shadow-sm hover:border-violet-200 transition-all ${color}`}>
+                    <a key={label} href={anchor} className={`block rounded-card border p-4 hover:shadow-sm hover:border-violet-200 transition-all ${color}`}>
                       {inner}
                     </a>
                   ) : (
-                    <div key={label} className={`rounded-xl border p-4 ${color}`}>
+                    <div key={label} className={`rounded-card border p-4 ${color}`}>
                       {inner}
                     </div>
                   );
@@ -344,7 +344,7 @@ export default function CompliancePage() {
                 Periodic Review Status (SR 11-7)
               </h2>
               {(posture.overdueReviews?.length ?? 0) === 0 ? (
-                <div className="rounded-xl border border-green-200 bg-green-50 p-5 text-center">
+                <div className="rounded-card border border-green-200 bg-green-50 p-5 text-center">
                   <p className="text-sm font-medium text-green-800">✓ All deployments on schedule</p>
                   <p className="mt-0.5 text-xs text-green-600">No deployed agents have overdue periodic reviews.</p>
                 </div>
@@ -356,7 +356,7 @@ export default function CompliancePage() {
                       {posture.overdueReviews.length} agent{posture.overdueReviews.length !== 1 ? "s" : ""} with overdue periodic review
                     </span>
                   </div>
-                  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                  <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-gray-100 bg-gray-50">
@@ -419,7 +419,7 @@ export default function CompliancePage() {
                 <p className="text-xs text-gray-400 mt-0.5">Agents with unresolved validation errors</p>
               </div>
               {posture.atRiskAgents.length === 0 ? (
-                <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
+                <div className="rounded-card border border-green-200 bg-green-50 p-6 text-center">
                   <p className="text-sm font-medium text-green-800">
                     ✓ No agents at risk
                   </p>
@@ -429,7 +429,7 @@ export default function CompliancePage() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50">
@@ -528,7 +528,7 @@ export default function CompliancePage() {
               </div>
 
               {posture.reviewQueue.length === 0 ? (
-                <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+                <div className="rounded-card border border-gray-200 bg-white p-6 text-center">
                   <p className="text-sm text-gray-400">
                     No blueprints pending review
                   </p>
@@ -579,7 +579,7 @@ export default function CompliancePage() {
               </h2>
 
               {posture.policyCoverage.length === 0 ? (
-                <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+                <div className="rounded-card border border-gray-200 bg-white p-6 text-center">
                   <p className="text-sm text-gray-400">
                     No active governance policies.{" "}
                     <Link
@@ -591,7 +591,7 @@ export default function CompliancePage() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50">
@@ -677,7 +677,7 @@ export default function CompliancePage() {
                     </span>
                   </div>
                 </div>
-                <div className="rounded-xl border border-gray-200 bg-white p-5">
+                <div className="rounded-card border border-gray-200 bg-white p-5">
                   {analytics.monthlySubmissions.every((m) => m.count === 0) &&
                   analytics.monthlyApprovals.every((m) => m.count === 0) ? (
                     <div className="flex flex-col items-center gap-1 py-6 text-center">

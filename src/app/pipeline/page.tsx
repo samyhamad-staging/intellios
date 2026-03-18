@@ -137,6 +137,24 @@ export default function PipelinePage() {
         <InsightsStrip agents={agents} />
       )}
 
+      {/* Stage totals bar */}
+      {!loading && !error && (
+        <div className="shrink-0 flex items-center gap-1 border-b border-gray-100 bg-white px-6 py-2">
+          {COLUMNS.map(({ status, label, badgeCls }, i) => {
+            const count = byStatus(status).length;
+            return (
+              <span key={status} className="flex items-center gap-1.5 text-xs">
+                {i > 0 && <span className="text-gray-200 select-none">·</span>}
+                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${badgeCls}`}>
+                  {count}
+                </span>
+                <span className="text-gray-500">{label}</span>
+              </span>
+            );
+          })}
+        </div>
+      )}
+
       {/* Board */}
       <div className="flex flex-1 gap-0 overflow-x-auto">
         {error && (
@@ -211,7 +229,7 @@ function Column({ status, label, colBg, dotColor, badgeCls, cards, loading }: Co
       </div>
 
       {/* Card list */}
-      <div className={`flex flex-col gap-2 rounded-xl border p-2 ${colBg} min-h-32 flex-1`}>
+      <div className={`flex flex-col gap-2 rounded-card border p-2 ${colBg} min-h-32 flex-1`}>
         {loading && (
           <div className="flex h-24 items-center justify-center">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-violet-600" />
@@ -337,18 +355,18 @@ function AgentCard({ agent }: { agent: Agent }) {
     "border-gray-200 hover:border-violet-300";
 
   const shadowCls =
-    sla === "alert" ? "shadow-sm hover:shadow-red-100" :
-    sla === "warn"  ? "shadow-sm hover:shadow-amber-100" :
+    sla === "alert" ? "shadow-sm hover:shadow-md hover:shadow-red-100" :
+    sla === "warn"  ? "shadow-sm hover:shadow-md hover:shadow-amber-100" :
     "shadow-sm hover:shadow-md hover:shadow-violet-50";
 
   return (
     <Link
       href={`/registry/${agent.agentId}`}
-      className={`block rounded-lg border bg-white p-3 transition-all hover:-translate-y-px ${borderCls} ${shadowCls}`}
+      className={`block rounded-lg border bg-white p-3 transition-all hover:-translate-y-px hover:border-gray-300 ${borderCls} ${shadowCls}`}
     >
       {/* Name + governance shield */}
       <div className="flex items-start gap-2">
-        <span className="flex-1 text-sm font-semibold leading-snug text-gray-900 line-clamp-2">
+        <span className="flex-1 text-sm font-semibold leading-snug text-gray-900 line-clamp-2" title={agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}>
           {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
         </span>
         {agent.violationCount !== null && agent.violationCount > 0 ? (

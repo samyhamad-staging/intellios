@@ -47,12 +47,12 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
         placeholder="Describe your agent..."
         disabled={disabled}
         rows={1}
-        className="flex-1 resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-gray-400 disabled:opacity-50"
+        className="flex-1 resize-none rounded-card border border-gray-300 px-4 py-3 text-sm outline-none focus:border-gray-400 disabled:opacity-50"
       />
       <button
         onClick={handleSend}
         disabled={disabled || !value.trim()}
-        className="rounded-xl bg-violet-600 px-4 py-3 text-sm text-white hover:bg-violet-700 disabled:opacity-50"
+        className="rounded-card bg-violet-600 px-4 py-3 text-sm text-white hover:bg-violet-700 disabled:opacity-50"
       >
         Send
       </button>

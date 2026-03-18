@@ -83,7 +83,7 @@ function InvitePage() {
         </div>
 
         {/* Card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="rounded-card border border-gray-200 bg-white p-8 shadow-sm">
           {status === "loading" && (
             <p className="text-center text-sm text-gray-500">Verifying invitation…</p>
           )}

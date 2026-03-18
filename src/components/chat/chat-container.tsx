@@ -119,7 +119,7 @@ export function ChatContainer({
                 <button
                   key={prompt}
                   onClick={() => handleSend(prompt)}
-                  className="flex items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm text-gray-700 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 transition-colors"
+                  className="flex items-center justify-between gap-2 rounded-card border border-gray-200 bg-white px-4 py-3 text-left text-sm text-gray-700 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 transition-colors"
                 >
                   <span>{prompt}</span>
                   <ArrowRight size={13} className="shrink-0 text-gray-300 group-hover:text-violet-400" />

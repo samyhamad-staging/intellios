@@ -292,7 +292,7 @@ export function IntakeReview({
 
         {/* Context summary strip */}
         {context && (
-          <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-card border border-gray-200 bg-white px-5 py-4 shadow-sm">
             <div className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Enterprise Context</div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
               <div>
@@ -329,7 +329,7 @@ export function IntakeReview({
 
         {/* Ambiguity flags */}
         {unresolvedFlags.length > 0 && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-card border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-amber-600">⚠</span>
@@ -363,7 +363,7 @@ export function IntakeReview({
 
         {/* Stakeholder contributions */}
         {(contributions.length > 0 || (context && getMissingContributionDomains(context, contributions, riskTier).length > 0)) && (
-          <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-card border border-gray-200 bg-white px-5 py-4 shadow-sm">
             <div className="flex items-baseline gap-2 mb-3">
               <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Stakeholder Input
@@ -443,7 +443,7 @@ export function IntakeReview({
 
         {/* Capture verification — only shown when assessments are present */}
         {captureVerification.length > 0 && (
-          <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-card border border-gray-200 bg-white px-5 py-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -496,7 +496,7 @@ export function IntakeReview({
 
         {/* Policy quality warnings — only shown when inadequate policies exist */}
         {inadequatePolicies.length > 0 && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-card border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-amber-600">⚠</span>
               <div className="text-xs font-semibold uppercase tracking-wider text-amber-700">
@@ -533,7 +533,7 @@ export function IntakeReview({
             return (
               <div
                 key={key}
-                className={`rounded-xl border bg-white shadow-sm transition-colors ${
+                className={`rounded-card border bg-white shadow-sm transition-colors ${
                   !filled
                     ? "border-gray-200 opacity-60"
                     : isAcknowledged

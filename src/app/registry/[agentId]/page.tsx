@@ -629,7 +629,7 @@ export default function AgentDetailPage({
       {/* Clone Modal */}
       {cloneModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-card border border-gray-200 bg-white p-6 shadow-xl">
             <h2 className="text-base font-semibold text-gray-900">Clone Agent</h2>
             <p className="mt-1 text-sm text-gray-500">
               Creates a new draft agent pre-populated with this blueprint&apos;s content. The clone
@@ -1028,7 +1028,7 @@ export default function AgentDetailPage({
           return (
             <div className="p-6 max-w-3xl space-y-6">
               {/* ── Test Suite ── */}
-              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+              <div className="rounded-card border border-gray-200 bg-white overflow-hidden">
                 <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900">Test Suite</p>
@@ -1161,7 +1161,7 @@ export default function AgentDetailPage({
               </div>
 
               {/* ── Test Runs ── */}
-              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+              <div className="rounded-card border border-gray-200 bg-white overflow-hidden">
                 <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900">Test Runs</p>
@@ -1364,7 +1364,7 @@ export default function AgentDetailPage({
 
             {/* Version Lineage — governance diff per version */}
             {versions.some((v) => v.governanceDiff != null) && (
-              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+              <div className="rounded-card border border-gray-200 bg-white overflow-hidden">
                 <div className="border-b border-gray-100 bg-gray-50 px-5 py-3">
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                     Version Lineage

@@ -64,7 +64,7 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+    <div className="rounded-card border border-gray-200 bg-white p-8 shadow-sm">
       <h2 className="mb-6 text-lg font-semibold text-gray-900">
         Create your account
       </h2>

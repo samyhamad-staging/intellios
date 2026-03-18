@@ -111,7 +111,7 @@ function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-blue-200 bg-blue-50 px-6 py-5 space-y-4">
+    <form onSubmit={handleSubmit} className="rounded-card border border-blue-200 bg-blue-50 px-6 py-5 space-y-4">
       <h3 className="text-sm font-semibold text-gray-900">New User</h3>
 
       {error && (
@@ -232,7 +232,7 @@ function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-violet-200 bg-violet-50 px-6 py-5 space-y-4">
+    <form onSubmit={handleSubmit} className="rounded-card border border-violet-200 bg-violet-50 px-6 py-5 space-y-4">
       <div>
         <h3 className="text-sm font-semibold text-gray-900">Invite User</h3>
         <p className="mt-0.5 text-xs text-gray-500">
@@ -525,7 +525,7 @@ export default function AdminUsersPage() {
         )}
 
         {/* User table */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
           {loading && (
             <div className="space-y-0 divide-y divide-gray-100">
               {[1, 2, 3].map((i) => (
@@ -610,7 +610,7 @@ export default function AdminUsersPage() {
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Pending Invitations</h2>
 
           {invitationsLoading && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
               {[1, 2].map((i) => (
                 <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-gray-100 last:border-0">
                   <div className="h-3 w-48 animate-pulse rounded bg-gray-100" />
@@ -621,13 +621,13 @@ export default function AdminUsersPage() {
           )}
 
           {!invitationsLoading && invitations.length === 0 && (
-            <div className="rounded-xl border border-gray-200 bg-white px-6 py-8 text-center">
+            <div className="rounded-card border border-gray-200 bg-white px-6 py-8 text-center">
               <p className="text-sm text-gray-400">No pending invitations.</p>
             </div>
           )}
 
           {!invitationsLoading && invitations.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
               <div className="border-b border-gray-100 bg-gray-50 px-6 py-2.5">
                 <div className="grid grid-cols-[2fr_1.5fr_2fr_1fr] gap-4 text-xs font-medium uppercase tracking-wider text-gray-400">
                   <span>Email</span>
