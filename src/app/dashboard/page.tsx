@@ -106,7 +106,7 @@ export default function ExecutiveDashboardPage() {
 
       <div className="space-y-8">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-lg border badge-gov-error p-4 text-sm">
             {error}
           </div>
         )}
@@ -119,15 +119,15 @@ export default function ExecutiveDashboardPage() {
               label="Deployed Agents"
               value={loading ? "–" : deployed}
               sub="live in production"
-              color="bg-indigo-50 border-indigo-200 text-indigo-900"
-              subColor="text-indigo-600"
+              color="kpi-deployed"
+              subColor="text-[color:var(--status-deployed-dot)]"
               href="/deploy"
             />
             <KpiCard
               label="Deployment Rate"
               value={loading ? "–" : deploymentRate !== null ? `${deploymentRate}%` : "—"}
               sub="of non-draft agents"
-              color="bg-white border-gray-200 text-gray-900"
+              color="kpi-neutral"
               subColor="text-gray-400"
             />
             <KpiCard
@@ -136,16 +136,16 @@ export default function ExecutiveDashboardPage() {
               sub={`${policyCount} polic${policyCount === 1 ? "y" : "ies"} active`}
               color={
                 complianceRate !== null && complianceRate >= 80
-                  ? "bg-green-50 border-green-200 text-green-900"
+                  ? "kpi-compliant"
                   : complianceRate !== null && complianceRate >= 50
-                  ? "bg-amber-50 border-amber-200 text-amber-900"
-                  : "bg-white border-gray-200 text-gray-900"
+                  ? "kpi-caution"
+                  : "kpi-neutral"
               }
               subColor={
                 complianceRate !== null && complianceRate >= 80
-                  ? "text-green-600"
+                  ? "text-[color:var(--gov-pass-icon)]"
                   : complianceRate !== null && complianceRate >= 50
-                  ? "text-amber-600"
+                  ? "text-[color:var(--gov-warn-icon)]"
                   : "text-gray-400"
               }
               href="/governance"
@@ -154,8 +154,8 @@ export default function ExecutiveDashboardPage() {
               label="Pending Review"
               value={loading ? "–" : inReview}
               sub={inReview > 0 ? "awaiting decision" : "queue clear"}
-              color={inReview > 0 ? "bg-blue-50 border-blue-200 text-blue-900" : "bg-white border-gray-200 text-gray-900"}
-              subColor={inReview > 0 ? "text-blue-600" : "text-gray-400"}
+              color={inReview > 0 ? "kpi-review" : "kpi-neutral"}
+              subColor={inReview > 0 ? "text-[color:var(--status-review-badge-dot)]" : "text-gray-400"}
               href="/review"
             />
           </div>
@@ -189,11 +189,11 @@ export default function ExecutiveDashboardPage() {
               <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3 text-center">
                 <div>
                   <div className="text-xs text-gray-400">Rejected</div>
-                  <div className="text-lg font-semibold text-red-600">{loading ? "–" : rejected}</div>
+                  <div className="text-lg font-semibold text-[color:var(--status-rejected-text)]">{loading ? "–" : rejected}</div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-400">Deprecated</div>
-                  <div className="text-lg font-semibold text-amber-600">{loading ? "–" : deprecated}</div>
+                  <div className="text-lg font-semibold text-[color:var(--status-deprecated-badge-text)]">{loading ? "–" : deprecated}</div>
                 </div>
               </div>
             </div>
@@ -205,13 +205,13 @@ export default function ExecutiveDashboardPage() {
             <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
               {/* Donut-style summary */}
               <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="rounded-lg bg-green-50 p-3">
-                  <div className="text-2xl font-bold text-green-700">{loading ? "–" : clean}</div>
-                  <div className="text-xs text-green-600 mt-0.5">Passing</div>
+                <div className="rounded-lg badge-gov-pass p-3">
+                  <div className="text-2xl font-bold">{loading ? "–" : clean}</div>
+                  <div className="text-xs mt-0.5">Passing</div>
                 </div>
-                <div className="rounded-lg bg-red-50 p-3">
-                  <div className="text-2xl font-bold text-red-700">{loading ? "–" : withErrors}</div>
-                  <div className="text-xs text-red-600 mt-0.5">With Errors</div>
+                <div className="rounded-lg badge-gov-error p-3">
+                  <div className="text-2xl font-bold">{loading ? "–" : withErrors}</div>
+                  <div className="text-xs mt-0.5">With Errors</div>
                 </div>
                 <div className="rounded-lg bg-gray-50 p-3">
                   <div className="text-2xl font-bold text-gray-700">{loading ? "–" : notValidated}</div>
@@ -228,12 +228,12 @@ export default function ExecutiveDashboardPage() {
                       <Link
                         key={agent.agentId}
                         href={`/registry/${agent.agentId}?tab=governance`}
-                        className="flex items-center justify-between rounded-lg border border-red-100 bg-white px-3 py-2 hover:border-red-300 transition-colors"
+                        className="flex items-center justify-between rounded-lg border border-[color:var(--gov-error-border)] bg-white px-3 py-2 hover:border-[color:var(--gov-error-icon)] transition-colors"
                       >
                         <span className="text-sm text-gray-800 truncate">
                           {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
                         </span>
-                        <span className="shrink-0 ml-2 text-xs font-medium text-red-600">
+                        <span className="shrink-0 ml-2 text-xs font-medium text-[color:var(--gov-error-text)]">
                           {agent.violationCount} error{agent.violationCount !== 1 ? "s" : ""}
                         </span>
                       </Link>
@@ -244,8 +244,8 @@ export default function ExecutiveDashboardPage() {
 
               {!loading && needingAttention.length === 0 && !loading && (
                 <div className="text-center py-3">
-                  <p className="text-sm font-medium text-green-700">✓ No governance errors detected</p>
-                  <p className="text-xs text-green-600 mt-0.5">{clean} validated agent{clean !== 1 ? "s" : ""} passing</p>
+                  <p className="text-sm font-medium text-[color:var(--gov-pass-text)]">✓ No governance errors detected</p>
+                  <p className="text-xs text-[color:var(--gov-pass-icon)] mt-0.5">{clean} validated agent{clean !== 1 ? "s" : ""} passing</p>
                 </div>
               )}
             </div>

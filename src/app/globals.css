@@ -211,6 +211,32 @@
 @utility badge-gov-warn  { background-color: var(--gov-warn-bg);  color: var(--gov-warn-text);  border-color: var(--gov-warn-border); }
 @utility badge-gov-error { background-color: var(--gov-error-bg); color: var(--gov-error-text); border-color: var(--gov-error-border); }
 
+/* Pipeline column backgrounds */
+@utility col-draft      { background-color: var(--status-draft-col-bg);      border-color: var(--status-draft-col-border); }
+@utility col-review     { background-color: var(--status-review-col-bg);     border-color: var(--status-review-col-border); }
+@utility col-approved   { background-color: var(--status-approved-col-bg);   border-color: var(--status-approved-col-border); }
+@utility col-deployed   { background-color: var(--status-deployed-col-bg);   border-color: var(--status-deployed-col-border); }
+@utility col-rejected   { background-color: var(--status-rejected-col-bg);   border-color: var(--status-rejected-col-border); }
+@utility col-deprecated { background-color: var(--status-deprecated-col-bg); border-color: var(--status-deprecated-col-border); }
+
+/* Alert / insight strip */
+@utility text-alert-critical { color: var(--alert-critical-text); }
+@utility text-alert-warn     { color: var(--alert-warn-text); }
+@utility text-alert-info     { color: var(--alert-info-text); }
+@utility dot-alert-critical  { background-color: var(--alert-critical-dot); }
+@utility dot-alert-warn      { background-color: var(--alert-warn-dot); }
+@utility dot-alert-info      { background-color: var(--alert-info-dot); }
+
+/* KPI / stat cards */
+@utility kpi-deployed  { background-color: var(--status-deployed-col-bg); border-color: var(--status-deployed-col-border); color: var(--status-deployed-text); }
+@utility kpi-review    { background-color: var(--status-review-col-bg);   border-color: var(--status-review-col-border);   color: var(--status-review-badge-text); }
+@utility kpi-compliant { background-color: var(--gov-pass-bg);  border-color: var(--gov-pass-border);  color: var(--gov-pass-text); }
+@utility kpi-caution   { background-color: var(--gov-warn-bg);  border-color: var(--gov-warn-border);  color: var(--gov-warn-text); }
+@utility kpi-neutral   { background-color: #ffffff; border-color: #e5e7eb; color: #111827; }
+
+/* Overdue / periodic review badge */
+@utility badge-overdue { background-color: var(--risk-critical-bg); color: var(--risk-critical-text); }
+
 /* Lifecycle action buttons */
 @utility btn-action-review    { background-color: var(--status-review-btn-bg);    color: #fff; &:hover { background-color: var(--status-review-btn-hover); } }
 @utility btn-action-approve   { background-color: var(--status-approved-btn-bg);  color: #fff; &:hover { background-color: var(--status-approved-btn-hover); } }
