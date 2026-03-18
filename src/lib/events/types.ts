@@ -33,7 +33,8 @@ export type EventType =
   | "settings.updated"
   | "blueprint.periodic_review_scheduled"
   | "blueprint.periodic_review_completed"
-  | "blueprint.periodic_review_reminder";
+  | "blueprint.periodic_review_reminder"
+  | "blueprint.evidence_package_exported";
 
 export interface LifecycleEvent {
   /** Audit log row ID — can be used to correlate with the audit trail */
