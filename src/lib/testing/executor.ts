@@ -98,7 +98,7 @@ async function executeTestCase(
   inputPrompt: string
 ): Promise<string> {
   const { text } = await generateText({
-    model: anthropic("claude-3-5-haiku-20241022"),
+    model: anthropic("claude-haiku-4-5-20251001"),
     system: systemPrompt,
     prompt: inputPrompt,
     maxOutputTokens: 500,
@@ -113,7 +113,7 @@ async function evaluateOutput(
   actualOutput: string
 ): Promise<{ pass: boolean; rationale: string }> {
   const { text } = await generateText({
-    model: anthropic("claude-3-5-haiku-20241022"),
+    model: anthropic("claude-haiku-4-5-20251001"),
     system:
       "You are a test evaluator for AI agent outputs. " +
       "Assess whether the actual output satisfies the expected behavior. " +

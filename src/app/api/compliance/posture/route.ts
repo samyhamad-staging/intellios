@@ -18,12 +18,13 @@ import type { ValidationReport } from "@/lib/governance/types";
  * Aggregates enterprise compliance posture from existing tables.
  * No new DB tables required — pure aggregation query.
  *
- * Access: compliance_officer | admin
+ * Access: compliance_officer | admin | viewer
  */
 export async function GET(request: NextRequest) {
   const { session: authSession, error } = await requireAuth([
     "compliance_officer",
     "admin",
+    "viewer",
   ]);
   if (error) return error;
   const requestId = getRequestId(request);

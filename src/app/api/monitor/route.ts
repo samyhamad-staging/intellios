@@ -9,10 +9,10 @@ import { getRequestId } from "@/lib/request-id";
 /**
  * GET /api/monitor
  * Returns all deployed agents enriched with their current governance health.
- * Roles: reviewer | compliance_officer | admin
+ * Roles: reviewer | compliance_officer | admin | viewer
  */
 export async function GET(request: NextRequest) {
-  const { session: authSession, error } = await requireAuth(["reviewer", "compliance_officer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["reviewer", "compliance_officer", "admin", "viewer"]);
   if (error) return error;
   const requestId = getRequestId(request);
 

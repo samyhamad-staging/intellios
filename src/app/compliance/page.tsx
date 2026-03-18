@@ -111,7 +111,7 @@ export default function CompliancePage() {
       return;
     }
     const role = session.user.role;
-    if (role !== "compliance_officer" && role !== "admin") {
+    if (role !== "compliance_officer" && role !== "admin" && role !== "viewer") {
       router.push("/");
     }
   }, [session, sessionStatus, router]);
@@ -119,7 +119,7 @@ export default function CompliancePage() {
   useEffect(() => {
     if (sessionStatus !== "authenticated") return;
     const role = session?.user?.role;
-    if (role !== "compliance_officer" && role !== "admin") return;
+    if (role !== "compliance_officer" && role !== "admin" && role !== "viewer") return;
 
     Promise.all([
       fetch("/api/compliance/posture").then((r) => r.json()),
@@ -659,70 +659,72 @@ export default function CompliancePage() {
               )}
             </section>
 
-            {/* ── Section E: 30-Day Trends ────────────────────────────────── */}
+            {/* ── Section E: Activity Trends ──────────────────────────────── */}
             {analytics && (
               <section>
-                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
-                  Activity Trends (last 6 months)
-                </h2>
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+                    Activity Trends (last 6 months)
+                  </h2>
+                  <div className="flex items-center gap-4 text-xs text-gray-400">
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block h-2 w-2 rounded-full bg-blue-400" />
+                      Submitted
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block h-2 w-2 rounded-full bg-green-400" />
+                      Approved
+                    </span>
+                  </div>
+                </div>
                 <div className="rounded-xl border border-gray-200 bg-white p-5">
-                  {(() => {
+                  {analytics.monthlySubmissions.every((m) => m.count === 0) &&
+                  analytics.monthlyApprovals.every((m) => m.count === 0) ? (
+                    <div className="flex flex-col items-center gap-1 py-6 text-center">
+                      <p className="text-sm text-gray-400">No submission activity in the last 6 months</p>
+                      <p className="text-xs text-gray-300">Data will appear here once agents are submitted for review</p>
+                    </div>
+                  ) : (() => {
                     const maxCount = Math.max(
                       ...analytics.monthlySubmissions.map((m) => m.count),
                       ...analytics.monthlyApprovals.map((m) => m.count),
                       1
                     );
                     return (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {analytics.monthlySubmissions.map((sub, i) => {
                           const appr = analytics.monthlyApprovals[i];
-                          const subPct = Math.round(
-                            (sub.count / maxCount) * 100
-                          );
-                          const apprPct = Math.round(
-                            ((appr?.count ?? 0) / maxCount) * 100
-                          );
+                          const subCount = sub.count;
+                          const apprCount = appr?.count ?? 0;
+                          const subPct = Math.round((subCount / maxCount) * 100);
+                          const apprPct = Math.round((apprCount / maxCount) * 100);
+                          // Format "2025-10" → "Oct 2025"
+                          const [yr, mo] = sub.month.split("-");
+                          const label = new Date(Number(yr), Number(mo) - 1, 1)
+                            .toLocaleDateString("en-US", { month: "short", year: "numeric" });
                           return (
-                            <div key={sub.month}>
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs text-gray-500">
-                                  {sub.month}
-                                </span>
-                                <div className="flex items-center gap-4 text-xs text-gray-400">
-                                  <span className="flex items-center gap-1">
-                                    <span className="inline-block w-2 h-2 rounded-full bg-blue-400" />
-                                    {sub.count} submitted
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <span className="inline-block w-2 h-2 rounded-full bg-green-400" />
-                                    {appr?.count ?? 0} approved
-                                  </span>
-                                </div>
+                            <div key={sub.month} className="grid grid-cols-[80px_1fr_72px] items-center gap-3">
+                              <span className="text-xs text-gray-400 text-right whitespace-nowrap">{label}</span>
+                              <div className="relative h-5 rounded bg-gray-50 overflow-hidden">
+                                <div
+                                  className="absolute inset-y-0 left-0 rounded bg-blue-100 transition-all"
+                                  style={{ width: `${subPct}%` }}
+                                />
+                                <div
+                                  className="absolute inset-y-0 left-0 rounded bg-green-400/70 transition-all"
+                                  style={{ width: `${apprPct}%` }}
+                                />
                               </div>
-                              <div className="space-y-1">
-                                <div className="h-2 w-full rounded-full bg-gray-100">
-                                  <div
-                                    className="h-2 rounded-full bg-blue-400 transition-all"
-                                    style={{ width: `${subPct}%` }}
-                                  />
-                                </div>
-                                <div className="h-2 w-full rounded-full bg-gray-100">
-                                  <div
-                                    className="h-2 rounded-full bg-green-400 transition-all"
-                                    style={{ width: `${apprPct}%` }}
-                                  />
-                                </div>
+                              <div className="text-right text-xs text-gray-400 whitespace-nowrap">
+                                {subCount} / {apprCount}
                               </div>
                             </div>
                           );
                         })}
-                        {analytics.monthlySubmissions.every(
-                          (m) => m.count === 0
-                        ) && (
-                          <p className="text-center text-xs text-gray-400 py-4">
-                            No submission activity in the last 6 months
-                          </p>
-                        )}
+                        <div className="mt-1 grid grid-cols-[80px_1fr_72px] gap-3">
+                          <span />
+                          <div className="text-xs text-gray-300">submitted / approved</div>
+                        </div>
                       </div>
                     );
                   })()}

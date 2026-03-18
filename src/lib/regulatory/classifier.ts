@@ -507,9 +507,9 @@ export function classifyNISTRMF(
         intakeContext.agentPurpose,
         intakeContext.deploymentType,
         intakeContext.dataSensitivity,
-        intakeContext.regulatoryScope.length > 0,
-        intakeContext.integrationTypes.length > 0,
-        intakeContext.stakeholdersConsulted.length > 0,
+        (intakeContext.regulatoryScope?.length ?? 0) > 0,
+        (intakeContext.integrationTypes?.length ?? 0) > 0,
+        (intakeContext.stakeholdersConsulted?.length ?? 0) > 0,
       ].filter(Boolean).length
     : 0;
   const map1Strength: NISTStrength =

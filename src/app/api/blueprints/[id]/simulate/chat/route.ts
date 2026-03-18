@@ -95,7 +95,7 @@ export async function POST(
     const modelMessages = await convertToModelMessages(messages);
 
     const result = streamText({
-      model: anthropic("claude-3-5-haiku-20241022"),
+      model: anthropic("claude-haiku-4-5-20251001"),
       system: systemPrompt,
       messages: modelMessages,
       maxOutputTokens: abp.constraints?.max_tokens_per_response ?? 1024,

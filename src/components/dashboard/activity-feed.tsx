@@ -49,6 +49,39 @@ function relativeTime(iso: string): string {
   return `${Math.floor(diffDays / 7)}w ago`;
 }
 
+// ─── Grouping ─────────────────────────────────────────────────────────────────
+
+interface GroupedItem {
+  id: string;
+  actorName: string;
+  description: string;
+  createdAt: string;
+  count: number;
+}
+
+function groupItems(items: ActivityItem[]): GroupedItem[] {
+  const groups: GroupedItem[] = [];
+  for (const item of items) {
+    const last = groups[groups.length - 1];
+    if (
+      last &&
+      last.actorName === item.actorName &&
+      last.description === item.description
+    ) {
+      last.count++;
+    } else {
+      groups.push({
+        id: item.id,
+        actorName: item.actorName,
+        description: item.description,
+        createdAt: item.createdAt,
+        count: 1,
+      });
+    }
+  }
+  return groups.slice(0, 10);
+}
+
 // ─── Feed ─────────────────────────────────────────────────────────────────────
 
 export function ActivityFeed() {
@@ -59,7 +92,7 @@ export function ActivityFeed() {
   useEffect(() => {
     fetch("/api/dashboard/activity")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data) => { setItems((data.items ?? []).slice(0, 15)); setLoading(false); })
+      .then((data) => { setItems(data.items ?? []); setLoading(false); })
       .catch(() => { setError(true); setLoading(false); });
   }, []);
 
@@ -92,30 +125,38 @@ export function ActivityFeed() {
     );
   }
 
+  const grouped = groupItems(items);
+
   return (
     <div>
-      <div className="space-y-3">
-        {items.map((item) => (
-          <div key={item.id} className="flex items-start gap-3">
+      <div className="space-y-0 divide-y divide-gray-50">
+        {grouped.map((item) => (
+          <div key={item.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
             {/* Avatar */}
-            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarColor(item.actorName)}`}>
+            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarColor(item.actorName)}`}>
               {initials(item.actorName)}
             </div>
             {/* Content */}
-            <div className="min-w-0 flex-1 pt-0.5">
-              <p className="text-sm text-gray-700 leading-snug">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm text-gray-700">
                 <span className="font-medium capitalize">{item.actorName}</span>
                 {" "}
-                <span className="text-gray-600">{item.description}</span>
+                <span className="text-gray-500">{item.description}</span>
               </p>
-              <p className="mt-0.5 text-xs text-gray-400">{relativeTime(item.createdAt)}</p>
+              <p className="text-xs text-gray-400">{relativeTime(item.createdAt)}</p>
             </div>
+            {/* Repeat count badge */}
+            {item.count > 1 && (
+              <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                ×{item.count}
+              </span>
+            )}
           </div>
         ))}
       </div>
 
       {/* Footer */}
-      <div className="mt-4 border-t border-gray-100 pt-3">
+      <div className="mt-3 border-t border-gray-100 pt-3">
         <Link href="/audit" className="text-xs text-violet-600 hover:text-violet-700">
           View full audit trail →
         </Link>

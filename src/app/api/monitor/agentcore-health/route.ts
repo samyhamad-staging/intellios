@@ -38,10 +38,10 @@ interface AgentHealthEntry {
  * This endpoint makes live AWS SDK calls — it should be triggered by user
  * action (a "Check Live Status" button), NOT polled automatically.
  *
- * Access: compliance_officer | admin
+ * Access: compliance_officer | admin | viewer
  */
 export async function GET(request: NextRequest) {
-  const { session: authSession, error } = await requireAuth(["compliance_officer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["compliance_officer", "admin", "viewer"]);
   if (error) return error;
   const requestId = getRequestId(request);
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Mail, PenLine } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,7 @@ const ROLES = [
   { value: "reviewer",          label: "Reviewer" },
   { value: "compliance_officer", label: "Compliance Officer" },
   { value: "admin",             label: "Admin" },
+  { value: "viewer",            label: "Viewer" },
 ] as const;
 
 const ROLE_COLORS: Record<string, string> = {
@@ -34,6 +36,15 @@ const ROLE_COLORS: Record<string, string> = {
   reviewer:          "bg-amber-50 text-amber-700 border-amber-200",
   compliance_officer: "bg-green-50 text-green-700 border-green-200",
   admin:             "bg-purple-50 text-purple-700 border-purple-200",
+  viewer:            "bg-slate-50 text-slate-600 border-slate-200",
+};
+
+const ROLE_ACCENT: Record<string, string> = {
+  designer:          "border-blue-400",
+  reviewer:          "border-amber-400",
+  compliance_officer: "border-green-400",
+  admin:             "border-purple-400",
+  viewer:            "border-slate-400",
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -322,18 +333,19 @@ function InlineRoleEditor({ user, currentUserId, onUpdated }: RoleEditorProps) {
 
   if (!editing) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="group flex items-center gap-2">
         <RoleBadge role={role} />
         {!isSelf && (
           <button
             onClick={() => setEditing(true)}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            className="opacity-0 group-hover:opacity-100 rounded p-0.5 text-gray-400 hover:text-gray-600 transition-all"
+            title="Edit role"
           >
-            Edit
+            <PenLine size={12} />
           </button>
         )}
         {isSelf && (
-          <span className="text-xs text-gray-300">(you)</span>
+          <span className="text-xs text-gray-300">you</span>
         )}
       </div>
     );
@@ -461,7 +473,8 @@ export default function AdminUsersPage() {
               onClick={() => setShowInvite(true)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-white px-4 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-50 transition-colors"
             >
-              ✉ Invite User
+              <Mail size={13} />
+              Invite User
             </button>
             <button
               onClick={() => setShowCreate(true)}
@@ -486,7 +499,7 @@ export default function AdminUsersPage() {
             {ROLES.map((r) => (
               <div
                 key={r.value}
-                className="rounded-lg border border-gray-200 bg-white px-4 py-3"
+                className={`rounded-lg border border-gray-200 border-l-2 ${ROLE_ACCENT[r.value]} bg-white px-4 py-3`}
               >
                 <div className="text-2xl font-bold text-gray-900">{roleCounts[r.value] ?? 0}</div>
                 <div className="mt-0.5 text-xs text-gray-500">{r.label}</div>
@@ -552,49 +565,49 @@ export default function AdminUsersPage() {
           {!loading && userList.length > 0 && (
             <>
               <div className="border-b border-gray-100 bg-gray-50 px-6 py-2.5">
-                <div className="grid grid-cols-[2fr_2fr_2fr_1fr] gap-4 text-xs font-medium uppercase tracking-wider text-gray-400">
+                <div className="grid grid-cols-[3fr_2fr_1fr] gap-4 text-xs font-medium uppercase tracking-wider text-gray-400">
                   <span>User</span>
-                  <span>Email</span>
                   <span>Role</span>
                   <span className="text-right">Joined</span>
                 </div>
               </div>
 
               <div className="divide-y divide-gray-100">
-                {userList.map((user) => (
-                  <div key={user.id} className="grid grid-cols-[2fr_2fr_2fr_1fr] gap-4 items-center px-6 py-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
-                        {user.name.charAt(0).toUpperCase()}
+                {userList.map((user) => {
+                  const isSelf = user.id === currentUserId;
+                  return (
+                    <div
+                      key={user.id}
+                      className={`grid grid-cols-[3fr_2fr_1fr] gap-4 items-center px-6 py-3.5 transition-colors ${isSelf ? "bg-violet-50/40 hover:bg-violet-50" : "hover:bg-gray-50"}`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-gray-900">{user.name}</p>
+                          <p className="truncate text-xs text-gray-400">{user.email}</p>
+                        </div>
                       </div>
-                      <span className="truncate text-sm font-medium text-gray-900">
-                        {user.name}
+                      <InlineRoleEditor
+                        user={user}
+                        currentUserId={currentUserId}
+                        onUpdated={handleUpdated}
+                      />
+                      <span className="text-right text-xs text-gray-400 whitespace-nowrap">
+                        {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </span>
                     </div>
-                    <span className="truncate text-sm text-gray-500">{user.email}</span>
-                    <InlineRoleEditor
-                      user={user}
-                      currentUserId={currentUserId}
-                      onUpdated={handleUpdated}
-                    />
-                    <span className="text-right text-xs text-gray-400">
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}
         </div>
 
-        <p className="text-xs text-gray-400 text-center">
-          {userList.length} user{userList.length === 1 ? "" : "s"} in this enterprise.
-          Password changes must be performed by each user individually.
-        </p>
-
         {/* Pending Invitations */}
         <div>
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">Pending Invitations</h2>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Pending Invitations</h2>
 
           {invitationsLoading && (
             <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
