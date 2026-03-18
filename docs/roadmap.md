@@ -1,6 +1,14 @@
 # Intellios Roadmap
 
-## Current Phase: Session 064 ✓ Complete (2026-03-18) — Design System + UX Improvements
+## Current Phase: Session 065 ✓ Complete (2026-03-18) — Architect Experience Audit: Final Items
+
+Post-submission transparency (approval progress timeline in workbench right rail for `in_review` blueprints — step-by-step reviewer name, decision, timestamp, comment) and pause/resume intelligence (Welcome back banner for stale drafts >24h with section/violation/refinement count summary, session-dismissible). Completes 7/10 audit recommendations from the hard Architect Experience Vision audit. Remaining deferred: progressive collaboration live feed (#8, requires WebSocket/polling), multi-agent data model primitives (#9, requires ABP schema design work).
+
+**Estimated alignment score vs. Architect Experience Vision: ~65–70 / 100** (up from 44 at audit start).
+
+---
+
+## ✓ Session 064 Complete (2026-03-18) — Design System + UX Improvements
 
 Design system fully token-based (no raw Tailwind color classes remaining in UI). Status badges and risk tier indicators use icon shape + color. Five information hierarchy improvements across main pages. KpiCard extracted as shared component. Remaining design audit items: component consolidation (DataTable, SectionCard, AgentRow), typography/spacing/shadow token sets, empty-state component.
 
