@@ -1,838 +1,1610 @@
-# Intellios Roadmap
+# Intellios — Product Roadmap
 
-## Current Phase: Phase 53 ✓ Complete (2026-03-17) — Viewer Role + Role Model Optimization
+**Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
----
-
-## ✓ Phase 53 Complete (2026-03-17) — Viewer Role + Role Model Optimization
-
-New 5th role `viewer` added to the Intellios role model (previously: `designer | reviewer | compliance_officer | admin`). **Context:** Phase 49 evaluation identified that giving a CRO/CISO/external auditor fleet-posture visibility required making them `admin` — granting user management, enterprise settings, and AgentCore deployment authority, which no enterprise security team would accept. **Viewer capabilities (read-only):** fleet governance dashboard, compliance posture page, monitoring intelligence, audit trail (enterprise-scoped), governance analytics, MRM reports, evidence packages, agent registry. **Viewer cannot:** create/edit blueprints, approve/reject/deploy, create/edit governance policies, trigger health checks, manage users or enterprise settings. **Implementation:** `"viewer"` added to `Role` type; 8 API read-gates updated; 3 admin user-management routes updated (viewer is now an assignable role in the invite/create/update flows); sidebar updated with Governance + Monitor nav sections for viewer; home page hides `NewIntakeButton` for viewer (falls through to fleet overview); compliance page client-side gate updated; governance page `canViewAnalytics` extended to viewer. **Rec 4 fix (same session):** `GET /api/blueprints/[id]/export/code` was missing the `approved | deployed` status gate that compliance and AgentCore exports already enforce — now added. **Rec 3 (non-issue):** `GET /api/blueprints/[id]/test-runs` already uses `requireAuth()` with no role restriction; compliance officers already had access. 17 files modified, 0 migrations, 0 new deps. TypeScript: 0 new errors (pre-existing errors in test files unchanged).
+**Last updated:** 2026-03-19 (Session 064)
 
 ---
 
-## ✓ Phase 52 Complete (2026-03-17) — Blueprint Lineage with Governance Diff
+## Completion Summary
 
-When a blueprint spawns a new version via "Create New Version," the system now automatically computes and permanently stores the governance diff between source and new blueprint. **Schema**: two new columns on `agent_blueprints` — `previous_blueprint_id UUID` (FK, null for v1) and `governance_diff JSONB` (null for v1). **Diff engine**: existing `diffABP()` function (added in Phase 23) called in the new-version route at creation time; diff includes per-section breakdown (governance/capabilities/constraints/identity), per-change type (added/removed/modified), significance (major/minor/patch), and totalChanges. **Audit enhancement**: `governanceDiffSignificance` and `governanceDiffChangeCount` stored in the blueprint.created audit event for every new version. **Registry UI**: "VERSION LINEAGE" panel in Versions tab renders when at least one version has `governanceDiff != null`; shows v{from}→v{to} arrow, colored significance badge (major=red, minor=amber, patch=gray), change count, "View changes ↓" toggle, expandable per-section breakdown with per-change type icons (+/−/~), and governance implication notes (re-validation required for governance section changes; safety policy review triggered for instruction changes; constraint re-validation recommended for tool changes). Verified end-to-end: created v2.0.0 from deployed v1.0.0 Credit Risk Assessment Agent — "Patch — identity or metadata only", 0 changes (correct for metadata-only new version). 1 new migration (0023), 4 files modified. **Completes the three-action strategic plan from Phase 49 evaluation.** TypeScript: 0 errors.
-
----
-
-## ✓ Phase 51 Complete (2026-03-17) — Fleet Governance Dashboard
-
-CRO/CISO-facing aggregate risk posture view on the admin Overview page. **New component** `FleetGovernanceDashboard` (async server component) — joins `agentBlueprints` with `intakeSessions` to get `riskTier`; filters to `approved | deployed` status; enterprise-scoped. **Risk tier derivation**: uses intake classification when available; falls back to governance policy-type logic (safety + compliance → high, one → medium, neither → low) for older agents without intake context. **Renders**: 4 risk tier KPI cards (Critical/High/Medium/Low counts, color-coded), governance alert chips (overdue for review, with governance errors, not yet validated), per-agent fleet table (agent name + version + status + policy count, risk tier badge, governance health ✓/⚠/✗, next review date or "Overdue" badge, "View Report" evidence link). Admin sees all agents; non-admin roles are enterprise-filtered. No new data model — pure query + presentation layer over existing governance infrastructure. 1 new file, 1 modified.
-
----
-
-## ✓ Phase 50 Complete (2026-03-17) — Evidence Package Export
-
-One-click regulatory evidence bundle for approved and deployed agents. **New route** `GET /api/blueprints/[id]/evidence-package` — accessible to `designer | reviewer | compliance_officer | admin` (broader than the existing compliance export, which required `compliance_officer | admin`). Status gate: `approved | deployed` only. **Bundle contents**: full 14-section MRM compliance report (assembled by `assembleMRMReport()`), multi-step approval chain (`approvalProgress` records with decision/actor/timestamp/comment), AI quality evaluation (5 scored dimensions), and all behavioral test run evidence. **Blueprint Studio integration**: new "Audit Evidence" section in the right rail for approved/deployed blueprints — "EXAM-READY" badge, framing copy, "View Compliance Report" link (to print-optimized MRM report page), "↓ Export Evidence Package" button (triggers download). Audit: `blueprint.evidence_package_exported` written on every export. No new data model — all data existed. 1 new file, 1 modified.
-
----
-
-## ✓ Phase 49 Complete (2026-03-17) — Intake Confidence Engine
-
-Intake reads the room. **Expertise detection**: after turn 2, `detectExpertiseLevel()` scores user messages for technical vs. business vocabulary and uncertainty signals — returning `"guided"`, `"adaptive"`, or `"expert"`. The detected level persists to `intakeSessions.expertise_level` and adapts Claude's communication register: Guided mode gets structured sub-questions, examples, and plain-language framing; Expert mode gets concise validation-focused exchanges without hand-holding; Adaptive mirrors the designer's vocabulary. **Adaptive model routing**: Guided mode routes to Sonnet for first 6 turns (richer language quality for non-technical designers). **Topic-specific probing rules**: `buildTopicProbingRules()` generates 0-8 soft advisory rules from context + agent type — customer-facing agents get fallback/rate-limiting/error-messaging probes; external API agents get auth/retry probes; PII data gets masking-scope probes; autonomous agents get human-oversight/override/escalation probes. These inject after the existing governance probing block in the system prompt. **Live Readiness Score**: Phase 2 sidebar shows a 0-100 score (section coverage + governance depth + specificity) with color-coded progress bar and label ("Getting started" → "Building requirements…" → "Nearly complete" → "✓ Ready to finalize"); updates on every payload poll. **Completeness Map**: Phase 3 review shows a 7-domain grid — status-colored cards (required/optional × filled/sparse/empty) with stakeholder-contribution indicators and trigger-reason labels that explain why a domain is required. **Tentative-items warning**: soft amber callout on the generate button when `unresolvedFlags > 0` — non-blocking, surfaces uncertainty without preventing generation. 1 schema migration (0022), 5 new files, 6 modified. TypeScript: 0 new errors.
+| Area | Complete | Total | % | Status |
+|---|---|---|---|---|
+| **P — Shared Platform** | 11 | 14 | 79% | 3 capabilities remaining (Observability, SSO, Portfolio Intelligence) |
+| **A — Architect Product** | 19 | 19 | 100% | Feature-complete for current scope |
+| **G — Governor Product** | 16 | 17 | 94% | Missing dedicated entry point / navigation |
+| **D — Technical Debt** | 1 | 5 | 20% | Must address in H1 |
+| **H1 — Close the Loop** | 0 | 18 | 0% | Not started |
+| **H2 — Govern at Scale** | 0 | 17 | 0% | Not started |
+| **H3 — Execution Platform** | 0 | 14 | 0% | Deferred; gated on prerequisites |
+| | | | | |
+| **Current Product (P+A+G+D)** | **47** | **55** | **85%** | Production-ready; 8 items remaining |
+| **Full Vision (all horizons)** | **47** | **104** | **45%** | Design + governance complete; observability + scale ahead |
 
 ---
 
-## ✓ Phase 48 Complete (2026-03-17) — Stakeholder Collaboration Workspace
+## P — Shared Platform
 
-## ✓ Phase 48 Complete (2026-03-17) — Stakeholder Collaboration Workspace
+Infrastructure that every product and role depends on.
 
-Full multi-stakeholder AI-orchestrated collaboration system. **External domain experts** (Compliance, Legal, IT, etc.) can now contribute requirements without an Intellios account via token-gated public workspaces. **RACI authority model** per domain: each stakeholder's AI interview is tonally adapted — Accountable owners focus on non-negotiables, Responsible owners on implementation concerns, Consulted experts on domain requirements, Informed stakeholders on concerns/dependencies. **Shared synthesis**: stakeholders see a live AI-generated summary of what's already been agreed, so each interview builds on prior contributions rather than repeating them. **AI Orchestrator** (`claude-haiku-4-5-20251001`) runs fire-and-forget after every contribution: generates synthesis + conflict detection + gap analysis + suggested next invitations; saves as `intakeAIInsights` rows. **Designer insights panel**: per-domain rows with RACI badge, invitee name, status; inline invite form; AI Orchestrator section with collapse/expand insight cards, dismiss, approve-to-act. **Auto-invitation on insight approval**: when a designer approves a "suggest invite" insight, the system auto-creates the invitation and sends the email — closing the orchestrator→action loop. 10 new files, 8 modified, 2 DB migrations (0020/0021). TypeScript: 0 errors.
-
----
-
-## ✓ Session 056 Complete (2026-03-16) — UI/UX Polish Pass
-
-Four targeted improvements to data-dense screens. **Workspace Activity deduplication:** `groupItems()` collapses consecutive identical `(actorName, description)` pairs with `×N` count badge — 25 identical rows → 1 with ×25. **User Management redesign:** 3-column `[3fr_2fr_1fr]` grid; two-line user cell (name + email); role-colored `border-l-2` stat cards; hover-reveal PenLine edit icon; Mail icon invite button; self-row `bg-violet-50/40` highlight; human-readable dates with `whitespace-nowrap`. **Compliance Activity Trends:** all-zero early exit to clean empty state (no empty bars); combined overlapping bar per month (blue-100 background + green-400/70 fill); `[80px_1fr_72px]` grid; `"Oct 2025"` month labels from ISO `"2025-10"`; right-aligned `submitted / approved` counts. **Intake Sessions rows:** `"by [username] · [timeAgo]"` as third content line (username from email before `@`); removed right-side metadata div; tags + chevron remain. 0 new files, 4 rewrites, 0 migrations, 0 deps. TypeScript: 0 errors.
-
----
-
-## ✓ Phase 47 Complete (2026-03-16) — Help Copilot
-
-One-shot Q&A had no conversation memory — follow-up questions lost all context. **Multi-turn copilot:** `/api/help/ask` replaced by `/api/help/chat` accepting full `UIMessage[]` history + pathname; `convertToModelMessages()` + `toUIMessageStreamResponse()` (same pattern as Blueprint Simulate). Client upgraded from manual `ReadableStream` decoding to `useChat()` hook with `DefaultChatTransport({ body: { pathname } })` in `useMemo([pathname])`. `MessageBubble` renders user (dark right) + assistant (light left) bubbles. Three-dot streaming indicator. Trash2 clear button in header resets to suggestion cards. System prompt updated to instruct multi-turn behavior and proactive follow-up suggestions. Token limit doubled to 800. Panel widened to 400px. 1 new file, 1 rewrite, 1 deleted, 0 migrations, 0 deps. TypeScript: 0 production errors.
-
----
-
-## ✓ Phase 46 Complete (2026-03-16) — Contextual Help Panel
-
-Zero help infrastructure existed. Users had no way to understand features or workflows without leaving the page. **"Ask Intellios" help panel:** `?` (HelpCircle) button in sidebar footer triggers a 360px right-side overlay. Suggested questions are computed entirely client-side (no API call) using `usePathname()` + role — 8 pathname prefixes × role → 4 tailored questions, with a global fallback. Users can also type any free-form question. Streaming AI answers via `claude-haiku-4-5-20251001` with `toTextStreamResponse()` — responses feel instant. ReactMarkdown renders formatted answers. Backdrop click or Escape key closes the panel. `buildHelpSystemPrompt()` covers all 5 subsystems, agent lifecycle, 4 roles, risk tiers, agent types, and governance concepts. 2 new files, 1 modified, 0 migrations, 0 deps. TypeScript: 0 production errors.
+| ID | Capability | Status | Notes |
+|---|---|---|---|
+| P-01 | Identity + RBAC | **Complete** | 5 roles: architect, reviewer, compliance_officer, admin, viewer. NextAuth sessions. |
+| P-02 | Multi-tenancy | **Complete** | Application-level isolation via `enterprise_id`. |
+| P-03 | Policy Engine | **Complete** | 11 operators, dot-notation fields, severity levels, Zod validation. |
+| P-04 | Governance Validator | **Complete** | Deterministic rule evaluation + AI remediation suggestions. |
+| P-05 | Lifecycle Engine | **Complete** | draft → in_review → approved → deployed → deprecated. SOD enforcement. |
+| P-06 | Audit + Evidence | **Complete** | Append-only event ledger, MRM reports (14 sections), evidence packages, regulatory mapping. |
+| P-07 | Evaluation | **Complete** | Blueprint quality (5 dims), intake quality (4 dims), red-teaming (5 categories), test harness. |
+| P-08 | Registry + Versioning | **Complete** | Semantic versioning, version diff engine, blueprint lineage with governance diff. |
+| P-09 | Notifications | **Complete** | In-app bell + email (Resend). Settings-gated. |
+| P-10 | Webhooks | **Complete** | Outbound HMAC-SHA256 signed, per-enterprise, event-filtered. |
+| P-11 | Eventing | **Partial** | Audit log is event-sourced. Typed event bus and webhook dispatch not formalized. See H1-4. |
+| P-12 | Observability | **Not started** | No production telemetry ingestion. Highest-value gap. See H1-1. |
+| P-13 | Enterprise SSO | **Not started** | SAML/OIDC federation. See H2-3. |
+| P-14 | Portfolio Intelligence | **Partial** | Fleet governance dashboard + viewer role exist. Needs trends + cost attribution. See H2-5. |
 
 ---
 
-## ✓ Phase 45 Complete (2026-03-16) — Notification Settings, Blueprint Regeneration + Status Polling
+## A — Architect Product
 
-Three behavioral gaps closed. **Notification settings wired:** `handler.ts` now loads `getEnterpriseSettings()` and gates all `sendEmail()` calls behind `notifyOnApproval`; `adminEmail` CC added for approved/deployed events. `createNotification()` remains unconditional — in-app notifications always fire. **Blueprint regeneration:** `POST /api/blueprints/[id]/regenerate` re-runs `generateBlueprint()` + `validateBlueprint()` from stored intake session, updates draft row in-place (no insert), resets `refinementCount` to 0. "Regenerate Blueprint" button in Blueprint Studio right rail (draft only) with two-step amber confirm state. **Status polling:** 30s visibility-aware `setInterval` polling `useEffect` added to registry detail page using the existing `load()` callback — catches external status changes without manual refresh. 1 new file, 5 modified, 0 migrations, 0 deps. TypeScript: 0 errors.
+The design studio. Captures requirements, generates blueprints, refines iteratively, simulates, tests.
 
----
+**Buyer:** AI/ML teams, innovation leads, platform engineering.
+**Completion: 19/19 — 100%**
 
-## ✓ Phase 44 Complete (2026-03-16) — Surface Latent Data + Activate Middleware
-
-Three gaps closed using existing data and infrastructure: **Auth middleware activated** — `proxy.ts` renamed to `middleware.ts` (git mv, no content change); edge auth was never running. **Governance scores in Versions tab** — `validationReport` was already fetched but not displayed; added Governance column with pass/fail badge and error/warning counts from `violations` by severity. **Quality Index KPI on admin Overview** — `getRecentSnapshots()` called directly from server component; Governance Health section with score/100 and delta now visible on the first page admins see. 0 new files, 3 modified, 0 migrations, 0 deps. TypeScript: 0 errors.
-
----
-
-## ✓ Phase 43 Complete (2026-03-16) — Last-Mile Completions + Blueprint Iteration
-
-Three orphaned/broken features closed. **Notification Bell wired**: `NotificationBell` (Phase 3) added to sidebar header — was fully built but never imported. **Version diff confirmed complete**: `GET /api/blueprints/[id]/diff` + `diffABP()` engine + `VersionDiff` component were all already built; feature is end-to-end functional. **Blueprint iteration**: `POST /api/blueprints/[id]/new-version` creates a new draft version of the same logical agent (same `agentId`, major semver bump, lifecycle state reset); "Create New Version" button in `LifecycleControls` for approved/deployed status. 1 new file, 3 modified. 0 DB migrations. 0 new npm dependencies. TypeScript: 0 errors.
-
----
-
-## ✓ Phase 42 Complete (2026-03-16) — Activation & Visibility
-
-Blueprint Template Library (6 production-ready starters, `/templates` gallery, one-click use flow, welcome page step 1) + Workspace Activity Feed (humanized audit log on admin Overview). 7 new files, 6 modified, 0 migrations, 0 deps. TypeScript: 0 errors.
-
----
-
-## ✓ Phase 41 Complete (2026-03-16) — Growth & Security
-
-Self-Service Enterprise Registration: any organization can create a workspace from the landing page — admin account created, enterprise settings seeded, SR 11-7 governance policies pre-loaded, `/welcome` onboarding checklist. Adversarial Red-Teaming: two-phase AI security evaluation in the Simulate tab — Sonnet generates 10 tailored attack prompts (2 per category: scope_creep, jailbreak, data_exfiltration, instruction_override, governance_bypass), Haiku evaluates all 10 in parallel, produces a scored RedTeamReport with risk tier (LOW/MEDIUM/HIGH/CRITICAL) and expandable attack rows. Landing + login CTAs updated to drive registrations. 5 new files. 0 DB migrations. 0 new npm dependencies. TypeScript: 0 errors.
-
----
-
-## ✓ Phase 40 Complete (2026-03-16) — Close the Factory Loop
-
-Three components that make "deploy" mean something. **Agent Playground**: "Simulate" tab on Registry detail — live sandboxed Claude chat using the blueprint's system prompt, tools as narrative context, and governance rules as constraints. Stateless (messages client-side only). **Agent Code Export**: "Export Agent Code ↓" button downloads a single-file TypeScript agent with system prompt, tool stubs, and a working agentic loop. **Public Landing Page**: `/landing` serves unauthenticated visitors; unauthenticated `/` redirects there. 5 new files. 0 DB migrations. 0 new npm dependencies. TypeScript: 0 errors.
+| ID | Capability | Status | Built in Phase |
+|---|---|---|---|
+| A-01 | 3-phase structured intake | **Complete** | 1, 9, 31 |
+| A-02 | Multi-turn AI conversation | **Complete** | 1, 47 |
+| A-03 | Expertise detection + adaptive routing | **Complete** | 49 |
+| A-04 | Stakeholder collaboration (7 domains, RACI) | **Complete** | 48 |
+| A-05 | AI orchestrator (synthesis, conflict detection) | **Complete** | 48 |
+| A-06 | Intake confidence + readiness scoring | **Complete** | 49 |
+| A-07 | Completeness map (7-domain grid) | **Complete** | 49 |
+| A-08 | Blueprint generation (Claude generateObject) | **Complete** | 1 |
+| A-09 | Multi-turn refinement chat (streaming) | **Complete** | 54 |
+| A-10 | Blueprint regeneration from stored intake | **Complete** | 45 |
+| A-11 | Blueprint Studio (7-section stepper) | **Complete** | 17 |
+| A-12 | Agent simulation (stateless playground) | **Complete** | 40 |
+| A-13 | Red-team security evaluation | **Complete** | 41 |
+| A-14 | Behavioral test harness | **Complete** | 23 |
+| A-15 | Blueprint quality dashboard (5 dimensions) | **Complete** | 54 |
+| A-16 | Blueprint template library (6 starters) | **Complete** | 42 |
+| A-17 | Agent code export (TypeScript) | **Complete** | 40 |
+| A-18 | Clone + version iteration | **Complete** | 43 |
+| A-19 | Contextual help copilot + command palette | **Complete** | 46, 47, 54 |
 
 ---
 
-## ✓ Phase 39 Complete (2026-03-15) — Role-Optimized UX
+## G — Governor Product
 
-12 targeted UX fixes across Designer, Reviewer, Compliance Officer, and all roles. No new routes, migrations, or dependencies. Key changes: intake form submit button violet+spinner, quality popover dimension descriptions, classification rationale display, pipeline Draft empty CTA, review step badge role-awareness, violations→Governance Hub link, approval history in Versions tab, compliance KPI card anchors + subtitles + count links, null agent name fallback shows short ID, AgentCore success modal "View in Registry".
+Governance, approval, and compliance interface. Policy management, approval workflows, evidence generation, fleet posture.
+
+**Buyer:** CRO, CISO, compliance officers, external auditors.
+**Completion: 16/17 — 94%**
+
+| ID | Capability | Status | Built in Phase |
+|---|---|---|---|
+| G-01 | Policy CRUD + lifecycle | **Complete** | 10, 11 |
+| G-02 | Policy versioning + historical integrity | **Complete** | 22 |
+| G-03 | Policy template library (SR 11-7) | **Complete** | 41 |
+| G-04 | Policy simulation (test against ABP) | **Complete** | 10 |
+| G-05 | Governance Hub (analytics, heatmap, trends) | **Complete** | 18 |
+| G-06 | Multi-step approval workflow (configurable) | **Complete** | 22 |
+| G-07 | Review queue + review console | **Complete** | 1, 19 |
+| G-08 | MRM compliance report (HTML + JSON) | **Complete** | 6, 21 |
+| G-09 | Evidence package export (14-section audit bundle) | **Complete** | 50 |
+| G-10 | Regulatory mapping report | **Complete** | 35 |
+| G-11 | Compliance posture dashboard | **Complete** | 28 |
+| G-12 | Fleet governance dashboard (CRO/CISO view) | **Complete** | 51 |
+| G-13 | Blueprint lineage with governance diff | **Complete** | 52 |
+| G-14 | SR 11-7 periodic review scheduling | **Complete** | 35 |
+| G-15 | Deployment health checks + snapshots + briefings | **Complete** | 28 |
+| G-16 | Viewer role (read-only governance visibility) + audit trail | **Complete** | 2, 53 |
+| G-17 | Dedicated Governor entry point / navigation | **Not started** | See H1-2 |
 
 ---
 
-## ✓ Phase 38 Complete (2026-03-15) — Classification-First Adaptive Intake
+## D — Technical Debt
+
+Must resolve before or during Horizon 1. Address in order of severity.
+
+| ID | Item | Severity | Status | Notes |
+|---|---|---|---|---|
+| D-01 | ABP schema migration strategy (OQ-007) | **High** | Not started | No migration path for stored ABPs. Must solve before schema v1.1.0. See H1-3. |
+| D-02 | Webhook delivery wiring | **Medium** | Not started | Admin webhooks CRUD exists; event dispatch not connected. See H1-4. |
+| D-03 | In-memory rate limiting | **Medium** | Not started | `Map`-based limiter fails across instances. See H1-5.1. |
+| D-04 | Help system prompt coverage | **Low** | Not started | Doesn't mention stakeholder collaboration, red-teaming, lineage, quality dashboard. |
+| D-05 | DB schema role comments | **Low** | **Complete** | Updated in Phase 54 (architect rename). |
 
 ---
 
-## ✓ MVP — Complete (2026-03-12)
+## Cancelled / Deferred
 
-**Goal:** Demonstrate the core loop — intake requirements, generate a blueprint, validate it, store it, and review it.
-
-### MVP Scope
-
-| Component | Status | Priority |
+| Item | Decision | Date |
 |---|---|---|
-| Intake Engine | Complete | P0 |
-| Generation Engine | Complete | P0 |
-| Governance Validator | Complete | P0 |
-| Agent Registry | Complete | P0 |
-| Blueprint Review UI | Complete | P0 |
-| ABP Schema v1.0.0 | Defined | P0 |
-
-### MVP Success Criteria
-
-All criteria validated end-to-end on 2026-03-12 (Session 002) against PostgreSQL with a live Anthropic API key.
-
-1. ✓ An enterprise user can provide requirements through the Intake Engine.
-2. ✓ The Generation Engine produces a valid ABP from those requirements.
-3. ✓ The Governance Validator checks the ABP against a set of policies.
-4. ✓ The ABP is stored in the Agent Registry with versioning.
-5. ✓ A human reviewer can view and approve/reject the ABP through the Review UI.
+| Reviewer Monitoring Access | Cancelled — reviewer scope is sufficient | 2026-03-19 |
+| Split Admin Roles | Cancelled — single admin role adequate for current scale | 2026-03-19 |
+| Command as standalone product | Absorbed into Portfolio Intelligence (P-14) — it's a view, not a product | 2026-03-19 |
+| Foundry execution runtime | Deferred to H3. Gated on: runtime governance + observability + 3 design partners | 2026-03-19 |
+| Enterprise memory / knowledge graph | Deferred to H3. No telemetry to populate it yet. Accumulates as side effect of execution | 2026-03-19 |
 
 ---
 
-## Post-MVP Phase 1 — Production Readiness
+## H1 — Close the Loop (Now → 3 months)
 
-Prerequisite work before Intellios can serve real enterprise users.
+**Theme:** Connect deployed agents back to the governance system. "Governed AI agents" must be a continuous property, not a point-in-time check.
 
-| Item | Priority | Status | Notes |
+**Completion: 0/18 — 0%**
+
+---
+
+### H1-1: Production Observability Pipeline [P0]
+
+Closes the highest-value gap: Intellios has zero visibility into what deployed agents do in production.
+
+---
+
+#### H1-1.1 — Telemetry Data Model + Ingestion API
+
+**Depends on:** nothing
+
+**What to build:**
+
+1. **New DB table `agentTelemetry`** in `src/lib/db/schema.ts`:
+   - Columns: `id` (uuid PK), `agentId` (text, FK → `agentBlueprints.agentId`), `enterpriseId` (text, nullable), `timestamp` (timestamp), `invocations` (integer), `errors` (integer), `latencyP50Ms` (integer), `latencyP99Ms` (integer), `tokensIn` (integer), `tokensOut` (integer), `policyViolations` (integer), `customMetrics` (jsonb, nullable), `source` (text — `"push"` or `"cloudwatch"`), `createdAt` (timestamp, default now)
+   - Index on `(agentId, timestamp)` for time-range queries
+   - Index on `(enterpriseId)` for tenant filtering
+
+2. **New API route `src/app/api/telemetry/ingest/route.ts`**:
+   - `POST /api/telemetry/ingest` — accepts array of metric data points
+   - Auth: API key in `Authorization: Bearer <key>` header (not session-based — external agents push data)
+   - API key validation: look up key in new `apiKeys` table (or initially, match against env var `TELEMETRY_API_KEY` for simplicity)
+   - Request body Zod schema: `{ metrics: Array<{ agentId, timestamp, invocations, errors, latencyP50Ms, latencyP99Ms, tokensIn, tokensOut, policyViolations, customMetrics? }> }`
+   - Validate each `agentId` exists in `agentBlueprints` with status `deployed`
+   - Batch insert into `agentTelemetry`
+   - Return `{ ingested: number, errors: Array<{ agentId, reason }> }`
+
+3. **New API route `src/app/api/telemetry/[agentId]/route.ts`**:
+   - `GET /api/telemetry/[agentId]?since=<ISO>&until=<ISO>&granularity=<hour|day|week>`
+   - Auth: `requireAuth()` — any authenticated user can read telemetry for their enterprise
+   - Query `agentTelemetry` where `agentId` matches, filter by time range
+   - Return time-series array sorted by timestamp
+
+4. **Drizzle migration**: generate and apply via `npx drizzle-kit generate` then `npx drizzle-kit push`
+
+**Definition of done:**
+- [ ] `agentTelemetry` table exists in schema with correct columns and indexes
+- [ ] `POST /api/telemetry/ingest` accepts valid payloads and inserts rows
+- [ ] `POST /api/telemetry/ingest` rejects invalid agentIds, returns structured errors
+- [ ] `POST /api/telemetry/ingest` rejects requests without valid API key (401)
+- [ ] `GET /api/telemetry/[agentId]` returns time-series data filtered by time range
+- [ ] `npx tsc --noEmit` passes with 0 errors
+- [ ] Existing tests still pass
+
+---
+
+#### H1-1.2 — AgentCore Telemetry Connector
+
+**Depends on:** H1-1.1
+
+**What to build:**
+
+1. **New lib module `src/lib/telemetry/agentcore-poller.ts`**:
+   - Function `pollAgentCoreMetrics(agentId: string, region: string, bedrockAgentId: string)`: calls AWS CloudWatch `getMetricData` for Bedrock agent metrics (invocations, errors, latency)
+   - Maps Bedrock metric names to Intellios telemetry schema fields
+   - Returns array of telemetry data points in the same shape as the ingest API body
+
+2. **New lib module `src/lib/telemetry/sync.ts`**:
+   - Function `syncAllAgentCoreTelemetry()`: queries `agentBlueprints` where `deploymentTarget = 'agentcore'` AND `status = 'deployed'`, extracts `deploymentMetadata.agentId` / `region` / `agentArn`, calls `pollAgentCoreMetrics` for each, batch-inserts results into `agentTelemetry` with `source = 'cloudwatch'`
+   - Tracks last sync timestamp per agent to avoid duplicate data
+
+3. **New API route `src/app/api/cron/telemetry-sync/route.ts`**:
+   - `POST /api/cron/telemetry-sync` — triggers `syncAllAgentCoreTelemetry()`
+   - Auth: same pattern as `src/app/api/cron/review-reminders/route.ts` (cron secret or admin)
+   - Returns `{ synced: number, errors: number }`
+
+4. **AWS SDK dependency**: add `@aws-sdk/client-cloudwatch` to `package.json`
+
+**Definition of done:**
+- [ ] `pollAgentCoreMetrics()` fetches real CloudWatch data for a given Bedrock agent
+- [ ] `syncAllAgentCoreTelemetry()` iterates all deployed AgentCore agents and ingests telemetry
+- [ ] Cron route callable and returns sync results
+- [ ] Telemetry rows appear in `agentTelemetry` with `source = 'cloudwatch'`
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H1-1.3 — Production Tab UI
+
+**Depends on:** H1-1.1
+
+**What to build:**
+
+1. **Add `"production"` tab** to `src/app/registry/[agentId]/page.tsx`:
+   - Add to `Tab` type union: `| "production"`
+   - Add to `tabs` array: `{ id: "production", label: "Production" }`
+   - Only show tab when blueprint status is `deployed`
+   - Fetch `GET /api/telemetry/[agentId]?since=<7d ago>` in a `useEffect`
+   - Store in state: `telemetryData`, `telemetryLoading`
+
+2. **New component `src/components/registry/production-dashboard.tsx`**:
+   - Props: `{ agentId: string; data: TelemetryDataPoint[] | null; loading: boolean }`
+   - **Empty state**: when `data` is null or empty — "No production telemetry yet. Configure your agent to send metrics to the Intellios telemetry API."
+   - **Status indicator**: large badge showing `Healthy` (errors < 5% of invocations in last 24h), `Degraded` (errors 5-20%), `Offline` (zero invocations in last 6h), `Unknown` (no data). Color: green/amber/red/gray.
+   - **KPI cards row**: Total invocations (last 7d), Error rate (%), P50 latency, P99 latency, Tokens consumed
+   - **Time-series chart**: line chart showing invocations and errors over time. Use simple `<div>` bars (no chart library needed — same visual approach as existing quality dashboard horizontal bars). One row per day, bar width proportional to max value.
+   - **"Last seen" timestamp**: relative time since most recent telemetry data point
+
+**Definition of done:**
+- [ ] "Production" tab appears on registry detail page for deployed agents only
+- [ ] Tab loads telemetry data from API
+- [ ] Empty state shown when no data exists
+- [ ] KPI cards display correct aggregated values from telemetry data
+- [ ] Status indicator computes health from error rate + recency
+- [ ] Time-series visualization renders invocations/errors per day
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H1-1.4 — Health Check Integration
+
+**Depends on:** H1-1.1, H1-1.2
+
+**What to build:**
+
+1. **Extend `src/lib/monitoring/health.ts`**:
+   - Modify `checkDeploymentHealth()` to also query latest telemetry from `agentTelemetry` (last 24h aggregate)
+   - New `HealthStatus` value: `"degraded"` (between clean and critical)
+   - Health status logic: `critical` if governance violations > 0 OR error rate > 20%; `degraded` if error rate 5-20% OR zero invocations for 6h; `clean` otherwise
+   - Store production health data in `deploymentHealth` table — add columns `productionErrorRate` (real), `productionLatencyP99` (integer), `lastTelemetryAt` (timestamp) via schema migration
+
+2. **Update monitor dashboard** `src/app/monitor/page.tsx`:
+   - Show combined governance + production health status
+   - "Degraded" agents shown in amber alongside "Critical" in red
+   - Add column to deployed agents table: "Production Status" with last-seen timestamp
+
+**Definition of done:**
+- [ ] `checkDeploymentHealth()` incorporates telemetry data into health status
+- [ ] New `degraded` status appears when production metrics indicate issues
+- [ ] Monitor dashboard shows combined governance + production health
+- [ ] `deploymentHealth` table has new production metric columns
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H1-1.5 — Threshold Alerts
+
+**Depends on:** H1-1.1, H1-4.2
+
+**What to build:**
+
+1. **New DB table `alertThresholds`** in `src/lib/db/schema.ts`:
+   - Columns: `id` (uuid PK), `agentId` (text), `enterpriseId` (text, nullable), `metric` (text — `"error_rate"`, `"latency_p99"`, `"zero_invocations"`, `"policy_violations"`), `operator` (text — `"gt"`, `"lt"`, `"eq"`), `value` (real), `windowMinutes` (integer), `enabled` (boolean, default true), `createdBy` (text), `createdAt`, `updatedAt`
+
+2. **New lib module `src/lib/telemetry/alerts.ts`**:
+   - Function `evaluateThresholds(agentId: string)`: loads thresholds for agent, queries recent telemetry within each threshold's window, evaluates conditions, returns array of `{ threshold, currentValue, breached: boolean }`
+   - Function `checkAndFireAlerts()`: for each deployed agent, call `evaluateThresholds()`, for breached thresholds: create notification via `createNotification()` from `src/lib/notifications/store.ts` + publish event via `writeAuditLog()` with action `"blueprint.threshold_alert"` (add to `AuditAction` union in `src/lib/audit/log.ts` and `EventType` in `src/lib/events/types.ts`)
+
+3. **New API routes**:
+   - `GET/POST /api/registry/[agentId]/alerts/route.ts` — CRUD for alert thresholds
+   - `POST /api/cron/alert-check/route.ts` — triggers `checkAndFireAlerts()` for all deployed agents
+
+4. **UI in production dashboard**: "Alert Thresholds" section below KPI cards. List existing thresholds with enable/disable toggle. "Add Threshold" form: select metric, operator, value, window.
+
+**Definition of done:**
+- [ ] `alertThresholds` table exists with correct schema
+- [ ] Thresholds can be created/read/toggled via API
+- [ ] `checkAndFireAlerts()` correctly evaluates telemetry against thresholds
+- [ ] Breached thresholds create in-app notifications
+- [ ] Breached thresholds fire webhook events via the event bus
+- [ ] New event type `blueprint.threshold_alert` added to `AuditAction` + `EventType`
+- [ ] Production dashboard UI shows threshold management
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+### H1-2: Governor Product Extraction
+
+No new backend — UX extraction of existing governance capabilities into a focused entry point.
+
+---
+
+#### H1-2.1 — Governor Layout + Navigation
+
+**Depends on:** nothing
+
+**What to build:**
+
+1. **New layout `src/app/governor/layout.tsx`**:
+   - Server component wrapping Governor pages
+   - Uses a governor-specific sidebar (separate from the main Architect sidebar in `src/components/nav/sidebar.tsx`)
+   - Shares platform header: `NotificationBell`, `HelpPanel`, user menu
+   - Access: `requireAuth(["reviewer", "compliance_officer", "admin"])` — architects cannot access Governor
+
+2. **New sidebar component `src/components/nav/governor-sidebar.tsx`**:
+   - Navigation sections:
+     - **Approvals**: `/governor/approvals` — pending review queue (data from `GET /api/review`)
+     - **Policies**: `/governor/policies` — policy management (existing `/governance` page content)
+     - **Compliance**: `/governor/compliance` — compliance posture (existing `/compliance` page content)
+     - **Fleet**: `/governor/fleet` — fleet governance dashboard (existing fleet dashboard component)
+     - **Audit**: `/governor/audit` — audit log (existing `/audit` page content)
+   - Same visual style as `src/components/nav/sidebar.tsx` (border-r, bg-gray-950, nav sections)
+   - Include branding area (same as main sidebar) and command palette trigger
+
+3. **Governor page stubs** — each governor page re-exports or wraps the existing page's content:
+   - `src/app/governor/page.tsx` — placeholder (will become home page in H1-2.3)
+   - `src/app/governor/approvals/page.tsx` — renders existing review queue content
+   - `src/app/governor/policies/page.tsx` — renders existing governance policy list
+   - `src/app/governor/compliance/page.tsx` — renders existing compliance posture
+   - `src/app/governor/fleet/page.tsx` — renders existing fleet governance dashboard
+   - `src/app/governor/audit/page.tsx` — renders existing audit log viewer
+
+4. **Update `src/components/nav/sidebar.tsx`**: add "Governor" link in the Governance section for reviewer/compliance_officer/admin roles, pointing to `/governor`
+
+**Definition of done:**
+- [ ] `/governor` route renders with dedicated sidebar navigation
+- [ ] All 5 sub-pages (approvals, policies, compliance, fleet, audit) render existing functionality
+- [ ] Governor sidebar shows correct nav items with active state highlighting
+- [ ] Platform header (notifications, help, user) present in Governor layout
+- [ ] Only reviewer, compliance_officer, and admin roles can access `/governor`
+- [ ] Main sidebar includes a link to Governor for eligible roles
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H1-2.2 — Role-Based Landing
+
+**Depends on:** H1-2.1
+
+**What to build:**
+
+1. **Modify `src/app/page.tsx`** (the root page):
+   - Currently renders the role-differentiated home screen
+   - After auth check, read user's role from session
+   - Redirect logic:
+     - `compliance_officer` → redirect to `/governor`
+     - `reviewer` → redirect to `/governor`
+     - `architect` → stay on `/` (existing Architect home)
+     - `admin` → stay on `/` (existing overview)
+     - `viewer` → stay on `/` (existing read-only view)
+   - Use `redirect()` from `next/navigation` (server component redirect)
+
+2. **Optional: per-user override** in `users` table:
+   - Add `defaultLanding` column (text, nullable) — `/`, `/governor`, or null (use role default)
+   - If set, override the role-based redirect
+   - Add setting to user profile / admin user edit page
+
+**Definition of done:**
+- [ ] Compliance officers and reviewers land on `/governor` after login
+- [ ] Architects and admins land on `/` after login
+- [ ] Redirect is server-side (no flash of wrong page)
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H1-2.3 — Governor Home Page
+
+**Depends on:** H1-2.1
+
+**What to build:**
+
+1. **Implement `src/app/governor/page.tsx`** as a rich dashboard:
+   - **Pending Approvals card**: count of blueprints with `status = 'in_review'` + list of top 5 with name, submitted-by, SLA time remaining. Data: `GET /api/review`
+   - **Policy Health card**: count of active policies, count with recent violations, count of stale policies (not updated in 90+ days). Data: `GET /api/governance/analytics`
+   - **Compliance KPIs**: overall compliance rate (% of deployed agents with `clean` health), average quality score, SLA compliance rate. Data: `GET /api/compliance/posture`
+   - **Recent Audit Activity**: last 10 audit entries from past 24h with action, actor, timestamp. Data: `GET /api/audit?since=<24h ago>&limit=10`
+   - All data fetched client-side via `useEffect` (same pattern as existing dashboard pages)
+
+**Definition of done:**
+- [ ] Governor home page shows 4 data cards with live data from existing APIs
+- [ ] Pending approvals link to individual blueprint review pages
+- [ ] Policy health shows active/violated/stale counts
+- [ ] Compliance KPIs render correctly
+- [ ] Recent audit entries show chronologically
+- [ ] Empty states shown when no data exists
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+### H1-3: ABP Schema Migration
+
+Resolves OQ-007. Required before any artifact expansion in H2.
+
+---
+
+#### H1-3.1 — Migration Framework
+
+**Depends on:** nothing
+
+**What to build:**
+
+1. **New lib module `src/lib/abp/migrate.ts`**:
+   - Type `ABPVersion = "1.0.0" | "1.1.0"` (extend as versions are added)
+   - Type `MigrationFn = (abp: Record<string, unknown>) => Record<string, unknown>`
+   - Registry: `const MIGRATIONS: Map<string, MigrationFn>` — keyed by `"fromVersion→toVersion"` (e.g., `"1.0.0→1.1.0"`)
+   - Function `registerMigration(from: ABPVersion, to: ABPVersion, fn: MigrationFn)` — adds to registry
+   - Function `detectVersion(abp: Record<string, unknown>): ABPVersion` — reads `abp.version` field; if missing, returns `"1.0.0"` (all current ABPs lack explicit version)
+   - Function `migrateABP(abp: Record<string, unknown>, targetVersion: ABPVersion): Record<string, unknown>` — detects current version, walks the migration chain (1.0.0 → 1.1.0 → ... → target), applies each step, returns migrated ABP with updated `version` field
+   - If no migration path exists, throw descriptive error
+
+2. **Integration point — migrate-on-read**:
+   - New helper `src/lib/abp/read.ts`: `readABP(raw: unknown): ABP` — calls `migrateABP(raw, LATEST_VERSION)` then validates with Zod `ABPSchema.parse()`. This is the single function all code should use to read ABPs from the database.
+   - **Do NOT modify existing read sites yet** — that happens in H1-3.3. This deliverable creates the framework only.
+
+3. **Test**: create `src/lib/abp/__tests__/migrate.test.ts` with:
+   - Test that a v1.0.0 ABP (no `version` field) is detected as `"1.0.0"`
+   - Test that `migrateABP()` applies registered migrations in order
+   - Test that migrating to current version is a no-op
+   - Test that missing migration path throws
+
+**Definition of done:**
+- [ ] `migrateABP()` correctly chains registered migrations from detected version to target
+- [ ] `detectVersion()` handles ABPs with and without explicit version fields
+- [ ] `readABP()` returns a fully typed, validated, migrated ABP
+- [ ] Unit tests cover version detection, migration chaining, no-op, and error cases
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H1-3.2 — ABP v1.1.0 Schema
+
+**Depends on:** H1-3.1
+
+**What to build:**
+
+1. **Extend ABP Zod schema** in `src/lib/types/abp.ts`:
+   - Add `version` field to `ABPSchema`: `z.string().default("1.0.0")`
+   - Add new `execution` section to `ABPContentSchema`:
+     ```
+     execution: z.object({
+       observability: z.object({
+         metricsEnabled: z.boolean().default(true),
+         logLevel: z.enum(["none", "errors", "info", "debug"]).default("errors"),
+         samplingRate: z.number().min(0).max(1).default(1.0),
+         telemetryEndpoint: z.string().nullable().default(null),
+       }).default({}),
+       runtimeConstraints: z.object({
+         maxTokensPerInteraction: z.number().nullable().default(null),
+         maxConcurrentSessions: z.number().nullable().default(null),
+         circuitBreakerThreshold: z.number().min(0).max(1).nullable().default(null),
+         sessionTimeoutMinutes: z.number().nullable().default(null),
+       }).default({}),
+       feedback: z.object({
+         alertWebhook: z.string().nullable().default(null),
+         escalationEmail: z.string().nullable().default(null),
+       }).default({}),
+     }).default({})
+     ```
+   - All fields have defaults so existing ABPs pass validation after migration
+
+2. **Register 1.0.0 → 1.1.0 migration** in `src/lib/abp/migrate.ts`:
+   - Migration function: adds `version: "1.1.0"` and `execution: {}` (defaults applied by Zod at read time)
+   - Register via `registerMigration("1.0.0", "1.1.0", fn)`
+
+3. **Update schema changelog** `docs/schemas/abp/changelog.md`:
+   - v1.1.0 entry: added `execution` section (observability, runtimeConstraints, feedback), added explicit `version` field
+
+4. **Create versioned schema file** `docs/schemas/abp/v1.1.0.schema.json` reflecting the new structure
+
+**Definition of done:**
+- [ ] `ABPSchema` includes `execution` section with all sub-fields
+- [ ] `ABPSchema` includes `version` field
+- [ ] All existing ABP Zod validations still pass (defaults ensure backward compatibility)
+- [ ] 1.0.0 → 1.1.0 migration registered and working
+- [ ] Schema changelog updated
+- [ ] New versioned schema JSON file created
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H1-3.3 — Generation Engine Update
+
+**Depends on:** H1-3.2
+
+**What to build:**
+
+1. **Update `src/lib/generation/system-prompt.ts`**:
+   - Add instructions for the `execution` section to `BASE_GENERATION_PROMPT`:
+     - "Set `execution.observability.metricsEnabled` to true for production agents"
+     - "Set `execution.observability.logLevel` based on risk tier: high/critical → 'info', medium → 'errors', low → 'none'"
+     - "Set `execution.runtimeConstraints.maxTokensPerInteraction` proportional to agent complexity"
+     - "Set `execution.runtimeConstraints.circuitBreakerThreshold` for high-risk agents (suggest 0.1 = 10% error rate)"
+
+2. **Update `src/lib/generation/generate.ts`**:
+   - `generateBlueprint()`: use updated `ABPContentSchema` (which now includes `execution`)
+   - `assembleABP()`: set `version: "1.1.0"` on newly generated ABPs
+   - `refineBlueprint()`: preserve `execution` section during refinement
+
+3. **Integrate migrate-on-read across read sites**: find every place that casts `blueprint.abp as ABP` and replace with `readABP(blueprint.abp)`. Key files:
+   - `src/lib/mrm/report.ts` (line 71: `const abp = blueprint.abp as ABP`)
+   - `src/lib/monitoring/health.ts` (line 55: `blueprint.abp as ABP`)
+   - `src/app/api/blueprints/[id]/route.ts`
+   - `src/app/api/blueprints/[id]/validate/route.ts`
+   - `src/app/api/blueprints/[id]/refine/route.ts` and `stream/route.ts`
+   - `src/app/api/blueprints/[id]/export/code/route.ts`
+   - `src/app/api/blueprints/[id]/export/agentcore/route.ts`
+   - `src/app/api/blueprints/[id]/simulate/chat/route.ts`
+   - `src/app/api/registry/[agentId]/route.ts`
+   - Any other file that reads ABP from DB — search for `as ABP` to find all sites
+
+4. **Update Blueprint Studio** `src/app/blueprints/[id]/page.tsx`:
+   - Add "Execution" section to the 7-section stepper (now 8 sections)
+   - Display observability config, runtime constraints, feedback settings
+   - Editable fields for each sub-section
+
+**Definition of done:**
+- [ ] New blueprints generated with `version: "1.1.0"` and populated `execution` section
+- [ ] Execution section content varies by risk tier (higher risk = more monitoring)
+- [ ] All `as ABP` casts replaced with `readABP()` — old blueprints auto-migrate on read
+- [ ] Blueprint Studio shows execution section
+- [ ] Refinement preserves execution section
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+### H1-4: Eventing Formalization
+
+Formalizes the implicit event system into a typed, dispatchable event bus.
+
+---
+
+#### H1-4.1 — Typed Event Definitions
+
+**Depends on:** nothing
+
+**What to build:**
+
+1. **Rewrite `src/lib/events/types.ts`**:
+   - Replace string union `EventType` with a discriminated union `IntelliosEvent`:
+     ```typescript
+     type IntelliosEvent =
+       | { type: "blueprint.created"; payload: { blueprintId: string; agentId: string; name: string; createdBy: string } }
+       | { type: "blueprint.status_changed"; payload: { blueprintId: string; fromStatus: string; toStatus: string } }
+       | { type: "blueprint.reviewed"; payload: { blueprintId: string; decision: string; reviewer: string; comment: string | null } }
+       | { type: "policy.created"; payload: { policyId: string; name: string; type: string } }
+       // ... one variant per existing EventType
+     ```
+   - Each variant has a typed `payload` — no more `Record<string, unknown>`
+   - Keep `LifecycleEvent` interface as the wire format (it wraps an `IntelliosEvent`)
+   - Export `EventEnvelope` type: `{ id: string; event: IntelliosEvent; timestamp: string; enterpriseId: string | null; actor: { email: string; role: string }; entity: { type: string; id: string } }`
+
+2. **Update `src/lib/audit/log.ts`**:
+   - `writeAuditLog()` signature accepts `IntelliosEvent` (or keep accepting `AuditEntry` and derive `IntelliosEvent` internally for backward compatibility during migration)
+   - Existing callers continue to work — this is additive
+
+3. **Synchronize `AuditAction` and `EventType`**: they are currently duplicate string unions. Merge into a single source of truth. `AuditAction` should reference `IntelliosEvent["type"]`.
+
+**Definition of done:**
+- [ ] `IntelliosEvent` discriminated union covers all 27+ existing event types with typed payloads
+- [ ] `EventEnvelope` type wraps event with metadata (id, timestamp, actor, entity, enterprise)
+- [ ] `AuditAction` type derived from `IntelliosEvent["type"]` — single source of truth
+- [ ] All existing `writeAuditLog()` call sites still compile without changes
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H1-4.2 — Event Bus + Webhook Dispatch
+
+**Depends on:** H1-4.1, resolves D-02
+
+**What to build:**
+
+1. **New function `publishEvent()`** in `src/lib/events/publish.ts`:
+   - Signature: `publishEvent(envelope: EventEnvelope): Promise<void>`
+   - Internally: (1) writes audit log row, (2) dispatches to event bus handlers
+   - Replaces the current `writeAuditLog() → dispatch()` two-step in `src/lib/audit/log.ts`
+
+2. **Migrate call sites**: replace all `writeAuditLog()` calls across API routes with `publishEvent()`:
+   - Search for `writeAuditLog(` across all `src/app/api/` files
+   - Each call site constructs an `EventEnvelope` with typed payload instead of raw `AuditEntry`
+   - This is a large but mechanical migration (approximately 40 call sites across API routes)
+
+3. **Verify webhook dispatch works end-to-end**:
+   - `src/lib/webhooks/dispatch.ts` already registers as an event bus handler
+   - `src/lib/webhooks/deliver.ts` already does HMAC-signed HTTP POST with retry
+   - Verify: create a webhook via admin UI, trigger an event, check `webhookDeliveries` table for success
+   - This resolves D-02 (webhook delivery wiring) — the wiring exists, it just needs events flowing through it
+
+4. **Add webhook delivery status to admin UI**: in `src/app/admin/webhooks/page.tsx`, show recent deliveries with status (success/failed) and response code
+
+**Definition of done:**
+- [ ] `publishEvent()` function exists and combines audit log write + event dispatch
+- [ ] All `writeAuditLog()` call sites migrated to `publishEvent()`
+- [ ] Webhook dispatch fires for matching events (test with admin webhook UI)
+- [ ] Webhook delivery records appear in `webhookDeliveries` table
+- [ ] D-02 marked as resolved
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H1-4.3 — Event Filtering API
+
+**Depends on:** H1-4.1, H1-4.2
+
+**What to build:**
+
+1. **New API route `src/app/api/events/route.ts`**:
+   - `GET /api/events?type=<eventType>&entityType=<type>&enterpriseId=<id>&since=<ISO>&until=<ISO>&limit=<n>&offset=<n>`
+   - Auth: `requireAuth()` — any authenticated user, filtered to their enterprise
+   - Queries `auditLog` table with filters, returns array of `EventEnvelope`-shaped objects
+   - Pagination via `limit` + `offset`
+   - Default: last 100 events, most recent first
+
+2. **Response format**: JSON array of `EventEnvelope` objects with typed payloads reconstructed from audit log `metadata` + `fromState`/`toState` columns
+
+**Definition of done:**
+- [ ] `GET /api/events` returns paginated, filtered event list
+- [ ] Filters work: type, entityType, enterpriseId, time range
+- [ ] Enterprise scoping enforced (users only see their enterprise's events)
+- [ ] Response shape matches `EventEnvelope` type
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+### H1-5: Infrastructure Hardening
+
+---
+
+#### H1-5.1 — Redis Rate Limiting
+
+**Depends on:** nothing. Resolves D-03.
+
+**What to build:**
+
+1. **Rewrite `src/lib/rate-limit.ts`**:
+   - Current implementation: in-memory `Map<string, Window>` with sliding window (66 lines)
+   - New implementation: Redis-backed sliding window using sorted sets
+   - Read `REDIS_URL` from env — if not set, fall back to current in-memory implementation (for local dev)
+   - Use `ioredis` package (add to `package.json`)
+   - Redis key pattern: `ratelimit:${endpoint}:${actorEmail}`
+   - Algorithm: `ZADD` timestamp, `ZREMRANGEBYSCORE` to evict expired, `ZCARD` to count
+   - TTL: auto-expire keys after `windowMs` to prevent unbounded growth
+   - Same public API: `rateLimit(actorEmail, config)` returns `NextResponse | null`
+
+2. **Add env var**: `REDIS_URL` to `src/lib/env.ts` schema (optional string)
+
+3. **Add `ioredis` dependency**: `npm install ioredis`
+
+**Definition of done:**
+- [ ] `rateLimit()` uses Redis when `REDIS_URL` is set
+- [ ] `rateLimit()` falls back to in-memory `Map` when `REDIS_URL` is not set
+- [ ] Same 429 response format as current implementation
+- [ ] Redis keys auto-expire via TTL
+- [ ] `REDIS_URL` added to env schema as optional
+- [ ] D-03 marked as resolved
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H1-5.2 — Artifact Storage (S3)
+
+**Depends on:** nothing
+
+**What to build:**
+
+1. **New lib module `src/lib/storage/s3.ts`**:
+   - S3 client initialized from `AWS_REGION` + `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` (or IAM role)
+   - Bucket name from env var `ARTIFACT_BUCKET`
+   - Function `uploadArtifact(key: string, body: Buffer | string, contentType: string): Promise<string>` — uploads to S3, returns the S3 key
+   - Function `getSignedUrl(key: string, expiresInSeconds?: number): Promise<string>` — generates pre-signed download URL (default: 1 hour)
+   - Function `artifactExists(key: string): Promise<boolean>` — head check
+
+2. **Integrate with evidence package export**:
+   - In `src/app/api/blueprints/[id]/evidence-package/route.ts`: after generating the ZIP, upload to S3 with key `evidence/{blueprintId}/{timestamp}.zip`, store the S3 key in `agentBlueprints.evidencePackageKey` (new nullable text column)
+   - On subsequent requests: check if `evidencePackageKey` exists and blueprint hasn't changed since — if so, return signed URL instead of regenerating
+
+3. **Integrate with MRM report export**:
+   - Similar caching pattern for `src/app/api/blueprints/[id]/report/route.ts`
+
+4. **Integrate with code export**:
+   - Similar caching pattern for `src/app/api/blueprints/[id]/export/code/route.ts`
+
+5. **Add `@aws-sdk/client-s3` and `@aws-sdk/s3-request-presigner`** to `package.json`
+
+6. **Fallback**: when `ARTIFACT_BUCKET` is not set, skip caching and generate on-demand (current behavior)
+
+**Definition of done:**
+- [ ] S3 upload/download/signed-URL functions work
+- [ ] Evidence packages cached in S3 and served via signed URL on repeat requests
+- [ ] MRM reports cached in S3
+- [ ] Code exports cached in S3
+- [ ] When `ARTIFACT_BUCKET` is not set, behavior is identical to current (no crash, no regression)
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H1-5.3 — Help Prompt Refresh
+
+**Depends on:** nothing. Resolves D-04.
+
+**What to build:**
+
+1. **Update `buildHelpSystemPrompt()` in `src/app/api/help/chat/route.ts`**:
+   - The function currently describes 5 subsystems and 5 common workflows. It is missing features built in Phases 23-54.
+   - Add sections for:
+     - **Stakeholder Collaboration**: "Intellios supports multi-stakeholder intake via 7 contribution domains (compliance, risk, legal, security, IT, operations, business). Architects can invite domain experts via the stakeholder workspace. An AI orchestrator synthesizes contributions, detects conflicts, and identifies coverage gaps."
+     - **Red-Team Testing**: "The red-team evaluator probes agents for prompt injection, data exfiltration, instruction override, jailbreak, and social engineering vulnerabilities. Access via the Simulate tab on any blueprint."
+     - **Blueprint Quality Dashboard**: "Every blueprint is scored on 5 dimensions: intent alignment, tool appropriateness, instruction specificity, governance adequacy, and ownership completeness. Scores range 1-5, with an overall 0-100 score. Access via the Quality tab on any agent in the registry."
+     - **Refinement Chat**: "Blueprint refinement uses a multi-turn streaming chat. Send natural language instructions to modify any aspect of the blueprint. The AI applies changes and explains what it did."
+     - **Blueprint Lineage**: "The version diff engine shows changes between blueprint versions. The lineage view shows the full version history with governance diff — which policies changed between versions."
+     - **Agent Search**: "Press Cmd+K (or Ctrl+K) to open the command palette. Type an agent name to search the registry directly."
+     - **Viewer Role**: "Viewer users have read-only access to blueprints, governance dashboards, audit trails, and compliance reports. They cannot create, modify, or approve anything."
+   - Fix stale role references: change any remaining "designer" references to "architect"
+   - Update role list: `architect | reviewer | compliance_officer | admin | viewer` (currently missing viewer)
+
+**Definition of done:**
+- [ ] `buildHelpSystemPrompt()` covers all 7 new feature areas listed above
+- [ ] Role references say "architect" not "designer"
+- [ ] Role list includes "viewer"
+- [ ] Help copilot can answer questions about stakeholder collaboration, red-teaming, quality scores, refinement chat, lineage, agent search, and viewer role
+- [ ] D-04 marked as resolved
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+### H1 — DO NOT BUILD:
+- Foundry, knowledge graph, multi-agent workflows, runtime governance engine
+- Multi-cloud deployment adapters (Bedrock-only is sufficient for early customers)
+- Enterprise SSO (email/password is adequate pre-scale)
+
+---
+
+## H2 — Govern at Scale (Months 3–9)
+
+**Theme:** Extend governance from design-time to runtime. Intellios becomes the authority on agent behavior in production.
+
+**Completion: 0/17 — 0%**
+
+---
+
+### H2-1: Runtime Governance Engine
+
+---
+
+#### H2-1.1 — Runtime Policy Type
+
+**Depends on:** H1-1.1
+
+**What to build:**
+
+1. **Extend policy type enum**: the `governancePolicies.type` column currently accepts `safety | compliance | data_handling | access_control | audit`. Add `runtime` as a new valid type.
+
+2. **New runtime rule operators** in `src/lib/governance/evaluate.ts`:
+   - `token_budget_daily` — max tokens per agent per day
+   - `token_budget_per_interaction` — max tokens per single interaction
+   - `pii_action` — what to do when PII detected: `block`, `redact`, or `log`
+   - `scope_constraint` — allowed topics/actions (whitelist)
+   - `circuit_breaker_error_rate` — error rate threshold (0-1) that triggers circuit breaker
+
+3. **Runtime policy creation UI**: extend `src/components/governance/policy-form.tsx` to support the `runtime` type with its specific rule operators. When type = `runtime`, show runtime-specific rule builders.
+
+4. **Runtime policies stored in `governancePolicies` table** — no new table needed, just a new `type` value.
+
+**Definition of done:**
+- [ ] `runtime` is a valid policy type in the governance system
+- [ ] Runtime rule operators evaluate correctly
+- [ ] Policy form supports creating runtime policies
+- [ ] Existing policy CRUD, versioning, and simulation work with runtime policies
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H2-1.2 — Telemetry-Based Violation Detection
+
+**Depends on:** H2-1.1, H1-1.1
+
+**What to build:**
+
+1. **New DB table `runtimeViolations`** in `src/lib/db/schema.ts`:
+   - Columns: `id` (uuid PK), `agentId` (text), `enterpriseId` (text, nullable), `policyId` (text, FK → `governancePolicies.id`), `policyName` (text), `ruleId` (text), `severity` (text — error/warning), `metric` (text — which telemetry metric triggered it), `observedValue` (real), `threshold` (real), `message` (text), `telemetryTimestamp` (timestamp), `detectedAt` (timestamp, default now)
+
+2. **New lib module `src/lib/governance/runtime-evaluator.ts`**:
+   - Function `evaluateRuntimePolicies(agentId: string, telemetryWindow: TelemetryDataPoint[])`:
+     - Load runtime policies for the agent's enterprise
+     - For each policy rule: compute the relevant metric from the telemetry window (e.g., sum tokens, compute error rate, check for PII indicators)
+     - For each violation: insert into `runtimeViolations`
+     - Return `{ violations: RuntimeViolation[], checked: number }`
+
+3. **Hook into telemetry ingestion**: after `POST /api/telemetry/ingest` inserts new data points, call `evaluateRuntimePolicies()` for each affected agent
+
+4. **PII detection** (sample-based): for agents with `pii_action` rules, flag in telemetry that PII scanning is needed. Actual PII scanning deferred to a background job (mark as TODO for this deliverable — full PII scanning is a separate concern).
+
+**Definition of done:**
+- [ ] `runtimeViolations` table exists with correct schema
+- [ ] `evaluateRuntimePolicies()` correctly evaluates token budgets, error rates, and circuit breaker thresholds
+- [ ] Violations are written to `runtimeViolations` when thresholds are breached
+- [ ] Telemetry ingestion triggers runtime policy evaluation
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H2-1.3 — Runtime Violation UI + Alerts
+
+**Depends on:** H2-1.2
+
+**What to build:**
+
+1. **New API route `src/app/api/registry/[agentId]/violations/route.ts`**:
+   - `GET /api/registry/[agentId]/violations?since=<ISO>&severity=<error|warning>&limit=<n>`
+   - Returns violations from `runtimeViolations` table
+
+2. **Add "Violations" tab** to `src/app/registry/[agentId]/page.tsx`:
+   - Tab visible only for deployed agents with runtime policies
+   - Shows violation timeline (list sorted by `detectedAt` desc)
+   - Severity distribution: count of errors vs warnings
+   - Per-policy breakdown: which policies are most frequently violated
+
+3. **New component `src/components/registry/violations-panel.tsx`**:
+   - Props: `{ agentId: string; violations: RuntimeViolation[]; loading: boolean }`
+   - Violation list with severity badge, policy name, observed vs threshold values, timestamp
+   - Filter by severity, time range
+
+4. **Alert on critical violations**: use `createNotification()` to notify admin + compliance_officer when error-severity runtime violations are detected. Publish webhook event `blueprint.runtime_violation`.
+
+**Definition of done:**
+- [ ] Violations API returns paginated, filtered runtime violations
+- [ ] "Violations" tab appears on registry detail for deployed agents
+- [ ] Violation list renders with severity badges and metric details
+- [ ] Notifications created for error-severity violations
+- [ ] Webhook event fires for violations
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H2-1.4 — Governance-Gated Circuit Breaker
+
+**Depends on:** H2-1.2, H2-1.3
+
+**What to build:**
+
+1. **New lifecycle status `suspended`**: add to the status enum in `src/lib/db/schema.ts` alongside `draft | in_review | approved | rejected | deployed | deprecated`. Update lifecycle controls, status badges, and all status-related logic.
+
+2. **Auto-suspend logic** in `src/lib/governance/runtime-evaluator.ts`:
+   - After evaluating runtime policies, if error-severity violations exceed the enterprise's circuit breaker threshold (from `enterpriseSettings`): update blueprint status to `suspended`
+   - Write audit log entry `blueprint.status_changed` with `toState: { status: "suspended" }`
+   - Notify admin + compliance_officer
+
+3. **Enterprise setting**: add `governance.circuitBreakerAction` to `EnterpriseSettings` in `src/lib/settings/types.ts`:
+   - Values: `"auto_suspend"` (default) or `"alert_only"`
+   - When `alert_only`: violations create notifications but don't change status
+
+4. **Resume flow**: `suspended → deployed` transition requires re-approval (same as `draft → in_review → approved → deployed`). Add resume button to lifecycle controls for admin role.
+
+5. **Update `src/components/registry/status-badge.tsx`**: add `suspended` variant (red pulsing badge)
+
+**Definition of done:**
+- [ ] `suspended` is a valid blueprint status throughout the system
+- [ ] Circuit breaker auto-suspends agents when violation threshold exceeded
+- [ ] `alert_only` mode creates notifications without suspending
+- [ ] Suspended agents can be resumed through re-approval flow
+- [ ] Status badge shows `suspended` state
+- [ ] Audit trail records suspension events
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+### H2-2: Production Quality Measurement
+
+---
+
+#### H2-2.1 — Production Quality Scoring
+
+**Depends on:** H1-1.1, H2-1.2
+
+**What to build:**
+
+1. **Extend `src/components/blueprint/quality-dashboard.tsx`**:
+   - Add "Production Quality" section below existing design-time quality scores
+   - New metrics: Policy Adherence Rate (% of telemetry windows with zero violations), Uptime % (% of time with non-zero invocations), Error Rate
+   - Data source: aggregate from `agentTelemetry` + `runtimeViolations`
+
+2. **New API route `src/app/api/registry/[agentId]/quality/production/route.ts`**:
+   - Returns production quality metrics computed from telemetry + violations
+   - Time range: last 30 days
+
+3. **Combined quality score**: design-time score (existing 0-100) weighted against production score. Display as "Design: X / Production: Y" comparison.
+
+**Definition of done:**
+- [ ] Quality dashboard shows production metrics alongside design-time scores
+- [ ] Policy adherence rate computed correctly from violations data
+- [ ] Uptime percentage computed from telemetry data
+- [ ] API returns production quality data
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H2-2.2 — Quality Trend Analysis
+
+**Depends on:** H2-2.1
+
+**What to build:**
+
+1. **New DB table `qualityTrends`**: weekly snapshots of combined quality score per agent. Columns: `id`, `agentId`, `enterpriseId`, `weekStart` (date), `designScore` (real), `productionScore` (real, nullable), `policyAdherenceRate` (real, nullable)
+
+2. **Cron job** `POST /api/cron/quality-trends`: runs weekly, computes quality snapshot for each deployed agent, inserts into `qualityTrends`
+
+3. **Trend visualization** in quality dashboard: line chart showing quality score over past 12 weeks. Highlight regression (current week score < previous week by > 10 points).
+
+4. **Regression alert**: when production quality drops below design-time quality by > 15 points, create notification + webhook event.
+
+**Definition of done:**
+- [ ] Weekly quality snapshots stored in `qualityTrends` table
+- [ ] Cron job computes and stores snapshots
+- [ ] Quality dashboard shows trend visualization
+- [ ] Regression detection creates alerts when quality drops significantly
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+### H2-3: Enterprise SSO
+
+---
+
+#### H2-3.1 — SAML 2.0 + OIDC Federation
+
+**Depends on:** nothing
+
+**What to build:**
+
+1. **Configure NextAuth providers** in the auth configuration (currently in `src/app/api/auth/[...nextauth]/route.ts`):
+   - Add SAML provider using `next-auth` SAML support or `@auth/saml-provider`
+   - Add generic OIDC provider for Azure AD / Google Workspace / Okta
+   - Provider config stored per-enterprise in `enterpriseSettings.sso` (new settings section)
+
+2. **Enterprise SSO settings**: add `sso` section to `EnterpriseSettings` in `src/lib/settings/types.ts`:
+   - `enabled: boolean`, `protocol: "saml" | "oidc"`, `issuer: string`, `clientId: string`, `clientSecret: string`, `metadataUrl: string` (for SAML), `attributeMapping: { email, name, groups }`
+
+3. **Admin SSO configuration page** `src/app/admin/sso/page.tsx`: form to configure SSO settings per enterprise
+
+4. **Login page update**: show "Sign in with SSO" button when SSO is configured for the enterprise domain
+
+**Definition of done:**
+- [ ] SAML and OIDC providers configured in NextAuth
+- [ ] SSO settings stored per-enterprise
+- [ ] Admin can configure SSO via settings page
+- [ ] Login page shows SSO option when configured
+- [ ] SSO login creates/updates user record
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H2-3.2 — Directory Sync + JIT Provisioning
+
+**Depends on:** H2-3.1
+
+**What to build:**
+
+1. **JIT user creation**: on first SSO login, auto-create user record with:
+   - Email from SSO assertion
+   - Name from SSO assertion
+   - Role mapped from directory group (configurable mapping in enterprise settings)
+   - `enterpriseId` from the SSO configuration
+
+2. **Directory group → role mapping**: add `sso.groupRoleMapping` to enterprise settings:
+   - `{ "EngineeringLeads": "architect", "ComplianceTeam": "compliance_officer", "Reviewers": "reviewer" }`
+   - Default role when no group matches: `viewer`
+
+3. **Periodic sync** (stretch): `POST /api/cron/directory-sync` — for enterprises with directory sync enabled, query the IdP for deactivated users and mark them inactive in Intellios
+
+**Definition of done:**
+- [ ] First SSO login creates user with correct role from group mapping
+- [ ] Subsequent SSO logins update user attributes (name, groups)
+- [ ] Admin can configure group-to-role mappings
+- [ ] Unknown groups default to viewer role
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+### H2-4: Artifact Family v1
+
+---
+
+#### H2-4.1 — Workflow Definition Schema
+
+**Depends on:** H1-3.1
+
+**What to build:**
+
+1. **New Zod schema `src/lib/types/workflow.ts`**:
+   ```typescript
+   WorkflowSchema = z.object({
+     version: z.string().default("1.0.0"),
+     name: z.string(),
+     description: z.string(),
+     agents: z.array(z.object({
+       agentId: z.string(),
+       role: z.string(),         // role within the workflow
+       required: z.boolean(),
+     })),
+     handoffRules: z.array(z.object({
+       from: z.string(),         // agentId or "start"
+       to: z.string(),           // agentId or "end"
+       condition: z.string(),    // natural language condition
+       priority: z.number(),
+     })),
+     sharedContext: z.array(z.object({
+       field: z.string(),
+       type: z.enum(["string", "number", "boolean", "json"]),
+       description: z.string(),
+     })),
+   })
+   ```
+
+2. **New DB table `workflows`**: `id`, `workflowId` (logical ID like `agentId`), `name`, `description`, `definition` (jsonb — WorkflowSchema), `status` (same lifecycle as blueprints), `version`, `enterpriseId`, `createdBy`, `createdAt`, `updatedAt`
+
+3. **CRUD API routes**:
+   - `GET/POST /api/workflows/route.ts` — list/create workflows
+   - `GET/PATCH/DELETE /api/workflows/[id]/route.ts` — read/update/delete
+   - Validate `definition` against `WorkflowSchema` on create/update
+   - Validate all referenced `agentId`s exist in the blueprint registry
+
+**Definition of done:**
+- [ ] `WorkflowSchema` validates workflow definitions with agents, handoff rules, shared context
+- [ ] `workflows` table exists with correct schema
+- [ ] CRUD API routes work with auth + enterprise scoping
+- [ ] Agent references validated against registry
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H2-4.2 — Multi-Artifact Registry
+
+**Depends on:** H2-4.1
+
+**What to build:**
+
+1. **Extend registry API** `src/app/api/registry/route.ts`:
+   - Add `artifactType` query param: `blueprint` (default) or `workflow`
+   - When `artifactType=workflow`: query `workflows` table instead of `agentBlueprints`
+   - Return unified response shape with `artifactType` discriminator
+
+2. **Extend registry UI** `src/app/registry/page.tsx`:
+   - Add toggle/tabs: "Agents" (blueprints) and "Workflows"
+   - Workflow list shows: name, status, agent count, version
+
+3. **Workflow detail page** `src/app/registry/workflow/[workflowId]/page.tsx`:
+   - Show workflow definition: agent list with names/statuses, handoff rules, shared context
+   - Version history
+   - Status badge and lifecycle controls (same as blueprint)
+
+**Definition of done:**
+- [ ] Registry API supports querying workflows
+- [ ] Registry UI shows agents and workflows as separate views
+- [ ] Workflow detail page renders definition and version history
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H2-4.3 — Workflow Governance
+
+**Depends on:** H2-4.1, H2-4.2
+
+**What to build:**
+
+1. **Workflow validation**: before a workflow can move to `in_review`, validate:
+   - All referenced agents exist and are `approved` or `deployed`
+   - No circular handoff rules
+   - All shared context fields are defined
+
+2. **Workflow governance diff**: when a workflow is updated, show what changed — agents added/removed, handoff rules modified, shared context altered
+
+3. **Approval workflow**: same multi-step approval chain as blueprints. Audit trail records workflow approval events.
+
+4. **MRM report extension**: if a blueprint is part of a workflow, the MRM report includes workflow context (which workflow, what role the agent plays, handoff conditions)
+
+**Definition of done:**
+- [ ] Workflow validation blocks invalid workflows from review
+- [ ] Governance diff shows workflow changes
+- [ ] Multi-step approval chain works for workflows
+- [ ] Audit trail records workflow events
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+### H2-5: Portfolio Intelligence
+
+---
+
+#### H2-5.1 — Risk Trend Analysis
+
+**Depends on:** H1-1.1
+
+**What to build:**
+
+1. **New DB table `portfolioSnapshots`**: weekly fleet-level metrics. Columns: `id`, `enterpriseId`, `weekStart` (date), `totalAgents` (integer), `deployedAgents` (integer), `complianceRate` (real), `avgQualityScore` (real), `totalViolations` (integer), `violationsByType` (jsonb), `agentsByRiskTier` (jsonb)
+
+2. **Cron job** `POST /api/cron/portfolio-snapshot`: runs weekly, aggregates fleet metrics per enterprise
+
+3. **Trend API** `GET /api/portfolio/trends?weeks=12`: returns time-series of portfolio snapshots
+
+4. **Trend visualization**: add to fleet governance dashboard (`src/app/governance/page.tsx` or the Governor fleet page). Line charts: compliance rate over time, violation count over time, fleet size over time. Group by risk tier or business unit.
+
+**Definition of done:**
+- [ ] Weekly portfolio snapshots stored and queryable
+- [ ] Trend API returns time-series data
+- [ ] Trend charts render in fleet governance dashboard
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H2-5.2 — Cost Attribution
+
+**Depends on:** H1-1.1
+
+**What to build:**
+
+1. **Cost computation** from telemetry: `tokensIn * inputCostPerToken + tokensOut * outputCostPerToken`. Cost rates configurable per enterprise in `enterpriseSettings.costRates` (new settings section).
+
+2. **Per-agent cost API** `GET /api/registry/[agentId]/cost?period=<month>`: returns token consumption, cost breakdown, estimated monthly spend
+
+3. **Fleet cost rollup API** `GET /api/portfolio/cost?period=<month>`: per-agent costs aggregated to fleet total, grouped by business unit (from `agentBlueprints.ownership.businessUnit`)
+
+4. **Cost column** in registry list page: show estimated monthly cost alongside each agent
+
+**Definition of done:**
+- [ ] Cost rates configurable per enterprise
+- [ ] Per-agent cost API returns correct calculations from telemetry
+- [ ] Fleet cost rollup groups by business unit
+- [ ] Registry list shows cost column
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H2-5.3 — Executive Dashboard
+
+**Depends on:** H2-5.1, H2-5.2
+
+**What to build:**
+
+1. **New page `src/app/governor/executive/page.tsx`**:
+   - Single-page board-ready view with cards:
+     - Fleet size (total agents, deployed, by status)
+     - Compliance posture (% compliant, trend arrow)
+     - Risk distribution (pie/bar by risk tier)
+     - Cost summary (total monthly, top 5 by cost)
+     - Quality trend (12-week line, overall index)
+     - Top 5 alerts (most recent critical notifications)
+   - All data from existing APIs: `/api/portfolio/trends`, `/api/portfolio/cost`, `/api/compliance/posture`, `/api/notifications`
+
+2. **PDF export**: "Export PDF" button generates a print-optimized version. Use `@react-pdf/renderer` or browser print CSS (`@media print` stylesheet) — prefer print CSS for simplicity.
+
+3. **Access control**: admin + compliance_officer only
+
+**Definition of done:**
+- [ ] Executive dashboard page renders all 6 data cards
+- [ ] PDF export produces a clean, print-ready document
+- [ ] Only admin and compliance_officer can access
+- [ ] All data sourced from existing APIs (no new backend beyond what H2-5.1/H2-5.2 provide)
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+## H3 — Execution Platform (Months 9–18)
+
+**Theme:** Extend from design + governance into workflow composition and execution monitoring.
+
+**Gate:** 3+ enterprise design partners with validated execution orchestration needs. Do not build speculatively.
+
+**Completion: 0/14 — 0%**
+
+---
+
+### H3-1: Foundry MVP
+
+---
+
+#### H3-1.1 — Workflow Composition UI
+
+**Depends on:** H2-4.1
+
+**What to build:**
+
+1. **New page `src/app/workflows/compose/page.tsx`**: visual workflow editor
+   - Canvas with drag-and-drop agent nodes from registry
+   - Handoff connectors between nodes (lines with condition labels)
+   - Conditional routing branches (if/else splits)
+   - "Start" and "End" nodes
+   - Save/load workflow definitions to `workflows` table via API
+
+2. **Canvas implementation**: use a lightweight canvas library (e.g., `reactflow`) or custom SVG-based renderer. Nodes are agent cards (name + status badge). Edges are handoff rules.
+
+3. **Sidebar panel**: agent picker (search registry), handoff rule editor (from/to/condition), shared context field editor
+
+**Definition of done:**
+- [ ] Visual workflow editor renders with drag-and-drop
+- [ ] Agents can be added from registry search
+- [ ] Handoff connections can be drawn between agents
+- [ ] Workflow can be saved to and loaded from the database
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H3-1.2 — Execution Monitoring
+
+**Depends on:** H1-1.1, H2-4.2
+
+**What to build:**
+
+1. **New DB table `workflowRuns`**: `id`, `workflowId`, `status` (running/completed/failed/paused), `currentStep` (agentId), `startedAt`, `completedAt`, `input` (jsonb), `output` (jsonb), `stepHistory` (jsonb array of step results)
+
+2. **Dashboard page** `src/app/workflows/runs/page.tsx`: list active and recent workflow runs. Per-run detail: current step highlighted, agent status at each step, elapsed time, error state.
+
+3. **API**: `GET /api/workflows/[id]/runs` — list runs. `GET /api/workflows/[id]/runs/[runId]` — run detail with step history.
+
+**Definition of done:**
+- [ ] Workflow runs tracked in database with step-by-step history
+- [ ] Runs dashboard shows active and completed runs
+- [ ] Run detail view shows step progression and status
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H3-1.3 — Workflow-Level Governance
+
+**Depends on:** H2-4.3
+
+**What to build:**
+
+1. **Workflow deployment approval**: same multi-step approval chain as blueprints
+2. **Workflow audit trail**: all workflow lifecycle events (created, reviewed, deployed, run_started, run_completed) logged via `publishEvent()`
+3. **Workflow governance diff**: show changes between workflow versions
+4. **MRM report workflow section**: new section in MRM report when blueprint is part of a deployed workflow
+
+**Definition of done:**
+- [ ] Workflow deployments require approval
+- [ ] Workflow events appear in audit trail
+- [ ] Governance diff works for workflow versions
+- [ ] MRM report includes workflow context
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H3-1.4 — Workflow Simulation
+
+**Depends on:** H3-1.1, A-12
+
+**What to build:**
+
+1. **Dry-run endpoint** `POST /api/workflows/[id]/simulate`: accepts test input, runs each agent in sequence using existing simulation (`/api/blueprints/[id]/simulate/chat`), passes output as input to next agent per handoff rules
+
+2. **Simulation report**: per-agent response, handoff decisions made, total latency, governance violations detected during simulation
+
+3. **UI**: "Simulate" button on workflow detail page, results displayed inline
+
+**Definition of done:**
+- [ ] Workflow simulation runs each agent in sequence with handoff logic
+- [ ] Simulation report shows per-agent results
+- [ ] UI displays simulation results
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+### H3-2: Enterprise Memory v1
+
+---
+
+#### H3-2.1 — Execution History Store
+
+**Depends on:** H1-1.1
+
+**What to build:**
+
+1. **New DB table `executionHistory`**: `id`, `agentId`, `blueprintId`, `blueprintVersion`, `enterpriseId`, `interactionSummary` (text), `decisionRationale` (text, nullable), `outcome` (text — `"success"`, `"failure"`, `"escalated"`), `metadata` (jsonb), `timestamp`
+
+2. **Ingestion**: extend telemetry ingest API to accept optional `interactionLogs` alongside metrics. Parse and store as execution history entries.
+
+3. **Query API** `GET /api/agents/[agentId]/history?since=&until=&outcome=&limit=`: paginated, filterable execution history
+
+**Definition of done:**
+- [ ] Execution history stored with interaction summaries and outcomes
+- [ ] Query API supports time range, outcome, and pagination filters
+- [ ] Linked to agent + blueprint version
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H3-2.2 — Pattern Extraction
+
+**Depends on:** H3-2.1
+
+**What to build:**
+
+1. **AI analysis job**: periodically analyze execution history using Claude to extract:
+   - Common resolution patterns (how agents typically handle certain query types)
+   - Escalation triggers (what conditions cause failures or escalations)
+   - Failure modes (recurring error patterns)
+
+2. **Store patterns** in new `agentPatterns` table: `id`, `agentId`, `patternType` (resolution/escalation/failure), `description`, `frequency`, `confidence`, `extractedAt`
+
+3. **Surface in UI**: "Insights" section on agent detail page showing extracted patterns. Use in Architect's blueprint refinement context (include patterns in refinement chat system prompt).
+
+**Definition of done:**
+- [ ] Pattern extraction job runs and produces meaningful patterns from execution history
+- [ ] Patterns stored and queryable
+- [ ] Patterns surfaced in agent detail UI
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+### H3-3: Continuous Governance
+
+---
+
+#### H3-3.1 — Scheduled Policy Re-evaluation
+
+**Depends on:** H2-1.1
+
+**What to build:**
+
+1. **Cron job** `POST /api/cron/governance-drift`: for each deployed agent, re-validate blueprint against current policy set using `validateBlueprint()`. Compare results to last validation. If new violations found → governance drift detected.
+
+2. **Drift notifications**: notify admin + compliance_officer when drift detected. Include which policies changed and which new violations appeared.
+
+3. **Drift column in fleet dashboard**: show "Drifted" badge alongside agents whose current policies would produce violations that weren't present at approval time.
+
+**Definition of done:**
+- [ ] Scheduled re-evaluation detects governance drift
+- [ ] Drift notifications sent to appropriate roles
+- [ ] Fleet dashboard shows drift status
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H3-3.2 — Self-Healing Remediation
+
+**Depends on:** H3-3.1, A-09
+
+**What to build:**
+
+1. **AI remediation suggestions**: when governance drift or production violations are detected, use Claude to propose specific ABP modifications that would resolve the violations
+
+2. **Auto-create draft**: create a new blueprint version (draft status) with Claude's suggested changes applied. Link to the violations that triggered it.
+
+3. **Architect review flow**: architect sees "Suggested Fix" in Studio with diff showing what Claude changed and why. Architect can accept, modify, or reject.
+
+**Definition of done:**
+- [ ] Claude proposes ABP changes based on violations
+- [ ] Draft version auto-created with suggested fixes
+- [ ] Diff view shows Claude's proposed changes
+- [ ] Architect can accept/modify/reject suggestions
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H3-3.3 — Compliance Calendar
+
+**Depends on:** G-14
+
+**What to build:**
+
+1. **New page `src/app/governor/calendar/page.tsx`**: calendar view showing:
+   - SR 11-7 periodic review due dates (from `agentBlueprints.nextReviewDue`)
+   - Policy review schedules (configurable per policy)
+   - Regulatory submission deadlines (manually entered)
+
+2. **Automated reminders**: extend `POST /api/cron/review-reminders` to send notifications at 30, 14, and 7 days before deadlines
+
+3. **iCal export**: generate `.ics` file for subscribing in external calendar apps
+
+**Definition of done:**
+- [ ] Calendar page shows all compliance-related deadlines
+- [ ] Automated reminders at 30/14/7 day intervals
+- [ ] iCal export works
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+### H3-4: Ecosystem
+
+---
+
+#### H3-4.1 — Template Marketplace
+
+**Depends on:** A-16
+
+**What to build:**
+
+1. **Extend template system**: add `source` field (built-in / community), `rating` (average), `usageCount`, `author`, `publishedAt` to template schema
+
+2. **Browse UI**: gallery view with search, filter by category/risk-tier/rating. Preview template before importing. Usage metrics displayed.
+
+3. **Submission flow**: architects can publish their blueprints as templates (strip enterprise-specific data, add description/tags)
+
+4. **Rating system**: users rate templates after use (1-5 stars). Stored in new `templateRatings` table.
+
+**Definition of done:**
+- [ ] Templates have community metadata (author, rating, usage count)
+- [ ] Gallery view with search and filtering
+- [ ] Architects can publish blueprints as templates
+- [ ] Rating system works
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H3-4.2 — Enterprise Integrations
+
+**Depends on:** H1-4.2
+
+**What to build:**
+
+1. **Integration adapter framework**: `src/lib/integrations/adapter.ts` — base interface for external system adapters: `sendNotification()`, `createTicket()`, `syncStatus()`
+
+2. **ServiceNow adapter**: creates incident tickets on critical violations. Config: instance URL, credentials, assignment group.
+
+3. **Jira adapter**: creates approval tasks in Jira when blueprints enter review. Updates Jira status when approved/rejected.
+
+4. **Slack/Teams adapter**: sends notification messages to configured channel. Uses incoming webhook URLs.
+
+5. **Admin integration config page**: `src/app/admin/integrations/page.tsx` — configure which integrations are active, provide credentials, map events to actions.
+
+**Definition of done:**
+- [ ] Adapter interface defined with implementations for ServiceNow, Jira, Slack
+- [ ] Each adapter can be configured per-enterprise
+- [ ] Events correctly trigger adapter actions
+- [ ] Admin page for managing integrations
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H3-4.3 — API-First + SDK
+
+**Depends on:** H1-4.3
+
+**What to build:**
+
+1. **OpenAPI 3.1 spec**: auto-generate from route definitions or manually author `docs/api/openapi.yaml` covering all public API routes
+
+2. **API key management**: new `apiKeys` table (id, enterpriseId, name, keyHash, scopes, createdBy, createdAt, lastUsedAt, revokedAt). Admin page for creating/revoking API keys.
+
+3. **TypeScript SDK**: `packages/sdk-typescript/` — typed client generated from OpenAPI spec. Publish to npm.
+
+4. **Python SDK**: `packages/sdk-python/` — typed client generated from OpenAPI spec. Publish to PyPI.
+
+**Definition of done:**
+- [ ] OpenAPI spec covers all public API routes
+- [ ] API key creation/revocation works via admin UI
+- [ ] TypeScript SDK installable and functional
+- [ ] Python SDK installable and functional
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+#### H3-4.4 — Multi-Cloud Deployment
+
+**Depends on:** P-08
+
+**What to build:**
+
+1. **Deployment adapter interface**: `src/lib/deploy/adapter.ts` — `deploy(abp: ABP, config: DeployConfig): Promise<DeploymentRecord>`, `getStatus(record: DeploymentRecord): Promise<string>`
+
+2. **Azure AI Foundry adapter**: translate ABP → Azure AI Foundry deployment manifest. Deploy via Azure SDK.
+
+3. **Google Vertex AI adapter**: translate ABP → Vertex AI agent definition. Deploy via Google Cloud SDK.
+
+4. **Deployment target selector**: extend `src/app/blueprints/[id]/page.tsx` deploy flow to allow choosing target (Bedrock / Azure / Vertex / Custom). Config per enterprise in `enterpriseSettings.deploymentTargets`.
+
+**Definition of done:**
+- [ ] Deployment adapter interface with implementations for Azure + Vertex
+- [ ] ABP translation to each cloud's manifest format
+- [ ] Deployment target selector in UI
+- [ ] Deployed agents tracked with target-specific metadata
+- [ ] `npx tsc --noEmit` passes with 0 errors
+
+---
+
+## Dependency Graph (Critical Path)
+
+```
+H1-1.1 (Telemetry model)
+  ├── H1-1.2 (AgentCore connector)
+  ├── H1-1.3 (Production tab UI)
+  ├── H1-1.4 (Health integration) ← H1-1.2
+  ├── H1-1.5 (Threshold alerts) ← H1-4.2
+  ├── H2-1.1 (Runtime policy type)
+  │     ├── H2-1.2 (Violation detection) ← H1-1.1
+  │     ├── H2-1.3 (Violation UI)
+  │     └── H2-1.4 (Circuit breaker) ← H2-1.2
+  ├── H2-2.1 (Production quality) ← H2-1.2
+  ├── H2-5.1 (Risk trends)
+  └── H2-5.2 (Cost attribution)
+
+H1-3.1 (Migration framework)
+  ├── H1-3.2 (ABP v1.1.0)
+  │     └── H1-3.3 (Generation update)
+  └── H2-4.1 (Workflow schema)
+        ├── H2-4.2 (Multi-artifact registry)
+        └── H2-4.3 (Workflow governance)
+
+H1-4.1 (Event definitions)
+  └── H1-4.2 (Event bus + webhook dispatch)
+        ├── H1-4.3 (Event filtering API)
+        └── H1-1.5 (Threshold alerts)
+
+H1-2.1 (Governor layout) → H1-2.2 (Routing) → H1-2.3 (Home page)
+H1-5.1, H1-5.2, H1-5.3 — independent, no dependencies
+```
+
+**Critical path to H2:** H1-1.1 → H1-1.2 → H2-1.1 → H2-1.2 (runtime governance requires telemetry)
+
+**Critical path to H3:** H1-3.1 → H2-4.1 → H3-1.1 (Foundry requires artifact family which requires migration framework)
+
+---
+
+## Session Execution Guide
+
+Each deliverable is scoped to fit a single Claude session (1–3 hours). Recommended execution order for H1:
+
+**Sprint 1 (foundations, parallelizable):**
+- H1-1.1 + H1-4.1 + H1-5.1 + H1-5.3 (four independent deliverables)
+
+**Sprint 2 (connect):**
+- H1-1.2 + H1-4.2 + H1-3.1 (connector, event bus, migration framework)
+
+**Sprint 3 (surface):**
+- H1-1.3 + H1-2.1 + H1-3.2 (production UI, Governor layout, ABP v1.1.0)
+
+**Sprint 4 (integrate):**
+- H1-1.4 + H1-2.2 + H1-2.3 + H1-3.3 (health integration, routing, Governor home, generation update)
+
+**Sprint 5 (complete):**
+- H1-1.5 + H1-4.3 + H1-5.2 (alerts, event API, S3 storage)
+
+---
+
+## Key Risks
+
+| # | Risk | Impact | Mitigation |
 |---|---|---|---|
-| Authentication | P0 | ✓ Complete (Session 003) | NextAuth v5 credentials provider, bcrypt, 8-hour JWT sessions |
-| User roles + RBAC | P1 | ✓ Complete (Session 003) | 4 roles: designer, reviewer, compliance_officer, admin. SOD enforced on review. |
-| Audit log | P0 | ✓ Complete (Session 003) | Append-only `audit_log` table; wired into all lifecycle events |
-| Rate limiting | P1 | ✓ Complete (Session 003) | Sliding-window in-memory; chat 30/min, generate+refine 10/min |
-| Input validation | P1 | ✓ Complete (Session 003) | Zod on all POST/PATCH routes via `parseBody()` helper |
-| Security headers | P1 | ✓ Complete (Session 003) | CSP, X-Frame-Options, HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy |
-| Request correlation IDs | P1 | ✓ Complete (Session 003) | `X-Request-Id` injected by middleware, threaded through all routes and error responses |
-| Environment variable validation | P1 | ✓ Complete (Session 003) | `src/lib/env.ts` validates DATABASE_URL, ANTHROPIC_API_KEY, AUTH_SECRET at startup |
-| Intake Engine UX | P1 | ✓ Complete (Session 003) | Dynamic system prompt, markdown rendering, suggested prompts, session history, sidebar detail |
-| Multi-tenancy | P0 | ✓ Complete (Session 004) | Application-level `enterprise_id` filtering on all 16 routes; `assertEnterpriseAccess()` helper; admin has cross-enterprise access |
-| ABP schema evolution strategy | P1 | Not started | Migration strategy needed before v1.1.0. See OQ-007. |
-| Deployment pipeline | P2 | Not started | Package approved ABPs for delivery to target runtime environments. |
-| Distributed rate limiting | P2 | Not started | Current in-memory limiter does not work across multiple server instances. Replace with Redis. |
+| R-1 | **Foundry prematurity** | 12 months of runtime engineering with no revenue | Gate on 3+ design partners + H2 prerequisites complete |
+| R-2 | **Observability gap erodes governance claim** | Buyers ask "how do you ensure compliance after deployment?" — today: "we don't" | H1-1 is P0; nothing else matters until deployed agents report back |
+| R-3 | **Enterprise integration tax** | Each enterprise has different stacks; unbounded integration work | Integration adapter framework (H1-4) + prioritize top 3 stacks in H3-4.2 |
+| R-4 | **Knowledge graph black hole** | 18 months of schema design with no outcome | No standalone project; H3-2 accumulates as side effect of observable execution |
+| R-5 | **Product family fragmentation** | Multiple product names = multiple procurement conversations | One platform, role-based experiences; pricing by capability tier, not product |
 
 ---
 
-## Post-MVP Phase 2 — Enterprise UX
+## Accomplished — Phase History (Reference)
 
-Transforms Intellios from a functional tool into a governed enterprise platform. Implemented in three phases (A → B → C) derived from the full UX architecture evaluation (Session 005).
+54 phases shipped between 2026-03-12 and 2026-03-19. Condensed by functional area.
 
-### Phase A — Foundation ✓ Complete (2026-03-13 Session 005)
+### Foundation (Phases 1–5)
 
-| Item | Status | Notes |
-|---|---|---|
-| Role-differentiated home screens | ✓ Complete | Designer (My Work + intake CTA), Reviewer (Review Queue focus), Admin (portfolio stats). Server component with direct DB reads. |
-| Pipeline Board | ✓ Complete | Kanban board at `/pipeline`. DRAFT → IN_REVIEW → APPROVED → REJECTED → DEPRECATED columns. Violation count badges. Tag filter. |
-| Blueprint Workbench redesign | ✓ Complete | Three-column layout: left-rail section stepper (7 sections, ✓/· per section), center (blueprint content), right (Submit for Review + violations + refinement). Submit button disabled until governance blockers = 0. |
-| Navigation update | ✓ Complete | Pipeline link added for all authenticated users. |
-| Registry API enrichment | ✓ Complete | `/api/registry` now returns `violationCount` (derived from stored validation report). |
+Core pipeline loop: intake → generate → validate → review. Auth + RBAC. Audit logging. Rate limiting. Input validation. Error handling.
 
-### Phase B — Governance & Oversight ✓ Complete (2026-03-13 Session 005)
+### Governance Infrastructure (Phases 6, 10–11, 14–15, 22)
 
-| Item | Status | Notes |
-|---|---|---|
-| Governance Hub | ✓ Complete | `/governance` — 4-stat coverage overview, agents-requiring-attention list, policy library with type/scope badges, compliance-by-stage table |
-| Review Console upgrade | ✓ Complete | Structured radio decision form (approve/request_changes/reject), inline governance report with violation detail, SOD warning when reviewer = designer, required rationale stored in audit log |
-| Audit Trail UI | ✓ Complete | `/audit` — filter by entity type/actor/date, load-on-demand table, expandable metadata, CSV export. Restricted to compliance_officer + admin. |
-| `/api/me` endpoint | ✓ Complete | Returns current user email/name/role for client-side SOD checks |
+MRM compliance reporting (14 sections). Policy CRUD + lifecycle audit. Governance integrity validation. Multi-step approval workflow + policy versioning (ADR-006).
 
-### Phase C — Lifecycle Extension ✓ Complete (2026-03-13 Session 005)
+### Enterprise Features (Phases 9, 12–13, 16–17, 24–25)
 
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `deployed` lifecycle status | P2 | ✓ Complete | Added `deployed` to all type enums (status route, ABP schema, lifecycle controls, status badge, pipeline board). Transition: `approved → deployed → deprecated`. |
-| Blueprint plain-language summary | P2 | ✓ Complete | `BlueprintSummary` component + "Summary" tab on registry detail page. Human-readable view of identity, capabilities, constraints, governance, audit. |
-| Deployment Console | P2 | ✓ Complete | `/deploy` — ready-to-deploy queue, one-click deploy, live production table with governance health. |
-| Executive Dashboard | P2 | ✓ Complete | `/dashboard` — top-line KPIs (deployed count, deployment rate, compliance rate, pending review), pipeline funnel bar chart, governance health grid, recent deployments table, platform summary stats. |
-| Navigation update | P2 | ✓ Complete | Deploy link added for reviewer/compliance_officer/admin. Dashboard link for compliance_officer/admin. |
-| Version diff view | P3 | Not started — compare blueprint versions side by side |
+Intake session management. User management (CRUD + invitations). Role-differentiated home screens. Pipeline board + blueprint workbench. Notification system (in-app + email). Outbound webhooks (HMAC-signed).
 
----
+### Intelligence + Monitoring (Phases 23, 28, 44)
 
----
+Blueprint quality scoring (5 dimensions). Intake quality scoring (4 dimensions). Deployment health snapshots. Daily AI-synthesized intelligence briefings. System health metrics. Governance scores surfaced in UI. Auth middleware activated.
 
-## Post-MVP Phase 3 — Workflow Intelligence ✓ Complete (2026-03-13 Session 006)
+### Deployment Integration (Phases 26–27, 33)
 
-Transforms Intellios from a governed pipeline into a self-managing enterprise platform. Reviewers and designers are notified in real time; compliance officers receive SLA breach alerts; no one needs to poll the UI to know their work is waiting.
+AgentCore manifest export. Direct AWS Bedrock deploy. AgentCore confidence hardening (error handling, model scoring).
 
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| Event bus | P0 | ✓ Complete | In-process `LifecycleEvent` bus (`src/lib/events/`). `registerHandler()` + fire-and-forget `dispatch()`. |
-| Notifications DB table | P0 | ✓ Complete | `notifications` table + migration `0005_notifications.sql`. Two indexes: recipient inbox + enterprise audit. |
-| Notification routing handler | P0 | ✓ Complete | `src/lib/notifications/handler.ts` — routes lifecycle events to correct recipients (reviewers, designers, compliance officers) by event type and `toState`. Self-registers via side-effect import in `audit/log.ts`. |
-| Audit-as-event-source | P0 | ✓ Complete | `writeAuditLog` is the single event integration point — dispatches `LifecycleEvent` after DB insert. No duplicate call sites. |
-| Email delivery (Resend) | P1 | ✓ Complete | `src/lib/notifications/email.ts` — Resend API, graceful no-op when `RESEND_API_KEY` absent. |
-| Notifications API | P0 | ✓ Complete | `GET /api/notifications` (list + unread count) + `PATCH /api/notifications` (mark all read). |
-| NotificationBell UI | P0 | ✓ Complete | `src/components/nav/notification-bell.tsx` — 30s focus-aware polling, unread count badge, dropdown with type icons + relative timestamps. |
-| SLA monitoring | P1 | ✓ Complete | `src/lib/sla/config.ts` — `getSlaStatus()` with 48h warn / 72h alert (env-var overridable). Pipeline Board: amber ring at warn, red ring + "SLA breach" badge at alert. |
-| Route metadata enrichment | P0 | ✓ Complete | Status + review routes now pass `agentName`, `agentId`, `createdBy` in audit metadata — enables correct notification recipient lookup. |
+### Compliance + Evidence (Phases 21, 29–30, 35, 50, 52)
 
----
+MRM report JSON + HTML export. Evidence package export (14-section audit bundles). Regulatory mapping report. SR 11-7 periodic review scheduling. Blueprint lineage with governance diff.
 
----
+### Intake Evolution (Phases 8, 31, 48–49)
 
-## Post-MVP Phase 4 — Enterprise UX Hardening ✓ Complete (2026-03-13 Session 007)
+Context enrichment (risk-aware probing). Classification-driven intake (agent type + risk tier). Stakeholder collaboration workspace (7 domains, RACI, AI orchestrator). Intake confidence engine (expertise detection, adaptive routing, readiness scoring, completeness map).
 
-Addresses the three most critical gaps identified in the Fortune 500 financial services UX evaluation.
+### UX Polish + Growth (Phases 36–42, 45–47, 53–54)
 
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| Deployment confirmation modal | P0 | ✓ Complete | Change reference (required), deployment notes (optional), authorization checkbox. All stored in audit log metadata. Deploy button opens modal; no one-click production deployments. |
-| Global search — Registry | P0 | ✓ Complete | Text search by name, agentId, or tag + status filter dropdown. `useMemo` client-side filter. Result count + clear filters affordance. |
-| Global search — Pipeline Board | P0 | ✓ Complete | Text search input alongside tag filter. `matchesSearch()` helper + `useMemo`. Clear link when active. |
-| Review decision banner | P0 | ✓ Complete | Color-coded banner between tabs and content on Blueprint detail: green (approved), red (rejected), amber (changes requested). Shows reviewer identity, timestamp, and comment. |
-| Status route — change management fields | P0 | ✓ Complete | `changeRef` + `deploymentNotes` added to Zod schema; stored in audit metadata on `deployed` transitions. |
-| Three-layer deployment defense | P0 | ✓ Complete | (1) `LifecycleControls` redirects to `/deploy` modal — no direct deploy from detail page. (2) API rejects `deployed` without `changeRef`. (3) RBAC guard: only `reviewer`/`admin` may transition to `deployed`. SOD fully enforced. |
+Role-optimized UX. Agent playground + code export + landing page. Self-service registration + red-teaming. Blueprint template library + activity feed. Notification settings + blueprint regeneration + status polling. Contextual help + multi-turn copilot. Viewer role. Architect command center (quality dashboard, refinement chat, agent search).
 
----
+### Lifecycle + Versioning (Phases 20, 43, 52)
 
-## Post-MVP Phase 5 — MRM Compliance Report ✓ Complete (2026-03-13 Session 008)
+Deployed state + deprecation. Clone + new version iteration. Version diff engine. Blueprint lineage with governance diff.
 
-Enables compliance officers and model risk teams to extract a single, structured evidence
-package per deployed agent — satisfying SR 11-7 model documentation and audit trail requirements.
+### Role Model (Phase 54 addendum)
 
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `MRMReport` type definition | P0 | ✓ Complete | `src/lib/mrm/types.ts` — 10-section typed interface. |
-| Report assembly function | P0 | ✓ Complete | `src/lib/mrm/report.ts` — assembles from blueprint record, version history, and audit log. 4 DB queries. |
-| Report API endpoint | P0 | ✓ Complete | `GET /api/blueprints/[id]/report` — compliance_officer + admin only. Writes `blueprint.report_exported` audit entry on every call. |
-| Export audit trail | P0 | ✓ Complete | `blueprint.report_exported` added to `AuditAction` + `EventType`. Every download is permanently traceable. |
-| Export button on Blueprint detail | P0 | ✓ Complete | "Export MRM Report" button in Registry detail header — role-gated (compliance_officer + admin). Downloads `mrm-report-{name}-v{version}.json`. |
-| Risk Classification section | P0 | ✓ Complete | Risk tier (High/Medium/Low) derived from governance policy types. Intended use, business owner, model owner. Derivation basis stated for human validation. |
-| Model Lineage section | P0 | ✓ Complete | Full version history (all agent versions) + deployment lineage (every production deploy across all versions, with changeRef). |
-
----
-
-## Post-MVP Phase 6 — Enterprise Intake Architecture ✓ Complete (2026-03-13 Session 009)
-
-Eliminates the completeness and governance blindspot in the original single-phase intake design.
-Transforms intake from a discovery-driven conversation into a structured, evidence-grade capture process.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| DB migration: `intake_context` column | P0 | ✓ Complete | `ALTER TABLE intake_sessions ADD COLUMN IF NOT EXISTS intake_context JSONB` |
-| `IntakeContext` type | P0 | ✓ Complete | 6 fields: agentPurpose, deploymentType, dataSensitivity, regulatoryScope, integrationTypes, stakeholdersConsulted |
-| `PATCH /api/intake/sessions/[id]/context` | P0 | ✓ Complete | Validates + saves Phase 1 context; auth + enterprise access guards |
-| `IntakeContextForm` component (Phase 1) | P0 | ✓ Complete | Structured form with 6 field groups; all required before conversation begins |
-| System prompt context injection | P0 | ✓ Complete | `buildContextBlock()` injects Enterprise Context + Mandatory Governance Probing Rules (5 trigger rules) |
-| Governance sufficiency matrix | P0 | ✓ Complete | `checkGovernanceSufficiency()` in tools.ts; `mark_intake_complete` rejects if required governance missing |
-| `flag_ambiguous_requirement` tool | P1 | ✓ Complete | Stores to `_flags` array in payload; surfaced in Phase 3 review screen |
-| `IntakeReview` component (Phase 3) | P0 | ✓ Complete | Per-section review cards, acknowledgment checkboxes, flags panel, context strip, gated Generate button |
-| Session page three-phase gating | P0 | ✓ Complete | Phase type: loading → context-form → conversation → review; correct state machine across all flows |
-| MRM report intake context enrichment | P1 | ✓ Complete | riskClassification section now includes deploymentType, dataSensitivity, regulatoryScope, stakeholdersConsulted |
-
----
-
-## Post-MVP Phase 7 — Stakeholder Requirement Lanes ✓ Complete (2026-03-13 Session 010)
-
-Closes the gap between knowing that domain specialists were consulted and capturing what they
-actually said. Transforms `stakeholdersConsulted` from a participation boolean into a full
-attributed evidence record.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| DB migration: `intake_contributions` table | P0 | ✓ Complete | `0007_intake_contributions.sql` — id, session_id, enterprise_id, domain, contributor_name, contributor_role, fields (JSONB), submitted_at |
-| `ContributionDomain` type + `StakeholderContribution` interface | P0 | ✓ Complete | 7 domains; fields typed as `Record<string, string>` per domain |
-| `AuditAction` + `EventType` extension | P0 | ✓ Complete | `intake.contribution_submitted` added to both union types |
-| `POST /api/intake/sessions/[id]/contributions` | P0 | ✓ Complete | Zod validation, enterprise access guard, audit log write |
-| `GET /api/intake/sessions/[id]/contributions` | P0 | ✓ Complete | List contributions for session; auth + enterprise guard |
-| `StakeholderContributionForm` component | P0 | ✓ Complete | Domain-adaptive form — selecting domain reveals 3 domain-specific fields |
-| `StakeholderContributionsPanel` component | P0 | ✓ Complete | Phase 2 sidebar panel: count badge, per-contribution cards, Add Contribution affordance |
-| System prompt injection (`buildContributionsBlock`) | P0 | ✓ Complete | Attributed per-domain sections; injected between context block and current state block |
-| Session page + chat route contributions wiring | P0 | ✓ Complete | Contributions fetched on mount + after AI response; passed to progress + review components |
-| `IntakeProgress` contributions rendering | P0 | ✓ Complete | `StakeholderContributionsPanel` rendered at bottom of Phase 2 sidebar |
-| `IntakeReview` contributions panel | P0 | ✓ Complete | Full attributed contribution content shown before section cards in Phase 3 |
-| MRM report Section 11 (`stakeholderContributions`) | P1 | ✓ Complete | 6th DB query in `assembleMRMReport()`; empty-array safe for pre-Phase 7 blueprints |
-
----
-
-## Post-MVP Phase 8 — Policy Substance Enforcement + Contribution Coverage Indicators ✓ Complete (2026-03-13 Session 011)
-
-Closes two silent failure modes that survived Phase 7:
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| Policy substance check in `checkGovernanceSufficiency` | P0 | ✓ Complete | Required policies must have ≥1 non-empty rule or description ≥25 chars; empty shells return `_substance` gap and block finalization |
-| Policy substance instruction in system prompt | P0 | ✓ Complete | `buildContextBlock` now warns Claude to include substantive content when calling `add_governance_policy` |
-| `src/lib/intake/coverage.ts` — coverage helper | P0 | ✓ Complete | `getExpectedContributionDomains` + `getMissingContributionDomains` derived from Phase 1 signals |
-| Sidebar coverage gap strip | P0 | ✓ Complete | `StakeholderContributionsPanel` renders amber strip with missing domain chips when `context` prop is provided |
-| Phase 3 review missing-domain callout | P0 | ✓ Complete | `IntakeReview` renders non-blocking amber callout listing missing expected domains |
-| Context prop pass-through | P0 | ✓ Complete | `IntakeProgress` → `StakeholderContributionsPanel`; session page passes `intakeContext` |
-
----
-
-## Post-MVP Phase 9 — Intake Session Management + MRM Coverage Gap ✓ Complete (2026-03-13 Session 012)
-
-Closes two remaining gaps: no way for designers to navigate back to in-progress sessions; MRM report documented which domains contributed but not which expected domains were absent.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `GET /api/intake/sessions` | P0 | ✓ Complete | Lists sessions for current user/enterprise; designer sees own sessions, admin sees all enterprise sessions; derives agentName + agentPurpose from JSONB |
-| `src/app/intake/page.tsx` — session list | P0 | ✓ Complete | Server component; In Progress + Completed sections; rows link to `/intake/{id}`; empty state with CTA |
-| "Intake" nav link | P0 | ✓ Complete | Added for designer + admin roles, positioned before Pipeline |
-| MRM `stakeholderCoverageGaps` field | P1 | ✓ Complete | `string[] \| null` in Section 11; computed via `getMissingContributionDomains`; null for pre-Phase 8 blueprints |
-
----
-
-## Post-MVP Phase 10 — Governance Policy Management ✓ Complete (2026-03-13 Session 013)
-
-Closes the governance configuration gap: compliance officers and admins can now create, edit, and delete enterprise governance policies entirely through the UI without needing direct API access.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `GET /api/governance/policies/[id]` | P0 | ✓ Complete | Fetch single policy; compliance_officer + admin; enterprise-scoped access control |
-| `PATCH /api/governance/policies/[id]` | P0 | ✓ Complete | Partial update; compliance_officer cannot modify global/platform policies; admin unrestricted |
-| `DELETE /api/governance/policies/[id]` | P0 | ✓ Complete | Delete policy; same access control rules as PATCH; returns `{ deleted: true }` |
-| POST — compliance_officer role | P0 | ✓ Complete | `POST /api/governance/policies` now accepts compliance_officer in addition to admin |
-| `PolicyForm` component — rule builder | P0 | ✓ Complete | Shared form: name/type/description + interactive rule builder for all 11 operators; value field hidden for exists/not_exists; client-side validation |
-| `/governance/policies/new` page | P0 | ✓ Complete | Client component; POSTs to policies API; redirects to Governance Hub on success |
-| `/governance/policies/[id]/edit` page | P0 | ✓ Complete | Pre-populated from API; platform-policy read-only mode; two-step delete confirmation for enterprise policies |
-| Governance Hub — New Policy CTA | P0 | ✓ Complete | "New Policy" button in Policy Library header; visible to compliance_officer + admin |
-| Governance Hub — Edit/View links | P0 | ✓ Complete | Per-card link: "Edit →" for enterprise policies, "View →" for platform policies; visible to managers |
-| Governance Hub — empty state | P1 | ✓ Complete | Shows "Create first policy" CTA for managers; "Contact your administrator" for others |
-
----
-
-## Post-MVP Phase 11 — Policy Lifecycle Audit ✓ Complete (2026-03-13 Session 014)
-
-Closes the compliance gap introduced by Phase 10: every governance policy mutation is now permanently recorded in the audit trail.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `policy.updated` + `policy.deleted` in `EventType` | P0 | ✓ Complete | Mirror `AuditAction` 1:1 per event bus convention |
-| `policy.updated` + `policy.deleted` in `AuditAction` | P0 | ✓ Complete | Type-safe across all call sites |
-| `policy.created` audit wired into POST handler | P0 | ✓ Complete | Was defined but never called; now fires with `toState: { name, type, ruleCount }` |
-| `policy.updated` audit wired into PATCH handler | P0 | ✓ Complete | `fromState` + `toState` capture name, type, ruleCount before and after |
-| `policy.deleted` audit wired into DELETE handler | P0 | ✓ Complete | `fromState` captures final policy state before deletion |
-| Audit Trail UI — all 10 actions labeled | P1 | ✓ Complete | `policy.updated` (orange), `policy.deleted` (rose), `blueprint.report_exported` (teal), `intake.contribution_submitted` (sky) added |
-
----
-
-## Post-MVP Phase 12 — Admin User Management ✓ Complete (2026-03-13 Session 014)
-
-Enables administrators to onboard new users, view the enterprise roster, and adjust roles without database access.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `GET /api/admin/users` | P0 | ✓ Complete | Enterprise-scoped list; admin only; excludes passwordHash |
-| `POST /api/admin/users` | P0 | ✓ Complete | Create user: name, email, role, password (bcrypt cost 12); email uniqueness enforced; 409 on conflict |
-| `PATCH /api/admin/users/[id]` | P0 | ✓ Complete | Update name and/or role; enterprise-scoped access; admin cannot change own role |
-| `/admin/users` page | P0 | ✓ Complete | Role summary stats, Create User form, user table with inline role editor; alphabetically sorted |
-| "Users" nav link | P0 | ✓ Complete | Admin-only; positioned after Dashboard |
-| `/api/me` — id field | P1 | ✓ Complete | Added `id` to response for client-side self-protection in user management UI |
-
----
-
-## Post-MVP Phase 13 — Governance Integrity ✓ Complete (2026-03-13 Session 015)
-
-Closes the P0 governance staleness vulnerability: the `in_review` gate now always runs validation live against the current policy set, preventing stale validation reports from masking policy violations introduced between a designer's last manual validate and their submission.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| Live revalidation on `in_review` submission | P0 | ✓ Complete | `validateBlueprint()` called inside the status route's `in_review` transition; fresh report persisted; stale stored-report check removed |
-| `evaluatedPolicyIds` in `ValidationReport` | P0 | ✓ Complete | IDs of all policies evaluated per run; enables audit evidence and future staleness detection |
-| Governance revalidation audit metadata | P1 | ✓ Complete | `governanceRevalidatedAt` timestamp in `in_review` audit log entry |
-| Staleness warning strip in Blueprint Workbench | P1 | ✓ Complete | Amber strip when report loaded from DB — "re-validate to check against current policies before submitting" |
-
----
-
-## Post-MVP Phase 14 — MRM Report HTML View ✓ Complete (2026-03-13 Session 016)
-
-Closes the P1 MRM usability gap: compliance officers and model risk committees can now open a browser-rendered version of the MRM Compliance Report and print it to PDF without leaving the application or touching JSON.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `src/components/mrm/print-button.tsx` client component | P1 | ✓ Complete | `window.print()` call isolated to keep report page server-rendered |
-| `/blueprints/[id]/report` server page | P1 | ✓ Complete | All 11 MRM sections rendered as structured HTML; role-gated (compliance_officer + admin); enterprise access enforced; audit entry on every view |
-| Print-to-PDF | P1 | ✓ Complete | `print:hidden` on toolbar; `print:break-before-page` on section headers; no library dependency |
-| "View MRM Report" link on Registry detail | P1 | ✓ Complete | Added alongside JSON export; "Export MRM Report" renamed "Export JSON" to distinguish formats |
-| HTML view audit entry | P1 | ✓ Complete | `blueprint.report_exported` with `metadata.format: "html"` — identical auditability to JSON export |
-
----
-
-## Post-MVP Phase 15 — Policy-Aware Intake ✓ Complete (2026-03-13 Session 017)
-
-Closes the policy-awareness gap in the intake conversation: Claude now sees the enterprise's active governance policies while helping designers define agent requirements and generates blueprints pre-adapted to them.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `buildPoliciesBlock()` in `system-prompt.ts` | P1 | ✓ Complete | Renders `## Active Enterprise Governance Policies` section with all rules, severity tags, field paths, and saturation guidance |
-| `buildIntakeSystemPrompt` signature update | P1 | ✓ Complete | Added optional `policies?: GovernancePolicy[]` 4th parameter; block injected between context and contributions blocks |
-| Enterprise policy load in chat route | P1 | ✓ Complete | Same `or(isNull, eq(enterpriseId))` query as `validateBlueprint()`; policies mapped to `GovernancePolicy[]` and passed to system prompt builder |
-
----
-
-## Blueprint-to-Session Traceability ✓ Complete (2026-03-13 Session 018)
-
-Closes the navigation gap between blueprints and the intake sessions that produced them.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| "← Intake Session" link on Blueprint Workbench | P2 | ✓ Complete | `sessionId` captured from `GET /api/blueprints/[id]` response; link shown in header when set |
-| "← Intake Session" link on Registry detail | P2 | ✓ Complete | `sessionId` added to `BlueprintVersion` interface; link shown in header when `latest.sessionId` present |
-
----
-
-## Post-MVP Phase 16 — Intake Quality Gates ✓ Complete (2026-03-13 Session 019)
-
-Closes the two silent failure modes identified in the intake confidence assessment: requirements described conversationally but not tool-captured, and governance policies that are structurally present but operationally vague.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `AmbiguityFlag`, `CaptureVerificationItem`, `PolicyQualityItem` types in `intake.ts` | P1 | ✓ Complete | Canonical types replacing local definition; `_captureVerification` and `_policyQualityAssessment` added to `IntakePayload` |
-| Per-type quality rubric in `buildContextBlock` | P1 | ✓ Complete | Minimum adequacy standards for all 5 policy types injected into intake system prompt |
-| `mark_intake_complete` schema expansion | P1 | ✓ Complete | `captureVerification` (required) + `policyQualityAssessment` (required) added; tool description updated |
-| Capture verification gate in `checkGovernanceSufficiency` | P1 | ✓ Complete | Any `capturedAs: null` item blocks finalization with descriptive error |
-| Policy quality warnings (non-blocking) | P1 | ✓ Complete | `adequate: false` items persisted and surfaced in Phase 3; do not block submission |
-| Assessments persisted to payload | P1 | ✓ Complete | `updatePayload` called before `finalizeSession()` so Phase 3 always has current data |
-| Phase 3 Capture Verification panel | P1 | ✓ Complete | Collapsible table: area / what was discussed / captured as (monospace green) or "Not captured" (red) |
-| Phase 3 Policy Quality Warnings panel | P1 | ✓ Complete | Amber panel listing inadequate policies with Claude's rationale; visible to designer and reviewer |
-
----
-
-## Post-MVP Phase 17 — Generation Intelligence ✓ Complete (2026-03-13 Session 020)
-
-Eliminates three structural inefficiencies in the generation pipeline: duplicated policy loading, post-generation governance violation discovery, and uniform model cost for all intake turns.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `src/lib/governance/load-policies.ts` — shared policy loader | P0 | ✓ Complete | Extracts `or(isNull, eq(enterpriseId))` pattern shared by validator, chat route, generate route, refine route into a single export |
-| `validateBlueprint` optional `policies?` parameter | P0 | ✓ Complete | Backward-compatible; when provided, skips DB query (`resolvedPolicies = policies ?? await loadPolicies(enterpriseId)`); internal variable renamed to avoid shadowing |
-| `buildGenerationSystemPrompt(policies?)` function | P1 | ✓ Complete | Replaced static string constant; appends `## Enterprise Governance Policies` block with `[ERROR]`/`[WARN]` severity-tagged rules when policies are provided |
-| Policy-aware `generateBlueprint` + `refineBlueprint` | P1 | ✓ Complete | Both functions accept optional `policies?: GovernancePolicy[]`; generation route loads policies once and passes to both generate + validate, eliminating the second DB query |
-| `src/lib/intake/model-selector.ts` — adaptive model selection | P1 | ✓ Complete | `selectIntakeModel(ctx: ModelSelectionContext): IntakeModel` — Haiku for ~75–80% of turns; Sonnet for opening turn, payload-complete turns, explicit finalization language, governance/regulatory keywords |
-| `stepCountIs(20)` ceiling | P1 | ✓ Complete | Raised from 10; in AI SDK v5 this limits LLM inference steps (rounds), not individual tool calls |
-| Haiku for remediation suggestions | P2 | ✓ Complete | `addRemediationSuggestions` switched to `claude-3-5-haiku-20241022`; short structured factual completions per violation — Haiku is reliable and 8× cheaper |
-
----
-
-## Post-MVP Phase 18 — Blueprint Workbench UX Reliability ✓ Complete (2026-03-13 Session 021)
-
-Resolves four latent reliability issues in the Blueprint Workbench that were invisible until specific navigation paths triggered them.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| Remove ABP from URL params | P0 | ✓ Complete | `handleGenerate` redirect simplified to `/blueprints/${id}?agentId=${agentId}`; workbench always loads from API |
-| `agentId` as state + API hydration | P0 | ✓ Complete | Submit for Review button no longer hidden on direct navigation; `agentIdState` populated from API fetch when URL param absent |
-| Auto-validate after refinement | P1 | ✓ Complete | `handleRefine` automatically calls `/validate` after a successful refine; Apply Changes button disabled during validation |
-| Surface validation errors on explicit calls | P1 | ✓ Complete | `handleValidate` catch block now calls `setError` instead of silently swallowing failures |
-
----
-
-## Post-MVP Phase 19 — Deployment Health & Governance Drift Detection ✓ Complete (2026-03-13 Session 022)
-
-Closes the governance blindspot for deployed agents: a blueprint clean at review time can silently drift out of compliance after any policy update. Phase 19 adds continuous posture monitoring without AI cost.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `deployment_health` DB table + migration | P0 | ✓ Complete | `0008_deployment_health.sql` — one row per logical agent (UPSERT on `agentId`); `health_status` (clean/critical/unknown), `error_count`, `warning_count`, `validation_report`, `last_checked_at`, `deployed_at` |
-| `deploymentHealth` Drizzle schema | P0 | ✓ Complete | Added to `src/lib/db/schema.ts` after `notifications` table |
-| `blueprint.health_checked` EventType + AuditAction | P0 | ✓ Complete | Added to both union types; enables full audit trail for every health check |
-| `src/lib/monitoring/health.ts` | P0 | ✓ Complete | `checkDeploymentHealth` + `checkAllDeployedAgents` — uses `evaluatePolicies()` (no AI, no cost); UPSERT pattern; returns `previousStatus` for transition detection |
-| `src/lib/monitoring/policy-impact-handler.ts` | P0 | ✓ Complete | Side-effect module; registered via `audit/log.ts` import; fires `checkAllDeployedAgents` on every `policy.created/updated/deleted` event; writes `blueprint.health_checked` audit entries |
-| Notification routing for health transitions | P1 | ✓ Complete | `notifications/handler.ts` extended to detect `clean→critical` (degraded) and `critical→clean` (restored); compliance officers notified with `deployment.health_degraded` / `deployment.health_restored` — transition-only to prevent alert fatigue |
-| Fire-and-forget initial check on deployment | P0 | ✓ Complete | `status/route.ts` calls `void checkDeploymentHealth(...)` after audit log write for `deployed` transitions; does not block PATCH response |
-| `GET /api/monitor` | P0 | ✓ Complete | `requireAuth(reviewer/co/admin)`; returns all deployed agents with health data + `{ total, clean, critical, unknown }` summary |
-| `POST /api/monitor/[agentId]/check` | P0 | ✓ Complete | Single-agent manual re-check; writes audit entry; returns updated health record |
-| `POST /api/monitor/check-all/route.ts` | P0 | ✓ Complete | Bulk re-check all deployed agents; writes audit per result |
-| `/monitor` page | P0 | ✓ Complete | 4 KPI cards, search + health filter, table with health badges (clean/critical/not-checked), per-row "Check Now" (co/admin), "Check All Agents" button, empty state |
-| Governance health strip on Registry detail | P1 | ✓ Complete | 3-variant strip (unknown/clean/critical) between header and tabs for deployed agents; "Check Now" / "Re-check" / "Run First Check" (co/admin) updates inline |
-| "Monitor" nav link | P0 | ✓ Complete | `reviewer | compliance_officer | admin`; after "Deploy", before "Governance" |
-
----
-
-## Post-MVP Phase 20 — Regulatory Intelligence & Version Audit Trail ✓ Complete (2026-03-13 Session 023)
-
-Adds regulatory vocabulary that Fortune 500 compliance officers and regulators expect. Every blueprint is now assessed deterministically against EU AI Act, SR 11-7, and NIST AI RMF — no AI calls, no schema migrations.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `src/lib/regulatory/frameworks.ts` | P0 | ✓ Complete | Type definitions + requirement ID constants for EU AI Act (9), SR 11-7 (9), NIST AI RMF (8) |
-| `src/lib/regulatory/classifier.ts` | P0 | ✓ Complete | Pure functions: `classifyEUAIAct`, `classifySR117`, `classifyNISTRMF`, `assessAllFrameworks`; EU AI Act risk tier from intake context signals; all evidence mapped from ABP fields |
-| `GET /api/blueprints/[id]/regulatory` | P0 | ✓ Complete | 3 DB queries, no writes; runs classifier on current blueprint state |
-| `RegulatoryPanel` component | P0 | ✓ Complete | Expandable framework sections; EU AI Act risk tier badges; NIST function strength dots |
-| "Regulatory" tab on Registry detail | P0 | ✓ Complete | Visible to all roles; renders `RegulatoryPanel` for latest blueprint version |
-| `src/lib/diff/abp-diff.ts` | P0 | ✓ Complete | Pure structural diff engine; significance: major/minor/patch; diffs identity/capabilities/constraints/governance |
-| `GET /api/blueprints/[id]/diff` | P0 | ✓ Complete | `?compareWith={blueprintId}`; asserts same `agentId`; returns `ABPDiff` |
-| `VersionDiff` component | P0 | ✓ Complete | Collapsible per-section blocks; +/−/~ indicators; significance badge; `defaultCollapsed` mode for review panel |
-| Version comparison in Versions tab | P1 | ✓ Complete | Dropdown shown when `versions.length >= 2`; renders `VersionDiff` on selection |
-| Version diff in Review Panel | P0 | ✓ Complete | Collapsible "Changes from v{prev} → v{current}" at top of panel when `previousBlueprintId` provided |
-| `src/lib/governance/policy-templates.ts` | P0 | ✓ Complete | 4 packs: sr-11-7-core (4 policies), eu-ai-act-high-risk (5), gdpr-agent-data (3), ai-safety-baseline (3) |
-| `GET /api/governance/templates` | P0 | ✓ Complete | Returns static pack metadata; no DB query |
-| `POST /api/governance/templates/[pack]/apply` | P0 | ✓ Complete | Duplicate guard (409 + `{ duplicates }`) unless `force=true`; creates real enterprise policies; audits each |
-| Compliance Starter Packs UI | P0 | ✓ Complete | 2-column pack cards in Governance Hub; inline 409 conflict prompt with "Overwrite" / Cancel; success/error toast |
-| MRM Report Section 12 | P1 | ✓ Complete | `regulatoryFrameworks` field in `MRMReport`; `assembleMRMReport` computes via `assessAllFrameworks` |
-
----
-
-## Post-MVP Phase 21 — Enterprise Completeness ✓ Complete (2026-03-13 Session 024)
-
-Five gaps blocking Fortune 500 production readiness, selected from a ranked audit of 20 identified issues. Items ranked 6–20 deferred (webhooks, multi-step approval, policy versioning, bulk operations) as they require stakeholder alignment or external dependencies. The five delivered items are individually additive with no breaking changes.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| MRM HTML Report Section 12 | P0 | ✓ Complete | Regulatory Framework Assessment table rendered in `/blueprints/[id]/report`; per-requirement evidence rows with ✓/⚠/✗ status; NIST function strength dots; direct `assessAllFrameworks()` call (no HTTP self-call) |
-| Agent Clone API | P0 | ✓ Complete | `POST /api/blueprints/[id]/clone`; new `agentId` + new blueprint `id`; status=draft, version=1.0.0; `blueprint.cloned` audit; `designer | admin` only |
-| Agent Clone UI | P0 | ✓ Complete | Clone button on Registry detail page header + per-card clone in Registry list; optional name override modal; navigates to new agent on success |
-| ABP Ownership Metadata (v1.2.0) | P1 | ✓ Complete | Optional `ownership` block: `businessUnit`, `ownerEmail`, `costCenter`, `deploymentEnvironment`, `dataClassification`; `PATCH /api/blueprints/[id]/ownership`; Workbench editor + Registry summary card; docs/schemas/abp/v1.2.0.schema.json |
-| Enterprise Settings | P0 | ✓ Complete | `enterprise_settings` DB table; `src/lib/settings/types.ts` + `get-settings.ts`; GET+PUT `/api/admin/settings`; `/admin/settings` page (SLA/governance/notifications); Settings nav link for admin |
-| Governance Analytics | P1 | ✓ Complete | `GET /api/governance/analytics`; Governance Hub analytics section with 3-column KPI row, 6-month dual bar chart (no npm deps), top violated policies table, agent status distribution |
-
----
-
-## Post-MVP Phase 22 — Governance Maturity ✓ Complete (2026-03-13 Session 025)
-
-Two regulated-industry production blockers resolved. SR 11-7 separation-of-duties requirements can now be enforced with sequential multi-role approval chains. Governance policies now version on every edit, preserving the historical validation evidence chain required for MRM audit reproducibility. Zero new npm dependencies. Zero breaking changes. One migration file.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| DB migration: approval columns + policy versioning columns | P0 | ✓ Complete | `0010_multi_step_approval.sql`; `current_approval_step`, `approval_progress` on `agent_blueprints`; `policy_version`, `previous_version_id`, `superseded_at` on `governance_policies`; backward-compatible defaults |
-| `ApprovalChainStep` + `ApprovalStepRecord` types | P0 | ✓ Complete | `src/lib/settings/types.ts`; `approvalChain: ApprovalChainStep[]` on `EnterpriseSettings`; default `[]` = legacy single-step |
-| Policy versioning — PATCH creates new row | P0 | ✓ Complete | Transaction: insert new version row + `supersededAt` old row; GET list filtered to active-only; rows never deleted (ADR-003) |
-| Policy history endpoint | P0 | ✓ Complete | `GET /api/governance/policies/[id]/history`; walks `previousVersionId` chain (limit 20); `compliance_officer \| admin` |
-| Approval chain enforcement in review route | P0 | ✓ Complete | Role check against active step; `ApprovalStepRecord` appended per step; `blueprint.approval_step_completed` fired on non-final advances |
-| Approval chain enforcement in status route | P0 | ✓ Complete | Resets `currentApprovalStep/approvalProgress` on submission; same chain enforcement on approval/rejection transitions |
-| `blueprint.approval_step_completed` audit + event + notification | P0 | ✓ Complete | Added to `AuditAction` + `EventType`; handler fans out to users with `nextApproverRole`; `getUsersByRole` in `recipients.ts` |
-| `approvalChain` in admin settings UI + API Zod schema | P0 | ✓ Complete | Ordered step list with role selector + label; `ApprovalChainStepSchema` in settings route |
-| Review queue step filtering | P1 | ✓ Complete | `?role=X` filters to caller's step; step progress strip + prior approval chips on each card |
-| Registry detail approval progress strip + role-gated review | P0 | ✓ Complete | `✓/→/○` progress strip; prior approvals table; step context banner; "not your turn" guard |
-| Governance Hub policy version badges + history | P1 | ✓ Complete | `v{N}` badge when `policyVersion > 1`; expandable inline version table via history endpoint |
-| MRM Section 6 — approval chain evidence table | P0 | ✓ Complete | Full step table when `approvalProgress.length > 0`; legacy 3-field view when empty |
-| MRM Section 5 — policy version lineage (5.1) | P0 | ✓ Complete | Batch-fetch `evaluatedPolicyIds` rows; version at evaluation + "policy revised since approval" warnings |
-
----
-
-## Post-MVP Phase 23 — Blueprint Test Harness ✓ Complete (2026-03-14 Session 026)
-
-Closes the behavioral verification gap: every blueprint was previously validated only structurally (governance rule checks) — not behaviorally (does the agent actually behave as designed?). SR 11-7 requires performance testing evidence, not only documentation review. Phase 23 adds a complete behavioral test layer with Claude-as-judge evaluation, permanent MRM evidence records, and an optional enterprise gate that blocks review submission until a passing test run exists.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| DB migration: `blueprint_test_cases` + `blueprint_test_runs` | P0 | ✓ Complete | `0011_test_harness.sql`; test cases per logical agent (shared across versions); test runs per blueprint version (append-only evidence) |
-| `src/lib/testing/types.ts` | P0 | ✓ Complete | `TestCase`, `TestCaseResult`, `TestRun` interfaces |
-| `src/lib/testing/executor.ts` — execution engine | P0 | ✓ Complete | `buildAgentSystemPrompt` from ABP fields; two Haiku calls per case (execute → evaluate); `runTestSuite` returns `{ results, passedCases, failedCases, status }` accounting for required vs. informational severity |
-| Test case CRUD routes — `GET/POST /api/registry/[agentId]/test-cases` | P0 | ✓ Complete | List all roles; create `designer\|admin`; enterprise-scoped via latest blueprint |
-| Test case item routes — `PATCH/DELETE /api/registry/[agentId]/test-cases/[caseId]` | P1 | ✓ Complete | Partial update + deletion; `designer\|admin`; ownership verified |
-| Test run routes — `GET/POST /api/blueprints/[id]/test-runs` | P0 | ✓ Complete | GET newest-first; POST executes suite, inserts running→completed row, writes `blueprint.test_run_completed` audit entry |
-| `requireTestsBeforeApproval` enterprise setting | P1 | ✓ Complete | `src/lib/settings/types.ts`; admin settings Zod schema + UI toggle; status route gate on `draft→in_review` |
-| `blueprint.test_run_completed` audit action + event | P0 | ✓ Complete | Added to `AuditAction` + `EventType` |
-| `VALIDATION_ERROR` added to `ErrorCode` | P0 | ✓ Complete | HTTP 422; used by submission gate + no-test-cases guard |
-| Tests tab on Registry detail | P0 | ✓ Complete | Lazy-loaded on first activation; test suite panel (list + Add Test Case form + delete); test runs panel (Run Tests button, latest run banner with ✓/✗ verdict, per-case expandable detail, prior run history) |
-| Test Suite widget in Blueprint Workbench | P1 | ✓ Complete | Compact right-rail widget; test case count; last run summary; Run Tests button; amber strip when cases exist but no passing run |
-| MRM Report Section 13 — Behavioral Test Evidence | P0 | ✓ Complete | Server-fetched latest `TestRun` for blueprint; summary row (executor, date, total, verdict); per-case verdict table with evaluation rationale; "no tests executed" empty state with SR 11-7 note |
-
----
-
-## Post-MVP Phase 24 — Proactive Compliance Intelligence ✓ Complete (2026-03-14 Session 027)
-
-Closes the compliance reactivity gap: compliance officers previously operated reactively (policy changes silently affected deployed agents; compliance posture required 5-page navigation). Phase 24 adds proactive tooling: policy impact simulation before publishing, and a Compliance Command Center consolidating enterprise posture, at-risk agents, review queue pressure, policy coverage, and activity trends.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `policy.simulated` audit action + event | P0 | ✓ Complete | Added to `AuditAction` + `EventType` |
-| `POST /api/governance/policies/simulate` | P0 | ✓ Complete | Deterministic evaluator only (zero AI calls); loads `approved|deployed` blueprints; classifies each as `new_violations|resolved_violations|no_change`; writes `policy.simulated` audit entry |
-| `GET /api/compliance/posture` | P0 | ✓ Complete | Pure aggregation from existing tables: status counts, health counts, test coverage, at-risk agents, review queue, policy coverage |
-| "Preview Impact" button in `PolicyForm` | P0 | ✓ Complete | Purple button between rules and save; inline 4-stat summary + per-blueprint affected list; "outdated" warning when form changes after simulation; `existingPolicyId` passed from edit page for resolved-violation detection |
-| Edit policy page passes `existingPolicyId` | P0 | ✓ Complete | Enables baseline violation comparison for modified policies |
-| `/compliance` page — all 5 sections | P0 | ✓ Complete | Enterprise Posture KPIs, At-Risk Agents table, Review Queue Pressure, Policy Coverage Gaps, 30-Day Trends; `compliance_officer|admin` access; redirects other roles |
-| Nav link for `/compliance` | P0 | ✓ Complete | Added to `layout.tsx` for `compliance_officer|admin`; positioned before Governance |
-| ADR-008 | P0 | ✓ Complete | Documents simulation design, zero-AI-call constraint, and Command Center aggregation approach |
-
----
-
-## Post-MVP Phase 25 — Outbound Webhook Integration ✓ Complete (2026-03-14 Session 028)
-
-Transforms the platform from a governance silo into an integration hub. Admins register HTTPS endpoints subscribed to lifecycle events; Intellios POSTs HMAC-SHA256 signed payloads on each matching event — enabling CI/CD automation, SIEM integration, Slack/Teams bots, and external audit system synchronization.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `webhooks` + `webhook_deliveries` DB tables + migration | P0 | ✓ Complete | `0012_webhooks.sql`; `events TEXT[]` (empty = all); `active` boolean for pause/resume without deletion; cascade-delete on deliveries |
-| `src/lib/webhooks/types.ts` | P0 | ✓ Complete | `WebhookPayload` + `WebhookRecord` interfaces |
-| `src/lib/webhooks/deliver.ts` | P0 | ✓ Complete | `deliverWebhook()` — 3-attempt retry (0ms/1s/2s), HMAC-SHA256 signing, delivery log; `deliverWebhookTest()` — synchronous test delivery |
-| `src/lib/webhooks/dispatch.ts` | P0 | ✓ Complete | Event handler; enterprise-scoped webhook load; event-type filter; fire-and-forget `Promise.allSettled`; self-registers with event bus on import |
-| Event bus wiring | P0 | ✓ Complete | Side-effect import `import "@/lib/webhooks/dispatch"` added to `audit/log.ts` |
-| `GET/POST /api/admin/webhooks` | P0 | ✓ Complete | List (no secrets) + register (auto-generates secret, returns once) |
-| `GET/PATCH/DELETE /api/admin/webhooks/[id]` | P0 | ✓ Complete | Fetch with last 20 deliveries + update name/url/events/active + delete |
-| `POST /api/admin/webhooks/[id]/test` | P0 | ✓ Complete | Synchronous test delivery; returns status + HTTP code inline |
-| `POST /api/admin/webhooks/[id]/rotate-secret` | P0 | ✓ Complete | Generates new 32-byte secret; returns once |
-| `/admin/webhooks` page | P0 | ✓ Complete | Register form with event group checkboxes (Blueprint/Policy/Intake/Settings); amber secret-reveal callout; webhook cards with active toggle, test, delivery log, rotate secret, delete; signature verification docs block |
-| Webhooks nav link | P0 | ✓ Complete | Added to `layout.tsx` for `admin`; positioned after Settings |
-| ADR-009 | P0 | ✓ Complete | Documents HMAC signing design, enterprise scoping, fire-and-forget delivery model, no-new-deps constraint |
-
----
-
----
-
-## AgentCore Integration Phase 1 — Export ✓ Complete (2026-03-14 Session 029)
-
-Enables any approved or deployed blueprint to be exported as a self-contained Amazon Bedrock AgentCore deployment manifest. The manifest contains all fields needed for `CreateAgent` + `CreateAgentActionGroup` in Bedrock, including RETURN_CONTROL action groups (no Lambda required), tags for traceability back to Intellios, and human-readable deployment instructions. No AWS credentials required in Intellios — the operator applies the manifest manually or via CI/CD.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `src/lib/agentcore/types.ts` | P0 | ✓ Complete | TypeScript shapes for Bedrock Agent API: `BedrockAgentDefinition`, `BedrockActionGroup`, `BedrockFunctionSchema`, `AgentCoreExportManifest`, `AgentCoreDeploymentRecord` |
-| `src/lib/agentcore/translate.ts` | P0 | ✓ Complete | Pure ABP → Bedrock translation: `translateAbpToBedrockAgent()` + `buildAgentCoreExportManifest()`; RETURN_CONTROL tool pattern; field sanitization; fallback instruction for <40-char cases; traceability tags |
-| `GET /api/blueprints/[id]/export/agentcore` | P0 | ✓ Complete | `reviewer|compliance_officer|admin`; approved/deployed blueprints only; returns downloadable JSON with `Content-Disposition` header; writes `blueprint.agentcore_exported` audit entry |
-| "Export for AgentCore ↓" on Deploy Console | P0 | ✓ Complete | Shown on approved (Ready to Deploy) cards and deployed (Live in Production) table rows |
-| "Export for AgentCore ↓" on Registry detail | P0 | ✓ Complete | Orange-tinted button visible to reviewer/compliance_officer/admin when blueprint is approved or deployed |
-| ADR-010 | P0 | ✓ Complete | Documents adapter/deployment-target pattern, ABP→Bedrock field mapping, RETURN_CONTROL rationale, no-credentials-in-DB decision |
-
----
-
-## AgentCore Integration Phase 2 — Direct Deploy ✓ Complete (2026-03-14 Session 030)
-
-Enables one-click deployment to Bedrock AgentCore from Intellios. AWS credentials from server environment variables; enterprise AgentCore config (region, IAM role ARN, model, guardrail) in Admin Settings; `agentId`/`agentArn`/`region`/`model` stored in `agentBlueprints.deployment_metadata`; "AgentCore ↗" badge and deployment strip on Registry detail.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `src/lib/agentcore/deploy.ts` | P0 | Not started | AWS SDK `@aws-sdk/client-bedrock-agent`; `createBedrockAgent()` + `prepareAgent()` + poll until PREPARED |
-| `@aws-sdk/client-bedrock-agent` | P0 | ✓ Complete | First AWS SDK dependency; isolated to `src/lib/agentcore/deploy.ts` |
-| DB migration 0013: `deployment_target` + `deployment_metadata` | P0 | ✓ Complete | `migration 0013_agentcore_deployment.sql`; two columns added + pushed to DB |
-| `src/lib/agentcore/deploy.ts` | P0 | ✓ Complete | `deployToAgentCore()`: CreateAgent → CreateAgentActionGroup × n → PrepareAgent → poll GetAgent until PREPARED; timeout rollback via DeleteAgent |
-| `EnterpriseSettings.deploymentTargets.agentcore` | P1 | ✓ Complete | `region`, `agentResourceRoleArn`, `foundationModel`, `guardrailId` optional; `AgentCoreConfig` interface |
-| `POST /api/blueprints/[id]/deploy/agentcore` | P0 | ✓ Complete | Calls `deployToAgentCore()`; updates status → deployed; writes `blueprint.agentcore_deployed` + `blueprint.status_changed` audit entries (triggers webhooks + notifications) |
-| AgentCore Deploy Modal on Deploy Console | P0 | ✓ Complete | 4-phase modal (confirm/deploying/success/error); progress label cycling; success shows agentId/ARN/region + AWS console link |
-| Deployment target badge on Registry detail | P1 | ✓ Complete | "AgentCore ↗" pill badge + orange deployment details strip (agentId, region, model, ARN, deployed-at/by, AWS console link) |
-| "Deployment Targets" section in Admin Settings | P1 | ✓ Complete | AgentCore block with enable toggle; region/model/roleARN/guardrail fields |
-| `blueprint.agentcore_deployed` audit + event | P1 | ✓ Complete | Added to `AuditAction` + `EventType` unions; fires on successful deployment |
-| `AGENTCORE_NOT_CONFIGURED` + `AGENTCORE_DEPLOY_FAILED` error codes | P1 | ✓ Complete | 400 + 502 respectively; returned with descriptive messages |
-
----
-
-## AgentCore Integration Phase 3 — Polish ✓ Complete (2026-03-14 Session 031)
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| MRM Report "Deployment Target" section | P2 | ✓ Complete | `deploymentTarget` + `agentcoreRecord` added to `MRMReport.deploymentRecord`; Section 8 renders orange AWS Resource Details strip with agentId, ARN, region, model, deployed-at/by, AWS console link |
-| Audit Trail `blueprint.agentcore_deployed` event surface | P2 | ✓ Complete | Orange badge + inline AgentCore summary (agentId, region, ARN) without expanding; labels/colors added for all 18 action types |
-| `blueprint.agentcore_exported` event in Webhook dispatch | P2 | ✓ Complete | Already complete: `writeAuditLog` dispatches to event bus for every EventType; no code change needed |
-
----
-
-## Phase 28 — Awareness and Measurement System ✓ Complete (2026-03-14 Session 032)
-
-Continuous platform quality monitoring answering three questions: Are agents being generated correctly? Is quality improving over time? Is the system reliable and safe?
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| DB migration 0014 (4 tables) | P0 | ✓ Complete | `blueprint_quality_scores`, `intake_quality_scores`, `system_health_snapshots`, `intelligence_briefings` |
-| `src/lib/awareness/types.ts` | P0 | ✓ Complete | `MetricsSnapshot`, `QualityScoreResult`, `IntakeScoreResult`, `AnomalySignal`, `BriefingResult`, `IntelligencePayload` |
-| `src/lib/awareness/metrics-worker.ts` | P0 | ✓ Complete | 8-metric SQL aggregation; Quality Index composite (0–100); writes snapshots |
-| `src/lib/awareness/anomaly-detector.ts` | P1 | ✓ Complete | 4-threshold checks; dedup via notifications table; fires compliance_officer notifications |
-| `src/lib/awareness/quality-evaluator.ts` | P0 | ✓ Complete | AI side-effect; Haiku scores blueprints (5 dims) + intake sessions (4 dims) on event; never throws |
-| `src/lib/awareness/briefing-generator.ts` | P0 | ✓ Complete | Sonnet daily briefing (5-section narrative); upserts by date; notifications on non-nominal health |
-| API routes (4) | P0 | ✓ Complete | `/api/monitor/intelligence`, `/snapshot`, `/briefing` (GET+POST) |
-| `/monitor/intelligence` page | P0 | ✓ Complete | KPI strip, health badge, briefing panel, SVG sparkline, quality scores table |
-| Settings `awareness` block | P1 | ✓ Complete | 4 alert thresholds + optional `briefingWebhookUrl` |
-| Scheduled task | P1 | ✓ Complete | `intellios-daily-briefing`; cron `0 8 * * *`; POSTs to briefing endpoint |
-
----
-
-## Phase 29 — Intelligence Maturation ✓ Complete (2026-03-15 Session 034)
-
-Transforms the Intelligence page from a single-day snapshot into a genuine daily intelligence dashboard. Adds briefing history navigation, 30-day trend charts, quality score backfill, anomaly resource links, and briefing webhook delivery.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `runBlueprintQualityScoreForId` export | P0 | ✓ Complete | Extracted from event handler; enables direct scoring by blueprint ID |
-| `POST /api/monitor/intelligence/backfill` | P0 | ✓ Complete | Scores all unscored blueprints in `in_review\|approved\|deployed`; safe to re-run |
-| `IntelligencePayload.briefingHistory` | P0 | ✓ Complete | Last 7 briefings returned; GET route now fetches 30 snapshots |
-| Briefing history date strip | P0 | ✓ Complete | 7-day date buttons with health dots; click navigates between days |
-| 30-day trend charts (4 metrics) | P0 | ✓ Complete | QI, validity rate, review queue, webhook rate; threshold lines; inverted color for queue |
-| Anomaly KPI card links | P1 | ✓ Complete | Anomalous KPI cards link to the affected resource (pipeline/review/admin/webhooks) |
-| ACTION REQUIRED strip | P1 | ✓ Complete | Amber strip listing anomalies with value, reason, and "Go →" link |
-| Briefing webhook delivery | P1 | ✓ Complete | POSTs to `settings.awareness.briefingWebhookUrl` when set; enables Slack/Teams integration |
-| "⟳ Score Existing" admin button | P1 | ✓ Complete | Header button fires backfill; shows scored/skipped toast; refreshes data |
-
----
-
-## Phase 30 — Compliance Evidence Export ✓ Complete (2026-03-15 Session 035)
-
-Per-agent downloadable evidence package for regulatory submission; intake quality score surface across the platform.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `blueprint.compliance_exported` event type | P0 | ✓ Complete | Added to `EventType` and `AuditAction`; every export is a traceable lifecycle event |
-| `GET /api/blueprints/[id]/export/compliance` | P0 | ✓ Complete | JSON evidence bundle: MRM report + quality eval + test runs + export metadata; status-gated to `approved\|deployed`; `Content-Disposition: attachment` |
-| `DownloadEvidenceButton` component | P0 | ✓ Complete | Client component; browser fetch → Blob → `<a download>`; loading state; only renders when enabled |
-| "↓ Download Evidence Package" on MRM report | P0 | ✓ Complete | Added to MRM report toolbar next to Print button; visible for `approved\|deployed` |
-| "Export Evidence ↓" on Registry detail | P0 | ✓ Complete | Indigo-styled `<a download>` in compliance actions block; visible for `approved\|deployed` |
-| `GET /api/intake/sessions/[id]/quality-score` | P1 | ✓ Complete | Returns most recent intake AI quality score or `null` if not yet evaluated |
-| Intake quality score chip on session page | P1 | ✓ Complete | Green/amber/red `Intake quality NN/100` chip in review-phase header |
-| `recentIntakeScores` in Intelligence payload | P1 | ✓ Complete | Last 10 intake scores added to `IntelligencePayload`; fetched in parallel in API route |
-| "Recent Intake Quality Scores" table on Intelligence page | P1 | ✓ Complete | Dimension table (Breadth, Ambiguity, Risk ID, Stakeholder, Overall) with session links |
-
----
-
-## Phase 31 — AI Experience Optimization ✓ Complete (2026-03-15 Session 036)
-
-Makes Intellios's embedded AI capabilities visible, interpretable, and trustworthy. Nine targeted UX improvements across three categories: AI reasoning surfaced, AI text styled, AI assistance at high-stakes decision points. No DB migrations. No new npm dependencies.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| Governance violation AI suggestion cards | P0 | ✓ Complete | `suggestion` in blue `bg-blue-50 border-l-2 border-blue-300` block labeled `✦ Suggested fix`; policy message stays `text-gray-900` |
-| Test harness judge rationale expansion | P0 | ✓ Complete | Click `N/M passed` to expand per-case results with Claude's `evaluationRationale` in italic for failures |
-| Intelligence quality score dimension bars | P1 | ✓ Complete | Click quality score row to expand 5 dimension bars; amber + `⚠ below threshold` for dims < 3.0 |
-| Context-aware streaming labels | P1 | ✓ Complete | `STREAMING_LABELS` map; `lastToolCallName` derived from message history; shows e.g. "Capturing tool details…" with dots |
-| Stale validation signal during refinement | P1 | ✓ Complete | Validation section dims to `opacity-50 pointer-events-none` when `refining \|\| validating` with existing report |
-| Intake score loading + dimension popover | P1 | ✓ Complete | Animate-pulse placeholder chip during score fetch; clickable chip opens popover with 4 dimension bars |
-| Generation step progress | P1 | ✓ Complete | 4-step label cycling during `generateObject()` wait; indigo progress dots |
-| Structured briefing sections | P0 | ✓ Complete | `generateObject()` migration with 5-section Zod schema; section cards with icons + colored badges; `<pre>` fallback for old records; `BriefingSections` type in `types.ts` |
-| AI Risk Brief on review panel | P0 | ✓ Complete | New `POST /api/blueprints/[id]/review-brief` (Claude Haiku); structured `riskLevel`/`summary`/`keyPoints`/`recommendation` schema; "Generate Brief" button + shimmer loading + non-interactive recommendation badge |
-
----
-
-## Phase 32 — UI Transformation ✓ Complete (2026-03-15 Session 037)
-
-Transforms Intellios from a gray prototype into a polished product-grade interface. Design direction: dark sidebar + light content (Linear/Vercel aesthetic). Installed `lucide-react` and `geist`. No DB migrations. No new API routes. No behavioral changes.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| Install lucide-react + geist | P0 | ✓ Complete | `lucide-react ^0.487.0` + `geist ^1.3.0` added to package.json |
-| CSS design tokens + Geist font | P0 | ✓ Complete | `--sidebar-bg/border/text/accent`, `--content-bg`, `--shadow-card/raised` in `:root`; WebKit scrollbar styles |
-| Dark sidebar layout | P0 | ✓ Complete | `slate-900` sidebar (240px); violet-500 accent; role-gated nav; user chip; replaces horizontal top-nav |
-| `sidebar.tsx` new component | P0 | ✓ Complete | Brand strip, grouped nav with Lucide icons, active state (`border-l-2 border-violet-500`), user chip + sign-out |
-| Layout.tsx sidebar integration | P0 | ✓ Complete | `flex h-screen overflow-hidden` layout; login page excluded; Geist Sans applied via `next/font` |
-| Overview page redesign | P1 | ✓ Complete | `LayoutDashboard` icon, stats row, quick-action cards, activity list |
-| Intake page redesign | P1 | ✓ Complete | `MessageSquare` icon, session rows, amber in-progress strip, `Inbox` empty state |
-| Pipeline page surgical edits | P1 | ✓ Complete | Removed `← Home`, layout constraint removed |
-| Registry page redesign | P1 | ✓ Complete | `Library` icon, `Search` in bar, `Bot` row icons, pill toggle status filter |
-| Review page redesign | P1 | ✓ Complete | `ClipboardList` icon, pending count badge, `ClipboardCheck` empty state |
-| Governance page redesign | P1 | ✓ Complete | `Shield` icon, `Plus` on New Policy (violet), `Download` on template import |
-| Compliance page redesign | P1 | ✓ Complete | `CheckSquare` icon, `AlertTriangle` on risk indicators, 3+2 KPI layout |
-| Dashboard page redesign | P1 | ✓ Complete | `BarChart3` icon, `TrendingUp`/`TrendingDown` on KPI cards |
-| Deploy page redesign | P1 | ✓ Complete | `Rocket` icon, green `border-l-2` ready rows, `Globe` on live rows, modal emoji→icon |
-| Monitor page redesign | P1 | ✓ Complete | `Activity` icon, `RefreshCw` on Check All, removed `max-w` constraint |
-| Audit page redesign | P1 | ✓ Complete | `ScrollText` icon, `Download` icon on Export CSV |
-| Admin pages redesign (users, settings, webhooks) | P1 | ✓ Complete | Consistent inline header pattern, violet-600 CTAs, removed breadcrumb links |
-| Governance sub-pages redesign (new, edit) | P1 | ✓ Complete | `px-8 py-8` + `max-w-3xl`, `h-64` loading states |
-| StatusBadge colored dot | P2 | ✓ Complete | `STATUS_DOT` record; `h-1.5 w-1.5 rounded-full` dot before label |
-| BlueprintView section icons | P2 | ✓ Complete | Optional `icon?: LucideIcon` prop; 7 sections mapped to Lucide icons |
-| ReviewPanel action icons | P2 | ✓ Complete | `Sparkles` on AI Brief; `ThumbsUp`/`ThumbsDown` on submit button |
-| ChatContainer prompt card icons | P2 | ✓ Complete | `ArrowRight` right-aligned; hover color violet |
-
----
-
-## Phase 33 — AgentCore Integration Confidence ✓ Complete (2026-03-15 Session 038)
-
-Systematically hardens the AgentCore integration (Phases 29–30) to reach production-grade confidence. No DB migrations. No new runtime npm dependencies (vitest is devDependency only). Pre-existing webhooks.tsx TypeScript error unrelated to this phase.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| Settings Zod schema for agentcore config | P0 | ✓ Complete | `AgentCoreConfigSchema` in admin settings PUT; region regex, ARN regex, guardrail co-validation; HTTP 400 on malformed config |
-| Instruction padding fix | P0 | ✓ Complete | Short-but-real instructions padded (not replaced) to meet Bedrock's 40-char minimum |
-| Polling timeout 30s → 90s | P0 | ✓ Complete | `POLL_MAX_ATTEMPTS = 180`; UI copy updated; dynamic error message self-corrects |
-| Pre-flight config validation | P0 | ✓ Complete | `validateAgentCoreConfig()` called before `BedrockAgentClient` instantiation; fails with clear message before any AWS calls |
-| Error message enrichment | P0 | ✓ Complete | `enrichAgentCoreError()` maps 6 AWS error patterns to actionable operator guidance in the deploy modal |
-| vitest setup | P0 | ✓ Complete | `vitest ^3.0.0` + `@vitest/coverage-v8` devDependencies; `vitest.config.ts`; `test`, `test:watch`, `test:coverage` scripts |
-| Translation layer unit tests | P0 | ✓ Complete | 37 tests for `translateAbpToBedrockAgent()` + `buildAgentCoreExportManifest()`; zero AWS dependency; covers name sanitization, instruction padding, action groups, memory, tags, guardrails, manifest |
-| Deploy route integration tests | P1 | ✓ Complete | 12 tests with `vi.mock(@aws-sdk/client-bedrock-agent)`; covers happy path, all 3 failure steps, rollback, polling timeout, terminal state, pre-flight validation |
-| AgentCore live health endpoint | P1 | ✓ Complete | `GET /api/monitor/agentcore-health`; calls `GetAgent` per deployed agent; 5s timeout; `UNREACHABLE` on failure; summary object |
-| Monitor page AgentCore Live Status section | P1 | ✓ Complete | "Check Live AWS Status" button (compliance_officer + admin only); Bedrock status badges; only renders when AgentCore agents exist |
-| ADR-011 | P2 | ✓ Complete | Captures test runner choice, timeout rationale, padding behavior change, agentVersion limitation |
-| Operator setup guide | P2 | ✓ Complete | `docs/guides/agentcore-setup.md` — IAM setup, credential sources, model access, settings config, export vs deploy paths, live monitoring, known limitations, troubleshooting |
-
-**Test results:** 49/49 passing (37 translation + 12 deploy). Coverage target: ≥80% lines on `lib/agentcore/**`.
-
----
-
-## Phase 34 — Showcase Readiness ✓ Complete (2026-03-15 Session 039)
-
-Hardens Intellios for live demo showcasing. Six targeted deliverables that collectively eliminate blank error screens, loading gaps, empty states, and the absence of rich demo data. No DB migrations. No new npm dependencies.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| `src/app/error.tsx` — branded error boundary | P0 | ✓ Complete | Next.js client error boundary; `error.digest` reference ID; "Try again" reset + "Return home"; matching design system |
-| `src/app/not-found.tsx` — branded 404 | P0 | ✓ Complete | Static 404 page; no sidebar (unauthenticated layout); violet-600 "404" label; matching design system |
-| `src/lib/db/seed-demo.ts` — Acme Financial demo seed | P0 | ✓ Complete | ~530 lines; idempotent (hardcoded UUIDs); 5 agents at all lifecycle stages; 3 policies; 8-event audit trail; test cases; trend data; pre-written briefing; 3-step approval chain |
-| Blueprint generation success flash | P0 | ✓ Complete | 900ms green "✓ Blueprint ready — opening workbench…" state before `router.push()`; eliminates abrupt page change |
-| `src/app/blueprints/[id]/report/loading.tsx` — MRM skeleton | P1 | ✓ Complete | Co-located Suspense skeleton; prevents blank screen during 2–5s `assembleMRMReport()`; matches report structure |
-| Intelligence page cold-start message | P1 | ✓ Complete | Non-admins now see actionable message; only admins see "Generate Briefing" CTA |
-| `docs/demo/DEMO_SETUP.md` | P0 | ✓ Complete | Complete setup guide: prerequisites, env vars, DB commands, credentials, 12-min 9-stop demo flow, troubleshooting, what not to demo live |
-
----
-
-## Phase 35 — Demo Flow Fidelity ✓ Complete (2026-03-15 Session 040)
-
-Fixes three demo-blocking gaps identified by systematic codebase audit of all 9 showcase stops. No DB migrations. No new npm dependencies.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| MRM Report access — extend to all roles | P0 | ✓ Complete | Removed role restriction on report page + registry link; compliance exports remain gated to compliance_officer + admin |
-| Governance Hub — inline "Preview Impact" on policy cards | P0 | ✓ Complete | `SimResult` type + `simulatingId`/`simResults` state + `handlePreviewImpact()` + button + inline result panel (counts + agent list with registry links); reuses existing simulate API |
-| Review panel — step advancement toast | P1 | ✓ Complete | 2s green toast "Approval submitted — advancing to [label]" on intermediate step; checks `data.nextApproverLabel` in API response |
-| DEMO_SETUP.md corrections | P1 | ✓ Complete | Stops 4, 5, 6, 9 updated to reflect working flows |
-
----
-
-## Phase 36 — First Customer Readiness ✓ Complete (2026-03-15 Session 041)
-
-Three commercial viability gaps closed before a first enterprise customer engagement. No new npm dependencies.
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| White-label branding | P0 | ✓ Complete | `branding` + `periodicReview` settings blocks; sidebar logo/name/color from DB; MRM report footer; admin settings live preview; server-side layout injection |
-| SR 11-7 periodic review scheduling | P0 | ✓ Complete | Migration 0015; `nextReviewDue` set on deploy; MRM Section 14; Compliance overdue table; registry overdue badge; 1 new audit action |
-| Audit trail pagination | P1 | ✓ Complete | API `offset`+`count` params; parallel count query; 50-row pages; prev/next UI; page X of Y indicator |
-
----
-
-## Phase 37 — Operational Completeness ✓ Complete (2026-03-15 Session 042)
-
-Four operational gaps that block real-world deployment: the periodic review compliance loop, password reset, user invitations, and review reminder automation. Zero new npm dependencies. Three DB migrations (0016–0018).
-
-| Item | Priority | Status | Notes |
-|---|---|---|---|
-| Periodic review completion UI/API | P0 | ✓ Complete | `POST /api/blueprints/[id]/periodic-review/complete`; completion buttons on Compliance page + Registry detail; confirmation modal with notes; event → notification email to compliance officers |
-| Password reset | P0 | ✓ Complete | `forgot-password` + `reset-password` routes and pages; cryptographic token (raw sent by email, SHA-256 hash stored); 1h TTL; enumeration-safe 200 response; "Forgot your password?" link on login page |
-| User invitation system | P1 | ✓ Complete | `invite` + `invitations` admin API routes; `validate` + `accept` public auth routes; invite acceptance page; admin users page "Invite User" button + pending invitations table; 72h TTL; duplicate-invitation guard |
-| Periodic review reminders | P1 | ✓ Complete | Daily cron `GET /api/cron/review-reminders`; per-enterprise `reminderDaysBefore` setting honored; cycle-deduplication via `lastReminderSentAt`; `vercel.json` at 08:00 UTC daily; optional `CRON_SECRET` bearer auth |
-
----
-
-## Future Phases (not yet scoped)
-
-- Production hardening (OQ-007 ABP schema evolution, distributed rate limiting)
-- Agent marketplace / catalog
-- Agent-to-agent communication protocols
+Designer role renamed to Architect across entire codebase (type definition, 42 API auth guards, UI labels, seed data, DB records). Phase 55/56 cancelled.
