@@ -975,7 +975,12 @@ export default function AgentDetailPage({
 
         {activeTab === "quality" && (
           <div className="p-6 max-w-2xl">
-            <QualityDashboard score={qualityScore} loading={qualityLoading} />
+            <QualityDashboard
+              score={qualityScore}
+              loading={qualityLoading}
+              agentId={agentId}
+              agentStatus={latest.status}
+            />
           </div>
         )}
 

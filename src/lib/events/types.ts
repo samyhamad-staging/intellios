@@ -205,6 +205,18 @@ export type IntelliosEvent =
         threshold: number;
         message: string;
       };
+    }
+  | {
+      type: "blueprint.quality_regression";
+      payload: {
+        agentId: string;
+        blueprintId: string;
+        agentName: string;
+        designScore: number;
+        productionScore: number;
+        gap: number; // designScore - productionScore
+        weekStart: string; // ISO date
+      };
     };
 
 // ── Derived types ─────────────────────────────────────────────────────────────

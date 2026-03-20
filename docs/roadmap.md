@@ -28,11 +28,11 @@ This document is the **source of truth** for what has been built and what needs 
 | **G — Governor Product** | 16 | 17 | 94% | Missing dedicated entry point / navigation |
 | **D — Technical Debt** | 5 | 5 | 100% | All debt resolved (D-01 via H1-3, D-02 via H1-4.2, D-03/04/05 complete) |
 | **H1 — Close the Loop** | 17 | 17 | 100% | All 17 items complete; event bus wired end-to-end; observability + alerts live |
-| **H2 — Govern at Scale** | 4 | 17 | 24% | H2-1 (Sprint 1) complete; H2-2 next |
+| **H2 — Govern at Scale** | 6 | 17 | 35% | H2-1 + H2-2 complete; H2-3 (SSO) next |
 | **H3 — Execution Platform** | 0 | 14 | 0% | Deferred; gated on prerequisites |
 | | | | | |
 | **Current Product (P+A+G+D)** | **51** | **55** | **93%** | Production-ready; G-17 (Governor nav) remaining |
-| **Full Vision (all horizons)** | **70** | **103** | **68%** | Design + governance + observability backbone complete; scale + execution ahead |
+| **Full Vision (all horizons)** | **72** | **103** | **70%** | Design + governance + observability backbone complete; scale + execution ahead |
 
 ---
 
@@ -1437,11 +1437,11 @@ Formalizes the implicit event system into a typed, dispatchable event bus. Resol
 3. **Combined score**: design-time (existing 0-100) displayed alongside production score. Format: "Design: X / Production: Y"
 
 **Definition of done:**
-- [ ] Quality dashboard shows production metrics alongside design-time scores
-- [ ] Policy adherence rate computed from violations data
-- [ ] Uptime computed from telemetry data
-- [ ] API returns production quality data
-- [ ] `npx tsc --noEmit` passes with 0 errors
+- [x] Quality dashboard shows production metrics alongside design-time scores
+- [x] Policy adherence rate computed from violations data
+- [x] Uptime computed from telemetry data
+- [x] API returns production quality data
+- [x] `npx tsc --noEmit` passes with 0 errors
 
 ---
 
@@ -1460,11 +1460,11 @@ Formalizes the implicit event system into a typed, dispatchable event bus. Resol
 4. **Regression alert**: when production quality drops > 15 points below design-time quality: `createNotification()` + webhook event
 
 **Definition of done:**
-- [ ] Weekly snapshots stored in `qualityTrends`
-- [ ] Cron job computes and stores snapshots
-- [ ] Quality dashboard shows 12-week trend visualization
-- [ ] Regression detection creates alerts
-- [ ] `npx tsc --noEmit` passes with 0 errors
+- [x] Weekly snapshots stored in `qualityTrends`
+- [x] Cron job computes and stores snapshots
+- [x] Quality dashboard shows 12-week trend visualization
+- [x] Regression detection creates alerts
+- [x] `npx tsc --noEmit` passes with 0 errors
 
 ---
 

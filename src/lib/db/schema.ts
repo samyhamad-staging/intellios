@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, jsonb, timestamp, boolean, integer, index, numeric, date, real } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, jsonb, timestamp, boolean, integer, index, numeric, date, real, uniqueIndex } from "drizzle-orm/pg-core";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 // ─── Users ───────────────────────────────────────────────────────────────────
@@ -567,5 +567,27 @@ export const runtimeViolations = pgTable(
     index("idx_runtime_violations_agent").on(t.agentId, t.detectedAt),
     index("idx_runtime_violations_policy").on(t.policyId),
     index("idx_runtime_violations_enterprise").on(t.enterpriseId, t.detectedAt),
+  ]
+);
+
+// ─── Quality Trends (H2-2.2) ──────────────────────────────────────────────────
+// Weekly quality snapshots per agent — one row per (agentId, weekStart).
+// Written by the /api/cron/quality-trends job every Sunday at 00:00 UTC.
+
+export const qualityTrends = pgTable(
+  "quality_trends",
+  {
+    id:                   uuid("id").primaryKey().defaultRandom(),
+    agentId:              uuid("agent_id").notNull(),
+    enterpriseId:         text("enterprise_id"),
+    weekStart:            date("week_start").notNull(),    // ISO date of Monday for this week
+    designScore:          real("design_score"),            // overall quality score 0-100 (null if never evaluated)
+    productionScore:      real("production_score"),        // production composite 0-100 (null if not deployed)
+    policyAdherenceRate:  real("policy_adherence_rate"),  // 0-1, null if not deployed
+    createdAt:            timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("idx_quality_trends_agent_week").on(t.agentId, t.weekStart),
+    index("idx_quality_trends_enterprise").on(t.enterpriseId, t.weekStart),
   ]
 );

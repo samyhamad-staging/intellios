@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 interface QualityScore {
   id: string;
   blueprintId: string;
@@ -13,9 +15,33 @@ interface QualityScore {
   evaluatedAt: string;
 }
 
+interface ProductionQuality {
+  policyAdherenceRate: number;
+  uptime: number;
+  errorRate: number;
+  totalInvocations: number;
+  totalViolations: number;
+  productionScore: number;
+  windowDays: number;
+  computedAt: string;
+}
+
+interface QualityTrendRow {
+  id: string;
+  agentId: string;
+  weekStart: string;
+  designScore: number | null;
+  productionScore: number | null;
+  policyAdherenceRate: number | null;
+}
+
 interface Props {
   score: QualityScore | null;
   loading: boolean;
+  /** When provided, fetches and displays production quality metrics (H2-2.1). */
+  agentId?: string;
+  /** If "deployed" or "suspended", production quality section is shown. */
+  agentStatus?: string;
 }
 
 const DIMENSIONS = [
@@ -55,7 +81,47 @@ function timeAgo(dateStr: string): string {
   return `${diffDays}d ago`;
 }
 
-export function QualityDashboard({ score, loading }: Props) {
+function pctColor(pct: number): string {
+  if (pct >= 0.8) return "text-green-600";
+  if (pct >= 0.5) return "text-amber-600";
+  return "text-red-600";
+}
+
+function pctBar(pct: number): string {
+  if (pct >= 0.8) return "bg-green-500";
+  if (pct >= 0.5) return "bg-amber-400";
+  return "bg-red-400";
+}
+
+function scoreGrade(score: number): { label: string; color: string } {
+  if (score >= 80) return { label: "Excellent", color: "text-green-600" };
+  if (score >= 60) return { label: "Good",      color: "text-amber-600" };
+  if (score >= 40) return { label: "Fair",       color: "text-orange-600" };
+  return           { label: "Poor",       color: "text-red-600" };
+}
+
+export function QualityDashboard({ score, loading, agentId, agentStatus }: Props) {
+  const showProduction = !!agentId && (agentStatus === "deployed" || agentStatus === "suspended");
+
+  const [prodQuality, setProdQuality] = useState<ProductionQuality | null>(null);
+  const [prodLoading, setProdLoading] = useState(false);
+  const [trendData, setTrendData] = useState<QualityTrendRow[]>([]);
+
+  useEffect(() => {
+    if (!showProduction) return;
+    setProdLoading(true);
+    fetch(`/api/registry/${agentId}/quality/production`)
+      .then((r) => r.json())
+      .then((data) => setProdQuality(data as ProductionQuality))
+      .catch(() => setProdQuality(null))
+      .finally(() => setProdLoading(false));
+
+    fetch(`/api/registry/${agentId}/quality/trends?weeks=12`)
+      .then((r) => r.json())
+      .then((data) => setTrendData((data.trends ?? []) as QualityTrendRow[]))
+      .catch(() => setTrendData([]));
+  }, [agentId, showProduction]);
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -152,6 +218,156 @@ export function QualityDashboard({ score, loading }: Props) {
                 <span>{flag}</span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* H2-2.1: Production Quality section */}
+      {showProduction && (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50 overflow-hidden">
+          <div className="border-b border-indigo-100 bg-indigo-100/60 px-4 py-2.5 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-700">
+              Production Quality (Last {prodQuality?.windowDays ?? 30} Days)
+            </p>
+            {prodQuality && (
+              <span className={`text-xs font-bold ${scoreGrade(prodQuality.productionScore).color}`}>
+                {scoreGrade(prodQuality.productionScore).label}
+              </span>
+            )}
+          </div>
+
+          {prodLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-300 border-t-indigo-700" />
+              <span className="ml-2 text-xs text-indigo-500">Loading production metrics…</span>
+            </div>
+          ) : prodQuality === null ? (
+            <div className="px-4 py-6 text-center text-xs text-indigo-400">
+              No production data available
+            </div>
+          ) : (
+            <div className="p-4 space-y-4">
+              {/* Composite score + design score side-by-side */}
+              <div className="flex items-center gap-4">
+                <div className="text-center flex-1 rounded-lg bg-white border border-indigo-100 py-3">
+                  <p className={`text-3xl font-bold tabular-nums ${overallColor(parseFloat(score.overallScore ?? "0"))}`}>
+                    {Math.round(parseFloat(score.overallScore ?? "0"))}
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-gray-400">Design / 100</p>
+                </div>
+                <div className="text-lg font-light text-indigo-300 shrink-0">vs</div>
+                <div className="text-center flex-1 rounded-lg bg-white border border-indigo-100 py-3">
+                  <p className={`text-3xl font-bold tabular-nums ${overallColor(prodQuality.productionScore)}`}>
+                    {prodQuality.productionScore}
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-gray-400">Production / 100</p>
+                </div>
+              </div>
+
+              {/* Individual production metrics */}
+              {[
+                {
+                  label:       "Policy Adherence",
+                  description: "Days without runtime violations",
+                  value:       prodQuality.policyAdherenceRate,
+                  display:     `${(prodQuality.policyAdherenceRate * 100).toFixed(1)}%`,
+                },
+                {
+                  label:       "Uptime",
+                  description: "Days with active invocations",
+                  value:       prodQuality.uptime,
+                  display:     `${(prodQuality.uptime * 100).toFixed(1)}%`,
+                },
+                {
+                  label:       "Reliability",
+                  description: "1 − error rate",
+                  value:       1 - prodQuality.errorRate,
+                  display:     `${((1 - prodQuality.errorRate) * 100).toFixed(1)}%`,
+                },
+              ].map((m) => (
+                <div key={m.label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div>
+                      <span className="text-sm font-medium text-gray-800">{m.label}</span>
+                      <p className="text-xs text-gray-400">{m.description}</p>
+                    </div>
+                    <span className={`ml-4 shrink-0 text-sm font-bold tabular-nums ${pctColor(m.value)}`}>
+                      {m.display}
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-indigo-100 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${pctBar(m.value)}`}
+                      style={{ width: `${m.value * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              {/* Summary row */}
+              <div className="flex flex-wrap gap-3 pt-1 text-xs text-indigo-700">
+                <span>
+                  <span className="font-medium">{prodQuality.totalInvocations.toLocaleString()}</span> invocations
+                </span>
+                <span>·</span>
+                <span>
+                  <span className="font-medium">{prodQuality.totalViolations}</span> runtime violation{prodQuality.totalViolations !== 1 ? "s" : ""}
+                </span>
+                <span>·</span>
+                <span className="text-indigo-400">
+                  computed {new Date(prodQuality.computedAt).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* H2-2.2: 12-week trend chart — shown when trend data is available */}
+      {showProduction && trendData.length > 0 && (
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+          <div className="border-b border-gray-100 bg-gray-50 px-4 py-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Quality Trend — Last {trendData.length} Week{trendData.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+          <div className="px-4 pt-4 pb-3">
+            {/* Mini bar chart: one column per week */}
+            <div className="flex items-end gap-1 h-20">
+              {trendData.map((row) => {
+                const design     = row.designScore     !== null ? row.designScore     : null;
+                const production = row.productionScore !== null ? row.productionScore : null;
+                const gap        = design !== null && production !== null ? design - production : null;
+                const isRegression = gap !== null && gap > 15;
+                const prodPct    = production !== null ? production / 100 : 0;
+                const desPct     = design     !== null ? design / 100     : 0;
+
+                return (
+                  <div key={row.weekStart} className="flex-1 flex flex-col items-center gap-0.5" title={`${row.weekStart}: Design ${design ?? "—"} / Prod ${production ?? "—"}`}>
+                    {/* Design score dot */}
+                    <div
+                      className="w-1 rounded-full bg-gray-300"
+                      style={{ height: `${Math.max(2, desPct * 64)}px` }}
+                    />
+                    {/* Production score bar */}
+                    <div
+                      className={`w-3 rounded-sm ${isRegression ? "bg-red-400" : "bg-indigo-400"}`}
+                      style={{ height: `${Math.max(2, prodPct * 64)}px` }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            {/* X-axis labels: first + last week */}
+            <div className="flex justify-between mt-1.5 text-[9px] text-gray-400">
+              <span>{trendData[0]?.weekStart ?? ""}</span>
+              <span className="text-[9px] text-gray-400">
+                <span className="inline-block w-2 h-1 bg-indigo-400 rounded-sm mr-0.5 align-middle" />production
+                <span className="inline-block w-1.5 h-1.5 bg-gray-300 rounded-full mx-1 align-middle" />design
+                <span className="inline-block w-2 h-1 bg-red-400 rounded-sm mr-0.5 ml-1 align-middle" />regression
+              </span>
+              <span>{trendData[trendData.length - 1]?.weekStart ?? ""}</span>
+            </div>
           </div>
         </div>
       )}

@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/telemetry-sync",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/quality-trends",
+      "schedule": "0 0 * * 0"
     }
   ]
 }
