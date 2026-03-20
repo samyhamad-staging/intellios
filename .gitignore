@@ -1,0 +1,6 @@
+# Claude Code local settings — contains API keys and secrets
+.claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
