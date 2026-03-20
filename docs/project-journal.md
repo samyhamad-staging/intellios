@@ -2,6 +2,30 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 066 — 2026-03-20: H1 Complete + H2 Sprint 1 (Runtime Governance Engine)
+
+This session did two things: closed H1 (verification + documentation), then executed all four deliverables of H2 Sprint 1 in a single context.
+
+H2-1.1 introduced the `runtime` policy type — a parallel governance track to the design-time ABP validator. Instead of asserting fields on the blueprint document, runtime policies evaluate against live telemetry aggregates: token budgets, error rates, scope constraints (comparing deployed tool list against an allowlist), and circuit-breaker thresholds. The key design decision was an operator dispatch table (`Map<RuntimeRuleOperator, OperatorFn>`) rather than a switch statement, which makes adding new operators a one-line change rather than a structural modification. The `pii_action` operator is intentionally a stub (always returns null / skip) — PII interception requires the H3 Foundry execution layer to intercept individual invocations, which doesn't exist yet. Documenting the operator now lets policy authors express intent while avoiding false violations.
+
+H2-1.2 wired the telemetry pipeline into runtime policy evaluation. Every telemetry push now triggers `evaluateRuntimePolicies()` fire-and-forget for each affected agent. Violations are written to a new `runtimeViolations` table with operator-specific metric labels (`tokens_daily`, `avg_tokens_per_interaction`, `error_rate`, `out_of_scope_tools`). The fire-and-forget pattern is deliberate — telemetry ingest must never block on governance evaluation.
+
+H2-1.3 built the Violations tab on the registry detail page. This is the first place in the product where runtime governance is surfaced to operators. The design mirrors the Production tab pattern: a standalone component (`ViolationsPanel`) that fetches from a dedicated API route with severity and time-range filtering. The alert wiring sends notifications and webhook events for error-severity violations only — warnings are data for the UI, not alerts.
+
+H2-1.4 added the circuit breaker. When a deployed agent accumulates N error-severity violations in a single evaluation window (default N=3, configurable via enterprise settings `governance.circuitBreaker`), the agent is automatically suspended: its status transitions `deployed → suspended`, an audit event fires, and admins + compliance officers are notified. The `suspended` status is a new lifecycle state alongside `draft`, `in_review`, `approved`, `deployed`, `rejected`, `deprecated`. The resume path requires admin action and restarts the full approval workflow (`suspended → in_review`), preventing accidental re-deployment without human review. The `alert_only` circuit breaker mode fires notifications without suspending — for enterprises that prefer operational continuity over automatic enforcement.
+
+The strategic significance of H2 Sprint 1: Intellios has crossed from a design-time governance platform to a continuous governance platform. Every agent that pushes telemetry is now automatically evaluated against its enterprise's runtime policies on every data push, with violations surfaced, alerted, and enforced without any human action required. This is the foundational capability that justifies the "governed control plane" positioning.
+
+## Session 066 — 2026-03-20: H1 Complete
+
+This session closes H1 — Close the Loop at 100% (17/17 items). The session was primarily verification and documentation: confirming that all H1-1.5 and H1-4.2 components existed in the codebase from prior sessions, tracing the webhook dispatch chain to verify D-02 was resolved at the code level, and correcting a hallucinated "H1-2.4" item and "18" total that appeared in a prior context-compaction summary. The actual H1 count is 17 items.
+
+The most important confirmation in this session was the webhook dispatch chain trace. `publishEvent()` calls `writeAuditLog()`, which calls `dispatch()` on the in-process event bus, which invokes `webhookDispatchHandler` (registered via side-effect import), which calls `deliverWebhook()` with HMAC signing. The admin UI already has a delivery log panel. D-02 — "webhooks never actually sent" — is resolved: the two systems are now connected through the event bus at every call site that was previously a raw `writeAuditLog()` call.
+
+With H1 closed, all five technical debt items are also resolved: D-01 (ABP schema migration) via H1-3, D-02 (webhook wiring) via H1-4.2, D-03 (Redis rate limiting) via H1-5.1, D-04 (help prompt refresh) via H1-5.3, D-05 (schema role comments) in an earlier session. The current product stands at 51/55 items complete (93%). The only remaining item before H2 is G-17 (dedicated Governor entry point), which was the UX extraction work completed in H1-2 — but the G-17 header in the G section was never updated. It should be marked complete since H1-2.1/2.2/2.3 delivered exactly what G-17 specified.
+
+H2 — Govern at Scale — begins next. The first sprint is the Runtime Governance Engine (H2-1.1 → H2-1.2 → H2-1.3 → H2-1.4 in sequence). This is the transition from governance as a design-time property to governance as a continuous runtime property. H1 built the observability pipeline; H2 will use that data to enforce policy at runtime — blocking, suspending, or alerting based on what agents actually do in production.
+
 ## Session 065 — 2026-03-20: Sprint 5 Closed, H1 at 89%
 
 This is a short context-continuation session. Session 064 ran out of context mid-Sprint-5; this session verified the remaining H1-1.5 components (alert CRUD API routes and cron endpoint), confirmed all DoD checkboxes were already satisfied, and resolved two TypeScript error categories introduced during Sprint 5.

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { agentBlueprints, agentTelemetry } from "@/lib/db/schema";
 import { and, eq, inArray } from "drizzle-orm";
+import { evaluateRuntimePolicies } from "@/lib/governance/runtime-evaluator";
+import { readABP } from "@/lib/abp/read";
 
 /**
  * POST /api/telemetry/ingest
@@ -62,12 +64,13 @@ export async function POST(request: NextRequest) {
   // Validate that all referenced agentIds exist as deployed blueprints
   const uniqueAgentIds = [...new Set(metrics.map((m) => m.agentId))];
 
-  let validAgents: { agentId: string; enterpriseId: string | null }[];
+  let validAgents: { agentId: string; enterpriseId: string | null; abp: unknown }[];
   try {
     validAgents = await db
       .selectDistinctOn([agentBlueprints.agentId], {
-        agentId: agentBlueprints.agentId,
+        agentId:      agentBlueprints.agentId,
         enterpriseId: agentBlueprints.enterpriseId,
+        abp:          agentBlueprints.abp,
       })
       .from(agentBlueprints)
       .where(
@@ -81,7 +84,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
 
-  const validAgentMap = new Map(validAgents.map((a) => [a.agentId, a.enterpriseId]));
+  const validAgentMap = new Map(validAgents.map((a) => [a.agentId, { enterpriseId: a.enterpriseId, abp: a.abp }]));
 
   // Partition metrics into valid and invalid
   const toInsert: (typeof agentTelemetry.$inferInsert)[] = [];
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest) {
 
     toInsert.push({
       agentId: metric.agentId,
-      enterpriseId: validAgentMap.get(metric.agentId) ?? null,
+      enterpriseId: validAgentMap.get(metric.agentId)?.enterpriseId ?? null,
       timestamp: new Date(metric.timestamp),
       invocations: metric.invocations,
       errors: metric.errors,
@@ -121,6 +124,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Database error" }, { status: 500 });
     }
   }
+
+  // ── Runtime policy evaluation (fire-and-forget, non-blocking) ──────────────
+  // After inserting telemetry, evaluate runtime governance policies for each
+  // affected agent. Errors are caught and logged — they must not affect the
+  // ingest response.
+  const affectedAgentIds = [...new Set(toInsert.map((r) => r.agentId))];
+  void (async () => {
+    for (const agentId of affectedAgentIds) {
+      try {
+        const agentRecord = validAgentMap.get(agentId);
+        const enterpriseId = agentRecord?.enterpriseId ?? null;
+        const abp = agentRecord?.abp ? readABP(agentRecord.abp) : undefined;
+        await evaluateRuntimePolicies(agentId, enterpriseId, abp);
+      } catch (err) {
+        console.error("[telemetry/ingest] Runtime policy evaluation failed:", err, { agentId });
+      }
+    }
+  })();
 
   return NextResponse.json({ ingested: toInsert.length, errors });
 }

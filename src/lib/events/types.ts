@@ -189,6 +189,22 @@ export type IntelliosEvent =
         currentValue: number;
         windowMinutes: number;
       };
+    }
+  | {
+      type: "blueprint.runtime_violation";
+      payload: {
+        agentId: string;
+        blueprintId: string;
+        agentName: string;
+        policyId: string;
+        policyName: string;
+        ruleId: string;
+        severity: string;
+        metric: string;
+        observedValue: number;
+        threshold: number;
+        message: string;
+      };
     };
 
 // ── Derived types ─────────────────────────────────────────────────────────────

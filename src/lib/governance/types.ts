@@ -28,6 +28,59 @@ export interface PolicyRule {
   message: string;      // human-readable violation message
 }
 
+// ─── Runtime Policy Types (H2-1.1) ───────────────────────────────────────────
+
+/**
+ * Operators for runtime policies — evaluated against live telemetry aggregates,
+ * not against the ABP document structure.
+ *
+ * - `token_budget_daily`          : total tokens in+out over a 24-hour window exceeds limit
+ * - `token_budget_per_interaction`: average tokens per invocation exceeds limit
+ * - `pii_action`                  : documents PII handling action (block/redact/log);
+ *                                   runtime enforcement deferred to H3 Foundry layer
+ * - `scope_constraint`            : checks deployed ABP tool list against an allowlist
+ * - `circuit_breaker_error_rate`  : error rate (errors/invocations) over window exceeds threshold
+ */
+export type RuntimeRuleOperator =
+  | "token_budget_daily"
+  | "token_budget_per_interaction"
+  | "pii_action"
+  | "scope_constraint"
+  | "circuit_breaker_error_rate";
+
+/** One assertion rule within a runtime policy. */
+export interface RuntimePolicyRule {
+  id: string;
+  operator: RuntimeRuleOperator;
+  /**
+   * Operator-specific value:
+   * - `token_budget_daily`          : number (max tokens per 24h)
+   * - `token_budget_per_interaction`: number (max avg tokens per invocation)
+   * - `pii_action`                  : "block" | "redact" | "log"
+   * - `scope_constraint`            : string[] (allowed tool names)
+   * - `circuit_breaker_error_rate`  : number 0–1 (e.g. 0.1 = 10% error rate)
+   */
+  value: unknown;
+  severity: Severity;
+  message: string;
+}
+
+/**
+ * A runtime violation detected by `evaluateRuntimePolicies()`.
+ * Written to the `runtimeViolations` table.
+ */
+export interface RuntimeViolation {
+  policyId: string;
+  policyName: string;
+  ruleId: string;
+  severity: Severity;
+  metric: string;          // e.g. "tokens_daily", "error_rate", "avg_tokens_per_interaction"
+  observedValue: number;
+  threshold: number;
+  message: string;
+  telemetryTimestamp: Date; // the telemetry window end timestamp used for evaluation
+}
+
 /** A stored governance policy as loaded from the database. */
 export interface GovernancePolicy {
   id: string;
@@ -36,6 +89,16 @@ export interface GovernancePolicy {
   type: string;
   description: string | null;
   rules: PolicyRule[];
+}
+
+/** A stored runtime governance policy as loaded from the database. */
+export interface RuntimeGovernancePolicy {
+  id: string;
+  enterpriseId: string | null;
+  name: string;
+  type: "runtime";
+  description: string | null;
+  rules: RuntimePolicyRule[];
 }
 
 /** A single rule violation produced by the evaluator. */

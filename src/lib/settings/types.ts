@@ -61,6 +61,25 @@ export interface EnterpriseSettings {
      * it can be submitted for review. Default: false.
      */
     requireTestsBeforeApproval: boolean;
+    /**
+     * H2-1.4: Governance-gated circuit breaker configuration.
+     * When a deployed agent accumulates error-severity runtime violations
+     * beyond the threshold, the circuit breaker fires.
+     */
+    circuitBreaker: {
+      /**
+       * What to do when the violation threshold is exceeded.
+       * - "auto_suspend": automatically suspend the agent (status → suspended)
+       * - "alert_only": notify admins and compliance officers without suspending
+       * Default: "auto_suspend"
+       */
+      action: "auto_suspend" | "alert_only";
+      /**
+       * Number of error-severity runtime violations in the current evaluation
+       * window that triggers the circuit breaker. Default: 3.
+       */
+      errorViolationThreshold: number;
+    };
   };
   /** Notification preferences */
   notifications: {
@@ -181,6 +200,10 @@ export const DEFAULT_ENTERPRISE_SETTINGS: EnterpriseSettings = {
     requireAllPhase3Acknowledgments: true,
     allowSelfApproval: false,
     requireTestsBeforeApproval: false,
+    circuitBreaker: {
+      action: "auto_suspend",
+      errorViolationThreshold: 3,
+    },
   },
   notifications: {
     adminEmail: null,

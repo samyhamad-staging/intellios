@@ -9,14 +9,41 @@ import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
 import { publishEvent } from "@/lib/events/publish";
 
-const POLICY_TYPES = ["safety", "compliance", "data_handling", "access_control", "audit"] as const;
+const DESIGN_TIME_POLICY_TYPES = ["safety", "compliance", "data_handling", "access_control", "audit"] as const;
+const RUNTIME_POLICY_TYPE = "runtime" as const;
+const ALL_POLICY_TYPES = [...DESIGN_TIME_POLICY_TYPES, RUNTIME_POLICY_TYPE] as const;
 
-const CreatePolicyBody = z.object({
-  name: z.string().min(1).max(200),
-  type: z.enum(POLICY_TYPES),
-  description: z.string().max(1000).optional(),
-  rules: z.array(z.unknown()).default([]),
+const RuntimeRuleSchema = z.object({
+  id:       z.string(),
+  operator: z.enum(["token_budget_daily", "token_budget_per_interaction", "pii_action", "scope_constraint", "circuit_breaker_error_rate"]),
+  value:    z.unknown(),
+  severity: z.enum(["error", "warning"]),
+  message:  z.string().min(1),
 });
+
+const DesignTimeRuleSchema = z.object({
+  id:       z.string(),
+  field:    z.string(),
+  operator: z.string(),
+  value:    z.unknown().optional(),
+  severity: z.enum(["error", "warning"]),
+  message:  z.string().min(1),
+});
+
+const CreatePolicyBody = z.discriminatedUnion("type", [
+  z.object({
+    name:        z.string().min(1).max(200),
+    type:        z.literal(RUNTIME_POLICY_TYPE),
+    description: z.string().max(1000).optional(),
+    rules:       z.array(RuntimeRuleSchema).default([]),
+  }),
+  z.object({
+    name:        z.string().min(1).max(200),
+    type:        z.enum(DESIGN_TIME_POLICY_TYPES),
+    description: z.string().max(1000).optional(),
+    rules:       z.array(DesignTimeRuleSchema).default([]),
+  }),
+]);
 
 /**
  * GET /api/governance/policies

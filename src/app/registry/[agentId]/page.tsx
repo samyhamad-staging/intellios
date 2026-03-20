@@ -21,6 +21,7 @@ import type { TestCase, TestRun } from "@/lib/testing/types";
 import { SimulatePanel } from "@/components/registry/simulate-panel";
 import { QualityDashboard } from "@/components/blueprint/quality-dashboard";
 import { ProductionDashboard } from "@/components/registry/production-dashboard";
+import { ViolationsPanel } from "@/components/registry/violations-panel";
 
 interface CurrentUser {
   email: string;
@@ -86,8 +87,8 @@ interface BlueprintVersion {
   abp: ABP;
 }
 
-type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
-type Tab = "blueprint" | "summary" | "governance" | "quality" | "review" | "versions" | "regulatory" | "tests" | "simulate" | "production";
+type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed" | "suspended";
+type Tab = "blueprint" | "summary" | "governance" | "quality" | "review" | "versions" | "regulatory" | "tests" | "simulate" | "production" | "violations";
 
 export default function AgentDetailPage({
   params,
@@ -112,7 +113,7 @@ export default function AgentDetailPage({
   const [enterpriseSettings, setEnterpriseSettings] = useState<EnterpriseSettings>(DEFAULT_ENTERPRISE_SETTINGS);
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const tab = searchParams.get("tab");
-    if (tab === "review" || tab === "governance" || tab === "quality" || tab === "versions" || tab === "summary" || tab === "regulatory" || tab === "tests" || tab === "simulate" || tab === "production") return tab;
+    if (tab === "review" || tab === "governance" || tab === "quality" || tab === "versions" || tab === "summary" || tab === "regulatory" || tab === "tests" || tab === "simulate" || tab === "production" || tab === "violations") return tab;
     return "blueprint";
   });
   const [compareVersionId, setCompareVersionId] = useState<string | null>(null);
@@ -231,9 +232,9 @@ export default function AgentDetailPage({
       .finally(() => setQualityLoading(false));
   }, [agentId]);
 
-  // H1-1.3: Fetch production telemetry (deployed agents only)
+  // H1-1.3: Fetch production telemetry (deployed + suspended agents)
   useEffect(() => {
-    if (!latest || latest.status !== "deployed") return;
+    if (!latest || (latest.status !== "deployed" && latest.status !== "suspended")) return;
     setTelemetryLoading(true);
     const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
     fetch(`/api/telemetry/${agentId}?since=${since}`)
@@ -492,7 +493,8 @@ export default function AgentDetailPage({
     { id: "regulatory", label: "Regulatory" },
     { id: "tests", label: `Tests${testCases.length > 0 ? ` (${testCases.length})` : ""}` },
     { id: "simulate", label: "Simulate" },
-    ...(latest?.status === "deployed" ? [{ id: "production" as Tab, label: "Production" }] : []),
+    ...(latest?.status === "deployed" || latest?.status === "suspended" ? [{ id: "production" as Tab, label: "Production" }] : []),
+    ...(latest?.status === "deployed" || latest?.status === "suspended" ? [{ id: "violations" as Tab, label: "Violations" }] : []),
     ...(isInReview ? [{ id: "review" as Tab, label: "Review" }] : []),
     { id: "versions", label: `Versions (${versions.length})` },
   ];
@@ -562,6 +564,7 @@ export default function AgentDetailPage({
             blueprintId={latest.id}
             agentId={latest.agentId}
             currentStatus={latest.status}
+            currentUserRole={currentUser?.role}
             onStatusChange={handleStatusChange}
           />
           {/* MRM Report — visible to all authenticated users */}
@@ -1359,6 +1362,10 @@ export default function AgentDetailPage({
               currentUser?.role === "admin"
             }
           />
+        )}
+
+        {activeTab === "violations" && (
+          <ViolationsPanel agentId={agentId} />
         )}
 
       {activeTab === "versions" && (

@@ -1,6 +1,6 @@
 "use client";
 
-type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
+type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed" | "suspended";
 
 const STATUS_STYLES: Record<Status, string> = {
   draft:      "bg-gray-100 text-gray-600",
@@ -9,6 +9,7 @@ const STATUS_STYLES: Record<Status, string> = {
   deployed:   "bg-indigo-100 text-indigo-700",
   rejected:   "bg-red-100 text-red-700",
   deprecated: "bg-gray-200 text-gray-500",
+  suspended:  "bg-red-100 text-red-700 border border-red-300",
 };
 
 const STATUS_DOT: Record<Status, string> = {
@@ -18,6 +19,7 @@ const STATUS_DOT: Record<Status, string> = {
   deployed:   "bg-indigo-500",
   rejected:   "bg-red-500",
   deprecated: "bg-gray-400",
+  suspended:  "bg-red-500 animate-pulse",
 };
 
 const STATUS_LABELS: Record<Status, string> = {
@@ -27,6 +29,7 @@ const STATUS_LABELS: Record<Status, string> = {
   deployed:   "Deployed",
   rejected:   "Rejected",
   deprecated: "Deprecated",
+  suspended:  "Suspended",
 };
 
 export function StatusBadge({ status }: { status: string }) {

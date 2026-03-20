@@ -15,10 +15,10 @@ import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import { z } from "zod";
 import type { ApprovalStepRecord } from "@/lib/settings/types";
 
-type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
+type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed" | "suspended";
 
 const StatusBody = z.object({
-  status: z.enum(["draft", "in_review", "approved", "rejected", "deprecated", "deployed"]),
+  status: z.enum(["draft", "in_review", "approved", "rejected", "deprecated", "deployed", "suspended"]),
   // changeRef is required at the API boundary for "deployed" transitions (enforced below).
   // Accepting it as optional here so Zod parses the field; the business rule is applied
   // explicitly after auth + transition checks so the error message is domain-specific.
@@ -30,12 +30,15 @@ const StatusBody = z.object({
 
 // Valid forward transitions. Any status → deprecated is always allowed.
 const VALID_TRANSITIONS: Record<Status, Status[]> = {
-  draft: ["in_review", "deprecated"],
-  in_review: ["approved", "rejected", "deprecated"],
-  approved: ["deployed", "deprecated"],
-  deployed: ["deprecated"],
-  rejected: ["deprecated"],
+  draft:      ["in_review", "deprecated"],
+  in_review:  ["approved", "rejected", "deprecated"],
+  approved:   ["deployed", "deprecated"],
+  deployed:   ["deprecated"],
+  rejected:   ["deprecated"],
   deprecated: [],
+  // H2-1.4: suspended agents can be resumed (back to in_review) or deprecated.
+  // The "resume" transition restarts the approval workflow. Requires admin.
+  suspended:  ["in_review", "deprecated"],
 };
 
 /**
@@ -93,6 +96,11 @@ export async function PATCH(
     // SOD: the designer who created the blueprint must not also control its production promotion.
     if (newStatus === "deployed" && authSession.user.role !== "reviewer" && authSession.user.role !== "admin") {
       return apiError(ErrorCode.FORBIDDEN, "Only reviewers and administrators can deploy blueprints to production");
+    }
+
+    // H2-1.4: Only admins can resume a suspended agent (back to in_review).
+    if (currentStatus === "suspended" && authSession.user.role !== "admin") {
+      return apiError(ErrorCode.FORBIDDEN, "Only administrators can resume a suspended agent");
     }
 
     if (!allowed.includes(newStatus)) {

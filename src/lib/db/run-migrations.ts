@@ -40,6 +40,7 @@ const files = [
   // 0024_agent_telemetry — applied via inline script (no .sql file)
   "0025_production_health_columns.sql",
   "0026_alert_thresholds.sql",
+  "0027_runtime_violations.sql",
 ];
 
 const startFrom = process.argv[2];

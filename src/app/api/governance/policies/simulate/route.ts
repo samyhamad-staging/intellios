@@ -55,6 +55,15 @@ export async function POST(request: NextRequest) {
 
   const { policy: draftPolicyInput, existingPolicyId } = body;
 
+  // Runtime policies evaluate against live telemetry, not stored ABPs.
+  // Simulation against blueprint documents is not applicable.
+  if (draftPolicyInput.type === "runtime") {
+    return NextResponse.json(
+      { message: "Runtime policies are evaluated against live telemetry and cannot be simulated against stored blueprints." },
+      { status: 422 }
+    );
+  }
+
   try {
     const enterpriseId = authSession.user.enterpriseId ?? null;
 

@@ -10,11 +10,11 @@ import { z } from "zod";
 import { publishEvent } from "@/lib/events/publish";
 import { randomUUID } from "crypto";
 
-const POLICY_TYPES = ["safety", "compliance", "data_handling", "access_control", "audit"] as const;
+const ALL_POLICY_TYPES = ["safety", "compliance", "data_handling", "access_control", "audit", "runtime"] as const;
 
 const UpdatePolicyBody = z.object({
   name: z.string().min(1).max(200).optional(),
-  type: z.enum(POLICY_TYPES).optional(),
+  type: z.enum(ALL_POLICY_TYPES).optional(),
   description: z.string().max(1000).nullable().optional(),
   rules: z.array(z.unknown()).optional(),
 });

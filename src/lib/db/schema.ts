@@ -540,3 +540,32 @@ export const agentTelemetry = pgTable(
     index("idx_telemetry_enterprise").on(t.enterpriseId),
   ]
 );
+
+// ─── Runtime Violations (H2-1.2) ─────────────────────────────────────────────
+// Written by `evaluateRuntimePolicies()` when deployed agents breach runtime
+// policy thresholds. Append-only — never UPDATE or DELETE rows.
+// CASCADE on policyId: deleting a policy removes its historical violations.
+
+export const runtimeViolations = pgTable(
+  "runtime_violations",
+  {
+    id:                  uuid("id").primaryKey().defaultRandom(),
+    agentId:             uuid("agent_id").notNull(),
+    enterpriseId:        text("enterprise_id"),
+    policyId:            uuid("policy_id").notNull().references(() => governancePolicies.id, { onDelete: "cascade" }),
+    policyName:          text("policy_name").notNull(),
+    ruleId:              text("rule_id").notNull(),
+    severity:            text("severity").notNull(),            // "error" | "warning"
+    metric:              text("metric").notNull(),              // e.g. "tokens_daily", "error_rate"
+    observedValue:       real("observed_value").notNull(),
+    threshold:           real("threshold").notNull(),
+    message:             text("message").notNull(),
+    telemetryTimestamp:  timestamp("telemetry_timestamp", { withTimezone: true }).notNull(),
+    detectedAt:          timestamp("detected_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_runtime_violations_agent").on(t.agentId, t.detectedAt),
+    index("idx_runtime_violations_policy").on(t.policyId),
+    index("idx_runtime_violations_enterprise").on(t.enterpriseId, t.detectedAt),
+  ]
+);
