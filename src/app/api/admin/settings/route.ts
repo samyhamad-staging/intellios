@@ -6,7 +6,7 @@ import { z } from "zod";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 
@@ -171,14 +171,11 @@ export async function PUT(request: NextRequest) {
       });
 
     // Audit
-    await writeAuditLog({
-      entityType: "blueprint", // reusing nearest entity type — settings are enterprise-level
-      entityId: enterpriseId,
-      action: "settings.updated",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
+    await publishEvent({
+      event: { type: "settings.updated", payload: { enterpriseId } },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id: enterpriseId },
       enterpriseId,
-      metadata: { sections: Object.keys(body) },
     });
 
     // Return merged result

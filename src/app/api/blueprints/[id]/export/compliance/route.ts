@@ -6,7 +6,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { assembleMRMReport } from "@/lib/mrm/report";
 
 /**
@@ -124,20 +124,17 @@ export async function GET(
     };
 
     // Audit every compliance export
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: id,
-      action: "blueprint.compliance_exported",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
-      enterpriseId: blueprint.enterpriseId ?? null,
-      metadata: {
-        agentId: blueprint.agentId,
-        agentName: blueprint.name ?? "Unnamed Agent",
-        blueprintVersion: blueprint.version,
-        hasQualityScore: qualityScore !== null,
-        testRunCount: testRunRows.length,
+    await publishEvent({
+      event: {
+        type: "blueprint.compliance_exported",
+        payload: {
+          blueprintId: id,
+          agentId: blueprint.agentId,
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id },
+      enterpriseId: blueprint.enterpriseId ?? null,
     });
 
     const filename = `compliance-evidence-${blueprint.name?.replace(/[^a-z0-9]/gi, "-").toLowerCase() ?? "agent"}-v${blueprint.version}-${new Date().toISOString().slice(0, 10)}.json`;

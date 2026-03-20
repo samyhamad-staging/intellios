@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { ABP } from "@/lib/types/abp";
+import { readABP } from "@/lib/abp/read";
 import { validateBlueprint } from "@/lib/governance/validator";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -18,7 +19,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
   try {
@@ -35,7 +36,7 @@ export async function POST(
     const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, authSession.user);
     if (enterpriseError) return enterpriseError;
 
-    const abp = blueprint.abp as ABP;
+    const abp = readABP(blueprint.abp);
     // Use denormalized enterpriseId from blueprint (set at creation)
     const enterpriseId = blueprint.enterpriseId ?? null;
 

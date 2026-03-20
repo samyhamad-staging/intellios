@@ -10,7 +10,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
 import { sendEmail, buildInvitationEmail } from "@/lib/notifications/email";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 
 const VALID_RACI_ROLES = ["responsible", "accountable", "consulted", "informed"] as const;
 const VALID_DOMAINS = ["compliance", "risk", "legal", "security", "it", "operations", "business"] as const;
@@ -29,7 +29,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { session: authSession, error } = await requireAuth([
-    "designer", "reviewer", "compliance_officer", "admin",
+    "architect", "reviewer", "compliance_officer", "admin",
   ]);
   if (error) return error;
 
@@ -61,7 +61,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
 
   const requestId = getRequestId(request);
@@ -120,19 +120,18 @@ export async function POST(
     });
 
     // Audit log
-    void writeAuditLog({
-      entityType: "intake_session",
-      entityId: sessionId,
-      action: "intake.invitation_sent",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role ?? "designer",
-      enterpriseId: session.enterpriseId,
-      metadata: {
-        invitationId: invitation.id,
-        domain: body.domain,
-        inviteeEmail: body.inviteeEmail,
-        raciRole: body.raciRole,
+    void publishEvent({
+      event: {
+        type: "intake.invitation_sent",
+        payload: {
+          sessionId,
+          inviteeEmail: body.inviteeEmail,
+          raciRole: body.raciRole,
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role ?? "architect" },
+      entity: { type: "intake_session", id: sessionId },
+      enterpriseId: session.enterpriseId ?? null,
     });
 
     return NextResponse.json({ invitation }, { status: 201 });

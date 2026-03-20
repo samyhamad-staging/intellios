@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { and, desc, eq, isNull } from "drizzle-orm";
@@ -43,6 +44,11 @@ export default async function Home() {
   const session = await auth();
   const user = session?.user;
 
+  // H1-2.2: Role-based landing — reviewer and compliance_officer go to /governor
+  if (user?.role === "reviewer" || user?.role === "compliance_officer") {
+    redirect("/governor");
+  }
+
   const enterpriseFilter =
     user?.role === "admin"
       ? undefined
@@ -77,7 +83,7 @@ export default async function Home() {
     ? allAgents.filter((a) => a.createdBy === user.email)
     : allAgents;
 
-  const role = user?.role ?? "designer";
+  const role = user?.role ?? "architect";
 
   if (!user) {
     return (
@@ -101,8 +107,8 @@ export default async function Home() {
     );
   }
 
-  // ── Designer ──────────────────────────────────────────────────────────────
-  if (role === "designer") {
+  // ── Architect ──────────────────────────────────────────────────────────────
+  if (role === "architect") {
     return (
       <div className="px-8 py-8">
         {/* Header */}

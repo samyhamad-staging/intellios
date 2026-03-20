@@ -5,7 +5,7 @@ import { eq, desc } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { getRequestId } from "@/lib/request-id";
 import { runTestSuite } from "@/lib/testing/executor";
 import type { TestCase } from "@/lib/testing/types";
@@ -68,7 +68,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["designer", "reviewer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "reviewer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
@@ -148,22 +148,19 @@ export async function POST(
       .returning();
 
     // ── 6. Write audit entry ──────────────────────────────────────────────────
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: id,
-      action: "blueprint.test_run_completed",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role as string,
-      enterpriseId: blueprint.enterpriseId,
-      metadata: {
-        total: testCases.length,
-        passed: passedCases,
-        failed: failedCases,
-        status,
-        agentId: blueprint.agentId,
-        agentName: blueprint.name,
-        runId: runRow.id,
+    await publishEvent({
+      event: {
+        type: "blueprint.test_run_completed",
+        payload: {
+          blueprintId: id,
+          agentId: blueprint.agentId,
+          testCaseId: crypto.randomUUID(),
+          passed: passedCases === testCases.length,
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role as string },
+      entity: { type: "blueprint", id },
+      enterpriseId: blueprint.enterpriseId ?? null,
     });
 
     // ── 7. Return completed run ───────────────────────────────────────────────

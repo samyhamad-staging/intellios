@@ -24,7 +24,7 @@ interface Invitation {
 }
 
 const ROLES = [
-  { value: "designer",          label: "Designer" },
+  { value: "architect",          label: "Architect" },
   { value: "reviewer",          label: "Reviewer" },
   { value: "compliance_officer", label: "Compliance Officer" },
   { value: "admin",             label: "Admin" },
@@ -32,7 +32,7 @@ const ROLES = [
 ] as const;
 
 const ROLE_COLORS: Record<string, string> = {
-  designer:          "bg-blue-50 text-blue-700 border-blue-200",
+  architect:         "bg-blue-50 text-blue-700 border-blue-200",
   reviewer:          "bg-amber-50 text-amber-700 border-amber-200",
   compliance_officer: "bg-green-50 text-green-700 border-green-200",
   admin:             "bg-purple-50 text-purple-700 border-purple-200",
@@ -40,7 +40,7 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 const ROLE_ACCENT: Record<string, string> = {
-  designer:          "border-blue-400",
+  architect:         "border-blue-400",
   reviewer:          "border-amber-400",
   compliance_officer: "border-green-400",
   admin:             "border-purple-400",
@@ -79,7 +79,7 @@ interface CreateFormProps {
 function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<string>("designer");
+  const [role, setRole] = useState<string>("architect");
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -201,7 +201,7 @@ interface InviteFormProps {
 
 function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<string>("designer");
+  const [role, setRole] = useState<string>("architect");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

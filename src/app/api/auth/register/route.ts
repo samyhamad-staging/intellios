@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
     "unknown";
-  const rateLimitResponse = rateLimit(ip, {
+  const rateLimitResponse = await rateLimit(ip, {
     endpoint: "register",
     max: 5,
     windowMs: 60 * 60 * 1000, // 1 hour

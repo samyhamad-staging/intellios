@@ -617,7 +617,7 @@ function ReportDocument({
               </span>
             </div>
             <dl className="grid grid-cols-3 gap-x-8 gap-y-0">
-              <Field label="Designer (submitted)" value={r.sodEvidence.designer} />
+              <Field label="Architect (submitted)" value={r.sodEvidence.architect} />
               <Field label="Reviewer (approved/rejected)" value={r.sodEvidence.reviewer} />
               <Field label="Deployer (deployed to production)" value={r.sodEvidence.deployer} />
             </dl>

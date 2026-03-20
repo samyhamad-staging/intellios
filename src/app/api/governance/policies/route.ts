@@ -7,7 +7,7 @@ import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 
 const POLICY_TYPES = ["safety", "compliance", "data_handling", "access_control", "audit"] as const;
 
@@ -79,14 +79,18 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    void writeAuditLog({
-      entityType: "policy",
-      entityId: policy.id,
-      action: "policy.created",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role!,
-      enterpriseId: policy.enterpriseId,
-      toState: { name: policy.name, type: policy.type, ruleCount: (policy.rules as unknown[]).length },
+    void publishEvent({
+      event: {
+        type: "policy.created",
+        payload: {
+          policyId: policy.id,
+          name: policy.name,
+          type: policy.type,
+        },
+      },
+      actor: { email: authSession.user.email!, role: authSession.user.role! },
+      entity: { type: "policy", id: policy.id },
+      enterpriseId: policy.enterpriseId ?? null,
     });
 
     return NextResponse.json({ policy }, { status: 201 });

@@ -7,7 +7,7 @@ import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { randomUUID } from "crypto";
 
 const POLICY_TYPES = ["safety", "compliance", "data_handling", "access_control", "audit"] as const;
@@ -146,15 +146,17 @@ export async function PATCH(
         .where(eq(governancePolicies.id, id));
     });
 
-    void writeAuditLog({
-      entityType: "policy",
-      entityId: newId,
-      action: "policy.updated",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role!,
-      enterpriseId: policy.enterpriseId,
-      fromState: { id: policy.id, name: policy.name, type: policy.type, version: policy.policyVersion, ruleCount: (policy.rules as unknown[]).length },
-      toState: { id: newId, name: newPolicy!.name, type: newPolicy!.type, version: newPolicy!.policyVersion, ruleCount: (newPolicy!.rules as unknown[]).length },
+    void publishEvent({
+      event: {
+        type: "policy.updated",
+        payload: {
+          policyId: newId,
+          name: newPolicy!.name,
+        },
+      },
+      actor: { email: authSession.user.email!, role: authSession.user.role! },
+      entity: { type: "policy", id: newId },
+      enterpriseId: policy.enterpriseId ?? null,
     });
 
     return NextResponse.json({ policy: newPolicy! });
@@ -205,14 +207,17 @@ export async function DELETE(
 
     await db.delete(governancePolicies).where(eq(governancePolicies.id, id));
 
-    void writeAuditLog({
-      entityType: "policy",
-      entityId: id,
-      action: "policy.deleted",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role!,
-      enterpriseId: policy.enterpriseId,
-      fromState: { name: policy.name, type: policy.type, ruleCount: (policy.rules as unknown[]).length },
+    void publishEvent({
+      event: {
+        type: "policy.deleted",
+        payload: {
+          policyId: id,
+          name: policy.name,
+        },
+      },
+      actor: { email: authSession.user.email!, role: authSession.user.role! },
+      entity: { type: "policy", id },
+      enterpriseId: policy.enterpriseId ?? null,
     });
 
     return NextResponse.json({ deleted: true });

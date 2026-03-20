@@ -145,7 +145,7 @@ function LoginForm() {
                 <span className="font-medium text-gray-700">designer@intellios.dev</span>
                 <span className="ml-2 text-gray-400">Designer1234!</span>
               </div>
-              <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700">Designer</span>
+              <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700">Architect</span>
             </div>
             <div className="flex items-center justify-between">
               <div>

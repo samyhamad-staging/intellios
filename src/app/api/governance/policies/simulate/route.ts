@@ -7,7 +7,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { parseBody } from "@/lib/parse-body";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { evaluatePolicies } from "@/lib/governance/evaluate";
 import type { ABP } from "@/lib/types/abp";
 import type { GovernancePolicy, ValidationReport, Violation } from "@/lib/governance/types";
@@ -181,21 +181,16 @@ export async function POST(request: NextRequest) {
 
     // ── 5. Audit log ───────────────────────────────────────────────────────
     const policyEntityId = existingPolicyId ?? crypto.randomUUID();
-    void writeAuditLog({
-      entityType: "policy",
-      entityId: policyEntityId,
-      action: "policy.simulated",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role!,
-      enterpriseId,
-      metadata: {
-        policyName: draftPolicyInput.name,
-        existingPolicyId: existingPolicyId ?? null,
-        affectedCount: summary.newViolations + summary.resolvedViolations,
-        newViolationCount: summary.newViolations,
-        resolvedViolationCount: summary.resolvedViolations,
-        totalBlueprintsChecked: summary.total,
+    void publishEvent({
+      event: {
+        type: "policy.simulated",
+        payload: {
+          policyId: policyEntityId,
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role! },
+      entity: { type: "policy", id: policyEntityId },
+      enterpriseId,
     });
 
     return NextResponse.json({ summary, blueprints: results });

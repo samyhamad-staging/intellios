@@ -13,10 +13,13 @@ interface AgentHealth {
   tags: string[];
   deployedAt: string;
   deploymentTarget: string | null;
-  healthStatus: "clean" | "critical" | "unknown";
+  healthStatus: "clean" | "degraded" | "critical" | "unknown";
   errorCount: number;
   warningCount: number;
   lastCheckedAt: string | null;
+  productionErrorRate: number | null;
+  productionLatencyP99: number | null;
+  lastTelemetryAt: string | null;
 }
 
 type BedrockAgentStatus =
@@ -47,6 +50,7 @@ interface AgentCoreHealthSummary {
 interface MonitorSummary {
   total: number;
   clean: number;
+  degraded: number;
   critical: number;
   unknown: number;
 }
@@ -65,11 +69,18 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diffDays / 30)}mo ago`;
 }
 
-function HealthBadge({ status, errorCount }: { status: "clean" | "critical" | "unknown"; errorCount: number }) {
+function HealthBadge({ status, errorCount }: { status: "clean" | "degraded" | "critical" | "unknown"; errorCount: number }) {
   if (status === "clean") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
         ✓ Clean
+      </span>
+    );
+  }
+  if (status === "degraded") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+        ⚠ Degraded
       </span>
     );
   }
@@ -111,13 +122,13 @@ function KpiCard({
 
 export default function MonitorPage() {
   const [agents, setAgents] = useState<AgentHealth[]>([]);
-  const [summary, setSummary] = useState<MonitorSummary>({ total: 0, clean: 0, critical: 0, unknown: 0 });
+  const [summary, setSummary] = useState<MonitorSummary>({ total: 0, clean: 0, degraded: 0, critical: 0, unknown: 0 });
   const [loading, setLoading] = useState(true);
   const [checkingAll, setCheckingAll] = useState(false);
   const [checkingId, setCheckingId] = useState<string | null>(null);
   const [role, setRole] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [healthFilter, setHealthFilter] = useState<"all" | "clean" | "critical" | "unknown">("all");
+  const [healthFilter, setHealthFilter] = useState<"all" | "clean" | "degraded" | "critical" | "unknown">("all");
 
   // AgentCore live status
   const [agcHealth, setAgcHealth] = useState<AgentCoreHealthEntry[]>([]);
@@ -140,7 +151,7 @@ export default function MonitorPage() {
       const res = await fetch("/api/monitor");
       const data = await res.json();
       setAgents(data.agents ?? []);
-      setSummary(data.summary ?? { total: 0, clean: 0, critical: 0, unknown: 0 });
+      setSummary(data.summary ?? { total: 0, clean: 0, degraded: 0, critical: 0, unknown: 0 });
     } catch {
       // Keep existing state on fetch failure
     } finally {
@@ -170,16 +181,20 @@ export default function MonitorPage() {
             a.agentId === agentId
               ? {
                   ...a,
-                  healthStatus:  result.healthStatus as "clean" | "critical" | "unknown",
-                  errorCount:    result.errorCount,
-                  warningCount:  result.warningCount,
-                  lastCheckedAt: result.checkedAt,
+                  healthStatus:        result.healthStatus as "clean" | "degraded" | "critical" | "unknown",
+                  errorCount:          result.errorCount,
+                  warningCount:        result.warningCount,
+                  lastCheckedAt:       result.checkedAt,
+                  productionErrorRate: result.productionErrorRate ?? null,
+                  productionLatencyP99: result.productionLatencyP99 ?? null,
+                  lastTelemetryAt:     result.lastTelemetryAt ?? null,
                 }
               : a
           );
           setSummary({
             total:    updated.length,
             clean:    updated.filter((a) => a.healthStatus === "clean").length,
+            degraded: updated.filter((a) => a.healthStatus === "degraded").length,
             critical: updated.filter((a) => a.healthStatus === "critical").length,
             unknown:  updated.filter((a) => a.healthStatus === "unknown").length,
           });
@@ -269,7 +284,7 @@ export default function MonitorPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="mb-6 grid grid-cols-4 gap-4">
+      <div className="mb-6 grid grid-cols-5 gap-4">
         <KpiCard
           label="Deployed"
           value={summary.total}
@@ -285,7 +300,14 @@ export default function MonitorPage() {
           subColor="text-green-600"
         />
         <KpiCard
-          label="Needs Attention"
+          label="Degraded"
+          value={summary.degraded}
+          sub="production issues detected"
+          color={summary.degraded > 0 ? "bg-amber-50 border border-amber-200 text-amber-900" : "bg-white border border-gray-200 text-gray-900"}
+          subColor={summary.degraded > 0 ? "text-amber-600" : "text-gray-500"}
+        />
+        <KpiCard
+          label="Critical"
           value={summary.critical}
           sub="governance errors found"
           color={summary.critical > 0 ? "bg-red-50 border border-red-200 text-red-900" : "bg-white border border-gray-200 text-gray-900"}
@@ -295,8 +317,8 @@ export default function MonitorPage() {
           label="Not Checked"
           value={summary.unknown}
           sub="awaiting first health check"
-          color={summary.unknown > 0 ? "bg-amber-50 border border-amber-200 text-amber-900" : "bg-white border border-gray-200 text-gray-900"}
-          subColor={summary.unknown > 0 ? "text-amber-600" : "text-gray-500"}
+          color={summary.unknown > 0 ? "bg-gray-50 border border-gray-200 text-gray-700" : "bg-white border border-gray-200 text-gray-900"}
+          subColor={summary.unknown > 0 ? "text-gray-500" : "text-gray-400"}
         />
       </div>
 
@@ -321,7 +343,8 @@ export default function MonitorPage() {
           >
             <option value="all">All</option>
             <option value="clean">Clean</option>
-            <option value="critical">Needs Attention</option>
+            <option value="degraded">Degraded</option>
+            <option value="critical">Critical</option>
             <option value="unknown">Not Checked</option>
           </select>
         </div>
@@ -375,6 +398,7 @@ export default function MonitorPage() {
                 <th className="px-4 py-3 text-left">Health</th>
                 <th className="px-4 py-3 text-right">Errors</th>
                 <th className="px-4 py-3 text-right">Warnings</th>
+                <th className="px-4 py-3 text-left">Production</th>
                 <th className="px-4 py-3 text-left">Deployed</th>
                 <th className="px-4 py-3 text-left">Last Checked</th>
                 <th className="px-4 py-3 text-right">Actions</th>
@@ -383,7 +407,7 @@ export default function MonitorPage() {
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-8 text-center text-sm text-gray-400">
+                  <td colSpan={9} className="px-5 py-8 text-center text-sm text-gray-400">
                     No agents match your filters.{" "}
                     <button
                       onClick={() => { setSearchQuery(""); setHealthFilter("all"); }}
@@ -437,6 +461,20 @@ export default function MonitorPage() {
                           <span className="text-amber-600">{agent.warningCount}</span>
                         ) : (
                           <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {agent.lastTelemetryAt ? (
+                          <div>
+                            <div className="text-gray-600">
+                              {agent.productionErrorRate !== null
+                                ? `${(agent.productionErrorRate * 100).toFixed(1)}% err`
+                                : "—"}
+                            </div>
+                            <div className="text-gray-400">seen {timeAgo(agent.lastTelemetryAt)}</div>
+                          </div>
+                        ) : (
+                          <span className="text-gray-300">No data</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">

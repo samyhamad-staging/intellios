@@ -24,7 +24,7 @@ type RouteParams = { params: Promise<{ agentId: string; caseId: string }> };
  * Update a test case. designer | admin only.
  */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
@@ -81,7 +81,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  * Delete a test case. designer | admin only.
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 

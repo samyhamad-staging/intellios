@@ -121,7 +121,7 @@ export interface MRMReport {
   // ── Section 7: SOD Evidence ───────────────────────────────────────────────
   sodEvidence: {
     /** Email of the user who submitted the blueprint for review. */
-    designer: string | null;
+    architect: string | null;
     /** Email of the reviewer who made the approval/rejection decision. */
     reviewer: string | null;
     /** Email of the user who executed the production deployment. */

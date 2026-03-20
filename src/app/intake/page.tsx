@@ -36,7 +36,7 @@ export default async function IntakeSessionsPage() {
   const session = await auth();
   const user = session?.user;
   if (!user) redirect("/login");
-  if (user.role !== "designer" && user.role !== "admin") redirect("/");
+  if (user.role !== "architect" && user.role !== "admin") redirect("/");
 
   const enterpriseFilter =
     user.role === "admin"

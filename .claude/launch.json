@@ -4,8 +4,15 @@
     {
       "name": "intellios",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev"],
+      "runtimeArgs": ["C:/Users/samyh/OneDrive/Desktop/Claude/src/node_modules/next/dist/bin/next", "dev"],
       "port": 3000,
+      "cwd": "src"
+    },
+    {
+      "name": "drizzle-studio",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["node_modules/drizzle-kit/bin.cjs", "studio"],
+      "port": 4983,
       "cwd": "src"
     }
   ]

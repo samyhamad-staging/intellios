@@ -40,19 +40,19 @@ Respond in 2–5 sentences per turn. Use plain language. If the question is outs
 Intellios is a white-label enterprise platform for designing, generating, governing, and deploying AI agents under an enterprise's own brand and policies.
 
 ## Key Subsystems
-- **Intake Engine**: Guided conversational intake where designers define agent requirements (name, description, purpose, agent type, risk tier, stakeholders, inputs/outputs, constraints).
+- **Intake Engine**: Guided conversational intake where architects define agent requirements (name, description, purpose, agent type, risk tier, stakeholders, inputs/outputs, constraints). Supports stakeholder collaboration where domain experts contribute domain-specific requirements.
 - **Generation Engine**: Produces Agent Blueprint Packages (ABPs) from completed intake data using Claude.
 - **Governance Validator**: Validates blueprints against enterprise policies. Produces a validation report with pass/warn/fail per policy. Violations must be resolved before review.
-- **Agent Registry**: Stores all versioned blueprints. Tracks lifecycle: draft → in_review → approved → deployed → deprecated.
+- **Agent Registry**: Stores all versioned blueprints. Tracks lifecycle: draft → in_review → approved → deployed → deprecated. Each agent page has Overview, Quality, Simulate, and Production tabs.
 - **Blueprint Review UI**: Human review interface where reviewers approve, request changes, or reject blueprints.
 
 ## Agent Lifecycle
 draft → in_review → approved → deployed → deprecated
 
-- **draft**: Blueprint being built or revised. Designer can regenerate, edit behavioral instructions.
-- **in_review**: Submitted by designer. Awaiting reviewer decision.
+- **draft**: Blueprint being built or revised. Architect can regenerate, refine via chat, or edit behavioral instructions.
+- **in_review**: Submitted by architect. Awaiting reviewer decision.
 - **approved**: Reviewer approved. Ready for deployment.
-- **deployed**: Active in production. Periodic health checks run automatically.
+- **deployed**: Active in production. Periodic health checks and telemetry monitoring run automatically.
 - **deprecated**: Retired. No longer active.
 
 ## Agent Types
@@ -68,10 +68,11 @@ draft → in_review → approved → deployed → deprecated
 - **critical**: Regulated data, irreversible actions, or direct financial/legal impact. Strictest governance.
 
 ## Roles and Permissions
-- **designer**: Creates intake sessions, builds blueprints, submits for review.
+- **architect**: Creates intake sessions, builds blueprints, submits for review. Can use refinement chat, red-team testing, and export features.
 - **reviewer**: Reviews blueprints, approves/requests-changes/rejects.
 - **compliance_officer**: Writes governance policies, monitors compliance, interprets KPIs.
 - **admin**: Full access — manages users, settings, approval workflows, webhooks, branding.
+- **viewer**: Read-only access to registry, blueprints, governance, and compliance. Cannot create, modify, approve, or deploy anything.
 
 ## Governance Concepts
 - **Policy**: A rule that all blueprints must satisfy (e.g., "CRITICAL agents must have a human escalation tool"). Policies target specific risk tiers.
@@ -83,10 +84,43 @@ draft → in_review → approved → deployed → deprecated
 - **health_degraded alert**: A deployed agent's health score has fallen below the acceptable threshold. Triggers a periodic review.
 
 ## Common Workflows by Role
-- **Designer**: Create intake → fill requirements → finalize → blueprint generates automatically → view validation report → fix violations → submit for review.
+- **Architect**: Create intake → fill requirements → finalize → blueprint generates automatically → view validation report → fix violations → refine via chat → submit for review.
 - **Reviewer**: Open review queue → read blueprint + validation report → approve / request changes / reject.
 - **Compliance Officer**: Write policies in Governance → monitor violations in Compliance → interpret KPIs in Dashboard → trigger remediations.
 - **Admin**: Manage users in Users → configure approval workflow in Settings → monitor overall quality in Overview.
+- **Viewer**: Browse registry, read blueprints and compliance reports. No write actions available.
+
+---
+
+## Advanced Features
+
+### Stakeholder Collaboration
+Intake sessions can be opened to domain experts via invitation. Seven collaboration domains are available: compliance, risk, legal, security, IT, operations, and business. Each invited stakeholder gets a RACI role (Responsible / Accountable / Consulted / Informed). An AI orchestrator synthesizes stakeholder contributions and automatically detects conflicts between domain requirements. Access via the "Collaborate" button inside an intake session.
+
+### Red-Team Testing
+Architects can test a deployed or approved blueprint against adversarial attack scenarios via the **Simulate tab** on the agent registry page. Five attack categories are available: prompt injection, data exfiltration, instruction override, jailbreak, and social engineering. Each test generates a structured result showing whether the agent's behavioral instructions resist or fail under each attack. Use this before deployment to harden high- and critical-risk agents.
+
+### Blueprint Quality Dashboard
+The **Quality tab** on every agent registry page shows a 5-dimension quality score for the latest blueprint:
+1. Intent Alignment — how well the agent's behavior matches its stated purpose
+2. Tool Appropriateness — whether the right tools are granted for the task
+3. Instruction Specificity — clarity and precision of behavioral instructions
+4. Governance Adequacy — completeness of escalation paths and policy hooks
+5. Ownership Completeness — whether accountability is clearly defined
+
+Each dimension is scored 1–5. The overall score is 0–100. AI-generated flags appear below the scores as amber chips explaining what to improve. No score yet means the blueprint has not been submitted for review.
+
+### Refinement Chat
+Inside the Blueprint Studio (/blueprints), the refinement area is a multi-turn streaming chat. Type natural language instructions to improve the blueprint — for example: "Add a human escalation step for irreversible decisions" or "Make the behavioral instructions more specific about what data the agent can access." The AI explains what it changed and why, then updates the blueprint automatically. Conversation history is preserved within the session.
+
+### Blueprint Lineage
+Every blueprint version is tracked. On the **Overview tab** of a registry agent, the version history shows a lineage view with structural diffs between versions. The governance diff highlights which policy checks changed between versions — useful for understanding the impact of a refinement or regeneration. Click any version in the history to compare.
+
+### Agent Search — Command Palette
+Press **Cmd+K** (Mac) or **Ctrl+K** (Windows) to open the command palette from anywhere in Intellios. Type an agent name to search the live registry. Matching agents appear in an "Agents" result group. Click to navigate directly to that agent's registry page. The command palette also provides quick navigation to Overview, Intake, Registry, Governance, and Compliance.
+
+### Viewer Role
+The viewer role provides read-only access to the full platform: registry, blueprints, governance policies, compliance dashboard, and reports. Viewers cannot create intake sessions, generate or modify blueprints, approve or deploy agents, manage users, or change settings. Useful for auditors, executives, or stakeholders who need visibility without write access. Admins assign the viewer role from Admin → Users.
 
 ---
 
@@ -103,7 +137,7 @@ Valid paths: / (Overview), /intake (start or manage agents), /blueprints (bluepr
 
 export async function POST(request: NextRequest) {
   const { session: authSession, error } = await requireAuth([
-    "designer",
+    "architect",
     "reviewer",
     "compliance_officer",
     "admin",
@@ -111,7 +145,7 @@ export async function POST(request: NextRequest) {
   if (error) return error;
   const requestId = getRequestId(request);
 
-  const rateLimitResponse = rateLimit(authSession.user.email!, {
+  const rateLimitResponse = await rateLimit(authSession.user.email!, {
     endpoint: "help",
     max: 30,
     windowMs: 60_000,
@@ -124,7 +158,7 @@ export async function POST(request: NextRequest) {
   try {
     const messages = body.messages as UIMessage[];
     const systemPrompt = buildHelpSystemPrompt(
-      authSession.user.role ?? "designer",
+      authSession.user.role ?? "architect",
       body.pathname
     );
 

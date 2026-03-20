@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, jsonb, timestamp, boolean, integer, index, numeric, date } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, jsonb, timestamp, boolean, integer, index, numeric, date, real } from "drizzle-orm/pg-core";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 // ─── Users ───────────────────────────────────────────────────────────────────
@@ -8,7 +8,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   passwordHash: text("password_hash").notNull(),
-  role: text("role").notNull(), // designer | reviewer | compliance_officer | admin
+  role: text("role").notNull(), // architect | reviewer | compliance_officer | admin | viewer
   enterpriseId: text("enterprise_id"),  // tenant identifier — null for platform admins
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -172,13 +172,17 @@ export const deploymentHealth = pgTable(
     agentId:          uuid("agent_id").notNull().unique(),
     blueprintId:      uuid("blueprint_id").notNull(),
     enterpriseId:     text("enterprise_id"),
-    healthStatus:     text("health_status").notNull().default("unknown"), // clean | critical | unknown
-    errorCount:       integer("error_count").notNull().default(0),
-    warningCount:     integer("warning_count").notNull().default(0),
-    validationReport: jsonb("validation_report"),
-    lastCheckedAt:    timestamp("last_checked_at", { withTimezone: true }).defaultNow(),
-    deployedAt:       timestamp("deployed_at", { withTimezone: true }).notNull(),
-    createdAt:        timestamp("created_at", { withTimezone: true }).defaultNow(),
+    healthStatus:          text("health_status").notNull().default("unknown"), // clean | degraded | critical | unknown
+    errorCount:            integer("error_count").notNull().default(0),
+    warningCount:          integer("warning_count").notNull().default(0),
+    validationReport:      jsonb("validation_report"),
+    lastCheckedAt:         timestamp("last_checked_at", { withTimezone: true }).defaultNow(),
+    deployedAt:            timestamp("deployed_at", { withTimezone: true }).notNull(),
+    // H1-1.4: production telemetry metrics (updated by checkDeploymentHealth when telemetry available)
+    productionErrorRate:   real("production_error_rate"),          // 0.0–1.0; null = no telemetry
+    productionLatencyP99:  integer("production_latency_p99"),      // ms; null = no telemetry
+    lastTelemetryAt:       timestamp("last_telemetry_at", { withTimezone: true }),
+    createdAt:             timestamp("created_at", { withTimezone: true }).defaultNow(),
   },
   (table) => [index("idx_deployment_health_enterprise").on(table.enterpriseId)]
 );
@@ -467,7 +471,7 @@ export const userInvitations = pgTable(
     id:           uuid("id").primaryKey().defaultRandom(),
     enterpriseId: text("enterprise_id"),
     email:        text("email").notNull(),
-    role:         text("role").notNull(), // designer | reviewer | compliance_officer | admin
+    role:         text("role").notNull(), // architect | reviewer | compliance_officer | admin | viewer
     invitedBy:    uuid("invited_by").notNull().references(() => users.id),
     tokenHash:    text("token_hash").notNull(),
     expiresAt:    timestamp("expires_at", { withTimezone: true }).notNull(),
@@ -477,5 +481,62 @@ export const userInvitations = pgTable(
   (t) => [
     index("idx_ui_enterprise_id").on(t.enterpriseId),
     index("idx_ui_token_hash").on(t.tokenHash),
+  ]
+);
+
+// ─── Agent Telemetry ──────────────────────────────────────────────────────────
+// H1-1.1: Production Observability Pipeline.
+// Time-series metrics pushed by deployed agents (source="push") or pulled from
+// ─── Alert Thresholds (H1-1.5) ────────────────────────────────────────────────
+// Per-agent threshold rules for production health alerts. When a threshold is
+// breached during a cron check, a notification + event is fired.
+
+export const alertThresholds = pgTable(
+  "alert_thresholds",
+  {
+    id:            uuid("id").primaryKey().defaultRandom(),
+    agentId:       uuid("agent_id").notNull(),
+    enterpriseId:  text("enterprise_id"),
+    // metric: "error_rate" | "latency_p99" | "zero_invocations" | "policy_violations"
+    metric:        text("metric").notNull(),
+    // operator: "gt" | "lt" | "eq"
+    operator:      text("operator").notNull(),
+    value:         real("value").notNull(),
+    windowMinutes: integer("window_minutes").notNull().default(60),
+    enabled:       boolean("enabled").notNull().default(true),
+    createdBy:     text("created_by").notNull(),
+    createdAt:     timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt:     timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_alert_thresholds_agent").on(t.agentId),
+    index("idx_alert_thresholds_enterprise").on(t.enterpriseId),
+  ]
+);
+
+// CloudWatch (source="cloudwatch"). Indexed for time-range queries per agent.
+// Append-only — never UPDATE or DELETE rows from this table.
+
+export const agentTelemetry = pgTable(
+  "agent_telemetry",
+  {
+    id:               uuid("id").primaryKey().defaultRandom(),
+    agentId:          uuid("agent_id").notNull(),  // FK → agentBlueprints.agentId (logical agent)
+    enterpriseId:     text("enterprise_id"),
+    timestamp:        timestamp("timestamp", { withTimezone: true }).notNull(),
+    invocations:      integer("invocations").notNull().default(0),
+    errors:           integer("errors").notNull().default(0),
+    latencyP50Ms:     integer("latency_p50_ms"),
+    latencyP99Ms:     integer("latency_p99_ms"),
+    tokensIn:         integer("tokens_in").notNull().default(0),
+    tokensOut:        integer("tokens_out").notNull().default(0),
+    policyViolations: integer("policy_violations").notNull().default(0),
+    customMetrics:    jsonb("custom_metrics"),  // arbitrary key→number pairs
+    source:           text("source").notNull().default("push"), // "push" | "cloudwatch"
+    createdAt:        timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_telemetry_agent_time").on(t.agentId, t.timestamp),
+    index("idx_telemetry_enterprise").on(t.enterpriseId),
   ]
 );

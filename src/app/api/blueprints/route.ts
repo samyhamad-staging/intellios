@@ -10,7 +10,7 @@ import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
@@ -20,11 +20,11 @@ const GenerateBody = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
-  const rateLimitResponse = rateLimit(authSession.user.email!, {
+  const rateLimitResponse = await rateLimit(authSession.user.email!, {
     endpoint: "generate",
     max: 10,
     windowMs: 60_000,
@@ -94,15 +94,19 @@ export async function POST(request: NextRequest) {
       .values({ sessionId, abp, name, tags, enterpriseId, validationReport, createdBy: authSession.user.email ?? null })
       .returning();
 
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: blueprint.id,
-      action: "blueprint.created",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
+    await publishEvent({
+      event: {
+        type: "blueprint.created",
+        payload: {
+          blueprintId: blueprint.id,
+          agentId: blueprint.agentId,
+          name: blueprint.name ?? "",
+          createdBy: authSession.user.email!,
+        },
+      },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id: blueprint.id },
       enterpriseId,
-      toState: { status: "draft", agentId: blueprint.agentId, name: blueprint.name },
-      metadata: { sessionId, violationCount: validationReport?.violations?.length ?? 0 },
     });
 
     return NextResponse.json({

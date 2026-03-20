@@ -6,7 +6,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { parseBody } from "@/lib/parse-body";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import { z } from "zod";
@@ -146,25 +146,22 @@ export async function POST(
             .where(eq(agentBlueprints.id, id))
             .returning({ id: agentBlueprints.id, status: agentBlueprints.status, reviewComment: agentBlueprints.reviewComment, reviewedAt: agentBlueprints.reviewedAt });
 
-          await writeAuditLog({
-            entityType: "blueprint",
-            entityId: id,
-            action: "blueprint.reviewed",
-            actorEmail: userEmail,
-            actorRole: userRole,
-            enterpriseId: blueprint.enterpriseId ?? null,
-            fromState: { status: "in_review", step: stepIndex },
-            toState: { status: "approved" },
-            metadata: {
-              agentId: id,
-              agentName,
-              createdBy: blueprint.createdBy ?? null,
-              reviewAction: "approve",
-              comment: comment?.trim() || null,
-              step: stepIndex,
-              label: activeStep.label,
-              finalStep: true,
+          await publishEvent({
+            event: {
+              type: "blueprint.reviewed",
+              payload: {
+                blueprintId: id,
+                decision: "approve",
+                reviewer: userEmail,
+                comment: comment?.trim() || null,
+                agentId: id,
+                agentName: String(agentName),
+                createdBy: blueprint.createdBy ?? "",
+              },
             },
+            actor: { email: userEmail, role: userRole },
+            entity: { type: "blueprint", id },
+            enterpriseId: blueprint.enterpriseId ?? null,
           });
 
           return NextResponse.json(updated);
@@ -181,23 +178,22 @@ export async function POST(
             })
             .where(eq(agentBlueprints.id, id));
 
-          await writeAuditLog({
-            entityType: "blueprint",
-            entityId: id,
-            action: "blueprint.approval_step_completed",
-            actorEmail: userEmail,
-            actorRole: userRole,
-            enterpriseId: blueprint.enterpriseId ?? null,
-            fromState: { status: "in_review", step: stepIndex },
-            toState: { status: "in_review", step: stepIndex + 1, nextApproverRole: nextStep.role, nextApproverLabel: nextStep.label },
-            metadata: {
-              agentId: id,
-              agentName,
-              createdBy: blueprint.createdBy ?? null,
-              comment: comment?.trim() || null,
-              completedStep: stepIndex,
-              label: activeStep.label,
+          await publishEvent({
+            event: {
+              type: "blueprint.approval_step_completed",
+              payload: {
+                blueprintId: id,
+                agentId: id,
+                agentName: String(agentName),
+                step: stepIndex,
+                label: activeStep.label,
+                nextApproverRole: nextStep.role,
+                nextApproverLabel: nextStep.label,
+              },
             },
+            actor: { email: userEmail, role: userRole },
+            entity: { type: "blueprint", id },
+            enterpriseId: blueprint.enterpriseId ?? null,
           });
 
           return NextResponse.json({
@@ -268,22 +264,22 @@ export async function POST(
         reviewedAt: agentBlueprints.reviewedAt,
       });
 
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: id,
-      action: "blueprint.reviewed",
-      actorEmail: userEmail,
-      actorRole: userRole,
-      enterpriseId: blueprint.enterpriseId ?? null,
-      fromState: { status: "in_review" },
-      toState: { status: newStatus },
-      metadata: {
-        agentId: id,
-        agentName,
-        createdBy: blueprint.createdBy ?? null,
-        reviewAction: action,
-        comment: comment?.trim() || null,
+    await publishEvent({
+      event: {
+        type: "blueprint.reviewed",
+        payload: {
+          blueprintId: id,
+          decision: action,
+          reviewer: userEmail,
+          comment: comment?.trim() || null,
+          agentId: id,
+          agentName: String(agentName),
+          createdBy: blueprint.createdBy ?? "",
+        },
       },
+      actor: { email: userEmail, role: userRole },
+      entity: { type: "blueprint", id },
+      enterpriseId: blueprint.enterpriseId ?? null,
     });
 
     return NextResponse.json(updated);

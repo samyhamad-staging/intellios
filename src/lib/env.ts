@@ -18,6 +18,12 @@ const EnvSchema = z.object({
   }),
   // Optional — enables Bearer token auth on cron routes (recommended in production)
   CRON_SECRET: z.string().optional(),
+  // Optional — API key for external agents pushing telemetry data
+  TELEMETRY_API_KEY: z.string().optional(),
+  // Optional — Redis connection URL for distributed rate limiting (recommended in multi-instance deployments)
+  REDIS_URL: z.string().optional(),
+  // Optional — S3 bucket name for artifact caching (evidence packages, MRM reports, code exports)
+  ARTIFACT_BUCKET: z.string().optional(),
 });
 
 function validateEnv() {

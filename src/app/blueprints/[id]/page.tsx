@@ -4,6 +4,7 @@ import { use, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
 import { ValidationReportView } from "@/components/governance/validation-report";
+import { RefinementChat } from "@/components/blueprint/refinement-chat";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
 import type { TestRun } from "@/lib/testing/types";
@@ -92,8 +93,6 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [change, setChange] = useState("");
-  const [refining, setRefining] = useState(false);
   const [refinementCount, setRefinementCount] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -158,41 +157,22 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       });
   }
 
-  const handleRefine = useCallback(async () => {
-    if (!change.trim() || refining) return;
-    setRefining(true);
-    setError(null);
+  // Called by RefinementChat after the stream completes and the updated ABP is fetched
+  const handleBlueprintUpdated = useCallback(async (updatedAbp: ABP) => {
+    setAbp(updatedAbp);
+    setRefinementCount((c) => c + 1);
+    // Auto-validate so stale warning clears after refinement
+    setValidating(true);
     try {
-      const res = await fetch(`/api/blueprints/${id}/refine`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ change }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Refinement failed");
+      const vRes = await fetch(`/api/blueprints/${id}/validate`, { method: "POST" });
+      const vData = await vRes.json();
+      if (vData.report) {
+        setValidationReport(vData.report as ValidationReport);
+        setReportIsFresh(true);
       }
-      const data = await res.json();
-      setAbp(data.abp as ABP);
-      setRefinementCount(parseInt(data.refinementCount ?? "0", 10));
-      setChange("");
-      // Auto-validate so the designer doesn't need a manual click before submitting.
-      setValidating(true);
-      try {
-        const vRes = await fetch(`/api/blueprints/${id}/validate`, { method: "POST" });
-        const vData = await vRes.json();
-        if (vData.report) {
-          setValidationReport(vData.report as ValidationReport);
-          setReportIsFresh(true);
-        }
-      } catch { /* non-critical: user can re-validate manually if this fails */ }
-      finally { setValidating(false); }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Refinement failed");
-    } finally {
-      setRefining(false);
-    }
-  }, [id, change, refining]);
+    } catch { /* non-critical */ }
+    finally { setValidating(false); }
+  }, [id]);
 
   const handleValidate = useCallback(async () => {
     setValidating(true);
@@ -583,7 +563,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               ) : (
                 <>
                   {/* Validation status */}
-                  <div className={`mt-2 mb-3 space-y-2 transition-opacity ${(refining || validating) && validationReport ? "opacity-50 pointer-events-none" : ""}`}>
+                  <div className={`mt-2 mb-3 space-y-2 transition-opacity ${validating && validationReport ? "opacity-50 pointer-events-none" : ""}`}>
                     {!validationReport && (
                       <div className="flex items-center justify-between">
                         <p className="text-xs text-gray-400">
@@ -658,7 +638,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                       {!confirmRegenerate ? (
                         <button
                           onClick={() => setConfirmRegenerate(true)}
-                          disabled={regenerating || refining || validating}
+                          disabled={regenerating || validating}
                           className="w-full rounded-lg border border-gray-200 py-1.5 text-xs font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 transition-colors disabled:opacity-40"
                         >
                           Regenerate Blueprint
@@ -946,43 +926,21 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             </div>
           )}
 
-          {/* Refinement */}
+          {/* Refinement — multi-turn chat */}
           <div className="border-b border-gray-200 px-5 py-4">
             <h2 className="text-sm font-semibold">Request Changes</h2>
             <p className="mt-1 text-xs text-gray-500">
-              Describe what to change and Claude will regenerate the blueprint.
+              Chat with Claude to iteratively refine the blueprint.
             </p>
           </div>
 
-          <div className="flex flex-1 flex-col gap-3 p-4">
-            <textarea
-              value={change}
-              onChange={(e) => setChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                  e.preventDefault();
-                  handleRefine();
-                }
-              }}
-              placeholder="e.g. Add a rate limit of 50 requests per minute. Make the persona more formal."
-              disabled={refining || loading}
-              className="flex-1 resize-none rounded-lg border border-gray-200 p-3 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50"
-              rows={4}
-            />
-
-            {error && !submitting && (
-              <p className="text-xs text-red-600">{error}</p>
+          <div className="flex flex-1 flex-col min-h-0">
+            {abp && (
+              <RefinementChat
+                blueprintId={id}
+                onBlueprintUpdated={handleBlueprintUpdated}
+              />
             )}
-
-            <button
-              onClick={handleRefine}
-              disabled={!change.trim() || refining || loading}
-              className="rounded-lg bg-violet-600 py-2 text-sm text-white hover:bg-violet-700 disabled:opacity-40"
-            >
-              {refining ? "Refining…" : "Apply Changes"}
-            </button>
-
-            <p className="text-center text-xs text-gray-400">⌘ Enter to apply</p>
           </div>
         </aside>
       </div>

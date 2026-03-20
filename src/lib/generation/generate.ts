@@ -62,9 +62,9 @@ ${changeRequest}
 Apply the requested change precisely. Keep all other sections unchanged unless the change logically affects them.`,
   });
 
-  // Preserve original metadata id and created_at, update status if needed
+  // Preserve original metadata and execution config; update status to draft
   return {
-    ...assembleABP(content, current.metadata.enterprise_id ?? "system"),
+    ...assembleABP(content, current.metadata.enterprise_id ?? "system", current.execution),
     metadata: {
       ...current.metadata,
       status: "draft",
@@ -74,9 +74,9 @@ Apply the requested change precisely. Keep all other sections unchanged unless t
 
 // ─── Internal ────────────────────────────────────────────────────────────────
 
-function assembleABP(content: ABPContent, createdBy: string): ABP {
+function assembleABP(content: ABPContent, createdBy: string, existingExecution?: ABP["execution"]): ABP {
   return {
-    version: "1.0.0",
+    version: "1.1.0",
     metadata: {
       id: randomUUID(),
       created_at: new Date().toISOString(),
@@ -88,5 +88,7 @@ function assembleABP(content: ABPContent, createdBy: string): ABP {
     capabilities: content.capabilities,
     constraints: content.constraints,
     governance: content.governance,
+    // Preserve existing execution config if provided (refinement); otherwise use empty defaults
+    execution: existingExecution ?? {},
   };
 }

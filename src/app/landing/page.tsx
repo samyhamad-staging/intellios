@@ -54,7 +54,7 @@ const DIFFERENTIATORS = [
 
 const ROLES = [
   {
-    name: "Designer",
+    name: "Architect",
     description: "Capture requirements through a structured, governance-aware intake conversation.",
   },
   {

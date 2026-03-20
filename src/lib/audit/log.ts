@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { auditLog } from "@/lib/db/schema";
 import { dispatch } from "@/lib/events/bus";
+import type { IntelliosEvent } from "@/lib/events/types";
 
 // Side-effect imports: register event handlers with the event bus.
 // Guaranteed to run on every request that writes an audit entry.
@@ -9,36 +10,12 @@ import "@/lib/monitoring/policy-impact-handler";
 import "@/lib/webhooks/dispatch";
 import "@/lib/awareness/quality-evaluator";
 
-export type AuditAction =
-  | "blueprint.created"
-  | "blueprint.refined"
-  | "blueprint.status_changed"
-  | "blueprint.reviewed"
-  | "blueprint.report_exported"
-  | "blueprint.health_checked"
-  | "blueprint.cloned"
-  | "blueprint.approval_step_completed"
-  | "blueprint.test_run_completed"
-  | "blueprint.agentcore_exported"
-  | "blueprint.agentcore_deployed"
-  | "blueprint.compliance_exported"
-  | "blueprint.simulated"
-  | "blueprint.code_exported"
-  | "blueprint.red_team_run"
-  | "blueprint.created_from_template"
-  | "blueprint.regenerated"
-  | "intake.finalized"
-  | "intake.contribution_submitted"
-  | "intake.invitation_sent"
-  | "policy.created"
-  | "policy.updated"
-  | "policy.deleted"
-  | "policy.simulated"
-  | "settings.updated"
-  | "blueprint.periodic_review_scheduled"
-  | "blueprint.periodic_review_completed"
-  | "blueprint.periodic_review_reminder"
-  | "blueprint.evidence_package_exported";
+/**
+ * Derived from `IntelliosEvent["type"]` — single source of truth.
+ * Previously a hand-maintained duplicate of `EventType`; now kept in sync
+ * automatically whenever a new variant is added to `IntelliosEvent`.
+ */
+export type AuditAction = IntelliosEvent["type"];
 
 export interface AuditEntry {
   entityType: "blueprint" | "intake_session" | "policy";

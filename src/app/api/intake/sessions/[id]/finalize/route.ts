@@ -7,13 +7,13 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
   try {
@@ -54,16 +54,18 @@ export async function POST(
       .where(eq(intakeSessions.id, id))
       .returning();
 
-    await writeAuditLog({
-      entityType: "intake_session",
-      entityId: id,
-      action: "intake.finalized",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
+    await publishEvent({
+      event: {
+        type: "intake.finalized",
+        payload: {
+          sessionId: id,
+          agentName: payload.identity?.name ?? "",
+          createdBy: authSession.user.email!,
+        },
+      },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "intake_session", id },
       enterpriseId: session.enterpriseId ?? null,
-      fromState: { status: "active" },
-      toState: { status: "completed" },
-      metadata: { agentName: payload.identity?.name ?? null },
     });
 
     return NextResponse.json({ session: updated, payload });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
@@ -19,7 +19,9 @@ import {
   Webhook,
   Search,
   ArrowRight,
+  Bot,
 } from "lucide-react";
+import { StatusBadge } from "@/components/registry/status-badge";
 
 // ── Nav item catalogue ─────────────────────────────────────────────────────────
 
@@ -49,7 +51,7 @@ const ALL_ENTRIES: NavEntry[] = [
     href: "/intake",
     section: "Navigate",
     icon: MessageSquare,
-    roles: ["designer", "admin"],
+    roles: ["architect", "admin"],
     keywords: ["intake", "new agent", "design", "session", "create"],
   },
   {
@@ -176,6 +178,13 @@ function matchesQuery(entry: NavEntry, query: string): boolean {
   );
 }
 
+interface AgentResult {
+  id: string;
+  agentId: string;
+  name: string | null;
+  status: string;
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -187,8 +196,11 @@ export function CommandPalette({ role, onClose }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [agentResults, setAgentResults] = useState<AgentResult[]>([]);
+  const [agentsLoading, setAgentsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const entries = useMemo(() => {
     return ALL_ENTRIES.filter(
@@ -207,10 +219,35 @@ export function CommandPalette({ role, onClose }: Props) {
     return map;
   }, [entries]);
 
+  // Debounced agent search
+  const searchAgents = useCallback((q: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (q.length < 2) {
+      setAgentResults([]);
+      setAgentsLoading(false);
+      return;
+    }
+    setAgentsLoading(true);
+    debounceRef.current = setTimeout(() => {
+      fetch("/api/registry")
+        .then((r) => r.json())
+        .then((data) => {
+          const agents: AgentResult[] = (data.agents ?? []);
+          const filtered = agents.filter((a) =>
+            (a.name ?? "").toLowerCase().includes(q.toLowerCase())
+          ).slice(0, 5);
+          setAgentResults(filtered);
+        })
+        .catch(() => setAgentResults([]))
+        .finally(() => setAgentsLoading(false));
+    }, 200);
+  }, []);
+
   // Reset selection when query changes
   useEffect(() => {
     setSelectedIndex(0);
-  }, [query]);
+    searchAgents(query);
+  }, [query, searchAgents]);
 
   // Focus input on mount
   useEffect(() => {
@@ -224,9 +261,10 @@ export function CommandPalette({ role, onClose }: Props) {
         onClose();
         return;
       }
+      const totalItems = entries.length + agentResults.length;
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex((i) => Math.min(i + 1, entries.length - 1));
+        setSelectedIndex((i) => Math.min(i + 1, totalItems - 1));
       }
       if (e.key === "ArrowUp") {
         e.preventDefault();
@@ -234,13 +272,18 @@ export function CommandPalette({ role, onClose }: Props) {
       }
       if (e.key === "Enter") {
         e.preventDefault();
-        const entry = entries[selectedIndex];
-        if (entry) navigate(entry.href);
+        if (selectedIndex < entries.length) {
+          const entry = entries[selectedIndex];
+          if (entry) navigate(entry.href);
+        } else {
+          const agent = agentResults[selectedIndex - entries.length];
+          if (agent) navigate(`/registry/${agent.agentId}`);
+        }
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [entries, selectedIndex, onClose]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [entries, agentResults, selectedIndex, onClose]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Scroll selected item into view
   useEffect(() => {
@@ -283,61 +326,117 @@ export function CommandPalette({ role, onClose }: Props) {
 
         {/* Results */}
         <div ref={listRef} className="max-h-80 overflow-y-auto py-2">
-          {entries.length === 0 ? (
+          {entries.length === 0 && agentResults.length === 0 && !agentsLoading ? (
             <p className="px-4 py-6 text-center text-sm text-gray-400">
               No results for &ldquo;{query}&rdquo;
             </p>
           ) : (
-            Array.from(grouped.entries()).map(([section, items]) => (
-              <div key={section} className="mb-1">
-                <p className="mb-1 px-4 pt-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-                  {section}
-                </p>
-                {items.map((entry) => {
-                  const Icon = entry.icon;
-                  const isSelected = flatIndex === selectedIndex;
-                  const currentFlatIndex = flatIndex;
-                  flatIndex++;
+            <>
+              {Array.from(grouped.entries()).map(([section, items]) => (
+                <div key={section} className="mb-1">
+                  <p className="mb-1 px-4 pt-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                    {section}
+                  </p>
+                  {items.map((entry) => {
+                    const Icon = entry.icon;
+                    const isSelected = flatIndex === selectedIndex;
+                    const currentFlatIndex = flatIndex;
+                    flatIndex++;
 
-                  return (
-                    <button
-                      key={entry.href}
-                      data-selected={isSelected}
-                      onClick={() => navigate(entry.href)}
-                      onMouseEnter={() => setSelectedIndex(currentFlatIndex)}
-                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                        isSelected ? "bg-violet-50" : "hover:bg-gray-50"
-                      }`}
-                    >
-                      <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
-                          isSelected
-                            ? "border-violet-200 bg-violet-100 text-violet-600"
-                            : "border-gray-200 bg-gray-50 text-gray-500"
+                    return (
+                      <button
+                        key={entry.href}
+                        data-selected={isSelected}
+                        onClick={() => navigate(entry.href)}
+                        onMouseEnter={() => setSelectedIndex(currentFlatIndex)}
+                        className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                          isSelected ? "bg-violet-50" : "hover:bg-gray-50"
                         }`}
                       >
-                        <Icon size={14} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className={`text-sm font-medium ${
-                            isSelected ? "text-violet-700" : "text-gray-800"
+                        <div
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
+                            isSelected
+                              ? "border-violet-200 bg-violet-100 text-violet-600"
+                              : "border-gray-200 bg-gray-50 text-gray-500"
                           }`}
                         >
-                          {entry.label}
-                        </p>
-                        <p className="truncate text-xs text-gray-400">
-                          {entry.description}
-                        </p>
-                      </div>
-                      {isSelected && (
-                        <ArrowRight size={13} className="shrink-0 text-violet-400" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            ))
+                          <Icon size={14} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className={`text-sm font-medium ${
+                              isSelected ? "text-violet-700" : "text-gray-800"
+                            }`}
+                          >
+                            {entry.label}
+                          </p>
+                          <p className="truncate text-xs text-gray-400">
+                            {entry.description}
+                          </p>
+                        </div>
+                        {isSelected && (
+                          <ArrowRight size={13} className="shrink-0 text-violet-400" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+
+              {/* Agent search results */}
+              {(agentsLoading || agentResults.length > 0) && (
+                <div className="mb-1">
+                  <p className="mb-1 px-4 pt-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                    Agents
+                  </p>
+                  {agentsLoading && agentResults.length === 0 ? (
+                    <p className="px-4 py-2 text-xs text-gray-400">Searching…</p>
+                  ) : (
+                    agentResults.map((agent) => {
+                      const isSelected = flatIndex === selectedIndex;
+                      const currentFlatIndex = flatIndex;
+                      flatIndex++;
+
+                      return (
+                        <button
+                          key={agent.agentId}
+                          data-selected={isSelected}
+                          onClick={() => navigate(`/registry/${agent.agentId}`)}
+                          onMouseEnter={() => setSelectedIndex(currentFlatIndex)}
+                          className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                            isSelected ? "bg-violet-50" : "hover:bg-gray-50"
+                          }`}
+                        >
+                          <div
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
+                              isSelected
+                                ? "border-violet-200 bg-violet-100 text-violet-600"
+                                : "border-gray-200 bg-gray-50 text-gray-500"
+                            }`}
+                          >
+                            <Bot size={14} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className={`text-sm font-medium ${
+                                isSelected ? "text-violet-700" : "text-gray-800"
+                              }`}
+                            >
+                              {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
+                            </p>
+                            <p className="text-xs text-gray-400">Agent Registry</p>
+                          </div>
+                          <StatusBadge status={agent.status} />
+                          {isSelected && (
+                            <ArrowRight size={13} className="shrink-0 text-violet-400" />
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
 

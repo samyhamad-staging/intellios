@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { agentBlueprints, auditLog, intakeSessions, intakeContributions } from "@/lib/db/schema";
 import { eq, and, asc, inArray } from "drizzle-orm";
 import { ABP } from "@/lib/types/abp";
+import { readABP } from "@/lib/abp/read";
 import { ValidationReport } from "@/lib/governance/types";
 import { IntakeContext, StakeholderContribution } from "@/lib/types/intake";
 import { getMissingContributionDomains } from "@/lib/intake/coverage";
@@ -68,7 +69,7 @@ export async function assembleMRMReport(
     .where(eq(intakeContributions.sessionId, blueprint.sessionId))
     .orderBy(asc(intakeContributions.createdAt));
 
-  const abp = blueprint.abp as ABP;
+  const abp = readABP(blueprint.abp);
   const validationReport = blueprint.validationReport as ValidationReport | null;
 
   // ── Risk Classification ───────────────────────────────────────────────────
@@ -99,18 +100,18 @@ export async function assembleMRMReport(
   const deployMeta = deployEvent?.metadata as Record<string, unknown> | null;
 
   // ── SOD Evidence ──────────────────────────────────────────────────────────
-  // designer: actor who submitted for review (first in_review transition)
+  // architect: actor who submitted for review (first in_review transition)
   const submitEvent = blueprintAuditEntries.find(
     (e) =>
       e.action === "blueprint.status_changed" &&
       (e.toState as Record<string, unknown> | null)?.status === "in_review"
   );
-  const designer = submitEvent?.actorEmail ?? blueprint.createdBy ?? null;
+  const architect = submitEvent?.actorEmail ?? blueprint.createdBy ?? null;
   const reviewer = blueprint.reviewedBy ?? null;
   const deployer = deployEvent?.actorEmail ?? null;
 
   const sodSatisfied = (() => {
-    const actors = [designer, reviewer, deployer].filter((a): a is string => a !== null);
+    const actors = [architect, reviewer, deployer].filter((a): a is string => a !== null);
     return new Set(actors).size === actors.length; // all distinct — no dual roles
   })();
 
@@ -265,7 +266,7 @@ export async function assembleMRMReport(
     },
 
     sodEvidence: {
-      designer,
+      architect,
       reviewer,
       deployer,
       sodSatisfied,
