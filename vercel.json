@@ -3,6 +3,14 @@
     {
       "path": "/api/cron/review-reminders",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/alert-check",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/telemetry-sync",
+      "schedule": "0 * * * *"
     }
   ]
 }
