@@ -2,6 +2,46 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 066 — 2026-03-20: H2 Complete — Portfolio Intelligence + Governor Completeness
+
+This session completed H2 entirely, bringing Govern at Scale to 17/17 (100%) and the Core Product to 55/55 (100%).
+
+H2-5 delivered Portfolio Intelligence across three deliverables. The `portfolioSnapshots` table provides a weekly time-series of fleet metrics per enterprise, written by a Sunday cron. The design decision to use DELETE + INSERT rather than Drizzle's `onConflictDoUpdate` for the upsert was forced by PostgreSQL's behavior with nullable unique index columns — null != null means no conflict fires, leading to unbounded row accumulation. The non-unique index + destructive replace pattern is the correct workaround for nullable partition keys.
+
+The Executive Dashboard (`/governor/executive`) is the first true C-suite artifact in the product — a single-page view of fleet health, compliance posture, monthly cost, at-risk agents, quality trends, and cost attribution by business unit. The PDF export via `window.print()` was a deliberate scope choice: browser print is zero-dependency, produces standards-compliant PDF, and requires no server-side rendering. The alternative (server-side PDF generation via puppeteer or a PDF library) would add significant maintenance surface with minimal user benefit for this use case.
+
+H2-6 closed documentation debts and added three completeness items. G-17 (Governor entry point) was already implemented by H1-2 but marked "Not started" — a stale status that misrepresented the platform's maturity. Similarly, P-11 through P-14 had stale status labels (Partial/Not started) despite being fully implemented by H1 and H2. Fixing these brings the documentation in sync with code reality, which matters because the roadmap is Claude's primary source of truth for current state at the start of each session.
+
+The Compliance Report Export API introduces the first structured audit artifact — a machine-readable JSON report covering fleet posture, policy violations, cost, and risk distribution for a given month. This is the foundation for regulatory evidence packages: compliance officers can now download a timestamped JSON record of their enterprise's governance posture for any month and attach it to audit submissions. The report API deliberately excludes any formatting — the raw JSON is the artifact, and presentation is the responsibility of downstream tooling.
+
+The Platform Admin Fleet Overview is a super-admin-only view showing cross-enterprise fleet stats. The 403 gate is explicit and strict: admin users with an `enterpriseId` see a "super-admins only" message. This is the right design because cross-tenant data visibility should never be granted to tenant-scoped admins, even ones with full admin privileges within their tenant.
+
+**At the close of this session, the Core Product (P+A+G+D) is 100% complete and H2 is 100% complete. The platform now covers the full governed lifecycle: design → intake → generation → governance → registry → review → deployment → runtime enforcement → observability → cost tracking → executive reporting.** The next frontier is H3 (Execution Platform) — gated on 3+ enterprise design partners with validated orchestration needs.
+
+## Session 066 — 2026-03-20: H2-4 Artifact Family v1 (Workflow Schema + Multi-Artifact Registry)
+
+This session's extended continuation completed H2-4.1 and H2-4.2, establishing workflows as first-class registry artifacts alongside agent blueprints.
+
+H2-4.1 introduced the Workflow Definition Schema — a Zod-validated data model that describes multi-agent pipelines. The three core concepts are `agents` (a list of participating agents with roles and required flags), `handoffRules` (directed edges between agents with conditions and evaluation priorities), and `sharedContext` (a typed envelope of fields passed between agents). The schema is deliberately minimal: it describes orchestration structure but not execution semantics. Execution semantics belong to H3 (the Foundry runtime). The decision to separate schema from runtime was key — it lets workflow definitions be authored, reviewed, and governed before any execution infrastructure exists.
+
+The `workflows` table mirrors the `agentBlueprints` table in structure (workflowId as logical ID, id as physical PK, status lifecycle, enterprise scoping) but uses the same status values as blueprints minus `deployed` — workflows are published, not deployed to a runtime. This deliberate omission is documented in `workflow.ts` itself.
+
+Agent reference validation in the CRUD API is a runtime guard: every `agentId` in `definition.agents` must exist in `agentBlueprints` within the caller's enterprise scope before the workflow can be created or updated. This prevents dangling references and ensures workflows only reference real agents — essential for governance downstream.
+
+H2-4.2 updated the registry UI to show both artifact types under a single top-level "Registry" page with Agents/Workflows tabs. The tab design is intentional: both artifact types share search and status filter mechanics, but each renders in its own list with appropriate icons and detail links. The workflow detail page (`/registry/workflow/[id]`) displays the full definition — agents with role labels and "Required" badges, handoff rules sorted by priority with condition in monospace, and shared context fields with type annotations. The Deprecate button provides the primary lifecycle control (DELETE → `status = "deprecated"`), keeping the UI lean for the MVP.
+
+**H2 now at 59% (10/17).** The artifact family foundation is in place. H2-4.3 (Workflow Governance) is next — applying enterprise policies to workflow artifacts using the same governance evaluation engine already used for blueprints.
+
+## Session 066 — 2026-03-20: H2-3 Enterprise SSO + JIT Provisioning
+
+H2-3 added enterprise SSO to the platform via NextAuth v5's OIDC provider. The design acknowledges a fundamental constraint: NextAuth doesn't support per-request provider configuration. The solution is a two-layer approach: the OIDC provider is configured at platform level via env vars (`SSO_ISSUER`, `SSO_CLIENT_ID`, `SSO_CLIENT_SECRET`), while per-enterprise customisation (email domain, group-to-role mapping, attribute claim overrides) lives in the `enterprise_settings` JSON column and is consumed in the `signIn` callback.
+
+JIT provisioning runs entirely in the `signIn` callback — the only hook NextAuth provides that can mutate the user before the session is created. The callback finds the enterprise by email domain (linear scan of `enterprise_settings` rows, acceptable given the expected scale of 1–100 enterprises), resolves the Intellios role from the IdP groups array, and either creates a new user or refreshes their display name. The provisioned user gets a random bcrypt hash as their password — a hash they can never match by guessing, preventing credential login for SSO-only users.
+
+The SSO check endpoint (`/api/auth/sso-check?domain=`) is deliberately public: the login page calls it on email input to decide whether to show the "Continue with SSO →" button, and this needs to work before the user is authenticated. The 400ms debounce on the email field prevents unnecessary API calls.
+
+A significant side-fix: the `governance.circuitBreaker` setting was being silently stripped on every admin settings PUT. The Zod validation schema for the settings endpoint was missing the `circuitBreaker` sub-object, so any PUT would validate and write a governance block without it. This affected circuit breaker configuration persistence. The fix adds the sub-object to the schema and changes the merge strategy from replace to deep-merge for the governance block.
+
 ## Session 066 — 2026-03-20: H1 Complete + H2 Sprint 1 (Runtime Governance Engine)
 
 This session did two things: closed H1 (verification + documentation), then executed all four deliverables of H2 Sprint 1 in a single context.

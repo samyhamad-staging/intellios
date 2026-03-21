@@ -11,6 +11,7 @@ import {
   Monitor,
   ScrollText,
   Search,
+  BarChart2,
 } from "lucide-react";
 import NotificationBell from "@/components/nav/notification-bell";
 import { HelpPanel } from "@/components/help/help-panel";
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { label: "Compliance", href: "/governor/compliance", icon: CheckSquare },
   { label: "Fleet", href: "/governor/fleet", icon: Monitor },
   { label: "Audit", href: "/governor/audit", icon: ScrollText },
+  { label: "Executive", href: "/governor/executive", icon: BarChart2 },
 ];
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {

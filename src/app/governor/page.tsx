@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { TrendingUp } from "lucide-react";
 
 interface QueueEntry {
   id: string;
@@ -24,6 +25,15 @@ interface CompliancePosture {
   critical: number;
   unknown: number;
   complianceRate: number;
+}
+
+interface PortfolioSnapshot {
+  weekStart: string;
+  totalAgents: number;
+  deployedAgents: number;
+  complianceRate: number | null;
+  avgQualityScore: number | null;
+  totalViolations: number;
 }
 
 interface AuditEntry {
@@ -65,6 +75,7 @@ export default function GovernorHomePage() {
   const [posture, setPosture] = useState<CompliancePosture | null>(null);
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [trends, setTrends] = useState<PortfolioSnapshot[]>([]);
 
   useEffect(() => {
     const since24h = new Date(Date.now() - 24 * 3_600_000).toISOString();
@@ -74,11 +85,13 @@ export default function GovernorHomePage() {
       fetch("/api/governance/analytics").then((r) => r.json()).catch(() => null),
       fetch("/api/compliance/posture").then((r) => r.json()).catch(() => null),
       fetch(`/api/audit?since=${since24h}&limit=10`).then((r) => r.json()).catch(() => ({ entries: [] })),
-    ]).then(([reviewData, analyticsData, postureData, auditData]) => {
+      fetch("/api/portfolio/trends?weeks=12").then((r) => r.json()).catch(() => ({ snapshots: [] })),
+    ]).then(([reviewData, analyticsData, postureData, auditData, trendsData]) => {
       setQueue((reviewData.blueprints ?? []).slice(0, 5));
       setAnalytics(analyticsData ?? null);
       setPosture(postureData ?? null);
       setAuditEntries(auditData.entries ?? []);
+      setTrends(trendsData.snapshots ?? []);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -209,6 +222,80 @@ export default function GovernorHomePage() {
           </div>
 
         </div>
+
+      )}
+
+      {/* Portfolio Trends — H2-5.1 */}
+      {!loading && trends.length > 0 && (
+        <div className="mt-5 rounded-xl border border-gray-200 bg-white p-5">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+                <TrendingUp size={12} /> Portfolio Trends (12 weeks)
+              </p>
+              <Link href="/governor/executive" className="text-xs text-violet-600 hover:underline">Executive view →</Link>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {/* Compliance rate sparkline */}
+              <div>
+                <p className="text-[11px] text-gray-400 mb-1.5">Compliance Rate</p>
+                <div className="flex items-end gap-0.5 h-10">
+                  {trends.map((s, i) => {
+                    const val = s.complianceRate ?? 0;
+                    const height = Math.max(4, Math.round((val / 100) * 40));
+                    const color = val >= 80 ? "bg-green-400" : val >= 60 ? "bg-amber-400" : "bg-red-400";
+                    return (
+                      <div key={i} title={`${s.weekStart}: ${val.toFixed(0)}%`}
+                        style={{ height }} className={`flex-1 rounded-sm ${color} opacity-80`} />
+                    );
+                  })}
+                </div>
+                <p className="mt-1 text-xs font-semibold text-gray-700">
+                  {(trends[trends.length - 1]?.complianceRate ?? 0).toFixed(0)}%
+                  <span className="ml-1 font-normal text-gray-400">current</span>
+                </p>
+              </div>
+              {/* Violations sparkline */}
+              <div>
+                <p className="text-[11px] text-gray-400 mb-1.5">Weekly Violations</p>
+                <div className="flex items-end gap-0.5 h-10">
+                  {trends.map((s, i) => {
+                    const max = Math.max(...trends.map((t) => t.totalViolations), 1);
+                    const height = Math.max(4, Math.round((s.totalViolations / max) * 40));
+                    const color = s.totalViolations === 0 ? "bg-gray-200" : s.totalViolations > max * 0.6 ? "bg-red-400" : "bg-amber-400";
+                    return (
+                      <div key={i} title={`${s.weekStart}: ${s.totalViolations}`}
+                        style={{ height }} className={`flex-1 rounded-sm ${color} opacity-80`} />
+                    );
+                  })}
+                </div>
+                <p className="mt-1 text-xs font-semibold text-gray-700">
+                  {trends[trends.length - 1]?.totalViolations ?? 0}
+                  <span className="ml-1 font-normal text-gray-400">this week</span>
+                </p>
+              </div>
+              {/* Fleet size sparkline */}
+              <div>
+                <p className="text-[11px] text-gray-400 mb-1.5">Fleet Size</p>
+                <div className="flex items-end gap-0.5 h-10">
+                  {trends.map((s, i) => {
+                    const max = Math.max(...trends.map((t) => t.totalAgents), 1);
+                    const height = Math.max(4, Math.round((s.totalAgents / max) * 40));
+                    return (
+                      <div key={i} title={`${s.weekStart}: ${s.totalAgents} agents (${s.deployedAgents} deployed)`}
+                        style={{ height }} className="flex-1 rounded-sm bg-violet-400 opacity-70" />
+                    );
+                  })}
+                </div>
+                <p className="mt-1 text-xs font-semibold text-gray-700">
+                  {trends[trends.length - 1]?.totalAgents ?? 0}
+                  <span className="ml-1 font-normal text-gray-400">agents</span>
+                  <span className="ml-1 text-violet-600">
+                    ({trends[trends.length - 1]?.deployedAgents ?? 0} deployed)
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
       )}
     </div>
   );

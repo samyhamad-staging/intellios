@@ -42,6 +42,8 @@ const files = [
   "0026_alert_thresholds.sql",
   "0027_runtime_violations.sql",
   "0028_quality_trends.sql",
+  "0029_workflows.sql",
+  "0030_portfolio_snapshots.sql",
 ];
 
 const startFrom = process.argv[2];

@@ -18,7 +18,7 @@ import "@/lib/awareness/quality-evaluator";
 export type AuditAction = IntelliosEvent["type"];
 
 export interface AuditEntry {
-  entityType: "blueprint" | "intake_session" | "policy";
+  entityType: "blueprint" | "intake_session" | "policy" | "workflow";
   entityId: string;
   action: AuditAction;
   actorEmail: string;

@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
-import { agentBlueprints, auditLog, intakeSessions, intakeContributions } from "@/lib/db/schema";
-import { eq, and, asc, inArray } from "drizzle-orm";
+import { agentBlueprints, auditLog, intakeSessions, intakeContributions, workflows } from "@/lib/db/schema";
+import { eq, and, asc, inArray, or, isNull } from "drizzle-orm";
+import type { WorkflowDefinition } from "@/lib/types/workflow";
 import { ABP } from "@/lib/types/abp";
 import { readABP } from "@/lib/abp/read";
 import { ValidationReport } from "@/lib/governance/types";
@@ -163,6 +164,38 @@ export async function assembleMRMReport(
   const nextReviewDueAt = blueprint.nextReviewDue?.toISOString() ?? null;
   const lastPeriodicReviewAt = blueprint.lastPeriodicReviewAt?.toISOString() ?? null;
   const isOverdue = nextReviewDueAt != null && new Date(nextReviewDueAt) < new Date();
+
+  // ── Section 13: Workflow Context ─────────────────────────────────────────
+  // Find approved/deprecated workflows that reference this agent
+  const enterpriseFilter =
+    blueprint.enterpriseId
+      ? or(isNull(workflows.enterpriseId), eq(workflows.enterpriseId, blueprint.enterpriseId))
+      : isNull(workflows.enterpriseId);
+
+  const workflowRows = await db
+    .select()
+    .from(workflows)
+    .where(and(enterpriseFilter, inArray(workflows.status, ["approved", "deprecated"])));
+
+  const participatingWorkflows = workflowRows
+    .filter((wf) => {
+      const def = wf.definition as WorkflowDefinition;
+      return def.agents?.some((a) => a.agentId === blueprint.agentId);
+    })
+    .map((wf) => {
+      const def = wf.definition as WorkflowDefinition;
+      const participation = def.agents?.find((a) => a.agentId === blueprint.agentId);
+      return {
+        workflowId: wf.id,
+        name:       wf.name,
+        status:     wf.status,
+        version:    wf.version,
+        role:       participation?.role ?? "Unknown",
+        required:   participation?.required ?? false,
+      };
+    });
+
+  const workflowContext = participatingWorkflows.length > 0 ? participatingWorkflows : null;
 
   // ── Section 12: Regulatory Framework Assessment ──────────────────────────
   const regulatoryAssessment = assessAllFrameworks({
@@ -339,6 +372,8 @@ export async function assembleMRMReport(
       : null,
 
     regulatoryFrameworks,
+
+    workflowContext,
 
     periodicReviewSchedule: {
       enabled: periodicReviewSettings.enabled,

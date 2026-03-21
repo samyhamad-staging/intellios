@@ -18,7 +18,7 @@ export interface WebhookPayload {
     role: string;
   };
   entity: {
-    type: "blueprint" | "intake_session" | "policy";
+    type: "blueprint" | "intake_session" | "policy" | "workflow";
     id: string;
   };
   fromState: Record<string, unknown> | null;

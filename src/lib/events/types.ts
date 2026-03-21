@@ -217,6 +217,26 @@ export type IntelliosEvent =
         gap: number; // designScore - productionScore
         weekStart: string; // ISO date
       };
+    }
+  | {
+      type: "workflow.status_changed";
+      payload: {
+        workflowId: string;
+        name: string;
+        fromStatus: string;
+        toStatus: string;
+        changedBy: string;
+      };
+    }
+  | {
+      type: "workflow.reviewed";
+      payload: {
+        workflowId: string;
+        name: string;
+        decision: "approve" | "reject";
+        reviewer: string;
+        comment: string | null;
+      };
     };
 
 // ── Derived types ─────────────────────────────────────────────────────────────
@@ -269,7 +289,7 @@ export interface LifecycleEvent {
   type: EventType;
   actorEmail: string;
   actorRole: string;
-  entityType: "blueprint" | "intake_session" | "policy";
+  entityType: "blueprint" | "intake_session" | "policy" | "workflow";
   entityId: string;
   enterpriseId: string | null;
   fromState: Record<string, unknown> | null;

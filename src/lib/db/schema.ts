@@ -591,3 +591,58 @@ export const qualityTrends = pgTable(
     index("idx_quality_trends_enterprise").on(t.enterpriseId, t.weekStart),
   ]
 );
+
+// ─── Portfolio Snapshots (H2-5.1) ────────────────────────────────────────────
+// Weekly fleet-level metrics per enterprise — written by the portfolio-snapshot
+// cron and read by the trends API and executive dashboard.
+
+export const portfolioSnapshots = pgTable(
+  "portfolio_snapshots",
+  {
+    id:               uuid("id").primaryKey().defaultRandom(),
+    enterpriseId:     text("enterprise_id"),
+    weekStart:        date("week_start").notNull(),         // ISO date of Monday for this week
+    totalAgents:      integer("total_agents").notNull().default(0),
+    deployedAgents:   integer("deployed_agents").notNull().default(0),
+    complianceRate:   real("compliance_rate"),              // 0-100, null if no prod agents
+    avgQualityScore:  real("avg_quality_score"),            // 0-100, null if no quality scores
+    totalViolations:  integer("total_violations").notNull().default(0),
+    violationsByType: jsonb("violations_by_type"),          // { error: N, warning: N }
+    agentsByRiskTier: jsonb("agents_by_risk_tier"),         // { low: N, medium: N, high: N, critical: N }
+    createdAt:        timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_portfolio_snapshots_enterprise_week").on(t.enterpriseId, t.weekStart),
+    index("idx_portfolio_snapshots_week").on(t.weekStart),
+  ]
+);
+
+// ─── Workflows (H2-4.1) ───────────────────────────────────────────────────────
+// An orchestration artifact that composes multiple AI agents into a pipeline.
+// Multiple versions of the same logical workflow share the same workflowId.
+// The definition column is validated against WorkflowSchema at write time.
+
+export const workflows = pgTable(
+  "workflows",
+  {
+    id:           uuid("id").primaryKey().defaultRandom(),
+    /** Logical workflow identifier — shared across all versions of this workflow. */
+    workflowId:   uuid("workflow_id").notNull().defaultRandom(),
+    version:      text("version").notNull().default("1.0.0"),
+    name:         text("name").notNull(),
+    description:  text("description").notNull().default(""),
+    /** Serialised WorkflowDefinition — validated against WorkflowSchema. */
+    definition:   jsonb("definition").notNull().default({}),
+    /** draft | in_review | approved | rejected | deprecated */
+    status:       text("status").notNull().default("draft"),
+    enterpriseId: text("enterprise_id"),
+    createdBy:    text("created_by").notNull(),             // user email
+    createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt:    timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_workflows_workflow_id").on(t.workflowId, t.createdAt),
+    index("idx_workflows_enterprise").on(t.enterpriseId, t.status),
+    index("idx_workflows_status").on(t.status),
+  ]
+);

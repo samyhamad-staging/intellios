@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { CheckSquare, AlertTriangle } from "lucide-react";
+import { CheckSquare, AlertTriangle, Download } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,6 +96,33 @@ export default function CompliancePage() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Report download state
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownloadReport() {
+    setDownloading(true);
+    try {
+      const now = new Date();
+      const period = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+      const res = await fetch(`/api/compliance/report?period=${period}`);
+      if (!res.ok) throw new Error("Report failed");
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `compliance-report-${period}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // silently ignore download errors
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   // Complete Review modal state
   const [completeModal, setCompleteModal] = useState<OverdueReviewItem | null>(null);
@@ -202,12 +229,24 @@ export default function CompliancePage() {
           </div>
           <p className="text-sm text-gray-500 pl-7">Enterprise compliance posture, at-risk agents, and review queue</p>
         </div>
-        <Link
-          href="/governance"
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-        >
-          Governance Hub →
-        </Link>
+        <div className="flex items-center gap-2">
+          {(session?.user?.role === "admin" || session?.user?.role === "compliance_officer") && (
+            <button
+              onClick={handleDownloadReport}
+              disabled={downloading}
+              className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm text-violet-700 hover:bg-violet-100 transition-colors disabled:opacity-50"
+            >
+              <Download size={14} />
+              {downloading ? "Generating…" : "Download Report"}
+            </button>
+          )}
+          <Link
+            href="/governance"
+            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+          >
+            Governance Hub →
+          </Link>
+        </div>
       </div>
 
       <div className="space-y-8">

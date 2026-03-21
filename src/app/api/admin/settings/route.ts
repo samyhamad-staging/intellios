@@ -66,6 +66,11 @@ const SettingsBody = z.object({
     requireAllPhase3Acknowledgments: z.boolean(),
     allowSelfApproval: z.boolean(),
     requireTestsBeforeApproval: z.boolean().optional().default(false),
+    // H2-1.4: circuit breaker — optional so legacy PUT bodies still parse
+    circuitBreaker: z.object({
+      action: z.enum(["auto_suspend", "alert_only"]),
+      errorViolationThreshold: z.number().int().min(1).max(100),
+    }).optional(),
   }).optional(),
   notifications: z.object({
     adminEmail: z.string().email().nullable(),
@@ -85,6 +90,10 @@ const SettingsBody = z.object({
   }).optional(),
   deploymentTargets: z.object({
     agentcore: AgentCoreConfigSchema,
+  }).optional(),
+  costRates: z.object({
+    inputCostPer1kTokens:  z.number().min(0).max(1),
+    outputCostPer1kTokens: z.number().min(0).max(1),
   }).optional(),
 }).refine(
   (data) => {
@@ -133,7 +142,11 @@ export async function PUT(request: NextRequest) {
     // Deep merge: apply new values on top of existing
     const merged = { ...existingSettings };
     if (body.sla) merged.sla = body.sla;
-    if (body.governance) merged.governance = body.governance;
+    if (body.governance) {
+      // Deep-merge governance so circuitBreaker is preserved when not provided
+      const existing_gov = (existingSettings.governance ?? {}) as Record<string, unknown>;
+      merged.governance = { ...existing_gov, ...body.governance };
+    }
     if (body.notifications) merged.notifications = body.notifications;
     if (body.approvalChain !== undefined) {
       // Normalize: fill in step from index if missing (handles legacy seed data)
@@ -150,6 +163,10 @@ export async function PUT(request: NextRequest) {
     if (body.deploymentTargets !== undefined) {
       const existing_dt = (existingSettings.deploymentTargets ?? {}) as Record<string, unknown>;
       merged.deploymentTargets = { ...existing_dt, ...body.deploymentTargets };
+    }
+    if (body.costRates !== undefined) {
+      const existing_cr = (existingSettings.costRates ?? {}) as Record<string, unknown>;
+      merged.costRates = { ...existing_cr, ...body.costRates };
     }
 
     // Upsert

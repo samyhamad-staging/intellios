@@ -17,7 +17,7 @@ export interface PublishInput {
   /** The typed lifecycle event (discriminated union). */
   event: IntelliosEvent;
   actor: { email: string; role: string };
-  entity: { type: "blueprint" | "intake_session" | "policy"; id: string };
+  entity: { type: "blueprint" | "intake_session" | "policy" | "workflow"; id: string };
   enterpriseId?: string | null;
 }
 
