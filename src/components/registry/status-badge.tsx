@@ -33,7 +33,16 @@ const STATUS_LABELS: Record<Status, string> = {
 };
 
 export function StatusBadge({ status }: { status: string }) {
-  const s = status as Status;
+  const cfg = STATUS_CONFIG[status as Status];
+  if (!cfg) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+        <Circle size={10} />
+        {status}
+      </span>
+    );
+  }
+  const Icon = cfg.icon;
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[s] ?? "bg-gray-100 text-gray-600"}`}

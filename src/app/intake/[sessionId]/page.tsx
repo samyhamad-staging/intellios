@@ -244,7 +244,7 @@ export default function IntakeSessionPage({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Generation failed");
+        throw new Error(data.message ?? "Generation failed");
       }
       const { id, agentId } = await res.json();
       // Brief success flash before redirect — gives the user a clear "done" signal

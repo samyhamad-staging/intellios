@@ -123,7 +123,18 @@ export function ReviewPanel({
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error ?? "Review submission failed");
+        throw new Error(data.message ?? "Review submission failed");
+      }
+      if (data.nextApproverLabel) {
+        // Intermediate step — show advancement toast, then notify parent
+        setStepToast(`Approval submitted — advancing to ${data.nextApproverLabel}`);
+        setTimeout(() => {
+          setStepToast(null);
+          onReviewComplete(data.status);
+        }, 2000);
+      } else {
+        // Final step — close immediately
+        onReviewComplete(data.status);
       }
       if (data.nextApproverLabel) {
         // Intermediate step — show advancement toast, then notify parent

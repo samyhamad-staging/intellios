@@ -489,7 +489,7 @@ export default function DeploymentConsolePage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Deployment failed");
+        throw new Error(data.message ?? "Deployment failed");
       }
       const agentId = modal.agent.id;
       setAgents((prev) =>
@@ -557,7 +557,7 @@ export default function DeploymentConsolePage() {
               subColor: readyToDeploy.length > 0 ? "text-green-600" : "text-gray-400",
             },
           ].map(({ label, value, sub, color, subColor }) => (
-            <div key={label} className={`rounded-xl border p-5 ${color}`}>
+            <div key={label} className={`rounded-card border p-5 ${color}`}>
               <div className="text-3xl font-bold">{value}</div>
               <div className="mt-1 text-sm font-medium">{label}</div>
               <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
@@ -572,7 +572,7 @@ export default function DeploymentConsolePage() {
           </h2>
 
           {!loading && readyToDeploy.length === 0 && (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
+            <div className="rounded-card border border-dashed border-gray-300 bg-white p-10 text-center">
               <p className="text-sm text-gray-400">No agents are currently approved and awaiting deployment.</p>
               <p className="mt-1 text-xs text-gray-400">
                 Agents must pass review before they can be deployed.{" "}
@@ -655,13 +655,13 @@ export default function DeploymentConsolePage() {
           {loading && (
             <div className="space-y-2">
               {[1, 2].map((i) => (
-                <div key={i} className="h-16 animate-pulse rounded-xl bg-gray-100" />
+                <div key={i} className="h-16 animate-pulse rounded-card bg-gray-100" />
               ))}
             </div>
           )}
 
           {!loading && deployed.length === 0 && (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
+            <div className="rounded-card border border-dashed border-gray-300 bg-white p-10 text-center">
               <p className="text-sm text-gray-400">No agents are currently deployed.</p>
             </div>
           )}

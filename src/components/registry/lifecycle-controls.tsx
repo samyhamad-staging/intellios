@@ -13,23 +13,23 @@ interface Action {
 
 const ACTIONS: Record<Status, Action[]> = {
   draft: [
-    { label: "Submit for Review", next: "in_review", style: "bg-yellow-600 hover:bg-yellow-700 text-white" },
-    { label: "Deprecate", next: "deprecated", style: "bg-gray-400 hover:bg-gray-500 text-white" },
+    { label: "Submit for Review", next: "in_review", style: "btn-action-review" },
+    { label: "Deprecate", next: "deprecated", style: "btn-action-deprecate" },
   ],
   in_review: [
-    { label: "Approve", next: "approved", style: "bg-green-600 hover:bg-green-700 text-white" },
-    { label: "Reject", next: "rejected", style: "bg-red-600 hover:bg-red-700 text-white" },
-    { label: "Deprecate", next: "deprecated", style: "bg-gray-400 hover:bg-gray-500 text-white" },
+    { label: "Approve", next: "approved", style: "btn-action-approve" },
+    { label: "Reject", next: "rejected", style: "btn-action-reject" },
+    { label: "Deprecate", next: "deprecated", style: "btn-action-deprecate" },
   ],
   approved: [
     { label: "Deploy to Production", next: "deployed", style: "bg-violet-600 hover:bg-violet-700 text-white" },
     { label: "Deprecate", next: "deprecated", style: "bg-gray-400 hover:bg-gray-500 text-white" },
   ],
   deployed: [
-    { label: "Deprecate", next: "deprecated", style: "bg-gray-400 hover:bg-gray-500 text-white" },
+    { label: "Deprecate", next: "deprecated", style: "btn-action-deprecate" },
   ],
   rejected: [
-    { label: "Deprecate", next: "deprecated", style: "bg-gray-400 hover:bg-gray-500 text-white" },
+    { label: "Deprecate", next: "deprecated", style: "btn-action-deprecate" },
   ],
   deprecated: [],
   // H2-1.4: Suspended agents can be resumed (sent back to in_review) or deprecated.
@@ -92,7 +92,7 @@ export function LifecycleControls({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Transition failed");
+        throw new Error(data.message ?? "Transition failed");
       }
       onStatusChange(next);
     } catch (err) {

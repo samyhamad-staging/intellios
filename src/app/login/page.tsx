@@ -80,7 +80,7 @@ function LoginForm() {
         )}
 
         {/* Card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="rounded-card border border-gray-200 bg-white p-8 shadow-sm">
           <h2 className="mb-6 text-lg font-semibold text-gray-900">
             Sign in to your account
           </h2>
@@ -100,7 +100,7 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus-accent"
                 placeholder="you@intellios.dev"
               />
             </div>
@@ -146,7 +146,7 @@ function LoginForm() {
             )}
 
             {error && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="rounded-lg badge-gov-error px-3 py-2 text-sm">
                 {error}
               </p>
             )}

@@ -102,7 +102,7 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Failed to save context");
+        throw new Error(data.message ?? "Failed to save context");
       }
       onComplete(context);
     } catch (err) {
@@ -127,7 +127,7 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Agent purpose */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
             <label className="block text-sm font-medium text-gray-900 mb-1">
               What should this agent do? <span className="text-red-500">*</span>
             </label>
@@ -147,7 +147,7 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
           </div>
 
           {/* Deployment type */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
             <label className="block text-sm font-medium text-gray-900 mb-1">
               Who will interact with this agent? <span className="text-red-500">*</span>
             </label>
@@ -174,7 +174,7 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
           </div>
 
           {/* Data sensitivity */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
             <label className="block text-sm font-medium text-gray-900 mb-1">
               What is the highest data sensitivity level this agent will handle? <span className="text-red-500">*</span>
             </label>
@@ -210,7 +210,7 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
           </div>
 
           {/* Regulatory scope */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
             <label className="block text-sm font-medium text-gray-900 mb-1">
               Which regulatory frameworks apply? <span className="text-red-500">*</span>
             </label>
@@ -239,7 +239,7 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
           </div>
 
           {/* Integration types */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
             <label className="block text-sm font-medium text-gray-900 mb-1">
               What systems will this agent integrate with? <span className="text-red-500">*</span>
             </label>
@@ -279,7 +279,7 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
           </div>
 
           {/* Stakeholders consulted */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
             <label className="block text-sm font-medium text-gray-900 mb-1">
               Which stakeholders have been consulted? <span className="text-red-500">*</span>
             </label>

@@ -48,7 +48,7 @@ export function ChatInput({ onSend, disabled, placeholder = "Describe your agent
         placeholder={placeholder}
         disabled={disabled}
         rows={1}
-        className="flex-1 resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-gray-400 disabled:opacity-50"
+        className="flex-1 resize-none rounded-card border border-gray-300 px-4 py-3 text-sm outline-none focus:border-gray-400 disabled:opacity-50"
       />
       <button
         onClick={handleSend}

@@ -345,7 +345,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Submit failed");
+        throw new Error(data.message ?? "Submit failed");
       }
       setSubmitted(true);
     } catch (err) {
