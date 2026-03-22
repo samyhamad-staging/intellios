@@ -19,6 +19,9 @@ import type { ApprovalChainStep, ApprovalStepRecord, EnterpriseSettings } from "
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 import type { TestCase, TestRun } from "@/lib/testing/types";
 import { SimulatePanel } from "@/components/registry/simulate-panel";
+import { QualityDashboard } from "@/components/blueprint/quality-dashboard";
+import { ProductionDashboard } from "@/components/registry/production-dashboard";
+import { ViolationsPanel } from "@/components/registry/violations-panel";
 
 interface CurrentUser {
   email: string;
@@ -84,8 +87,8 @@ interface BlueprintVersion {
   abp: ABP;
 }
 
-type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
-type Tab = "blueprint" | "summary" | "governance" | "review" | "versions" | "regulatory" | "tests" | "simulate";
+type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed" | "suspended";
+type Tab = "blueprint" | "summary" | "governance" | "quality" | "review" | "versions" | "regulatory" | "tests" | "simulate" | "production" | "violations";
 
 export default function AgentDetailPage({
   params,
@@ -110,7 +113,7 @@ export default function AgentDetailPage({
   const [enterpriseSettings, setEnterpriseSettings] = useState<EnterpriseSettings>(DEFAULT_ENTERPRISE_SETTINGS);
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const tab = searchParams.get("tab");
-    if (tab === "review" || tab === "governance" || tab === "versions" || tab === "summary" || tab === "regulatory" || tab === "tests" || tab === "simulate") return tab;
+    if (tab === "review" || tab === "governance" || tab === "quality" || tab === "versions" || tab === "summary" || tab === "regulatory" || tab === "tests" || tab === "simulate" || tab === "production" || tab === "violations") return tab;
     return "blueprint";
   });
   const [compareVersionId, setCompareVersionId] = useState<string | null>(null);
@@ -133,6 +136,29 @@ export default function AgentDetailPage({
   const [savingTestCase, setSavingTestCase] = useState(false);
   // Expanded test case result detail
   const [expandedResult, setExpandedResult] = useState<string | null>(null);
+  // Quality score
+  const [qualityScore, setQualityScore] = useState<{
+    id: string;
+    blueprintId: string;
+    overallScore: string | null;
+    intentAlignment: string | null;
+    toolAppropriateness: string | null;
+    instructionSpecificity: string | null;
+    governanceAdequacy: string | null;
+    ownershipCompleteness: string | null;
+    flags: string[];
+    evaluatedAt: string;
+  } | null>(null);
+  const [qualityLoading, setQualityLoading] = useState(true);
+
+  // H1-1.3: Production telemetry
+  const [telemetryData, setTelemetryData] = useState<{
+    id: string; agentId: string; timestamp: string; invocations: number; errors: number;
+    latencyP50Ms: number | null; latencyP99Ms: number | null; tokensIn: number; tokensOut: number;
+    policyViolations: number; source: string; createdAt: string;
+  }[] | null>(null);
+  const [telemetryLoading, setTelemetryLoading] = useState(false);
+
   // Phase 37: Periodic review completion
   const [reviewCompleteOpen, setReviewCompleteOpen] = useState(false);
   const [reviewCompleteNotes, setReviewCompleteNotes] = useState("");
@@ -196,6 +222,28 @@ export default function AgentDetailPage({
       .catch(() => {}); // non-critical
   }, [load]);
 
+  // Fetch quality score once on mount (non-critical, fails silently)
+  useEffect(() => {
+    setQualityLoading(true);
+    fetch(`/api/registry/${agentId}/quality`)
+      .then((r) => r.json())
+      .then((data) => setQualityScore(data.score ?? null))
+      .catch(() => {})
+      .finally(() => setQualityLoading(false));
+  }, [agentId]);
+
+  // H1-1.3: Fetch production telemetry (deployed + suspended agents)
+  useEffect(() => {
+    if (!latest || (latest.status !== "deployed" && latest.status !== "suspended")) return;
+    setTelemetryLoading(true);
+    const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
+    fetch(`/api/telemetry/${agentId}?since=${since}`)
+      .then((r) => r.json())
+      .then((data) => setTelemetryData(data.rows ?? []))
+      .catch(() => setTelemetryData([]))
+      .finally(() => setTelemetryLoading(false));
+  }, [agentId, latest?.status]);
+
   // Poll every 30s when the tab is visible to reflect status changes by other users.
   useEffect(() => {
     const interval = setInterval(() => {
@@ -258,7 +306,7 @@ export default function AgentDetailPage({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message ?? "Clone failed");
+        throw new Error(data.error ?? "Clone failed");
       }
       const cloned = await res.json();
       setCloneModalOpen(false);
@@ -441,9 +489,12 @@ export default function AgentDetailPage({
     { id: "blueprint", label: "Blueprint" },
     { id: "summary", label: "Summary" },
     { id: "governance", label: "Governance" },
+    { id: "quality", label: "Quality" },
     { id: "regulatory", label: "Regulatory" },
     { id: "tests", label: `Tests${testCases.length > 0 ? ` (${testCases.length})` : ""}` },
     { id: "simulate", label: "Simulate" },
+    ...(latest?.status === "deployed" || latest?.status === "suspended" ? [{ id: "production" as Tab, label: "Production" }] : []),
+    ...(latest?.status === "deployed" || latest?.status === "suspended" ? [{ id: "violations" as Tab, label: "Violations" }] : []),
     ...(isInReview ? [{ id: "review" as Tab, label: "Review" }] : []),
     { id: "versions", label: `Versions (${versions.length})` },
   ];
@@ -513,6 +564,7 @@ export default function AgentDetailPage({
             blueprintId={latest.id}
             agentId={latest.agentId}
             currentStatus={latest.status}
+            currentUserRole={currentUser?.role}
             onStatusChange={handleStatusChange}
           />
           {/* MRM Report — visible to all authenticated users */}
@@ -572,7 +624,7 @@ export default function AgentDetailPage({
               ← Intake Session
             </Link>
           )}
-          {(currentUser?.role === "designer" || currentUser?.role === "admin") && (
+          {(currentUser?.role === "architect" || currentUser?.role === "admin") && (
             <button
               onClick={() => { setCloneName(""); setCloneModalOpen(true); }}
               className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
@@ -629,7 +681,7 @@ export default function AgentDetailPage({
       {/* Clone Modal */}
       {cloneModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-card border border-gray-200 bg-white p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
             <h2 className="text-base font-semibold text-gray-900">Clone Agent</h2>
             <p className="mt-1 text-sm text-gray-500">
               Creates a new draft agent pre-populated with this blueprint&apos;s content. The clone
@@ -921,6 +973,17 @@ export default function AgentDetailPage({
           </div>
         )}
 
+        {activeTab === "quality" && (
+          <div className="p-6 max-w-2xl">
+            <QualityDashboard
+              score={qualityScore}
+              loading={qualityLoading}
+              agentId={agentId}
+              agentStatus={latest.status}
+            />
+          </div>
+        )}
+
         {activeTab === "regulatory" && (
           <div className="p-6 max-w-3xl">
             <RegulatoryPanel blueprintId={latest.id} />
@@ -1023,12 +1086,12 @@ export default function AgentDetailPage({
           {activeTab === "tests" && (() => {
           // Lazy-load test data on first activation
           if (!testCasesLoaded && latest) void loadTestData(latest.id);
-          const canManage = currentUser?.role === "designer" || currentUser?.role === "admin";
+          const canManage = currentUser?.role === "architect" || currentUser?.role === "admin";
           const latestRun = testRuns[0] ?? null;
           return (
             <div className="p-6 max-w-3xl space-y-6">
               {/* ── Test Suite ── */}
-              <div className="rounded-card border border-gray-200 bg-white overflow-hidden">
+              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900">Test Suite</p>
@@ -1161,7 +1224,7 @@ export default function AgentDetailPage({
               </div>
 
               {/* ── Test Runs ── */}
-              <div className="rounded-card border border-gray-200 bg-white overflow-hidden">
+              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900">Test Runs</p>
@@ -1294,6 +1357,22 @@ export default function AgentDetailPage({
           />
         )}
 
+        {activeTab === "production" && (
+          <ProductionDashboard
+            agentId={agentId}
+            data={telemetryData}
+            loading={telemetryLoading}
+            canManageAlerts={
+              currentUser?.role === "architect" ||
+              currentUser?.role === "admin"
+            }
+          />
+        )}
+
+        {activeTab === "violations" && (
+          <ViolationsPanel agentId={agentId} />
+        )}
+
       {activeTab === "versions" && (
           <div className="p-6 space-y-6">
             <table className="w-full text-sm">
@@ -1364,7 +1443,7 @@ export default function AgentDetailPage({
 
             {/* Version Lineage — governance diff per version */}
             {versions.some((v) => v.governanceDiff != null) && (
-              <div className="rounded-card border border-gray-200 bg-white overflow-hidden">
+              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <div className="border-b border-gray-100 bg-gray-50 px-5 py-3">
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                     Version Lineage

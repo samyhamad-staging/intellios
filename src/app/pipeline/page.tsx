@@ -28,12 +28,12 @@ const COLUMNS: {
   badgeCls: string;
   group: "active" | "terminal";
 }[] = [
-  { status: "draft",      label: "Draft",      colBg: "col-draft",      dotColor: "dot-draft",      badgeCls: "badge-draft",      group: "active" },
-  { status: "in_review",  label: "In Review",  colBg: "col-review",     dotColor: "dot-review",     badgeCls: "badge-review",     group: "active" },
-  { status: "approved",   label: "Approved",   colBg: "col-approved",   dotColor: "dot-approved",   badgeCls: "badge-approved",   group: "active" },
-  { status: "deployed",   label: "Deployed",   colBg: "col-deployed",   dotColor: "dot-deployed",   badgeCls: "badge-deployed",   group: "terminal" },
-  { status: "rejected",   label: "Rejected",   colBg: "col-rejected",   dotColor: "dot-rejected",   badgeCls: "badge-rejected",   group: "terminal" },
-  { status: "deprecated", label: "Deprecated", colBg: "col-deprecated", dotColor: "dot-deprecated", badgeCls: "badge-deprecated", group: "terminal" },
+  { status: "draft",      label: "Draft",      colBg: "bg-gray-50 border-gray-200",     dotColor: "bg-gray-400",   badgeCls: "bg-gray-200 text-gray-600",     group: "active" },
+  { status: "in_review",  label: "In Review",  colBg: "bg-blue-50 border-blue-200",     dotColor: "bg-blue-500",   badgeCls: "bg-blue-100 text-blue-700",     group: "active" },
+  { status: "approved",   label: "Approved",   colBg: "bg-green-50 border-green-200",   dotColor: "bg-green-500",  badgeCls: "bg-green-100 text-green-700",   group: "active" },
+  { status: "deployed",   label: "Deployed",   colBg: "bg-indigo-50 border-indigo-200", dotColor: "bg-indigo-500", badgeCls: "bg-indigo-100 text-indigo-700", group: "terminal" },
+  { status: "rejected",   label: "Rejected",   colBg: "bg-red-50 border-red-200",       dotColor: "bg-red-500",    badgeCls: "bg-red-100 text-red-700",       group: "terminal" },
+  { status: "deprecated", label: "Deprecated", colBg: "bg-amber-50 border-amber-200",   dotColor: "bg-amber-400",  badgeCls: "bg-amber-100 text-amber-700",   group: "terminal" },
 ];
 
 function timeAgo(dateStr: string): string {
@@ -137,28 +137,10 @@ export default function PipelinePage() {
         <InsightsStrip agents={agents} />
       )}
 
-      {/* Stage totals bar */}
-      {!loading && !error && (
-        <div className="shrink-0 flex items-center gap-1 border-b border-gray-100 bg-white px-6 py-2">
-          {COLUMNS.map(({ status, label, badgeCls }, i) => {
-            const count = byStatus(status).length;
-            return (
-              <span key={status} className="flex items-center gap-1.5 text-xs">
-                {i > 0 && <span className="text-gray-200 select-none">·</span>}
-                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${badgeCls}`}>
-                  {count}
-                </span>
-                <span className="text-gray-500">{label}</span>
-              </span>
-            );
-          })}
-        </div>
-      )}
-
       {/* Board */}
       <div className="flex flex-1 gap-0 overflow-x-auto">
         {error && (
-          <div className="m-6 w-full rounded-lg border badge-gov-error p-4 text-sm">
+          <div className="m-6 w-full rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
           </div>
         )}
@@ -229,7 +211,7 @@ function Column({ status, label, colBg, dotColor, badgeCls, cards, loading }: Co
       </div>
 
       {/* Card list */}
-      <div className={`flex flex-col gap-2 rounded-card border p-2 ${colBg} min-h-32 flex-1`}>
+      <div className={`flex flex-col gap-2 rounded-xl border p-2 ${colBg} min-h-32 flex-1`}>
         {loading && (
           <div className="flex h-24 items-center justify-center">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-violet-600" />
@@ -316,15 +298,15 @@ function InsightsStrip({ agents }: { agents: Agent[] }) {
   if (insights.length === 0) return null;
 
   const STYLES: Record<Insight["type"], string> = {
-    alert: "text-alert-critical",
-    warn:  "text-alert-warn",
-    info:  "text-alert-info",
+    alert: "text-red-600",
+    warn: "text-amber-600",
+    info: "text-gray-500",
   };
 
   const DOTS: Record<Insight["type"], string> = {
-    alert: "dot-alert-critical",
-    warn:  "dot-alert-warn",
-    info:  "dot-alert-info",
+    alert: "bg-red-400",
+    warn: "bg-amber-400",
+    info: "bg-gray-300",
   };
 
   return (
@@ -355,18 +337,18 @@ function AgentCard({ agent }: { agent: Agent }) {
     "border-gray-200 hover:border-violet-300";
 
   const shadowCls =
-    sla === "alert" ? "shadow-sm hover:shadow-md hover:shadow-red-100" :
-    sla === "warn"  ? "shadow-sm hover:shadow-md hover:shadow-amber-100" :
+    sla === "alert" ? "shadow-sm hover:shadow-red-100" :
+    sla === "warn"  ? "shadow-sm hover:shadow-amber-100" :
     "shadow-sm hover:shadow-md hover:shadow-violet-50";
 
   return (
     <Link
       href={`/registry/${agent.agentId}`}
-      className={`block rounded-lg border bg-white p-3 transition-all hover:-translate-y-px hover:border-gray-300 ${borderCls} ${shadowCls}`}
+      className={`block rounded-lg border bg-white p-3 transition-all hover:-translate-y-px ${borderCls} ${shadowCls}`}
     >
       {/* Name + governance shield */}
       <div className="flex items-start gap-2">
-        <span className="flex-1 text-sm font-semibold leading-snug text-gray-900 line-clamp-2" title={agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}>
+        <span className="flex-1 text-sm font-semibold leading-snug text-gray-900 line-clamp-2">
           {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
         </span>
         {agent.violationCount !== null && agent.violationCount > 0 ? (
@@ -397,13 +379,13 @@ function AgentCard({ agent }: { agent: Agent }) {
         <span className="font-mono text-[11px]">v{agent.version}</span>
         <div className="flex items-center gap-1.5">
           {sla === "alert" && (
-            <span className="flex items-center gap-0.5 rounded-md badge-gov-error border px-1.5 py-0.5 text-[10px] font-semibold">
+            <span className="flex items-center gap-0.5 rounded-md bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
               <AlertCircle size={9} />
               SLA breach
             </span>
           )}
           {sla === "warn" && (
-            <span className="flex items-center gap-0.5 rounded-md badge-gov-warn border px-1.5 py-0.5 text-[10px] font-semibold">
+            <span className="flex items-center gap-0.5 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600">
               <Clock size={9} />
               Nearing SLA
             </span>

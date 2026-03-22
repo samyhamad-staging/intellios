@@ -5,7 +5,7 @@ import { and, eq, gt, isNotNull, lte } from "drizzle-orm";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import { getComplianceOfficerEmails } from "@/lib/notifications/recipients";
 import { sendEmail, buildNotificationEmail } from "@/lib/notifications/email";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 
 /**
  * GET /api/cron/review-reminders
@@ -118,19 +118,18 @@ export async function GET(request: NextRequest) {
       .where(eq(agentBlueprints.id, blueprint.id));
 
     // Audit trail
-    void writeAuditLog({
-      entityType: "blueprint",
-      entityId: blueprint.id,
-      action: "blueprint.periodic_review_reminder",
-      actorEmail: "system@intellios",
-      actorRole: "system",
-      enterpriseId: blueprint.enterpriseId ?? null,
-      metadata: {
-        recipientCount: recipients.length,
-        nextReviewDue: blueprint.nextReviewDue!.toISOString(),
-        daysUntilDue: daysUntil,
-        reminderDaysBefore,
+    void publishEvent({
+      event: {
+        type: "blueprint.periodic_review_reminder",
+        payload: {
+          blueprintId: blueprint.id,
+          agentId: blueprint.agentId,
+          agentName: agentName,
+        },
       },
+      actor: { email: "system@intellios", role: "system" },
+      entity: { type: "blueprint", id: blueprint.id },
+      enterpriseId: blueprint.enterpriseId ?? null,
     });
 
     sent++;

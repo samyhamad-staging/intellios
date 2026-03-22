@@ -70,10 +70,13 @@ export async function GET(request: NextRequest) {
         tags:             (a.tags ?? []) as string[],
         deployedAt:       a.updatedAt.toISOString(), // updatedAt = when status last changed to deployed
         deploymentTarget: a.deploymentTarget ?? null,
-        healthStatus:     (health?.healthStatus ?? "unknown") as "clean" | "critical" | "unknown",
-        errorCount:       health?.errorCount ?? 0,
-        warningCount:     health?.warningCount ?? 0,
-        lastCheckedAt:    health?.lastCheckedAt?.toISOString() ?? null,
+        healthStatus:          (health?.healthStatus ?? "unknown") as "clean" | "degraded" | "critical" | "unknown",
+        errorCount:            health?.errorCount ?? 0,
+        warningCount:          health?.warningCount ?? 0,
+        lastCheckedAt:         health?.lastCheckedAt?.toISOString() ?? null,
+        productionErrorRate:   health?.productionErrorRate ?? null,
+        productionLatencyP99:  health?.productionLatencyP99 ?? null,
+        lastTelemetryAt:       health?.lastTelemetryAt?.toISOString() ?? null,
       };
     });
 
@@ -81,6 +84,7 @@ export async function GET(request: NextRequest) {
     const summary = {
       total:    agents.length,
       clean:    agents.filter((a) => a.healthStatus === "clean").length,
+      degraded: agents.filter((a) => a.healthStatus === "degraded").length,
       critical: agents.filter((a) => a.healthStatus === "critical").length,
       unknown:  agents.filter((a) => a.healthStatus === "unknown").length,
     };

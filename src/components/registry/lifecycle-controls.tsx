@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
+type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed" | "suspended";
 
 interface Action {
   label: string;
@@ -22,8 +22,8 @@ const ACTIONS: Record<Status, Action[]> = {
     { label: "Deprecate", next: "deprecated", style: "btn-action-deprecate" },
   ],
   approved: [
-    { label: "Deploy to Production", next: "deployed", style: "btn-action-deploy" },
-    { label: "Deprecate", next: "deprecated", style: "btn-action-deprecate" },
+    { label: "Deploy to Production", next: "deployed", style: "bg-violet-600 hover:bg-violet-700 text-white" },
+    { label: "Deprecate", next: "deprecated", style: "bg-gray-400 hover:bg-gray-500 text-white" },
   ],
   deployed: [
     { label: "Deprecate", next: "deprecated", style: "btn-action-deprecate" },
@@ -32,12 +32,19 @@ const ACTIONS: Record<Status, Action[]> = {
     { label: "Deprecate", next: "deprecated", style: "btn-action-deprecate" },
   ],
   deprecated: [],
+  // H2-1.4: Suspended agents can be resumed (sent back to in_review) or deprecated.
+  // The resume button only renders if the user is an admin (API enforces this too).
+  suspended: [
+    { label: "Resume (Re-submit for Review)", next: "in_review", style: "bg-green-600 hover:bg-green-700 text-white" },
+    { label: "Deprecate", next: "deprecated", style: "bg-gray-400 hover:bg-gray-500 text-white" },
+  ],
 };
 
 interface LifecycleControlsProps {
   blueprintId: string;
   agentId: string;
   currentStatus: string;
+  currentUserRole?: string;
   onStatusChange: (newStatus: Status) => void;
 }
 
@@ -45,6 +52,7 @@ export function LifecycleControls({
   blueprintId,
   agentId,
   currentStatus,
+  currentUserRole,
   onStatusChange,
 }: LifecycleControlsProps) {
   const router = useRouter();
@@ -52,7 +60,15 @@ export function LifecycleControls({
   const [creatingVersion, setCreatingVersion] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const actions = ACTIONS[currentStatus as Status] ?? [];
+  const allActions = ACTIONS[currentStatus as Status] ?? [];
+  // H2-1.4: Gate "Resume" action on admin role — suspended agents may only be
+  // resumed by an administrator. The API enforces this too; the UI hides the
+  // button for non-admins to avoid a confusing failed call.
+  const actions =
+    currentStatus === "suspended" && currentUserRole !== "admin"
+      ? [] // non-admins see no actions on suspended agents
+      : allActions;
+
   const canCreateNewVersion = currentStatus === "approved" || currentStatus === "deployed";
 
   if (actions.length === 0 && !canCreateNewVersion) return null;
@@ -95,7 +111,7 @@ export function LifecycleControls({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message ?? "Failed to create new version");
+        throw new Error(data.error ?? "Failed to create new version");
       }
       router.push(`/registry/${agentId}`);
       router.refresh();

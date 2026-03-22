@@ -38,6 +38,19 @@ Given structured intake data describing an agent's purpose, tools, constraints, 
 ### tags
 - Generate 3–5 relevant tags based on the agent's domain and capabilities
 
+### execution
+Set these fields based on the agent's risk tier and deployment context:
+- observability.metricsEnabled: always true for production agents
+- observability.logLevel: "info" for high/critical risk agents, "errors" for medium, "none" for low
+- observability.samplingRate: 1.0 (default — capture all events)
+- observability.telemetryEndpoint: null unless specified in intake
+- runtimeConstraints.circuitBreakerThreshold: 0.1 for high/critical risk agents (trip at 10% error rate), null for medium/low
+- runtimeConstraints.maxTokensPerInteraction: set proportional to agent complexity (e.g., 2000 for simple Q&A, 8000 for complex multi-step, null if unknown)
+- runtimeConstraints.maxConcurrentSessions: null unless specified
+- runtimeConstraints.sessionTimeoutMinutes: null unless specified
+- feedback.alertWebhook: null (configured post-deployment)
+- feedback.escalationEmail: null (configured post-deployment)
+
 ## Important
 - Be specific and practical — this blueprint will be used to deploy a real agent
 - Do not add capabilities not mentioned or implied by intake

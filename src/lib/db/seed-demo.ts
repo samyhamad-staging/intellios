@@ -37,7 +37,7 @@ import { eq } from "drizzle-orm";
 const E = "acme-financial"; // enterprise_id
 
 const USERS = {
-  designer:  "designer@intellios.dev",
+  architect:  "designer@intellios.dev",
   reviewer:  "reviewer@intellios.dev",
   officer:   "officer@intellios.dev",
   admin:     "admin@intellios.dev",
@@ -273,7 +273,7 @@ async function seedDemo() {
     await db.insert(intakeSessions).values({
       id: s.id,
       enterpriseId: E,
-      createdBy: USERS.designer,
+      createdBy: USERS.architect,
       status: "completed",
       intakePayload: { identity: { name: s.label } },
       intakeContext: { deploymentType: "customer-facing", dataSensitivity: "regulated", regulatoryScope: ["SOX", "FINRA"] },
@@ -293,7 +293,7 @@ async function seedDemo() {
     else {
       const abp = makeAbp({
         id: BP.CIB, agentId: AG.CIB,
-        name: "Customer Inquiry Bot", enterpriseId: E, createdBy: USERS.designer, status: "deployed",
+        name: "Customer Inquiry Bot", enterpriseId: E, createdBy: USERS.architect, status: "deployed",
         description: "Handles inbound customer inquiries about account balances, transactions, and general banking services. Routes complex issues to human agents.",
         persona: "Professional, empathetic, and concise. Uses plain language. Never speculates about account-specific details without verification.",
         instructions: `You are Acme Financial's Customer Inquiry Bot. Your role is to assist customers with general inquiries about their accounts, products, and services.
@@ -323,7 +323,7 @@ OUT OF SCOPE: Financial advice, loan decisions, fraud investigation, account mod
           { name: "Response Safety Filter", type: "safety",        description: "Block harmful, misleading, or off-topic responses." },
           { name: "SR 11-7 Documentation",  type: "compliance",    description: "Model documentation for federal examination readiness." },
         ],
-        ownerEmail: USERS.designer, businessUnit: "Customer Experience", costCenter: "CE-0042",
+        ownerEmail: USERS.architect, businessUnit: "Customer Experience", costCenter: "CE-0042",
         deploymentEnv: "production", dataClassification: "regulated",
         tags: ["customer-facing", "banking", "support", "production"],
       });
@@ -335,7 +335,7 @@ OUT OF SCOPE: Financial advice, loan decisions, fraud investigation, account mod
         validationReport: validReport(ALL_POLICY_IDS),
         reviewedBy: USERS.reviewer, reviewComment: "Comprehensive agent with robust guardrails. Approved for production deployment.",
         reviewedAt: daysAgo(12),
-        createdBy: USERS.designer,
+        createdBy: USERS.architect,
         currentApprovalStep: 3,
         approvalProgress: [
           { role: "reviewer",           label: "Senior Reviewer",     approvedBy: USERS.reviewer, approvedAt: daysAgo(14).toISOString(), comment: "Technically sound. Good use of escalation. Forwarding to compliance." },
@@ -365,7 +365,7 @@ OUT OF SCOPE: Financial advice, loan decisions, fraud investigation, account mod
     else {
       const abp = makeAbp({
         id: BP.FDA, agentId: AG.FDA,
-        name: "Fraud Detection Advisor", enterpriseId: E, createdBy: USERS.designer, status: "in_review",
+        name: "Fraud Detection Advisor", enterpriseId: E, createdBy: USERS.architect, status: "in_review",
         description: "Analyzes flagged transactions and account activity patterns to provide fraud risk assessments for the investigations team.",
         persona: "Analytical, precise, and evidence-based. Reports findings with confidence scores. Flags ambiguous cases for human review rather than making definitive judgments.",
         instructions: `You are Acme Financial's Fraud Detection Advisor. You assist the fraud investigations team by analyzing flagged transactions and providing structured risk assessments.
@@ -389,7 +389,7 @@ OUT OF SCOPE: Account freezes, fraud confirmation, customer communication, legal
           { name: "Fraud Investigation Standards", type: "compliance",     description: "Bank Secrecy Act and internal fraud policy compliance." },
           { name: "Data Access Controls",          type: "access_control", description: "Limit data access to investigation-relevant fields only." },
         ],
-        ownerEmail: USERS.designer, businessUnit: "Fraud & Risk Management", costCenter: "RISK-0117",
+        ownerEmail: USERS.architect, businessUnit: "Fraud & Risk Management", costCenter: "RISK-0117",
         deploymentEnv: "production", dataClassification: "regulated",
         tags: ["fraud", "risk", "internal", "investigations"],
       });
@@ -417,7 +417,7 @@ OUT OF SCOPE: Account freezes, fraud confirmation, customer communication, legal
           generatedAt: daysAgo(5).toISOString(),
         },
         reviewedBy: null, reviewComment: null, reviewedAt: null,
-        createdBy: USERS.designer,
+        createdBy: USERS.architect,
         currentApprovalStep: 1,
         approvalProgress: [
           { role: "reviewer", label: "Senior Reviewer", approvedBy: USERS.reviewer, approvedAt: daysAgo(4).toISOString(), comment: "Logic is sound. One warning about retention_days — flagged for compliance review. Forwarding." },
@@ -436,7 +436,7 @@ OUT OF SCOPE: Account freezes, fraud confirmation, customer communication, legal
     else {
       const abp = makeAbp({
         id: BP.LAA, agentId: AG.LAA,
-        name: "Loan Application Assistant", enterpriseId: E, createdBy: USERS.designer, status: "approved",
+        name: "Loan Application Assistant", enterpriseId: E, createdBy: USERS.architect, status: "approved",
         description: "Guides retail customers through mortgage and personal loan applications, collects required documentation, and provides status updates.",
         persona: "Helpful, patient, and thorough. Explains requirements clearly in plain English. Sensitive to customer anxiety around financial decisions.",
         instructions: `You are Acme Financial's Loan Application Assistant. You help customers through the loan application process from initial inquiry to document submission.
@@ -461,7 +461,7 @@ OUT OF SCOPE: Credit decisions, rate negotiations, underwriting exceptions, lega
           { name: "Loan Data Privacy",        type: "data_handling",  description: "GLBA safeguards for loan application data." },
           { name: "Application Access Control", type: "access_control", description: "Application data visible only to authorized loan processing staff." },
         ],
-        ownerEmail: USERS.designer, businessUnit: "Retail Lending", costCenter: "LEND-0088",
+        ownerEmail: USERS.architect, businessUnit: "Retail Lending", costCenter: "LEND-0088",
         deploymentEnv: "staging", dataClassification: "regulated",
         tags: ["lending", "customer-facing", "mortgages", "staging"],
       });
@@ -473,7 +473,7 @@ OUT OF SCOPE: Credit decisions, rate negotiations, underwriting exceptions, lega
         validationReport: validReport(ALL_POLICY_IDS),
         reviewedBy: USERS.officer, reviewComment: "ECOA constraints verified. Documentation policy adequate. Approved for staging deployment.",
         reviewedAt: daysAgo(3),
-        createdBy: USERS.designer,
+        createdBy: USERS.architect,
         currentApprovalStep: 3,
         approvalProgress: [
           { role: "reviewer",           label: "Senior Reviewer",   approvedBy: USERS.reviewer, approvedAt: daysAgo(5).toISOString(),  comment: "Well-structured. ECOA constraints are thorough. Forwarding to compliance." },
@@ -496,7 +496,7 @@ OUT OF SCOPE: Credit decisions, rate negotiations, underwriting exceptions, lega
         version: "1.2.0",
         metadata: {
           id: BP.DPA, created_at: daysAgo(4).toISOString(),
-          created_by: USERS.designer, status: "draft", enterprise_id: E, tags: ["compliance", "privacy"],
+          created_by: USERS.architect, status: "draft", enterprise_id: E, tags: ["compliance", "privacy"],
         },
         identity: { name: "Data Privacy Compliance Agent", description: "Monitors data usage across business systems for CCPA and GDPR compliance gaps." },
         capabilities: {
@@ -538,7 +538,7 @@ OUT OF SCOPE: Credit decisions, rate negotiations, underwriting exceptions, lega
             suggestion: "Add at least one governance policy (e.g., a Data Privacy policy) to the `governance.policies` array. The policy should specify rules governing how this agent handles customer data.",
           },
         ]),
-        createdBy: USERS.designer,
+        createdBy: USERS.architect,
         currentApprovalStep: 0, approvalProgress: [],
         deploymentTarget: null, deploymentMetadata: null,
         createdAt: daysAgo(4), updatedAt: daysAgo(4),
@@ -554,7 +554,7 @@ OUT OF SCOPE: Credit decisions, rate negotiations, underwriting exceptions, lega
     else {
       const abp = makeAbp({
         id: BP.HOG, agentId: AG.HOG,
-        name: "HR Onboarding Guide", enterpriseId: E, createdBy: USERS.designer, status: "deprecated",
+        name: "HR Onboarding Guide", enterpriseId: E, createdBy: USERS.architect, status: "deprecated",
         description: "Guided new employees through their first 30 days at Acme Financial. Replaced by the enhanced Employee Experience Platform.",
         persona: "Warm, encouraging, and organized. Uses checklists and step-by-step guidance. Celebrates milestones.",
         instructions: `You are Acme Financial's HR Onboarding Guide. You help new employees navigate their first 30 days. Walk them through IT setup, benefits enrollment, policy acknowledgments, and team introductions.`,
@@ -567,7 +567,7 @@ OUT OF SCOPE: Credit decisions, rate negotiations, underwriting exceptions, lega
           { name: "Employee Data Privacy",   type: "data_handling", description: "HR data governed by internal privacy policy and applicable law." },
           { name: "Onboarding Safety Filter", type: "safety",       description: "Ensure all guidance is accurate and legally compliant." },
         ],
-        ownerEmail: USERS.designer, businessUnit: "Human Resources", costCenter: "HR-0055",
+        ownerEmail: USERS.architect, businessUnit: "Human Resources", costCenter: "HR-0055",
         deploymentEnv: "production", dataClassification: "internal",
         tags: ["hr", "internal", "deprecated"],
       });
@@ -579,7 +579,7 @@ OUT OF SCOPE: Credit decisions, rate negotiations, underwriting exceptions, lega
         validationReport: validReport(ALL_POLICY_IDS),
         reviewedBy: USERS.admin, reviewComment: "Superseded by Employee Experience Platform v2.",
         reviewedAt: daysAgo(5),
-        createdBy: USERS.designer,
+        createdBy: USERS.architect,
         currentApprovalStep: 3, approvalProgress: [],
         deploymentTarget: null, deploymentMetadata: null,
         createdAt: daysAgo(40), updatedAt: daysAgo(5),
@@ -591,10 +591,10 @@ OUT OF SCOPE: Credit decisions, rate negotiations, underwriting exceptions, lega
   // ── 6. Audit log ──────────────────────────────────────────────────────────────
   console.log("\nStep 6/11 — Audit log (Customer Inquiry Bot lifecycle)");
   const auditSeeds = [
-    { id: "70000000-0000-0000-0000-000000000001", action: "blueprint.created",               actor: USERS.designer,  role: "designer",           ts: daysAgo(27), from: null,          to: "draft",     meta: { version: "1.0.0" } },
-    { id: "70000000-0000-0000-0000-000000000002", action: "blueprint.refined",                actor: USERS.designer,  role: "designer",           ts: daysAgo(26), from: "draft",       to: "draft",     meta: { changeRequest: "Add escalation tool and refine instructions for GLBA compliance." } },
-    { id: "70000000-0000-0000-0000-000000000003", action: "blueprint.refined",                actor: USERS.designer,  role: "designer",           ts: daysAgo(25), from: "draft",       to: "draft",     meta: { changeRequest: "Strengthen denied_actions list and add knowledge sources." } },
-    { id: "70000000-0000-0000-0000-000000000004", action: "blueprint.submitted",              actor: USERS.designer,  role: "designer",           ts: daysAgo(24), from: "draft",       to: "in_review", meta: { governanceValid: true, policyCount: 3 } },
+    { id: "70000000-0000-0000-0000-000000000001", action: "blueprint.created",               actor: USERS.architect,  role: "architect",           ts: daysAgo(27), from: null,          to: "draft",     meta: { version: "1.0.0" } },
+    { id: "70000000-0000-0000-0000-000000000002", action: "blueprint.refined",                actor: USERS.architect,  role: "architect",           ts: daysAgo(26), from: "draft",       to: "draft",     meta: { changeRequest: "Add escalation tool and refine instructions for GLBA compliance." } },
+    { id: "70000000-0000-0000-0000-000000000003", action: "blueprint.refined",                actor: USERS.architect,  role: "architect",           ts: daysAgo(25), from: "draft",       to: "draft",     meta: { changeRequest: "Strengthen denied_actions list and add knowledge sources." } },
+    { id: "70000000-0000-0000-0000-000000000004", action: "blueprint.submitted",              actor: USERS.architect,  role: "architect",           ts: daysAgo(24), from: "draft",       to: "in_review", meta: { governanceValid: true, policyCount: 3 } },
     { id: "70000000-0000-0000-0000-000000000005", action: "blueprint.approval_step_completed", actor: USERS.reviewer, role: "reviewer",           ts: daysAgo(14), from: "in_review",   to: "in_review", meta: { step: 0, label: "Senior Reviewer", comment: "Technically sound. Forwarding to compliance." } },
     { id: "70000000-0000-0000-0000-000000000006", action: "blueprint.approval_step_completed", actor: USERS.officer,  role: "compliance_officer", ts: daysAgo(13), from: "in_review",   to: "in_review", meta: { step: 1, label: "Compliance Officer", comment: "GLBA constraints confirmed. Approved." } },
     { id: "70000000-0000-0000-0000-000000000007", action: "blueprint.reviewed",               actor: USERS.admin,     role: "admin",              ts: daysAgo(12), from: "in_review",   to: "approved",  meta: { decision: "approve", comment: "Approved for production deployment." } },

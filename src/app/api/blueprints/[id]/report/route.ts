@@ -6,8 +6,9 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { assembleMRMReport } from "@/lib/mrm/report";
+import { artifactExists, getSignedUrl, uploadArtifact } from "@/lib/storage/s3";
 
 /**
  * GET /api/blueprints/[id]/report
@@ -47,19 +48,28 @@ export async function GET(
     }
 
     // Audit every report export — provides traceability for regulatory inquiries
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: id,
-      action: "blueprint.report_exported",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
-      enterpriseId: blueprint.enterpriseId ?? null,
-      metadata: {
-        agentId: blueprint.agentId,
-        agentName: blueprint.name ?? "Unnamed Agent",
-        reportVersion: report.cover.currentVersion,
+    await publishEvent({
+      event: {
+        type: "blueprint.report_exported",
+        payload: {
+          blueprintId: id,
+          agentId: blueprint.agentId,
+          agentName: blueprint.name ?? "",
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id },
+      enterpriseId: blueprint.enterpriseId ?? null,
     });
+
+    // S3 cache: check for pre-generated report
+    const s3Key = `reports/${id}/${blueprint.version}.json`;
+    const cached = await artifactExists(s3Key);
+    if (cached) {
+      const signedUrl = await getSignedUrl(s3Key, 3600);
+      if (signedUrl) return NextResponse.redirect(signedUrl, 302);
+    }
+    void uploadArtifact(s3Key, JSON.stringify(report), "application/json");
 
     return NextResponse.json(report);
   } catch (err) {

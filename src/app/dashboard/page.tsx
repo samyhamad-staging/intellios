@@ -147,7 +147,7 @@ export default function ExecutiveDashboardPage() {
           {/* ── Pipeline funnel ────────────────────────────────────────── */}
           <section>
             <h2 className="mb-4 text-xs font-semibold text-gray-400">Pipeline Funnel</h2>
-            <div className="rounded-card border border-gray-200 bg-white p-5 space-y-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
               {funnelStages.map((stage) => (
                 <div key={stage.label}>
                   <div className="flex items-center justify-between mb-1">
@@ -184,7 +184,7 @@ export default function ExecutiveDashboardPage() {
           {/* ── Governance health ──────────────────────────────────────── */}
           <section>
             <h2 className="mb-4 text-xs font-semibold text-gray-400">Governance Health</h2>
-            <div className="rounded-card border border-gray-200 bg-white p-5 space-y-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
               {/* Donut-style summary */}
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="rounded-lg badge-gov-pass p-3">

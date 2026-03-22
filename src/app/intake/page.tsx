@@ -36,7 +36,7 @@ export default async function IntakeSessionsPage() {
   const session = await auth();
   const user = session?.user;
   if (!user) redirect("/login");
-  if (user.role !== "designer" && user.role !== "admin") redirect("/");
+  if (user.role !== "architect" && user.role !== "admin") redirect("/");
 
   const enterpriseFilter =
     user.role === "admin"
@@ -78,7 +78,7 @@ export default async function IntakeSessionsPage() {
 
       {/* Empty state */}
       {sessions.length === 0 && (
-        <div className="flex flex-col items-center rounded-card border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
+        <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
           <Inbox size={32} className="mb-4 text-gray-300" />
           <h2 className="mb-1 text-sm font-medium text-gray-700">No intake sessions yet</h2>
           <p className="mb-6 max-w-xs text-xs text-gray-400">
@@ -94,7 +94,7 @@ export default async function IntakeSessionsPage() {
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
             In Progress — {active.length}
           </h2>
-          <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             {active.map((s, i) => <SessionRow key={s.id} session={s} isLast={i === active.length - 1} />)}
           </div>
         </section>
@@ -106,7 +106,7 @@ export default async function IntakeSessionsPage() {
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
             Completed — {completed.length}
           </h2>
-          <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             {completed.map((s, i) => <SessionRow key={s.id} session={s} isLast={i === completed.length - 1} />)}
           </div>
         </section>

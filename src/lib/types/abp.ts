@@ -123,10 +123,31 @@ export const ABPContentSchema = z.object({
     .describe("Freeform tags for categorization"),
 });
 
+// ─── Execution section (added in ABP v1.1.0) ────────────────────────────────
+
+const ExecutionSchema = z.object({
+  observability: z.object({
+    metricsEnabled: z.boolean().default(true),
+    logLevel: z.enum(["none", "errors", "info", "debug"]).default("errors"),
+    samplingRate: z.number().min(0).max(1).default(1.0),
+    telemetryEndpoint: z.string().nullable().default(null),
+  }).optional(),
+  runtimeConstraints: z.object({
+    maxTokensPerInteraction: z.number().nullable().default(null),
+    maxConcurrentSessions: z.number().nullable().default(null),
+    circuitBreakerThreshold: z.number().min(0).max(1).nullable().default(null),
+    sessionTimeoutMinutes: z.number().nullable().default(null),
+  }).optional(),
+  feedback: z.object({
+    alertWebhook: z.string().nullable().default(null),
+    escalationEmail: z.string().nullable().default(null),
+  }).optional(),
+});
+
 // ─── Full ABP (content + system metadata) ───────────────────────────────────
 
 export const ABPSchema = z.object({
-  version: z.literal("1.0.0"),
+  version: z.string().default("1.0.0"),
   metadata: z.object({
     id: z.string().uuid(),
     created_at: z.string().datetime(),
@@ -168,6 +189,11 @@ export const ABPSchema = z.object({
     })
     .optional()
     .describe("Organizational ownership and data classification metadata"),
+  /**
+   * Execution configuration — added in ABP v1.1.0.
+   * Covers observability settings, runtime constraints, and alert feedback.
+   */
+  execution: ExecutionSchema.optional(),
 });
 
 export type ABPContent = z.infer<typeof ABPContentSchema>;

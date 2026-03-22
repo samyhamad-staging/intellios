@@ -6,7 +6,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { parseBody } from "@/lib/parse-body";
 import { validateBlueprint } from "@/lib/governance/validator";
 import { ABP } from "@/lib/types/abp";
@@ -15,10 +15,10 @@ import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import { z } from "zod";
 import type { ApprovalStepRecord } from "@/lib/settings/types";
 
-type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
+type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed" | "suspended";
 
 const StatusBody = z.object({
-  status: z.enum(["draft", "in_review", "approved", "rejected", "deprecated", "deployed"]),
+  status: z.enum(["draft", "in_review", "approved", "rejected", "deprecated", "deployed", "suspended"]),
   // changeRef is required at the API boundary for "deployed" transitions (enforced below).
   // Accepting it as optional here so Zod parses the field; the business rule is applied
   // explicitly after auth + transition checks so the error message is domain-specific.
@@ -30,12 +30,15 @@ const StatusBody = z.object({
 
 // Valid forward transitions. Any status → deprecated is always allowed.
 const VALID_TRANSITIONS: Record<Status, Status[]> = {
-  draft: ["in_review", "deprecated"],
-  in_review: ["approved", "rejected", "deprecated"],
-  approved: ["deployed", "deprecated"],
-  deployed: ["deprecated"],
-  rejected: ["deprecated"],
+  draft:      ["in_review", "deprecated"],
+  in_review:  ["approved", "rejected", "deprecated"],
+  approved:   ["deployed", "deprecated"],
+  deployed:   ["deprecated"],
+  rejected:   ["deprecated"],
   deprecated: [],
+  // H2-1.4: suspended agents can be resumed (back to in_review) or deprecated.
+  // The "resume" transition restarts the approval workflow. Requires admin.
+  suspended:  ["in_review", "deprecated"],
 };
 
 /**
@@ -54,7 +57,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   // Include compliance_officer — they may be part of a multi-step approval chain
-  const { session: authSession, error } = await requireAuth(["designer", "reviewer", "compliance_officer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "reviewer", "compliance_officer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
@@ -84,7 +87,7 @@ export async function PATCH(
 
     const allowed = VALID_TRANSITIONS[currentStatus];
     // Role-based transition enforcement (SOD: designers submit, reviewers decide, reviewers/admins deploy)
-    if (newStatus === "in_review" && authSession.user.role !== "designer" && authSession.user.role !== "admin") {
+    if (newStatus === "in_review" && authSession.user.role !== "architect" && authSession.user.role !== "admin") {
       return apiError(ErrorCode.FORBIDDEN, "Only designers can submit blueprints for review");
     }
     if (newStatus === "deprecated" && authSession.user.role !== "reviewer" && authSession.user.role !== "admin") {
@@ -93,6 +96,11 @@ export async function PATCH(
     // SOD: the designer who created the blueprint must not also control its production promotion.
     if (newStatus === "deployed" && authSession.user.role !== "reviewer" && authSession.user.role !== "admin") {
       return apiError(ErrorCode.FORBIDDEN, "Only reviewers and administrators can deploy blueprints to production");
+    }
+
+    // H2-1.4: Only admins can resume a suspended agent (back to in_review).
+    if (currentStatus === "suspended" && authSession.user.role !== "admin") {
+      return apiError(ErrorCode.FORBIDDEN, "Only administrators can resume a suspended agent");
     }
 
     if (!allowed.includes(newStatus)) {
@@ -231,16 +239,22 @@ export async function PATCH(
             })
             .where(eq(agentBlueprints.id, id));
 
-          await writeAuditLog({
-            entityType: "blueprint",
-            entityId: id,
-            action: "blueprint.reviewed",
-            actorEmail: userEmail,
-            actorRole: userRole,
+          await publishEvent({
+            event: {
+              type: "blueprint.reviewed",
+              payload: {
+                blueprintId: id,
+                decision: "reject",
+                reviewer: userEmail,
+                comment: comment ?? null,
+                agentId: blueprint.agentId,
+                agentName: blueprint.name ?? "",
+                createdBy: blueprint.createdBy ?? "",
+              },
+            },
+            actor: { email: userEmail, role: userRole },
+            entity: { type: "blueprint", id },
             enterpriseId: blueprint.enterpriseId ?? null,
-            fromState: { status: currentStatus, step: stepIndex },
-            toState: { status: "rejected" },
-            metadata: { comment: comment ?? null, step: stepIndex, label: activeStep.label },
           });
 
           return NextResponse.json({ id, status: "rejected" });
@@ -264,16 +278,22 @@ export async function PATCH(
             })
             .where(eq(agentBlueprints.id, id));
 
-          await writeAuditLog({
-            entityType: "blueprint",
-            entityId: id,
-            action: "blueprint.reviewed",
-            actorEmail: userEmail,
-            actorRole: userRole,
+          await publishEvent({
+            event: {
+              type: "blueprint.reviewed",
+              payload: {
+                blueprintId: id,
+                decision: "approve",
+                reviewer: userEmail,
+                comment: comment ?? null,
+                agentId: blueprint.agentId,
+                agentName: blueprint.name ?? "",
+                createdBy: blueprint.createdBy ?? "",
+              },
+            },
+            actor: { email: userEmail, role: userRole },
+            entity: { type: "blueprint", id },
             enterpriseId: blueprint.enterpriseId ?? null,
-            fromState: { status: currentStatus, step: stepIndex },
-            toState: { status: "approved" },
-            metadata: { comment: comment ?? null, step: stepIndex, label: activeStep.label, finalStep: true },
           });
 
           return NextResponse.json({ id, status: "approved" });
@@ -290,16 +310,22 @@ export async function PATCH(
             })
             .where(eq(agentBlueprints.id, id));
 
-          await writeAuditLog({
-            entityType: "blueprint",
-            entityId: id,
-            action: "blueprint.approval_step_completed",
-            actorEmail: userEmail,
-            actorRole: userRole,
+          await publishEvent({
+            event: {
+              type: "blueprint.approval_step_completed",
+              payload: {
+                blueprintId: id,
+                agentId: blueprint.agentId,
+                agentName: blueprint.name ?? "",
+                step: stepIndex,
+                label: activeStep.label,
+                nextApproverRole: nextStep.role,
+                nextApproverLabel: nextStep.label,
+              },
+            },
+            actor: { email: userEmail, role: userRole },
+            entity: { type: "blueprint", id },
             enterpriseId: blueprint.enterpriseId ?? null,
-            fromState: { status: "in_review", step: stepIndex },
-            toState: { status: "in_review", step: stepIndex + 1, nextApproverRole: nextStep.role, nextApproverLabel: nextStep.label },
-            metadata: { comment: comment ?? null, completedStep: stepIndex, label: activeStep.label },
           });
 
           return NextResponse.json({ id, status: "in_review", nextStep: stepIndex + 1, nextApproverRole: nextStep.role });
@@ -332,35 +358,37 @@ export async function PATCH(
       (abp?.identity as Record<string, unknown> | undefined)?.name ??
       "Unnamed Agent";
 
-    const auditAction =
-      newStatus === "approved" || newStatus === "rejected"
-        ? "blueprint.reviewed"
-        : "blueprint.status_changed";
+    const isReviewDecision = newStatus === "approved" || newStatus === "rejected";
+    const legacyEvent = isReviewDecision
+      ? {
+          type: "blueprint.reviewed" as const,
+          payload: {
+            blueprintId: id,
+            decision: newStatus === "approved" ? "approve" : "reject",
+            reviewer: userEmail,
+            comment: comment ?? null,
+            agentId: blueprint.agentId,
+            agentName: String(agentName),
+            createdBy: blueprint.createdBy ?? "",
+          },
+        }
+      : {
+          type: "blueprint.status_changed" as const,
+          payload: {
+            blueprintId: id,
+            fromStatus: currentStatus,
+            toStatus: newStatus,
+            agentId: blueprint.agentId,
+            agentName: String(agentName),
+            createdBy: blueprint.createdBy ?? "",
+          },
+        };
 
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: id,
-      action: auditAction,
-      actorEmail: userEmail,
-      actorRole: userRole,
+    await publishEvent({
+      event: legacyEvent,
+      actor: { email: userEmail, role: userRole },
+      entity: { type: "blueprint", id },
       enterpriseId: blueprint.enterpriseId ?? null,
-      fromState: { status: currentStatus },
-      toState: { status: newStatus },
-      metadata: {
-        agentId: id,
-        agentName,
-        createdBy: blueprint.createdBy ?? null,
-        comment: comment ?? null,
-        // Change management fields — populated for deployed transitions
-        ...(newStatus === "deployed" && {
-          changeRef: changeRef ?? null,
-          deploymentNotes: deploymentNotes ?? null,
-        }),
-        // Governance integrity: record that live revalidation passed for in_review transitions
-        ...(newStatus === "in_review" && {
-          governanceRevalidatedAt: new Date().toISOString(),
-        }),
-      },
     });
 
     // On deployment: create initial governance health record (fire-and-forget, does not block response).
@@ -377,17 +405,18 @@ export async function PATCH(
           .update(agentBlueprints)
           .set({ nextReviewDue })
           .where(eq(agentBlueprints.id, id));
-        void writeAuditLog({
-          entityType: "blueprint",
-          entityId: id,
-          action: "blueprint.periodic_review_scheduled",
-          actorEmail: userEmail,
-          actorRole: userRole,
-          enterpriseId: blueprint.enterpriseId ?? null,
-          toState: {
-            nextReviewDue: nextReviewDue.toISOString(),
-            cadenceMonths: deploySettings.periodicReview.defaultCadenceMonths,
+        void publishEvent({
+          event: {
+            type: "blueprint.periodic_review_reminder",
+            payload: {
+              blueprintId: id,
+              agentId: blueprint.agentId,
+              agentName: String(agentName),
+            },
           },
+          actor: { email: userEmail, role: userRole },
+          entity: { type: "blueprint", id },
+          enterpriseId: blueprint.enterpriseId ?? null,
         });
       }
     }

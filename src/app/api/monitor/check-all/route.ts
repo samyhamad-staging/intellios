@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { checkAllDeployedAgents } from "@/lib/monitoring/health";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
@@ -38,24 +38,21 @@ export async function POST(request: NextRequest) {
         bp?.name ??
         "Unknown Agent";
 
-      await writeAuditLog({
-        entityType:   "blueprint",
-        entityId:     result.blueprintId,
-        action:       "blueprint.health_checked",
-        actorEmail:   authSession.user.email!,
-        actorRole:    authSession.user.role,
-        enterpriseId,
-        fromState:    { healthStatus: result.previousStatus },
-        toState:      { healthStatus: result.healthStatus },
-        metadata: {
-          agentId:        result.agentId,
-          agentName,
-          errorCount:     result.errorCount,
-          warningCount:   result.warningCount,
-          previousStatus: result.previousStatus,
-          healthStatus:   result.healthStatus,
-          triggeredBy:    "manual-check-all",
+      await publishEvent({
+        event: {
+          type: "blueprint.health_checked",
+          payload: {
+            blueprintId: result.blueprintId,
+            agentId: result.agentId,
+            agentName: String(agentName),
+            healthStatus: result.healthStatus,
+            previousStatus: result.previousStatus ?? "",
+            errorCount: result.errorCount,
+          },
         },
+        actor: { email: authSession.user.email!, role: authSession.user.role },
+        entity: { type: "blueprint", id: result.blueprintId },
+        enterpriseId,
       });
     }
 

@@ -21,6 +21,8 @@ import {
   Webhook,
   LogOut,
   Search,
+  Building2,
+  Globe,
 } from "lucide-react";
 import NotificationBell from "@/components/nav/notification-bell";
 import { HelpPanel } from "@/components/help/help-panel";
@@ -32,6 +34,11 @@ interface SidebarProps {
     email?: string | null;
     role?: string | null;
   };
+  branding?: {
+    companyName: string;
+    logoUrl: string | null;
+    primaryColor: string;
+  } | null;
   signOutAction: () => Promise<void>;
 }
 
@@ -48,7 +55,7 @@ interface NavSection {
 }
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
-  designer: { label: "Designer", color: "bg-blue-500/20 text-blue-300" },
+  architect: { label: "Architect", color: "bg-blue-500/20 text-blue-300" },
   reviewer: { label: "Reviewer", color: "bg-amber-500/20 text-amber-300" },
   compliance_officer: { label: "Compliance", color: "bg-green-500/20 text-green-300" },
   admin: { label: "Admin", color: "bg-violet-500/20 text-violet-300" },
@@ -57,7 +64,7 @@ const ROLE_LABELS: Record<string, { label: string; color: string }> = {
 
 function getNavSections(role: string | null | undefined): NavSection[] {
   const r = role ?? "";
-  const isDesigner = r === "designer" || r === "admin";
+  const isArchitect = r === "architect" || r === "admin";
   const isReviewer = r === "reviewer" || r === "compliance_officer" || r === "admin";
   const isCompliance = r === "compliance_officer" || r === "admin";
   const isViewer = r === "viewer";
@@ -67,7 +74,7 @@ function getNavSections(role: string | null | undefined): NavSection[] {
     {
       items: [
         { label: "Overview", href: "/", icon: LayoutDashboard },
-        ...(isDesigner ? [{ label: "Intake", href: "/intake", icon: MessageSquare }] : []),
+        ...(isArchitect ? [{ label: "Intake", href: "/intake", icon: MessageSquare }] : []),
         { label: "Pipeline", href: "/pipeline", icon: Kanban },
         { label: "Registry", href: "/registry", icon: Library },
       ],
@@ -81,6 +88,7 @@ function getNavSections(role: string | null | undefined): NavSection[] {
         ...(isReviewer ? [{ label: "Review Queue", href: "/review", icon: ClipboardList }] : []),
         ...(isCompliance || isViewer ? [{ label: "Governance", href: "/governance", icon: Shield }] : []),
         ...(isCompliance || isViewer ? [{ label: "Compliance", href: "/compliance", icon: CheckSquare }] : []),
+        ...(isReviewer ? [{ label: "Governor", href: "/governor", icon: Building2 }] : []),
       ],
     });
   }
@@ -93,6 +101,7 @@ function getNavSections(role: string | null | undefined): NavSection[] {
   if (isAdmin) opsItems.push({ label: "Users", href: "/admin/users", icon: Users });
   if (isAdmin) opsItems.push({ label: "Settings", href: "/admin/settings", icon: Settings });
   if (isAdmin) opsItems.push({ label: "Webhooks", href: "/admin/webhooks", icon: Webhook });
+  if (isAdmin) opsItems.push({ label: "Fleet", href: "/admin/fleet", icon: Globe });
 
   if (opsItems.length > 0) {
     sections.push({ label: "Operations", items: opsItems });
@@ -101,7 +110,7 @@ function getNavSections(role: string | null | undefined): NavSection[] {
   return sections;
 }
 
-export default function Sidebar({ user, signOutAction }: SidebarProps) {
+export default function Sidebar({ user, branding, signOutAction }: SidebarProps) {
   const pathname = usePathname();
   const sections = getNavSections(user.role);
   const roleInfo = user.role
@@ -142,17 +151,26 @@ export default function Sidebar({ user, signOutAction }: SidebarProps) {
         className="flex h-14 shrink-0 items-center gap-2.5 px-4"
         style={{ borderBottom: "1px solid var(--sidebar-border)" }}
       >
-        <div
-          className="flex h-7 w-7 items-center justify-center rounded-lg shrink-0"
-          style={{ backgroundColor: "#7c3aed" }}
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M2 11L7 3L12 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M4.5 8H9.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-        </div>
+        {branding?.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={branding.logoUrl}
+            alt=""
+            className="h-7 w-7 rounded-lg object-cover shrink-0"
+          />
+        ) : (
+          <div
+            className="flex h-7 w-7 items-center justify-center rounded-lg shrink-0"
+            style={{ backgroundColor: branding?.primaryColor ?? "#7c3aed" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 11L7 3L12 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4.5 8H9.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </div>
+        )}
         <span className="text-sm font-semibold text-white tracking-tight">
-          Intellios
+          {branding?.companyName ?? "Intellios"}
         </span>
         <div className="ml-auto">
           <NotificationBell />
@@ -236,7 +254,7 @@ export default function Sidebar({ user, signOutAction }: SidebarProps) {
             )}
           </div>
           <div className="flex items-center gap-0.5">
-            <HelpPanel role={user.role ?? "designer"} />
+            <HelpPanel role={user.role ?? "architect"} />
             <form action={signOutAction}>
               <button
                 type="submit"
@@ -256,7 +274,7 @@ export default function Sidebar({ user, signOutAction }: SidebarProps) {
     {paletteOpen && typeof document !== "undefined" &&
       createPortal(
         <CommandPalette
-          role={user.role ?? "designer"}
+          role={user.role ?? "architect"}
           onClose={() => setPaletteOpen(false)}
         />,
         document.body

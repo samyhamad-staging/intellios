@@ -346,7 +346,7 @@ export default function IntakeSessionPage({
                   ] as { label: string; value: number | null }[];
                   const hasLowScore = dims.some((d) => (d.value ?? 0) < 3.0 && d.value != null);
                   return (
-                    <div className="absolute bottom-full right-0 mb-2 w-72 rounded-card border border-gray-200 bg-white p-4 shadow-lg">
+                    <div className="absolute bottom-full right-0 mb-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-lg">
                       <p className="mb-2.5 text-xs font-semibold text-gray-700">Quality Dimensions</p>
                       {dims.map((d) => {
                         const val = d.value ?? 0;

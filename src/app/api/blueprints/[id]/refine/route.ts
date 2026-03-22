@@ -5,12 +5,13 @@ import { eq } from "drizzle-orm";
 import { refineBlueprint } from "@/lib/generation/generate";
 import { loadPolicies } from "@/lib/governance/load-policies";
 import { ABP } from "@/lib/types/abp";
+import { readABP } from "@/lib/abp/read";
 import { IntakePayload } from "@/lib/types/intake";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
@@ -23,11 +24,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
-  const rateLimitResponse = rateLimit(authSession.user.email!, {
+  const rateLimitResponse = await rateLimit(authSession.user.email!, {
     endpoint: "generate",
     max: 10,
     windowMs: 60_000,
@@ -62,7 +63,7 @@ export async function POST(
     });
 
     const intake = (session?.intakePayload ?? {}) as IntakePayload;
-    const currentAbp = blueprint.abp as ABP;
+    const currentAbp = readABP(blueprint.abp);
 
     // Load policies so Claude can maintain governance compliance during refinement
     // and avoid inadvertently dropping required policy sections during regeneration.
@@ -90,14 +91,19 @@ export async function POST(
       .where(eq(agentBlueprints.id, id))
       .returning();
 
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: id,
-      action: "blueprint.refined",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
+    await publishEvent({
+      event: {
+        type: "blueprint.refined",
+        payload: {
+          blueprintId: id,
+          agentId: blueprint.agentId,
+          name: blueprint.name ?? "",
+          createdBy: blueprint.createdBy ?? "",
+        },
+      },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id },
       enterpriseId: blueprint.enterpriseId ?? null,
-      metadata: { change: change.trim(), refinementCount: newCount },
     });
 
     return NextResponse.json({

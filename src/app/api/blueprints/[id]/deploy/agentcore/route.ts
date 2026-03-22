@@ -6,9 +6,10 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import { ABP } from "@/lib/types/abp";
+import { readABP } from "@/lib/abp/read";
 import { deployToAgentCore } from "@/lib/agentcore/deploy";
 import type { AgentCoreDeploymentRecord } from "@/lib/agentcore/types";
 
@@ -81,7 +82,7 @@ export async function POST(
       );
     }
 
-    const abp = blueprint.abp as ABP;
+    const abp = readABP(blueprint.abp);
 
     // Deploy to AgentCore — this makes live AWS API calls and may take up to 30s
     let deploymentRecord: AgentCoreDeploymentRecord;
@@ -122,36 +123,37 @@ export async function POST(
       .where(eq(agentBlueprints.id, id));
 
     // Audit: deployment event — also triggers webhooks + notifications
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: id,
-      action: "blueprint.agentcore_deployed",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role!,
-      enterpriseId: blueprint.enterpriseId ?? null,
-      fromState: { status: "approved" },
-      toState: { status: "deployed", deploymentTarget: "agentcore" },
-      metadata: {
-        agentId: deploymentRecord.agentId,
-        agentArn: deploymentRecord.agentArn,
-        region: deploymentRecord.region,
-        foundationModel: deploymentRecord.foundationModel,
-        toolCount: (abp.capabilities.tools ?? []).length,
+    await publishEvent({
+      event: {
+        type: "blueprint.agentcore_deployed",
+        payload: {
+          blueprintId: id,
+          agentId: blueprint.agentId,
+          deploymentId: deploymentRecord.agentId,
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role! },
+      entity: { type: "blueprint", id },
+      enterpriseId: blueprint.enterpriseId ?? null,
     });
 
-    // Also emit a status_changed audit entry so existing notification/webhook
+    // Also emit a status_changed event so existing notification/webhook
     // handlers pick up the deployed transition
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: id,
-      action: "blueprint.status_changed",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role!,
+    await publishEvent({
+      event: {
+        type: "blueprint.status_changed",
+        payload: {
+          blueprintId: id,
+          fromStatus: "approved",
+          toStatus: "deployed",
+          agentId: blueprint.agentId,
+          agentName: blueprint.name ?? "",
+          createdBy: blueprint.createdBy ?? "",
+        },
+      },
+      actor: { email: authSession.user.email!, role: authSession.user.role! },
+      entity: { type: "blueprint", id },
       enterpriseId: blueprint.enterpriseId ?? null,
-      fromState: { status: "approved" },
-      toState: { status: "deployed" },
-      metadata: { trigger: "agentcore_deploy", deploymentTarget: "agentcore" },
     });
 
     return NextResponse.json(

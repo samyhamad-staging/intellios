@@ -61,6 +61,25 @@ export interface EnterpriseSettings {
      * it can be submitted for review. Default: false.
      */
     requireTestsBeforeApproval: boolean;
+    /**
+     * H2-1.4: Governance-gated circuit breaker configuration.
+     * When a deployed agent accumulates error-severity runtime violations
+     * beyond the threshold, the circuit breaker fires.
+     */
+    circuitBreaker: {
+      /**
+       * What to do when the violation threshold is exceeded.
+       * - "auto_suspend": automatically suspend the agent (status → suspended)
+       * - "alert_only": notify admins and compliance officers without suspending
+       * Default: "auto_suspend"
+       */
+      action: "auto_suspend" | "alert_only";
+      /**
+       * Number of error-severity runtime violations in the current evaluation
+       * window that triggers the circuit breaker. Default: 3.
+       */
+      errorViolationThreshold: number;
+    };
   };
   /** Notification preferences */
   notifications: {
@@ -103,6 +122,15 @@ export interface EnterpriseSettings {
      */
     briefingWebhookUrl: string | null;
   };
+  /** White-label branding configuration. */
+  branding: {
+    /** Company name shown in sidebar and reports. Default: "Intellios" */
+    companyName: string;
+    /** Optional logo URL. If set, shown in sidebar instead of the default SVG. */
+    logoUrl: string | null;
+    /** Hex color for sidebar logo background. Default: "#7c3aed" (violet-600) */
+    primaryColor: string;
+  };
   /** SR 11-7 periodic model review scheduling. */
   periodicReview: {
     /** Whether periodic review scheduling is enabled. Default: true */
@@ -117,6 +145,64 @@ export interface EnterpriseSettings {
      * Default: 30
      */
     reminderDaysBefore: number;
+  };
+  /**
+   * H2-3: Enterprise SSO (SAML 2.0 / OIDC) configuration.
+   * OIDC is activated when the platform-level SSO_ISSUER env var is set.
+   * SAML requires a separate SAML middleware (future enhancement).
+   */
+  sso: {
+    /** Whether SSO is enabled for this enterprise. Default: false */
+    enabled: boolean;
+    /** SSO protocol. Only "oidc" is supported in the current platform build. */
+    protocol: "oidc" | "saml";
+    /**
+     * OIDC: issuer / discovery base URL
+     * (e.g. https://login.microsoftonline.com/{tenant}/v2.0)
+     * SAML: IdP metadata URL
+     */
+    issuer: string;
+    /** OIDC client ID registered with the IdP. */
+    clientId: string;
+    /**
+     * OIDC client secret. Stored at rest in the enterprise settings JSONB
+     * column. Masked to "••••••••" in all GET responses.
+     */
+    clientSecret: string;
+    /**
+     * Email domain that triggers the SSO login button on the login page.
+     * e.g. "acme.com" — when a user types an @acme.com email the SSO
+     * button appears and credentials are hidden.
+     */
+    emailDomain: string;
+    /** IdP claim-name overrides for standard user attributes. */
+    attributeMapping: {
+      /** Claim that contains the user's email address. Default: "email" */
+      email: string;
+      /** Claim that contains the user's display name. Default: "name" */
+      name: string;
+      /** Claim that contains the user's group memberships. Default: "groups" */
+      groups: string;
+    };
+    /**
+     * H2-3.2: Group name → Intellios role mapping used during JIT
+     * provisioning. e.g. { "EngineeringLeads": "architect" }.
+     * Users not matching any group receive defaultRole.
+     */
+    groupRoleMapping: Record<string, string>;
+    /** H2-3.2: Role for SSO users not matched by groupRoleMapping. Default: "viewer" */
+    defaultRole: string;
+  };
+  /**
+   * H2-5.2: Cost attribution token pricing rates.
+   * Used to compute per-agent and fleet-level cost from telemetry.
+   * Costs: (tokensIn * inputCostPer1kTokens + tokensOut * outputCostPer1kTokens) / 1000
+   */
+  costRates: {
+    /** Cost per 1,000 input tokens in USD. Default: 0.003 */
+    inputCostPer1kTokens: number;
+    /** Cost per 1,000 output tokens in USD. Default: 0.015 */
+    outputCostPer1kTokens: number;
   };
   /**
    * Phase 2: Deployment target configuration.
@@ -172,6 +258,10 @@ export const DEFAULT_ENTERPRISE_SETTINGS: EnterpriseSettings = {
     requireAllPhase3Acknowledgments: true,
     allowSelfApproval: false,
     requireTestsBeforeApproval: false,
+    circuitBreaker: {
+      action: "auto_suspend",
+      errorViolationThreshold: 3,
+    },
   },
   notifications: {
     adminEmail: null,
@@ -188,10 +278,30 @@ export const DEFAULT_ENTERPRISE_SETTINGS: EnterpriseSettings = {
     },
     briefingWebhookUrl: null,
   },
+  branding: {
+    companyName: "Intellios",
+    logoUrl: null,
+    primaryColor: "#7c3aed",
+  },
   periodicReview: {
     enabled: true,
     defaultCadenceMonths: 12,
     reminderDaysBefore: 30,
+  },
+  sso: {
+    enabled: false,
+    protocol: "oidc",
+    issuer: "",
+    clientId: "",
+    clientSecret: "",
+    emailDomain: "",
+    attributeMapping: { email: "email", name: "name", groups: "groups" },
+    groupRoleMapping: {},
+    defaultRole: "viewer",
+  },
+  costRates: {
+    inputCostPer1kTokens: 0.003,
+    outputCostPer1kTokens: 0.015,
   },
   deploymentTargets: {
     agentcore: null,

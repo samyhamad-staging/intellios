@@ -13,17 +13,19 @@ import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { getRequestId } from "@/lib/request-id";
 import { generateAgentCode } from "@/lib/export/code-generator";
+import { artifactExists, getSignedUrl, uploadArtifact } from "@/lib/storage/s3";
 import type { ABP } from "@/lib/types/abp";
+import { readABP } from "@/lib/abp/read";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { session: authSession, error } = await requireAuth([
-    "designer",
+    "architect",
     "reviewer",
     "compliance_officer",
     "admin",
@@ -53,7 +55,7 @@ export async function GET(
       );
     }
 
-    const abp = blueprint.abp as ABP;
+    const abp = readABP(blueprint.abp);
 
     const code = generateAgentCode(abp, {
       blueprintId,
@@ -63,24 +65,31 @@ export async function GET(
     });
 
     // Audit log — fire-and-forget
-    void writeAuditLog({
-      entityType: "blueprint",
-      entityId: blueprintId,
-      action: "blueprint.code_exported",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
-      enterpriseId: blueprint.enterpriseId,
-      metadata: {
-        agentId: blueprint.agentId,
-        agentName: blueprint.name,
-        version: blueprint.version,
-        format: "typescript",
+    void publishEvent({
+      event: {
+        type: "blueprint.code_exported",
+        payload: {
+          blueprintId,
+          agentId: blueprint.agentId,
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id: blueprintId },
+      enterpriseId: blueprint.enterpriseId ?? null,
     });
 
     const safeName = (blueprint.name ?? "agent")
       .replace(/[^a-zA-Z0-9_-]/g, "-")
       .toLowerCase();
+
+    // S3 cache
+    const s3Key = `code/${blueprintId}/${blueprint.version}.ts`;
+    const cached = await artifactExists(s3Key);
+    if (cached) {
+      const signedUrl = await getSignedUrl(s3Key, 3600);
+      if (signedUrl) return Response.redirect(signedUrl, 302);
+    }
+    void uploadArtifact(s3Key, code, "text/plain");
 
     return new Response(code, {
       headers: {

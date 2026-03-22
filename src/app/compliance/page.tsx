@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { CheckSquare, AlertTriangle } from "lucide-react";
+import { CheckSquare, AlertTriangle, Download } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,6 +96,33 @@ export default function CompliancePage() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Report download state
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownloadReport() {
+    setDownloading(true);
+    try {
+      const now = new Date();
+      const period = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+      const res = await fetch(`/api/compliance/report?period=${period}`);
+      if (!res.ok) throw new Error("Report failed");
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `compliance-report-${period}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // silently ignore download errors
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   // Complete Review modal state
   const [completeModal, setCompleteModal] = useState<OverdueReviewItem | null>(null);
@@ -202,12 +229,24 @@ export default function CompliancePage() {
           </div>
           <p className="text-sm text-gray-500 pl-7">Enterprise compliance posture, at-risk agents, and review queue</p>
         </div>
-        <Link
-          href="/governance"
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-        >
-          Governance Hub →
-        </Link>
+        <div className="flex items-center gap-2">
+          {(session?.user?.role === "admin" || session?.user?.role === "compliance_officer") && (
+            <button
+              onClick={handleDownloadReport}
+              disabled={downloading}
+              className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm text-violet-700 hover:bg-violet-100 transition-colors disabled:opacity-50"
+            >
+              <Download size={14} />
+              {downloading ? "Generating…" : "Download Report"}
+            </button>
+          )}
+          <Link
+            href="/governance"
+            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+          >
+            Governance Hub →
+          </Link>
+        </div>
       </div>
 
       <div className="space-y-8">
@@ -326,11 +365,11 @@ export default function CompliancePage() {
                     </>
                   );
                   return anchor ? (
-                    <a key={label} href={anchor} className={`block rounded-card border p-4 hover:shadow-sm hover:border-violet-200 transition-all ${color}`}>
+                    <a key={label} href={anchor} className={`block rounded-xl border p-4 hover:shadow-sm hover:border-violet-200 transition-all ${color}`}>
                       {inner}
                     </a>
                   ) : (
-                    <div key={label} className={`rounded-card border p-4 ${color}`}>
+                    <div key={label} className={`rounded-xl border p-4 ${color}`}>
                       {inner}
                     </div>
                   );
@@ -344,7 +383,7 @@ export default function CompliancePage() {
                 Periodic Review Status (SR 11-7)
               </h2>
               {(posture.overdueReviews?.length ?? 0) === 0 ? (
-                <div className="rounded-card border border-green-200 bg-green-50 p-5 text-center">
+                <div className="rounded-xl border border-green-200 bg-green-50 p-5 text-center">
                   <p className="text-sm font-medium text-green-800">✓ All deployments on schedule</p>
                   <p className="mt-0.5 text-xs text-green-600">No deployed agents have overdue periodic reviews.</p>
                 </div>
@@ -356,7 +395,7 @@ export default function CompliancePage() {
                       {posture.overdueReviews.length} agent{posture.overdueReviews.length !== 1 ? "s" : ""} with overdue periodic review
                     </span>
                   </div>
-                  <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
+                  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-gray-100 bg-gray-50">
@@ -419,7 +458,7 @@ export default function CompliancePage() {
                 <p className="text-xs text-gray-400 mt-0.5">Agents with unresolved validation errors</p>
               </div>
               {posture.atRiskAgents.length === 0 ? (
-                <div className="rounded-card border border-green-200 bg-green-50 p-6 text-center">
+                <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
                   <p className="text-sm font-medium text-green-800">
                     ✓ No agents at risk
                   </p>
@@ -429,7 +468,7 @@ export default function CompliancePage() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
+                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50">
@@ -528,7 +567,7 @@ export default function CompliancePage() {
               </div>
 
               {posture.reviewQueue.length === 0 ? (
-                <div className="rounded-card border border-gray-200 bg-white p-6 text-center">
+                <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
                   <p className="text-sm text-gray-400">
                     No blueprints pending review
                   </p>
@@ -579,7 +618,7 @@ export default function CompliancePage() {
               </h2>
 
               {posture.policyCoverage.length === 0 ? (
-                <div className="rounded-card border border-gray-200 bg-white p-6 text-center">
+                <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
                   <p className="text-sm text-gray-400">
                     No active governance policies.{" "}
                     <Link
@@ -591,7 +630,7 @@ export default function CompliancePage() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
+                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50">
@@ -677,7 +716,7 @@ export default function CompliancePage() {
                     </span>
                   </div>
                 </div>
-                <div className="rounded-card border border-gray-200 bg-white p-5">
+                <div className="rounded-xl border border-gray-200 bg-white p-5">
                   {analytics.monthlySubmissions.every((m) => m.count === 0) &&
                   analytics.monthlyApprovals.every((m) => m.count === 0) ? (
                     <div className="flex flex-col items-center gap-1 py-6 text-center">

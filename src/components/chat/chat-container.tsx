@@ -46,7 +46,7 @@ export function ChatContainer({
     [sessionId]
   );
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, error } = useChat({
     transport,
     id: sessionId,
     messages: initialMessages,
@@ -119,7 +119,7 @@ export function ChatContainer({
                 <button
                   key={prompt}
                   onClick={() => handleSend(prompt)}
-                  className="flex items-center justify-between gap-2 rounded-card border border-gray-200 bg-white px-4 py-3 text-left text-sm text-gray-700 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 transition-colors"
+                  className="flex items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm text-gray-700 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 transition-colors"
                 >
                   <span>{prompt}</span>
                   <ArrowRight size={13} className="shrink-0 text-gray-300 group-hover:text-violet-400" />
@@ -156,6 +156,12 @@ export function ChatContainer({
             </div>
           );
         })}
+
+        {error && !isStreaming && (
+          <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <span>Something went wrong. Check your connection and try again.</span>
+          </div>
+        )}
 
         {isStreaming && (
           <div className="flex justify-start">

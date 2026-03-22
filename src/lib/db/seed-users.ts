@@ -23,9 +23,9 @@ const DEMO_USERS = [
   },
   {
     email: "designer@intellios.dev",
-    name: "Agent Designer",
+    name: "Agent Architect",
     password: "Designer1234!",
-    role: "designer",
+    role: "architect",
   },
   {
     email: "reviewer@intellios.dev",

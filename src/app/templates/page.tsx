@@ -59,7 +59,7 @@ function TemplateCard({
   const deniedActions = template.abp.constraints?.denied_actions ?? [];
 
   return (
-    <div className="flex flex-col rounded-card border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+    <div className="flex flex-col rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
       <div className="flex-1 p-5">
         {/* Badges */}
         <div className="flex items-center gap-1.5 mb-3 flex-wrap">
@@ -191,7 +191,7 @@ export default async function TemplatesPage() {
         {/* Header */}
         <div className="mb-10 flex items-start justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-card bg-violet-100">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-100">
               <LayoutTemplate className="h-6 w-6 text-violet-600" />
             </div>
             <div>

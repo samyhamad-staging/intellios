@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { apiError, ErrorCode } from "@/lib/errors";
 import type { Session } from "next-auth";
 
-export type Role = "designer" | "reviewer" | "compliance_officer" | "admin" | "viewer";
+export type Role = "architect" | "reviewer" | "compliance_officer" | "admin" | "viewer";
 
 type AuthSuccess = { session: Session; error: null };
 type AuthFailure = { session: null; error: ReturnType<typeof apiError> };
@@ -12,7 +12,7 @@ type AuthFailure = { session: null; error: ReturnType<typeof apiError> };
  * optionally enforce role-based access control.
  *
  * Usage:
- *   const { session, error } = await requireAuth(["designer", "admin"]);
+ *   const { session, error } = await requireAuth(["architect", "admin"]);
  *   if (error) return error;
  *   // session.user.role, session.user.email are now available
  */

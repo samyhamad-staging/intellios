@@ -64,7 +64,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ agentId: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 

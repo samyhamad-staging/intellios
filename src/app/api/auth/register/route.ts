@@ -7,7 +7,7 @@
  *   2. Checks email uniqueness
  *   3. Generates a new enterpriseId UUID
  *   4. Creates the admin user (bcrypt)
- *   5. Upserts initial enterprise settings (default approval chain)
+ *   5. Upserts initial enterprise settings (branding + approval chain)
  *   6. Seeds the SR 11-7 Core governance policy pack
  *
  * On success: returns 201 { message: "Account created" }.
@@ -30,6 +30,7 @@ import { findTemplatePack } from "@/lib/governance/policy-templates";
 import { getRequestId } from "@/lib/request-id";
 
 const RegisterBody = z.object({
+  companyName: z.string().min(1).max(80),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
   email: z.string().email().max(300),
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
     "unknown";
-  const rateLimitResponse = rateLimit(ip, {
+  const rateLimitResponse = await rateLimit(ip, {
     endpoint: "register",
     max: 5,
     windowMs: 60 * 60 * 1000, // 1 hour
@@ -81,8 +82,10 @@ export async function POST(request: NextRequest) {
     });
 
     // 2. Seed initial enterprise settings
+    //    - branding.companyName from the form
     //    - Default 2-step approval chain (reviewer → compliance_officer)
     const initialSettings = {
+      branding: { companyName: body.companyName },
       approvalChain: [
         { step: 0, role: "reviewer", label: "Reviewer Approval" },
         { step: 1, role: "compliance_officer", label: "Compliance Sign-off" },

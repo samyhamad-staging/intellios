@@ -35,11 +35,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
-  const rateLimitResponse = rateLimit(authSession.user.email!, {
+  const rateLimitResponse = await rateLimit(authSession.user.email!, {
     endpoint: "chat",
     max: 30,
     windowMs: 60_000,

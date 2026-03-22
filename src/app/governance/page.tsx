@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Shield, Plus, Download, ShieldAlert } from "lucide-react";
+import { Shield, Plus, Download } from "lucide-react";
 
 interface Agent {
   id: string;
@@ -193,7 +193,7 @@ export default function GovernanceHubPage() {
       }
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message ?? "Import failed");
+        throw new Error(data.error ?? "Import failed");
       }
       const data = await res.json();
       showToast(`✓ Imported ${data.created} polic${data.created === 1 ? "y" : "ies"} from pack`, "success");
@@ -270,27 +270,6 @@ export default function GovernanceHubPage() {
           </div>
         )}
 
-        {/* Active violations banner */}
-        {!loading && withErrors > 0 && (
-          <a
-            href="#violations"
-            className="flex items-center justify-between rounded-lg border badge-gov-error px-4 py-3 transition-opacity hover:opacity-90"
-          >
-            <div className="flex items-center gap-3">
-              <ShieldAlert size={16} strokeWidth={2} />
-              <div>
-                <p className="text-sm font-semibold">
-                  {withErrors} agent{withErrors !== 1 ? "s" : ""} with active governance violations
-                </p>
-                <p className="text-xs opacity-70 mt-0.5">
-                  {withErrors !== 1 ? "These agents require" : "This agent requires"} remediation before deployment
-                </p>
-              </div>
-            </div>
-            <span className="text-xs font-semibold shrink-0">View violations ↓</span>
-          </a>
-        )}
-
         {/* ── Governance Analytics ─────────────────────────────────────────── */}
         {canViewAnalytics && (
           <section>
@@ -311,19 +290,19 @@ export default function GovernanceHubPage() {
                   sub: "of validated agents",
                   color:
                     analytics?.validationPassRate != null && analytics.validationPassRate >= 80
-                      ? "badge-gov-pass"
+                      ? "bg-green-50 border-green-200 text-green-900"
                       : analytics?.validationPassRate != null && analytics.validationPassRate >= 50
-                      ? "badge-gov-warn"
+                      ? "bg-amber-50 border-amber-200 text-amber-900"
                       : analytics?.validationPassRate != null
-                      ? "badge-gov-error"
-                      : "kpi-neutral",
+                      ? "bg-red-50 border-red-200 text-red-900"
+                      : "bg-white border-gray-200 text-gray-900",
                   subColor:
                     analytics?.validationPassRate != null && analytics.validationPassRate >= 80
-                      ? "text-[color:var(--gov-pass-icon)]"
+                      ? "text-green-600"
                       : analytics?.validationPassRate != null && analytics.validationPassRate >= 50
-                      ? "text-[color:var(--gov-warn-icon)]"
+                      ? "text-amber-600"
                       : analytics?.validationPassRate != null
-                      ? "text-[color:var(--gov-error-text)]"
+                      ? "text-red-600"
                       : "text-gray-400",
                 },
                 {
@@ -336,7 +315,7 @@ export default function GovernanceHubPage() {
                       : `${Math.round(analytics.avgTimeToApprovalHours / 24)}d`
                     : "N/A",
                   sub: "from review submission",
-                  color: "kpi-neutral",
+                  color: "bg-white border-gray-200 text-gray-900",
                   subColor: "text-gray-400",
                 },
                 {
@@ -351,17 +330,17 @@ export default function GovernanceHubPage() {
                     !analyticsLoading &&
                     analytics &&
                     analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0) > 0
-                      ? "badge-gov-error"
-                      : "kpi-neutral",
+                      ? "bg-red-50 border-red-200 text-red-900"
+                      : "bg-white border-gray-200 text-gray-900",
                   subColor:
                     !analyticsLoading &&
                     analytics &&
                     analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0) > 0
-                      ? "text-[color:var(--gov-error-text)]"
+                      ? "text-red-600"
                       : "text-gray-400",
                 },
               ].map(({ label, value, sub, color, subColor }) => (
-                <div key={label} className={`rounded-card border p-5 ${color}`}>
+                <div key={label} className={`rounded-xl border p-5 ${color}`}>
                   <div className="text-3xl font-bold">{value}</div>
                   <div className="mt-1 text-sm font-medium">{label}</div>
                   <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
@@ -372,7 +351,7 @@ export default function GovernanceHubPage() {
             {!analyticsLoading && analytics && (
               <div className="grid grid-cols-2 gap-6">
                 {/* Monthly Submissions vs Approvals bar chart */}
-                <div className="rounded-card border border-gray-200 bg-white p-5">
+                <div className="rounded-xl border border-gray-200 bg-white p-5">
                   <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
                     Monthly Activity (last 6 months)
                   </h3>
@@ -434,7 +413,7 @@ export default function GovernanceHubPage() {
                 {/* Right column: Top Violated Policies + Agent Status Distribution */}
                 <div className="space-y-6">
                   {/* Top Violated Policies */}
-                  <div className="rounded-card border border-gray-200 bg-white p-5">
+                  <div className="rounded-xl border border-gray-200 bg-white p-5">
                     <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
                       Top Violated Policies
                     </h3>
@@ -460,7 +439,7 @@ export default function GovernanceHubPage() {
                   </div>
 
                   {/* Agent Status Distribution */}
-                  <div className="rounded-card border border-gray-200 bg-white p-5">
+                  <div className="rounded-xl border border-gray-200 bg-white p-5">
                     <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
                       Agent Status Distribution
                     </h3>
@@ -516,10 +495,10 @@ export default function GovernanceHubPage() {
 
             {analyticsLoading && (
               <div className="grid grid-cols-2 gap-6">
-                <div className="h-64 animate-pulse rounded-card bg-gray-100" />
+                <div className="h-64 animate-pulse rounded-xl bg-gray-100" />
                 <div className="space-y-4">
-                  <div className="h-28 animate-pulse rounded-card bg-gray-100" />
-                  <div className="h-32 animate-pulse rounded-card bg-gray-100" />
+                  <div className="h-28 animate-pulse rounded-xl bg-gray-100" />
+                  <div className="h-32 animate-pulse rounded-xl bg-gray-100" />
                 </div>
               </div>
             )}
@@ -866,7 +845,7 @@ export default function GovernanceHubPage() {
               {templatePacks.map((pack) => (
                 <div
                   key={pack.id}
-                  className="rounded-card border border-gray-200 bg-white p-5 flex flex-col gap-3"
+                  className="rounded-xl border border-gray-200 bg-white p-5 flex flex-col gap-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -902,7 +881,7 @@ export default function GovernanceHubPage() {
 
             {/* Duplicate conflict prompt */}
             {duplicatePrompt && (
-              <div className="mt-4 rounded-card border border-amber-200 bg-amber-50 px-5 py-4">
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
                 <p className="text-sm font-medium text-amber-800 mb-1">
                   {duplicatePrompt.duplicates.length} existing polic{duplicatePrompt.duplicates.length === 1 ? "y" : "ies"} would be replaced:
                 </p>

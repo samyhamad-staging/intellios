@@ -12,24 +12,29 @@
  */
 
 import { db } from "@/lib/db";
-import { agentBlueprints, deploymentHealth } from "@/lib/db/schema";
-import { eq, isNull } from "drizzle-orm";
+import { agentBlueprints, deploymentHealth, agentTelemetry } from "@/lib/db/schema";
+import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { loadPolicies } from "@/lib/governance/load-policies";
 import { evaluatePolicies } from "@/lib/governance/evaluate";
 import type { ABP } from "@/lib/types/abp";
+import { readABP } from "@/lib/abp/read";
 import type { ValidationReport } from "@/lib/governance/types";
 
-export type HealthStatus = "clean" | "critical" | "unknown";
+export type HealthStatus = "clean" | "degraded" | "critical" | "unknown";
 
 export interface HealthCheckResult {
   agentId: string;
   blueprintId: string;
-  healthStatus: "clean" | "critical";
+  healthStatus: "clean" | "degraded" | "critical";
   errorCount: number;
   warningCount: number;
-  /** Health status before this check — used to detect clean↔critical transitions. */
+  /** Health status before this check — used to detect status transitions. */
   previousStatus: HealthStatus;
   checkedAt: string; // ISO
+  // Production telemetry (null if no data available)
+  productionErrorRate: number | null;
+  productionLatencyP99: number | null;
+  lastTelemetryAt: Date | null;
 }
 
 /**
@@ -52,10 +57,56 @@ export async function checkDeploymentHealth(
   const policies = await loadPolicies(enterpriseId);
 
   // 3. Pure rule evaluation — no AI, no remediation suggestions
-  const violations = evaluatePolicies(blueprint.abp as ABP, policies);
+  const violations = evaluatePolicies(readABP(blueprint.abp), policies);
   const errors   = violations.filter((v) => v.severity === "error");
   const warnings = violations.filter((v) => v.severity === "warning");
-  const healthStatus: "clean" | "critical" = errors.length > 0 ? "critical" : "clean";
+
+  // 4. Query 24h telemetry aggregate for production health signal
+  const since24h = new Date(Date.now() - 24 * 3_600_000);
+  const since6h  = new Date(Date.now() -  6 * 3_600_000);
+
+  const [telemetry24h, telemetry6h, latestTelemetry] = await Promise.all([
+    db
+      .select({
+        totalInvocations: sql<number>`SUM(${agentTelemetry.invocations})`,
+        totalErrors:       sql<number>`SUM(${agentTelemetry.errors})`,
+        maxLatencyP99:     sql<number>`MAX(${agentTelemetry.latencyP99Ms})`,
+        maxTimestamp:      sql<Date | null>`MAX(${agentTelemetry.timestamp})`,
+      })
+      .from(agentTelemetry)
+      .where(and(eq(agentTelemetry.agentId, blueprint.agentId), gt(agentTelemetry.timestamp, since24h))),
+    db
+      .select({ totalInvocations: sql<number>`SUM(${agentTelemetry.invocations})` })
+      .from(agentTelemetry)
+      .where(and(eq(agentTelemetry.agentId, blueprint.agentId), gt(agentTelemetry.timestamp, since6h))),
+    db
+      .select({ maxTimestamp: sql<Date | null>`MAX(${agentTelemetry.timestamp})` })
+      .from(agentTelemetry)
+      .where(eq(agentTelemetry.agentId, blueprint.agentId)),
+  ]);
+
+  const totalInv24 = Number(telemetry24h[0]?.totalInvocations ?? 0);
+  const totalErr24 = Number(telemetry24h[0]?.totalErrors ?? 0);
+  const prodErrorRate = totalInv24 > 0 ? totalErr24 / totalInv24 : null;
+  const prodLatencyP99 = telemetry24h[0]?.maxLatencyP99 ? Number(telemetry24h[0].maxLatencyP99) : null;
+  const lastTelemetryAt = latestTelemetry[0]?.maxTimestamp ?? null;
+  const inv6h = Number(telemetry6h[0]?.totalInvocations ?? 0);
+
+  // 5. Compute combined governance + production health status
+  //   critical: governance errors > 0 OR production error rate > 20%
+  //   degraded: production error rate 5–20% OR zero invocations in last 6h (with telemetry data)
+  //   clean: otherwise
+  let healthStatus: "clean" | "degraded" | "critical";
+  if (errors.length > 0 || (prodErrorRate !== null && prodErrorRate > 0.2)) {
+    healthStatus = "critical";
+  } else if (
+    (prodErrorRate !== null && prodErrorRate > 0.05) ||
+    (lastTelemetryAt !== null && inv6h === 0)
+  ) {
+    healthStatus = "degraded";
+  } else {
+    healthStatus = "clean";
+  }
 
   // Build a minimal ValidationReport (violations present but no suggestions)
   const report: ValidationReport = {
@@ -66,47 +117,56 @@ export async function checkDeploymentHealth(
     generatedAt: new Date().toISOString(),
   };
 
-  // 4. Read previous status for transition detection
+  // 6. Read previous status for transition detection
   const existing = await db.query.deploymentHealth.findFirst({
     where: eq(deploymentHealth.agentId, blueprint.agentId),
   });
   const previousStatus: HealthStatus =
     (existing?.healthStatus as HealthStatus) ?? "unknown";
 
-  // 5. Upsert health record (INSERT or UPDATE on agentId conflict)
+  // 7. Upsert health record (INSERT or UPDATE on agentId conflict)
   await db
     .insert(deploymentHealth)
     .values({
-      agentId:          blueprint.agentId,
-      blueprintId:      blueprint.id,
+      agentId:               blueprint.agentId,
+      blueprintId:           blueprint.id,
       enterpriseId,
       healthStatus,
-      errorCount:       errors.length,
-      warningCount:     warnings.length,
-      validationReport: report,
-      lastCheckedAt:    new Date(),
+      errorCount:            errors.length,
+      warningCount:          warnings.length,
+      validationReport:      report,
+      lastCheckedAt:         new Date(),
       deployedAt,
+      productionErrorRate:   prodErrorRate,
+      productionLatencyP99:  prodLatencyP99,
+      lastTelemetryAt:       lastTelemetryAt ? new Date(lastTelemetryAt) : null,
     })
     .onConflictDoUpdate({
       target: deploymentHealth.agentId,
       set: {
-        blueprintId:      blueprint.id,
+        blueprintId:           blueprint.id,
         healthStatus,
-        errorCount:       errors.length,
-        warningCount:     warnings.length,
-        validationReport: report,
-        lastCheckedAt:    new Date(),
+        errorCount:            errors.length,
+        warningCount:          warnings.length,
+        validationReport:      report,
+        lastCheckedAt:         new Date(),
+        productionErrorRate:   prodErrorRate,
+        productionLatencyP99:  prodLatencyP99,
+        lastTelemetryAt:       lastTelemetryAt ? new Date(lastTelemetryAt) : null,
       },
     });
 
   return {
-    agentId:        blueprint.agentId,
-    blueprintId:    blueprint.id,
+    agentId:              blueprint.agentId,
+    blueprintId:          blueprint.id,
     healthStatus,
-    errorCount:     errors.length,
-    warningCount:   warnings.length,
+    errorCount:           errors.length,
+    warningCount:         warnings.length,
     previousStatus,
-    checkedAt:      new Date().toISOString(),
+    checkedAt:            new Date().toISOString(),
+    productionErrorRate:  prodErrorRate,
+    productionLatencyP99: prodLatencyP99,
+    lastTelemetryAt:      lastTelemetryAt ? new Date(lastTelemetryAt) : null,
   };
 }
 

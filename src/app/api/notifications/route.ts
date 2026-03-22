@@ -15,7 +15,7 @@ import {
  */
 export async function GET(request: NextRequest) {
   const { session: authSession, error } = await requireAuth([
-    "designer",
+    "architect",
     "reviewer",
     "compliance_officer",
     "admin",
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   const { session: authSession, error } = await requireAuth([
-    "designer",
+    "architect",
     "reviewer",
     "compliance_officer",
     "admin",
