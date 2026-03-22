@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
-import { and, eq, gt, isNotNull, lte } from "drizzle-orm";
-import { getEnterpriseSettings } from "@/lib/settings/get-settings";
+import { and, eq, isNotNull, lte } from "drizzle-orm";
 import { getComplianceOfficerEmails } from "@/lib/notifications/recipients";
 import { sendEmail, buildNotificationEmail } from "@/lib/notifications/email";
 import { publishEvent } from "@/lib/events/publish";
@@ -13,15 +12,12 @@ import { publishEvent } from "@/lib/events/publish";
  * Daily cron job that sends periodic review reminder emails to compliance
  * officers when a deployed agent's next review is approaching.
  *
- * Reminder logic:
- *   - Look up each enterprise's `reminderDaysBefore` setting.
- *   - If `nextReviewDue - reminderDaysBefore days <= now()` AND
- *     (`lastReminderSentAt IS NULL` OR `lastReminderSentAt < lastPeriodicReviewAt`)
- *     → send reminder emails and set `lastReminderSentAt = now()`.
- *
- * This ensures exactly one reminder per review cycle — regardless of how many
- * times the cron fires, the `lastReminderSentAt >= lastPeriodicReviewAt` guard
- * prevents duplicate reminders within the same cycle.
+ * H3-3.3: Multi-window reminder logic at 30, 14, and 7 days before due date.
+ *   - For each threshold, send a reminder if `now` is within the 1-day window
+ *     starting at `nextReviewDue - threshold days`.
+ *   - Deduplication: skip if `lastReminderSentAt` was within the last 6 days
+ *     (prevents re-sending within the same threshold window).
+ *   - Only one reminder fires per cron run (break after first match).
  *
  * Security: Bearer token via CRON_SECRET env var (optional; skip if unset).
  */
@@ -37,8 +33,11 @@ export async function GET(request: NextRequest) {
 
   const now = new Date();
 
-  // Pre-filter: deployed blueprints with a scheduled review due within 60 days
-  const sixtDaysFromNow = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+  // H3-3.3: Fixed reminder thresholds (days before due date)
+  const thresholds = [30, 14, 7];
+
+  // Pre-filter: deployed blueprints with a scheduled review due within 35 days
+  const thirtyFiveDaysFromNow = new Date(now.getTime() + 35 * 24 * 60 * 60 * 1000);
 
   let candidates;
   try {
@@ -46,8 +45,7 @@ export async function GET(request: NextRequest) {
       where: and(
         eq(agentBlueprints.status, "deployed"),
         isNotNull(agentBlueprints.nextReviewDue),
-        gt(agentBlueprints.nextReviewDue, now),
-        lte(agentBlueprints.nextReviewDue, sixtDaysFromNow)
+        lte(agentBlueprints.nextReviewDue, thirtyFiveDaysFromNow)
       ),
     });
   } catch (err) {
@@ -61,78 +59,71 @@ export async function GET(request: NextRequest) {
   for (const blueprint of candidates) {
     processed++;
 
-    const settings = await getEnterpriseSettings(blueprint.enterpriseId);
-    const { reminderDaysBefore } = settings.periodicReview;
+    const nextReviewDue = blueprint.nextReviewDue!;
+    const lastReminderSentAt = blueprint.lastReminderSentAt ?? null;
 
-    // Reminder window: nextReviewDue - reminderDaysBefore days
-    const reminderWindowStart = new Date(
-      blueprint.nextReviewDue!.getTime() - reminderDaysBefore * 24 * 60 * 60 * 1000
-    );
+    // Check each threshold window
+    for (const days of thresholds) {
+      const windowStart = new Date(nextReviewDue.getTime() - days * 24 * 60 * 60 * 1000);
+      const windowEnd = new Date(windowStart.getTime() + 24 * 60 * 60 * 1000); // 1-day window
 
-    // Check: is it time to send a reminder?
-    if (now < reminderWindowStart) continue;
+      if (now >= windowStart && now <= windowEnd) {
+        // Check not already sent recently (within 6 days)
+        if (lastReminderSentAt && (now.getTime() - lastReminderSentAt.getTime()) < 6 * 24 * 60 * 60 * 1000) {
+          break; // already sent for this threshold
+        }
 
-    // Check: has a reminder already been sent for this review cycle?
-    // A cycle starts after each completed review (lastPeriodicReviewAt).
-    // If lastReminderSentAt is null, no reminder has ever been sent.
-    // If lastReminderSentAt < lastPeriodicReviewAt, the last reminder was for
-    // a previous cycle — safe to send again.
-    if (blueprint.lastReminderSentAt !== null && blueprint.lastReminderSentAt !== undefined) {
-      const lastReviewAt = blueprint.lastPeriodicReviewAt;
-      if (!lastReviewAt || blueprint.lastReminderSentAt >= lastReviewAt) {
-        // Already sent for this cycle — skip
-        continue;
+        // Fetch compliance officers for this enterprise
+        const recipients = await getComplianceOfficerEmails(blueprint.enterpriseId);
+        if (recipients.length === 0) break;
+
+        const agentName = blueprint.name ?? "Agent";
+        const daysUntil = Math.ceil(
+          (nextReviewDue.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)
+        );
+        const reviewDueStr = nextReviewDue.toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
+
+        const title = `Periodic review due in ${daysUntil} day${daysUntil === 1 ? "" : "s"}`;
+        const message = `${agentName} has a scheduled periodic review due on ${reviewDueStr}. Please complete the review in Intellios to keep this agent's compliance record current.`;
+        const link = `/registry/${blueprint.agentId}`;
+
+        for (const recipientEmail of recipients) {
+          void sendEmail({
+            to: recipientEmail,
+            subject: `[Intellios] Periodic review reminder: ${agentName}`,
+            html: buildNotificationEmail(title, message, link),
+          });
+        }
+
+        // Update lastReminderSentAt to prevent duplicates this cycle
+        await db
+          .update(agentBlueprints)
+          .set({ lastReminderSentAt: now })
+          .where(eq(agentBlueprints.id, blueprint.id));
+
+        // Audit trail
+        void publishEvent({
+          event: {
+            type: "blueprint.periodic_review_reminder",
+            payload: {
+              blueprintId: blueprint.id,
+              agentId: blueprint.agentId,
+              agentName: agentName,
+            },
+          },
+          actor: { email: "system@intellios", role: "system" },
+          entity: { type: "blueprint", id: blueprint.id },
+          enterpriseId: blueprint.enterpriseId ?? null,
+        });
+
+        sent++;
+        break; // only send one reminder per run per blueprint
       }
     }
-
-    // Fetch compliance officers for this enterprise
-    const recipients = await getComplianceOfficerEmails(blueprint.enterpriseId);
-    if (recipients.length === 0) continue;
-
-    const agentName = blueprint.name ?? "Agent";
-    const daysUntil = Math.ceil(
-      (blueprint.nextReviewDue!.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)
-    );
-    const reviewDueStr = blueprint.nextReviewDue!.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-
-    const title = `Periodic review due in ${daysUntil} day${daysUntil === 1 ? "" : "s"}`;
-    const message = `${agentName} has a scheduled periodic review due on ${reviewDueStr}. Please complete the review in Intellios to keep this agent's compliance record current.`;
-    const link = `/registry/${blueprint.agentId}`;
-
-    for (const recipientEmail of recipients) {
-      void sendEmail({
-        to: recipientEmail,
-        subject: `[Intellios] Periodic review reminder: ${agentName}`,
-        html: buildNotificationEmail(title, message, link),
-      });
-    }
-
-    // Update lastReminderSentAt to prevent duplicates this cycle
-    await db
-      .update(agentBlueprints)
-      .set({ lastReminderSentAt: now })
-      .where(eq(agentBlueprints.id, blueprint.id));
-
-    // Audit trail
-    void publishEvent({
-      event: {
-        type: "blueprint.periodic_review_reminder",
-        payload: {
-          blueprintId: blueprint.id,
-          agentId: blueprint.agentId,
-          agentName: agentName,
-        },
-      },
-      actor: { email: "system@intellios", role: "system" },
-      entity: { type: "blueprint", id: blueprint.id },
-      enterpriseId: blueprint.enterpriseId ?? null,
-    });
-
-    sent++;
   }
 
   return NextResponse.json({ processed, sent });

@@ -219,6 +219,25 @@ export type IntelliosEvent =
       };
     }
   | {
+      // H3-3.1: Governance drift detected — new policy violations since approval
+      type: "blueprint.governance_drift_detected";
+      payload: {
+        blueprintId: string;
+        agentId: string;
+        agentName: string;
+        newViolationCount: number;
+      };
+    }
+  | {
+      // H3-3.2: AI fix suggestion generated for a blueprint
+      type: "blueprint.fix_suggested";
+      payload: {
+        blueprintId: string;
+        violationCount: number;
+        changeCount: number;
+      };
+    }
+  | {
       type: "workflow.status_changed";
       payload: {
         workflowId: string;

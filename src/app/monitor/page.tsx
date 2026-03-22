@@ -20,6 +20,7 @@ interface AgentHealth {
   productionErrorRate: number | null;
   productionLatencyP99: number | null;
   lastTelemetryAt: string | null;
+  governanceDrift: { status?: string; newViolations?: unknown[]; checkedAt?: string } | null;
 }
 
 type BedrockAgentStatus =
@@ -447,7 +448,14 @@ export default function MonitorPage() {
                       </td>
                       <td className="px-4 py-3 text-gray-600">v{agent.version}</td>
                       <td className="px-4 py-3">
-                        <HealthBadge status={agent.healthStatus} errorCount={agent.errorCount} />
+                        <div className="flex flex-wrap gap-1">
+                          <HealthBadge status={agent.healthStatus} errorCount={agent.errorCount} />
+                          {agent.governanceDrift?.status === "drifted" && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                              ⚠ Drifted
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-right">
                         {agent.errorCount > 0 ? (

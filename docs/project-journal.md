@@ -2,6 +2,30 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 068 — 2026-03-22: H3 Partial — Continuous Governance + Ecosystem (7/14)
+
+This session began with a strategic decision: H3 has 14 items across 4 sprints, but only 7 are truly buildable today without live execution infrastructure or enterprise design partners. H3-1 (Foundry) and H3-2 (Memory) are explicitly gated — building a visual workflow editor and pattern extraction engine with no real execution data would be pure speculation at high cost. H3-3 (Continuous Governance) and H3-4 (Ecosystem) have no such dependency. They extend already-shipped infrastructure rather than requiring new runtime capabilities.
+
+**H3-3: Continuous Governance** closes the gap between design-time and runtime governance. The most important piece is H3-3.1 — governance drift detection. The key insight behind the implementation is the distinction between the *approval-time baseline* (what violations existed when a compliance officer approved an agent) and the *current state* (violations against today's active policy set). A deployed agent that was clean at approval may develop new violations if policies change after deployment. Storing `baselineValidationReport` at approval time and computing the diff on every cron run is the minimal correct approach. It avoids the false positive problem (violations that existed at approval time are not "new" and should not trigger drift alerts) while correctly catching genuine policy drift.
+
+H3-3.2 (Self-Healing) introduces the first AI-generated remediation flow. Claude proposes minimal targeted ABP changes for each violation, returning a structured diff. The design choice to *not* auto-apply the fix — requiring architect acceptance — is deliberate. Auto-apply would violate the separation of duties principle that runs throughout the product: AI generates, humans govern. The Suggested Fix panel in the Studio is a proposal, not an action.
+
+H3-3.3 (Compliance Calendar) is operationally valuable for compliance officers managing SR 11-7 and annual policy reviews. The iCal export (`.ics`) is zero-dependency and universally supported — every calendar client (Outlook, Google Calendar, Apple Calendar) can subscribe to it. The multi-window reminder logic (30/14/7 days) replaces the single `reminderDaysBefore` setting with a fixed schedule that mirrors regulatory practice.
+
+**H3-4: Ecosystem** is commercially important. The four items make Intellios an open platform rather than a closed appliance.
+
+H3-4.1 (Template Marketplace) seeds the network effect: as more enterprises publish community templates, the cost of starting a new agent drops. The publish flow deliberately strips enterprise-specific data before storing the template globally — this prevents accidental data leakage across tenants when blueprints are shared.
+
+H3-4.2 (Enterprise Integrations) is the most operationally critical. ServiceNow, Jira, and Slack/Teams are the three tools where governance actions need to appear for enterprises to trust the system. The adapter framework is designed to be extend-first: adding a new integration means implementing one interface (`IntegrationAdapter`) and adding one block to the dispatcher. The secret-masking behavior in the GET endpoint (passwords and API tokens replaced with `••••••••`) is a UX safety feature — admins can verify configuration without exposing credentials.
+
+H3-4.3 (API-First + SDK) establishes the foundation for API-led integration. The bcrypt hashing + single-use plaintext reveal pattern for API keys is the industry standard (GitHub, Stripe, etc.) — the plaintext is shown exactly once at creation and never again. The OpenAPI 3.1 spec is the source of truth from which TypeScript and Python SDKs can be code-generated; the SDK packages themselves are deferred because they require a monorepo build setup (pnpm workspaces or equivalent) that is outside the scope of the Next.js application.
+
+H3-4.4 (Multi-Cloud) translates ABPs to Azure AI Foundry and Google Vertex AI manifests. The adapter interface is deliberately thin — `deploy()` and `getStatus()` — which is enough to initiate deployment and poll status without coupling the application to cloud-provider-specific concepts. The actual auth implementations (service principal for Azure, service account JWT for Vertex) are scaffolded correctly but require real credentials to test against live endpoints.
+
+**At the close of this session, the Full Vision stands at 92/103 (89%). The remaining 11 items are H3-1 (Foundry) + H3-2 (Memory) — both correctly deferred behind the design partner gate.**
+
+---
+
 ## Session 066 — 2026-03-20: H2 Complete — Portfolio Intelligence + Governor Completeness
 
 This session completed H2 entirely, bringing Govern at Scale to 17/17 (100%) and the Core Product to 55/55 (100%).

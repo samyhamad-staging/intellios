@@ -274,6 +274,8 @@ export async function PATCH(
               reviewedBy: userEmail,
               reviewedAt: new Date(),
               reviewComment: comment ?? null,
+              // H3-3.1: Capture baseline validation report at approval time for drift detection
+              baselineValidationReport: blueprint.validationReport,
               updatedAt: new Date(),
             })
             .where(eq(agentBlueprints.id, id));
@@ -343,6 +345,10 @@ export async function PATCH(
       updateFields.reviewedBy = userEmail;
       updateFields.reviewedAt = new Date();
       updateFields.reviewComment = comment ?? null;
+    }
+    // H3-3.1: Capture baseline validation report at approval time for drift detection
+    if (newStatus === "approved") {
+      updateFields.baselineValidationReport = blueprint.validationReport;
     }
 
     const [updated] = await db

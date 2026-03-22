@@ -100,6 +100,9 @@ export const agentBlueprints = pgTable(
     // Phase 52: Blueprint lineage — records predecessor + governance diff computed at version creation
     previousBlueprintId:   uuid("previous_blueprint_id"),  // which blueprint this was forked from (null for v1)
     governanceDiff:        jsonb("governance_diff"),         // ABPDiff stored at creation time; null for v1
+    // H3-3.1: Governance drift detection
+    baselineValidationReport: jsonb("baseline_validation_report"), // ValidationReport snapshot taken at approval time
+    governanceDrift:           jsonb("governance_drift"),            // { status: 'clean'|'drifted', newViolations: [], checkedAt: string } | null
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -644,5 +647,69 @@ export const workflows = pgTable(
     index("idx_workflows_workflow_id").on(t.workflowId, t.createdAt),
     index("idx_workflows_enterprise").on(t.enterpriseId, t.status),
     index("idx_workflows_status").on(t.status),
+  ]
+);
+
+// ─── Templates (H3-4.1 Template Marketplace) ─────────────────────────────────
+
+export const templates = pgTable(
+  "templates",
+  {
+    id:           uuid("id").primaryKey().defaultRandom(),
+    enterpriseId: text("enterprise_id"),
+    name:         text("name").notNull(),
+    description:  text("description"),
+    category:     text("category"),
+    riskTier:     text("risk_tier"),
+    abpTemplate:  jsonb("abp_template").notNull(),
+    tags:         jsonb("tags").notNull().default([]),
+    // H3-4.1 marketplace metadata
+    source:       text("source").notNull().default("built-in"), // 'built-in' | 'community'
+    rating:       real("rating"),
+    usageCount:   integer("usage_count").notNull().default(0),
+    author:       text("author"),
+    publishedAt:  timestamp("published_at", { withTimezone: true }),
+    createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt:    timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_templates_enterprise").on(table.enterpriseId),
+    index("idx_templates_source").on(table.source),
+  ]
+);
+
+export const templateRatings = pgTable(
+  "template_ratings",
+  {
+    id:         uuid("id").primaryKey().defaultRandom(),
+    templateId: uuid("template_id").notNull(),
+    userEmail:  text("user_email").notNull(),
+    rating:     integer("rating").notNull(),
+    createdAt:  timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_template_ratings_template").on(table.templateId),
+  ]
+);
+
+// ─── API Keys (H3-4.3 API-First + SDK) ───────────────────────────────────────
+
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id:           uuid("id").primaryKey().defaultRandom(),
+    enterpriseId: text("enterprise_id"),
+    name:         text("name").notNull(),
+    keyHash:      text("key_hash").notNull(),      // bcrypt hash of the actual key
+    keyPrefix:    text("key_prefix").notNull(),    // first 12 chars for display (e.g. "ik_live_xxxx")
+    scopes:       jsonb("scopes").notNull().default([]), // ["blueprints:read", "policies:read", etc.]
+    createdBy:    text("created_by").notNull(),
+    createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    lastUsedAt:   timestamp("last_used_at", { withTimezone: true }),
+    revokedAt:    timestamp("revoked_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("idx_api_keys_enterprise").on(table.enterpriseId),
+    index("idx_api_keys_prefix").on(table.keyPrefix),
   ]
 );

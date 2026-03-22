@@ -23,6 +23,9 @@ import {
   Search,
   Building2,
   Globe,
+  Package,
+  Plug,
+  Key,
 } from "lucide-react";
 import NotificationBell from "@/components/nav/notification-bell";
 import { HelpPanel } from "@/components/help/help-panel";
@@ -77,6 +80,7 @@ function getNavSections(role: string | null | undefined): NavSection[] {
         ...(isArchitect ? [{ label: "Intake", href: "/intake", icon: MessageSquare }] : []),
         { label: "Pipeline", href: "/pipeline", icon: Kanban },
         { label: "Registry", href: "/registry", icon: Library },
+        { label: "Templates", href: "/templates", icon: Package },
       ],
     },
   ];
@@ -102,6 +106,8 @@ function getNavSections(role: string | null | undefined): NavSection[] {
   if (isAdmin) opsItems.push({ label: "Settings", href: "/admin/settings", icon: Settings });
   if (isAdmin) opsItems.push({ label: "Webhooks", href: "/admin/webhooks", icon: Webhook });
   if (isAdmin) opsItems.push({ label: "Fleet", href: "/admin/fleet", icon: Globe });
+  if (isAdmin) opsItems.push({ label: "Integrations", href: "/admin/integrations", icon: Plug });
+  if (isAdmin) opsItems.push({ label: "API Keys", href: "/admin/api-keys", icon: Key });
 
   if (opsItems.length > 0) {
     sections.push({ label: "Operations", items: opsItems });

@@ -12,6 +12,7 @@ import {
   ScrollText,
   Search,
   BarChart2,
+  Calendar,
 } from "lucide-react";
 import NotificationBell from "@/components/nav/notification-bell";
 import { HelpPanel } from "@/components/help/help-panel";
@@ -34,6 +35,7 @@ const NAV_ITEMS = [
   { label: "Approvals", href: "/governor/approvals", icon: ClipboardList },
   { label: "Policies", href: "/governor/policies", icon: Shield },
   { label: "Compliance", href: "/governor/compliance", icon: CheckSquare },
+  { label: "Calendar", href: "/governor/calendar", icon: Calendar },
   { label: "Fleet", href: "/governor/fleet", icon: Monitor },
   { label: "Audit", href: "/governor/audit", icon: ScrollText },
   { label: "Executive", href: "/governor/executive", icon: BarChart2 },

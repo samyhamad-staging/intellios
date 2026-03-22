@@ -1,0 +1,384 @@
+openapi: 3.1.0
+info:
+  title: Intellios API
+  version: 1.0.0
+  description: |
+    The Intellios API provides programmatic access to agent blueprint management,
+    governance policy enforcement, and registry operations.
+
+    ## Authentication
+    All endpoints require either:
+    - **Session cookie** (browser-based, via NextAuth)
+    - **API key** (Bearer token): `Authorization: Bearer ik_live_...`
+
+    ## Base URL
+    `https://your-instance.intellios.ai`
+
+servers:
+  - url: https://your-instance.intellios.ai
+    description: Production
+
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: API key (ik_live_...)
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+
+  schemas:
+    Blueprint:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        agentId: { type: string, format: uuid }
+        version: { type: string, example: "1.0.0" }
+        name: { type: string }
+        status:
+          type: string
+          enum: [draft, in_review, approved, deployed, deprecated, rejected]
+        validationReport: { $ref: "#/components/schemas/ValidationReport" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    ValidationReport:
+      type: object
+      properties:
+        valid: { type: boolean }
+        policyCount: { type: integer }
+        violations:
+          type: array
+          items: { $ref: "#/components/schemas/Violation" }
+        generatedAt: { type: string, format: date-time }
+
+    Violation:
+      type: object
+      properties:
+        field: { type: string }
+        message: { type: string }
+        severity: { type: string, enum: [error, warning] }
+        suggestion: { type: string }
+
+    Policy:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        type:
+          type: string
+          enum: [safety, compliance, data_handling, access_control, audit]
+        rules: { type: array, items: { type: object } }
+        policyVersion: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    Template:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        category: { type: string, nullable: true }
+        riskTier: { type: string, nullable: true }
+        source: { type: string, enum: [built-in, community] }
+        rating: { type: number, nullable: true, minimum: 1, maximum: 5 }
+        usageCount: { type: integer }
+        author: { type: string, nullable: true }
+        tags: { type: array, items: { type: string } }
+
+    ApiKey:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        keyPrefix: { type: string, example: "ik_live_xxxx" }
+        scopes: { type: array, items: { type: string } }
+        createdBy: { type: string }
+        createdAt: { type: string, format: date-time }
+        lastUsedAt: { type: string, format: date-time, nullable: true }
+
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+        code: { type: string }
+
+paths:
+  /api/blueprints:
+    get:
+      summary: List blueprints
+      operationId: listBlueprints
+      tags: [Blueprints]
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20, maximum: 100 }
+      responses:
+        "200":
+          description: List of blueprints
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blueprints:
+                    type: array
+                    items: { $ref: "#/components/schemas/Blueprint" }
+                  total: { type: integer }
+        "401": { description: Unauthorized, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+
+  /api/blueprints/{id}:
+    get:
+      summary: Get blueprint by ID
+      operationId: getBlueprint
+      tags: [Blueprints]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Blueprint
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Blueprint" }
+        "404": { description: Not found }
+
+  /api/blueprints/{id}/validate:
+    post:
+      summary: Validate blueprint against governance policies
+      operationId: validateBlueprint
+      tags: [Blueprints, Governance]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Validation report
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationReport" }
+
+  /api/governance/policies:
+    get:
+      summary: List governance policies
+      operationId: listPolicies
+      tags: [Governance]
+      responses:
+        "200":
+          description: List of policies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  policies:
+                    type: array
+                    items: { $ref: "#/components/schemas/Policy" }
+
+  /api/registry:
+    get:
+      summary: List registry entries (deployed agents)
+      operationId: listRegistry
+      tags: [Registry]
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        "200":
+          description: Registry entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agents: { type: array, items: { $ref: "#/components/schemas/Blueprint" } }
+
+  /api/templates:
+    get:
+      summary: List agent templates (built-in and community)
+      operationId: listTemplates
+      tags: [Templates]
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+          description: Search by name
+        - in: query
+          name: source
+          schema: { type: string, enum: [built-in, community] }
+        - in: query
+          name: category
+          schema: { type: string }
+      responses:
+        "200":
+          description: Templates list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  templates:
+                    type: array
+                    items: { $ref: "#/components/schemas/Template" }
+
+  /api/templates/{id}/rate:
+    post:
+      summary: Rate a community template (1-5 stars)
+      operationId: rateTemplate
+      tags: [Templates]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              properties:
+                rating: { type: integer, minimum: 1, maximum: 5 }
+      responses:
+        "200":
+          description: New average rating
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rating: { type: number }
+
+  /api/templates/{id}/publish:
+    post:
+      summary: Publish a blueprint as a community template
+      operationId: publishTemplate
+      tags: [Templates]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+          description: Blueprint ID to publish as a template
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                category: { type: string }
+                tags: { type: array, items: { type: string } }
+      responses:
+        "200":
+          description: Published template
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  template: { $ref: "#/components/schemas/Template" }
+
+  /api/telemetry/ingest:
+    post:
+      summary: Ingest agent telemetry
+      operationId: ingestTelemetry
+      tags: [Telemetry]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agentId, invocations, errors]
+              properties:
+                agentId: { type: string, format: uuid }
+                invocations: { type: integer }
+                errors: { type: integer }
+                latencyP50Ms: { type: number }
+                latencyP99Ms: { type: number }
+                policyViolations: { type: integer }
+      responses:
+        "200": { description: OK }
+        "401": { description: Unauthorized }
+
+  /api/admin/api-keys:
+    get:
+      summary: List active API keys for the enterprise
+      operationId: listApiKeys
+      tags: [Admin]
+      responses:
+        "200":
+          description: API keys list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keys:
+                    type: array
+                    items: { $ref: "#/components/schemas/ApiKey" }
+                  validScopes: { type: array, items: { type: string } }
+    post:
+      summary: Create a new API key
+      operationId: createApiKey
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                scopes:
+                  type: array
+                  items: { type: string }
+      responses:
+        "200":
+          description: Created key (raw key shown once only)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key: { type: string, description: "Raw API key — copy now, not stored in plaintext" }
+                  id: { type: string, format: uuid }
+                  name: { type: string }
+                  keyPrefix: { type: string }
+                  scopes: { type: array, items: { type: string } }
+                  warning: { type: string }
+
+  /api/admin/api-keys/{id}:
+    delete:
+      summary: Revoke an API key
+      operationId: revokeApiKey
+      tags: [Admin]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { description: OK }
+        "404": { description: Key not found }

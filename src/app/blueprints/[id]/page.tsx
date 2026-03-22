@@ -112,6 +112,22 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   const [reviewComment, setReviewComment] = useState<string | null>(null);
   const [exportingEvidence, setExportingEvidence] = useState(false);
 
+  // H3-3.1: Governance drift state (loaded from blueprint API)
+  const [governanceDrift, setGovernanceDrift] = useState<{ status?: string; newViolations?: Array<{ field: string; message: string; severity: string }> } | null>(null);
+
+  // H3-4.4: Multi-cloud deployment target selector
+  const [deployTarget, setDeployTarget] = useState<"agentcore" | "azure-foundry" | "vertex-ai">("agentcore");
+
+  // H3-3.2: Self-healing remediation state
+  const [suggestFixLoading, setSuggestFixLoading] = useState(false);
+  const [suggestFixResult, setSuggestFixResult] = useState<{
+    changes: Array<{ field: string; oldValue: string; newValue: string; reason: string }>;
+    suggestedAbp: ABP;
+    summary: string;
+    violationCount: number;
+  } | null>(null);
+  const [acceptingFix, setAcceptingFix] = useState(false);
+
   const [ownershipOpen, setOwnershipOpen] = useState(false);
   const [ownershipDraft, setOwnershipDraft] = useState<{
     businessUnit: string;
@@ -148,6 +164,9 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           setValidationReport(data.validationReport as ValidationReport);
           // Report came from DB — may not reflect policy changes since it was run
           setReportIsFresh(false);
+        }
+        if (data.governanceDrift) {
+          setGovernanceDrift(data.governanceDrift as { status?: string; newViolations?: Array<{ field: string; message: string; severity: string }> });
         }
         setLoading(false);
       })
@@ -332,6 +351,62 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
     } catch { /* non-critical */ }
     finally { setRunningWorkbenchTests(false); }
   }, [id, runningWorkbenchTests]);
+
+  const handleSuggestFix = useCallback(async () => {
+    if (suggestFixLoading) return;
+    setSuggestFixLoading(true);
+    setSuggestFixResult(null);
+    try {
+      const res = await fetch(`/api/blueprints/${id}/suggest-fix`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Suggest fix failed");
+      setSuggestFixResult(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate fix suggestion");
+    } finally {
+      setSuggestFixLoading(false);
+    }
+  }, [id, suggestFixLoading]);
+
+  const handleAcceptFix = useCallback(async () => {
+    if (!suggestFixResult || acceptingFix) return;
+    setAcceptingFix(true);
+    try {
+      // Build a descriptive change message from the suggested changes
+      const changeDescription = suggestFixResult.summary ||
+        suggestFixResult.changes.map((c) => `Set ${c.field} to resolve: ${c.reason}`).join("; ");
+      const res = await fetch(`/api/blueprints/${id}/refine`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          change: `[AI Fix] ${changeDescription}`,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "Accept fix failed");
+      }
+      const data = await res.json();
+      if (data.abp) {
+        setAbp(data.abp as ABP);
+        setRefinementCount((c) => c + 1);
+        setSuggestFixResult(null);
+        // Re-validate after accepting fix
+        setValidating(true);
+        const vRes = await fetch(`/api/blueprints/${id}/validate`, { method: "POST" });
+        const vData = await vRes.json();
+        if (vData.report) {
+          setValidationReport(vData.report);
+          setReportIsFresh(true);
+        }
+        setValidating(false);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Accept fix failed");
+    } finally {
+      setAcceptingFix(false);
+    }
+  }, [id, suggestFixResult, acceptingFix]);
 
   const handleSubmitForReview = useCallback(async () => {
     if (!agentIdState || submitting) return;
@@ -727,6 +802,77 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             </div>
           )}
 
+          {/* H3-3.2: Suggested Fix panel — shown when violations exist or drift detected */}
+          {!loading && ((validationReport?.violations?.length ?? 0) > 0 || governanceDrift?.status === "drifted") ? (
+            <div className="border-b border-gray-200 px-5 py-4">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-sm font-semibold text-amber-800">AI Fix Suggestion</h2>
+                {governanceDrift?.status === "drifted" && (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Drifted</span>
+                )}
+              </div>
+              <p className="text-xs text-amber-700 mb-3">
+                {governanceDrift?.status === "drifted"
+                  ? `${governanceDrift.newViolations?.length ?? 0} new policy violation${(governanceDrift.newViolations?.length ?? 0) === 1 ? "" : "s"} detected since approval.`
+                  : `${validationReport?.violations?.length ?? 0} violation${(validationReport?.violations?.length ?? 0) === 1 ? "" : "s"} found.`} Claude can suggest specific fixes.
+              </p>
+
+              {!suggestFixResult ? (
+                <button
+                  onClick={handleSuggestFix}
+                  disabled={suggestFixLoading}
+                  className="w-full rounded-lg bg-amber-600 py-2 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50 transition-colors"
+                >
+                  {suggestFixLoading ? "Generating fix…" : "Generate Fix Suggestion"}
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  {suggestFixResult.summary && (
+                    <p className="text-xs text-amber-800 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
+                      {suggestFixResult.summary}
+                    </p>
+                  )}
+                  {suggestFixResult.changes.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-gray-600">Proposed changes:</p>
+                      {suggestFixResult.changes.map((c, i) => (
+                        <div key={i} className="rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs">
+                          <p className="font-mono text-amber-900 font-medium">{c.field}</p>
+                          <p className="mt-0.5 text-amber-700 line-through opacity-60">{String(c.oldValue)}</p>
+                          <p className="text-green-700 font-medium">→ {String(c.newValue)}</p>
+                          <p className="mt-1 text-gray-600 italic">{c.reason}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={handleAcceptFix}
+                      disabled={acceptingFix}
+                      className="flex-1 rounded-lg bg-green-600 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+                    >
+                      {acceptingFix ? "Applying…" : "Accept Fix"}
+                    </button>
+                    <button
+                      onClick={() => setSuggestFixResult(null)}
+                      disabled={acceptingFix}
+                      className="flex-1 rounded-lg border border-gray-200 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleSuggestFix}
+                    disabled={suggestFixLoading}
+                    className="w-full text-xs text-amber-600 hover:text-amber-800 underline"
+                  >
+                    Regenerate
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : null}
+
           {/* Validate button if no report yet and no agentId CTA above */}
           {!agentIdState && !validationReport && (
             <div className="border-b border-gray-200 px-5 py-4">
@@ -888,6 +1034,34 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               </div>
             )}
           </div>
+
+          {/* H3-4.4: Deployment target selector — shown for approved blueprints (architects/admins) */}
+          {blueprintStatus === "approved" && (
+            <div className="border-b border-gray-200 px-5 py-4">
+              <h2 className="text-sm font-semibold mb-2">Deploy to</h2>
+              <div className="flex gap-1.5 flex-wrap">
+                {(["agentcore", "azure-foundry", "vertex-ai"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setDeployTarget(t)}
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium border transition-colors ${
+                      deployTarget === t
+                        ? "bg-violet-100 text-violet-700 border-violet-300"
+                        : "bg-slate-50 text-slate-600 border-slate-200 hover:border-violet-300"
+                    }`}
+                  >
+                    {t === "agentcore" ? "AWS Bedrock" : t === "azure-foundry" ? "Azure AI Foundry" : "Google Vertex AI"}
+                  </button>
+                ))}
+              </div>
+              <Link
+                href={`/deploy?blueprintId=${id}&target=${deployTarget}`}
+                className="mt-3 flex w-full items-center justify-center rounded-lg bg-violet-600 px-3 py-2 text-xs font-medium text-white hover:bg-violet-700 transition-colors"
+              >
+                Deploy to {deployTarget === "agentcore" ? "AWS Bedrock" : deployTarget === "azure-foundry" ? "Azure AI Foundry" : "Google Vertex AI"}
+              </Link>
+            </div>
+          )}
 
           {/* Evidence Package — shown for approved and deployed blueprints */}
           {(blueprintStatus === "approved" || blueprintStatus === "deployed") && (

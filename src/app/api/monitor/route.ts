@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
         createdAt:        agentBlueprints.createdAt,
         updatedAt:        agentBlueprints.updatedAt,
         deploymentTarget: agentBlueprints.deploymentTarget,
+        governanceDrift:  agentBlueprints.governanceDrift,
       })
       .from(agentBlueprints)
       .where(
@@ -77,6 +78,7 @@ export async function GET(request: NextRequest) {
         productionErrorRate:   health?.productionErrorRate ?? null,
         productionLatencyP99:  health?.productionLatencyP99 ?? null,
         lastTelemetryAt:       health?.lastTelemetryAt?.toISOString() ?? null,
+        governanceDrift:       a.governanceDrift as { status?: string; newViolations?: unknown[]; checkedAt?: string } | null,
       };
     });
 
