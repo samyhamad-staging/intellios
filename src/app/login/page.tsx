@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
+import { fetchJson } from "@/lib/fetch-json";
 
 function LoginForm() {
   const router = useRouter();
@@ -28,8 +29,7 @@ function LoginForm() {
     }
     const timer = setTimeout(() => {
       setSsoLoading(true);
-      fetch(`/api/auth/sso-check?domain=${encodeURIComponent(domain)}`)
-        .then((r) => r.json())
+      fetchJson<{ ssoEnabled?: boolean }>(`/api/auth/sso-check?domain=${encodeURIComponent(domain)}`)
         .then((data) => setSsoEnabled(!!data.ssoEnabled))
         .catch(() => setSsoEnabled(false))
         .finally(() => setSsoLoading(false));

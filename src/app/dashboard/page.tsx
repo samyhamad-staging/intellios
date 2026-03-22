@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface AgentSummary {
   id: string;
@@ -47,9 +48,8 @@ export default function ExecutiveDashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/dashboard/summary")
-      .then((r) => r.json())
-      .then((data: DashboardSummary) => {
+    fetchJson<DashboardSummary>("/api/dashboard/summary")
+      .then((data) => {
         setSummary(data);
         setLoading(false);
       })

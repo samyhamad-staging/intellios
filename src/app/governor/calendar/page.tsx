@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Calendar, Download, Clock, Shield, ChevronRight } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface ReviewEvent {
   id: string;
@@ -32,9 +33,8 @@ export default function ComplianceCalendarPage() {
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    fetch("/api/compliance/calendar")
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); })
+    fetchJson("/api/compliance/calendar")
+      .then((d: any) => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 

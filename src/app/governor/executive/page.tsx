@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Printer, TrendingUp, Shield, DollarSign, Users, AlertTriangle } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -69,10 +70,10 @@ export default function ExecutiveDashboardPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/compliance/posture").then((r) => r.json()).catch(() => null),
-      fetch("/api/portfolio/trends?weeks=12").then((r) => r.json()).catch(() => ({ snapshots: [] })),
-      fetch("/api/portfolio/cost").then((r) => r.json()).catch(() => null),
-      fetch("/api/notifications?limit=5&unread=false").then((r) => r.json()).catch(() => ({ notifications: [] })),
+      fetchJson("/api/compliance/posture").catch(() => null),
+      fetchJson("/api/portfolio/trends?weeks=12").catch(() => ({ snapshots: [] })),
+      fetchJson("/api/portfolio/cost").catch(() => null),
+      fetchJson("/api/notifications?limit=5&unread=false").catch(() => ({ notifications: [] })),
     ]).then(([postureData, trendsData, costData, notifData]) => {
       setPosture(postureData);
       setTrends(trendsData?.snapshots ?? []);

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Mail, PenLine } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -396,14 +397,12 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     // Fetch current user ID for self-protection
-    fetch("/api/me")
-      .then((r) => r.json())
-      .then((d: { id?: string }) => { if (d.id) setCurrentUserId(d.id); })
+    fetchJson<{ id?: string }>("/api/me")
+      .then((d) => { if (d.id) setCurrentUserId(d.id); })
       .catch(() => {});
 
-    fetch("/api/admin/users")
-      .then((r) => r.json())
-      .then((d: { users?: User[]; message?: string }) => {
+    fetchJson<{ users?: User[]; message?: string }>("/api/admin/users")
+      .then((d) => {
         if (d.users) {
           setUserList(d.users.sort((a, b) => a.name.localeCompare(b.name)));
         } else {
@@ -416,9 +415,8 @@ export default function AdminUsersPage() {
         setLoading(false);
       });
 
-    fetch("/api/admin/users/invitations")
-      .then((r) => r.json())
-      .then((d: { invitations?: Invitation[] }) => {
+    fetchJson<{ invitations?: Invitation[] }>("/api/admin/users/invitations")
+      .then((d) => {
         if (d.invitations) setInvitations(d.invitations);
         setInvitationsLoading(false);
       })

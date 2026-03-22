@@ -8,6 +8,7 @@ import { RefinementChat } from "@/components/blueprint/refinement-chat";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
 import type { TestRun } from "@/lib/testing/types";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface BlueprintPageProps {
   params: Promise<{ id: string }>;
@@ -140,9 +141,8 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
 
   // Always fetch from API on mount — blueprint content is never passed via URL.
   if (loading && !abp) {
-    fetch(`/api/blueprints/${id}`)
-      .then((r) => r.json())
-      .then((data) => {
+    fetchJson(`/api/blueprints/${id}`)
+      .then((data: any) => {
         const loadedAbp = data.abp as ABP;
         setAbp(loadedAbp);
         setRefinementCount(parseInt(data.refinementCount ?? "0", 10));

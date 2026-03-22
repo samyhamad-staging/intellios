@@ -274,8 +274,8 @@ export async function GET(request: NextRequest) {
           enterpriseId
             ? eq(portfolioSnapshots.enterpriseId, enterpriseId)
             : isNull(portfolioSnapshots.enterpriseId),
-          gte(portfolioSnapshots.weekStart, periodLabel),
-          lt(portfolioSnapshots.weekStart, `${year}-${String(month + 2).padStart(2, "0")}-01`)
+          gte(portfolioSnapshots.weekStart, periodStart.toISOString().slice(0, 10)),
+          lt(portfolioSnapshots.weekStart, periodEnd.toISOString().slice(0, 10))
         )
       )
       .orderBy(desc(portfolioSnapshots.weekStart))

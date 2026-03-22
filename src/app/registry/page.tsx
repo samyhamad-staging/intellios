@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Search, Bot, ChevronRight, Copy, X, Inbox, GitBranch } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,18 +66,16 @@ export default function RegistryPage() {
   // ─── Data fetching ────────────────────────────────────────────────────────
 
   useEffect(() => {
-    fetch("/api/registry")
-      .then((r) => r.json())
-      .then((data) => { setAgents(data.agents ?? []); setAgentsLoading(false); })
+    fetchJson("/api/registry")
+      .then((data: any) => { setAgents(data.agents ?? []); setAgentsLoading(false); })
       .catch(() => { setAgentsError("Failed to load registry"); setAgentsLoading(false); });
   }, []);
 
   useEffect(() => {
     if (activeTab === "workflows" && !wflowsLoaded) {
       setWflowsLoading(true);
-      fetch("/api/workflows")
-        .then((r) => r.json())
-        .then((data) => { setWflows(data.workflows ?? []); setWflowsLoading(false); setWflowsLoaded(true); })
+      fetchJson("/api/workflows")
+        .then((data: any) => { setWflows(data.workflows ?? []); setWflowsLoading(false); setWflowsLoaded(true); })
         .catch(() => { setWflowsError("Failed to load workflows"); setWflowsLoading(false); });
     }
   }, [activeTab, wflowsLoaded]);

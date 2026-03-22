@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Activity, RefreshCw, Cpu } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface AgentHealth {
   agentId: string;
@@ -139,9 +140,8 @@ export default function MonitorPage() {
 
   useEffect(() => {
     // Fetch current user role for gating "Check Now" and "Check All" buttons
-    fetch("/api/me")
-      .then((r) => r.json())
-      .then((d) => setRole(d.role ?? ""))
+    fetchJson("/api/me")
+      .then((d: any) => setRole(d.role ?? ""))
       .catch(() => {});
     loadAgents();
   }, []);

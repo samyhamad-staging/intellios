@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Shield, Plus, Download } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface Agent {
   id: string;
@@ -104,15 +105,14 @@ export default function GovernanceHubPage() {
   const [simResults, setSimResults] = useState<Record<string, SimResult>>({});
 
   const loadPolicies = () =>
-    fetch("/api/governance/policies")
-      .then((r) => r.json())
-      .then((govData) => setPolicies(govData.policies ?? []));
+    fetchJson("/api/governance/policies")
+      .then((govData: any) => setPolicies(govData.policies ?? []));
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/registry").then((r) => r.json()),
-      fetch("/api/governance/policies").then((r) => r.json()),
-      fetch("/api/governance/templates").then((r) => r.json()),
+      fetchJson("/api/registry"),
+      fetchJson("/api/governance/policies"),
+      fetchJson("/api/governance/templates"),
     ])
       .then(([registryData, govData, templateData]) => {
         setAgents(registryData.agents ?? []);
@@ -131,9 +131,8 @@ export default function GovernanceHubPage() {
       setAnalyticsLoading(false);
       return;
     }
-    fetch("/api/governance/analytics")
-      .then((r) => r.json())
-      .then((data) => {
+    fetchJson("/api/governance/analytics")
+      .then((data: any) => {
         setAnalytics(data);
         setAnalyticsLoading(false);
       })

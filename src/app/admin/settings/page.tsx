@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import type { EnterpriseSettings, ApprovalChainStep } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
+import { fetchJson } from "@/lib/fetch-json";
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<EnterpriseSettings>(DEFAULT_ENTERPRISE_SETTINGS);
@@ -12,8 +13,7 @@ export default function AdminSettingsPage() {
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/settings")
-      .then((r) => r.json())
+    fetchJson<{ settings?: EnterpriseSettings }>("/api/admin/settings")
       .then((data) => {
         setSettings(data.settings ?? DEFAULT_ENTERPRISE_SETTINGS);
         setLoading(false);

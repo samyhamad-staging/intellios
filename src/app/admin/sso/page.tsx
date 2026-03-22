@@ -14,6 +14,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import type { EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
+import { fetchJson } from "@/lib/fetch-json";
 
 type SsoSettings = EnterpriseSettings["sso"];
 
@@ -62,9 +63,8 @@ export default function AdminSsoPage() {
   const [groupRows, setGroupRows] = useState<{ group: string; role: string }[]>([]);
 
   useEffect(() => {
-    fetch("/api/admin/sso")
-      .then((r) => r.json())
-      .then((data) => {
+    fetchJson("/api/admin/sso")
+      .then((data: any) => {
         if (data.sso) {
           setSso(data.sso);
           setGroupRows(

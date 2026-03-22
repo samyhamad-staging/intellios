@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Key, Plus, Trash2, Copy, Check, AlertTriangle } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface ApiKey {
   id: string;
@@ -23,9 +24,8 @@ export default function ApiKeysPage() {
   const [form, setForm] = useState({ name: "", scopes: [] as string[] });
 
   useEffect(() => {
-    fetch("/api/admin/api-keys")
-      .then((r) => r.json())
-      .then((d) => { setKeys(d.keys ?? []); setValidScopes(d.validScopes ?? []); setLoading(false); })
+    fetchJson("/api/admin/api-keys")
+      .then((d: any) => { setKeys(d.keys ?? []); setValidScopes(d.validScopes ?? []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 

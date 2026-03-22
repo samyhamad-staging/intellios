@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { CheckSquare, AlertTriangle, Download } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -149,8 +150,8 @@ export default function CompliancePage() {
     if (role !== "compliance_officer" && role !== "admin" && role !== "viewer") return;
 
     Promise.all([
-      fetch("/api/compliance/posture").then((r) => r.json()),
-      fetch("/api/governance/analytics").then((r) => r.json()),
+      fetchJson("/api/compliance/posture"),
+      fetchJson("/api/governance/analytics"),
     ])
       .then(([postureData, analyticsData]) => {
         setPosture(postureData as PostureData);
@@ -183,7 +184,7 @@ export default function CompliancePage() {
         return;
       }
       // Refresh posture data and close modal
-      const postureData = await fetch("/api/compliance/posture").then((r) => r.json());
+      const postureData = await fetchJson("/api/compliance/posture");
       setPosture(postureData as PostureData);
       setCompleteModal(null);
       setReviewNotes("");

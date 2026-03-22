@@ -6,6 +6,7 @@ import { ValidationReport } from "@/lib/governance/types";
 import type { ApprovalStepRecord, ApprovalChainStep, EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 import { ClipboardList, CheckCircle, ChevronRight, ShieldCheck, ShieldAlert, AlertCircle } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface QueueEntry {
   id: string; agentId: string; version: string; name: string | null; tags: string[];
@@ -22,15 +23,13 @@ export default function ReviewQueuePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/auth/session")
-      .then((r) => r.json())
-      .then((data) => {
+    fetchJson("/api/auth/session")
+      .then((data: any) => {
         const role = data?.user?.role ?? null;
         setUserRole(role);
         if (role === "admin") {
-          fetch("/api/admin/settings")
-            .then((r) => r.json())
-            .then((d) => setSettings(d.settings ?? DEFAULT_ENTERPRISE_SETTINGS))
+          fetchJson("/api/admin/settings")
+            .then((d: any) => setSettings(d.settings ?? DEFAULT_ENTERPRISE_SETTINGS))
             .catch(() => {});
         }
         const roleParam = role ? `?role=${encodeURIComponent(role)}` : "";

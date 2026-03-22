@@ -3,6 +3,7 @@
 import { Fragment, useState, useEffect } from "react";
 import Link from "next/link";
 import type { BriefingResult, IntelligencePayload, MetricsSnapshot } from "@/lib/awareness/types";
+import { fetchJson } from "@/lib/fetch-json";
 
 function pct(v: number | null): string {
   if (v == null) return "—";
@@ -181,9 +182,8 @@ export default function IntelligencePage() {
   const [expandedScoreId, setExpandedScoreId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/me")
-      .then((r) => r.json())
-      .then((d) => setRole(d.user?.role ?? d.role ?? ""))
+    fetchJson("/api/me")
+      .then((d: any) => setRole(d.user?.role ?? d.role ?? ""))
       .catch(() => {});
     loadData();
   }, []);

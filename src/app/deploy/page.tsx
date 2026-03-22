@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Rocket } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 /**
  * Map raw AWS SDK / server error strings to actionable operator messages.
@@ -382,9 +383,8 @@ export default function DeploymentConsolePage() {
   const [agcModal, setAgcModal] = useState<AgentCoreModalState | null>(null);
 
   useEffect(() => {
-    fetch("/api/registry")
-      .then((r) => r.json())
-      .then((data) => {
+    fetchJson("/api/registry")
+      .then((data: any) => {
         setAgents(data.agents ?? []);
         setLoading(false);
       })

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { TrendingUp } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface QueueEntry {
   id: string;
@@ -81,11 +82,11 @@ export default function GovernorHomePage() {
     const since24h = new Date(Date.now() - 24 * 3_600_000).toISOString();
 
     Promise.all([
-      fetch("/api/review").then((r) => r.json()).catch(() => ({ blueprints: [] })),
-      fetch("/api/governance/analytics").then((r) => r.json()).catch(() => null),
-      fetch("/api/compliance/posture").then((r) => r.json()).catch(() => null),
-      fetch(`/api/audit?since=${since24h}&limit=10`).then((r) => r.json()).catch(() => ({ entries: [] })),
-      fetch("/api/portfolio/trends?weeks=12").then((r) => r.json()).catch(() => ({ snapshots: [] })),
+      fetchJson("/api/review").catch(() => ({ blueprints: [] })),
+      fetchJson("/api/governance/analytics").catch(() => null),
+      fetchJson("/api/compliance/posture").catch(() => null),
+      fetchJson(`/api/audit?since=${since24h}&limit=10`).catch(() => ({ entries: [] })),
+      fetchJson("/api/portfolio/trends?weeks=12").catch(() => ({ snapshots: [] })),
     ]).then(([reviewData, analyticsData, postureData, auditData, trendsData]) => {
       setQueue((reviewData.blueprints ?? []).slice(0, 5));
       setAnalytics(analyticsData ?? null);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Package, Search, Star, TrendingUp } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface Template {
   id: string;
@@ -28,9 +29,8 @@ export default function TemplateMarketplacePage() {
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     if (sourceFilter) params.set("source", sourceFilter);
-    fetch(`/api/templates?${params}`)
-      .then((r) => r.json())
-      .then((d) => { setTemplates(d.templates ?? []); setLoading(false); })
+    fetchJson(`/api/templates?${params}`)
+      .then((d: any) => { setTemplates(d.templates ?? []); setLoading(false); })
       .catch(() => setLoading(false));
   }, [search, sourceFilter]);
 

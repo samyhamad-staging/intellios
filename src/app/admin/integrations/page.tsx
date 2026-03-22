@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plug, Save, CheckCircle } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface IntegrationsData {
   servicenow?: { enabled: boolean; instanceUrl?: string; username?: string; assignmentGroup?: string };
@@ -17,9 +18,8 @@ export default function IntegrationsPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/integrations")
-      .then((r) => r.json())
-      .then((d) => { setData(d.integrations ?? {}); setLoading(false); })
+    fetchJson("/api/admin/integrations")
+      .then((d: any) => { setData(d.integrations ?? {}); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 

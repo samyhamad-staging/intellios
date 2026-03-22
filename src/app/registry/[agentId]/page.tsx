@@ -8,6 +8,7 @@ import { BlueprintView } from "@/components/blueprint/blueprint-view";
 import { BlueprintSummary } from "@/components/blueprint/blueprint-summary";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { LifecycleControls } from "@/components/registry/lifecycle-controls";
+import { fetchJson } from "@/lib/fetch-json";
 import { ValidationReportView } from "@/components/governance/validation-report";
 import { ReviewPanel } from "@/components/review/review-panel";
 import { RegulatoryPanel } from "@/components/registry/regulatory-panel";
@@ -178,9 +179,8 @@ export default function AgentDetailPage({
 
       // Fetch governance health for deployed agents
       if (data.agent?.status === "deployed") {
-        fetch("/api/monitor")
-          .then((r) => r.json())
-          .then((monitorData) => {
+        fetchJson("/api/monitor")
+          .then((monitorData: any) => {
             const found = (monitorData.agents ?? []).find(
               (a: { agentId: string }) => a.agentId === agentId
             );
@@ -207,15 +207,13 @@ export default function AgentDetailPage({
   useEffect(() => {
     load();
     // Fetch current user for SOD check and role-gating
-    fetch("/api/me")
-      .then((r) => r.json())
-      .then((data) => {
+    fetchJson("/api/me")
+      .then((data: any) => {
         setCurrentUser(data.user ?? null);
         // Load enterprise settings for approval chain (admin only endpoint, best-effort)
         if (data.user?.role === "admin") {
-          fetch("/api/admin/settings")
-            .then((r) => r.json())
-            .then((d) => setEnterpriseSettings(d.settings ?? DEFAULT_ENTERPRISE_SETTINGS))
+          fetchJson("/api/admin/settings")
+            .then((d: any) => setEnterpriseSettings(d.settings ?? DEFAULT_ENTERPRISE_SETTINGS))
             .catch(() => {});
         }
       })
@@ -225,9 +223,8 @@ export default function AgentDetailPage({
   // Fetch quality score once on mount (non-critical, fails silently)
   useEffect(() => {
     setQualityLoading(true);
-    fetch(`/api/registry/${agentId}/quality`)
-      .then((r) => r.json())
-      .then((data) => setQualityScore(data.score ?? null))
+    fetchJson(`/api/registry/${agentId}/quality`)
+      .then((data: any) => setQualityScore(data.score ?? null))
       .catch(() => {})
       .finally(() => setQualityLoading(false));
   }, [agentId]);
@@ -237,9 +234,8 @@ export default function AgentDetailPage({
     if (!latest || (latest.status !== "deployed" && latest.status !== "suspended")) return;
     setTelemetryLoading(true);
     const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
-    fetch(`/api/telemetry/${agentId}?since=${since}`)
-      .then((r) => r.json())
-      .then((data) => setTelemetryData(data.rows ?? []))
+    fetchJson(`/api/telemetry/${agentId}?since=${since}`)
+      .then((data: any) => setTelemetryData(data.rows ?? []))
       .catch(() => setTelemetryData([]))
       .finally(() => setTelemetryLoading(false));
   }, [agentId, latest?.status]);

@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PolicyForm, { PolicyFormValues } from "@/components/governance/policy-form";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface Policy {
   id: string;
@@ -30,9 +31,8 @@ export default function EditPolicyPage({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/governance/policies/${id}`)
-      .then((r) => r.json())
-      .then((data: { policy?: Policy; message?: string }) => {
+    fetchJson<{ policy?: Policy; message?: string }>(`/api/governance/policies/${id}`)
+      .then((data) => {
         if (data.policy) {
           setPolicy(data.policy);
         } else {

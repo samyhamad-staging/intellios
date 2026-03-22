@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { getSlaStatus } from "@/lib/sla/config";
 import { Search, ShieldCheck, ShieldAlert, AlertCircle, Clock } from "lucide-react";
+import { fetchJson } from "@/lib/fetch-json";
 
 interface Agent {
   id: string;
@@ -64,9 +65,8 @@ export default function PipelinePage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
-    fetch("/api/registry")
-      .then((r) => r.json())
-      .then((data) => { setAgents(data.agents ?? []); setLoading(false); })
+    fetchJson("/api/registry")
+      .then((data: any) => { setAgents(data.agents ?? []); setLoading(false); })
       .catch(() => { setError("Failed to load pipeline"); setLoading(false); });
   }, []);
 
