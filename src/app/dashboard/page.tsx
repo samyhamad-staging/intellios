@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { KpiCard } from "@/components/dashboard/kpi-card";
 
 interface AgentSummary {
   id: string;

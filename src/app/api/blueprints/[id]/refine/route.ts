@@ -70,11 +70,6 @@ export async function POST(
     const enterpriseId = blueprint.enterpriseId ?? null;
     const policies = await loadPolicies(enterpriseId);
 
-    // Load policies so Claude can maintain governance compliance during refinement
-    // and avoid inadvertently dropping required policy sections during regeneration.
-    const enterpriseId = blueprint.enterpriseId ?? null;
-    const policies = await loadPolicies(enterpriseId);
-
     // Refine via Claude
     let updatedAbp: ABP;
     try {

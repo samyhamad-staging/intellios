@@ -61,19 +61,6 @@ export default function RegistryPage() {
   // ── Shared filter state ──
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
-  const [cloningId, setCloningId] = useState<string | null>(null);
-
-  const handleClone = useCallback(async (agent: RegistryEntry, e: React.MouseEvent) => {
-    e.preventDefault(); e.stopPropagation();
-    setCloningId(agent.id);
-    try {
-      const res = await fetch(`/api/blueprints/${agent.id}/clone`, { method: "POST" });
-      if (!res.ok) return;
-      const cloned = await res.json();
-      router.push(`/registry/${cloned.agentId}`);
-    } catch { /* non-critical */ }
-    finally { setCloningId(null); }
-  }, [router]);
 
   // ─── Data fetching ────────────────────────────────────────────────────────
 
