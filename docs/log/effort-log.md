@@ -38,6 +38,36 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 069 — 2026-03-22
+
+**Go-to-market prep — Meridian Capital demo + sales materials**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 (orchestrator) + 1× subagent (seed script) | — |
+| Context catch-up | Resumed from compaction; verified git state, tsc, PR status | ~45K in / ~2K out |
+| PR #11 push + merge | tsc verification, push, merge confirmation | ~15K in / ~1K out |
+| PR #12 create + merge | H3-3+H3-4 already on branch; PR mechanics | ~10K in / ~1K out |
+| Demo seed subagent | 1,666-line seed script — 15 steps, Meridian Capital, all tables | ~95K in / ~40K out |
+| Demo script + objection handling | Two docs for CRO/CCO sales conversations | ~20K in / ~8K out |
+| Documentation | Session log, index, project journal, effort log | ~15K in / ~4K out |
+| **Session total (est.)** | | **~200K in / ~56K out** |
+
+**Estimated session cost (Sonnet 4.6):** ~200K × $3/1M + ~56K × $15/1M ≈ **$0.60 + $0.84 = ~$1.44**
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 5 ("Proceed", "Where are we?", "Continue", "heading into enterprise conversations", "Yes please") |
+| Decisions made | 2 — D-Scope: prioritise demo prep over H3-1/H3-2; D-Approve: "Yes please" to demo + PR + script plan |
+| Engagement type | Strategic direction + approval |
+| Estimated time | ~10 min |
+
+---
+
 ## Session 068 — 2026-03-22
 
 **H3-3 Continuous Governance + H3-4 Ecosystem — 7 H3 items shipped**
