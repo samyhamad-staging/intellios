@@ -431,7 +431,7 @@ export default function IntakeSessionPage({
 
       {/* Classification header — shown below nav header, above chat */}
       {(classificationLoading || classification) && (
-        <div className="border-b border-border bg-surface-raised px-6 py-2">
+        <div className="border-b border-border bg-surface-raised px-6 py-2 flex min-h-[32px] items-center">
           {classificationLoading && !classification ? (
             <div className="flex animate-pulse items-center gap-2">
               <div className="h-5 w-24 rounded-full bg-surface-muted" />
@@ -475,7 +475,7 @@ export default function IntakeSessionPage({
               <select
                 value={editAgentType}
                 onChange={(e) => setEditAgentType(e.target.value as AgentType)}
-                className="rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
+                className="h-[20px] rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
                 title="Agent type"
               >
                 <option value="automation">Automation</option>
@@ -486,7 +486,7 @@ export default function IntakeSessionPage({
               <select
                 value={editRiskTier}
                 onChange={(e) => setEditRiskTier(e.target.value as IntakeRiskTier)}
-                className="rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
+                className="h-[20px] rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
                 title="Risk tier"
               >
                 <option value="low">LOW risk</option>

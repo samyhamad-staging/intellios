@@ -148,6 +148,7 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
   const requiredFilled = sections.filter((s) => s.required && s.filled).length;
   const requiredTotal = sections.filter((s) => s.required).length;
   const pct = Math.round((filled / sections.length) * 100);
+  const activeKey = sections.find((s) => s.required && !s.filled)?.key ?? null;
 
   return (
     <aside className="w-72 shrink-0 border-l border-gray-200 bg-white p-5 flex flex-col gap-4 overflow-y-auto">
@@ -180,6 +181,8 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
               className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
                 section.filled
                   ? "bg-blue-500 text-white"
+                  : section.key === activeKey
+                  ? "animate-pulse border-2 border-blue-400 text-blue-400"
                   : section.required
                   ? "border-2 border-gray-300 text-gray-300"
                   : "border border-gray-200 text-gray-200"
@@ -270,19 +273,29 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
         }`}
       >
         {requiredFilled === requiredTotal
-          ? "All required sections filled"
-          : `${requiredTotal - requiredFilled} required section${requiredTotal - requiredFilled === 1 ? "" : "s"} remaining`}
+          ? "Ready to finalize"
+          : (() => {
+              const next = sections.find((s) => s.required && !s.filled);
+              return next ? `Next: ${next.label}` : `${requiredTotal - requiredFilled} required section${requiredTotal - requiredFilled === 1 ? "" : "s"} remaining`;
+            })()}
       </div>
 
-      {/* Stakeholder contributions panel */}
+      {/* Stakeholder contributions panel — locked until required sections are complete */}
       {onContributionAdded && (
-        <StakeholderContributionsPanel
-          sessionId={sessionId}
-          contributions={contributions}
-          onContributionAdded={onContributionAdded}
-          context={context}
-          riskTier={riskTier}
-        />
+        requiredFilled === requiredTotal ? (
+          <StakeholderContributionsPanel
+            sessionId={sessionId}
+            contributions={contributions}
+            onContributionAdded={onContributionAdded}
+            context={context}
+            riskTier={riskTier}
+          />
+        ) : (
+          <div className="rounded-lg border border-dashed border-gray-200 px-4 py-3 text-center" title="Complete required sections first.">
+            <p className="text-xs font-medium text-gray-400">Stakeholder Input</p>
+            <p className="mt-1 text-xs text-gray-400">Complete required sections first.</p>
+          </div>
+        )
       )}
     </aside>
   );
