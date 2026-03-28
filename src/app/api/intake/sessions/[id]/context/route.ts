@@ -56,15 +56,18 @@ export async function PATCH(
       .set({ intakeContext: context, updatedAt: new Date() })
       .where(eq(intakeSessions.id, sessionId));
 
-    // Fire-and-forget classification — does not block the context save response.
-    // Results (agentType + riskTier) are written to the session row and picked up
-    // by the UI via polling the session GET endpoint.
-    void classifyIntake(context).then(async ({ agentType, riskTier }) => {
+    // Classify synchronously — Vercel serverless kills fire-and-forget after response.
+    // Haiku is fast (~500ms) so this doesn't meaningfully delay the context save.
+    try {
+      const { agentType, riskTier } = await classifyIntake(context);
       await db
         .update(intakeSessions)
         .set({ agentType, riskTier, updatedAt: new Date() })
         .where(eq(intakeSessions.id, sessionId));
-    }).catch((err) => console.error("[classify] Failed to write classification:", err));
+    } catch (err) {
+      console.error("[classify] Failed to classify intake:", err);
+      // Non-fatal — intake continues without classification
+    }
 
     return NextResponse.json({ success: true, context });
   } catch (err) {
