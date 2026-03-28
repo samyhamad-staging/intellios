@@ -15,7 +15,7 @@ export function NewIntakeButton({ className }: { className?: string }) {
       const res = await fetch("/api/intake/sessions", { method: "POST" });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        const msg = (body as { error?: string }).error ?? `HTTP ${res.status}`;
+        const msg = (body as { message?: string }).message ?? `HTTP ${res.status}`;
         throw new Error(msg);
       }
       const session = await res.json();

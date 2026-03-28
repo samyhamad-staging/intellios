@@ -38,6 +38,7 @@ const files = [
   "0022_intake_confidence.sql",
   "0023_blueprint_lineage.sql",
   "0024_agent_telemetry.sql",
+  "0025_intake_sessions_created_by.sql",
 ];
 
 const startFrom = process.argv[2];
