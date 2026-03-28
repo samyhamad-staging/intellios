@@ -6,7 +6,6 @@ import type { UIMessage } from "ai";
 import { ChatContainer } from "@/components/chat/chat-container";
 import { IntakeProgress } from "@/components/intake/intake-progress";
 import { IntakeContextForm } from "@/components/intake/intake-context-form";
-import { IntakeQuickStart } from "@/components/intake/intake-quick-start";
 import { IntakeReview } from "@/components/intake/intake-review";
 import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
 
@@ -26,7 +25,7 @@ function mapToUIMessages(dbMessages: DBMessage[]): UIMessage[] {
 }
 
 /** Which phase the UI is currently showing */
-type Phase = "loading" | "context-form" | "quick-start" | "conversation" | "review";
+type Phase = "loading" | "context-form" | "conversation" | "review";
 
 export default function IntakeSessionPage({
   params,
@@ -108,9 +107,9 @@ export default function IntakeSessionPage({
           return;
         }
 
-        // If no context yet → show AI quick-start (replaces form-first flow)
+        // If no context yet → show Phase 1 form
         if (!storedContext) {
-          setPhase("quick-start");
+          setPhase("context-form");
           return;
         }
 
@@ -119,7 +118,7 @@ export default function IntakeSessionPage({
         setInitialMessages(uiMessages.length > 0 ? uiMessages : undefined);
         setPhase("conversation");
       } catch {
-        setPhase("quick-start");
+        setPhase("context-form");
       }
     }
     loadSession();
@@ -245,7 +244,7 @@ export default function IntakeSessionPage({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message ?? "Generation failed");
+        throw new Error(data.error ?? "Generation failed");
       }
       const { id, agentId } = await res.json();
       // Brief success flash before redirect — gives the user a clear "done" signal
@@ -263,9 +262,9 @@ export default function IntakeSessionPage({
 
   if (phase === "loading") {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="flex items-center gap-2.5 text-sm text-gray-400">
-          <svg className="h-4 w-4 animate-spin text-violet-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <div className="flex h-screen items-center justify-center bg-surface-raised">
+        <div className="flex items-center gap-2.5 text-sm text-text-tertiary">
+          <svg className="h-4 w-4 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
@@ -275,46 +274,17 @@ export default function IntakeSessionPage({
     );
   }
 
-  // ─── Phase 1a: AI Quick Start (default) ──────────────────────────────────────
-
-  if (phase === "quick-start") {
-    return (
-      <div className="flex h-screen flex-col">
-        <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
-          <div>
-            <h1 className="text-lg font-semibold">Intellios</h1>
-            <p className="text-xs text-gray-500">Agent Intake</p>
-          </div>
-          <div className="text-xs text-gray-400 font-mono">{sessionId.slice(0, 8)}</div>
-        </header>
-        <IntakeQuickStart
-          sessionId={sessionId}
-          onComplete={(context) => handleContextComplete(context as unknown as IntakeContext)}
-          onSwitchToForm={() => setPhase("context-form")}
-        />
-      </div>
-    );
-  }
-
-  // ─── Phase 1b: Manual Context Form (fallback) ──────────────────────────────────
+  // ─── Phase 1: Context Form ───────────────────────────────────────────────────
 
   if (phase === "context-form") {
     return (
       <div className="flex h-screen flex-col">
-        <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
+        <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-3">
           <div>
             <h1 className="text-lg font-semibold">Intellios</h1>
-            <p className="text-xs text-gray-500">Agent Intake</p>
+            <p className="text-xs text-text-secondary">Agent Intake</p>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setPhase("quick-start")}
-              className="text-xs text-violet-600 hover:text-violet-800 transition-colors"
-            >
-              ← Back to Quick Start
-            </button>
-            <div className="text-xs text-gray-400 font-mono">{sessionId.slice(0, 8)}</div>
-          </div>
+          <div className="text-xs text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
         </header>
         <IntakeContextForm sessionId={sessionId} onComplete={handleContextComplete} />
       </div>
@@ -325,41 +295,41 @@ export default function IntakeSessionPage({
 
   if (phase === "review") {
     const scoreColor =
-      intakeScore?.overallScore == null ? "text-gray-400"
+      intakeScore?.overallScore == null ? "text-text-tertiary"
       : intakeScore.overallScore >= 70 ? "text-green-700"
       : intakeScore.overallScore >= 50 ? "text-amber-700"
       : "text-red-700";
 
     return (
       <div className="flex h-screen flex-col">
-        <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
+        <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-3">
           <div>
             <h1 className="text-lg font-semibold">Intellios</h1>
-            <p className="text-xs text-gray-500">Agent Intake</p>
+            <p className="text-xs text-text-secondary">Agent Intake</p>
           </div>
           <div className="flex items-center gap-3">
             {/* Intake quality score chip: loading pulse → real chip with popover */}
             {intakeScoreLoading && !intakeScore ? (
-              <div className="flex animate-pulse items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1">
-                <span className="text-xs text-gray-400">Scoring…</span>
+              <div className="flex animate-pulse items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1">
+                <span className="text-xs text-text-tertiary">Scoring…</span>
                 <span className="flex gap-0.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-border" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-border" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-border" />
                 </span>
               </div>
             ) : intakeScore ? (
               <div ref={popoverRef} className="relative">
                 <button
                   onClick={() => setScorePopoverOpen((o) => !o)}
-                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 hover:border-gray-300"
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1 hover:border-border-strong"
                   title={`Evaluated at ${new Date(intakeScore.evaluatedAt).toLocaleString()}`}
                 >
-                  <span className="text-xs text-gray-500">Intake quality</span>
+                  <span className="text-xs text-text-secondary">Intake quality</span>
                   <span className={`text-sm font-bold ${scoreColor}`}>
                     {intakeScore.overallScore != null ? `${Math.round(intakeScore.overallScore)}/100` : "—"}
                   </span>
-                  <span className="text-xs text-gray-400">{scorePopoverOpen ? "▲" : "▼"}</span>
+                  <span className="text-xs text-text-tertiary">{scorePopoverOpen ? "▲" : "▼"}</span>
                 </button>
                 {scorePopoverOpen && (() => {
                   const DIMENSION_DESCRIPTIONS: Record<string, string> = {
@@ -376,31 +346,31 @@ export default function IntakeSessionPage({
                   ] as { label: string; value: number | null }[];
                   const hasLowScore = dims.some((d) => (d.value ?? 0) < 3.0 && d.value != null);
                   return (
-                    <div className="absolute bottom-full right-0 mb-2 w-72 rounded-card border border-gray-200 bg-white p-4 shadow-lg">
-                      <p className="mb-2.5 text-xs font-semibold text-gray-700">Quality Dimensions</p>
+                    <div className="absolute bottom-full right-0 mb-2 w-72 rounded-xl border border-border bg-surface p-4 shadow-lg">
+                      <p className="mb-2.5 text-xs font-semibold text-text">Quality Dimensions</p>
                       {dims.map((d) => {
                         const val = d.value ?? 0;
                         const below = val < 3.0;
                         return (
                           <div key={d.label} className="mb-3">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="w-20 shrink-0 text-xs text-gray-600 font-medium">{d.label}</span>
-                              <div className="h-1.5 flex-1 rounded-full bg-gray-200">
+                              <span className="w-20 shrink-0 text-xs text-text-secondary font-medium">{d.label}</span>
+                              <div className="h-1.5 flex-1 rounded-full bg-border">
                                 <div
                                   className={`h-1.5 rounded-full ${below ? "bg-amber-400" : "bg-indigo-400"}`}
                                   style={{ width: `${(val / 5) * 100}%` }}
                                 />
                               </div>
-                              <span className={`w-8 shrink-0 text-right text-xs font-medium ${below ? "text-amber-600" : "text-gray-700"}`}>
+                              <span className={`w-8 shrink-0 text-right text-xs font-medium ${below ? "text-amber-600" : "text-text"}`}>
                                 {d.value != null ? `${d.value.toFixed(1)}` : "—"}
                               </span>
                             </div>
-                            <p className="pl-[88px] text-[11px] text-gray-400 leading-snug">{DIMENSION_DESCRIPTIONS[d.label]}</p>
+                            <p className="pl-[88px] text-[11px] text-text-tertiary leading-snug">{DIMENSION_DESCRIPTIONS[d.label]}</p>
                           </div>
                         );
                       })}
                       {hasLowScore && (
-                        <p className="mt-1 text-xs text-amber-600 border-t border-gray-100 pt-2">
+                        <p className="mt-1 text-xs text-amber-600 border-t border-border pt-2">
                           Some areas need more depth — continue the conversation to strengthen coverage.
                         </p>
                       )}
@@ -412,7 +382,7 @@ export default function IntakeSessionPage({
             <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
               Complete
             </span>
-            <div className="text-xs text-gray-400 font-mono">{sessionId.slice(0, 8)}</div>
+            <div className="text-xs text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
           </div>
         </header>
         <IntakeReview
@@ -449,31 +419,31 @@ export default function IntakeSessionPage({
   return (
     <div className="flex h-screen flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
+      <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-3">
         <div>
           <h1 className="text-lg font-semibold">Intellios</h1>
-          <p className="text-xs text-gray-500">Agent Intake</p>
+          <p className="text-xs text-text-secondary">Agent Intake</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-xs text-gray-400 font-mono">{sessionId.slice(0, 8)}</div>
+          <div className="text-xs text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
         </div>
       </header>
 
       {/* Classification header — shown below nav header, above chat */}
       {(classificationLoading || classification) && (
-        <div className="border-b border-gray-100 bg-gray-50 px-6 py-2">
+        <div className="border-b border-border bg-surface-raised px-6 py-2">
           {classificationLoading && !classification ? (
             <div className="flex animate-pulse items-center gap-2">
-              <div className="h-5 w-24 rounded-full bg-gray-200" />
-              <div className="h-5 w-16 rounded-full bg-gray-200" />
-              <span className="text-xs text-gray-400">Classifying…</span>
+              <div className="h-5 w-24 rounded-full bg-surface-muted" />
+              <div className="h-5 w-16 rounded-full bg-surface-muted" />
+              <span className="text-xs text-text-tertiary">Classifying…</span>
             </div>
           ) : classification && !editingClassification ? (
             <div className="flex flex-col gap-0.5">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400 mr-1">Agent classification:</span>
+                <span className="text-xs text-text-tertiary mr-1">Agent classification:</span>
                 <span
-                  className="rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-600"
+                  className="rounded-full bg-surface-muted px-2.5 py-0.5 text-xs font-medium text-text-secondary"
                   title="Agent type — how this agent operates (auto-classified from your description)"
                 >
                   {AGENT_TYPE_LABELS[classification.agentType]}
@@ -490,22 +460,22 @@ export default function IntakeSessionPage({
                     setEditRiskTier(classification.riskTier);
                     setEditingClassification(true);
                   }}
-                  className="ml-1 text-xs text-gray-400 hover:text-gray-600 underline-offset-2 hover:underline"
+                  className="ml-1 text-xs text-text-tertiary hover:text-text-secondary underline-offset-2 hover:underline"
                 >
                   Override
                 </button>
               </div>
               {classification.rationale && (
-                <p className="text-xs italic text-gray-400">{classification.rationale}</p>
+                <p className="text-xs italic text-text-tertiary">{classification.rationale}</p>
               )}
             </div>
           ) : classification && editingClassification ? (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">Override classification:</span>
+              <span className="text-xs text-text-tertiary">Override classification:</span>
               <select
                 value={editAgentType}
                 onChange={(e) => setEditAgentType(e.target.value as AgentType)}
-                className="rounded border border-gray-300 px-2 py-0.5 text-xs focus:border-gray-500 focus:outline-none"
+                className="rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
                 title="Agent type"
               >
                 <option value="automation">Automation</option>
@@ -516,7 +486,7 @@ export default function IntakeSessionPage({
               <select
                 value={editRiskTier}
                 onChange={(e) => setEditRiskTier(e.target.value as IntakeRiskTier)}
-                className="rounded border border-gray-300 px-2 py-0.5 text-xs focus:border-gray-500 focus:outline-none"
+                className="rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
                 title="Risk tier"
               >
                 <option value="low">LOW risk</option>
@@ -527,13 +497,13 @@ export default function IntakeSessionPage({
               <button
                 onClick={handleSaveClassification}
                 disabled={classificationSaving}
-                className="rounded bg-gray-900 px-2.5 py-0.5 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                className="rounded bg-text px-2.5 py-0.5 text-xs font-medium text-surface hover:opacity-80 disabled:opacity-50"
               >
                 {classificationSaving ? "Saving…" : "Save classification"}
               </button>
               <button
                 onClick={() => setEditingClassification(false)}
-                className="text-xs text-gray-400 hover:text-gray-600"
+                className="text-xs text-text-tertiary hover:text-text-secondary"
               >
                 Cancel
               </button>

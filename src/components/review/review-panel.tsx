@@ -91,7 +91,8 @@ export function ReviewPanel({
       const data = await res.json();
       if (!res.ok) throw new Error(data.message ?? "Failed to generate brief");
       setAiBrief(data.brief as RiskBrief);
-    } catch {
+    } catch (err) {
+      console.error("[review-panel] AI brief fetch failed:", err);
       setAiBrief(null);
     }
   }

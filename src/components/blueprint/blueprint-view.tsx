@@ -43,7 +43,7 @@ export function BlueprintView({ abp }: BlueprintViewProps) {
       {/* Instructions */}
       {abp.capabilities.instructions && (
         <Section title="System Instructions" icon={FileText}>
-          <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
+          <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed">
             {abp.capabilities.instructions}
           </pre>
         </Section>

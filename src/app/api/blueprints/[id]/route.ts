@@ -6,6 +6,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
+import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 
 export async function GET(
   request: NextRequest,
@@ -28,7 +29,12 @@ export async function GET(
     const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, authSession.user);
     if (enterpriseError) return enterpriseError;
 
-    return NextResponse.json(blueprint);
+    // Include the enterprise's approval chain so the Blueprint Studio can render
+    // an approval progress tracker without a separate settings API call.
+    const settings = await getEnterpriseSettings(blueprint.enterpriseId);
+    const approvalChain = settings.approvalChain ?? [];
+
+    return NextResponse.json({ ...blueprint, approvalChain });
   } catch (error) {
     console.error(`[${requestId}] Failed to fetch blueprint:`, error);
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch blueprint", undefined, requestId);

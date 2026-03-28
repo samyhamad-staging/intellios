@@ -28,12 +28,12 @@ const COLUMNS: {
   badgeCls: string;
   group: "active" | "terminal";
 }[] = [
-  { status: "draft",      label: "Draft",      colBg: "col-draft",      dotColor: "dot-draft",      badgeCls: "badge-draft",      group: "active" },
-  { status: "in_review",  label: "In Review",  colBg: "col-review",     dotColor: "dot-review",     badgeCls: "badge-review",     group: "active" },
-  { status: "approved",   label: "Approved",   colBg: "col-approved",   dotColor: "dot-approved",   badgeCls: "badge-approved",   group: "active" },
-  { status: "deployed",   label: "Deployed",   colBg: "col-deployed",   dotColor: "dot-deployed",   badgeCls: "badge-deployed",   group: "terminal" },
-  { status: "rejected",   label: "Rejected",   colBg: "col-rejected",   dotColor: "dot-rejected",   badgeCls: "badge-rejected",   group: "terminal" },
-  { status: "deprecated", label: "Deprecated", colBg: "col-deprecated", dotColor: "dot-deprecated", badgeCls: "badge-deprecated", group: "terminal" },
+  { status: "draft",      label: "Draft",      colBg: "bg-gray-50 border-gray-200",     dotColor: "bg-gray-400",   badgeCls: "bg-gray-200 text-gray-600",     group: "active" },
+  { status: "in_review",  label: "In Review",  colBg: "bg-blue-50 border-blue-200",     dotColor: "bg-blue-500",   badgeCls: "bg-blue-100 text-blue-700",     group: "active" },
+  { status: "approved",   label: "Approved",   colBg: "bg-green-50 border-green-200",   dotColor: "bg-green-500",  badgeCls: "bg-green-100 text-green-700",   group: "active" },
+  { status: "deployed",   label: "Deployed",   colBg: "bg-indigo-50 border-indigo-200", dotColor: "bg-indigo-500", badgeCls: "bg-indigo-100 text-indigo-700", group: "terminal" },
+  { status: "rejected",   label: "Rejected",   colBg: "bg-red-50 border-red-200",       dotColor: "bg-red-500",    badgeCls: "bg-red-100 text-red-700",       group: "terminal" },
+  { status: "deprecated", label: "Deprecated", colBg: "bg-amber-50 border-amber-200",   dotColor: "bg-amber-400",  badgeCls: "bg-amber-100 text-amber-700",   group: "terminal" },
 ];
 
 function timeAgo(dateStr: string): string {
@@ -91,30 +91,30 @@ export default function PipelinePage() {
   return (
     <div className="flex h-[calc(100vh-0px)] flex-col overflow-hidden">
       {/* Header */}
-      <header className="shrink-0 border-b border-gray-200 bg-white px-6 py-4">
+      <header className="shrink-0 border-b border-border bg-surface px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Pipeline Board</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
+            <h1 className="text-xl font-semibold text-text">Pipeline Board</h1>
+            <p className="mt-0.5 text-sm text-text-secondary">
               {loading ? "Loading…" : `${agents.length} agent${agents.length === 1 ? "" : "s"} across all stages`}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search agents…"
-                className="w-48 rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-sm placeholder-gray-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/10"
+                className="w-48 rounded-lg border border-border bg-surface py-1.5 pl-8 pr-3 text-sm placeholder:text-text-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"
               />
             </div>
             {allTags.length > 0 && (
               <select
                 value={filterTag}
                 onChange={(e) => setFilterTag(e.target.value)}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-600 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/10"
+                className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"
               >
                 <option value="">All tags</option>
                 {allTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
@@ -123,7 +123,7 @@ export default function PipelinePage() {
             {(searchQuery || filterTag) && (
               <button
                 onClick={() => { setSearchQuery(""); setFilterTag(""); }}
-                className="text-xs text-gray-400 hover:text-gray-700 underline"
+                className="text-xs text-text-tertiary hover:text-text underline"
               >
                 Clear
               </button>
@@ -137,28 +137,10 @@ export default function PipelinePage() {
         <InsightsStrip agents={agents} />
       )}
 
-      {/* Stage totals bar */}
-      {!loading && !error && (
-        <div className="shrink-0 flex items-center gap-1 border-b border-gray-100 bg-white px-6 py-2">
-          {COLUMNS.map(({ status, label, badgeCls }, i) => {
-            const count = byStatus(status).length;
-            return (
-              <span key={status} className="flex items-center gap-1.5 text-xs">
-                {i > 0 && <span className="text-gray-200 select-none">·</span>}
-                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${badgeCls}`}>
-                  {count}
-                </span>
-                <span className="text-gray-500">{label}</span>
-              </span>
-            );
-          })}
-        </div>
-      )}
-
       {/* Board */}
       <div className="flex flex-1 gap-0 overflow-x-auto">
         {error && (
-          <div className="m-6 w-full rounded-lg border badge-gov-error p-4 text-sm">
+          <div className="m-6 w-full rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
           </div>
         )}
@@ -181,7 +163,7 @@ export default function PipelinePage() {
 
             {/* Divider between active and terminal stages */}
             {terminalColumns.length > 0 && (
-              <div className="shrink-0 self-stretch w-px bg-gray-200 mx-1" />
+              <div className="shrink-0 self-stretch w-px bg-border mx-1" />
             )}
 
             {/* Terminal stage columns */}
@@ -222,27 +204,27 @@ function Column({ status, label, colBg, dotColor, badgeCls, cards, loading }: Co
       {/* Column header */}
       <div className="flex items-center gap-2 px-0.5">
         <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotColor}`} />
-        <span className="text-sm font-semibold text-gray-800">{label}</span>
+        <span className="text-sm font-semibold text-text">{label}</span>
         <span className={`ml-auto rounded-full px-2 py-0.5 text-xs font-semibold ${badgeCls}`}>
           {loading ? "…" : cards.length}
         </span>
       </div>
 
       {/* Card list */}
-      <div className={`flex flex-col gap-2 rounded-card border p-2 ${colBg} min-h-32 flex-1`}>
+      <div className={`flex flex-col gap-2 rounded-xl border p-2 ${colBg} min-h-32 flex-1`}>
         {loading && (
           <div className="flex h-24 items-center justify-center">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-violet-600" />
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary" />
           </div>
         )}
         {!loading && cards.length === 0 && (
-          <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-gray-200">
+          <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-border">
             {status === "draft" ? (
-              <Link href="/intake" className="text-xs font-medium text-violet-500 hover:text-violet-700 transition-colors">
+              <Link href="/intake" className="text-xs font-medium text-primary hover:opacity-70 transition-colors">
                 Start an intake →
               </Link>
             ) : (
-              <p className="text-xs text-gray-400">Empty</p>
+              <p className="text-xs text-text-tertiary">Empty</p>
             )}
           </div>
         )}
@@ -316,20 +298,20 @@ function InsightsStrip({ agents }: { agents: Agent[] }) {
   if (insights.length === 0) return null;
 
   const STYLES: Record<Insight["type"], string> = {
-    alert: "text-alert-critical",
-    warn:  "text-alert-warn",
-    info:  "text-alert-info",
+    alert: "text-red-600",
+    warn: "text-amber-600",
+    info: "text-text-secondary",
   };
 
   const DOTS: Record<Insight["type"], string> = {
-    alert: "dot-alert-critical",
-    warn:  "dot-alert-warn",
-    info:  "dot-alert-info",
+    alert: "bg-red-400",
+    warn: "bg-amber-400",
+    info: "bg-border",
   };
 
   return (
-    <div className="shrink-0 flex items-center gap-4 border-b border-gray-100 bg-gray-50/60 px-6 py-2">
-      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+    <div className="shrink-0 flex items-center gap-4 border-b border-border bg-surface-raised px-6 py-2">
+      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-text-tertiary">
         Insights
       </span>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
@@ -352,21 +334,21 @@ function AgentCard({ agent }: { agent: Agent }) {
   const borderCls =
     sla === "alert" ? "border-red-300 border-t-2 border-t-red-400" :
     sla === "warn"  ? "border-amber-300 border-t-2 border-t-amber-400" :
-    "border-gray-200 hover:border-violet-300";
+    "border-border hover:border-primary/40";
 
   const shadowCls =
-    sla === "alert" ? "shadow-sm hover:shadow-md hover:shadow-red-100" :
-    sla === "warn"  ? "shadow-sm hover:shadow-md hover:shadow-amber-100" :
-    "shadow-sm hover:shadow-md hover:shadow-violet-50";
+    sla === "alert" ? "shadow-sm hover:shadow-red-100" :
+    sla === "warn"  ? "shadow-sm hover:shadow-amber-100" :
+    "shadow-sm hover:shadow-md hover:shadow-primary/5";
 
   return (
     <Link
       href={`/registry/${agent.agentId}`}
-      className={`block rounded-lg border bg-white p-3 transition-all hover:-translate-y-px hover:border-gray-300 ${borderCls} ${shadowCls}`}
+      className={`block rounded-lg border bg-surface p-3 transition-all hover:-translate-y-px ${borderCls} ${shadowCls}`}
     >
       {/* Name + governance shield */}
       <div className="flex items-start gap-2">
-        <span className="flex-1 text-sm font-semibold leading-snug text-gray-900 line-clamp-2" title={agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}>
+        <span className="flex-1 text-sm font-semibold leading-snug text-text line-clamp-2">
           {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
         </span>
         {agent.violationCount !== null && agent.violationCount > 0 ? (
@@ -380,12 +362,12 @@ function AgentCard({ agent }: { agent: Agent }) {
       {agent.tags?.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
           {agent.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
+            <span key={tag} className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-text-secondary">
               {tag}
             </span>
           ))}
           {agent.tags.length > 2 && (
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-400">
+            <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-text-tertiary">
               +{agent.tags.length - 2}
             </span>
           )}
@@ -393,17 +375,17 @@ function AgentCard({ agent }: { agent: Agent }) {
       )}
 
       {/* Footer: version + SLA + time */}
-      <div className="mt-2.5 flex items-center justify-between text-xs text-gray-400">
+      <div className="mt-2.5 flex items-center justify-between text-xs text-text-tertiary">
         <span className="font-mono text-[11px]">v{agent.version}</span>
         <div className="flex items-center gap-1.5">
           {sla === "alert" && (
-            <span className="flex items-center gap-0.5 rounded-md badge-gov-error border px-1.5 py-0.5 text-[10px] font-semibold">
+            <span className="flex items-center gap-0.5 rounded-md bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
               <AlertCircle size={9} />
               SLA breach
             </span>
           )}
           {sla === "warn" && (
-            <span className="flex items-center gap-0.5 rounded-md badge-gov-warn border px-1.5 py-0.5 text-[10px] font-semibold">
+            <span className="flex items-center gap-0.5 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600">
               <Clock size={9} />
               Nearing SLA
             </span>

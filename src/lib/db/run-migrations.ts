@@ -33,6 +33,11 @@ const files = [
   "0017_user_invitations.sql",
   "0018_review_reminder_tracking.sql",
   "0019_intake_classification.sql",
+  "0020_intake_invitations.sql",
+  "0021_intake_ai_insights.sql",
+  "0022_intake_confidence.sql",
+  "0023_blueprint_lineage.sql",
+  "0024_agent_telemetry.sql",
 ];
 
 const startFrom = process.argv[2];

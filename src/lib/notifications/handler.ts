@@ -263,14 +263,16 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
 
   // ── blueprint.approval_step_completed ────────────────────────────────────
   // Notify all users with the next required role that a blueprint is awaiting
-  // their approval step.
+  // their approval step. Also notify the designer of their blueprint's progress.
   if (event.type === "blueprint.approval_step_completed") {
     const toState = event.toState as Record<string, unknown> | null;
     const nextApproverRole = toState?.nextApproverRole as string | undefined;
     const nextApproverLabel = toState?.nextApproverLabel as string | undefined;
     const nextStep = (toState?.step as number | undefined) ?? 0;
+    const completedStep = (meta.completedStep as number | undefined) ?? 0;
     const completedLabel = meta.label ?? "previous step";
 
+    // Notify next-step reviewers
     if (nextApproverRole) {
       const recipients = await getUsersByRole(nextApproverRole, event.enterpriseId);
       const title = `Blueprint awaiting ${nextApproverLabel ?? "your review"}`;
@@ -297,6 +299,33 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
         }
       }
     }
+
+    // Notify the designer that their blueprint advanced a step
+    const createdBy = meta.createdBy;
+    if (createdBy && createdBy !== event.actorEmail) {
+      const designerTitle = "Your blueprint advanced in review";
+      const designerMessage = nextApproverLabel
+        ? `${agentName} passed step ${completedStep + 1} ("${completedLabel}") and is now awaiting step ${nextStep + 1} (${nextApproverLabel})`
+        : `${agentName} passed step ${completedStep + 1} ("${completedLabel}") and is now in final review`;
+      await createNotification({
+        recipientEmail: createdBy,
+        enterpriseId: event.enterpriseId,
+        type: "blueprint.approval_step_pending",
+        title: designerTitle,
+        message: designerMessage,
+        entityType: event.entityType,
+        entityId: event.entityId,
+        link,
+      });
+      if (emailEnabled) {
+        void sendEmail({
+          to: createdBy,
+          subject: `[Intellios] ${designerTitle}`,
+          html: buildNotificationEmail(designerTitle, designerMessage, link),
+        });
+      }
+    }
+
     return;
   }
 

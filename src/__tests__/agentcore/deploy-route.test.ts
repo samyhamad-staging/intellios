@@ -58,7 +58,6 @@ function makeAbp(): ABP {
 }
 
 const validConfig: AgentCoreConfig = {
-  enabled: true,
   region: "us-east-1",
   agentResourceRoleArn: "arn:aws:iam::123456789012:role/BedrockAgentRole",
   foundationModel: "anthropic.claude-3-5-sonnet-20241022-v2:0",

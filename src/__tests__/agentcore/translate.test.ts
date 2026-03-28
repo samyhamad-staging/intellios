@@ -280,9 +280,10 @@ describe("translateAbpToBedrockAgent — tags", () => {
   it("always includes managed-by, abpId, and abpVersion tags", () => {
     const abp = makeAbp();
     const result = translateAbpToBedrockAgent(abp);
-    expect(result.tags["managed-by"]).toBe("intellios");
-    expect(result.tags.abpId).toBeTruthy();
-    expect(result.tags.abpVersion).toBeTruthy();
+    expect(result.tags).toBeDefined();
+    expect(result.tags!["managed-by"]).toBe("intellios");
+    expect(result.tags!.abpId).toBeTruthy();
+    expect(result.tags!.abpVersion).toBeTruthy();
   });
 
   it("includes all ownership fields when present", () => {
@@ -295,24 +296,27 @@ describe("translateAbpToBedrockAgent — tags", () => {
       },
     });
     const result = translateAbpToBedrockAgent(abp);
-    expect(result.tags.businessUnit).toBe("Risk");
-    expect(result.tags.costCenter).toBe("CC-001");
-    expect(result.tags.environment).toBe("production");
-    expect(result.tags.dataClassification).toBe("confidential");
+    expect(result.tags).toBeDefined();
+    expect(result.tags!.businessUnit).toBe("Risk");
+    expect(result.tags!.costCenter).toBe("CC-001");
+    expect(result.tags!.environment).toBe("production");
+    expect(result.tags!.dataClassification).toBe("confidential");
   });
 
   it("omits ownership tags when ownership block is absent", () => {
     const abp: ABP = { ...makeAbp(), ownership: undefined };
     const result = translateAbpToBedrockAgent(abp);
-    expect(result.tags.businessUnit).toBeUndefined();
-    expect(result.tags.costCenter).toBeUndefined();
-    expect(result.tags.environment).toBeUndefined();
+    expect(result.tags).toBeDefined();
+    expect(result.tags!.businessUnit).toBeUndefined();
+    expect(result.tags!.costCenter).toBeUndefined();
+    expect(result.tags!.environment).toBeUndefined();
   });
 
   it("includes enterpriseId tag when metadata.enterprise_id is present", () => {
     const abp = makeAbp();
     const result = translateAbpToBedrockAgent(abp);
-    expect(result.tags.enterpriseId).toBe("ent-001");
+    expect(result.tags).toBeDefined();
+    expect(result.tags!.enterpriseId).toBe("ent-001");
   });
 });
 

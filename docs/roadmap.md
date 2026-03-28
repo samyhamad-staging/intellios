@@ -6,6 +6,12 @@ Design system fully token-based (no raw Tailwind color classes remaining in UI).
 
 ---
 
+## ✓ Phase 54 Complete (2026-03-17) — Designer Feedback Loop
+
+Rec 2 of the 7-rec role model plan. Closed the visibility gap for designers after blueprint submission. **Notification**: `blueprint.approval_step_completed` now also notifies `createdBy` with step-progress message ("passed step N / now awaiting step M"), in addition to the existing next-reviewer notification. **Blueprint Studio progress tracker**: when `status = "in_review"` and a multi-step approval chain exists, a tracker bar renders showing completed steps (✓ + approver username), current pending step (amber ●), and waiting steps (gray ○); tooltip shows full approver email + date. `approvalChain` injected into blueprint GET response to avoid exposing admin settings route to designer-role users. 3 files modified. 0 migrations. 0 new deps. TypeScript: 0 new errors.
+
+---
+
 ## ✓ Phase 53 Complete (2026-03-17) — Viewer Role + Role Model Optimization
 
 ---
