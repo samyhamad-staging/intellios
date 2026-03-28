@@ -258,7 +258,10 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
             }`}
           >
             {readiness.label === "not-started" && "Getting started"}
-            {readiness.label === "building" && "Building requirements…"}
+            {readiness.label === "building" && (() => {
+              const next = sections.find((s) => s.required && !s.filled);
+              return next ? `Next: ${next.label}` : "Building requirements…";
+            })()}
             {readiness.label === "near-complete" && "Nearly complete"}
             {readiness.label === "ready" && "✓ Ready to finalize"}
           </div>
