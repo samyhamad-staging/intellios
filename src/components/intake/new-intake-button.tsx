@@ -13,11 +13,15 @@ export function NewIntakeButton({ className }: { className?: string }) {
     setError(null);
     try {
       const res = await fetch("/api/intake/sessions", { method: "POST" });
-      if (!res.ok) throw new Error("Failed to create session");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const msg = (body as { error?: string }).error ?? `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
       const session = await res.json();
       router.push(`/intake/${session.id}`);
-    } catch {
-      setError("Could not start a session. Is the server running?");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start a session.");
       setLoading(false);
     }
   }
