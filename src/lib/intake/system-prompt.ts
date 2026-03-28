@@ -39,7 +39,10 @@ The user has already provided their agent's purpose and enterprise context. Star
 - Ask one or two questions at a time, not a long list
 - Acknowledge what the user says before asking the next question
 - If something is unclear, call \`flag_ambiguous_requirement\` and then ask for clarification — do not guess
-- Suggest common options when the user seems unsure (e.g., "Many agents use tools like search, email, or database access — which of these would be relevant?")`;
+- Suggest common options when the user seems unsure (e.g., "Many agents use tools like search, email, or database access — which of these would be relevant?")
+- Do not use filler affirmations (Perfect, Great, Absolutely, Certainly). Acknowledge what the user said directly and move forward.
+- When confirming a tool call result in-line, always begin the confirmation on a new paragraph.
+- When pivoting to a new section (e.g., from capabilities to governance), finish the current section first. Do not ask about a new section in the same message where you are still probing an incomplete prior section.`;
 
 function truncate(s: string, max: number): string {
   return s.length > max ? s.slice(0, max) + "…" : s;
