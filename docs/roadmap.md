@@ -1,6 +1,18 @@
 # Intellios Roadmap
 
-## Current Phase: Session 064 ✓ Complete (2026-03-18) — Design System + UX Improvements
+## Current Phase: Session 066 ✓ Complete (2026-03-28) — Intake Review Page Polish + Design System v1.1
+
+13 intake review UX enhancements (RV-001–013): sticky footer with live confirmation counter, human-readable retention formatting, per-section "← Revise" links, 3-step visual stepper, risk/sensitivity/regulatory badges, color-coded policy type chips, denied actions blocked list, collapsible empty sections, domain tile anchor links + hover tooltips, stakeholder gap warning banner. Design System v1.1 adds status, risk tier, and policy type semantic color tokens. 3 files modified, 0 migrations, 0 new deps.
+
+---
+
+## ✓ Session 065 Complete (2026-03-28) — Vercel Serverless Fixes + UE-001–009 Intake Chat UX
+
+6 production fixes unblocking Vercel deployment: postgres `max:1` for serverless connection limits, `await` classification in context route (fire-and-forget killed by serverless), missing `created_by` migration (0025) causing all intake session creation to fail with HTTP 500, missing UI components + quality dashboard committed (0024), intake button error surfacing. 9 intake chat UX enhancements: UE-001 classification banner height stability, UE-002 tool-call paragraph breaks, UE-003 routing agent classification fix, UE-004 section-boundary AI instruction, UE-005 active section pulse ring, UE-006 dynamic readiness label, UE-007 click-to-expand tool chips, UE-008 stakeholder panel lock, UE-009 anti-sycophancy system prompt ban. 2 new migrations, 20 files modified/added, 0 new deps.
+
+---
+
+## ✓ Session 064 Complete (2026-03-18) — Design System + UX Improvements
 
 Design system fully token-based (no raw Tailwind color classes remaining in UI). Status badges and risk tier indicators use icon shape + color. Five information hierarchy improvements across main pages. KpiCard extracted as shared component. Remaining design audit items: component consolidation (DataTable, SectionCard, AgentRow), typography/spacing/shadow token sets, empty-state component.
 

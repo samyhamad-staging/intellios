@@ -38,6 +38,63 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 066 — 2026-03-28
+
+**RV-001–013: Intake Review Page Polish + Design System v1.1**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context restore | Read intake-review, completeness-map, globals.css, roadmap | ~25k in / ~0.5k out |
+| RV-001–013 implementation | completeness-map.tsx (anchor links, tooltips, gap banner, label rename), intake-review.tsx (sticky footer, counter, revise links, retention format, stepper, badges, policy chips, denied list, empty collapse), globals.css (status/risk/policy tokens) | ~30k in / ~12k out |
+| Documentation | Session log 066, roadmap, project journal, effort log, _index | ~10k in / ~4k out |
+| **Session total (est.)** | | **~65k in / ~16.5k out** |
+
+**Estimated session cost:** Sonnet ~65k in × $3/1M + ~16.5k out × $15/1M = **$0.20 + $0.25 = ~$0.45**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Initiated RV-001–013 review page enhancement session | D-Approve | Approved scope of 13 items |
+
+**Totals:** 1 message · 1 D-Approve · ~5 min
+
+---
+
+## Session 065 — 2026-03-28
+
+**Vercel Serverless Fixes + UE-001–009 Intake Chat UX**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Infra diagnosis | Read db/index.ts, context route, new-intake-button, schema (postgres/classification issues) | ~20k in / ~0.5k out |
+| postgres max:1 fix | db/index.ts + new-intake-button error surfacing | ~5k in / ~0.5k out |
+| created_by migration | 0025_intake_sessions_created_by.sql + run-migrations.ts | ~5k in / ~1k out |
+| Classification await fix | context/route.ts — fire-and-forget → await | ~5k in / ~0.5k out |
+| Missing files commit | UI components, quality dashboard, error boundary, migration meta | ~10k in / ~2k out |
+| UE-001–009 implementation | intake-progress.tsx (pulse ring, dynamic label, stakeholder lock), tool-call-display.tsx (expand/collapse), system-prompt.ts (section boundary, anti-sycophancy), classify.ts (routing agent fix), intake session page (banner height fix, UE-006 label fix) | ~25k in / ~8k out |
+| Documentation | Session log 065, effort log entry | ~8k in / ~3k out |
+| **Session total (est.)** | | **~78k in / ~15.5k out** |
+
+**Estimated session cost:** Sonnet ~78k in × $3/1M + ~15.5k out × $15/1M = **$0.23 + $0.23 = ~$0.46**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Identified production failures; initiated fix session | D-Correct | Reported Vercel deploy issues |
+| 2 | Approved UE-001–009 scope | D-Approve | — |
+
+**Totals:** 2 messages · 1 D-Correct · 1 D-Approve · ~10 min
+
+---
+
 ## Session 058 — 2026-03-17
 
 **Phase 48: Stakeholder Collaboration Workspace (verification + docs)**
