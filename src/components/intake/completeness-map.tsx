@@ -26,11 +26,54 @@ interface DomainStatus {
   label: string;
   icon: string;
   itemCount: number;
+  itemNames: string[];
   status: "required-filled" | "required-empty" | "optional-filled" | "optional-sparse" | "optional-empty";
   /** Which context signal triggered this domain as required, if any */
   triggerReason?: string;
   /** Whether a stakeholder contribution was received for this domain */
   hasStakeholderInput: boolean;
+}
+
+// Maps completeness-map domain key → review section anchor id
+const DOMAIN_TO_SECTION_ANCHOR: Record<string, string> = {
+  identity:     "rv-section-identity",
+  tools:        "rv-section-capabilities",
+  instructions: "rv-section-instructions",
+  knowledge:    "rv-section-knowledge",
+  constraints:  "rv-section-constraints",
+  governance:   "rv-section-governance",
+  audit:        "rv-section-audit",
+};
+
+function getItemNames(section: string, payload: IntakePayload): string[] {
+  switch (section) {
+    case "identity":
+      return payload.identity?.name ? [payload.identity.name] : [];
+    case "tools":
+      return payload.capabilities?.tools?.map((t) => t.name) ?? [];
+    case "instructions":
+      return payload.capabilities?.instructions ? ["Custom instructions configured"] : [];
+    case "knowledge":
+      return payload.capabilities?.knowledge_sources?.map((s) => s.name) ?? [];
+    case "constraints":
+      return [
+        ...(payload.constraints?.allowed_domains ?? []).map((d) => `Allow: ${d}`),
+        ...(payload.constraints?.denied_actions ?? []).map((a) => `Deny: ${a}`),
+      ];
+    case "governance":
+      return payload.governance?.policies?.map((p) => p.name) ?? [];
+    case "audit": {
+      const a = payload.governance?.audit;
+      if (!a) return [];
+      const parts: string[] = [];
+      if (a.log_interactions !== undefined) parts.push(`Logging ${a.log_interactions ? "on" : "off"}`);
+      if (a.retention_days !== undefined) parts.push(`${a.retention_days}-day retention`);
+      if (a.pii_redaction !== undefined) parts.push(`PII redaction ${a.pii_redaction ? "on" : "off"}`);
+      return parts;
+    }
+    default:
+      return [];
+  }
 }
 
 function getSectionItemCount(section: string, payload: IntakePayload): number {
@@ -241,6 +284,7 @@ export function CompletenessMap({
       label,
       icon,
       itemCount: count,
+      itemNames: getItemNames(key, payload),
       status,
       triggerReason: required ? triggerReason : undefined,
       hasStakeholderInput,
@@ -277,63 +321,88 @@ export function CompletenessMap({
           )}
           {requiredEmptyCount === 0 && sparseCount === 0 && (
             <span className="rounded-full bg-green-100 border border-green-200 px-2 py-0.5 text-xs text-green-700">
-              Looking complete
+              Requirements Sufficient
             </span>
           )}
         </div>
       </div>
 
-      {/* Domain grid */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-        {domains.map((domain) => (
-          <div
-            key={domain.key}
-            className={`rounded-lg border px-3 py-2.5 transition-colors ${statusColors(domain.status)}`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              {/* Status icon */}
-              <span
-                className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${statusIconColors(domain.status)}`}
-              >
-                {statusIcon(domain.status)}
-              </span>
-              <span className="text-xs font-medium text-gray-800 leading-tight">
-                {domain.label}
-              </span>
-              {/* Stakeholder badge */}
-              {domain.hasStakeholderInput && (
-                <span
-                  className="ml-auto text-[10px] rounded-full bg-violet-100 border border-violet-200 px-1.5 py-0.5 text-violet-700 shrink-0"
-                  title="Stakeholder input received"
-                >
-                  ★
-                </span>
-              )}
+      {/* RV-002: Prominent stakeholder gap warning for high/critical risk — shown above grid */}
+      {(tier === "high" || tier === "critical") && expectedDomains.size > 0 && (() => {
+        const missingDomains = Array.from(expectedDomains).filter((d) => !contributionDomains.has(d));
+        if (missingDomains.length === 0) return null;
+        return (
+          <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs">
+            <span className="mt-0.5 shrink-0 text-amber-500">⚠</span>
+            <div>
+              <p className="font-semibold text-amber-800">
+                Stakeholder input required for {tier} risk — {missingDomains.length} domain{missingDomains.length > 1 ? "s" : ""} pending
+              </p>
+              <p className="mt-0.5 text-amber-700">
+                Missing input from: {missingDomains.join(", ")}. Reviewers will flag this absence.
+              </p>
             </div>
-            <div
-              className={`text-[11px] leading-tight ${
-                domain.status === "required-empty"
-                  ? "text-red-600"
-                  : domain.status === "optional-sparse"
-                  ? "text-amber-700"
-                  : domain.status === "optional-empty"
-                  ? "text-gray-400"
-                  : "text-gray-500"
-              }`}
-            >
-              {statusLabel(domain.status, domain.itemCount)}
-            </div>
-            {domain.triggerReason && (
-              <div className="mt-1 text-[10px] text-gray-400 leading-tight italic">
-                {domain.triggerReason}
-              </div>
-            )}
           </div>
-        ))}
+        );
+      })()}
+
+      {/* Domain grid — RV-007: tiles are anchor links to review section cards */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+        {domains.map((domain) => {
+          const anchorId = DOMAIN_TO_SECTION_ANCHOR[domain.key];
+          const tooltip = domain.itemNames.length > 0 ? domain.itemNames.join("\n") : undefined;
+          return (
+            <a
+              key={domain.key}
+              href={anchorId ? `#${anchorId}` : undefined}
+              title={tooltip}
+              className={`block rounded-lg border px-3 py-2.5 transition-colors ${statusColors(domain.status)} ${anchorId ? "cursor-pointer hover:brightness-95" : ""}`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                {/* Status icon */}
+                <span
+                  className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${statusIconColors(domain.status)}`}
+                >
+                  {statusIcon(domain.status)}
+                </span>
+                <span className="text-xs font-medium text-gray-800 leading-tight">
+                  {domain.label}
+                </span>
+                {/* Stakeholder badge */}
+                {domain.hasStakeholderInput && (
+                  <span
+                    className="ml-auto text-[10px] rounded-full bg-violet-100 border border-violet-200 px-1.5 py-0.5 text-violet-700 shrink-0"
+                    title="Stakeholder input received"
+                  >
+                    ★
+                  </span>
+                )}
+              </div>
+              <div
+                className={`text-[11px] leading-tight ${
+                  domain.status === "required-empty"
+                    ? "text-red-600"
+                    : domain.status === "optional-sparse"
+                    ? "text-amber-700"
+                    : domain.status === "optional-empty"
+                    ? "text-gray-400"
+                    : "text-gray-500"
+                }`}
+              >
+                {statusLabel(domain.status, domain.itemCount)}
+              </div>
+              {domain.triggerReason && (
+                <div className="mt-1 text-[10px] text-gray-400 leading-tight italic">
+                  {domain.triggerReason}
+                </div>
+              )}
+            </a>
+          );
+        })}
       </div>
 
-      {/* Stakeholder domain coverage footnote */}
-      {expectedDomains.size > 0 && (
+      {/* Stakeholder domain coverage footnote — shown for non-high/critical or when all domains covered */}
+      {expectedDomains.size > 0 && !(tier === "high" || tier === "critical") && (
         <div className="mt-3 text-xs text-gray-400 border-t border-gray-100 pt-2">
           <span className="text-violet-600">★</span>{" "}
           Stakeholder input received for a domain.{" "}
