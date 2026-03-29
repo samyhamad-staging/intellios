@@ -23,16 +23,17 @@ import { writeAuditLog } from "@/lib/audit/log";
  * times the cron fires, the `lastReminderSentAt >= lastPeriodicReviewAt` guard
  * prevents duplicate reminders within the same cycle.
  *
- * Security: Bearer token via CRON_SECRET env var (optional; skip if unset).
+ * Security: Bearer token via CRON_SECRET env var (required; returns 503 if unset).
  */
 export async function GET(request: NextRequest) {
-  // Optional bearer auth for Vercel cron
+  // Required bearer auth — fail closed if CRON_SECRET is not configured
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!cronSecret) {
+    return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
+  }
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const now = new Date();

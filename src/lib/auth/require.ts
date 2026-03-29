@@ -31,10 +31,7 @@ export async function requireAuth(
   if (allowedRoles && !allowedRoles.includes(session.user.role as Role)) {
     return {
       session: null,
-      error: apiError(
-        ErrorCode.FORBIDDEN,
-        `Access denied. Required role: ${allowedRoles.join(" or ")}`
-      ),
+      error: apiError(ErrorCode.FORBIDDEN, "Access denied"),
     };
   }
 

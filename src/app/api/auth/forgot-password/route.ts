@@ -4,6 +4,7 @@ import { users, passwordResetTokens } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { parseBody } from "@/lib/parse-body";
 import { sendEmail, buildNotificationEmail } from "@/lib/notifications/email";
+import { rateLimit } from "@/lib/rate-limit";
 import crypto from "node:crypto";
 import { z } from "zod";
 
@@ -23,6 +24,15 @@ const ForgotPasswordBody = z.object({
  * Public endpoint — no authentication required.
  */
 export async function POST(request: NextRequest) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  const rateLimitResponse = rateLimit(ip, {
+    endpoint: "forgot-password",
+    max: 5,
+    windowMs: 60 * 60 * 1000, // 5 per hour per IP
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   const { data: body, error: bodyError } = await parseBody(request, ForgotPasswordBody);
   if (bodyError) return bodyError;
 
