@@ -21,6 +21,7 @@ interface IntakeReviewProps {
   contributions?: StakeholderContribution[];
   riskTier?: IntakeRiskTier | null;
   onGenerate: () => void;
+  onRevise?: () => void;
   generating: boolean;
   generateSuccess?: boolean;
   generateError: string | null;
@@ -285,6 +286,7 @@ export function IntakeReview({
   contributions = [],
   riskTier,
   onGenerate,
+  onRevise,
   generating,
   generateSuccess = false,
   generateError,
@@ -657,13 +659,15 @@ export function IntakeReview({
                         <span className="text-xs text-gray-400">Not captured</span>
                       )}
                       {/* RV-003: Revise affordance */}
-                      <a
-                        href={`/intake/${sessionId}`}
-                        className="ml-auto text-xs text-gray-400 hover:text-primary transition-colors shrink-0"
-                        title={`Return to intake conversation to revise ${SECTION_LABELS[key]}`}
-                      >
-                        ← Revise
-                      </a>
+                      {onRevise && (
+                        <button
+                          onClick={onRevise}
+                          className="ml-auto text-xs text-gray-400 hover:text-primary transition-colors shrink-0"
+                          title={`Return to intake conversation to revise ${SECTION_LABELS[key]}`}
+                        >
+                          ← Revise
+                        </button>
+                      )}
                     </div>
                     <div className="text-sm">
                       {getSectionContent(key, payload)}
