@@ -450,7 +450,6 @@ export default async function Home() {
           <ActivityFeed />
         </div>
       </section>
-      </div>
     </div>
   );
 }
