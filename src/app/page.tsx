@@ -1,5 +1,4 @@
 import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { and, desc, eq, isNull } from "drizzle-orm";
@@ -17,7 +16,12 @@ import {
   CheckCircle,
   TrendingUp,
   TrendingDown,
+  AlertTriangle,
+  Rocket,
+  ShieldAlert,
+  Clock,
 } from "lucide-react";
+import type { ValidationReport } from "@/lib/governance/types";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { FleetGovernanceDashboard } from "@/components/dashboard/fleet-governance-dashboard";
 import { getRecentSnapshots } from "@/lib/awareness/metrics-worker";
@@ -44,11 +48,6 @@ export default async function Home() {
   const session = await auth();
   const user = session?.user;
 
-  // H1-2.2: Role-based landing — reviewer and compliance_officer go to /governor
-  if (user?.role === "reviewer" || user?.role === "compliance_officer") {
-    redirect("/governor");
-  }
-
   const enterpriseFilter =
     user?.role === "admin"
       ? undefined
@@ -67,6 +66,7 @@ export default async function Home() {
           tags: agentBlueprints.tags,
           createdBy: agentBlueprints.createdBy,
           updatedAt: agentBlueprints.updatedAt,
+          validationReport: agentBlueprints.validationReport,
         })
         .from(agentBlueprints)
         .where(enterpriseFilter)
@@ -90,16 +90,16 @@ export default async function Home() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="mb-4 flex justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
               <svg width="20" height="20" viewBox="0 0 14 14" fill="none">
                 <path d="M2 11L7 3L12 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M4.5 8H9.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
               </svg>
             </div>
           </div>
-          <h1 className="mb-1 text-2xl font-semibold text-gray-900">Intellios</h1>
-          <p className="mb-8 text-sm text-gray-500">Enterprise Agent Factory</p>
-          <Link href="/login" className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors">
+          <h1 className="mb-1 text-2xl font-semibold text-text">Intellios</h1>
+          <p className="mb-8 text-sm text-text-secondary">Enterprise Agent Factory</p>
+          <Link href="/login" className="rounded-lg bg-text px-5 py-2.5 text-sm font-medium text-surface hover:opacity-90 transition-opacity">
             Sign in
           </Link>
         </div>
@@ -107,73 +107,131 @@ export default async function Home() {
     );
   }
 
-  // ── Architect ──────────────────────────────────────────────────────────────
+  // ── Architect ─────────────────────────────────────────────────────────────
   if (role === "architect") {
     return (
       <div className="px-8 py-8">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">My Work</h1>
-            <p className="mt-0.5 text-sm text-gray-500">Design, refine, and submit agent blueprints for review.</p>
+            <h1 className="text-xl font-semibold text-text">My Work</h1>
+            <p className="mt-0.5 text-sm text-text-secondary">Design, refine, and submit agent blueprints for review.</p>
           </div>
-          <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors disabled:opacity-50" />
+          <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-fg hover:bg-primary-hover transition-colors disabled:opacity-50" />
         </div>
 
         {/* Quick action cards */}
         <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { href: "/pipeline", icon: Kanban,      label: "Pipeline Board",  sub: `${allAgents.length} agents`, color: "text-violet-600" },
-            { href: "/registry", icon: Library,     label: "Agent Registry",  sub: "All versions",              color: "text-blue-600" },
-            { href: "/intake",   icon: Plus,         label: "New Intake",      sub: "Start from scratch",        color: "text-green-600" },
+            { href: "/pipeline", icon: Kanban,  label: "Pipeline Board", sub: `${allAgents.length} agents`, color: "text-primary" },
+            { href: "/registry", icon: Library, label: "Agent Registry",  sub: "All versions",              color: "text-blue-600" },
+            { href: "/intake",   icon: Plus,    label: "New Intake",      sub: "Start from scratch",        color: "text-green-600" },
           ].map(({ href, icon: Icon, label, sub, color }) => (
-            <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all min-w-0">
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-violet-50 transition-colors ${color}`}>
+            <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] hover:border-primary-subtle hover:shadow-[var(--shadow-raised)] transition-all min-w-0">
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-raised group-hover:bg-primary-muted transition-colors ${color}`}>
                 <Icon size={16} />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900 truncate">{label}</p>
-                <p className="text-xs text-gray-400">{sub}</p>
+                <p className="text-sm font-medium text-text truncate">{label}</p>
+                <p className="text-xs text-text-tertiary">{sub}</p>
               </div>
-              <ChevronRight size={14} className="ml-auto text-gray-300 group-hover:text-gray-400" />
+              <ChevronRight size={14} className="ml-auto text-text-tertiary group-hover:text-text-secondary" />
             </Link>
           ))}
         </div>
 
-        {/* Drafts callout */}
-        {draftAgents.length > 0 && (
-          <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-            <span className="text-sm text-amber-800">
-              <strong>{draftAgents.length} draft{draftAgents.length === 1 ? "" : "s"}</strong> not yet submitted for review.
-            </span>
-            <Link href="/pipeline" className="ml-auto text-xs font-medium text-amber-700 underline hover:text-amber-900">
-              View in pipeline →
-            </Link>
-          </div>
-        )}
+        {/* Action Queue — computed items the architect should act on */}
+        {(() => {
+          type ActionItem = { icon: typeof AlertTriangle; label: string; sub: string; href: string; color: string; bgColor: string };
+          const actions: ActionItem[] = [];
+
+          // Agents with governance violations (draft, need fixing before submit)
+          const draftsWithViolations = myAgents.filter((a) => {
+            if (a.status !== "draft") return false;
+            const report = a.validationReport as ValidationReport | null;
+            return report?.violations?.some((v) => v.severity === "error");
+          });
+          if (draftsWithViolations.length > 0) {
+            const first = draftsWithViolations[0];
+            const errorCount = (first.validationReport as ValidationReport).violations.filter((v) => v.severity === "error").length;
+            actions.push({
+              icon: ShieldAlert,
+              label: `${first.name ?? "Unnamed"} has ${errorCount} governance violation${errorCount === 1 ? "" : "s"}`,
+              sub: "Fix violations before submitting for review",
+              href: `/registry/${first.agentId}?tab=governance`,
+              color: "text-red-700", bgColor: "bg-red-50 border-red-200",
+            });
+          }
+
+          // Approved agents ready to deploy
+          const approvedAgents = myAgents.filter((a) => a.status === "approved");
+          if (approvedAgents.length > 0) {
+            actions.push({
+              icon: Rocket,
+              label: `${approvedAgents[0].name ?? "Agent"} is approved — ready to deploy`,
+              sub: `${approvedAgents.length} approved agent${approvedAgents.length === 1 ? "" : "s"} awaiting deployment`,
+              href: "/deploy",
+              color: "text-green-700", bgColor: "bg-green-50 border-green-200",
+            });
+          }
+
+          // Drafts not yet submitted (no violations)
+          const cleanDrafts = myAgents.filter((a) => {
+            if (a.status !== "draft") return false;
+            const report = a.validationReport as ValidationReport | null;
+            return !report?.violations?.some((v) => v.severity === "error");
+          });
+          if (cleanDrafts.length > 0) {
+            actions.push({
+              icon: Clock,
+              label: `${cleanDrafts.length} draft${cleanDrafts.length === 1 ? "" : "s"} ready to submit for review`,
+              sub: "Governance checks pass — submit when ready",
+              href: "/pipeline",
+              color: "text-amber-700", bgColor: "bg-amber-50 border-amber-200",
+            });
+          }
+
+          if (actions.length === 0) return null;
+
+          return (
+            <div className="mb-6 space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Action Queue</h2>
+              {actions.slice(0, 4).map((action, i) => (
+                <Link key={i} href={action.href} className={`group flex items-center gap-3 rounded-lg border px-4 py-3 transition-all hover:shadow-sm ${action.bgColor}`}>
+                  <action.icon size={16} className={`shrink-0 ${action.color}`} />
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm font-medium ${action.color}`}>{action.label}</p>
+                    <p className="text-xs text-text-tertiary">{action.sub}</p>
+                  </div>
+                  <ChevronRight size={14} className="shrink-0 text-text-tertiary group-hover:text-text-secondary" />
+                </Link>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* Recent agents */}
         <section>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Recent Agents</h2>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Recent Agents</h2>
           {myAgents.length === 0 ? (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-14 text-center">
-              <Inbox size={28} className="mb-3 text-gray-300" />
-              <p className="text-sm font-medium text-gray-500">No agents yet</p>
-              <p className="mt-1 text-xs text-gray-400">Start an intake session to design your first agent.</p>
+            <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface py-14 text-center">
+              <Inbox size={28} className="mb-3 text-text-tertiary" />
+              <p className="text-sm font-medium text-text-secondary">No agents yet</p>
+              <p className="mt-1 text-xs text-text-tertiary">Start an intake session to design your first agent.</p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
               {myAgents.slice(0, 8).map((agent, i) => (
                 <Link
                   key={agent.agentId}
                   href={`/registry/${agent.agentId}`}
-                  className={`flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-100" : ""}`}
+                  className={`flex items-center gap-3 px-5 py-3.5 hover:bg-surface-raised transition-colors ${i > 0 ? "border-t border-border" : ""}`}
                 >
-                  <Bot size={15} className="shrink-0 text-gray-400" />
-                  <span className="flex-1 truncate text-sm font-medium text-gray-900">{agent.name ?? "Unnamed Agent"}</span>
+                  <Bot size={15} className="shrink-0 text-text-tertiary" />
+                  <span className="flex-1 truncate text-sm font-medium text-text">{agent.name ?? "Unnamed Agent"}</span>
                   <StatusBadge status={agent.status} />
-                  <span className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</span>
-                  <ChevronRight size={13} className="text-gray-300" />
+                  <span className="text-xs text-text-tertiary">{timeAgo(agent.updatedAt)}</span>
+                  <ChevronRight size={13} className="text-text-tertiary" />
                 </Link>
               ))}
             </div>
@@ -189,16 +247,16 @@ export default async function Home() {
       <div className="px-8 py-8">
         <div className="mb-8 flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">
+            <h1 className="text-xl font-semibold text-text">
               {role === "compliance_officer" ? "Governance & Compliance" : "Review Queue"}
             </h1>
-            <p className="mt-0.5 text-sm text-gray-500">
+            <p className="mt-0.5 text-sm text-text-secondary">
               {inReviewAgents.length > 0
                 ? `${inReviewAgents.length} agent${inReviewAgents.length === 1 ? "" : "s"} pending review`
                 : "Queue is clear"}
             </p>
           </div>
-          <Link href="/review" className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors">
+          <Link href="/review" className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-fg hover:bg-primary-hover transition-colors">
             <ClipboardList size={14} />
             Review Queue{inReviewAgents.length > 0 && ` (${inReviewAgents.length})`}
           </Link>
@@ -207,43 +265,43 @@ export default async function Home() {
         <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { href: "/review",   icon: ClipboardList, label: "Review Queue",   sub: `${inReviewAgents.length} pending`, color: "text-amber-600" },
-            { href: "/pipeline", icon: Kanban,         label: "Pipeline Board", sub: `${allAgents.length} total`,        color: "text-violet-600" },
+            { href: "/pipeline", icon: Kanban,         label: "Pipeline Board", sub: `${allAgents.length} total`,        color: "text-primary" },
             { href: "/registry", icon: Library,        label: "Agent Registry", sub: "All versions",                     color: "text-blue-600" },
           ].map(({ href, icon: Icon, label, sub, color }) => (
-            <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:border-violet-300 hover:shadow-md transition-all min-w-0">
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-violet-50 transition-colors ${color}`}>
+            <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] hover:border-primary-subtle hover:shadow-[var(--shadow-raised)] transition-all min-w-0">
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-raised group-hover:bg-primary-muted transition-colors ${color}`}>
                 <Icon size={16} />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900 truncate">{label}</p>
-                <p className="text-xs text-gray-400">{sub}</p>
+                <p className="text-sm font-medium text-text truncate">{label}</p>
+                <p className="text-xs text-text-tertiary">{sub}</p>
               </div>
-              <ChevronRight size={14} className="ml-auto text-gray-300 group-hover:text-gray-400" />
+              <ChevronRight size={14} className="ml-auto text-text-tertiary group-hover:text-text-secondary" />
             </Link>
           ))}
         </div>
 
         <section>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Pending Reviews</h2>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Pending Reviews</h2>
           {inReviewAgents.length === 0 ? (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-14 text-center">
+            <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface py-14 text-center">
               <CheckCircle size={28} className="mb-3 text-green-400" />
-              <p className="text-sm font-medium text-gray-500">Review queue is clear</p>
+              <p className="text-sm font-medium text-text-secondary">Review queue is clear</p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
               {inReviewAgents.slice(0, 8).map((agent, i) => (
                 <Link
                   key={agent.agentId}
                   href={`/registry/${agent.agentId}?tab=review`}
-                  className={`flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-100" : ""}`}
+                  className={`flex items-center gap-3 px-5 py-3.5 hover:bg-surface-raised transition-colors ${i > 0 ? "border-t border-border" : ""}`}
                 >
-                  <Bot size={15} className="shrink-0 text-gray-400" />
-                  <span className="flex-1 truncate text-sm font-medium text-gray-900">{agent.name ?? "Unnamed Agent"}</span>
+                  <Bot size={15} className="shrink-0 text-text-tertiary" />
+                  <span className="flex-1 truncate text-sm font-medium text-text">{agent.name ?? "Unnamed Agent"}</span>
                   <StatusBadge status={agent.status} />
                   <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Review</span>
-                  <span className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</span>
-                  <ChevronRight size={13} className="text-gray-300" />
+                  <span className="text-xs text-text-tertiary">{timeAgo(agent.updatedAt)}</span>
+                  <ChevronRight size={13} className="text-text-tertiary" />
                 </Link>
               ))}
             </div>
@@ -253,7 +311,7 @@ export default async function Home() {
     );
   }
 
-  // ── Admin ─────────────────────────────────────────────────────────────────
+  // ── Admin / Viewer ─────────────────────────────────────────────────────────
   const statuses = ["draft", "in_review", "approved", "deployed", "rejected", "deprecated"] as const;
   const counts = Object.fromEntries(
     statuses.map((s) => [s, allAgents.filter((a) => a.status === s).length])
@@ -303,13 +361,13 @@ export default async function Home() {
       {/* Header */}
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Overview</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
+          <h1 className="text-xl font-semibold text-text">Overview</h1>
+          <p className="mt-0.5 text-sm text-text-secondary">
             {allAgents.length} agent{allAgents.length === 1 ? "" : "s"} across all teams
           </p>
         </div>
         {role !== "viewer" && (
-          <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors disabled:opacity-50" />
+          <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-fg hover:bg-primary-hover transition-colors disabled:opacity-50" />
         )}
       </div>
 
@@ -362,7 +420,7 @@ export default async function Home() {
       {/* Governance Health KPI + Fleet Posture */}
       <div className="mb-8">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Governance Health</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Governance Health</h2>
           {qualityIndex != null && (
             <div className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
               qualityIndex >= 80 ? "bg-green-50 text-green-700 border-green-200" :
@@ -390,16 +448,16 @@ export default async function Home() {
       {/* Recent activity */}
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Recent Activity</h2>
-          <Link href="/registry" className="text-xs text-violet-600 hover:text-violet-700">View all →</Link>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Recent Activity</h2>
+          <Link href="/registry" className="text-xs text-primary hover:text-primary-hover">View all →</Link>
         </div>
         {allAgents.length === 0 ? (
-          <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-14 text-center">
-            <Inbox size={28} className="mb-3 text-gray-300" />
-            <p className="text-sm font-medium text-gray-500">No agents in the system yet</p>
+          <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface py-14 text-center">
+            <Inbox size={28} className="mb-3 text-text-tertiary" />
+            <p className="text-sm font-medium text-text-secondary">No agents in the system yet</p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
             {allAgents.slice(0, 8).map((agent, i) => {
               const author = agent.createdBy
                 ? agent.createdBy.includes("@")
@@ -410,17 +468,17 @@ export default async function Home() {
                 <Link
                   key={agent.agentId}
                   href={`/registry/${agent.agentId}`}
-                  className={`flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-100" : ""}`}
+                  className={`flex items-center gap-4 px-5 py-3 hover:bg-surface-raised transition-colors ${i > 0 ? "border-t border-border" : ""}`}
                 >
-                  <Bot size={15} className="shrink-0 text-gray-400" />
+                  <Bot size={15} className="shrink-0 text-text-tertiary" />
                   <div className="flex-1 min-w-0">
-                    <p className="truncate text-sm font-medium text-gray-900">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="truncate text-sm font-medium text-text">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</p>
+                    <p className="text-xs text-text-tertiary mt-0.5">
                       {author ? `by ${author} · ` : ""}{timeAgo(agent.updatedAt)}
                     </p>
                   </div>
                   <StatusBadge status={agent.status} />
-                  <ChevronRight size={13} className="shrink-0 text-gray-300" />
+                  <ChevronRight size={13} className="shrink-0 text-text-tertiary" />
                 </Link>
               );
             })}
@@ -430,10 +488,10 @@ export default async function Home() {
 
       {/* Workspace activity feed */}
       <section className="mt-8">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
           Workspace Activity
         </h2>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-[var(--shadow-card)]">
           <ActivityFeed />
         </div>
       </section>

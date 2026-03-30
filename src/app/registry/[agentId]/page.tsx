@@ -4,6 +4,11 @@ import { use, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuGroup,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
 import { BlueprintSummary } from "@/components/blueprint/blueprint-summary";
 import { StatusBadge } from "@/components/registry/status-badge";
@@ -20,8 +25,6 @@ import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 import type { TestCase, TestRun } from "@/lib/testing/types";
 import { SimulatePanel } from "@/components/registry/simulate-panel";
 import { QualityDashboard } from "@/components/blueprint/quality-dashboard";
-import { ProductionDashboard } from "@/components/registry/production-dashboard";
-import { ViolationsPanel } from "@/components/registry/violations-panel";
 
 interface CurrentUser {
   email: string;
@@ -87,8 +90,8 @@ interface BlueprintVersion {
   abp: ABP;
 }
 
-type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed" | "suspended";
-type Tab = "blueprint" | "summary" | "governance" | "quality" | "review" | "versions" | "regulatory" | "tests" | "simulate" | "production" | "violations";
+type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
+type Tab = "blueprint" | "summary" | "governance" | "quality" | "review" | "versions" | "regulatory" | "tests" | "simulate";
 
 export default function AgentDetailPage({
   params,
@@ -113,13 +116,12 @@ export default function AgentDetailPage({
   const [enterpriseSettings, setEnterpriseSettings] = useState<EnterpriseSettings>(DEFAULT_ENTERPRISE_SETTINGS);
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const tab = searchParams.get("tab");
-    if (tab === "review" || tab === "governance" || tab === "quality" || tab === "versions" || tab === "summary" || tab === "regulatory" || tab === "tests" || tab === "simulate" || tab === "production" || tab === "violations") return tab;
+    if (tab === "review" || tab === "governance" || tab === "quality" || tab === "versions" || tab === "summary" || tab === "regulatory" || tab === "tests" || tab === "simulate") return tab;
     return "blueprint";
   });
   const [compareVersionId, setCompareVersionId] = useState<string | null>(null);
   // Phase 52: Blueprint lineage — which version's governance diff is expanded
   const [expandedDiffId, setExpandedDiffId] = useState<string | null>(null);
-
   // Phase 23: Test Harness state
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
@@ -136,29 +138,13 @@ export default function AgentDetailPage({
   const [savingTestCase, setSavingTestCase] = useState(false);
   // Expanded test case result detail
   const [expandedResult, setExpandedResult] = useState<string | null>(null);
-  // Quality score
   const [qualityScore, setQualityScore] = useState<{
-    id: string;
-    blueprintId: string;
-    overallScore: string | null;
-    intentAlignment: string | null;
-    toolAppropriateness: string | null;
-    instructionSpecificity: string | null;
-    governanceAdequacy: string | null;
-    ownershipCompleteness: string | null;
-    flags: string[];
-    evaluatedAt: string;
+    id: string; blueprintId: string; overallScore: string | null;
+    intentAlignment: string | null; toolAppropriateness: string | null;
+    instructionSpecificity: string | null; governanceAdequacy: string | null;
+    ownershipCompleteness: string | null; flags: string[]; evaluatedAt: string;
   } | null>(null);
   const [qualityLoading, setQualityLoading] = useState(true);
-
-  // H1-1.3: Production telemetry
-  const [telemetryData, setTelemetryData] = useState<{
-    id: string; agentId: string; timestamp: string; invocations: number; errors: number;
-    latencyP50Ms: number | null; latencyP99Ms: number | null; tokensIn: number; tokensOut: number;
-    policyViolations: number; source: string; createdAt: string;
-  }[] | null>(null);
-  const [telemetryLoading, setTelemetryLoading] = useState(false);
-
   // Phase 37: Periodic review completion
   const [reviewCompleteOpen, setReviewCompleteOpen] = useState(false);
   const [reviewCompleteNotes, setReviewCompleteNotes] = useState("");
@@ -170,7 +156,7 @@ export default function AgentDetailPage({
       const res = await fetch(`/api/registry/${agentId}`);
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message ?? "Not found");
+        throw new Error(data.error ?? "Not found");
       }
       const data = await res.json();
       setLatest(data.agent);
@@ -222,28 +208,6 @@ export default function AgentDetailPage({
       .catch(() => {}); // non-critical
   }, [load]);
 
-  // Fetch quality score once on mount (non-critical, fails silently)
-  useEffect(() => {
-    setQualityLoading(true);
-    fetch(`/api/registry/${agentId}/quality`)
-      .then((r) => r.json())
-      .then((data) => setQualityScore(data.score ?? null))
-      .catch(() => {})
-      .finally(() => setQualityLoading(false));
-  }, [agentId]);
-
-  // H1-1.3: Fetch production telemetry (deployed + suspended agents)
-  useEffect(() => {
-    if (!latest || (latest.status !== "deployed" && latest.status !== "suspended")) return;
-    setTelemetryLoading(true);
-    const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
-    fetch(`/api/telemetry/${agentId}?since=${since}`)
-      .then((r) => r.json())
-      .then((data) => setTelemetryData(data.rows ?? []))
-      .catch(() => setTelemetryData([]))
-      .finally(() => setTelemetryLoading(false));
-  }, [agentId, latest?.status]);
-
   // Poll every 30s when the tab is visible to reflect status changes by other users.
   useEffect(() => {
     const interval = setInterval(() => {
@@ -253,6 +217,16 @@ export default function AgentDetailPage({
     }, 30_000);
     return () => clearInterval(interval);
   }, [load]);
+
+  // Fetch quality score once on mount (non-critical, fails silently)
+  useEffect(() => {
+    setQualityLoading(true);
+    fetch(`/api/registry/${agentId}/quality`)
+      .then((r) => r.json())
+      .then((data) => setQualityScore(data.score ?? null))
+      .catch(() => {})
+      .finally(() => setQualityLoading(false));
+  }, [agentId]);
 
   const handleStatusChange = useCallback((newStatus: Status) => {
     setLatest((prev) => prev ? { ...prev, status: newStatus } : prev);
@@ -312,8 +286,8 @@ export default function AgentDetailPage({
       setCloneModalOpen(false);
       setCloneName("");
       router.push(`/registry/${cloned.agentId}`);
-    } catch {
-      // clone errors are non-critical; user can retry
+    } catch (err) {
+      console.error("[registry] Clone failed:", err);
     } finally {
       setCloning(false);
     }
@@ -360,7 +334,7 @@ export default function AgentDetailPage({
       const res = await fetch(`/api/blueprints/${latest.id}/report`);
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message ?? "Export failed");
+        throw new Error(data.error ?? "Export failed");
       }
       const report = await res.json();
       const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
@@ -371,8 +345,8 @@ export default function AgentDetailPage({
       a.download = `mrm-report-${safeName}-v${latest.version}.json`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch {
-      // non-critical — export errors are silent; the user can retry
+    } catch (err) {
+      console.error("[registry] Export report failed:", err);
     } finally {
       setExporting(false);
     }
@@ -437,8 +411,9 @@ export default function AgentDetailPage({
         setShowTestForm(false);
         setTestFormName(""); setTestFormDescription(""); setTestFormInput(""); setTestFormExpected(""); setTestFormSeverity("required");
       }
-    } catch { /* non-critical */ }
-    finally { setSavingTestCase(false); }
+    } catch (err) {
+      console.error("[registry] Save test case failed:", err);
+    } finally { setSavingTestCase(false); }
   }, [agentId, testFormName, testFormDescription, testFormInput, testFormExpected, testFormSeverity]);
 
   const handleDeleteTestCase = useCallback(async (caseId: string) => {
@@ -450,7 +425,7 @@ export default function AgentDetailPage({
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center text-sm text-gray-400">
+      <div className="flex h-screen items-center justify-center text-sm text-text-tertiary">
         Loading agent…
       </div>
     );
@@ -459,8 +434,8 @@ export default function AgentDetailPage({
   if (error || !latest) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4">
-        <p className="text-sm text-red-600">{error ?? "Agent not found"}</p>
-        <Link href="/registry" className="text-sm text-gray-500 underline">
+        <p className="text-sm text-danger">{error ?? "Agent not found"}</p>
+        <Link href="/registry" className="text-sm text-text-secondary underline">
           Back to Registry
         </Link>
       </div>
@@ -493,8 +468,6 @@ export default function AgentDetailPage({
     { id: "regulatory", label: "Regulatory" },
     { id: "tests", label: `Tests${testCases.length > 0 ? ` (${testCases.length})` : ""}` },
     { id: "simulate", label: "Simulate" },
-    ...(latest?.status === "deployed" || latest?.status === "suspended" ? [{ id: "production" as Tab, label: "Production" }] : []),
-    ...(latest?.status === "deployed" || latest?.status === "suspended" ? [{ id: "violations" as Tab, label: "Violations" }] : []),
     ...(isInReview ? [{ id: "review" as Tab, label: "Review" }] : []),
     { id: "versions", label: `Versions (${versions.length})` },
   ];
@@ -502,15 +475,15 @@ export default function AgentDetailPage({
   return (
     <div className="flex h-screen flex-col">
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-y-2 border-b border-gray-200 bg-white px-6 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-y-2 border-b border-border bg-surface px-6 py-3">
         <div className="flex items-center gap-3 min-w-0">
-          <Link href="/registry" className="text-sm text-gray-400 hover:text-gray-700 shrink-0">
+          <Link href="/registry" className="text-sm text-text-tertiary hover:text-text shrink-0">
             ← Registry
           </Link>
-          <span className="text-gray-200">/</span>
+          <span className="text-border">/</span>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold text-gray-900 truncate">
+              <h1 className="text-lg font-semibold text-text truncate">
                 {latest.name ?? `Agent ${latest.agentId.slice(0, 8)}`}
               </h1>
               <StatusBadge status={latest.status} />
@@ -526,7 +499,7 @@ export default function AgentDetailPage({
                 </a>
               )}
             </div>
-            <p className="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
+            <p className="text-xs text-text-tertiary flex items-center gap-2 flex-wrap">
               <span>v{latest.version} · {versions.length} version{versions.length !== 1 ? "s" : ""}
               {parseInt(latest.refinementCount ?? "0") > 0 &&
                 ` · ${latest.refinementCount} refinement${latest.refinementCount === "1" ? "" : "s"}`}</span>
@@ -540,14 +513,14 @@ export default function AgentDetailPage({
                         Review Overdue
                       </span>
                     ) : (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+                      <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium text-text-secondary">
                         Next Review: {new Date(latest.nextReviewDue).toLocaleDateString(undefined, { dateStyle: "medium" })}
                       </span>
                     )}
                     {canComplete && (
                       <button
                         onClick={() => { setReviewCompleteOpen(true); setReviewCompleteNotes(""); setReviewCompleteError(null); }}
-                        className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700 hover:bg-violet-100"
+                        className="rounded-full bg-primary-muted px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-primary-subtle"
                       >
                         Complete Review
                       </button>
@@ -559,85 +532,80 @@ export default function AgentDetailPage({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
+          {/* Primary lifecycle action + ⋯ overflow (Deprecate) */}
           <LifecycleControls
             blueprintId={latest.id}
             agentId={latest.agentId}
             currentStatus={latest.status}
-            currentUserRole={currentUser?.role}
             onStatusChange={handleStatusChange}
           />
-          {/* MRM Report — visible to all authenticated users */}
-          <Link
-            href={`/blueprints/${latest.id}/report`}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-          >
-            View MRM Report
-          </Link>
-          {/* Compliance exports — restricted to compliance_officer + admin */}
-          {/* Export Agent Code — all roles */}
-          <a
-            href={`/api/blueprints/${latest.id}/export/code`}
-            download
-            className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm text-violet-700 hover:border-violet-400 hover:bg-violet-100 transition-colors"
-            title="Download a ready-to-run TypeScript agent generated from this blueprint"
-          >
-            Export Agent Code ↓
-          </a>
-          {(currentUser?.role === "compliance_officer" || currentUser?.role === "admin") && (
-            <>
-              {(latest.status === "approved" || latest.status === "deployed") && (
-                <a
-                  href={`/api/blueprints/${latest.id}/export/compliance`}
-                  download
-                  className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm text-indigo-700 hover:border-indigo-400 hover:bg-indigo-100 transition-colors"
-                  title="Download structured JSON compliance evidence package"
-                >
-                  Export Evidence ↓
-                </a>
-              )}
-              <button
-                onClick={handleExportReport}
-                disabled={exporting}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors disabled:opacity-50"
-              >
-                {exporting ? "Exporting…" : "Export JSON"}
-              </button>
-            </>
-          )}
-          {(currentUser?.role === "reviewer" || currentUser?.role === "compliance_officer" || currentUser?.role === "admin") &&
-            (latest.status === "approved" || latest.status === "deployed") && (
-              <a
-                href={`/api/blueprints/${latest.id}/export/agentcore`}
-                download
-                className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5 text-sm text-orange-700 hover:border-orange-400 hover:bg-orange-100 transition-colors"
-                title="Download Amazon Bedrock AgentCore deployment manifest"
-              >
-                Export for AgentCore ↓
-              </a>
-          )}
-          {latest.sessionId && (
-            <Link
-              href={`/intake/${latest.sessionId}`}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              ← Intake Session
-            </Link>
-          )}
-          {(currentUser?.role === "architect" || currentUser?.role === "admin") && (
-            <button
-              onClick={() => { setCloneName(""); setCloneModalOpen(true); }}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-            >
-              Clone Agent
-            </button>
-          )}
-          <Link
-            href={`/blueprints/${latest.id}`}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-          >
-            Open in Studio
-          </Link>
+
+          {/* Actions menu — all secondary actions in one dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="md">
+                Actions
+                <svg className="ml-1 h-3.5 w-3.5 opacity-50" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                </svg>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuGroup>
+                <DropdownMenuItem asChild>
+                  <Link href={`/blueprints/${latest.id}`}>Open in Studio</Link>
+                </DropdownMenuItem>
+                {(currentUser?.role === "architect" || currentUser?.role === "admin") && (
+                  <DropdownMenuItem onSelect={() => { setCloneName(""); setCloneModalOpen(true); }}>
+                    Clone Agent
+                  </DropdownMenuItem>
+                )}
+                {latest.sessionId && (
+                  <DropdownMenuItem asChild>
+                    <Link href={`/intake/${latest.sessionId}`}>← Intake Session</Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem asChild>
+                  <Link href={`/blueprints/${latest.id}/report`}>View MRM Report</Link>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Exports</DropdownMenuLabel>
+
+              <DropdownMenuGroup>
+                <DropdownMenuItem asChild>
+                  <a href={`/api/blueprints/${latest.id}/export/code`} download className="flex items-center justify-between">
+                    Agent Code <span className="text-text-tertiary text-xs">↓ TS</span>
+                  </a>
+                </DropdownMenuItem>
+                {(currentUser?.role === "compliance_officer" || currentUser?.role === "admin") &&
+                  (latest.status === "approved" || latest.status === "deployed") && (
+                  <DropdownMenuItem asChild>
+                    <a href={`/api/blueprints/${latest.id}/export/compliance`} download className="flex items-center justify-between">
+                      Evidence Package <span className="text-text-tertiary text-xs">↓ JSON</span>
+                    </a>
+                  </DropdownMenuItem>
+                )}
+                {(currentUser?.role === "reviewer" || currentUser?.role === "compliance_officer" || currentUser?.role === "admin") &&
+                  (latest.status === "approved" || latest.status === "deployed") && (
+                  <DropdownMenuItem asChild>
+                    <a href={`/api/blueprints/${latest.id}/export/agentcore`} download className="flex items-center justify-between">
+                      AgentCore Manifest <span className="text-text-tertiary text-xs">↓ JSON</span>
+                    </a>
+                  </DropdownMenuItem>
+                )}
+                {(currentUser?.role === "compliance_officer" || currentUser?.role === "admin") && (
+                  <DropdownMenuItem onSelect={handleExportReport} disabled={exporting}>
+                    <span className="flex items-center justify-between w-full">
+                      Full Blueprint <span className="text-text-tertiary text-xs">{exporting ? "…" : "↓ JSON"}</span>
+                    </span>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
@@ -681,14 +649,14 @@ export default function AgentDetailPage({
       {/* Clone Modal */}
       {cloneModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
-            <h2 className="text-base font-semibold text-gray-900">Clone Agent</h2>
-            <p className="mt-1 text-sm text-gray-500">
+          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-xl">
+            <h2 className="text-base font-semibold text-text">Clone Agent</h2>
+            <p className="mt-1 text-sm text-text-secondary">
               Creates a new draft agent pre-populated with this blueprint&apos;s content. The clone
               starts its own independent governance lifecycle.
             </p>
             <div className="mt-4">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <label className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                 Clone Name <span className="font-normal normal-case">(optional)</span>
               </label>
               <input
@@ -696,20 +664,20 @@ export default function AgentDetailPage({
                 value={cloneName}
                 onChange={(e) => setCloneName(e.target.value)}
                 placeholder={`${latest.name ?? "Unnamed Agent"} (Clone)`}
-                className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-400 focus:outline-none"
+                className="mt-1.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-text placeholder:text-text-tertiary focus:border-border-strong focus:outline-none"
               />
             </div>
             <div className="mt-5 flex justify-end gap-3">
               <button
                 onClick={() => setCloneModalOpen(false)}
-                className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                className="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised"
               >
                 Cancel
               </button>
               <button
                 onClick={handleClone}
                 disabled={cloning}
-                className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                className="rounded-lg bg-text px-4 py-2 text-sm font-medium text-surface hover:opacity-80 disabled:opacity-50"
               >
                 {cloning ? "Cloning…" : "Clone Agent"}
               </button>
@@ -818,7 +786,7 @@ export default function AgentDetailPage({
                           ? "bg-green-100 text-green-700"
                           : isActive
                           ? "bg-amber-100 text-amber-700 ring-1 ring-amber-300"
-                          : "bg-gray-100 text-gray-400"
+                          : "bg-surface-muted text-text-tertiary"
                       }`}
                       title={completed ? `Approved by ${completed.approvedBy}` : isActive ? `Awaiting ${step.role}` : "Pending"}
                     >
@@ -837,15 +805,15 @@ export default function AgentDetailPage({
       })()}
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-200 bg-white px-6">
+      <div className="flex border-b border-border bg-surface px-6">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
               activeTab === tab.id
-                ? "border-gray-900 text-gray-900"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-text text-text"
+                : "border-transparent text-text-secondary hover:text-text"
             }`}
           >
             {tab.id === "review" && activeTab !== "review" ? (
@@ -952,8 +920,8 @@ export default function AgentDetailPage({
                 onRevalidate={handleRevalidate}
               />
             ) : (
-              <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
-                <p className="text-sm text-gray-500">No validation report yet.</p>
+              <div className="rounded-lg border border-border bg-surface p-8 text-center">
+                <p className="text-sm text-text-secondary">No validation report yet.</p>
                 <button
                   onClick={async () => {
                     try {
@@ -964,7 +932,7 @@ export default function AgentDetailPage({
                       if (data.report) handleRevalidate(data.report as ValidationReport);
                     } catch { /* non-critical */ }
                   }}
-                  className="mt-3 text-sm text-gray-900 underline"
+                  className="mt-3 text-sm text-text underline"
                 >
                   Run validation
                 </button>
@@ -1003,15 +971,15 @@ export default function AgentDetailPage({
             <div className="p-6 max-w-2xl space-y-5">
               {/* Prior approvals table — shown when multi-step and at least one step completed */}
               {chain.length > 0 && priorApprovals.length > 0 && (
-                <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-                  <div className="border-b border-gray-100 bg-gray-50 px-4 py-2.5">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <div className="rounded-lg border border-border bg-surface overflow-hidden">
+                  <div className="border-b border-border bg-surface-raised px-4 py-2.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
                       Prior Approvals
                     </p>
                   </div>
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-gray-100 text-left text-gray-400">
+                      <tr className="border-b border-border text-left text-text-tertiary">
                         <th className="px-4 py-2 font-medium">Step</th>
                         <th className="px-4 py-2 font-medium">Label</th>
                         <th className="px-4 py-2 font-medium">Approver</th>
@@ -1019,16 +987,16 @@ export default function AgentDetailPage({
                         <th className="px-4 py-2 font-medium">Comment</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50">
+                    <tbody className="divide-y divide-border">
                       {priorApprovals.map((step, i) => (
-                        <tr key={i} className="text-gray-600">
+                        <tr key={i} className="text-text-secondary">
                           <td className="px-4 py-2">{step.step + 1}</td>
                           <td className="px-4 py-2">{step.label}</td>
                           <td className="px-4 py-2 font-medium">{step.approvedBy}</td>
                           <td className="px-4 py-2 whitespace-nowrap">
                             {new Date(step.approvedAt).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
                           </td>
-                          <td className="px-4 py-2 text-gray-500 italic">
+                          <td className="px-4 py-2 text-text-secondary italic">
                             {step.comment ?? "—"}
                           </td>
                         </tr>
@@ -1055,11 +1023,11 @@ export default function AgentDetailPage({
 
               {/* Not your turn message */}
               {!isMyTurn ? (
-                <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-center">
-                  <p className="text-sm font-medium text-gray-600">
+                <div className="rounded-lg border border-border bg-surface-raised px-4 py-6 text-center">
+                  <p className="text-sm font-medium text-text-secondary">
                     Waiting for {activeStep?.label ?? "next approver"}
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-text-tertiary mt-1">
                     This step requires a user with role <span className="font-medium">{activeStep?.role}</span>.
                     Your role is <span className="font-medium">{userRole}</span>.
                   </p>
@@ -1091,11 +1059,11 @@ export default function AgentDetailPage({
           return (
             <div className="p-6 max-w-3xl space-y-6">
               {/* ── Test Suite ── */}
-              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-                <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-3">
+              <div className="rounded-xl border border-border bg-surface overflow-hidden">
+                <div className="flex items-center justify-between border-b border-border bg-surface-raised px-5 py-3">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">Test Suite</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-sm font-semibold text-text">Test Suite</p>
+                    <p className="text-xs text-text-secondary mt-0.5">
                       {testCases.length === 0
                         ? "No test cases defined yet."
                         : `${testCases.length} test case${testCases.length !== 1 ? "s" : ""} — shared across all versions of this agent`}
@@ -1104,7 +1072,7 @@ export default function AgentDetailPage({
                   {canManage && (
                     <button
                       onClick={() => setShowTestForm((v) => !v)}
-                      className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700"
+                      className="rounded-lg bg-text px-3 py-1.5 text-xs font-medium text-surface hover:opacity-80"
                     >
                       {showTestForm ? "Cancel" : "+ Add Test Case"}
                     </button>
@@ -1113,60 +1081,60 @@ export default function AgentDetailPage({
 
                 {/* Add Test Case form */}
                 {showTestForm && (
-                  <div className="border-b border-gray-100 px-5 py-4 space-y-3 bg-blue-50">
+                  <div className="border-b border-border px-5 py-4 space-y-3 bg-blue-50">
                     <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">New Test Case</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
+                        <label className="block text-xs font-medium text-text mb-1">Name *</label>
                         <input
                           type="text"
                           value={testFormName}
                           onChange={(e) => setTestFormName(e.target.value)}
                           placeholder="e.g. Happy path: basic domain query"
-                          className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-gray-400 focus:outline-none"
+                          className="w-full rounded-lg border border-border px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
                         />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Description (optional)</label>
+                        <label className="block text-xs font-medium text-text mb-1">Description (optional)</label>
                         <input
                           type="text"
                           value={testFormDescription}
                           onChange={(e) => setTestFormDescription(e.target.value)}
                           placeholder="Brief description of what this test verifies"
-                          className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-gray-400 focus:outline-none"
+                          className="w-full rounded-lg border border-border px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
                         />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Input prompt *</label>
+                        <label className="block text-xs font-medium text-text mb-1">Input prompt *</label>
                         <textarea
                           value={testFormInput}
                           onChange={(e) => setTestFormInput(e.target.value)}
                           rows={3}
                           placeholder="The message to send to the agent"
-                          className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-gray-400 focus:outline-none"
+                          className="w-full rounded-lg border border-border px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
                         />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Expected behavior *</label>
+                        <label className="block text-xs font-medium text-text mb-1">Expected behavior *</label>
                         <textarea
                           value={testFormExpected}
                           onChange={(e) => setTestFormExpected(e.target.value)}
                           rows={3}
                           placeholder="Describe what the agent should do in response"
-                          className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-gray-400 focus:outline-none"
+                          className="w-full rounded-lg border border-border px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Severity</label>
+                        <label className="block text-xs font-medium text-text mb-1">Severity</label>
                         <select
                           value={testFormSeverity}
                           onChange={(e) => setTestFormSeverity(e.target.value as "required" | "informational")}
-                          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:border-gray-400 focus:outline-none"
+                          className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
                         >
                           <option value="required">required</option>
                           <option value="informational">informational</option>
                         </select>
-                        <p className="text-xs text-gray-400 mt-0.5">Required failures block the overall pass verdict</p>
+                        <p className="text-xs text-text-tertiary mt-0.5">Required failures block the overall pass verdict</p>
                       </div>
                     </div>
                     <div className="flex justify-end">
@@ -1184,29 +1152,29 @@ export default function AgentDetailPage({
                 {/* Test case list */}
                 {testCases.length === 0 ? (
                   <div className="px-5 py-10 text-center">
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-text-tertiary">
                       {canManage
                         ? "No test cases yet. Click \"+ Add Test Case\" to define behavioral tests for this agent."
                         : "No test cases have been defined for this agent."}
                     </p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-50">
+                  <div className="divide-y divide-border">
                     {testCases.map((tc) => (
                       <div key={tc.id} className="px-5 py-3 flex items-start gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-900">{tc.name}</span>
+                            <span className="text-sm font-medium text-text">{tc.name}</span>
                             <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${
                               tc.severity === "required"
-                                ? "bg-gray-100 text-gray-600"
+                                ? "bg-surface-muted text-text-secondary"
                                 : "bg-blue-50 text-blue-600"
                             }`}>
                               {tc.severity}
                             </span>
                           </div>
                           {tc.description && (
-                            <p className="text-xs text-gray-400 mt-0.5">{tc.description}</p>
+                            <p className="text-xs text-text-tertiary mt-0.5">{tc.description}</p>
                           )}
                         </div>
                         {canManage && (
@@ -1224,18 +1192,18 @@ export default function AgentDetailPage({
               </div>
 
               {/* ── Test Runs ── */}
-              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-                <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-3">
+              <div className="rounded-xl border border-border bg-surface overflow-hidden">
+                <div className="flex items-center justify-between border-b border-border bg-surface-raised px-5 py-3">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">Test Runs</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-sm font-semibold text-text">Test Runs</p>
+                    <p className="text-xs text-text-secondary mt-0.5">
                       Runs for v{latest?.version} of this blueprint
                     </p>
                   </div>
                   <button
                     onClick={() => latest && handleRunTests(latest.id)}
                     disabled={runningTests || testCases.length === 0}
-                    className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                    className="rounded-lg bg-text px-3 py-1.5 text-xs font-medium text-surface hover:opacity-80 disabled:opacity-50"
                   >
                     {runningTests
                       ? `Running ${testCases.length} test${testCases.length !== 1 ? "s" : ""}…`
@@ -1270,7 +1238,7 @@ export default function AgentDetailPage({
                         {latestRun.passedCases}/{latestRun.totalCases} passed
                         {latestRun.status === "error" && " (some cases errored)"}
                       </span>
-                      <span className="text-xs text-gray-400 ml-auto">
+                      <span className="text-xs text-text-tertiary ml-auto">
                         Run by {latestRun.runBy} · {new Date(latestRun.startedAt).toLocaleString()}
                       </span>
                     </div>
@@ -1279,7 +1247,7 @@ export default function AgentDetailPage({
 
                 {/* Latest run results detail */}
                 {latestRun && latestRun.testResults.length > 0 && (
-                  <div className="divide-y divide-gray-50">
+                  <div className="divide-y divide-border">
                     {latestRun.testResults.map((result) => (
                       <div key={result.testCaseId} className="px-5 py-3">
                         <div className="flex items-center gap-2">
@@ -1288,29 +1256,29 @@ export default function AgentDetailPage({
                           }`}>
                             {result.status === "passed" ? "✓" : "✗"}
                           </span>
-                          <span className="text-sm font-medium text-gray-900">{result.name}</span>
+                          <span className="text-sm font-medium text-text">{result.name}</span>
                           <button
                             onClick={() => setExpandedResult(expandedResult === result.testCaseId ? null : result.testCaseId)}
-                            className="ml-auto text-xs text-gray-400 hover:text-gray-700"
+                            className="ml-auto text-xs text-text-tertiary hover:text-text"
                           >
                             {expandedResult === result.testCaseId ? "Hide ▲" : "Details ▼"}
                           </button>
                         </div>
-                        <p className="mt-0.5 text-xs text-gray-500">{result.evaluationRationale}</p>
+                        <p className="mt-0.5 text-xs text-text-secondary">{result.evaluationRationale}</p>
                         {expandedResult === result.testCaseId && (
                           <div className="mt-3 space-y-2">
                             <div>
-                              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Input</p>
-                              <p className="mt-0.5 text-xs text-gray-700 rounded bg-gray-50 px-3 py-2">{result.inputPrompt}</p>
+                              <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Input</p>
+                              <p className="mt-0.5 text-xs text-text rounded bg-surface-raised px-3 py-2">{result.inputPrompt}</p>
                             </div>
                             <div>
-                              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Expected behavior</p>
-                              <p className="mt-0.5 text-xs text-gray-700 rounded bg-gray-50 px-3 py-2">{result.expectedBehavior}</p>
+                              <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Expected behavior</p>
+                              <p className="mt-0.5 text-xs text-text rounded bg-surface-raised px-3 py-2">{result.expectedBehavior}</p>
                             </div>
                             {result.actualOutput && (
                               <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Actual output</p>
-                                <p className="mt-0.5 text-xs text-gray-700 rounded bg-gray-50 px-3 py-2 whitespace-pre-wrap">{result.actualOutput}</p>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Actual output</p>
+                                <p className="mt-0.5 text-xs text-text rounded bg-surface-raised px-3 py-2 whitespace-pre-wrap">{result.actualOutput}</p>
                               </div>
                             )}
                           </div>
@@ -1323,21 +1291,21 @@ export default function AgentDetailPage({
                 {/* Run history — prior runs */}
                 {testRuns.length === 0 ? (
                   <div className="px-5 py-8 text-center">
-                    <p className="text-sm text-gray-400">No test runs yet. Click &quot;Run Tests&quot; to execute the test suite.</p>
+                    <p className="text-sm text-text-tertiary">No test runs yet. Click &quot;Run Tests&quot; to execute the test suite.</p>
                   </div>
                 ) : testRuns.length > 1 && (
-                  <div className="border-t border-gray-100 px-5 py-3">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Prior Runs</p>
+                  <div className="border-t border-border px-5 py-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Prior Runs</p>
                     <div className="space-y-1">
                       {testRuns.slice(1).map((run) => (
-                        <div key={run.id} className="flex items-center gap-2 text-xs text-gray-500">
+                        <div key={run.id} className="flex items-center gap-2 text-xs text-text-secondary">
                           <span className={run.status === "passed" ? "text-green-600" : "text-red-600"}>
                             {run.status === "passed" ? "✓" : "✗"}
                           </span>
                           <span>{run.passedCases}/{run.totalCases} passed</span>
-                          <span className="text-gray-300">·</span>
+                          <span className="text-border">·</span>
                           <span>{run.runBy}</span>
-                          <span className="text-gray-300">·</span>
+                          <span className="text-border">·</span>
                           <span>{new Date(run.startedAt).toLocaleString()}</span>
                         </div>
                       ))}
@@ -1357,27 +1325,11 @@ export default function AgentDetailPage({
           />
         )}
 
-        {activeTab === "production" && (
-          <ProductionDashboard
-            agentId={agentId}
-            data={telemetryData}
-            loading={telemetryLoading}
-            canManageAlerts={
-              currentUser?.role === "architect" ||
-              currentUser?.role === "admin"
-            }
-          />
-        )}
-
-        {activeTab === "violations" && (
-          <ViolationsPanel agentId={agentId} />
-        )}
-
       {activeTab === "versions" && (
           <div className="p-6 space-y-6">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <tr className="border-b border-border text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                   <th className="pb-3 pr-4">Version</th>
                   <th className="pb-3 pr-4">Status</th>
                   <th className="pb-3 pr-4">Governance</th>
@@ -1386,16 +1338,16 @@ export default function AgentDetailPage({
                   <th className="pb-3">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {versions.map((v) => (
                   <tr key={v.id} className="py-3">
-                    <td className="py-3 pr-4 font-mono text-gray-700">v{v.version}</td>
+                    <td className="py-3 pr-4 font-mono text-text">v{v.version}</td>
                     <td className="py-3 pr-4">
                       <StatusBadge status={v.status} />
                     </td>
                     <td className="py-3 pr-4">
                       {v.validationReport == null ? (
-                        <span className="text-gray-300">—</span>
+                        <span className="text-text-tertiary">—</span>
                       ) : (() => {
                         const errorCount = v.validationReport.violations.filter(x => x.severity === "error").length;
                         const warnCount = v.validationReport.violations.filter(x => x.severity === "warning").length;
@@ -1424,14 +1376,14 @@ export default function AgentDetailPage({
                         );
                       })()}
                     </td>
-                    <td className="py-3 pr-4 text-gray-500">{v.refinementCount ?? "0"}</td>
-                    <td className="py-3 pr-4 text-gray-500">
+                    <td className="py-3 pr-4 text-text-secondary">{v.refinementCount ?? "0"}</td>
+                    <td className="py-3 pr-4 text-text-secondary">
                       {new Date(v.createdAt).toLocaleString()}
                     </td>
                     <td className="py-3">
                       <Link
                         href={`/blueprints/${v.id}`}
-                        className="text-gray-500 hover:text-gray-900 underline"
+                        className="text-text-secondary hover:text-text underline"
                       >
                         Open
                       </Link>
@@ -1443,16 +1395,16 @@ export default function AgentDetailPage({
 
             {/* Version Lineage — governance diff per version */}
             {versions.some((v) => v.governanceDiff != null) && (
-              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-                <div className="border-b border-gray-100 bg-gray-50 px-5 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <div className="rounded-xl border border-border bg-surface overflow-hidden">
+                <div className="border-b border-border bg-surface-raised px-5 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                     Version Lineage
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-text-tertiary mt-0.5">
                     Governance changes computed at version-creation time — required for regulatory change management documentation.
                   </p>
                 </div>
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-border">
                   {versions
                     .filter((v) => v.governanceDiff != null)
                     .map((v) => {
@@ -1463,7 +1415,7 @@ export default function AgentDetailPage({
                           ? "bg-red-50 text-red-700 border-red-200"
                           : diff.significance === "minor"
                           ? "bg-amber-50 text-amber-700 border-amber-200"
-                          : "bg-gray-50 text-gray-500 border-gray-200";
+                          : "bg-surface-raised text-text-secondary border-border";
                       const sigLabel =
                         diff.significance === "major"
                           ? "Major — compliance posture changed"
@@ -1474,29 +1426,29 @@ export default function AgentDetailPage({
                       return (
                         <div key={v.id} className="px-5 py-4">
                           <div className="flex items-center gap-3">
-                            <span className="font-mono text-sm font-medium text-gray-700">
+                            <span className="font-mono text-sm font-medium text-text">
                               v{diff.versionFrom}
                             </span>
-                            <span className="text-gray-300">→</span>
-                            <span className="font-mono text-sm font-medium text-gray-700">
+                            <span className="text-border">→</span>
+                            <span className="font-mono text-sm font-medium text-text">
                               v{diff.versionTo}
                             </span>
                             <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${sigColor}`}>
                               {sigLabel}
                             </span>
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-text-tertiary">
                               {diff.totalChanges} change{diff.totalChanges !== 1 ? "s" : ""}
                             </span>
                             {hasSections && (
                               <button
                                 onClick={() => setExpandedDiffId(isExpanded ? null : v.id)}
-                                className="ml-auto text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                                className="ml-auto text-xs text-primary hover:opacity-70 font-medium"
                               >
                                 {isExpanded ? "Collapse ↑" : "View changes ↓"}
                               </button>
                             )}
                             {!hasSections && (
-                              <span className="ml-auto text-xs text-gray-400 italic">No structural changes</span>
+                              <span className="ml-auto text-xs text-text-tertiary italic">No structural changes</span>
                             )}
                           </div>
 
@@ -1505,8 +1457,8 @@ export default function AgentDetailPage({
                               {diff.sections
                                 .filter((s) => s.changes.length > 0)
                                 .map((section) => (
-                                  <div key={section.section} className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-                                    <p className="text-xs font-semibold text-gray-600 mb-2">{section.label}</p>
+                                  <div key={section.section} className="rounded-lg border border-border bg-surface-raised px-4 py-3">
+                                    <p className="text-xs font-semibold text-text-secondary mb-2">{section.label}</p>
                                     <ul className="space-y-1.5">
                                       {section.changes.map((change, ci) => (
                                         <li key={ci} className="flex items-start gap-2 text-xs">
@@ -1519,7 +1471,7 @@ export default function AgentDetailPage({
                                           }`}>
                                             {change.changeType === "added" ? "+" : change.changeType === "removed" ? "−" : "~"}
                                           </span>
-                                          <span className="text-gray-700">{change.label}</span>
+                                          <span className="text-text">{change.label}</span>
                                         </li>
                                       ))}
                                     </ul>
@@ -1555,24 +1507,24 @@ export default function AgentDetailPage({
               const approvalSteps = (latest.approvalProgress ?? []) as ApprovalStepRecord[];
               if (approvalSteps.length === 0) return null;
               return (
-                <div className="border border-gray-200 rounded-lg p-5">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">
+                <div className="border border-border rounded-lg p-5">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-text-tertiary mb-3">
                     Approval History
                   </h3>
                   <ol className="space-y-1.5">
                     {approvalSteps.map((step, i) => (
-                      <li key={i} className="flex items-center gap-2 text-xs text-gray-600">
+                      <li key={i} className="flex items-center gap-2 text-xs text-text-secondary">
                         <span className={`h-2 w-2 shrink-0 rounded-full ${
                           step.decision === "approved" ? "bg-green-500" :
-                          step.decision === "rejected" ? "bg-red-500" : "bg-gray-300"
+                          step.decision === "rejected" ? "bg-red-500" : "bg-border"
                         }`} />
                         <span className="capitalize font-medium">{step.role ?? `Step ${i + 1}`}</span>
-                        <span className="text-gray-400">—</span>
-                        <span className={`capitalize ${step.decision === "approved" ? "text-green-700" : step.decision === "rejected" ? "text-red-700" : "text-gray-500"}`}>
+                        <span className="text-text-tertiary">—</span>
+                        <span className={`capitalize ${step.decision === "approved" ? "text-green-700" : step.decision === "rejected" ? "text-red-700" : "text-text-secondary"}`}>
                           {step.decision ?? "pending"}
                         </span>
                         {step.approvedAt && (
-                          <span className="text-gray-400">
+                          <span className="text-text-tertiary">
                             · {new Date(step.approvedAt).toLocaleDateString()}
                           </span>
                         )}
@@ -1585,13 +1537,13 @@ export default function AgentDetailPage({
 
             {/* Version comparison — only shown when there are at least 2 versions */}
             {versions.length >= 2 && (
-              <div className="border border-gray-200 rounded-lg p-5 space-y-4">
+              <div className="border border-border rounded-lg p-5 space-y-4">
                 <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-gray-700">Compare versions:</span>
+                  <span className="text-sm font-medium text-text">Compare versions:</span>
                   <select
                     value={compareVersionId ?? ""}
                     onChange={(e) => setCompareVersionId(e.target.value || null)}
-                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    className="rounded-lg border border-border px-3 py-1.5 text-sm text-text bg-surface focus:outline-none focus:ring-2 focus:ring-border-strong"
                   >
                     <option value="">Select a version to compare…</option>
                     {versions
@@ -1619,17 +1571,17 @@ export default function AgentDetailPage({
       {/* ── Complete Review Modal ──────────────────────────────────────── */}
       {reviewCompleteOpen && latest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-xl">
-            <h3 className="mb-1 text-base font-semibold text-gray-900">Mark periodic review complete</h3>
-            <p className="mb-4 text-sm text-gray-500">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-xl">
+            <h3 className="mb-1 text-base font-semibold text-text">Mark periodic review complete</h3>
+            <p className="mb-4 text-sm text-text-secondary">
               This will record completion for{" "}
-              <span className="font-medium text-gray-900">{latest.name ?? "this agent"}</span>{" "}
+              <span className="font-medium text-text">{latest.name ?? "this agent"}</span>{" "}
               and schedule the next review based on the configured cadence.
             </p>
 
             <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Review notes <span className="text-gray-400">(optional)</span>
+              <label className="mb-1 block text-sm font-medium text-text">
+                Review notes <span className="text-text-tertiary">(optional)</span>
               </label>
               <textarea
                 value={reviewCompleteNotes}
@@ -1637,7 +1589,7 @@ export default function AgentDetailPage({
                 rows={3}
                 maxLength={1000}
                 placeholder="Findings, actions taken, or conclusions from the review…"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 resize-none"
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-border-strong focus:outline-none focus:ring-1 focus:ring-border-strong resize-none"
               />
             </div>
 
@@ -1651,14 +1603,14 @@ export default function AgentDetailPage({
               <button
                 onClick={() => { setReviewCompleteOpen(false); setReviewCompleteNotes(""); setReviewCompleteError(null); }}
                 disabled={completingReview}
-                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text hover:bg-surface-raised disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCompleteReview}
                 disabled={completingReview}
-                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-fg hover:bg-primary-hover disabled:opacity-50"
               >
                 {completingReview ? "Completing…" : "Confirm"}
               </button>

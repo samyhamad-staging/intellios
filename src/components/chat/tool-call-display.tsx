@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 interface ToolCallDisplayProps {
   toolName: string;
   args: Record<string, unknown>;
@@ -93,21 +97,32 @@ function buildSummary(toolName: string, args: Record<string, unknown>): string {
 }
 
 export function ToolCallDisplay({ toolName, args }: ToolCallDisplayProps) {
+  const [expanded, setExpanded] = useState(false);
   const icon = TOOL_ICONS[toolName] ?? "·";
   const label = TOOL_LABELS[toolName] ?? toolName;
   const summary = buildSummary(toolName, args ?? {});
 
   return (
     <div className="flex justify-start">
-      <div className="flex items-start gap-2 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-xs text-blue-700 max-w-[80%]">
+      <button
+        onClick={() => setExpanded((e) => !e)}
+        className="flex items-start gap-2 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-xs text-blue-700 max-w-[80%] text-left hover:bg-blue-100 transition-colors"
+        title={expanded ? "Click to collapse" : "Click to expand captured values"}
+      >
         <span className="shrink-0 mt-px">{icon}</span>
-        <span>
+        <span className="flex-1 min-w-0">
           <span className="font-medium">{label}</span>
           {summary && (
             <span className="text-blue-500 ml-1">— {summary}</span>
           )}
+          {expanded && (
+            <pre className="mt-2 text-[10px] text-blue-600 whitespace-pre-wrap break-all font-mono bg-white rounded p-1.5 border border-blue-100">
+              {JSON.stringify(args, null, 2)}
+            </pre>
+          )}
         </span>
-      </div>
+        <span className="shrink-0 mt-px text-blue-300 ml-2">{expanded ? "▲" : "▼"}</span>
+      </button>
     </div>
   );
 }

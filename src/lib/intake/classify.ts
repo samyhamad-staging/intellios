@@ -34,7 +34,7 @@ const AGENT_TYPE_DESCRIPTIONS: Record<AgentType, string> = {
 const CLASSIFICATION_SYSTEM_PROMPT = `You are classifying an AI agent into exactly one of four functional types based on its purpose and context. Choose the type that best describes the agent's primary mode of operation.
 
 Agent types:
-- automation: Executes predefined workflows or process orchestration. No direct user-facing output. Examples: ETL pipelines, scheduled report generation, Slack notification bots, CI/CD automation.
+- automation: Executes predefined workflows or process orchestration. No direct user-facing output. Examples: ETL pipelines, scheduled report generation, Slack notification bots, CI/CD automation, customer intake triage agents, IVR routing agents, intent classification pipelines.
 - decision-support: Analyzes data and presents recommendations or analysis to a human who makes the final decision. Examples: risk scoring dashboards, medical diagnosis assistants, investment research tools.
 - autonomous: Takes consequential real-world actions without human approval in the loop. Examples: autonomous trading agents, self-healing infrastructure agents, agents that send emails or modify customer records automatically.
 - data-access: Read-only data retrieval and summarization. Queries databases or APIs but never writes, triggers, or modifies anything. Examples: internal search tools, document Q&A bots, analytics query assistants.

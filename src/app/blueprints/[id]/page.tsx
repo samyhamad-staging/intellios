@@ -1,10 +1,9 @@
 "use client";
 
-import { use, useState, useCallback, useEffect } from "react";
+import { use, useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
 import { ValidationReportView } from "@/components/governance/validation-report";
-import { RefinementChat } from "@/components/blueprint/refinement-chat";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
 import type { TestRun } from "@/lib/testing/types";
@@ -93,7 +92,12 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [change, setChange] = useState("");
+  const [refining, setRefining] = useState(false);
   const [refinementCount, setRefinementCount] = useState(0);
+  // Multi-turn refinement history
+  const [refinementHistory, setRefinementHistory] = useState<Array<{ role: "user" | "assistant"; content: string; timestamp: string }>>([]);
+  const refinementEndRef = useRef<HTMLDivElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [validating, setValidating] = useState(false);
@@ -111,22 +115,11 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   const [blueprintStatus, setBlueprintStatus] = useState<string>("draft");
   const [reviewComment, setReviewComment] = useState<string | null>(null);
   const [exportingEvidence, setExportingEvidence] = useState(false);
-
-  // H3-3.1: Governance drift state (loaded from blueprint API)
-  const [governanceDrift, setGovernanceDrift] = useState<{ status?: string; newViolations?: Array<{ field: string; message: string; severity: string }> } | null>(null);
-
-  // H3-4.4: Multi-cloud deployment target selector
-  const [deployTarget, setDeployTarget] = useState<"agentcore" | "azure-foundry" | "vertex-ai">("agentcore");
-
-  // H3-3.2: Self-healing remediation state
-  const [suggestFixLoading, setSuggestFixLoading] = useState(false);
-  const [suggestFixResult, setSuggestFixResult] = useState<{
-    changes: Array<{ field: string; oldValue: string; newValue: string; reason: string }>;
-    suggestedAbp: ABP;
-    summary: string;
-    violationCount: number;
-  } | null>(null);
-  const [acceptingFix, setAcceptingFix] = useState(false);
+  const [approvalProgress, setApprovalProgress] = useState<Array<{
+    step: number; role: string; label: string; approvedBy: string; approvedAt: string; decision: string; comment: string | null;
+  }>>([]);
+  const [currentApprovalStep, setCurrentApprovalStep] = useState<number>(0);
+  const [approvalChain, setApprovalChain] = useState<Array<{ step: number; role: string; label: string }>>([]);
 
   const [ownershipOpen, setOwnershipOpen] = useState(false);
   const [ownershipDraft, setOwnershipDraft] = useState<{
@@ -165,9 +158,9 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           // Report came from DB — may not reflect policy changes since it was run
           setReportIsFresh(false);
         }
-        if (data.governanceDrift) {
-          setGovernanceDrift(data.governanceDrift as { status?: string; newViolations?: Array<{ field: string; message: string; severity: string }> });
-        }
+        if (Array.isArray(data.approvalProgress)) setApprovalProgress(data.approvalProgress);
+        if (typeof data.currentApprovalStep === "number") setCurrentApprovalStep(data.currentApprovalStep);
+        if (Array.isArray(data.approvalChain)) setApprovalChain(data.approvalChain);
         setLoading(false);
       })
       .catch(() => {
@@ -176,22 +169,57 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       });
   }
 
-  // Called by RefinementChat after the stream completes and the updated ABP is fetched
-  const handleBlueprintUpdated = useCallback(async (updatedAbp: ABP) => {
-    setAbp(updatedAbp);
-    setRefinementCount((c) => c + 1);
-    // Auto-validate so stale warning clears after refinement
-    setValidating(true);
+  const handleRefine = useCallback(async () => {
+    if (!change.trim() || refining) return;
+    const userMsg = change.trim();
+    setRefining(true);
+    setError(null);
+    // Add user message to history immediately
+    setRefinementHistory((prev) => [...prev, { role: "user", content: userMsg, timestamp: new Date().toISOString() }]);
+    setChange("");
     try {
-      const vRes = await fetch(`/api/blueprints/${id}/validate`, { method: "POST" });
-      const vData = await vRes.json();
-      if (vData.report) {
-        setValidationReport(vData.report as ValidationReport);
-        setReportIsFresh(true);
+      const res = await fetch(`/api/blueprints/${id}/refine`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ change: userMsg }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "Refinement failed");
       }
-    } catch { /* non-critical */ }
-    finally { setValidating(false); }
-  }, [id]);
+      const data = await res.json();
+      setAbp(data.abp as ABP);
+      setRefinementCount(parseInt(data.refinementCount ?? "0", 10));
+      // Add assistant response to history
+      setRefinementHistory((prev) => [...prev, {
+        role: "assistant",
+        content: `Applied changes. Blueprint updated to refinement #${parseInt(data.refinementCount ?? "0", 10)}.`,
+        timestamp: new Date().toISOString(),
+      }]);
+      // Auto-validate so the designer doesn't need a manual click before submitting.
+      setValidating(true);
+      try {
+        const vRes = await fetch(`/api/blueprints/${id}/validate`, { method: "POST" });
+        const vData = await vRes.json();
+        if (vData.report) {
+          setValidationReport(vData.report as ValidationReport);
+          setReportIsFresh(true);
+        }
+      } catch { /* non-critical: user can re-validate manually if this fails */ }
+      finally { setValidating(false); }
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "Refinement failed";
+      setError(errMsg);
+      // Add error to history so user can see it in context
+      setRefinementHistory((prev) => [...prev, {
+        role: "assistant",
+        content: `Error: ${errMsg}. Try again or rephrase your request.`,
+        timestamp: new Date().toISOString(),
+      }]);
+    } finally {
+      setRefining(false);
+    }
+  }, [id, change, refining]);
 
   const handleValidate = useCallback(async () => {
     setValidating(true);
@@ -339,6 +367,11 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       .catch(() => {}); // non-critical
   }, [agentIdState, id, testDataLoaded]);
 
+  // Auto-scroll refinement chat to bottom when new messages arrive
+  useEffect(() => {
+    refinementEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [refinementHistory]);
+
   const handleRunWorkbenchTests = useCallback(async () => {
     if (!id || runningWorkbenchTests) return;
     setRunningWorkbenchTests(true);
@@ -352,62 +385,6 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
     finally { setRunningWorkbenchTests(false); }
   }, [id, runningWorkbenchTests]);
 
-  const handleSuggestFix = useCallback(async () => {
-    if (suggestFixLoading) return;
-    setSuggestFixLoading(true);
-    setSuggestFixResult(null);
-    try {
-      const res = await fetch(`/api/blueprints/${id}/suggest-fix`, { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Suggest fix failed");
-      setSuggestFixResult(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate fix suggestion");
-    } finally {
-      setSuggestFixLoading(false);
-    }
-  }, [id, suggestFixLoading]);
-
-  const handleAcceptFix = useCallback(async () => {
-    if (!suggestFixResult || acceptingFix) return;
-    setAcceptingFix(true);
-    try {
-      // Build a descriptive change message from the suggested changes
-      const changeDescription = suggestFixResult.summary ||
-        suggestFixResult.changes.map((c) => `Set ${c.field} to resolve: ${c.reason}`).join("; ");
-      const res = await fetch(`/api/blueprints/${id}/refine`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          change: `[AI Fix] ${changeDescription}`,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Accept fix failed");
-      }
-      const data = await res.json();
-      if (data.abp) {
-        setAbp(data.abp as ABP);
-        setRefinementCount((c) => c + 1);
-        setSuggestFixResult(null);
-        // Re-validate after accepting fix
-        setValidating(true);
-        const vRes = await fetch(`/api/blueprints/${id}/validate`, { method: "POST" });
-        const vData = await vRes.json();
-        if (vData.report) {
-          setValidationReport(vData.report);
-          setReportIsFresh(true);
-        }
-        setValidating(false);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Accept fix failed");
-    } finally {
-      setAcceptingFix(false);
-    }
-  }, [id, suggestFixResult, acceptingFix]);
-
   const handleSubmitForReview = useCallback(async () => {
     if (!agentIdState || submitting) return;
     setSubmitting(true);
@@ -420,7 +397,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message ?? "Submit failed");
+        throw new Error(data.error ?? "Submit failed");
       }
       setSubmitted(true);
     } catch (err) {
@@ -458,20 +435,20 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   return (
     <div className="flex h-screen flex-col">
       {/* Header */}
-      <header className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
+      <header className="flex shrink-0 items-center justify-between border-b border-border bg-surface px-6 py-3">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href="/pipeline"
-            className="text-xs text-gray-400 hover:text-gray-700 shrink-0"
+            className="text-xs text-text-tertiary hover:text-text shrink-0"
           >
             ← Pipeline
           </Link>
-          <span className="text-gray-300">/</span>
-          <h1 className="truncate text-base font-semibold text-gray-900">
+          <span className="text-text-tertiary">/</span>
+          <h1 className="truncate text-base font-semibold text-text">
             {abp?.identity.name ?? "Agent Blueprint"}
           </h1>
           {refinementCount > 0 && (
-            <span className="shrink-0 text-xs text-gray-400">
+            <span className="shrink-0 text-xs text-text-tertiary">
               {refinementCount} refinement{refinementCount === 1 ? "" : "s"}
             </span>
           )}
@@ -486,15 +463,15 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               ? "bg-green-100 text-green-700"
               : blueprintStatus === "deployed"
               ? "bg-blue-100 text-blue-700"
-              : "bg-gray-100 text-gray-600"
+              : "bg-surface-muted text-text-secondary"
           }`}>
             {blueprintStatus.replace("_", " ")}
           </span>
-          <span className="text-xs text-gray-400 font-mono">{id.slice(0, 8)}</span>
+          <span className="text-xs text-text-tertiary font-mono">{id.slice(0, 8)}</span>
           {sessionId && (
             <Link
               href={`/intake/${sessionId}`}
-              className="rounded-lg border border-gray-200 px-2.5 py-0.5 text-xs text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+              className="rounded-lg border border-border px-2.5 py-0.5 text-xs text-text-secondary hover:border-border-strong hover:text-text transition-colors"
             >
               ← Intake Session
             </Link>
@@ -502,7 +479,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           {agentIdState && (
             <Link
               href={`/registry/${agentIdState}`}
-              className="rounded-lg border border-gray-200 px-2.5 py-0.5 text-xs text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+              className="rounded-lg border border-border px-2.5 py-0.5 text-xs text-text-secondary hover:border-border-strong hover:text-text transition-colors"
             >
               View in Registry →
             </Link>
@@ -530,17 +507,57 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         </div>
       )}
 
+      {/* Approval progress tracker — visible only when in_review and a multi-step chain exists */}
+      {blueprintStatus === "in_review" && approvalChain.length > 1 && (
+        <div className="shrink-0 border-b border-border bg-surface-raised px-6 py-3">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider mr-2">
+              Review progress
+            </span>
+            {approvalChain.map((chainStep, i) => {
+              const completed = approvalProgress.find((p) => p.step === i);
+              const isCurrent = !completed && i === currentApprovalStep;
+              const isPending = !completed && i > currentApprovalStep;
+              return (
+                <div key={i} className="flex items-center gap-1.5">
+                  {i > 0 && <span className="text-text-tertiary text-xs">→</span>}
+                  <div
+                    title={completed ? `Approved by ${completed.approvedBy} · ${new Date(completed.approvedAt).toLocaleDateString()}` : chainStep.label}
+                    className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                      completed
+                        ? "bg-green-50 border-green-200 text-green-700"
+                        : isCurrent
+                        ? "bg-amber-50 border-amber-300 text-amber-700"
+                        : "bg-surface border-border text-text-tertiary"
+                    }`}
+                  >
+                    <span>{completed ? "✓" : isCurrent ? "●" : "○"}</span>
+                    <span>{chainStep.label}</span>
+                    {completed && (
+                      <span className="opacity-60 truncate max-w-[80px]">
+                        · {completed.approvedBy.split("@")[0]}
+                      </span>
+                    )}
+                    {isPending && <span className="opacity-50">· waiting</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Three-column body */}
       <div className="flex flex-1 overflow-hidden">
 
         {/* Left rail: Section stepper */}
-        <aside className="w-48 shrink-0 border-r border-gray-200 bg-white overflow-y-auto">
+        <aside className="w-48 shrink-0 border-r border-border bg-surface overflow-y-auto">
           <div className="px-4 pt-5 pb-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
               Sections
             </p>
             {!loading && abp && (
-              <p className="mt-0.5 text-xs text-gray-400">
+              <p className="mt-0.5 text-xs text-text-tertiary">
                 {filledCount}/{sections.length} filled
               </p>
             )}
@@ -550,7 +567,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             {loading && (
               <div className="space-y-1.5 px-2 py-3">
                 {Array.from({ length: 7 }).map((_, i) => (
-                  <div key={i} className="h-7 animate-pulse rounded bg-gray-100" />
+                  <div key={i} className="h-7 animate-pulse rounded bg-surface-muted" />
                 ))}
               </div>
             )}
@@ -565,15 +582,15 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                 }}
                 className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                   activeSection === section.id
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-surface-muted text-text"
+                    : "text-text-secondary hover:bg-surface-raised hover:text-text"
                 }`}
               >
                 <span
                   className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-xs ${
                     section.filled
                       ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-400"
+                      : "bg-surface-muted text-text-tertiary"
                   }`}
                 >
                   {section.filled ? "✓" : "·"}
@@ -587,15 +604,15 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         {/* Center: Blueprint content */}
         <main className="flex-1 overflow-y-auto p-6">
           {loading && (
-            <div className="flex h-full items-center justify-center text-gray-400 text-sm">
+            <div className="flex h-full items-center justify-center text-text-tertiary text-sm">
               <div className="text-center space-y-3">
-                <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-gray-600" />
-                <p className="text-sm text-gray-500 font-medium">{GENERATION_STEPS[generationStep]}</p>
+                <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-border border-t-border-strong" />
+                <p className="text-sm text-text-secondary font-medium">{GENERATION_STEPS[generationStep]}</p>
                 <div className="flex justify-center gap-1.5">
                   {GENERATION_STEPS.map((_, i) => (
                     <span
                       key={i}
-                      className={`h-1.5 w-1.5 rounded-full transition-colors ${i <= generationStep ? "bg-indigo-400" : "bg-gray-200"}`}
+                      className={`h-1.5 w-1.5 rounded-full transition-colors ${i <= generationStep ? "bg-primary" : "bg-border"}`}
                     />
                   ))}
                 </div>
@@ -615,11 +632,11 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         </main>
 
         {/* Right rail: Submit + Governance + Refinement */}
-        <aside className="w-80 shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-y-auto">
+        <aside className="w-80 shrink-0 border-l border-border bg-surface flex flex-col overflow-y-auto">
 
           {/* Submit for Review */}
           {agentIdState && (
-            <div className="border-b border-gray-200 px-5 py-4">
+            <div className="border-b border-border px-5 py-4">
               <h2 className="text-sm font-semibold">Submit for Review</h2>
 
               {submitted ? (
@@ -638,16 +655,16 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               ) : (
                 <>
                   {/* Validation status */}
-                  <div className={`mt-2 mb-3 space-y-2 transition-opacity ${validating && validationReport ? "opacity-50 pointer-events-none" : ""}`}>
+                  <div className={`mt-2 mb-3 space-y-2 transition-opacity ${(refining || validating) && validationReport ? "opacity-50 pointer-events-none" : ""}`}>
                     {!validationReport && (
                       <div className="flex items-center justify-between">
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-text-tertiary">
                           {validating ? "Validating…" : "Not yet validated"}
                         </p>
                         {!validating && !loading && (
                           <button
                             onClick={handleValidate}
-                            className="text-xs text-gray-500 underline hover:text-gray-900"
+                            className="text-xs text-text-secondary underline hover:text-text"
                           >
                             Validate now
                           </button>
@@ -698,23 +715,23 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                     className={`w-full rounded-lg py-2.5 text-sm font-medium transition-colors ${
                       !loading && !validating && (canSubmit || !validationReport)
                         ? "bg-yellow-600 text-white hover:bg-yellow-700"
-                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-surface-muted text-text-tertiary cursor-not-allowed"
                     }`}
                   >
                     {validating && !validationReport ? "Validating…" : submitLabel}
                   </button>
                   {error && (
-                    <p className="mt-1.5 text-xs text-red-600">{error}</p>
+                    <p className="mt-1.5 text-xs text-danger">{error}</p>
                   )}
 
                   {/* Regenerate Blueprint — draft only, for when generation needs a fresh start */}
                   {blueprintStatus === "draft" && (
-                    <div className="mt-3 border-t border-gray-100 pt-3">
+                    <div className="mt-3 border-t border-border pt-3">
                       {!confirmRegenerate ? (
                         <button
                           onClick={() => setConfirmRegenerate(true)}
-                          disabled={regenerating || validating}
-                          className="w-full rounded-lg border border-gray-200 py-1.5 text-xs font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 transition-colors disabled:opacity-40"
+                          disabled={regenerating || refining || validating}
+                          className="w-full rounded-lg border border-border py-1.5 text-xs font-medium text-text-secondary hover:border-border-strong hover:text-text transition-colors disabled:opacity-40"
                         >
                           Regenerate Blueprint
                         </button>
@@ -726,14 +743,14 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                             <button
                               onClick={handleRegenerate}
                               disabled={regenerating}
-                              className="flex-1 rounded-md bg-red-600 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                              className="flex-1 rounded-md bg-danger py-1.5 text-xs font-medium text-danger-fg hover:bg-danger-hover disabled:opacity-50 transition-colors"
                             >
                               {regenerating ? "Regenerating…" : "Yes, Regenerate"}
                             </button>
                             <button
                               onClick={() => setConfirmRegenerate(false)}
                               disabled={regenerating}
-                              className="flex-1 rounded-md border border-gray-300 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                              className="flex-1 rounded-md border border-border py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-raised transition-colors"
                             >
                               Cancel
                             </button>
@@ -749,8 +766,8 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
 
           {/* Governance violations detail */}
           {validationReport && !validationReport.valid && (
-            <div className="border-b border-gray-200 px-5 py-4">
-              <h2 className="text-sm font-semibold text-gray-900">Violations</h2>
+            <div className="border-b border-border px-5 py-4">
+              <h2 className="text-sm font-semibold text-text">Violations</h2>
               <div className="mt-3 space-y-2">
                 {validationReport.violations.map((v, i) => (
                   <div
@@ -772,14 +789,14 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                         {v.severity}
                       </span>
                       <div>
-                        <p className="font-medium text-gray-900">{v.message}</p>
+                        <p className="font-medium text-text">{v.message}</p>
                         {v.suggestion && (
                           <div className="mt-1.5 border-l-2 border-blue-300 bg-blue-50 rounded px-2 py-1">
                             <p className="text-blue-600 text-xs font-medium mb-0.5">✦ Suggested fix</p>
                             <p className="text-blue-800 text-xs">{v.suggestion}</p>
                           </div>
                         )}
-                        <p className="mt-0.5 font-mono text-gray-400">{v.field}</p>
+                        <p className="mt-0.5 font-mono text-text-tertiary">{v.field}</p>
                       </div>
                     </div>
                   </div>
@@ -790,7 +807,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
 
           {/* Governance section (if no violations) */}
           {validationReport?.valid && (
-            <div className="border-b border-gray-200 px-5 py-4">
+            <div className="border-b border-border px-5 py-4">
               <h2 className="text-sm font-semibold">Governance</h2>
               <div className="mt-3">
                 <ValidationReportView
@@ -802,89 +819,18 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             </div>
           )}
 
-          {/* H3-3.2: Suggested Fix panel — shown when violations exist or drift detected */}
-          {!loading && ((validationReport?.violations?.length ?? 0) > 0 || governanceDrift?.status === "drifted") ? (
-            <div className="border-b border-gray-200 px-5 py-4">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-sm font-semibold text-amber-800">AI Fix Suggestion</h2>
-                {governanceDrift?.status === "drifted" && (
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Drifted</span>
-                )}
-              </div>
-              <p className="text-xs text-amber-700 mb-3">
-                {governanceDrift?.status === "drifted"
-                  ? `${governanceDrift.newViolations?.length ?? 0} new policy violation${(governanceDrift.newViolations?.length ?? 0) === 1 ? "" : "s"} detected since approval.`
-                  : `${validationReport?.violations?.length ?? 0} violation${(validationReport?.violations?.length ?? 0) === 1 ? "" : "s"} found.`} Claude can suggest specific fixes.
-              </p>
-
-              {!suggestFixResult ? (
-                <button
-                  onClick={handleSuggestFix}
-                  disabled={suggestFixLoading}
-                  className="w-full rounded-lg bg-amber-600 py-2 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50 transition-colors"
-                >
-                  {suggestFixLoading ? "Generating fix…" : "Generate Fix Suggestion"}
-                </button>
-              ) : (
-                <div className="space-y-3">
-                  {suggestFixResult.summary && (
-                    <p className="text-xs text-amber-800 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
-                      {suggestFixResult.summary}
-                    </p>
-                  )}
-                  {suggestFixResult.changes.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-gray-600">Proposed changes:</p>
-                      {suggestFixResult.changes.map((c, i) => (
-                        <div key={i} className="rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs">
-                          <p className="font-mono text-amber-900 font-medium">{c.field}</p>
-                          <p className="mt-0.5 text-amber-700 line-through opacity-60">{String(c.oldValue)}</p>
-                          <p className="text-green-700 font-medium">→ {String(c.newValue)}</p>
-                          <p className="mt-1 text-gray-600 italic">{c.reason}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="flex gap-2 mt-2">
-                    <button
-                      onClick={handleAcceptFix}
-                      disabled={acceptingFix}
-                      className="flex-1 rounded-lg bg-green-600 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
-                    >
-                      {acceptingFix ? "Applying…" : "Accept Fix"}
-                    </button>
-                    <button
-                      onClick={() => setSuggestFixResult(null)}
-                      disabled={acceptingFix}
-                      className="flex-1 rounded-lg border border-gray-200 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-                    >
-                      Dismiss
-                    </button>
-                  </div>
-                  <button
-                    onClick={handleSuggestFix}
-                    disabled={suggestFixLoading}
-                    className="w-full text-xs text-amber-600 hover:text-amber-800 underline"
-                  >
-                    Regenerate
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : null}
-
           {/* Validate button if no report yet and no agentId CTA above */}
           {!agentIdState && !validationReport && (
-            <div className="border-b border-gray-200 px-5 py-4">
+            <div className="border-b border-border px-5 py-4">
               <h2 className="text-sm font-semibold">Governance</h2>
               <div className="mt-3 flex items-center justify-between">
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-text-tertiary">
                   {loading ? "Running validation…" : "Not yet validated"}
                 </p>
                 {!loading && (
                   <button
                     onClick={handleValidate}
-                    className="text-xs text-gray-500 hover:text-gray-900 underline"
+                    className="text-xs text-text-secondary hover:text-text underline"
                   >
                     Validate now
                   </button>
@@ -895,31 +841,31 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
 
           {/* Phase 23: Test Suite Widget — shown when we have an agentId (agent exists in registry) */}
           {agentIdState && (
-            <div className="border-b border-gray-200 px-5 py-4">
+            <div className="border-b border-border px-5 py-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold">Test Suite</h2>
                 {testCaseCount > 0 && (
                   <button
                     onClick={handleRunWorkbenchTests}
                     disabled={runningWorkbenchTests}
-                    className="rounded-lg bg-violet-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+                    className="rounded-lg bg-primary px-2.5 py-1 text-xs font-medium text-primary-fg hover:bg-primary-hover disabled:opacity-50"
                   >
                     {runningWorkbenchTests ? "Running…" : "Run Tests"}
                   </button>
                 )}
               </div>
               {testCaseCount === 0 ? (
-                <p className="mt-1.5 text-xs text-gray-400">
+                <p className="mt-1.5 text-xs text-text-tertiary">
                   No test cases defined.{" "}
                   {agentIdState && (
-                    <Link href={`/registry/${agentIdState}?tab=tests`} className="underline hover:text-gray-700">
+                    <Link href={`/registry/${agentIdState}?tab=tests`} className="underline hover:text-text-secondary">
                       Add test cases →
                     </Link>
                   )}
                 </p>
               ) : (
                 <div className="mt-2 space-y-1.5">
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-text-secondary">
                     {testCaseCount} case{testCaseCount !== 1 ? "s" : ""}
                     {latestTestRun && (
                       <> · Last run:{" "}
@@ -929,7 +875,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                         >
                           {latestTestRun.passedCases}/{latestTestRun.totalCases} passed
                         </button>
-                        <span className="ml-1 text-gray-400">{testRunExpanded ? "▲" : "▼"}</span>
+                        <span className="ml-1 text-text-tertiary">{testRunExpanded ? "▲" : "▼"}</span>
                       </>
                     )}
                   </p>
@@ -943,7 +889,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                             <span className={`font-medium ${tr.status === "passed" ? "text-green-800" : "text-red-800"}`}>{tr.name}</span>
                           </div>
                           {tr.status !== "passed" && tr.evaluationRationale && (
-                            <p className="mt-1 text-gray-600 italic">Judge: {tr.evaluationRationale}</p>
+                            <p className="mt-1 text-text-secondary italic">Judge: {tr.evaluationRationale}</p>
                           )}
                         </div>
                       ))}
@@ -961,23 +907,23 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           )}
 
           {/* Ownership & Classification */}
-          <div className="border-b border-gray-200">
+          <div className="border-b border-border">
             <button
               onClick={() => setOwnershipOpen((o) => !o)}
               className="flex w-full items-center justify-between px-5 py-4 text-left"
             >
               <div>
                 <h2 className="text-sm font-semibold">Ownership &amp; Classification</h2>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-text-tertiary">
                   {abp?.ownership?.businessUnit
                     ? `${abp.ownership.businessUnit}${abp.ownership.ownerEmail ? ` · ${abp.ownership.ownerEmail}` : ""}`
                     : "Not set"}
                 </p>
               </div>
-              <span className="text-gray-400 text-xs">{ownershipOpen ? "▴" : "▾"}</span>
+              <span className="text-text-tertiary text-xs">{ownershipOpen ? "▴" : "▾"}</span>
             </button>
             {ownershipOpen && (
-              <div className="border-t border-gray-100 px-5 pb-4 pt-3 space-y-3">
+              <div className="border-t border-border px-5 pb-4 pt-3 space-y-3">
                 {(
                   [
                     { key: "businessUnit", label: "Business Unit", type: "text", placeholder: "e.g. Risk & Compliance" },
@@ -986,22 +932,22 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                   ] as { key: keyof typeof ownershipDraft; label: string; type: string; placeholder: string }[]
                 ).map(({ key, label, type, placeholder }) => (
                   <div key={key}>
-                    <label className="text-xs font-medium text-gray-500">{label}</label>
+                    <label className="text-xs font-medium text-text-secondary">{label}</label>
                     <input
                       type={type}
                       value={ownershipDraft[key]}
                       onChange={(e) => setOwnershipDraft((d) => ({ ...d, [key]: e.target.value }))}
                       placeholder={placeholder}
-                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-1.5 text-xs focus:border-gray-400 focus:outline-none"
+                      className="mt-1 w-full rounded-lg border border-border px-3 py-1.5 text-xs focus:border-border-strong focus:outline-none"
                     />
                   </div>
                 ))}
                 <div>
-                  <label className="text-xs font-medium text-gray-500">Deployment Environment</label>
+                  <label className="text-xs font-medium text-text-secondary">Deployment Environment</label>
                   <select
                     value={ownershipDraft.deploymentEnvironment}
                     onChange={(e) => setOwnershipDraft((d) => ({ ...d, deploymentEnvironment: e.target.value }))}
-                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-1.5 text-xs focus:border-gray-400 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-border px-3 py-1.5 text-xs focus:border-border-strong focus:outline-none"
                   >
                     <option value="">— Select —</option>
                     <option value="production">Production</option>
@@ -1011,11 +957,11 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500">Data Classification</label>
+                  <label className="text-xs font-medium text-text-secondary">Data Classification</label>
                   <select
                     value={ownershipDraft.dataClassification}
                     onChange={(e) => setOwnershipDraft((d) => ({ ...d, dataClassification: e.target.value }))}
-                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-1.5 text-xs focus:border-gray-400 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-border px-3 py-1.5 text-xs focus:border-border-strong focus:outline-none"
                   >
                     <option value="">— Select —</option>
                     <option value="public">Public</option>
@@ -1027,7 +973,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                 <button
                   onClick={handleSaveOwnership}
                   disabled={savingOwnership}
-                  className="w-full rounded-lg bg-violet-600 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+                  className="w-full rounded-lg bg-primary py-1.5 text-xs font-medium text-primary-fg hover:bg-primary-hover disabled:opacity-50"
                 >
                   {savingOwnership ? "Saving…" : "Save Ownership"}
                 </button>
@@ -1035,44 +981,16 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             )}
           </div>
 
-          {/* H3-4.4: Deployment target selector — shown for approved blueprints (architects/admins) */}
-          {blueprintStatus === "approved" && (
-            <div className="border-b border-gray-200 px-5 py-4">
-              <h2 className="text-sm font-semibold mb-2">Deploy to</h2>
-              <div className="flex gap-1.5 flex-wrap">
-                {(["agentcore", "azure-foundry", "vertex-ai"] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setDeployTarget(t)}
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium border transition-colors ${
-                      deployTarget === t
-                        ? "bg-violet-100 text-violet-700 border-violet-300"
-                        : "bg-slate-50 text-slate-600 border-slate-200 hover:border-violet-300"
-                    }`}
-                  >
-                    {t === "agentcore" ? "AWS Bedrock" : t === "azure-foundry" ? "Azure AI Foundry" : "Google Vertex AI"}
-                  </button>
-                ))}
-              </div>
-              <Link
-                href={`/deploy?blueprintId=${id}&target=${deployTarget}`}
-                className="mt-3 flex w-full items-center justify-center rounded-lg bg-violet-600 px-3 py-2 text-xs font-medium text-white hover:bg-violet-700 transition-colors"
-              >
-                Deploy to {deployTarget === "agentcore" ? "AWS Bedrock" : deployTarget === "azure-foundry" ? "Azure AI Foundry" : "Google Vertex AI"}
-              </Link>
-            </div>
-          )}
-
           {/* Evidence Package — shown for approved and deployed blueprints */}
           {(blueprintStatus === "approved" || blueprintStatus === "deployed") && (
-            <div className="border-b border-gray-200 px-5 py-4">
+            <div className="border-b border-border px-5 py-4">
               <div className="flex items-center gap-2 mb-2">
                 <h2 className="text-sm font-semibold">Audit Evidence</h2>
                 <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700 uppercase tracking-wide">
                   Exam-Ready
                 </span>
               </div>
-              <p className="text-xs text-gray-500 mb-3">
+              <p className="text-xs text-text-secondary mb-3">
                 This agent has a complete governance record — identity, capabilities,
                 validation, approvals, stakeholder contributions, and regulatory
                 framework assessment are all on record.
@@ -1080,10 +998,10 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               <div className="space-y-2">
                 <Link
                   href={`/blueprints/${id}/report`}
-                  className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors"
+                  className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-xs font-medium text-text-secondary hover:border-border-strong hover:text-text transition-colors"
                 >
                   <span>View Compliance Report</span>
-                  <span className="text-gray-400">→</span>
+                  <span className="text-text-tertiary">→</span>
                 </Link>
                 <button
                   onClick={handleExportEvidence}
@@ -1092,7 +1010,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                 >
                   {exportingEvidence ? "Exporting…" : "↓ Export Evidence Package"}
                 </button>
-                <p className="text-[10px] text-gray-400 leading-tight">
+                <p className="text-[10px] text-text-tertiary leading-tight">
                   JSON bundle: MRM report, approval chain, quality evaluation,
                   test evidence, stakeholder contributions.
                 </p>
@@ -1100,21 +1018,80 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             </div>
           )}
 
-          {/* Refinement — multi-turn chat */}
-          <div className="border-b border-gray-200 px-5 py-4">
-            <h2 className="text-sm font-semibold">Request Changes</h2>
-            <p className="mt-1 text-xs text-gray-500">
-              Chat with Claude to iteratively refine the blueprint.
+          {/* Refinement Chat */}
+          <div className="border-b border-border px-5 py-4">
+            <h2 className="text-sm font-semibold">Refinement Chat</h2>
+            <p className="mt-1 text-xs text-text-secondary">
+              Describe changes — Claude will regenerate the blueprint. Each message is a refinement round.
             </p>
           </div>
 
           <div className="flex flex-1 flex-col min-h-0">
-            {abp && (
-              <RefinementChat
-                blueprintId={id}
-                onBlueprintUpdated={handleBlueprintUpdated}
-              />
-            )}
+            {/* Message history */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+              {refinementHistory.length === 0 && (
+                <p className="py-6 text-center text-xs text-text-tertiary">
+                  No refinements yet. Describe what to change below.
+                </p>
+              )}
+              {refinementHistory.map((msg, i) => (
+                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${
+                    msg.role === "user"
+                      ? "bg-primary text-primary-fg"
+                      : msg.content.startsWith("Error:")
+                      ? "bg-red-50 text-red-700 border border-red-200"
+                      : "bg-surface-raised text-text border border-border"
+                  }`}>
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    <p className={`mt-1 text-[10px] ${
+                      msg.role === "user" ? "text-primary-fg/60" : "text-text-tertiary"
+                    }`}>
+                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {refining && (
+                <div className="flex justify-start">
+                  <div className="rounded-lg bg-surface-raised border border-border px-3 py-2">
+                    <span className="text-xs text-text-secondary animate-pulse">Refining blueprint…</span>
+                  </div>
+                </div>
+              )}
+              <div ref={refinementEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-border p-3">
+              {error && !submitting && !refinementHistory.some((m) => m.content.includes(error!)) && (
+                <p className="mb-2 text-xs text-danger">{error}</p>
+              )}
+              <div className="flex gap-2">
+                <textarea
+                  value={change}
+                  onChange={(e) => setChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault();
+                      handleRefine();
+                    }
+                  }}
+                  placeholder="e.g. Add rate limiting of 50 req/min…"
+                  disabled={refining || loading}
+                  className="flex-1 resize-none rounded-lg border border-border p-2 text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                  rows={2}
+                />
+                <button
+                  onClick={handleRefine}
+                  disabled={!change.trim() || refining || loading}
+                  className="shrink-0 self-end rounded-lg bg-primary px-4 py-2 text-sm text-primary-fg hover:bg-primary-hover disabled:opacity-40"
+                >
+                  {refining ? "…" : "Send"}
+                </button>
+              </div>
+              <p className="mt-1 text-center text-[10px] text-text-tertiary">⌘ Enter to send</p>
+            </div>
           </div>
         </aside>
       </div>

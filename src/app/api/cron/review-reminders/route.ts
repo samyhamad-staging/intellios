@@ -19,16 +19,17 @@ import { publishEvent } from "@/lib/events/publish";
  *     (prevents re-sending within the same threshold window).
  *   - Only one reminder fires per cron run (break after first match).
  *
- * Security: Bearer token via CRON_SECRET env var (optional; skip if unset).
+ * Security: Bearer token via CRON_SECRET env var (required; returns 503 if unset).
  */
 export async function GET(request: NextRequest) {
-  // Optional bearer auth for Vercel cron
+  // Required bearer auth — fail closed if CRON_SECRET is not configured
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!cronSecret) {
+    return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
+  }
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const now = new Date();

@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
     const latestBlueprints = await db
       .selectDistinctOn([agentBlueprints.agentId], {
         agentId: agentBlueprints.agentId,
+        name: agentBlueprints.name,
         validationReport: agentBlueprints.validationReport,
       })
       .from(agentBlueprints)
@@ -162,10 +163,13 @@ export async function GET(request: NextRequest) {
     // Aggregate violations across all latest blueprints
     const violationsByType: Record<string, number> = {};
     const violationsByPolicy: Record<string, { name: string; count: number }> = {};
+    // Per-rule violation detail: rule message → { policyName, field, affectedBlueprints }
+    const violationsByRule: Record<string, { policyName: string; field: string; severity: string; blueprintNames: string[] }> = {};
 
     for (const blueprint of latestBlueprints) {
       const report = blueprint.validationReport as ValidationReport | null;
       if (!report?.violations) continue;
+      const bpName = blueprint.name ?? "Unnamed";
       for (const v of report.violations) {
         if (v.severity !== "error") continue;
         // By type
@@ -176,6 +180,14 @@ export async function GET(request: NextRequest) {
           violationsByPolicy[v.policyId] = { name: v.policyName, count: 0 };
         }
         violationsByPolicy[v.policyId].count++;
+        // By rule
+        const ruleKey = `${v.policyId}::${v.ruleId}`;
+        if (!violationsByRule[ruleKey]) {
+          violationsByRule[ruleKey] = { policyName: v.policyName, field: v.field, severity: v.severity, blueprintNames: [] };
+        }
+        if (!violationsByRule[ruleKey].blueprintNames.includes(bpName)) {
+          violationsByRule[ruleKey].blueprintNames.push(bpName);
+        }
       }
     }
 
@@ -187,6 +199,17 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5)
       .map(({ name, count }) => ({ policyName: name, count }));
+
+    const topViolatedRules = Object.values(violationsByRule)
+      .sort((a, b) => b.blueprintNames.length - a.blueprintNames.length)
+      .slice(0, 10)
+      .map(({ policyName, field, severity, blueprintNames }) => ({
+        policyName,
+        field,
+        severity,
+        affectedCount: blueprintNames.length,
+        affectedBlueprints: blueprintNames.slice(0, 5),
+      }));
 
     // ── 5. Average Time to Approval ────────────────────────────────────────
     const statusChangeEvents = await db
@@ -238,6 +261,7 @@ export async function GET(request: NextRequest) {
       monthlySubmissions,
       monthlyApprovals,
       topViolatedPolicies,
+      topViolatedRules,
       avgTimeToApprovalHours,
     });
   } catch (err) {

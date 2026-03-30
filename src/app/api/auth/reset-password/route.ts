@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { users, passwordResetTokens } from "@/lib/db/schema";
 import { eq, and, isNull, gt } from "drizzle-orm";
 import { parseBody } from "@/lib/parse-body";
+import { rateLimit } from "@/lib/rate-limit";
 import { getRequestId } from "@/lib/request-id";
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
@@ -22,6 +23,15 @@ const ResetPasswordBody = z.object({
  * Public endpoint — no authentication required.
  */
 export async function POST(request: NextRequest) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  const rateLimitResponse = await rateLimit(ip, {
+    endpoint: "reset-password",
+    max: 10,
+    windowMs: 60 * 60 * 1000, // 10 per hour per IP
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   const { data: body, error: bodyError } = await parseBody(request, ResetPasswordBody);
   if (bodyError) return bodyError;
 

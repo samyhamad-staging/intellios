@@ -37,13 +37,17 @@ const files = [
   "0021_intake_ai_insights.sql",
   "0022_intake_confidence.sql",
   "0023_blueprint_lineage.sql",
-  // 0024_agent_telemetry — applied via inline script (no .sql file)
+  "0024_agent_telemetry.sql",
   "0025_production_health_columns.sql",
   "0026_alert_thresholds.sql",
   "0027_runtime_violations.sql",
   "0028_quality_trends.sql",
   "0029_workflows.sql",
   "0030_portfolio_snapshots.sql",
+  "0031_governance_drift.sql",
+  "0032_template_marketplace.sql",
+  "0033_api_keys.sql",
+  "0034_intake_sessions_created_by.sql",
 ];
 
 const startFrom = process.argv[2];
