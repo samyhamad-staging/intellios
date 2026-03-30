@@ -45,6 +45,41 @@ export async function PATCH(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { session: authSession, error } = await requireAuth();
+  if (error) return error;
+  const requestId = getRequestId(request);
+
+  try {
+    const { id } = await params;
+
+    const session = await db.query.intakeSessions.findFirst({
+      where: eq(intakeSessions.id, id),
+    });
+
+    if (!session) {
+      return apiError(ErrorCode.NOT_FOUND, "Session not found");
+    }
+
+    const enterpriseError = assertEnterpriseAccess(session.enterpriseId, authSession.user);
+    if (enterpriseError) return enterpriseError;
+
+    // Only allow deleting incomplete sessions
+    if (session.status === "completed") {
+      return apiError(ErrorCode.BAD_REQUEST, "Cannot delete a completed session");
+    }
+
+    await db.delete(intakeSessions).where(eq(intakeSessions.id, id));
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error(`[${requestId}] Failed to delete intake session:`, error);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to delete session", undefined, requestId);
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
