@@ -90,6 +90,9 @@ export default function IntakeSessionPage({
         }
 
         if (session?.status === "completed") {
+          // Store messages so they're available if the user clicks Revise
+          const uiMessages = mapToUIMessages(messages ?? []);
+          setInitialMessages(uiMessages.length > 0 ? uiMessages : undefined);
           // Load payload and quality score for review screen
           setIntakeScoreLoading(true);
           await Promise.all([
