@@ -117,7 +117,7 @@ export default async function Home() {
             <h1 className="text-xl font-semibold text-text">My Work</h1>
             <p className="mt-0.5 text-sm text-text-secondary">Design, refine, and submit agent blueprints for review.</p>
           </div>
-          <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-fg hover:bg-primary-hover transition-colors disabled:opacity-50" />
+          <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg btn-primary px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50" />
         </div>
 
         {/* Quick action cards */}
@@ -256,7 +256,7 @@ export default async function Home() {
                 : "Queue is clear"}
             </p>
           </div>
-          <Link href="/review" className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-fg hover:bg-primary-hover transition-colors">
+          <Link href="/review" className="inline-flex items-center gap-1.5 rounded-lg btn-primary px-4 py-2 text-sm font-medium transition-colors">
             <ClipboardList size={14} />
             Review Queue{inReviewAgents.length > 0 && ` (${inReviewAgents.length})`}
           </Link>
@@ -367,7 +367,7 @@ export default async function Home() {
           </p>
         </div>
         {role !== "viewer" && (
-          <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-fg hover:bg-primary-hover transition-colors disabled:opacity-50" />
+          <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg btn-primary px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50" />
         )}
       </div>
 

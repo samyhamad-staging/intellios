@@ -62,14 +62,14 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center" style={{ background: "var(--gradient-login-bg)" }}>
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-3xl font-bold tracking-tight text-white">
             Intellios
           </h1>
-          <p className="mt-1 text-sm text-gray-500">Enterprise Agent Factory</p>
+          <p className="mt-1 text-sm text-gray-400">Enterprise Agent Factory</p>
         </div>
 
         {/* Registration success banner */}
@@ -155,7 +155,7 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={loading || ssoLoading}
-                className="w-full rounded-lg bg-violet-600 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+                className="w-full rounded-lg btn-primary py-2 text-sm font-medium disabled:opacity-50"
               >
                 {loading ? "Signing in..." : "Sign in"}
               </button>
@@ -164,18 +164,18 @@ function LoginForm() {
             <div className="text-center">
               <a
                 href="/auth/forgot-password"
-                className="text-xs text-gray-500 hover:text-gray-700 underline-offset-2 hover:underline"
+                className="text-xs text-gray-400 hover:text-gray-300 underline-offset-2 hover:underline"
               >
                 Forgot your password?
               </a>
             </div>
 
             <div className="text-center">
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-400">
                 Don&apos;t have an account?{" "}
                 <a
                   href="/register"
-                  className="font-medium text-violet-600 hover:text-violet-700 underline-offset-2 hover:underline"
+                  className="font-medium text-indigo-400 hover:text-indigo-300 underline-offset-2 hover:underline"
                 >
                   Start free trial
                 </a>
@@ -185,38 +185,38 @@ function LoginForm() {
         </div>
 
         {/* Role reference */}
-        <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4">
+        <div className="mt-6 rounded-lg border border-white/10 bg-white/10 backdrop-blur-sm p-4">
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
             Demo accounts
           </p>
-          <div className="space-y-1.5 text-xs text-gray-500">
+          <div className="space-y-1.5 text-xs text-gray-300">
             <div className="flex items-center justify-between">
               <div>
-                <span className="font-medium text-gray-700">designer@intellios.dev</span>
+                <span className="font-medium text-white">designer@intellios.dev</span>
                 <span className="ml-2 text-gray-400">Designer1234!</span>
               </div>
-              <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700">Architect</span>
+              <span className="rounded bg-blue-500/20 px-1.5 py-0.5 text-blue-300">Architect</span>
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <span className="font-medium text-gray-700">reviewer@intellios.dev</span>
+                <span className="font-medium text-white">reviewer@intellios.dev</span>
                 <span className="ml-2 text-gray-400">Reviewer1234!</span>
               </div>
-              <span className="rounded bg-amber-50 px-1.5 py-0.5 text-amber-700">Reviewer</span>
+              <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-amber-300">Reviewer</span>
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <span className="font-medium text-gray-700">officer@intellios.dev</span>
+                <span className="font-medium text-white">officer@intellios.dev</span>
                 <span className="ml-2 text-gray-400">Officer1234!</span>
               </div>
-              <span className="rounded bg-green-50 px-1.5 py-0.5 text-green-700">Compliance Officer</span>
+              <span className="rounded bg-green-500/20 px-1.5 py-0.5 text-green-300">Compliance Officer</span>
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <span className="font-medium text-gray-700">admin@intellios.dev</span>
+                <span className="font-medium text-white">admin@intellios.dev</span>
                 <span className="ml-2 text-gray-400">Admin1234!</span>
               </div>
-              <span className="rounded bg-purple-50 px-1.5 py-0.5 text-purple-700">Admin</span>
+              <span className="rounded bg-violet-500/20 px-1.5 py-0.5 text-violet-300">Admin</span>
             </div>
           </div>
         </div>

@@ -155,7 +155,7 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
       {/* Brand */}
       <div
         className="flex h-14 shrink-0 items-center gap-2.5 px-4"
-        style={{ borderBottom: "1px solid var(--sidebar-border)" }}
+        style={{ background: "var(--gradient-sidebar-header)", borderBottom: "1px solid var(--sidebar-border)" }}
       >
         {branding?.logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -167,7 +167,7 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
         ) : (
           <div
             className="flex h-7 w-7 items-center justify-center rounded-lg shrink-0"
-            style={{ backgroundColor: branding?.primaryColor ?? "#7c3aed" }}
+            style={{ backgroundColor: branding?.primaryColor ?? "#4f46e5" }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M2 11L7 3L12 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -225,12 +225,13 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
                         color: active ? "var(--sidebar-text-active)" : "var(--sidebar-text)",
                         backgroundColor: active ? "var(--sidebar-active-bg)" : "transparent",
                         borderLeft: active ? "2px solid var(--sidebar-accent)" : "2px solid transparent",
+                        boxShadow: active ? "var(--sidebar-active-glow)" : "none",
                       }}
                     >
                       <Icon
                         size={15}
                         className="shrink-0 transition-colors"
-                        style={{ color: active ? "#a78bfa" : "inherit" }}
+                        style={{ color: active ? "var(--sidebar-accent)" : "inherit" }}
                       />
                       <span className="font-medium">{item.label}</span>
                     </Link>
