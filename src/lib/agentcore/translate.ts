@@ -94,7 +94,12 @@ function toolToActionGroup(tool: ABP["capabilities"]["tools"][number]): BedrockA
 export interface TranslateOptions {
   /**
    * ARN of the IAM role Bedrock will assume to call foundation models.
-   * Required by the Bedrock API. If omitted, the manifest includes a placeholder.
+   * Required by the Bedrock API.
+   *
+   * For actual deployments this must be supplied; `deployAgentToAgentCore` validates
+   * its presence via `validateAgentCoreConfig` before calling this function.
+   * If omitted (e.g. when building an export manifest for inspection), the output
+   * includes a placeholder ARN that will be rejected by Bedrock if used directly.
    */
   agentResourceRoleArn?: string;
   /**

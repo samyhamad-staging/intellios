@@ -2,6 +2,18 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Sessions 065b–066b — 2026-03-28: Production Hardening and the Review Experience
+
+Two sessions on the same day. The first spent almost entirely fixing the gap between what works locally and what works in production. The second on the quality of the moment just before a user commits to generating a blueprint.
+
+**Why production fixes came first.** The classification-first intake work from Phase 38 had a fundamental assumption baked in: that fire-and-forget async works. It doesn't in Vercel serverless. The fix is simple (`await` the classification call), but the root cause is architectural: Vercel serverless is not a long-running process, and code written with that assumption breaks in ways that are invisible in local development. The postgres `max:1` fix is the same class of problem — local development typically has a single long-running server; serverless has many short-lived concurrent functions, each opening their own connection pool if not constrained. The missing `created_by` migration was a pure oversight: the column existed in the Drizzle schema from Phase 38 but was never added to production via a migration file. Every intake session creation returned HTTP 500 in production.
+
+**UE-001–009: fixing the conversation quality.** AI behavior fixes are system prompt changes — instructions to start confirmations on new paragraphs, not skip sections when changing topics, correctly classify routing agents as Automation rather than Chatbot, and stop prefacing responses with sycophantic openers. A routing agent misclassified as a Chatbot generates a blueprint with the wrong risk tier, which affects governance gate thresholds downstream. The interface feedback fixes address the "where am I?" question in the intake flow with a pulse ring on the active section, dynamic readiness label, and click-to-expand tool chips.
+
+**RV-001–013: the moment before commitment.** The 13 review page enhancements addressed specific friction: sticky footer with generate button, live confirmation counter, human-readable retention, per-section "← Revise" links, 3-step stepper, risk/sensitivity/regulatory badges, color-coded policy chips, denied actions blocked list. The Design System v1.1 semantic tokens make policy type chips and risk tier badges skinnable without hardcoded colors — continuing the direction from Session 064b.
+
+---
+
 ## Session 068 — 2026-03-22: H3 Partial — Continuous Governance + Ecosystem (7/14)
 
 This session began with a strategic decision: H3 has 14 items across 4 sprints, but only 7 are truly buildable today without live execution infrastructure or enterprise design partners. H3-1 (Foundry) and H3-2 (Memory) are explicitly gated — building a visual workflow editor and pattern extraction engine with no real execution data would be pure speculation at high cost. H3-3 (Continuous Governance) and H3-4 (Ecosystem) have no such dependency. They extend already-shipped infrastructure rather than requiring new runtime capabilities.

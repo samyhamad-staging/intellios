@@ -21,7 +21,6 @@ import {
   ArrowRight,
   Bot,
 } from "lucide-react";
-import { StatusBadge } from "@/components/registry/status-badge";
 
 // ── Nav item catalogue ─────────────────────────────────────────────────────────
 
@@ -178,13 +177,6 @@ function matchesQuery(entry: NavEntry, query: string): boolean {
   );
 }
 
-interface AgentResult {
-  id: string;
-  agentId: string;
-  name: string | null;
-  status: string;
-}
-
 // ── Component ──────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -192,21 +184,60 @@ interface Props {
   onClose: () => void;
 }
 
+interface AgentResult {
+  agentId: string;
+  name: string | null;
+  status: string;
+  version: string;
+  tags: string[];
+}
+
 export function CommandPalette({ role, onClose }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [agentResults, setAgentResults] = useState<AgentResult[]>([]);
-  const [agentsLoading, setAgentsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Dynamic agent search
+  const [agentResults, setAgentResults] = useState<AgentResult[]>([]);
+  const agentFetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchAgents = useCallback(async (q: string) => {
+    if (q.length < 2) { setAgentResults([]); return; }
+    try {
+      const res = await fetch("/api/registry");
+      if (!res.ok) return;
+      const data = await res.json();
+      const agents = (data.agents ?? []) as AgentResult[];
+      const lq = q.toLowerCase();
+      setAgentResults(
+        agents
+          .filter((a) =>
+            (a.name ?? "").toLowerCase().includes(lq) ||
+            a.agentId.toLowerCase().includes(lq) ||
+            a.tags?.some((t: string) => t.toLowerCase().includes(lq))
+          )
+          .slice(0, 5)
+      );
+    } catch { /* non-critical */ }
+  }, []);
+
+  // Debounced agent search
+  useEffect(() => {
+    if (agentFetchTimer.current) clearTimeout(agentFetchTimer.current);
+    agentFetchTimer.current = setTimeout(() => fetchAgents(query), 200);
+    return () => { if (agentFetchTimer.current) clearTimeout(agentFetchTimer.current); };
+  }, [query, fetchAgents]);
 
   const entries = useMemo(() => {
     return ALL_ENTRIES.filter(
       (e) => matchesRole(e, role) && matchesQuery(e, query)
     );
   }, [role, query]);
+
+  // Total items = nav entries + agent results
+  const totalItems = entries.length + agentResults.length;
 
   // Group by section
   const grouped = useMemo(() => {
@@ -219,35 +250,10 @@ export function CommandPalette({ role, onClose }: Props) {
     return map;
   }, [entries]);
 
-  // Debounced agent search
-  const searchAgents = useCallback((q: string) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (q.length < 2) {
-      setAgentResults([]);
-      setAgentsLoading(false);
-      return;
-    }
-    setAgentsLoading(true);
-    debounceRef.current = setTimeout(() => {
-      fetch("/api/registry")
-        .then((r) => r.json())
-        .then((data) => {
-          const agents: AgentResult[] = (data.agents ?? []);
-          const filtered = agents.filter((a) =>
-            (a.name ?? "").toLowerCase().includes(q.toLowerCase())
-          ).slice(0, 5);
-          setAgentResults(filtered);
-        })
-        .catch(() => setAgentResults([]))
-        .finally(() => setAgentsLoading(false));
-    }, 200);
-  }, []);
-
   // Reset selection when query changes
   useEffect(() => {
     setSelectedIndex(0);
-    searchAgents(query);
-  }, [query, searchAgents]);
+  }, [query]);
 
   // Focus input on mount
   useEffect(() => {
@@ -261,7 +267,6 @@ export function CommandPalette({ role, onClose }: Props) {
         onClose();
         return;
       }
-      const totalItems = entries.length + agentResults.length;
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setSelectedIndex((i) => Math.min(i + 1, totalItems - 1));
@@ -276,14 +281,15 @@ export function CommandPalette({ role, onClose }: Props) {
           const entry = entries[selectedIndex];
           if (entry) navigate(entry.href);
         } else {
-          const agent = agentResults[selectedIndex - entries.length];
+          const agentIdx = selectedIndex - entries.length;
+          const agent = agentResults[agentIdx];
           if (agent) navigate(`/registry/${agent.agentId}`);
         }
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [entries, agentResults, selectedIndex, onClose]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [entries, selectedIndex, onClose, totalItems, agentResults]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Scroll selected item into view
   useEffect(() => {
@@ -316,7 +322,7 @@ export function CommandPalette({ role, onClose }: Props) {
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search pages…"
+            placeholder="Search pages and agents…"
             className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
           />
           <kbd className="shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-400">
@@ -326,116 +332,114 @@ export function CommandPalette({ role, onClose }: Props) {
 
         {/* Results */}
         <div ref={listRef} className="max-h-80 overflow-y-auto py-2">
-          {entries.length === 0 && agentResults.length === 0 && !agentsLoading ? (
+          {totalItems === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-gray-400">
               No results for &ldquo;{query}&rdquo;
             </p>
           ) : (
             <>
-              {Array.from(grouped.entries()).map(([section, items]) => (
-                <div key={section} className="mb-1">
-                  <p className="mb-1 px-4 pt-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-                    {section}
-                  </p>
-                  {items.map((entry) => {
-                    const Icon = entry.icon;
-                    const isSelected = flatIndex === selectedIndex;
-                    const currentFlatIndex = flatIndex;
-                    flatIndex++;
+            {Array.from(grouped.entries()).map(([section, items]) => (
+              <div key={section} className="mb-1">
+                <p className="mb-1 px-4 pt-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                  {section}
+                </p>
+                {items.map((entry) => {
+                  const Icon = entry.icon;
+                  const isSelected = flatIndex === selectedIndex;
+                  const currentFlatIndex = flatIndex;
+                  flatIndex++;
 
-                    return (
-                      <button
-                        key={entry.href}
-                        data-selected={isSelected}
-                        onClick={() => navigate(entry.href)}
-                        onMouseEnter={() => setSelectedIndex(currentFlatIndex)}
-                        className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                          isSelected ? "bg-violet-50" : "hover:bg-gray-50"
+                  return (
+                    <button
+                      key={entry.href}
+                      data-selected={isSelected}
+                      onClick={() => navigate(entry.href)}
+                      onMouseEnter={() => setSelectedIndex(currentFlatIndex)}
+                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                        isSelected ? "bg-violet-50" : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
+                          isSelected
+                            ? "border-violet-200 bg-violet-100 text-violet-600"
+                            : "border-gray-200 bg-gray-50 text-gray-500"
                         }`}
                       >
-                        <div
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
-                            isSelected
-                              ? "border-violet-200 bg-violet-100 text-violet-600"
-                              : "border-gray-200 bg-gray-50 text-gray-500"
+                        <Icon size={14} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={`text-sm font-medium ${
+                            isSelected ? "text-violet-700" : "text-gray-800"
                           }`}
                         >
-                          <Icon size={14} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p
-                            className={`text-sm font-medium ${
-                              isSelected ? "text-violet-700" : "text-gray-800"
-                            }`}
-                          >
-                            {entry.label}
-                          </p>
-                          <p className="truncate text-xs text-gray-400">
-                            {entry.description}
-                          </p>
-                        </div>
-                        {isSelected && (
-                          <ArrowRight size={13} className="shrink-0 text-violet-400" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
+                          {entry.label}
+                        </p>
+                        <p className="truncate text-xs text-gray-400">
+                          {entry.description}
+                        </p>
+                      </div>
+                      {isSelected && (
+                        <ArrowRight size={13} className="shrink-0 text-violet-400" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
 
-              {/* Agent search results */}
-              {(agentsLoading || agentResults.length > 0) && (
-                <div className="mb-1">
-                  <p className="mb-1 px-4 pt-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-                    Agents
-                  </p>
-                  {agentsLoading && agentResults.length === 0 ? (
-                    <p className="px-4 py-2 text-xs text-gray-400">Searching…</p>
-                  ) : (
-                    agentResults.map((agent) => {
-                      const isSelected = flatIndex === selectedIndex;
-                      const currentFlatIndex = flatIndex;
-                      flatIndex++;
-
-                      return (
-                        <button
-                          key={agent.agentId}
-                          data-selected={isSelected}
-                          onClick={() => navigate(`/registry/${agent.agentId}`)}
-                          onMouseEnter={() => setSelectedIndex(currentFlatIndex)}
-                          className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                            isSelected ? "bg-violet-50" : "hover:bg-gray-50"
-                          }`}
-                        >
-                          <div
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
-                              isSelected
-                                ? "border-violet-200 bg-violet-100 text-violet-600"
-                                : "border-gray-200 bg-gray-50 text-gray-500"
-                            }`}
-                          >
-                            <Bot size={14} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p
-                              className={`text-sm font-medium ${
-                                isSelected ? "text-violet-700" : "text-gray-800"
-                              }`}
-                            >
-                              {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
-                            </p>
-                            <p className="text-xs text-gray-400">Agent Registry</p>
-                          </div>
-                          <StatusBadge status={agent.status} />
-                          {isSelected && (
-                            <ArrowRight size={13} className="shrink-0 text-violet-400" />
-                          )}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              )}
+            {/* Agent search results */}
+            {agentResults.length > 0 && (
+              <div className="mb-1">
+                <p className="mb-1 px-4 pt-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                  Agents
+                </p>
+                {agentResults.map((agent, i) => {
+                  const agentFlatIndex = entries.length + i;
+                  const isSelected = agentFlatIndex === selectedIndex;
+                  const STATUS_DOTS: Record<string, string> = {
+                    draft: "bg-gray-400", in_review: "bg-amber-400",
+                    approved: "bg-green-400", deployed: "bg-violet-400",
+                    rejected: "bg-red-400", deprecated: "bg-gray-300",
+                  };
+                  return (
+                    <button
+                      key={agent.agentId}
+                      data-selected={isSelected}
+                      onClick={() => navigate(`/registry/${agent.agentId}`)}
+                      onMouseEnter={() => setSelectedIndex(agentFlatIndex)}
+                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                        isSelected ? "bg-violet-50" : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
+                          isSelected
+                            ? "border-violet-200 bg-violet-100 text-violet-600"
+                            : "border-gray-200 bg-gray-50 text-gray-500"
+                        }`}
+                      >
+                        <Bot size={14} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-sm font-medium ${isSelected ? "text-violet-700" : "text-gray-800"}`}>
+                          {agent.name ?? "Unnamed Agent"}
+                        </p>
+                        <p className="truncate text-xs text-gray-400">
+                          <span className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOTS[agent.status] ?? "bg-gray-300"}`} />
+                          {agent.status.replace("_", " ")} · v{agent.version}
+                          {agent.tags?.length > 0 && ` · ${agent.tags.slice(0, 2).join(", ")}`}
+                        </p>
+                      </div>
+                      {isSelected && (
+                        <ArrowRight size={13} className="shrink-0 text-violet-400" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             </>
           )}
         </div>

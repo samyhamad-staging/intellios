@@ -280,6 +280,7 @@ describe("translateAbpToBedrockAgent — tags", () => {
   it("always includes managed-by, abpId, and abpVersion tags", () => {
     const abp = makeAbp();
     const result = translateAbpToBedrockAgent(abp);
+    expect(result.tags).toBeDefined();
     expect(result.tags!["managed-by"]).toBe("intellios");
     expect(result.tags!.abpId).toBeTruthy();
     expect(result.tags!.abpVersion).toBeTruthy();
@@ -295,6 +296,7 @@ describe("translateAbpToBedrockAgent — tags", () => {
       },
     });
     const result = translateAbpToBedrockAgent(abp);
+    expect(result.tags).toBeDefined();
     expect(result.tags!.businessUnit).toBe("Risk");
     expect(result.tags!.costCenter).toBe("CC-001");
     expect(result.tags!.environment).toBe("production");
@@ -304,6 +306,7 @@ describe("translateAbpToBedrockAgent — tags", () => {
   it("omits ownership tags when ownership block is absent", () => {
     const abp: ABP = { ...makeAbp(), ownership: undefined };
     const result = translateAbpToBedrockAgent(abp);
+    expect(result.tags).toBeDefined();
     expect(result.tags!.businessUnit).toBeUndefined();
     expect(result.tags!.costCenter).toBeUndefined();
     expect(result.tags!.environment).toBeUndefined();
@@ -312,6 +315,7 @@ describe("translateAbpToBedrockAgent — tags", () => {
   it("includes enterpriseId tag when metadata.enterprise_id is present", () => {
     const abp = makeAbp();
     const result = translateAbpToBedrockAgent(abp);
+    expect(result.tags).toBeDefined();
     expect(result.tags!.enterpriseId).toBe("ent-001");
   });
 });

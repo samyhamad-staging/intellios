@@ -63,6 +63,7 @@ interface AnalyticsData {
   monthlySubmissions: Array<{ month: string; count: number }>;
   monthlyApprovals: Array<{ month: string; count: number }>;
   topViolatedPolicies: Array<{ policyName: string; count: number }>;
+  topViolatedRules: Array<{ policyName: string; field: string; severity: string; affectedCount: number; affectedBlueprints: string[] }>;
   avgTimeToApprovalHours: number | null;
 }
 
@@ -437,6 +438,45 @@ export default function GovernanceHubPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Rule Violation Detail — which specific rules fail most, with affected blueprints */}
+                  {analytics.topViolatedRules && analytics.topViolatedRules.length > 0 && (
+                    <div className="col-span-2 rounded-xl border border-gray-200 bg-white p-5">
+                      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        Violation Hotspots
+                      </h3>
+                      <p className="mb-3 text-xs text-gray-400">
+                        Most frequently violated rules across active blueprints
+                      </p>
+                      <div className="space-y-2">
+                        {analytics.topViolatedRules.map((rule, idx) => (
+                          <div key={idx} className="rounded-lg border border-red-100 bg-red-50/50 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-medium text-gray-800">{rule.policyName}</p>
+                                <p className="mt-0.5 text-xs text-gray-500 font-mono">{rule.field}</p>
+                              </div>
+                              <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                                {rule.affectedCount} agent{rule.affectedCount === 1 ? "" : "s"}
+                              </span>
+                            </div>
+                            <div className="mt-1.5 flex flex-wrap gap-1">
+                              {rule.affectedBlueprints.map((name) => (
+                                <span key={name} className="rounded bg-white px-1.5 py-0.5 text-[11px] text-gray-600 border border-gray-200">
+                                  {name}
+                                </span>
+                              ))}
+                              {rule.affectedCount > rule.affectedBlueprints.length && (
+                                <span className="text-[11px] text-gray-400">
+                                  +{rule.affectedCount - rule.affectedBlueprints.length} more
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Agent Status Distribution */}
                   <div className="rounded-xl border border-gray-200 bg-white p-5">

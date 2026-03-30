@@ -11,11 +11,23 @@ import { getRequestId } from "@/lib/request-id";
 
 // ─── Zod schema ───────────────────────────────────────────────────────────────
 
+const PRIVATE_HOST_RE =
+  /^(localhost|127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|::1|0\.0\.0\.0)/;
+
 const CreateWebhookSchema = z.object({
   name: z.string().min(1).max(100),
-  url: z.string().url().refine((u) => u.startsWith("https://"), {
-    message: "Webhook URL must use HTTPS",
-  }),
+  url: z.string().url()
+    .refine((u) => u.startsWith("https://"), {
+      message: "Webhook URL must use HTTPS",
+    })
+    .refine((u) => {
+      try {
+        const host = new URL(u).hostname;
+        return !PRIVATE_HOST_RE.test(host);
+      } catch {
+        return false;
+      }
+    }, { message: "Webhook URL must point to a public host" }),
   events: z.array(z.string()).default([]),
 });
 

@@ -2,7 +2,23 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-03-22 (Session 068 — H3-3 + H3-4 complete; 7 of 14 H3 items shipped)
+**Last updated:** 2026-03-28 (Session 066b — RV-001–013 review enhancements + Design System v1.1; Session 065b — Vercel serverless fixes + UE-001–009)
+
+---
+
+## ✓ Session 066b Complete (2026-03-28) — Intake Review Page Polish + Design System v1.1
+
+13 intake review UX enhancements (RV-001–013): sticky footer with live confirmation counter, human-readable retention formatting, per-section "← Revise" links, 3-step visual stepper, risk/sensitivity/regulatory badges, color-coded policy type chips, denied actions blocked list, collapsible empty sections, domain tile anchor links + hover tooltips, stakeholder gap warning banner. Design System v1.1 adds status, risk tier, and policy type semantic color tokens. 3 files modified, 0 migrations, 0 new deps.
+
+---
+
+## ✓ Session 065b Complete (2026-03-28) — Vercel Serverless Fixes + UE-001–009 Intake Chat UX
+
+6 production fixes unblocking Vercel deployment: postgres `max:1` for serverless connection limits, `await` classification in context route (fire-and-forget killed by serverless), missing `created_by` migration (now 0034) causing HTTP 500 on intake session creation, missing UI components + quality dashboard committed (0024), intake button error surfacing. 9 intake chat UX enhancements (UE-001–009). 2 new migrations, 20 files modified.
+
+---
+
+## ✓ Session 068 Complete (2026-03-22) — H3-3 + H3-4 (7 of 14 H3 items shipped)
 
 ---
 

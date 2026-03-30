@@ -1,8 +1,8 @@
 # INTELLIOS_SYSTEM_DESCRIPTION.md
 
-**Version:** 1.2.0
-**Date:** 2026-03-17
-**Status:** Canonical — reflects implementation through Phase 48
+**Version:** 1.3.0
+**Date:** 2026-03-18
+**Status:** Canonical — reflects implementation through Phase 53 + Session 064
 **Purpose:** Primary system description and source of truth for Intellios. Written for LLM ingestion, architectural reasoning, development guidance, and system evaluation.
 
 ---
@@ -275,13 +275,45 @@ Seven domain channels allow specialists to submit attributed requirements alongs
 
 Contributions are stored in `intake_contributions` (JSONB), injected verbatim into Claude's system prompt during Phase 2, and included in the MRM report as Section 11 (stakeholder evidence).
 
-#### 4.1.3 Adaptive Model Selection
+#### 4.1.3 Expertise Detection and Adaptive Communication
+
+After turn 2, `detectExpertiseLevel()` scores user messages for technical vs. business vocabulary and uncertainty signals, returning one of three levels stored in `intake_sessions.expertise_level`:
+
+| Level | Detection Signal | Claude Behavior |
+|---|---|---|
+| `guided` | Non-technical vocabulary, uncertainty signals | Structured sub-questions, examples, plain-language framing |
+| `adaptive` | Mixed or neutral vocabulary | Mirrors the designer's vocabulary and register |
+| `expert` | Technical AI/engineering vocabulary, precise terminology | Concise validation-focused exchanges, no hand-holding |
+
+Guided mode also routes first 6 turns to Claude Sonnet for higher language quality.
+
+#### 4.1.4 Topic-Specific Probing Rules
+
+`buildTopicProbingRules()` generates 0–8 soft advisory rules from intake context and agent type, injected into the system prompt after the governance probing block:
+
+| Context Signal | Generated Probe |
+|---|---|
+| Customer-facing agent | Fallback behavior, rate-limiting, error messaging |
+| External API integrations | Auth strategy, retry logic |
+| PII or regulated data | PII masking scope |
+| Autonomous agent | Human oversight, override mechanisms, escalation |
+
+#### 4.1.5 Live Readiness Score and Completeness Map
+
+**Live Readiness Score (Phase 2 sidebar):** A 0–100 score computed from section coverage, governance depth, and requirement specificity. Color-coded with label: "Getting started" → "Building requirements…" → "Nearly complete" → "✓ Ready to finalize". Updates on every payload poll.
+
+**Completeness Map (Phase 3 review):** A 7-domain grid of status-colored cards (required/optional × filled/sparse/empty) with stakeholder-contribution indicators and trigger-reason labels explaining why each domain is required.
+
+**Tentative-items warning:** A soft amber callout on the Generate button when `unresolvedFlags > 0`. Non-blocking — surfaces uncertainty without preventing generation.
+
+#### 4.1.6 Adaptive Model Selection
 
 `selectIntakeModel()` routes each turn to Claude Sonnet or Haiku using priority-ordered rules:
 
 | Condition | Model | Rationale |
 |---|---|---|
 | First turn (`messageCount <= 1`) | Sonnet | Opening synthesis requires full context |
+| Guided expertise + first 6 turns | Sonnet | Higher language quality for non-technical designers |
 | Payload complete + tools set | Sonnet | Finalization may occur; false negatives too costly |
 | Explicit finalization language | Sonnet | `mark_intake_complete` requires full enumeration |
 | Governance/regulatory keywords | Sonnet | Multi-constraint reasoning required |
@@ -289,7 +321,7 @@ Contributions are stored in `intake_contributions` (JSONB), injected verbatim in
 
 This achieves an estimated 8× cost reduction on routine turns without compromising quality at governance-critical steps.
 
-#### 4.1.4 API Routes
+#### 4.1.7 API Routes
 
 | Method | Route | Purpose |
 |---|---|---|
@@ -309,11 +341,11 @@ This achieves an estimated 8× cost reduction on routine turns without compromis
 | GET | `/api/intake/invitations/[token]` | Validate invitation token; returns session context and prior synthesis |
 | POST | `/api/intake/invitations/[token]/chat` | Token-gated stakeholder AI interview (no Intellios account required) |
 
-#### 4.1.5 Data Model
+#### 4.1.8 Data Model
 
 | Table | Purpose |
 |---|---|
-| `intake_sessions` | One row per session; `intake_payload` (JSONB), `intake_context` (JSONB), status |
+| `intake_sessions` | One row per session; `intake_payload` (JSONB), `intake_context` (JSONB), `expertise_level` (guided/adaptive/expert), status |
 | `intake_messages` | One row per message; role, content, ordering |
 | `intake_contributions` | One row per stakeholder contribution; domain, contributor, fields (JSONB) |
 | `intake_invitations` | Token-based invitations to external stakeholders; domain, RACI role, invitee name/email, token, expiry, status |
@@ -503,6 +535,8 @@ The `agent_blueprints` table serves as both the blueprint store and the Agent Re
 | `deployment_metadata` | JSONB | AgentCore deployment record (agentId, ARN, region, model) |
 | `current_approval_step` | INT | Index into approval chain (multi-step) |
 | `approval_progress` | JSONB | Array of `ApprovalStepRecord` — evidence per step |
+| `previous_blueprint_id` | UUID | FK to source blueprint when forked via `new-version`; null for v1 |
+| `governance_diff` | JSONB | Computed diff between source and this version at fork time; null for v1 |
 
 #### 4.4.2 Lifecycle State Machine
 
@@ -541,7 +575,17 @@ draft → in_review → approved → deployed → deprecated
 - Returns per-change significance: `major`, `minor`, `patch`
 - Rendered in Registry "Versions" tab and Review Panel ("Changes from v{prev} → v{current}")
 
-#### 4.4.5 API Routes
+#### 4.4.5 Blueprint Lineage
+
+When a blueprint spawns a new version via `POST /api/blueprints/[id]/new-version`, the system automatically computes and permanently stores the governance diff between source and new blueprint:
+
+- **`previous_blueprint_id`** — UUID FK to the source blueprint row; null for v1
+- **`governance_diff`** — JSONB containing per-section breakdown (governance/capabilities/constraints/identity), per-change type (added/removed/modified), significance (`major`/`minor`/`patch`), and `totalChanges`
+- **Audit enhancement** — `governanceDiffSignificance` and `governanceDiffChangeCount` stored in the `blueprint.created` audit event for every new version
+
+**Registry UI — VERSION LINEAGE panel** (Versions tab): Renders when at least one version has `governance_diff != null`. Shows v{from}→v{to} arrow, colored significance badge, change count, expandable per-section breakdown with per-change-type icons (+/−/~), and governance implication notes (re-validation required for governance section changes; safety policy review triggered for instruction changes).
+
+#### 4.4.6 API Routes
 
 | Method | Route | Purpose |
 |---|---|---|
@@ -549,6 +593,7 @@ draft → in_review → approved → deployed → deprecated
 | GET | `/api/registry/[agentId]` | Agent detail + full version history |
 | PATCH | `/api/blueprints/[id]/status` | Lifecycle transition |
 | POST | `/api/blueprints/[id]/clone` | Fork into new logical agent |
+| POST | `/api/blueprints/[id]/new-version` | Fork new version; computes and stores governance diff |
 | PATCH | `/api/blueprints/[id]/ownership` | Update ownership metadata block |
 | GET | `/api/blueprints/[id]/diff` | Structural diff against another version |
 | GET | `/api/blueprints/[id]/regulatory` | Regulatory framework assessment |
@@ -611,7 +656,17 @@ Report is available as:
 - HTML browser view (`/blueprints/[id]/report`) — printable to PDF
 - Compliance Evidence Bundle (`GET /api/blueprints/[id]/export/compliance`) — MRM report + quality eval + test runs bundled as JSON
 
-#### 4.5.4 API Routes
+#### 4.5.4 Compliance Evidence Bundle
+
+`GET /api/blueprints/[id]/evidence-package` — one-click regulatory evidence bundle for `approved` and `deployed` agents:
+
+- **Access:** `designer`, `reviewer`, `compliance_officer`, `admin` (broader than compliance export)
+- **Status gate:** `approved` or `deployed` only
+- **Bundle contents:** Full 14-section MRM compliance report, multi-step approval chain records (decision/actor/timestamp/comment), AI quality evaluation (5 scored dimensions), and all behavioral test run evidence
+- **Blueprint Studio integration:** "Audit Evidence" section in the right rail for approved/deployed blueprints — "EXAM-READY" badge, "View Compliance Report" link (print-optimized MRM page), "↓ Export Evidence Package" button
+- **Audit:** `blueprint.evidence_package_exported` written on every export
+
+#### 4.5.5 API Routes
 
 | Method | Route | Purpose |
 |---|---|---|
@@ -619,6 +674,7 @@ Report is available as:
 | POST | `/api/blueprints/[id]/review` | Submit review decision |
 | POST | `/api/blueprints/[id]/review-brief` | Generate AI Risk Brief (Haiku) |
 | GET | `/api/blueprints/[id]/report` | MRM JSON report |
+| GET | `/api/blueprints/[id]/evidence-package` | One-click regulatory evidence bundle |
 | GET | `/api/blueprints/[id]/export/compliance` | Full evidence bundle download |
 | GET | `/api/blueprints/[id]/export/agentcore` | Bedrock export manifest download |
 
@@ -632,7 +688,7 @@ Report is available as:
 
 - **Table:** `audit_log` — append-only; never modified or deleted
 - **Every entry includes:** `id`, `enterprise_id`, `action` (typed `AuditAction`), `actor` (user email), `entity_type`, `entity_id`, `from_state`, `to_state`, `metadata` (JSONB), `created_at`
-- **Total audit actions:** 18 typed actions across blueprints, policies, intake, deployment, governance checks, and exports
+- **Total audit actions:** 19 typed actions across blueprints, policies, intake, deployment, governance checks, and exports
 
 **Audit actions include:**
 
@@ -641,7 +697,7 @@ Report is available as:
 | Blueprint | `blueprint.created`, `blueprint.refined`, `blueprint.submitted`, `blueprint.reviewed`, `blueprint.approved`, `blueprint.rejected`, `blueprint.deployed`, `blueprint.cloned`, `blueprint.status_changed` |
 | AgentCore | `blueprint.agentcore_exported`, `blueprint.agentcore_deployed` |
 | Governance | `blueprint.health_checked`, `blueprint.test_run_completed`, `blueprint.approval_step_completed` |
-| Reports | `blueprint.report_exported`, `blueprint.compliance_exported` |
+| Reports | `blueprint.report_exported`, `blueprint.compliance_exported`, `blueprint.evidence_package_exported` |
 | Policies | `policy.created`, `policy.updated`, `policy.deleted`, `policy.simulated` |
 | Intake | `intake.contribution_submitted` |
 
@@ -846,13 +902,22 @@ Intellios exposes a set of role-gated pages. Below is the complete page inventor
 
 #### 4.9.1 Role-Differentiated Home Screens (`/`)
 
-Three views served from the root route based on the authenticated user's role:
+Four views served from the root route based on the authenticated user's role:
 
 | Role | Home Screen Focus |
 |---|---|
 | `designer` | My Work strip (in-progress blueprints) + New Agent CTA; recent intake sessions |
-| `reviewer` | Review Queue focus; review-ready cards with SLA ring indicators |
-| `admin` | Portfolio stats; platform KPIs; cross-role navigation |
+| `reviewer` / `compliance_officer` | Review Queue focus; review-ready cards with pending count |
+| `admin` | Portfolio status tiles, notification strip, Fleet Governance Dashboard, Recent Activity feed, Workspace Activity feed |
+| `viewer` | Falls through to Fleet Governance Dashboard — read-only fleet posture view; no intake or design CTAs |
+
+**Admin home screen** includes:
+- **Notification strip** — compact inline alerts (amber dot + violet CTA links) when action is needed (blueprints awaiting review, approved agents ready to deploy)
+- **Status count tiles** — 4 lifecycle stage cards (Draft/In Review/Approved/Deployed) styled with `kpi-*` design tokens; clickable, link to relevant page; terminal states (Rejected/Deprecated) shown as compact low-emphasis text
+- **Quality Index badge** — composite platform health score (0–100) with trend delta, styled with `badge-gov-pass/warn/error` tokens
+- **Fleet Governance Dashboard** — risk tier KPI cards (Critical/High/Medium/Low) with shield icons, governance alert chips, per-agent fleet table with risk tier badge, governance health status, next review date, and evidence link
+- **Recent Activity** — last 8 agents sorted by update time with StatusBadge and author attribution
+- **Workspace Activity** — humanized audit event feed with grouping of consecutive identical events
 
 #### 4.9.2 Intake Session Pages (`/intake`, `/intake/[sessionId]`)
 
@@ -991,6 +1056,40 @@ Pre-built blueprint templates that designers can instantiate as a starting point
 Access: All authenticated roles (new users).
 
 Onboarding walkthrough presented to newly registered users before their first session. Covers the agent factory pipeline, role-specific entry points, and first-action CTA.
+
+#### 4.9.16 Design System
+
+Intellios uses a semantic CSS custom property design system built on Tailwind CSS v4 (`@theme` / `@utility`).
+
+**Token groups (defined in `src/app/globals.css` `:root`):**
+
+| Group | Tokens | Purpose |
+|---|---|---|
+| Status lifecycle | `--status-{status}-{variant}` | 6 statuses × bg/text/border/dot/col-bg/col-border/badge-bg/badge-text/badge-dot/btn-bg/btn-hover |
+| Risk tier | `--risk-{tier}-{variant}` | 4 tiers (critical/high/medium/low) × bg/text/border/icon |
+| Governance | `--gov-{state}-{variant}` | 3 states (pass/warn/error) × bg/text/border/icon |
+| Alert | `--alert-{level}-{variant}` | 3 levels (info/warning/critical) × text/dot |
+| Sidebar | `--sidebar-*` | Sidebar brand accent and navigation colors |
+| Radius | `--radius-card: 0.75rem`, `--radius-inner: 0.5rem` | Registered via `@theme`; generates `rounded-card`/`rounded-inner` utilities |
+
+**`@utility` classes:**
+
+| Class | Usage |
+|---|---|
+| `badge-{status}` | Status pill (bg + color); used in `StatusBadge` component |
+| `dot-{status}` | Status dot (background-color only); used in funnel bar charts |
+| `badge-risk-{tier}` | Risk tier pill |
+| `card-risk-{tier}` | Risk tier card background |
+| `badge-gov-{state}` | Governance pass/warn/error pill |
+| `kpi-{type}` | KPI card styling (neutral/deployed/review/compliant/caution) |
+| `col-{status}` | Pipeline column background + border |
+| `btn-action-{action}` | Lifecycle action button |
+| `badge-role-{role}` | User role pill |
+| `btn-primary`, `focus-accent`, `banner-success` | Global interactive elements |
+
+**Status badge icons (Lucide):** `Circle` (draft), `Clock` (in_review), `CheckCircle` (approved), `Zap` (deployed), `XCircle` (rejected), `Archive` (deprecated).
+
+**Risk tier icons (Lucide):** `ShieldX` (critical), `ShieldAlert` (high), `Shield` (medium), `ShieldCheck` (low). Applied in Fleet Governance Dashboard KPI cards, table badges, and alert chips.
 
 ---
 
@@ -1470,6 +1569,9 @@ Intellios exposes a comprehensive REST API under the Next.js App Router (`/api/*
 | `reviewer` | Review blueprints (approve, reject, request changes), deploy approved blueprints |
 | `compliance_officer` | All reviewer capabilities, governance policy management, compliance reports, audit trail, monitor and health checks |
 | `admin` | All capabilities, user management, enterprise settings, webhook management, cross-enterprise access |
+| `viewer` | Read-only: fleet governance dashboard, compliance posture, monitoring intelligence, audit trail (enterprise-scoped), governance analytics, MRM reports, evidence packages, agent registry. Cannot create/edit blueprints, approve/reject/deploy, create/edit policies, trigger health checks, or manage users |
+
+**Viewer role constraints:** `viewer` is assignable via admin user management (invite/create/update flows). The sidebar shows Governance and Monitor nav sections. The home page renders the Fleet Governance Dashboard (read-only). The `NewIntakeButton` is hidden. All write-path API routes reject `viewer` with 403.
 
 ---
 
@@ -1486,6 +1588,7 @@ Intellios exposes a comprehensive REST API under the Next.js App Router (`/api/*
 | Distributed rate limiting | Redis-backed rate limiting for multi-instance deployments |
 | Additional deployment targets | Azure AI Foundry, Google Vertex AI, OpenAI Assistants API |
 | Stakeholder workspace enhancements | Async threading, multi-round stakeholder sessions, contribution version tracking |
+| Design system completion | Shared DataTable, SectionCard, AgentRow components; typography/spacing/shadow token sets; shared EmptyState component |
 
 ### 11.2 Known Limitations (Current)
 
@@ -1539,6 +1642,16 @@ Intellios exposes a comprehensive REST API under the Next.js App Router (`/api/*
 | **Designer Insights Panel** | The collapsible panel in the intake session page showing per-domain stakeholder rows (RACI badge, invitee, status, inline invite form) and AI Orchestrator insight cards with approve/dismiss actions. |
 | **Shared Synthesis** | The current AI-generated synthesis of all stakeholder contributions, injected into each new stakeholder's interview system prompt so contributors build progressively on prior requirements rather than repeating them. |
 | **Blueprint Template** | A pre-built, validated ABP stub covering a common use case. Instantiated via `/api/templates/[id]/use` to create a new `draft` blueprint as a starting point. |
+| **Viewer Role** | A 5th user role providing read-only access to fleet posture, compliance, monitoring, audit trail, and evidence — without any write or approval capabilities. Designed for CROs, CISOs, and external auditors who need fleet visibility without operational authority. |
+| **Blueprint Lineage** | The parent-child relationship between blueprint versions created via `new-version`. Each new version stores `previous_blueprint_id` and a computed `governance_diff` capturing what changed between source and new version. Surfaced in the Registry Versions tab as a VERSION LINEAGE panel. |
+| **Governance Diff** | The structured output of `diffABP()` comparing two blueprint versions. Contains per-section breakdown (governance/capabilities/constraints/identity), per-change type (added/removed/modified), significance (major/minor/patch), and totalChanges. Stored in `agent_blueprints.governance_diff`. |
+| **Evidence Package** | A one-click downloadable bundle for regulatory submission, accessed via `GET /api/blueprints/[id]/evidence-package`. Contains the MRM report, approval chain records, AI quality scores, and all behavioral test evidence. Available for `approved` and `deployed` blueprints. |
+| **Expertise Level** | The detected communication register of an intake designer: `guided` (non-technical), `adaptive` (mixed), or `expert` (technical AI vocabulary). Detected after turn 2 by `detectExpertiseLevel()`; stored in `intake_sessions.expertise_level`; adapts Claude's language register and model routing. |
+| **Live Readiness Score** | A 0–100 score computed during Phase 2 of intake from section coverage, governance depth, and requirement specificity. Displayed in the Phase 2 sidebar with a color-coded label. |
+| **Completeness Map** | A 7-domain grid rendered on the Phase 3 intake review screen. Each domain shows a status-colored card (required/optional × filled/sparse/empty) with stakeholder-contribution indicators and trigger-reason labels. |
+| **Design System** | Intellios's semantic CSS custom property system. Token groups: `--status-*`, `--risk-*`, `--gov-*`, `--alert-*`, `--radius-card`, `--radius-inner`. Utility classes: `badge-{status}`, `kpi-*`, `badge-risk-*`, `card-risk-*`, `badge-gov-*`, `dot-{status}`. Status badges use Lucide icons (shape + color) for color-blind accessibility. |
+| **KpiCard** | Shared React component (`src/components/dashboard/kpi-card.tsx`) for KPI display. Props: label, value, sub, color (`kpi-*` token), subColor, optional href. Renders with `opacity-50 border-dashed` when value is 0. |
+| **Fleet Governance Dashboard** | Server component (`src/components/dashboard/fleet-governance-dashboard.tsx`) rendering aggregate risk posture: 4 risk tier KPI cards with shield icons, governance alert chips, and per-agent fleet table. Shown on the admin and viewer home screen. |
 
 ---
 
