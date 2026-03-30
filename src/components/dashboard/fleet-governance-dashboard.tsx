@@ -164,53 +164,51 @@ export async function FleetGovernanceDashboard({
     );
   }
 
+  const hasAlerts = overdueCount > 0 || errorCount > 0 || unvalidatedCount > 0;
+
   return (
-    <div className="space-y-4">
-      {/* Risk tier distribution */}
-      <div className="grid grid-cols-4 gap-3">
-        {TIERS.map((tier) => {
-          const cfg = TIER_CONFIG[tier];
-          const count = tierCounts[tier];
-          return (
-            <div
-              key={tier}
-              className={`rounded-xl border ${cfg.border} ${cfg.bg} px-4 py-3`}
-            >
-              <div className={`text-2xl font-bold ${cfg.text}`}>{count}</div>
-              <div className={`mt-0.5 text-xs font-medium ${cfg.text} opacity-80`}>
-                {cfg.label} Risk
-              </div>
-            </div>
-          );
-        })}
+    <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
+      {/* Risk distribution + governance alerts — compact summary bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+        <div className="flex items-center gap-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Risk</span>
+          {TIERS.map((tier) => {
+            const cfg = TIER_CONFIG[tier];
+            const count = tierCounts[tier];
+            return (
+              <span key={tier} className="flex items-center gap-1.5">
+                <span className={`text-sm font-bold ${cfg.text}`}>{count}</span>
+                <span className={`text-xs ${cfg.text} opacity-70`}>{cfg.label}</span>
+              </span>
+            );
+          })}
+        </div>
+        {hasAlerts && (
+          <div className="flex items-center gap-2">
+            {overdueCount > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                {overdueCount} overdue
+              </span>
+            )}
+            {errorCount > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-medium text-orange-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
+                {errorCount} error{errorCount !== 1 ? "s" : ""}
+              </span>
+            )}
+            {unvalidatedCount > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-500">
+                <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+                {unvalidatedCount} unvalidated
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Governance alerts */}
-      {(overdueCount > 0 || errorCount > 0 || unvalidatedCount > 0) && (
-        <div className="flex flex-wrap gap-2">
-          {overdueCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-              {overdueCount} overdue for periodic review
-            </span>
-          )}
-          {errorCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-              {errorCount} with governance errors
-            </span>
-          )}
-          {unvalidatedCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-500">
-              <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
-              {unvalidatedCount} not yet validated
-            </span>
-          )}
-        </div>
-      )}
-
       {/* Per-agent fleet table */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50 text-left">
