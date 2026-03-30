@@ -359,70 +359,14 @@ export default async function Home() {
   return (
     <div className="px-8 py-8">
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between">
-        <div>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <h1 className="text-xl font-semibold text-text">Overview</h1>
-          <p className="mt-0.5 text-sm text-text-secondary">
-            {allAgents.length} agent{allAgents.length === 1 ? "" : "s"} across all teams
-          </p>
-        </div>
-        {role !== "viewer" && (
-          <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg btn-primary px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50" />
-        )}
-      </div>
-
-      {/* Action callouts — only shown when something needs attention */}
-      {actionCallouts.length > 0 && (
-        <div className="mb-6 flex flex-col gap-2">
-          {actionCallouts.map(({ href, label, cta, color }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center justify-between rounded-lg border px-4 py-2.5 text-sm transition-colors ${color}`}
-            >
-              <span className="font-medium">{label}</span>
-              <span className="text-xs font-semibold opacity-80">{cta}</span>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {/* Pipeline status — active stages link to relevant pages */}
-      <div className="mb-6">
-        <div className="grid grid-cols-4 gap-3">
-          {(["draft", "in_review", "approved", "deployed"] as const).map((s) => {
-            const cfg = STATUS_CONFIG[s];
-            return (
-              <Link
-                key={s}
-                href={activeStageLinks[s]}
-                className={`rounded-xl border ${cfg.border} ${cfg.bg} p-4 hover:shadow-sm transition-shadow`}
-              >
-                <div className={`text-2xl font-bold ${cfg.text}`}>{counts[s]}</div>
-                <div className={`mt-0.5 text-xs font-medium ${cfg.text} opacity-80`}>{cfg.label}</div>
-              </Link>
-            );
-          })}
-        </div>
-        {/* Terminal states — compact, low-emphasis */}
-        <div className="mt-2.5 flex items-center gap-4 px-1">
-          {(["rejected", "deprecated"] as const).map((s) => {
-            const cfg = STATUS_CONFIG[s];
-            return (
-              <span key={s} className={`text-xs font-medium ${cfg.text} opacity-70`}>
-                {counts[s]} {cfg.label}
-              </span>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Governance Health KPI + Fleet Posture */}
-      <div className="mb-8">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Governance Health</h2>
+          <span className="text-sm text-text-tertiary">
+            {allAgents.length} agent{allAgents.length === 1 ? "" : "s"}
+          </span>
           {qualityIndex != null && (
-            <div className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+            <div className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${
               qualityIndex >= 80 ? "bg-green-50 text-green-700 border-green-200" :
               qualityIndex >= 60 ? "bg-amber-50 text-amber-700 border-amber-200" :
               "bg-red-50 text-red-700 border-red-200"
@@ -430,15 +374,66 @@ export default async function Home() {
               {qualityIndexDelta != null && (
                 qualityIndexDelta >= 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />
               )}
-              Quality Index: {qualityIndex}/100
+              QI {qualityIndex}/100
               {qualityIndexDelta != null && (
-                <span className="ml-0.5 opacity-70">
-                  ({qualityIndexDelta >= 0 ? "+" : ""}{qualityIndexDelta})
-                </span>
+                <span className="opacity-60">({qualityIndexDelta >= 0 ? "+" : ""}{qualityIndexDelta})</span>
               )}
             </div>
           )}
         </div>
+        {role !== "viewer" && (
+          <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg btn-primary px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50" />
+        )}
+      </div>
+
+      {/* Pipeline strip + inline alerts */}
+      <div className="mb-6 rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
+        {/* Stat row */}
+        <div className="flex items-stretch divide-x divide-border">
+          {(["draft", "in_review", "approved", "deployed"] as const).map((s) => {
+            const cfg = STATUS_CONFIG[s];
+            return (
+              <Link
+                key={s}
+                href={activeStageLinks[s]}
+                className="group flex flex-1 flex-col px-5 py-4 hover:bg-surface-raised transition-colors min-w-0"
+              >
+                <span className={`text-2xl font-bold ${cfg.text}`}>{counts[s]}</span>
+                <span className="mt-0.5 text-xs text-text-tertiary group-hover:text-text-secondary transition-colors">{cfg.label}</span>
+              </Link>
+            );
+          })}
+          {/* Terminal states — right-aligned, muted */}
+          <div className="flex flex-col justify-center gap-1 px-5 py-4">
+            {(["rejected", "deprecated"] as const).map((s) => {
+              const cfg = STATUS_CONFIG[s];
+              return (
+                <span key={s} className={`text-xs ${cfg.text} opacity-60 whitespace-nowrap`}>
+                  {counts[s]} {cfg.label}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+        {/* Inline alerts — only when actionable */}
+        {actionCallouts.length > 0 && (
+          <div className="flex items-center gap-1 border-t border-border px-5 py-2.5">
+            {actionCallouts.map(({ href, label, cta, color }) => (
+              <Link
+                key={href}
+                href={href}
+                className={`inline-flex items-center gap-2 rounded-md border px-3 py-1 text-xs font-medium transition-colors ${color}`}
+              >
+                {label} <span className="opacity-70">→</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Governance Health */}
+      <div className="mb-8">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Governance Health</h2>
         <FleetGovernanceDashboard
           enterpriseId={user.enterpriseId}
           userRole={role}
@@ -488,9 +483,7 @@ export default async function Home() {
 
       {/* Workspace activity feed */}
       <section className="mt-8">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-          Workspace Activity
-        </h2>
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Workspace Activity</h2>
         <div className="rounded-xl border border-border bg-surface p-5 shadow-[var(--shadow-card)]">
           <ActivityFeed />
         </div>
