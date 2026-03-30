@@ -440,58 +440,16 @@ export default async function Home() {
         />
       </div>
 
-      {/* Agents + Activity — side by side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Agents */}
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Agents</h2>
-            <Link href="/registry" className="text-xs text-primary hover:text-primary-hover">View all →</Link>
-          </div>
-          {allAgents.length === 0 ? (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface py-14 text-center">
-              <Inbox size={28} className="mb-3 text-text-tertiary" />
-              <p className="text-sm font-medium text-text-secondary">No agents yet</p>
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
-              {allAgents.slice(0, 8).map((agent, i) => {
-                const author = agent.createdBy
-                  ? agent.createdBy.includes("@")
-                    ? agent.createdBy.split("@")[0]
-                    : agent.createdBy
-                  : null;
-                return (
-                  <Link
-                    key={agent.agentId}
-                    href={`/registry/${agent.agentId}`}
-                    className={`flex items-center gap-3 px-4 py-2.5 hover:bg-surface-raised transition-colors ${i > 0 ? "border-t border-border" : ""}`}
-                  >
-                    <Bot size={14} className="shrink-0 text-text-tertiary" />
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate text-sm font-medium text-text">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</p>
-                      <p className="text-xs text-text-tertiary">
-                        {author ? `${author} · ` : ""}{timeAgo(agent.updatedAt)}
-                      </p>
-                    </div>
-                    <StatusBadge status={agent.status} />
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        {/* Activity */}
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Activity</h2>
-            <Link href="/audit" className="text-xs text-primary hover:text-primary-hover">Audit trail →</Link>
-          </div>
-          <div className="rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
-            <ActivityFeed />
-          </div>
-        </section>
+      {/* Activity */}
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Activity</h2>
+          <Link href="/audit" className="text-xs text-primary hover:text-primary-hover">Audit trail →</Link>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
+          <ActivityFeed />
+        </div>
+      </section>
       </div>
     </div>
   );
