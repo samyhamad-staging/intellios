@@ -233,6 +233,19 @@ export default function IntakeSessionPage({
     }
   }
 
+  const handleRevise = useCallback(async () => {
+    try {
+      await fetch(`/api/intake/sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "in_progress" }),
+      });
+    } catch {
+      // Non-critical — switch to conversation regardless
+    }
+    setPhase("conversation");
+  }, [sessionId]);
+
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
     setGenerateError(null);
@@ -392,6 +405,7 @@ export default function IntakeSessionPage({
           contributions={contributions}
           riskTier={classification?.riskTier ?? null}
           onGenerate={handleGenerate}
+          onRevise={handleRevise}
           generating={generating}
           generateSuccess={generateSuccess}
           generateError={generateError}
