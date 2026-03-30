@@ -57,6 +57,8 @@ export default function IntakeSessionPage({
   const [intakeScoreLoading, setIntakeScoreLoading] = useState(false);
   const [scorePopoverOpen, setScorePopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const [discardConfirm, setDiscardConfirm] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
 
   // Load session status + message history + contributions on mount
   useEffect(() => {
@@ -235,6 +237,16 @@ export default function IntakeSessionPage({
       setClassificationSaving(false);
     }
   }
+
+  const handleDiscard = useCallback(async () => {
+    setDiscarding(true);
+    try {
+      await fetch(`/api/intake/sessions/${sessionId}`, { method: "DELETE" });
+    } catch {
+      // Non-critical — navigate away regardless
+    }
+    router.push("/intake");
+  }, [sessionId, router]);
 
   const handleRevise = useCallback(async () => {
     try {
@@ -442,6 +454,31 @@ export default function IntakeSessionPage({
           <p className="text-xs text-text-secondary">Agent Intake</p>
         </div>
         <div className="flex items-center gap-3">
+          {discardConfirm ? (
+            <>
+              <span className="text-xs text-text-secondary">Discard this session?</span>
+              <button
+                onClick={handleDiscard}
+                disabled={discarding}
+                className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+              >
+                {discarding ? "Discarding…" : "Yes, discard"}
+              </button>
+              <button
+                onClick={() => setDiscardConfirm(false)}
+                className="text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setDiscardConfirm(true)}
+              className="text-xs text-text-tertiary hover:text-red-500 transition-colors"
+            >
+              Discard
+            </button>
+          )}
           <div className="text-xs text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
         </div>
       </header>
