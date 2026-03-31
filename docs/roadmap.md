@@ -2,7 +2,13 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-03-31 (Session 073 — log backfill + strategic planning + keen-pascal merge; Session 072 — all-conversation intake v2 + font tokenization + a11y)
+**Last updated:** 2026-03-31 (Session 074 — intake transparency overhaul + tool call result status)
+
+---
+
+## ✓ Session 074 Complete (2026-03-31) — Intake Transparency Overhaul
+
+Evaluated the intake process (UX 7.5/10, UI 7/10, Transparency 3.5/10 → target 7+/10). Designed and implemented a `messageMetadata`-based transparency system using AI SDK v6 that streams AI calculations live alongside each response. Five new collapsible sidebar panels: score decomposition (3-dimension bars replacing opaque %), classification explainer (risk tier signals + rationale + conversation depth), governance checklist (live satisfied/pending status with reasons), probing topics (mandatory/recommended with covered status), model & expertise indicator (Sonnet/Haiku with reason + Guided/Adaptive/Expert). Tool call chips enhanced with "Captured"/"Failed" result status badges and result JSON on expand. TypeScript UIMessage content field fix. Local preview unblocked. Verified end-to-end with live AI conversation (sidebar panels populated correctly from streamed metadata). 2 new files, 4 modified, 0 migrations, 0 new deps.
 
 ---
 

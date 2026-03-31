@@ -38,6 +38,37 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 074 — 2026-03-31
+
+**Intake Transparency Overhaul + Tool Call Enhancement**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-opus-4-6 (1M context) | — |
+| Intake evaluation | Read system-prompt.ts, tools.ts, chat/route.ts, intake-progress.tsx, chat-container.tsx, tool-call-display.tsx, completeness-map.tsx, model-selector.ts, probing.ts, coverage.ts, readiness.ts, classify.ts, classifier.ts | ~120k in / ~3k out |
+| AI SDK v6 research | Read messageMetadata docs, UIMessage types, ToolUIPart types from node_modules | ~40k in / ~1k out |
+| Plan design | Strategic plan agent + synthesis | ~60k in / ~15k out |
+| Transparency implementation | Types, helpers, route injection, client wiring, 5 sidebar panels | ~80k in / ~30k out |
+| Tool call enhancement | ToolCallDisplay result status + chat-container extraction | ~15k in / ~3k out |
+| Verification | Dev server start, login, navigate to intake, send message, verify panels | ~30k in / ~2k out |
+| Documentation | Session log 074, _index, effort log, roadmap, project journal | ~15k in / ~5k out |
+| **Session total (est.)** | | **~360k in / ~59k out** |
+
+**Estimated session cost:** Opus ~360k in × $15/1M + ~59k out × $75/1M = **$5.40 + $4.43 = ~$9.83**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~20 |
+| Decisions made | 3 (D-Arch: messageMetadata over DataUIPart; D-Approve: transparency plan; D-Approve: API credit purchase) |
+| Engagement type | Strategic direction + validation + approval |
+| Estimated time | ~1.5 hr |
+
+---
+
 ## Session 073 — 2026-03-31
 
 **Log Backfill + Strategic Planning + keen-pascal Merge**

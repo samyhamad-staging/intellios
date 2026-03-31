@@ -2,6 +2,22 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 074 — 2026-03-31: Making the Machine Legible
+
+This session started with an evaluation and ended with a working transparency layer. The evaluation was the important part.
+
+**The intake engine is sophisticated. The user can't tell.** The system computes risk tier from a 5-condition cascade, selects between Sonnet and Haiku per turn based on 5 trigger conditions, derives mandatory governance rules from context signals, generates topic-specific probing rules based on deployment type and agent classification, tracks readiness across 3 dimensions with different weights, and enforces a capture verification gate at finalization that ensures no discussed requirement was silently dropped. None of this was visible to the user. The conversation felt like an interview — answer questions, watch blue chips appear, see a percentage climb. The user was a passenger.
+
+**The fix is `messageMetadata`.** AI SDK v6's `toUIMessageStreamResponse` accepts a callback that attaches arbitrary JSON to each streamed message. On `finish`, the server computes a full transparency snapshot — classification signals, readiness breakdown, governance checklist, model selection reason, probing topics — and the client receives it alongside the response with zero additional latency. No polling, no new endpoints, no transport changes. The metadata is per-response, which is exactly the right granularity: after each AI turn, the sidebar updates with the latest state.
+
+**The sidebar panels are a forcing function for trust.** When the governance checklist shows "3/6 satisfied" with specific reasons for each pending item — "compliance policy: SOX/FINRA regulatory scope" — the user knows what's expected, why, and what they need to do. When the score decomposition shows 20/50 for sections and 14/35 for governance, the user can see exactly where the gap is and what actions would close it. When the model indicator says "Sonnet — governance content detected," the user understands why this turn's response felt different from the last one. These are not decorative — they are the difference between "the AI is asking me questions" and "the AI and I are building a blueprint together, and I can see its reasoning."
+
+**The tool call result badges close the feedback loop.** Previously, tool call chips showed what was sent (input args) but not what happened (success/failure). The user clicked the expand button and saw the raw JSON — but not whether it worked. Now "Captured" appears in green when the tool succeeds, "Failed" in red when it doesn't, and the result JSON (showing exactly what was stored) is visible on expand. This is the smallest change in the session and arguably the most impactful: it converts a write-only operation into a visible, verifiable action.
+
+**The `.env.local` resolution was a reminder that dev environment setup is part of the product.** The transparency overhaul was code-complete for a full session before it could be verified because a single file was missing. This worktree pattern — code in one worktree, secrets in another, npm modules in a third — creates unnecessary friction. The gap-check protocol (session 073) catches documentation drift; there should be a similar check for environment completeness.
+
+---
+
 ## Session 073 — 2026-03-31: The Gap-Check, the Merge, and What Comes Next
 
 Session 073 is mostly about infrastructure, but the infrastructure matters.
