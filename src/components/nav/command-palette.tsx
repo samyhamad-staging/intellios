@@ -325,7 +325,7 @@ export function CommandPalette({ role, onClose }: Props) {
             placeholder="Search pages and agents…"
             className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
           />
-          <kbd className="shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-400">
+          <kbd className="shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-2xs font-medium text-gray-400">
             ESC
           </kbd>
         </div>
@@ -340,7 +340,7 @@ export function CommandPalette({ role, onClose }: Props) {
             <>
             {Array.from(grouped.entries()).map(([section, items]) => (
               <div key={section} className="mb-1">
-                <p className="mb-1 px-4 pt-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                <p className="mb-1 px-4 pt-1 text-2xs font-semibold uppercase tracking-widest text-gray-400">
                   {section}
                 </p>
                 {items.map((entry) => {
@@ -392,7 +392,7 @@ export function CommandPalette({ role, onClose }: Props) {
             {/* Agent search results */}
             {agentResults.length > 0 && (
               <div className="mb-1">
-                <p className="mb-1 px-4 pt-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                <p className="mb-1 px-4 pt-1 text-2xs font-semibold uppercase tracking-widest text-gray-400">
                   Agents
                 </p>
                 {agentResults.map((agent, i) => {
@@ -446,15 +446,15 @@ export function CommandPalette({ role, onClose }: Props) {
 
         {/* Footer hint */}
         <div className="flex items-center gap-3 border-t border-gray-100 px-4 py-2">
-          <div className="flex items-center gap-1 text-[10px] text-gray-400">
+          <div className="flex items-center gap-1 text-2xs text-gray-400">
             <kbd className="rounded border border-gray-200 bg-gray-50 px-1 py-0.5 font-medium">↑↓</kbd>
             <span>navigate</span>
           </div>
-          <div className="flex items-center gap-1 text-[10px] text-gray-400">
+          <div className="flex items-center gap-1 text-2xs text-gray-400">
             <kbd className="rounded border border-gray-200 bg-gray-50 px-1 py-0.5 font-medium">↵</kbd>
             <span>open</span>
           </div>
-          <div className="ml-auto flex items-center gap-1 text-[10px] text-gray-400">
+          <div className="ml-auto flex items-center gap-1 text-2xs text-gray-400">
             <kbd className="rounded border border-gray-200 bg-gray-50 px-1 py-0.5 font-medium">⌘K</kbd>
             <span>close</span>
           </div>

@@ -117,7 +117,7 @@ export function ToolCallDisplay({ toolName, args }: ToolCallDisplayProps) {
             <span className="text-blue-500 ml-1">— {summary}</span>
           )}
           {expanded && (
-            <pre className="mt-2 text-[10px] text-blue-600 whitespace-pre-wrap break-all font-mono bg-white rounded p-1.5 border border-blue-100">
+            <pre className="mt-2 text-2xs text-blue-600 whitespace-pre-wrap break-all font-mono bg-white rounded p-1.5 border border-blue-100">
               {JSON.stringify(args, null, 2)}
             </pre>
           )}

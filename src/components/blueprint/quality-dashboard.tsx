@@ -163,7 +163,7 @@ export function QualityDashboard({ score, loading, agentId, agentStatus }: Props
           <p className="mt-0.5 text-xs text-gray-500">
             Average of 5 dimensions, scaled 0–100
           </p>
-          <p className="mt-2 text-[10px] text-gray-400">
+          <p className="mt-2 text-2xs text-gray-400">
             Last evaluated {timeAgo(score.evaluatedAt)}
           </p>
         </div>
@@ -253,14 +253,14 @@ export function QualityDashboard({ score, loading, agentId, agentStatus }: Props
                   <p className={`text-3xl font-bold tabular-nums ${overallColor(parseFloat(score.overallScore ?? "0"))}`}>
                     {Math.round(parseFloat(score.overallScore ?? "0"))}
                   </p>
-                  <p className="mt-0.5 text-[10px] text-gray-400">Design / 100</p>
+                  <p className="mt-0.5 text-2xs text-gray-400">Design / 100</p>
                 </div>
                 <div className="text-lg font-light text-indigo-300 shrink-0">vs</div>
                 <div className="text-center flex-1 rounded-lg bg-white border border-indigo-100 py-3">
                   <p className={`text-3xl font-bold tabular-nums ${overallColor(prodQuality.productionScore)}`}>
                     {prodQuality.productionScore}
                   </p>
-                  <p className="mt-0.5 text-[10px] text-gray-400">Production / 100</p>
+                  <p className="mt-0.5 text-2xs text-gray-400">Production / 100</p>
                 </div>
               </div>
 
@@ -359,9 +359,9 @@ export function QualityDashboard({ score, loading, agentId, agentStatus }: Props
               })}
             </div>
             {/* X-axis labels: first + last week */}
-            <div className="flex justify-between mt-1.5 text-[9px] text-gray-400">
+            <div className="flex justify-between mt-1.5 text-2xs text-gray-400">
               <span>{trendData[0]?.weekStart ?? ""}</span>
-              <span className="text-[9px] text-gray-400">
+              <span className="text-2xs text-gray-400">
                 <span className="inline-block w-2 h-1 bg-indigo-400 rounded-sm mr-0.5 align-middle" />production
                 <span className="inline-block w-1.5 h-1.5 bg-gray-300 rounded-full mx-1 align-middle" />design
                 <span className="inline-block w-2 h-1 bg-red-400 rounded-sm mr-0.5 ml-1 align-middle" />regression

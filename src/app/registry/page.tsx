@@ -261,9 +261,9 @@ export default function RegistryPage() {
                       {Array.isArray(agent.tags) && agent.tags.length > 0 && (
                         <div className="mt-1.5 flex flex-wrap gap-1">
                           {(agent.tags as string[]).slice(0, 5).map((tag) => (
-                            <span key={tag} className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-500">{tag}</span>
+                            <span key={tag} className="rounded-md bg-gray-100 px-1.5 py-0.5 text-xs-tight text-gray-500">{tag}</span>
                           ))}
-                          {agent.tags.length > 5 && <span className="text-[11px] text-gray-400">+{agent.tags.length - 5} more</span>}
+                          {agent.tags.length > 5 && <span className="text-xs-tight text-gray-400">+{agent.tags.length - 5} more</span>}
                         </div>
                       )}
                     </div>

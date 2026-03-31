@@ -174,7 +174,7 @@ export default function AdminFleetPage() {
           >
             <div className="flex items-center gap-2 mb-2">
               {card.icon}
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+              <span className="text-2xs font-semibold uppercase tracking-wider text-gray-500">
                 {card.label}
               </span>
             </div>

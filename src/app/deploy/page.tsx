@@ -259,7 +259,7 @@ function AgentCoreDeployModal({
                 directly in your AWS account. No credentials are stored in Intellios.
               </p>
               <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 space-y-2 text-xs">
-                <p className="text-gray-400 font-medium uppercase tracking-wider text-[10px]">
+                <p className="text-gray-400 font-medium uppercase tracking-wider text-2xs">
                   Deployment configuration
                 </p>
                 <p className="text-gray-500">

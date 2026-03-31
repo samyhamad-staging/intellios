@@ -362,7 +362,7 @@ export function CompletenessMap({
               <div className="flex items-center gap-2 mb-1">
                 {/* Status icon */}
                 <span
-                  className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${statusIconColors(domain.status)}`}
+                  className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-2xs font-bold ${statusIconColors(domain.status)}`}
                 >
                   {statusIcon(domain.status)}
                 </span>
@@ -381,7 +381,7 @@ export function CompletenessMap({
                 )}
               </div>
               <div
-                className={`text-[11px] leading-tight ${
+                className={`text-xs-tight leading-tight ${
                   domain.status === "required-empty"
                     ? "text-red-600"
                     : domain.status === "optional-sparse"
@@ -394,7 +394,7 @@ export function CompletenessMap({
                 {statusLabel(domain.status, domain.itemCount)}
               </div>
               {domain.triggerReason && (
-                <div className="mt-1 text-[10px] text-gray-400 leading-tight italic">
+                <div className="mt-1 text-2xs text-gray-400 leading-tight italic">
                   {domain.triggerReason}
                 </div>
               )}

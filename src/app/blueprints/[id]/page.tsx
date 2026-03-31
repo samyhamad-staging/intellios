@@ -986,7 +986,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             <div className="border-b border-border px-5 py-4">
               <div className="flex items-center gap-2 mb-2">
                 <h2 className="text-sm font-semibold">Audit Evidence</h2>
-                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700 uppercase tracking-wide">
+                <span className="rounded-full bg-green-100 px-2 py-0.5 text-2xs font-semibold text-green-700 uppercase tracking-wide">
                   Exam-Ready
                 </span>
               </div>
@@ -1010,7 +1010,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                 >
                   {exportingEvidence ? "Exporting…" : "↓ Export Evidence Package"}
                 </button>
-                <p className="text-[10px] text-text-tertiary leading-tight">
+                <p className="text-2xs text-text-tertiary leading-tight">
                   JSON bundle: MRM report, approval chain, quality evaluation,
                   test evidence, stakeholder contributions.
                 </p>
@@ -1044,7 +1044,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                       : "bg-surface-raised text-text border border-border"
                   }`}>
                     <p className="whitespace-pre-wrap">{msg.content}</p>
-                    <p className={`mt-1 text-[10px] ${
+                    <p className={`mt-1 text-2xs ${
                       msg.role === "user" ? "text-primary-fg/60" : "text-text-tertiary"
                     }`}>
                       {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -1090,7 +1090,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                   {refining ? "…" : "Send"}
                 </button>
               </div>
-              <p className="mt-1 text-center text-[10px] text-text-tertiary">⌘ Enter to send</p>
+              <p className="mt-1 text-center text-2xs text-text-tertiary">⌘ Enter to send</p>
             </div>
           </div>
         </aside>

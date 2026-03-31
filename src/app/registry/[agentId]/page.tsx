@@ -492,7 +492,7 @@ export default function AgentDetailPage({
                   href={`https://console.aws.amazon.com/bedrock/home?region=${latest.deploymentMetadata.region}#/agents/${latest.deploymentMetadata.agentId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-700 hover:bg-orange-100 transition-colors"
+                  className="flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-2xs font-semibold text-orange-700 hover:bg-orange-100 transition-colors"
                   title={`Deployed to Amazon Bedrock AgentCore in ${latest.deploymentMetadata.region}`}
                 >
                   AgentCore ↗
@@ -509,18 +509,18 @@ export default function AgentDetailPage({
                 return (
                   <>
                     {isOverdue ? (
-                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700">
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-2xs font-medium text-red-700">
                         Review Overdue
                       </span>
                     ) : (
-                      <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium text-text-secondary">
+                      <span className="rounded-full bg-surface-muted px-2 py-0.5 text-2xs font-medium text-text-secondary">
                         Next Review: {new Date(latest.nextReviewDue).toLocaleDateString(undefined, { dateStyle: "medium" })}
                       </span>
                     )}
                     {canComplete && (
                       <button
                         onClick={() => { setReviewCompleteOpen(true); setReviewCompleteNotes(""); setReviewCompleteError(null); }}
-                        className="rounded-full bg-primary-muted px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-primary-subtle"
+                        className="rounded-full bg-primary-muted px-2 py-0.5 text-2xs font-medium text-primary hover:bg-primary-subtle"
                       >
                         Complete Review
                       </button>

@@ -144,7 +144,7 @@ function SessionRow({ session: s, isLast }: SessionRowProps) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-0.5">
           <span className="text-sm font-medium text-gray-900 truncate">{displayName}</span>
-          <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium ${badge.className}`}>{badge.label}</span>
+          <span className={`shrink-0 rounded border px-1.5 py-0.5 text-2xs font-medium ${badge.className}`}>{badge.label}</span>
         </div>
         {s.agentPurpose ? (
           <p className="text-xs text-gray-500 truncate">{s.agentPurpose}</p>

@@ -167,9 +167,9 @@ export function StakeholderWorkspace({
                             <p className="text-xs font-medium text-gray-700 truncate">
                               {c.roleTitle}
                             </p>
-                            <p className="text-[10px] text-gray-400">{DOMAIN_LABELS[c.domain] ?? c.domain}</p>
+                            <p className="text-2xs text-gray-400">{DOMAIN_LABELS[c.domain] ?? c.domain}</p>
                           </div>
-                          <span className={`text-[10px] shrink-0 ${st.color}`}>{st.label}</span>
+                          <span className={`text-2xs shrink-0 ${st.color}`}>{st.label}</span>
                         </div>
                       );
                     })}
@@ -252,7 +252,7 @@ function SubmittedState({
                   <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
                   <span className="text-xs text-gray-600">{c.roleTitle}</span>
                   <span className="text-xs text-gray-400">· {DOMAIN_LABELS[c.domain] ?? c.domain}</span>
-                  <span className={`ml-auto text-[10px] ${st.color}`}>{st.label}</span>
+                  <span className={`ml-auto text-2xs ${st.color}`}>{st.label}</span>
                 </div>
               );
             })}

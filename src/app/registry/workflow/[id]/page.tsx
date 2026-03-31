@@ -211,7 +211,7 @@ export default function WorkflowDetailPage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {agent.required && (
-                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 border border-amber-200">Required</span>
+                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs-tight font-medium text-amber-700 border border-amber-200">Required</span>
                   )}
                   <Link
                     href={`/registry/${agent.agentId}`}
@@ -265,7 +265,7 @@ export default function WorkflowDetailPage() {
             {def.sharedContext.map((field, i) => (
               <div key={i} className="flex items-center gap-4 px-5 py-3">
                 <span className="font-mono text-xs text-gray-700">{field.field}</span>
-                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-500">{field.type}</span>
+                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs-tight text-gray-500">{field.type}</span>
                 <span className="text-xs text-gray-400 flex-1">{field.description}</span>
               </div>
             ))}

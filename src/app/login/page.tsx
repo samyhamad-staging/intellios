@@ -118,7 +118,7 @@ function LoginForm() {
                 >
                   Continue with SSO →
                 </button>
-                <p className="text-[10px] text-violet-500 text-center">
+                <p className="text-2xs text-violet-500 text-center">
                   You will be redirected to your identity provider.
                 </p>
               </div>

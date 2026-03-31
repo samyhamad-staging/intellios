@@ -462,12 +462,12 @@ export default function GovernanceHubPage() {
                             </div>
                             <div className="mt-1.5 flex flex-wrap gap-1">
                               {rule.affectedBlueprints.map((name) => (
-                                <span key={name} className="rounded bg-white px-1.5 py-0.5 text-[11px] text-gray-600 border border-gray-200">
+                                <span key={name} className="rounded bg-white px-1.5 py-0.5 text-xs-tight text-gray-600 border border-gray-200">
                                   {name}
                                 </span>
                               ))}
                               {rule.affectedCount > rule.affectedBlueprints.length && (
-                                <span className="text-[11px] text-gray-400">
+                                <span className="text-xs-tight text-gray-400">
                                   +{rule.affectedCount - rule.affectedBlueprints.length} more
                                 </span>
                               )}

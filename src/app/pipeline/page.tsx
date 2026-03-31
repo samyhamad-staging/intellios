@@ -311,7 +311,7 @@ function InsightsStrip({ agents }: { agents: Agent[] }) {
 
   return (
     <div className="shrink-0 flex items-center gap-4 border-b border-border bg-surface-raised px-6 py-2">
-      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-text-tertiary">
+      <span className="shrink-0 text-2xs font-semibold uppercase tracking-widest text-text-tertiary">
         Insights
       </span>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
@@ -362,12 +362,12 @@ function AgentCard({ agent }: { agent: Agent }) {
       {agent.tags?.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
           {agent.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-text-secondary">
+            <span key={tag} className="rounded-full bg-surface-muted px-2 py-0.5 text-xs-tight font-medium text-text-secondary">
               {tag}
             </span>
           ))}
           {agent.tags.length > 2 && (
-            <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-text-tertiary">
+            <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs-tight font-medium text-text-tertiary">
               +{agent.tags.length - 2}
             </span>
           )}
@@ -376,16 +376,16 @@ function AgentCard({ agent }: { agent: Agent }) {
 
       {/* Footer: version + SLA + time */}
       <div className="mt-2.5 flex items-center justify-between text-xs text-text-tertiary">
-        <span className="font-mono text-[11px]">v{agent.version}</span>
+        <span className="font-mono text-xs-tight">v{agent.version}</span>
         <div className="flex items-center gap-1.5">
           {sla === "alert" && (
-            <span className="flex items-center gap-0.5 rounded-md bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
+            <span className="flex items-center gap-0.5 rounded-md bg-red-50 px-1.5 py-0.5 text-2xs font-semibold text-red-600">
               <AlertCircle size={9} />
               SLA breach
             </span>
           )}
           {sla === "warn" && (
-            <span className="flex items-center gap-0.5 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600">
+            <span className="flex items-center gap-0.5 rounded-md bg-amber-50 px-1.5 py-0.5 text-2xs font-semibold text-amber-600">
               <Clock size={9} />
               Nearing SLA
             </span>

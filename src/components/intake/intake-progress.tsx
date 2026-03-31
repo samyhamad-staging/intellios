@@ -178,7 +178,7 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
         {sections.map((section) => (
           <li key={section.key} className="flex items-start gap-2.5">
             <span
-              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-2xs font-bold ${
                 section.filled
                   ? "bg-blue-500 text-white"
                   : section.key === activeKey
@@ -204,7 +204,7 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
                   {section.label}
                 </span>
                 {section.required && !section.filled && (
-                  <span className="text-[10px] text-red-400">required</span>
+                  <span className="text-2xs text-red-400">required</span>
                 )}
               </div>
               {section.detail && (
@@ -249,7 +249,7 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
           </div>
           {/* Label */}
           <div
-            className={`text-[11px] text-center font-medium ${
+            className={`text-xs-tight text-center font-medium ${
               readiness.label === "ready"
                 ? "text-green-700"
                 : readiness.label === "near-complete"

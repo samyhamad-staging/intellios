@@ -177,7 +177,7 @@ function CompletedPage({
                     <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${dot}`} />
                     <span className="text-xs text-gray-700">{c.roleTitle}</span>
                     <span className="text-xs text-gray-400">· {DOMAIN_LABELS[c.domain] ?? c.domain}</span>
-                    <span className={`ml-auto text-[10px] ${st.color}`}>{st.label}</span>
+                    <span className={`ml-auto text-2xs ${st.color}`}>{st.label}</span>
                   </div>
                 );
               })}

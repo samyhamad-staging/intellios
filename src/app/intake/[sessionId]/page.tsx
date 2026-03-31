@@ -393,7 +393,7 @@ export default function IntakeSessionPage({
                                 {d.value != null ? `${d.value.toFixed(1)}` : "—"}
                               </span>
                             </div>
-                            <p className="pl-[88px] text-[11px] text-text-tertiary leading-snug">{DIMENSION_DESCRIPTIONS[d.label]}</p>
+                            <p className="pl-[88px] text-xs-tight text-text-tertiary leading-snug">{DIMENSION_DESCRIPTIONS[d.label]}</p>
                           </div>
                         );
                       })}

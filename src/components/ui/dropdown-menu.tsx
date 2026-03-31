@@ -89,7 +89,7 @@ export function DropdownMenuLabel({
   return (
     <RadixDropdown.Label
       className={cn(
-        "px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-tertiary",
+        "px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider text-text-tertiary",
         inset && "pl-8",
         className
       )}
