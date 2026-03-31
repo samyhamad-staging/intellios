@@ -8,6 +8,7 @@ import { intakeSessions, intakeMessages, intakeContributions } from "@/lib/db/sc
 import { eq, asc } from "drizzle-orm";
 import { buildIntakeSystemPrompt } from "@/lib/intake/system-prompt";
 import { createIntakeTools } from "@/lib/intake/tools";
+import { classifyIntake } from "@/lib/intake/classify";
 import { IntakePayload, IntakeContext, ContributionDomain, StakeholderContribution, IntakeClassification, AgentType, IntakeRiskTier } from "@/lib/types/intake";
 import { loadPolicies } from "@/lib/governance/load-policies";
 import { selectIntakeModel, detectExpertiseLevel, ExpertiseLevel } from "@/lib/intake/model-selector";
@@ -85,7 +86,7 @@ export async function POST(
     // Current payload state — serialized to prevent race conditions when
     // Claude calls multiple tools in the same step (parallel execution).
     let currentPayload = (session.intakePayload as IntakePayload) ?? {};
-    const currentContext = (session.intakeContext as IntakeContext | null) ?? null;
+    let currentContext = (session.intakeContext as IntakeContext | null) ?? null;
 
     // Build classification from session columns (null for unclassified sessions)
     const currentClassification: IntakeClassification | null =
@@ -156,7 +157,26 @@ export async function POST(
           .where(eq(intakeSessions.id, sessionId));
       },
       () => currentContext,
-      () => (currentClassification?.riskTier ?? null)
+      () => (currentClassification?.riskTier ?? null),
+      async (context: IntakeContext) => {
+        // Save context to DB and update in-memory reference
+        await db
+          .update(intakeSessions)
+          .set({ intakeContext: context, updatedAt: new Date() })
+          .where(eq(intakeSessions.id, sessionId));
+        currentContext = context;
+        // Classify synchronously (~500ms, one-time) so the tool response can include it
+        try {
+          const classification = await classifyIntake(context);
+          await db
+            .update(intakeSessions)
+            .set({ agentType: classification.agentType, riskTier: classification.riskTier, updatedAt: new Date() })
+            .where(eq(intakeSessions.id, sessionId));
+          return { agentType: classification.agentType as AgentType, riskTier: classification.riskTier as IntakeRiskTier };
+        } catch {
+          return null;
+        }
+      }
     );
 
     // Convert UI messages to model messages for Claude

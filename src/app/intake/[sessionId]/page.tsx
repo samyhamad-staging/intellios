@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import type { UIMessage } from "ai";
 import { ChatContainer } from "@/components/chat/chat-container";
 import { IntakeProgress } from "@/components/intake/intake-progress";
-import { IntakeContextForm } from "@/components/intake/intake-context-form";
 import { IntakeReview } from "@/components/intake/intake-review";
 import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
 
@@ -25,7 +24,7 @@ function mapToUIMessages(dbMessages: DBMessage[]): UIMessage[] {
 }
 
 /** Which phase the UI is currently showing */
-type Phase = "loading" | "context-form" | "conversation" | "review";
+type Phase = "loading" | "conversation" | "review";
 
 export default function IntakeSessionPage({
   params,
@@ -112,18 +111,12 @@ export default function IntakeSessionPage({
           return;
         }
 
-        // If no context yet → show Phase 1 form
-        if (!storedContext) {
-          setPhase("context-form");
-          return;
-        }
-
-        // Context present → show conversation
+        // Go directly to conversation — context is collected conversationally
         const uiMessages = mapToUIMessages(messages ?? []);
         setInitialMessages(uiMessages.length > 0 ? uiMessages : undefined);
         setPhase("conversation");
       } catch {
-        setPhase("context-form");
+        setPhase("conversation");
       }
     }
     loadSession();
@@ -137,6 +130,21 @@ export default function IntakeSessionPage({
         const res = await fetch(`/api/intake/sessions/${sessionId}`);
         if (!res.ok) return;
         const { session } = await res.json();
+        // Pick up context + classification as conversation progresses
+        if (session?.intakeContext) {
+          setIntakeContext(session.intakeContext as IntakeContext);
+          if (!session.agentType) {
+            setClassificationLoading(true);
+          }
+        }
+        if (session?.agentType && session?.riskTier) {
+          setClassification({
+            agentType: session.agentType as AgentType,
+            riskTier: session.riskTier as IntakeRiskTier,
+            rationale: "",
+          });
+          setClassificationLoading(false);
+        }
         if (session?.status === "completed") {
           setIntakeScoreLoading(true);
           await Promise.all([
@@ -174,39 +182,6 @@ export default function IntakeSessionPage({
 
   function handleResponseComplete() {
     setRefreshTick((t) => t + 1);
-  }
-
-  function handleContextComplete(context: IntakeContext) {
-    setIntakeContext(context);
-    setPhase("conversation");
-    // Poll for async classification result (fires after context save)
-    setClassificationLoading(true);
-    let polls = 0;
-    const interval = setInterval(async () => {
-      polls++;
-      try {
-        const res = await fetch(`/api/intake/sessions/${sessionId}`);
-        if (res.ok) {
-          const { session } = await res.json();
-          if (session?.agentType && session?.riskTier) {
-            setClassification({
-              agentType: session.agentType as AgentType,
-              riskTier: session.riskTier as IntakeRiskTier,
-              rationale: "",
-            });
-            setClassificationLoading(false);
-            clearInterval(interval);
-            return;
-          }
-        }
-      } catch {
-        // Non-critical — keep polling
-      }
-      if (polls >= 10) {
-        setClassificationLoading(false);
-        clearInterval(interval);
-      }
-    }, 1500);
   }
 
   function handleContributionAdded(contribution: StakeholderContribution) {
@@ -302,24 +277,7 @@ export default function IntakeSessionPage({
     );
   }
 
-  // ─── Phase 1: Context Form ───────────────────────────────────────────────────
-
-  if (phase === "context-form") {
-    return (
-      <div className="flex h-screen flex-col">
-        <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-3">
-          <div>
-            <h1 className="text-lg font-semibold">Intellios</h1>
-            <p className="text-xs text-text-secondary">Agent Intake</p>
-          </div>
-          <div className="text-xs text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
-        </header>
-        <IntakeContextForm sessionId={sessionId} onComplete={handleContextComplete} />
-      </div>
-    );
-  }
-
-  // ─── Phase 3: Review ─────────────────────────────────────────────────────────
+  // ─── Phase: Review ───────────────────────────────────────────────────────────
 
   if (phase === "review") {
     const scoreColor =
