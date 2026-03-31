@@ -102,15 +102,24 @@ function getNavSections(role: string | null | undefined): NavSection[] {
   if (isReviewer || isViewer) opsItems.push({ label: "Monitor", href: "/monitor", icon: Activity });
   if (isCompliance || isViewer) opsItems.push({ label: "Dashboard", href: "/dashboard", icon: BarChart3 });
   if (isCompliance || isViewer) opsItems.push({ label: "Audit", href: "/audit", icon: ScrollText });
-  if (isAdmin) opsItems.push({ label: "Users", href: "/admin/users", icon: Users });
-  if (isAdmin) opsItems.push({ label: "Settings", href: "/admin/settings", icon: Settings });
-  if (isAdmin) opsItems.push({ label: "Webhooks", href: "/admin/webhooks", icon: Webhook });
-  if (isAdmin) opsItems.push({ label: "Fleet", href: "/admin/fleet", icon: Globe });
-  if (isAdmin) opsItems.push({ label: "Integrations", href: "/admin/integrations", icon: Plug });
-  if (isAdmin) opsItems.push({ label: "API Keys", href: "/admin/api-keys", icon: Key });
 
   if (opsItems.length > 0) {
     sections.push({ label: "Operations", items: opsItems });
+  }
+
+  // Admin settings — collapsed into a single expandable group
+  if (isAdmin) {
+    sections.push({
+      label: "Admin",
+      items: [
+        { label: "Users", href: "/admin/users", icon: Users },
+        { label: "Settings", href: "/admin/settings", icon: Settings },
+        { label: "Webhooks", href: "/admin/webhooks", icon: Webhook },
+        { label: "Fleet", href: "/admin/fleet", icon: Globe },
+        { label: "Integrations", href: "/admin/integrations", icon: Plug },
+        { label: "API Keys", href: "/admin/api-keys", icon: Key },
+      ],
+    });
   }
 
   return sections;
@@ -149,6 +158,8 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
   return (
     <>
     <aside
+      role="navigation"
+      aria-label="Main navigation"
       className="flex h-screen w-60 shrink-0 flex-col overflow-hidden"
       style={{ backgroundColor: "var(--sidebar-bg)", borderRight: "1px solid var(--sidebar-border)" }}
     >
@@ -196,17 +207,18 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
         >
           <Search size={12} className="shrink-0" />
           <span className="flex-1 text-left">Search…</span>
-          <kbd className="rounded border px-1 py-0.5 text-[9px] font-medium" style={{ borderColor: "var(--sidebar-border)", opacity: 0.6 }}>⌘K</kbd>
+          <kbd className="rounded border px-1 py-0.5 text-2xs font-medium" style={{ borderColor: "var(--sidebar-border)", opacity: 0.6 }}>⌘K</kbd>
         </button>
       </div>
 
       {/* Nav */}
       <nav className="sidebar-scroll flex-1 overflow-y-auto px-2 py-3">
-        {sections.map((section, si) => (
+        {sections.map((section, si) => {
+          return (
           <div key={si} className={si > 0 ? "mt-4" : ""}>
             {section.label && (
               <p
-                className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest"
+                className="mb-1 px-2 text-2xs font-semibold uppercase tracking-widest"
                 style={{ color: "var(--sidebar-text)", opacity: 0.5 }}
               >
                 {section.label}
@@ -220,6 +232,7 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      aria-current={active ? "page" : undefined}
                       className="group flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors"
                       style={{
                         color: active ? "var(--sidebar-text-active)" : "var(--sidebar-text)",
@@ -240,7 +253,8 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
               })}
             </ul>
           </div>
-        ))}
+          );
+        })}
       </nav>
 
       {/* User */}
@@ -249,13 +263,13 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
         style={{ borderTop: "1px solid var(--sidebar-border)" }}
       >
         <div className="flex items-center gap-2.5 rounded-lg px-2 py-2">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-fg">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs-tight font-semibold text-primary-fg">
             {initials}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-medium text-white">{user.name ?? user.email}</p>
             {roleInfo && (
-              <span className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${roleInfo.color}`}>
+              <span className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-2xs font-medium ${roleInfo.color}`}>
                 {roleInfo.label}
               </span>
             )}
@@ -266,6 +280,7 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
               <button
                 type="submit"
                 title="Sign out"
+                aria-label="Sign out"
                 className="rounded p-1 transition-colors hover:bg-white/10"
                 style={{ color: "var(--sidebar-text)" }}
               >

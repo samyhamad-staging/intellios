@@ -197,7 +197,7 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
               <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 space-y-1">
                 {c.denied_actions.map((a) => (
                   <div key={a} className="flex items-center gap-2 text-xs">
-                    <span className="shrink-0 h-4 w-4 flex items-center justify-center rounded-full bg-red-200 text-red-700 font-bold text-[10px]">✕</span>
+                    <span className="shrink-0 h-4 w-4 flex items-center justify-center rounded-full bg-red-200 text-red-700 font-bold text-2xs">✕</span>
                     <span className="text-red-800 font-medium">{a}</span>
                   </div>
                 ))}
@@ -369,7 +369,7 @@ export function IntakeReview({
                 {(context.regulatoryScope ?? []).filter((s) => s !== "none").length > 0 ? (
                   <div className="flex flex-wrap gap-1">
                     {(context.regulatoryScope ?? []).filter((s) => s !== "none").map((s) => (
-                      <span key={s} className="inline-flex rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-slate-700">{s.toUpperCase()}</span>
+                      <span key={s} className="inline-flex rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-xs-tight font-medium text-slate-700">{s.toUpperCase()}</span>
                     ))}
                   </div>
                 ) : (
@@ -643,7 +643,7 @@ export function IntakeReview({
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="text-sm font-semibold text-gray-900">{SECTION_LABELS[key]}</h3>
                       {isRequired && !filled && (
-                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-600">required</span>
+                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-2xs font-medium text-red-600">required</span>
                       )}
                       {!filled && (
                         <span className="text-xs text-gray-400">Not captured</span>

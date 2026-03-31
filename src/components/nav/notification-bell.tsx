@@ -150,7 +150,7 @@ export default function NotificationBell() {
           />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[16px] h-4 px-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+          <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[16px] h-4 px-0.5 rounded-full bg-red-500 text-white text-2xs font-bold leading-none">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
@@ -193,7 +193,7 @@ export default function NotificationBell() {
                         <p className="text-xs font-semibold text-gray-800 truncate">
                           {n.title}
                         </p>
-                        <span className="text-[10px] text-gray-400 shrink-0">
+                        <span className="text-2xs text-gray-400 shrink-0">
                           {formatRelative(n.createdAt)}
                         </span>
                       </div>

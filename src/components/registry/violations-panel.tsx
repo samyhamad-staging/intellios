@@ -194,7 +194,7 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
                   {/* Row 1: severity + policy name */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wide ${
                         v.severity === "error"
                           ? "bg-red-100 text-red-700"
                           : "bg-amber-100 text-amber-700"
@@ -244,8 +244,8 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
 
                 {/* Timestamp */}
                 <div className="text-right shrink-0">
-                  <p className="text-[10px] text-gray-400">{timeAgo(v.detectedAt)}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">
+                  <p className="text-2xs text-gray-400">{timeAgo(v.detectedAt)}</p>
+                  <p className="text-2xs text-gray-400 mt-0.5">
                     {new Date(v.detectedAt).toLocaleDateString()}
                   </p>
                 </div>

@@ -66,7 +66,7 @@ function SuggestChangeCard({
           <span className="font-medium text-gray-900">{change.summary}</span>
         </div>
         <span
-          className={`text-[10px] font-semibold uppercase ${priorityLabel} shrink-0`}
+          className={`text-2xs font-semibold uppercase ${priorityLabel} shrink-0`}
         >
           {change.priority}
         </span>
@@ -151,7 +151,7 @@ export function CompanionChat({
         <span className="text-xs font-semibold text-gray-700">
           Blueprint Companion
         </span>
-        <span className="text-[10px] text-gray-400">AI Design Partner</span>
+        <span className="text-2xs text-gray-400">AI Design Partner</span>
       </div>
 
       {/* Messages */}
