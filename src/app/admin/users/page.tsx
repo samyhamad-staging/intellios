@@ -453,7 +453,7 @@ export default function AdminUsersPage() {
   const showingForm = showCreate || showInvite;
 
   return (
-    <div className="px-8 py-8 space-y-6">
+    <div className="px-6 py-6 space-y-6">
       {/* Success toast */}
       {inviteSuccessToast && (
         <div className="fixed bottom-6 right-6 z-50 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800 shadow-lg">

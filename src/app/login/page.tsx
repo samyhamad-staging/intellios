@@ -65,7 +65,7 @@ function LoginForm() {
     <div className="flex min-h-screen items-center justify-center" style={{ background: "var(--gradient-login-bg)" }}>
       <div className="w-full max-w-sm">
         {/* Header */}
-        <div className="mb-8 text-center">
+        <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold tracking-tight text-white">
             Intellios
           </h1>

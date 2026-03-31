@@ -44,9 +44,9 @@ export default function ReviewQueuePage() {
   const chain: ApprovalChainStep[] = settings.approvalChain ?? [];
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-6 py-6">
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between">
+      <div className="mb-6 flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-xl font-semibold text-gray-900">Review Queue</h1>

@@ -147,7 +147,7 @@ function CompletedPage({
         <h1 className="mb-2 text-xl font-semibold text-gray-900">
           {inviteeName ? `Thanks, ${inviteeName}!` : "Contribution received"}
         </h1>
-        <p className="mb-8 text-sm text-gray-500">
+        <p className="mb-6 text-sm text-gray-500">
           Your requirements have been recorded and will be incorporated into the agent design for{" "}
           <strong>{sessionName}</strong>.
         </p>

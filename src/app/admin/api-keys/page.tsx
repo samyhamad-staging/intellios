@@ -67,7 +67,7 @@ export default function ApiKeysPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-8">
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-2">
           <Key className="h-6 w-6 text-violet-600" />

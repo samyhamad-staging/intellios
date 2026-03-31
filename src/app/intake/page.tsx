@@ -64,9 +64,9 @@ export default async function IntakeSessionsPage() {
   const completed = sessions.filter((s) => s.status === "completed");
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-6 py-6">
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between">
+      <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Intake Sessions</h1>
           <p className="mt-0.5 text-sm text-gray-500">
@@ -92,7 +92,7 @@ export default async function IntakeSessionsPage() {
 
       {/* In Progress */}
       {active.length > 0 && (
-        <section className="mb-8">
+        <section className="mb-6">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
             In Progress — {active.length}
           </h2>

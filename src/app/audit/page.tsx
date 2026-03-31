@@ -174,7 +174,7 @@ export default function AuditTrailPage() {
   }, [entityType, actorEmail, from, to, page]);
 
   return (
-    <div className="px-8 py-8 space-y-4">
+    <div className="px-6 py-6 space-y-4">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>

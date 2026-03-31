@@ -504,7 +504,7 @@ export default function DeploymentConsolePage() {
   }
 
   return (
-    <div className="px-8 py-8 space-y-8">
+    <div className="px-6 py-6 space-y-6">
       {/* Standard deployment confirmation modal */}
       {modal && (
         <DeployConfirmModal
@@ -530,7 +530,7 @@ export default function DeploymentConsolePage() {
         <p className="mt-0.5 text-sm text-gray-500">Promote approved agents to production</p>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}

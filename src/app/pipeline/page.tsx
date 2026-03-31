@@ -219,13 +219,21 @@ function Column({ status, label, colBg, dotColor, badgeCls, cards, loading }: Co
           </div>
         )}
         {!loading && cards.length === 0 && (
-          <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-border">
+          <div className="flex h-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border px-3 text-center">
             {status === "draft" ? (
               <Link href="/intake" className="text-xs font-medium text-primary hover:opacity-70 transition-colors">
                 Start an intake →
               </Link>
+            ) : status === "in_review" ? (
+              <p className="text-xs text-text-tertiary">No agents under review</p>
+            ) : status === "approved" ? (
+              <p className="text-xs text-text-tertiary">No agents awaiting deployment</p>
+            ) : status === "deployed" ? (
+              <p className="text-xs text-text-tertiary">No agents deployed yet</p>
+            ) : status === "rejected" ? (
+              <p className="text-xs text-text-tertiary">No rejected agents</p>
             ) : (
-              <p className="text-xs text-text-tertiary">Empty</p>
+              <p className="text-xs text-text-tertiary">No agents here</p>
             )}
           </div>
         )}

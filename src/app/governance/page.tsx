@@ -246,7 +246,7 @@ export default function GovernanceHubPage() {
     .sort((a, b) => (b.violationCount ?? 0) - (a.violationCount ?? 0));
 
   return (
-    <div className="px-8 py-8 space-y-8">
+    <div className="px-6 py-6 space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -264,7 +264,7 @@ export default function GovernanceHubPage() {
         </Link>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}

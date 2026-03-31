@@ -133,7 +133,7 @@ export default function RegistryPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-6 py-6">
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
