@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { getSlaStatus } from "@/lib/sla/config";
 import { Search, ShieldCheck, ShieldAlert, AlertCircle, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface Agent {
   id: string;
@@ -362,14 +363,10 @@ function AgentCard({ agent }: { agent: Agent }) {
       {agent.tags?.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
           {agent.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="rounded-full bg-surface-muted px-2 py-0.5 text-xs-tight font-medium text-text-secondary">
-              {tag}
-            </span>
+            <Badge key={tag} variant="neutral">{tag}</Badge>
           ))}
           {agent.tags.length > 2 && (
-            <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs-tight font-medium text-text-tertiary">
-              +{agent.tags.length - 2}
-            </span>
+            <Badge variant="muted">+{agent.tags.length - 2}</Badge>
           )}
         </div>
       )}
@@ -379,16 +376,10 @@ function AgentCard({ agent }: { agent: Agent }) {
         <span className="font-mono text-xs-tight">v{agent.version}</span>
         <div className="flex items-center gap-1.5">
           {sla === "alert" && (
-            <span className="flex items-center gap-0.5 rounded-md bg-red-50 px-1.5 py-0.5 text-2xs font-semibold text-red-600">
-              <AlertCircle size={9} />
-              SLA breach
-            </span>
+            <Badge variant="danger">SLA breach</Badge>
           )}
           {sla === "warn" && (
-            <span className="flex items-center gap-0.5 rounded-md bg-amber-50 px-1.5 py-0.5 text-2xs font-semibold text-amber-600">
-              <Clock size={9} />
-              Nearing SLA
-            </span>
+            <Badge variant="warning">Nearing SLA</Badge>
           )}
           <span>{timeAgo(agent.updatedAt)}</span>
         </div>
