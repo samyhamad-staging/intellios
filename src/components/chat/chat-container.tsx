@@ -8,6 +8,7 @@ import { MessageBubble } from "./message-bubble";
 import { ToolCallDisplay } from "./tool-call-display";
 import { ChatInput } from "./chat-input";
 import { ArrowRight } from "lucide-react";
+import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
 
 const STREAMING_LABELS: Record<string, string> = {
   set_agent_identity:    "Defining agent identity…",
@@ -30,6 +31,7 @@ interface ChatContainerProps {
   initialMessages?: UIMessage[];
   showSuggestedPrompts?: boolean;
   onResponseComplete?: () => void;
+  onTransparencyUpdate?: (metadata: IntakeTransparencyMetadata) => void;
 }
 
 export function ChatContainer({
@@ -37,6 +39,7 @@ export function ChatContainer({
   initialMessages,
   showSuggestedPrompts,
   onResponseComplete,
+  onTransparencyUpdate,
 }: ChatContainerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevStatus = useRef<string | null>(null);
@@ -60,9 +63,16 @@ export function ChatContainer({
     const isDone = !isStreaming;
     if (wasStreaming && isDone) {
       onResponseComplete?.();
+      // Extract transparency metadata from the latest assistant message
+      if (onTransparencyUpdate && messages.length > 0) {
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg.role === "assistant" && lastMsg.metadata) {
+          onTransparencyUpdate(lastMsg.metadata as IntakeTransparencyMetadata);
+        }
+      }
     }
     prevStatus.current = status;
-  }, [status, isStreaming, onResponseComplete]);
+  }, [status, isStreaming, onResponseComplete, onTransparencyUpdate, messages]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({

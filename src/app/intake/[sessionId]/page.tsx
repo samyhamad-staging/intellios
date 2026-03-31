@@ -7,6 +7,7 @@ import { ChatContainer } from "@/components/chat/chat-container";
 import { IntakeProgress } from "@/components/intake/intake-progress";
 import { IntakeReview } from "@/components/intake/intake-review";
 import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
+import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
 
 /** Static opener injected for fresh sessions — appears instantly, no API call needed. */
 const INTAKE_OPENER: UIMessage = {
@@ -40,6 +41,7 @@ export default function IntakeSessionPage({
   const { sessionId } = use(params);
   const router = useRouter();
   const [refreshTick, setRefreshTick] = useState(0);
+  const [transparency, setTransparency] = useState<IntakeTransparencyMetadata | null>(null);
   const [phase, setPhase] = useState<Phase>("loading");
   const [generating, setGenerating] = useState(false);
   const [generateSuccess, setGenerateSuccess] = useState(false);
@@ -564,6 +566,7 @@ export default function IntakeSessionPage({
           initialMessages={initialMessages}
           showSuggestedPrompts={false}
           onResponseComplete={handleResponseComplete}
+          onTransparencyUpdate={setTransparency}
         />
         <IntakeProgress
           sessionId={sessionId}
@@ -572,6 +575,7 @@ export default function IntakeSessionPage({
           onContributionAdded={handleContributionAdded}
           context={intakeContext ?? undefined}
           riskTier={classification?.riskTier ?? null}
+          transparency={transparency}
         />
       </main>
     </div>

@@ -13,6 +13,7 @@ import { IntakePayload, IntakeContext, ContributionDomain, StakeholderContributi
 import { loadPolicies } from "@/lib/governance/load-policies";
 import { selectIntakeModel, detectExpertiseLevel, ExpertiseLevel } from "@/lib/intake/model-selector";
 import { buildTopicProbingRules } from "@/lib/intake/probing";
+import { buildTransparencyMetadata } from "@/lib/intake/transparency";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
@@ -228,7 +229,28 @@ export async function POST(
       },
     });
 
-    return result.toUIMessageStreamResponse();
+    // Build model selection context for transparency (reuse the same inputs)
+    const modelSelectionCtx = {
+      messageCount: messages.length,
+      lastUserText: messages.length > 0 ? extractTextContent(messages[messages.length - 1]) : "",
+      context: currentContext,
+      payload: currentPayload,
+      expertiseLevel: currentExpertiseLevel,
+    };
+
+    return result.toUIMessageStreamResponse({
+      messageMetadata: ({ part }) => {
+        if (part.type !== "finish") return undefined;
+        return buildTransparencyMetadata(
+          currentPayload,
+          currentContext,
+          currentClassification,
+          selectedModel,
+          currentExpertiseLevel,
+          modelSelectionCtx,
+        );
+      },
+    });
   } catch (error) {
     console.error(`[${requestId}] Failed to process intake chat:`, error);
     return aiError(error, requestId);
