@@ -2,7 +2,37 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-03-28 (Session 066b — RV-001–013 review enhancements + Design System v1.1; Session 065b — Vercel serverless fixes + UE-001–009)
+**Last updated:** 2026-03-31 (Session 073 — log backfill + strategic planning + keen-pascal merge; Session 072 — all-conversation intake v2 + font tokenization + a11y)
+
+---
+
+## ✓ Session 073 Complete (2026-03-31) — Log Backfill + keen-pascal Merge
+
+Retroactive session logs for 069–071 created. Gap-check instruction added to CLAUDE.md (Step 0: read _index, compare with git log, create missing logs before starting new work). Strategic assessment: 4-sprint priority stack produced; H3 gate reconfirmed (requires 3 design partners). Squash merge of `claude/keen-pascal` → `main` (17 commits → 3 squash commits; 54 files; 1 conflict resolved). Preview server started but blocked by missing `.env.local` in zealous-banzai worktree. Session 072 log written.
+
+---
+
+## ✓ Session 072 Complete (2026-03-31) — All-Conversation Intake v2 + Font Tokenization + A11y
+
+All-conversation intake v2: Phase 1 structured form eliminated; `submit_intake_context` tool added (Claude calls after conversational confirmation of 6 context fields); `CONTEXT_COLLECTION_PROMPT` mode added (sole job: collect context, then transition to full governance probing prompt); cold start fix (`INTAKE_OPENER` pre-populated as first message — no blank loading state); 3-step phase stepper (Context · Requirements · Review); orientation panel (6 context areas + 7 blueprint sections, transitions to Blueprint Progress once context arrives); readiness score hidden until score > 0. Font tokenization: `text-2xs` (10px) and `text-xs-tight` (11px) tokens defined in globals.css; 90+ arbitrary `text-[10px]`/`text-[11px]` replacements across 48 files. Badge migration batch 4: intake-review + completeness-map migrated to unified Badge component. A11y: sidebar ARIA landmarks + `aria-current="page"`, `aria-label` on controls (help panel, command palette, contributions panel, violations panel, tool call display). Pipeline empty states for all 4 kanban columns. Admin section nav converted from collapsible to static label. 54 files, 0 migrations, 0 new deps.
+
+---
+
+## ✓ Session 071 Complete (2026-03-30) — Intake UX Hardening + Admin Overview Redesign + Unified Badge System
+
+Intake UX: /landing redirect loop fixed (ERR_TOO_MANY_REDIRECTS for all unauthenticated visitors); Revise button fixed (was anchor→full reload, now PATCH session status + client-side phase switch); chat history restored on Revise; discard button with inline confirm + DELETE endpoint (cascade-safe, completed sessions protected). Admin Overview: compact stats strip (3× vertical space saving), action callouts → inline chips, Fleet Governance summary bar replaces 4 tiles, side-by-side activity layout, redundant agents list removed. Unified Badge system: 7 semantic variants (neutral/info/success/warning/danger/accent/muted) replace 30+ inline color definitions; consistent `rounded-full px-2 py-0.5 text-xs font-medium` across all badge-like elements; 6 files migrated. 9 commits, 0 migrations, 0 new deps.
+
+---
+
+## ✓ Session 070 Complete (2026-03-30) — Cron Downgrade + Design System v1.2
+
+Cron downgrade: alert-check and telemetry-sync reduced to daily for Vercel Hobby plan compliance (restore to `*/15` and `0 *` on Pro). Design System v1.2: primary violet-700→indigo-600 (cooler, more enterprise-native tone); cool-shift all surfaces and borders to blue-tinted slate; indigo-tinted box shadows; new `.btn-primary` gradient+glow utility; glass-morphism login page; sidebar header gradient + active nav glow. 5 files modified, 0 migrations, 0 new deps.
+
+---
+
+## ✓ Session 069 Complete (2026-03-29) — SEC-001–007 Security Hardening
+
+86 API routes scanned against OWASP Top 10 patterns. 7 findings (0 critical/high, 3 medium, 4 low) — all resolved: SEC-001 cron fails-closed when CRON_SECRET unset; SEC-002 forgot-password IP rate limit (5/hr); SEC-003 webhook SSRF prevention (RFC 1918 + loopback blocked in schema); SEC-004/006 npm audit fix (Next.js CVEs + flatted/picomatch dev deps); SEC-005 requireAuth 403 no longer exposes role names; SEC-007 reset-password IP rate limit (10/hr). Deferred: esbuild/drizzle-kit CVEs (no prod runtime exposure, requires breaking drizzle-kit upgrade). Full report at `docs/log/health/2026-03-29_security.md`. 6 src files modified, 0 migrations, 0 new deps.
 
 ---
 

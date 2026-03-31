@@ -2,6 +2,78 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 073 — 2026-03-31: The Gap-Check, the Merge, and What Comes Next
+
+Session 073 is mostly about infrastructure, but the infrastructure matters.
+
+**The logging gap reveals something about the session protocol's failure mode.** Three sessions of work — security hardening, design system evolution, intake UX fixes — were committed without creating session logs. The code was correct; the audit trail was missing. The root cause is simple: documentation was the last step, and when sessions end under time pressure or mid-task, the last step is the first to be dropped. The fix is not discipline — discipline fails under load — it is structural: add a gap-check at the start of every session that compares `_index.md` against `git log`. Claude checks for the gap before doing anything else, and creates the missing logs before starting new work. This is the correct place to put the responsibility: the beginning of the next session, not the end of the current one.
+
+**The squash merge resolves a subtle version control problem.** The `keen-pascal` branch had 17 commits, but the branch's history was not clean — some of those commits duplicated work that had been separately committed to `main` during the same period (badge system, overview redesign). A 3-way merge would have preserved all 17 commits, including the duplicates, creating a noisy history where the same change appeared twice with different hashes. Squash merge solves this: flatten all 17 commits into 3 logical units, resolve conflicts once (there was only one: `mb-8` vs `mb-6`, took keen-pascal's version), and push to main as a fast-forward. The result is a clean, readable history. The individual commit granularity from keen-pascal is preserved in session 072's log, not in git.
+
+**The all-conversation intake is the right call at the right moment.** The three-phase architecture — form, conversation, review — was the right design in session 009 when the product was being built to spec. Twelve months of AI product evolution later, the form feels like a gate. Users don't expect to fill out a form before talking to an AI; they expect to talk to the AI and have it figure out what it needs. The `submit_intake_context` tool is the correct technical realization of this: Claude collects context conversationally, confirms it with the user, then calls the tool once to save it. From the product's perspective, the context is still there — stored in the database, used by governance probing, visible in Phase 3 review. The implementation surface changed (tool instead of form POST); the semantic surface did not.
+
+The cold start fix is smaller but high-impact. Every new user who started a session saw a blank chat window while the page loaded and the AI initialized. The fix — pre-populate the first message as a constant before the stream opens — costs nothing and eliminates the impression that the product is loading or broken.
+
+**The H3 gate stands.** The strategic review this session reaffirmed: Foundry (workflow composition) and Enterprise Memory are not engineering problems waiting to be solved. They're business problems waiting to be scoped. Building them without design partners is the fastest way to build the wrong thing. The gate — 3+ enterprise partners with validated execution orchestration needs — is not bureaucracy; it's a forcing function to make sure we understand what "workflow composition" actually means to the people who will use it before we implement it.
+
+---
+
+## Session 072 — 2026-03-31: Making the Product Feel Like an AI Product
+
+The all-conversation intake was the headline, but the session's character is better described as: removing the things that remind users they are using software.
+
+The Phase 1 form was the most obvious example. It worked. It collected the right fields. But it was a form — a grid of labeled inputs with a submit button — at the moment when the product's job was to demonstrate that talking to an AI was better than filling out a form. The contradiction was architectural: the product is a governed AI factory, and its first interaction was a web form. The all-conversation path removes this contradiction at the source.
+
+The font tokenization is less dramatic but follows the same logic. Eighty-some `text-[10px]` and `text-[11px]` scattered across 48 files are invisible to users. They are not invisible to designers. When the palette shifted from violet to indigo in session 070, the change propagated cleanly because the design tokens were centralized. If the small text sizes had needed to change — say, from 10px to 11px everywhere to improve readability at smaller viewports — there would have been no central place to change them. The tokenization is not a current fix; it is a future capability. The product can now be resized at the smallest typographic level with two lines in `globals.css`.
+
+Accessibility is in the same category. The ARIA improvements — `aria-current="page"`, `role="navigation"`, `aria-label` on interactive controls — are not visible to most users. They are visible to screen reader users, to automated accessibility audits (Lighthouse, axe), and to enterprise procurement teams who require WCAG 2.1 AA compliance before signing contracts. None of the changes were complex; all of them were necessary for the product to be taken seriously by enterprise buyers.
+
+The pipeline empty states are the simplest change with the clearest impact. An empty kanban column communicates nothing. It could mean: there are no agents in this stage; the data is still loading; something is wrong. "No agents in Draft" communicates one thing. It changes the product's behavior from ambiguous silence to clear signal — a small change that matters at the moment when a design partner is looking at a freshly seeded demo environment trying to understand what they're looking at.
+
+---
+
+## Session 071 — 2026-03-30: What Gets Fixed When the Product Is Used
+
+Session 071 is instructive not for what was built, but for what it reveals about how production software accumulates damage in the gaps between polished sessions.
+
+**The revision flow was entirely broken.** The "← Revise" links on the intake review page had been built, committed, and shipped in session 066b as part of a 13-item enhancement. They looked right. They tested right in isolation. But they silently didn't work: clicking them sent the user back to review — because the link was an `<a href>` pointing to the same URL, the page reloaded, and since the session status was `"completed"`, the page loaded back into review mode immediately. The fix required three coordinated changes: change the link to a button, PATCH the session status to `in_progress` on click, and switch the phase client-side without a full page reload. None of these were individually complex; their necessity was only visible when a real user tried to actually revise something after marking it complete.
+
+The chat history vanishing on Revise was a second-order bug from the same feature. Even after the status fix, the conversation appeared blank — because `initialMessages` was only loaded for sessions not yet `"completed"`. Once reset to `"in_progress"`, the messages never came back. Both bugs together meant revision was impossible from end to end — you'd click Revise, get sent back to an empty conversation, with no way out except starting a new session.
+
+**The landing redirect loop was a configuration error that made the product unreachable to new users.** `next.config.ts` had a redirect rule `/landing → /`. Middleware had a rule `/` → `/landing` for unauthenticated visitors. Together, these created an infinite loop: any new user trying to reach the product would get `ERR_TOO_MANY_REDIRECTS` before seeing a single pixel. This had likely been true since the landing page was added in session 048, but was only caught now — before that, all testing was done as authenticated users, who never hit the middleware redirect.
+
+**The Badge system consolidation reflects a maturity milestone.** The unified Badge component isn't a new feature; it's a forcing function that makes the existing design consistent. The 30+ ad-hoc inline className strings that it replaced weren't a problem in session 037 when the dark sidebar was introduced, or in session 046 when the first risk tier badges appeared. They became a problem when the design needed to evolve (sessions 069–070, color palette shift) and there was no single place to update. The Badge system is the design system catching up to the implementation's breadth.
+
+The overview redesign follows the same principle. Four separate KPI tiles were right for a product with four lifecycle stages and little else. They became wrong when governance health, quality index, and activity feed were added — the overview had grown into a collection of equally-weighted cards with no hierarchy. The compact stats strip and side-by-side layout restore the page to its intended function: an executive summary, not a feature directory.
+
+---
+
+## Session 070 — 2026-03-30: A Constraint Becomes a Prompt for a Better Decision
+
+The cron downgrade is a consequence of a deployment decision: Vercel Hobby plan. The fix — change `*/15` to `0 9 * * *` — took two lines. But the session was mostly about something else.
+
+**The color palette shift is a positioning decision, not a cosmetic one.** Violet-700 as the primary color was chosen in session 037 during the dark sidebar redesign. It was distinctive (not the blue of enterprise software) and warm (different from the cold gray of most AI tooling). Eight sessions later, with the product deployed and demonstrating to enterprise buyers, the character of that choice had shifted. Warm violet reads as creative, expressive, independent. Indigo-600 — cooler, bluer, more controlled — reads as trustworthy, stable, enterprise-grade.
+
+The shift is subtle enough that a user switching between screenshots would notice something feels different before identifying what changed. That's the right level of change for a palette shift at this stage: significant enough to move the product positioning needle, invisible enough not to disrupt existing users.
+
+The glass-morphism login page and gradient sidebar header are part of the same signal: this is a product that has visual craft, not just visual consistency. Enterprise buyers who evaluate software are pattern-matching against the products they know — Salesforce, Workday, ServiceNow. Those products are polished but flat. Intellios is targeting the tier of enterprise that has started buying AI-native tools: they have higher visual expectations and respond to products that demonstrate design investment.
+
+---
+
+## Session 069 — 2026-03-29: Why Security Audits Belong at Milestones
+
+Session 069 was a deliberate pause. The product reached production-ready status (55/55, 100%) in session 066b. Before expanding the user base or starting the next phase of feature work, the right question is: what can go wrong?
+
+**The audit found 7 issues. None were catastrophic. One (SEC-003) was a real attack vector.** The webhook SSRF vulnerability deserves the most attention: any admin could register a webhook pointing to an internal IP address (`192.168.x.x`, `10.x.x.x`, `172.16–31.x.x`) and use it to probe internal infrastructure. With each outbound webhook call triggered by a governance event, an attacker with admin access could map the internal network or trigger internal services. The fix — a private IP regex check in the webhook schema — is one of the patterns that should have been in the initial implementation but wasn't: SSRF is a known risk for any system that makes outbound HTTP requests to user-provided URLs.
+
+**The failed-closed cron (SEC-001) represents a class of security thinking that's easy to miss.** The original implementation assumed that if `CRON_SECRET` was set, the cron was secure. It didn't consider the case where the environment variable is absent — which happens legitimately (new deployment, missing env config) and should fail safe, not fail open. The fix returns 503 instead of 200 when the secret is unset. This is the "fail closed" principle: when a security mechanism is unavailable, refuse to proceed rather than proceeding without protection.
+
+**The npm audit vulnerabilities are the hidden cost of dependency management.** Five Next.js CVEs (null origin CSRF, request smuggling, unbounded buffering) had accumulates since the last audit. These aren't dramatic vulnerabilities — they require specific conditions to exploit — but they're known and patched, which means shipping code with them is indefensible once you know they exist. The automated `npm audit fix` path handled them without changes to the application code.
+
+The deferred esbuild/drizzle-kit CVEs are an example of a legitimate risk acceptance decision. The vulnerabilities are real but limited to the development toolchain (not the production runtime), and the fix requires a breaking upgrade that would need its own session. The right call is to acknowledge them explicitly, document them in the health log, and schedule the upgrade rather than either ignoring them or rushing a breaking change.
+
+---
+
 ## Sessions 065b–066b — 2026-03-28: Production Hardening and the Review Experience
 
 Two sessions on the same day. The first spent almost entirely fixing the gap between what works locally and what works in production. The second on the quality of the moment just before a user commits to generating a blueprint.
