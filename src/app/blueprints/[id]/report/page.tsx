@@ -252,7 +252,7 @@ function ReportDocument({
       <div className="mx-auto max-w-4xl px-6 py-10 print:py-0 print:px-0 print:max-w-none">
 
         {/* ── Cover ────────────────────────────────────────────────────────── */}
-        <div className="mb-12 print:mb-8">
+        <div className="mb-12 print:mb-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
             SR 11-7 Model Risk Management — Compliance Report
           </p>

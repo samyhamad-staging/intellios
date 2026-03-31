@@ -200,11 +200,11 @@ export default function ExecutiveDashboardPage() {
                     const color = tier === "critical" ? "bg-red-400" : tier === "high" ? "bg-orange-400" : tier === "medium" ? "bg-amber-400" : "bg-green-400";
                     return (
                       <div key={tier} className="flex items-center gap-2">
-                        <span className="w-12 text-[11px] capitalize text-gray-500">{tier}</span>
+                        <span className="w-12 text-xs-tight capitalize text-gray-500">{tier}</span>
                         <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
                         </div>
-                        <span className="w-6 text-right text-[11px] text-gray-500">{count}</span>
+                        <span className="w-6 text-right text-xs-tight text-gray-500">{count}</span>
                       </div>
                     );
                   })}
@@ -234,7 +234,7 @@ export default function ExecutiveDashboardPage() {
                       );
                     })}
                   </div>
-                  <div className="mt-1 flex justify-between text-[10px] text-gray-400">
+                  <div className="mt-1 flex justify-between text-2xs text-gray-400">
                     <span>{trends[0]?.weekStart}</span>
                     <span>{latest?.weekStart}</span>
                   </div>
@@ -286,7 +286,7 @@ export default function ExecutiveDashboardPage() {
                     <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-medium text-gray-800 truncate">{n.title}</p>
-                      <p className="text-[11px] text-gray-400">{timeAgo(n.createdAt)}</p>
+                      <p className="text-xs-tight text-gray-400">{timeAgo(n.createdAt)}</p>
                     </div>
                   </li>
                 ))}

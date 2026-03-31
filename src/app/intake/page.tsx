@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 import { NewIntakeButton } from "@/components/intake/new-intake-button";
 import { IntakeContext } from "@/lib/types/intake";
 import { MessageSquare, ChevronRight, Inbox, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
 
 function timeAgo(date: Date): string {
   const diffMs = Date.now() - date.getTime();
@@ -21,10 +23,10 @@ function timeAgo(date: Date): string {
   return `${Math.floor(diffDays / 7)}w ago`;
 }
 
-const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  active:    { label: "In Progress", className: "bg-blue-50 text-blue-700 border-blue-200" },
-  completed: { label: "Complete",    className: "bg-green-50 text-green-700 border-green-200" },
-  abandoned: { label: "Abandoned",   className: "bg-gray-100 text-gray-500 border-gray-200" },
+const STATUS_BADGE: Record<string, { label: string; variant: BadgeVariant }> = {
+  active:    { label: "In Progress", variant: "info" },
+  completed: { label: "Complete",    variant: "success" },
+  abandoned: { label: "Abandoned",   variant: "muted" },
 };
 
 const SENSITIVITY_LABELS: Record<string, string> = {
@@ -62,9 +64,9 @@ export default async function IntakeSessionsPage() {
   const completed = sessions.filter((s) => s.status === "completed");
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-6 py-6">
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between">
+      <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Intake Sessions</h1>
           <p className="mt-0.5 text-sm text-gray-500">
@@ -90,7 +92,7 @@ export default async function IntakeSessionsPage() {
 
       {/* In Progress */}
       {active.length > 0 && (
-        <section className="mb-8">
+        <section className="mb-6">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
             In Progress — {active.length}
           </h2>
@@ -144,7 +146,7 @@ function SessionRow({ session: s, isLast }: SessionRowProps) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-0.5">
           <span className="text-sm font-medium text-gray-900 truncate">{displayName}</span>
-          <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium ${badge.className}`}>{badge.label}</span>
+          <Badge variant={badge.variant} dot>{badge.label}</Badge>
         </div>
         {s.agentPurpose ? (
           <p className="text-xs text-gray-500 truncate">{s.agentPurpose}</p>
@@ -155,10 +157,10 @@ function SessionRow({ session: s, isLast }: SessionRowProps) {
       </div>
       <div className="hidden sm:flex items-center gap-1.5 shrink-0">
         {s.deploymentType && (
-          <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-400 capitalize">{s.deploymentType.replace(/-/g, " ")}</span>
+          <Badge variant="neutral" className="capitalize">{s.deploymentType.replace(/-/g, " ")}</Badge>
         )}
         {s.dataSensitivity && (
-          <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-400">{SENSITIVITY_LABELS[s.dataSensitivity] ?? s.dataSensitivity}</span>
+          <Badge variant="neutral">{SENSITIVITY_LABELS[s.dataSensitivity] ?? s.dataSensitivity}</Badge>
         )}
       </div>
       <ChevronRight size={14} className="shrink-0 text-gray-300" />

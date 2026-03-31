@@ -147,7 +147,7 @@ function CompletedPage({
         <h1 className="mb-2 text-xl font-semibold text-gray-900">
           {inviteeName ? `Thanks, ${inviteeName}!` : "Contribution received"}
         </h1>
-        <p className="mb-8 text-sm text-gray-500">
+        <p className="mb-6 text-sm text-gray-500">
           Your requirements have been recorded and will be incorporated into the agent design for{" "}
           <strong>{sessionName}</strong>.
         </p>
@@ -177,7 +177,7 @@ function CompletedPage({
                     <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${dot}`} />
                     <span className="text-xs text-gray-700">{c.roleTitle}</span>
                     <span className="text-xs text-gray-400">· {DOMAIN_LABELS[c.domain] ?? c.domain}</span>
-                    <span className={`ml-auto text-[10px] ${st.color}`}>{st.label}</span>
+                    <span className={`ml-auto text-2xs ${st.color}`}>{st.label}</span>
                   </div>
                 );
               })}

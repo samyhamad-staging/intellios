@@ -100,7 +100,7 @@ export default async function Home() {
             </div>
           </div>
           <h1 className="mb-1 text-2xl font-semibold text-text">Intellios</h1>
-          <p className="mb-8 text-sm text-text-secondary">Enterprise Agent Factory</p>
+          <p className="mb-6 text-sm text-text-secondary">Enterprise Agent Factory</p>
           <Link href="/login" className="rounded-lg bg-text px-5 py-2.5 text-sm font-medium text-surface hover:opacity-90 transition-opacity">
             Sign in
           </Link>
@@ -112,9 +112,9 @@ export default async function Home() {
   // ── Architect ─────────────────────────────────────────────────────────────
   if (role === "architect") {
     return (
-      <div className="px-8 py-8">
+      <div className="px-6 py-6">
         {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
+        <div className="mb-6 flex items-start justify-between">
           <div>
             <h1 className="text-xl font-semibold text-text">My Work</h1>
             <p className="mt-0.5 text-sm text-text-secondary">Design, refine, and submit agent blueprints for review.</p>
@@ -123,7 +123,7 @@ export default async function Home() {
         </div>
 
         {/* Quick action cards */}
-        <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { href: "/pipeline", icon: Kanban,  label: "Pipeline Board", sub: `${allAgents.length} agents`, color: "text-primary" },
             { href: "/registry", icon: Library, label: "Agent Registry",  sub: "All versions",              color: "text-blue-600" },
@@ -246,8 +246,8 @@ export default async function Home() {
   // ── Reviewer / Compliance Officer ─────────────────────────────────────────
   if (role === "reviewer" || role === "compliance_officer") {
     return (
-      <div className="px-8 py-8">
-        <div className="mb-8 flex items-start justify-between">
+      <div className="px-6 py-6">
+        <div className="mb-6 flex items-start justify-between">
           <div>
             <h1 className="text-xl font-semibold text-text">
               {role === "compliance_officer" ? "Governance & Compliance" : "Review Queue"}
@@ -264,7 +264,7 @@ export default async function Home() {
           </Link>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { href: "/review",   icon: ClipboardList, label: "Review Queue",   sub: `${inReviewAgents.length} pending`, color: "text-amber-600" },
             { href: "/pipeline", icon: Kanban,         label: "Pipeline Board", sub: `${allAgents.length} total`,        color: "text-primary" },
@@ -359,7 +359,7 @@ export default async function Home() {
   };
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-6 py-6">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -434,7 +434,7 @@ export default async function Home() {
       </div>
 
       {/* Governance Health */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Governance Health</h2>
         <FleetGovernanceDashboard
           enterpriseId={user.enterpriseId}

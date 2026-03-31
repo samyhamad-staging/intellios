@@ -133,7 +133,7 @@ export default function RegistryPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-6 py-6">
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
@@ -172,7 +172,7 @@ export default function RegistryPage() {
             className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-8 text-sm placeholder-gray-400 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/10"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <button onClick={() => setSearchQuery("")} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
               <X size={13} />
             </button>
           )}
@@ -261,9 +261,9 @@ export default function RegistryPage() {
                       {Array.isArray(agent.tags) && agent.tags.length > 0 && (
                         <div className="mt-1.5 flex flex-wrap gap-1">
                           {(agent.tags as string[]).slice(0, 5).map((tag) => (
-                            <span key={tag} className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-500">{tag}</span>
+                            <span key={tag} className="rounded-md bg-gray-100 px-1.5 py-0.5 text-xs-tight text-gray-500">{tag}</span>
                           ))}
-                          {agent.tags.length > 5 && <span className="text-[11px] text-gray-400">+{agent.tags.length - 5} more</span>}
+                          {agent.tags.length > 5 && <span className="text-xs-tight text-gray-400">+{agent.tags.length - 5} more</span>}
                         </div>
                       )}
                     </div>

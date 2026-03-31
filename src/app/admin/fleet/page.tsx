@@ -94,7 +94,7 @@ export default function AdminFleetPage() {
   if (error) {
     if (error === "super-admin-only") {
       return (
-        <div className="px-8 py-8">
+        <div className="px-6 py-6">
           <p className="text-sm text-gray-500">
             Platform fleet overview is only available to super-admins (admin accounts without an enterprise scope).
           </p>
@@ -113,7 +113,7 @@ export default function AdminFleetPage() {
   const { enterprises, totals } = data;
 
   return (
-    <div className="px-8 py-8 space-y-8">
+    <div className="px-6 py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -174,7 +174,7 @@ export default function AdminFleetPage() {
           >
             <div className="flex items-center gap-2 mb-2">
               {card.icon}
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+              <span className="text-2xs font-semibold uppercase tracking-wider text-gray-500">
                 {card.label}
               </span>
             </div>

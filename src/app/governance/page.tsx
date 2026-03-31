@@ -246,7 +246,7 @@ export default function GovernanceHubPage() {
     .sort((a, b) => (b.violationCount ?? 0) - (a.violationCount ?? 0));
 
   return (
-    <div className="px-8 py-8 space-y-8">
+    <div className="px-6 py-6 space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -264,7 +264,7 @@ export default function GovernanceHubPage() {
         </Link>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
@@ -462,12 +462,12 @@ export default function GovernanceHubPage() {
                             </div>
                             <div className="mt-1.5 flex flex-wrap gap-1">
                               {rule.affectedBlueprints.map((name) => (
-                                <span key={name} className="rounded bg-white px-1.5 py-0.5 text-[11px] text-gray-600 border border-gray-200">
+                                <span key={name} className="rounded bg-white px-1.5 py-0.5 text-xs-tight text-gray-600 border border-gray-200">
                                   {name}
                                 </span>
                               ))}
                               {rule.affectedCount > rule.affectedBlueprints.length && (
-                                <span className="text-[11px] text-gray-400">
+                                <span className="text-xs-tight text-gray-400">
                                   +{rule.affectedCount - rule.affectedBlueprints.length} more
                                 </span>
                               )}

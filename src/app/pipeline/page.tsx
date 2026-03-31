@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { getSlaStatus } from "@/lib/sla/config";
 import { Search, ShieldCheck, ShieldAlert, AlertCircle, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface Agent {
   id: string;
@@ -218,13 +219,21 @@ function Column({ status, label, colBg, dotColor, badgeCls, cards, loading }: Co
           </div>
         )}
         {!loading && cards.length === 0 && (
-          <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-border">
+          <div className="flex h-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border px-3 text-center">
             {status === "draft" ? (
               <Link href="/intake" className="text-xs font-medium text-primary hover:opacity-70 transition-colors">
                 Start an intake →
               </Link>
+            ) : status === "in_review" ? (
+              <p className="text-xs text-text-tertiary">No agents under review</p>
+            ) : status === "approved" ? (
+              <p className="text-xs text-text-tertiary">No agents awaiting deployment</p>
+            ) : status === "deployed" ? (
+              <p className="text-xs text-text-tertiary">No agents deployed yet</p>
+            ) : status === "rejected" ? (
+              <p className="text-xs text-text-tertiary">No rejected agents</p>
             ) : (
-              <p className="text-xs text-text-tertiary">Empty</p>
+              <p className="text-xs text-text-tertiary">No agents here</p>
             )}
           </div>
         )}
@@ -311,7 +320,7 @@ function InsightsStrip({ agents }: { agents: Agent[] }) {
 
   return (
     <div className="shrink-0 flex items-center gap-4 border-b border-border bg-surface-raised px-6 py-2">
-      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-text-tertiary">
+      <span className="shrink-0 text-2xs font-semibold uppercase tracking-widest text-text-tertiary">
         Insights
       </span>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
@@ -362,33 +371,23 @@ function AgentCard({ agent }: { agent: Agent }) {
       {agent.tags?.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
           {agent.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-text-secondary">
-              {tag}
-            </span>
+            <Badge key={tag} variant="neutral">{tag}</Badge>
           ))}
           {agent.tags.length > 2 && (
-            <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-text-tertiary">
-              +{agent.tags.length - 2}
-            </span>
+            <Badge variant="muted">+{agent.tags.length - 2}</Badge>
           )}
         </div>
       )}
 
       {/* Footer: version + SLA + time */}
       <div className="mt-2.5 flex items-center justify-between text-xs text-text-tertiary">
-        <span className="font-mono text-[11px]">v{agent.version}</span>
+        <span className="font-mono text-xs-tight">v{agent.version}</span>
         <div className="flex items-center gap-1.5">
           {sla === "alert" && (
-            <span className="flex items-center gap-0.5 rounded-md bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
-              <AlertCircle size={9} />
-              SLA breach
-            </span>
+            <Badge variant="danger">SLA breach</Badge>
           )}
           {sla === "warn" && (
-            <span className="flex items-center gap-0.5 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600">
-              <Clock size={9} />
-              Nearing SLA
-            </span>
+            <Badge variant="warning">Nearing SLA</Badge>
           )}
           <span>{timeAgo(agent.updatedAt)}</span>
         </div>

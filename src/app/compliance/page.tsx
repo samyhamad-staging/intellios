@@ -219,7 +219,7 @@ export default function CompliancePage() {
   }
 
   return (
-    <div className="px-8 py-8 space-y-8">
+    <div className="px-6 py-6 space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -249,7 +249,7 @@ export default function CompliancePage() {
         </div>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {posture && (
           <>
             {/* ── Section A: Enterprise Posture KPIs ─────────────────────── */}

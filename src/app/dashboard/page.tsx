@@ -79,14 +79,14 @@ export default function ExecutiveDashboardPage() {
   const funnelMax = Math.max(...funnelStages.map((s) => s.count), 1);
 
   return (
-    <div className="px-8 py-8 space-y-8">
+    <div className="px-6 py-6 space-y-6">
       {/* Page header */}
       <div>
         <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
         <p className="mt-0.5 text-sm text-gray-500">Platform health and governance posture</p>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {error && (
           <div className="rounded-lg border badge-gov-error p-4 text-sm">
             {error}

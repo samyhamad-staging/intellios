@@ -65,7 +65,7 @@ function LoginForm() {
     <div className="flex min-h-screen items-center justify-center" style={{ background: "var(--gradient-login-bg)" }}>
       <div className="w-full max-w-sm">
         {/* Header */}
-        <div className="mb-8 text-center">
+        <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold tracking-tight text-white">
             Intellios
           </h1>
@@ -118,7 +118,7 @@ function LoginForm() {
                 >
                   Continue with SSO →
                 </button>
-                <p className="text-[10px] text-violet-500 text-center">
+                <p className="text-2xs text-violet-500 text-center">
                   You will be redirected to your identity provider.
                 </p>
               </div>
