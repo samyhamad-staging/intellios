@@ -108,6 +108,7 @@ export function ToolCallDisplay({ toolName, args }: ToolCallDisplayProps) {
         onClick={() => setExpanded((e) => !e)}
         className="flex items-start gap-2 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-xs text-blue-700 max-w-[80%] text-left hover:bg-blue-100 transition-colors"
         title={expanded ? "Click to collapse" : "Click to expand captured values"}
+        aria-label={expanded ? "Collapse captured values" : "Expand captured values"}
       >
         <span className="shrink-0 mt-px">{icon}</span>
         <span className="flex-1 min-w-0">

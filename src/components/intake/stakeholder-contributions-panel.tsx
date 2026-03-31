@@ -571,6 +571,7 @@ function InsightCard({
         </div>
         <button
           onClick={() => setExpanded((v) => !v)}
+          aria-label={expanded ? "Collapse insight" : "Expand insight"}
           className="text-gray-300 hover:text-gray-500 shrink-0 text-[10px]"
         >
           {expanded ? "▲" : "▼"}

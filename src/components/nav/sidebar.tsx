@@ -149,6 +149,8 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
   return (
     <>
     <aside
+      role="navigation"
+      aria-label="Main navigation"
       className="flex h-screen w-60 shrink-0 flex-col overflow-hidden"
       style={{ backgroundColor: "var(--sidebar-bg)", borderRight: "1px solid var(--sidebar-border)" }}
     >
@@ -220,6 +222,7 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      aria-current={active ? "page" : undefined}
                       className="group flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors"
                       style={{
                         color: active ? "var(--sidebar-text-active)" : "var(--sidebar-text)",
@@ -266,6 +269,7 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
               <button
                 type="submit"
                 title="Sign out"
+                aria-label="Sign out"
                 className="rounded p-1 transition-colors hover:bg-white/10"
                 style={{ color: "var(--sidebar-text)" }}
               >

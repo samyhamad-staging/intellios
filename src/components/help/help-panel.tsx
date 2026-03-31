@@ -238,6 +238,7 @@ export function HelpPanel({ role }: HelpPanelProps) {
       <button
         onClick={() => setOpen(true)}
         title="Help & guidance"
+        aria-label="Help"
         className="rounded p-1 transition-colors hover:bg-white/10"
         style={{ color: "var(--sidebar-text)" }}
       >
@@ -267,6 +268,7 @@ export function HelpPanel({ role }: HelpPanelProps) {
                   <button
                     onClick={() => setMessages([])}
                     title="Clear conversation"
+                    aria-label="Clear conversation"
                     className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                   >
                     <Trash2 size={13} />
@@ -274,6 +276,7 @@ export function HelpPanel({ role }: HelpPanelProps) {
                 )}
                 <button
                   onClick={() => setOpen(false)}
+                  aria-label="Close help panel"
                   className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                 >
                   <X size={14} />
