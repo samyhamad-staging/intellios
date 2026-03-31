@@ -66,6 +66,10 @@ export default function IntakeSessionPage({
   const popoverRef = useRef<HTMLDivElement>(null);
   const [discardConfirm, setDiscardConfirm] = useState(false);
   const [discarding, setDiscarding] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  // Tracks consecutive ticks where classificationLoading is true but no classification arrived.
+  // After 2 unanswered ticks we bail out to prevent an infinite spinner.
+  const classificationLoadingTicksRef = useRef(0);
 
   // Load session status + message history + contributions on mount
   useEffect(() => {
@@ -143,7 +147,13 @@ export default function IntakeSessionPage({
         if (session?.intakeContext) {
           setIntakeContext(session.intakeContext as IntakeContext);
           if (!session.agentType) {
-            setClassificationLoading(true);
+            classificationLoadingTicksRef.current += 1;
+            // Bail out after 2 unanswered ticks — classification failed silently, don't spin forever
+            if (classificationLoadingTicksRef.current <= 2) {
+              setClassificationLoading(true);
+            } else {
+              setClassificationLoading(false);
+            }
           }
         }
         if (session?.agentType && session?.riskTier) {
@@ -152,6 +162,7 @@ export default function IntakeSessionPage({
             riskTier: session.riskTier as IntakeRiskTier,
             rationale: "",
           });
+          classificationLoadingTicksRef.current = 0;
           setClassificationLoading(false);
         }
         if (session?.status === "completed") {
@@ -447,6 +458,13 @@ export default function IntakeSessionPage({
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Mobile-only progress toggle */}
+          <button
+            onClick={() => setMobileSidebarOpen((o) => !o)}
+            className="lg:hidden rounded-lg border border-border px-2.5 py-1 text-xs text-text-secondary hover:border-border-strong transition-colors"
+          >
+            {mobileSidebarOpen ? "Hide progress" : "Progress"}
+          </button>
           {discardConfirm ? (
             <>
               <span className="text-xs text-text-secondary">Discard this session?</span>
@@ -560,7 +578,7 @@ export default function IntakeSessionPage({
       )}
 
       {/* Body: chat + progress sidebar */}
-      <main className="flex flex-1 overflow-hidden">
+      <main className="flex flex-1 overflow-hidden relative">
         <ChatContainer
           sessionId={sessionId}
           initialMessages={initialMessages}
@@ -576,6 +594,7 @@ export default function IntakeSessionPage({
           context={intakeContext ?? undefined}
           riskTier={classification?.riskTier ?? null}
           transparency={transparency}
+          mobileOpen={mobileSidebarOpen}
         />
       </main>
     </div>

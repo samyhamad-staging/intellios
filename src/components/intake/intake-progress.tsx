@@ -118,6 +118,8 @@ interface IntakeProgressProps {
   context?: IntakeContext;
   riskTier?: IntakeRiskTier | null;
   transparency?: IntakeTransparencyMetadata | null;
+  /** On mobile, controlled by the parent. When true, sidebar is shown even on narrow viewports. */
+  mobileOpen?: boolean;
 }
 
 // ── Collapsible section helper ───────────────────────────────────────────────
@@ -200,7 +202,7 @@ const BLUEPRINT_SECTIONS = [
   "Audit Configuration",
 ];
 
-export function IntakeProgress({ sessionId, refreshTick, contributions = [], onContributionAdded, context, riskTier, transparency }: IntakeProgressProps) {
+export function IntakeProgress({ sessionId, refreshTick, contributions = [], onContributionAdded, context, riskTier, transparency, mobileOpen }: IntakeProgressProps) {
   const [sections, setSections] = useState<Section[]>(getSections({}));
   const [agentName, setAgentName] = useState<string | null>(null);
   const [readiness, setReadiness] = useState<ReadinessResult | null>(null);
@@ -236,7 +238,7 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
   // Phase 1: no context yet — show session overview instead of Blueprint Progress
   if (!context) {
     return (
-      <aside className="w-72 shrink-0 border-l border-gray-200 bg-white p-5 flex flex-col gap-5 overflow-y-auto">
+      <aside className={`w-72 shrink-0 border-l border-gray-200 bg-white p-5 flex-col gap-5 overflow-y-auto ${mobileOpen ? "flex absolute inset-0 z-10 lg:relative lg:inset-auto" : "hidden lg:flex"}`}>
         <div>
           <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Session Overview</h2>
           <p className="text-xs text-gray-400">Here's what this conversation will cover.</p>
@@ -288,7 +290,7 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
   }
 
   return (
-    <aside className="w-72 shrink-0 border-l border-gray-200 bg-white p-5 flex flex-col gap-4 overflow-y-auto">
+    <aside className={`w-72 shrink-0 border-l border-gray-200 bg-white p-5 flex-col gap-4 overflow-y-auto ${mobileOpen ? "flex absolute inset-0 z-10 lg:relative lg:inset-auto" : "hidden lg:flex"}`}>
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
           Blueprint Progress

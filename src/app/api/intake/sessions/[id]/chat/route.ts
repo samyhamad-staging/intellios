@@ -160,13 +160,20 @@ export async function POST(
       () => currentContext,
       () => (currentClassification?.riskTier ?? null),
       async (context: IntakeContext) => {
-        // Save context to DB and update in-memory reference
-        await db
-          .update(intakeSessions)
-          .set({ intakeContext: context, updatedAt: new Date() })
-          .where(eq(intakeSessions.id, sessionId));
+        // Save context to DB and update in-memory reference.
+        // If this fails, propagate explicitly — the tool will surface a clean error to Claude.
+        try {
+          await db
+            .update(intakeSessions)
+            .set({ intakeContext: context, updatedAt: new Date() })
+            .where(eq(intakeSessions.id, sessionId));
+        } catch (err) {
+          console.error(`[${requestId}] Failed to persist intake context:`, err);
+          throw new Error("Failed to save context — please try again");
+        }
         currentContext = context;
-        // Classify synchronously (~500ms, one-time) so the tool response can include it
+        // Classify synchronously (~500ms, one-time) so the tool response can include it.
+        // Classification failure is non-fatal — context is already saved.
         try {
           const classification = await classifyIntake(context);
           await db
@@ -175,6 +182,7 @@ export async function POST(
             .where(eq(intakeSessions.id, sessionId));
           return { agentType: classification.agentType as AgentType, riskTier: classification.riskTier as IntakeRiskTier };
         } catch {
+          // Classification will be derived on the next turn; not a blocking error
           return null;
         }
       }
