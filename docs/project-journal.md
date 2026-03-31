@@ -2,6 +2,22 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 075 — 2026-03-31: Hardening Before Showing
+
+Session 074 built the transparency layer. Session 075 is about making it robust.
+
+**P1 hardening is the boring half of shipping.** When you build something new — the all-conversation intake v2, the transparency panels, the tool result badges — there are always failure modes you didn't see from the happy path. A mobile user arrives and can't read the chat because the 288px sidebar is occupying 80% of their viewport. The classification API times out silently and a spinner runs forever. A database write fails during context submission and the error surfaces as an opaque stream exception instead of a recoverable message. These are not edge cases to deprioritize — they are exactly the failure modes that break a first impression, and first impressions with design partners are the next milestone.
+
+**The mobile sidebar fix is the highest visibility.** The sidebar was `w-72 shrink-0` — fixed width, no breakpoints, no awareness of viewport size. On a 375px iPhone, the chat gets 87px. This isn't even "poor UX" — it's broken. The fix is straightforward: `hidden lg:flex` plus a mobileOpen prop that lets the parent toggle a full-viewport overlay. The chat is now always full-width on mobile; the progress sidebar is accessible via a small "Progress" button in the header. This pattern — primary action always visible, secondary panel accessible on demand — is the right mobile default for this kind of interface.
+
+**The classification loading resilience is about trust.** If the spinner runs forever because a background API call failed, the user sees an application that looks frozen. They don't know if the classification is coming or if something is broken. The `classificationLoadingTicksRef` counter is a small mechanism with a clear contract: after 2 turns without classification, stop pretending it's coming. Let the UI fall to a neutral state. Don't lie to the user about system status.
+
+**The onContextSubmit try/catch is about debuggability.** When the context save fails, the error should be logged with the request ID, and the tool should surface a message that Claude can relay to the user. Before this fix, a DB write failure would propagate as an unhandled exception, show up as an error state in the chat, and leave no trace of what happened. After the fix, there's a console.error with a requestId, and Claude can tell the user "there was a problem saving — try again." Small change, meaningful difference when debugging in production.
+
+**The pattern for this sprint: fix what's broken before expanding what's possible.** The transparency work was a major capability addition. This session is the follow-up that makes the capability reliable. Design partners will see the reliable version.
+
+---
+
 ## Session 074 — 2026-03-31: Making the Machine Legible
 
 This session started with an evaluation and ended with a working transparency layer. The evaluation was the important part.

@@ -2,7 +2,13 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-03-31 (Session 074 — intake transparency overhaul + tool call result status)
+**Last updated:** 2026-03-31 (Session 075 — Intake v2 P1 hardening)
+
+---
+
+## ✓ Session 075 Complete (2026-03-31) — Intake v2 P1 Hardening
+
+P1 hardening sprint against the all-conversation Intake v2. Three targeted fixes: (1) **Mobile sidebar** — `IntakeProgress` now `hidden lg:flex`; mobile users get a "Progress" toggle in the header that renders the sidebar as a full-viewport overlay, restoring full chat width on narrow screens; (2) **Classification loading resilience** — `classificationLoadingTicksRef` tracks consecutive refreshTicks where context is saved but `agentType` is absent; spinner clears after 2 unanswered ticks, preventing the infinite "Classifying…" state when classification API fails silently; (3) **Context cold-path** — `onContextSubmit` DB save now wrapped in try/catch with explicit throw + console.error; tool surfaces a clean "Failed to save context — please try again" message to Claude instead of an unhandled exception; classification failure remains non-fatal. 0 new files, 3 modified, 0 migrations, 0 new deps. tsc: 0 errors.
 
 ---
 

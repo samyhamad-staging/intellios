@@ -38,6 +38,34 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 075 — 2026-03-31
+
+**Intake v2 P1 Hardening**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Codebase exploration | Read route.ts, page.tsx, intake-progress.tsx, tool-call-display.tsx, chat-container.tsx; explore agent | ~80k in / ~3k out |
+| Implementation | 3 targeted fixes (mobile sidebar, classification resilience, cold-path) | ~15k in / ~4k out |
+| TypeScript check | tsc --noEmit | ~5k in / ~0.5k out |
+| Documentation | Session log 075, _index, effort log, roadmap, project journal | ~10k in / ~3k out |
+| **Session total (est.)** | | **~110k in / ~10.5k out** |
+
+**Estimated session cost:** Sonnet ~110k in × $3/1M + ~10.5k out × $15/1M = **$0.33 + $0.16 = ~$0.49**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~2 |
+| Decisions made | 1 (D-Approve: proceed with P1 sprint) |
+| Engagement type | Strategic direction |
+| Estimated time | ~10 min |
+
+---
+
 ## Session 074 — 2026-03-31
 
 **Intake Transparency Overhaul + Tool Call Enhancement**
