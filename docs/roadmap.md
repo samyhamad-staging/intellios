@@ -2,7 +2,13 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-03-31 (Session 075 — Intake v2 P1 hardening)
+**Last updated:** 2026-03-31 (Session 076 — UI/UX Optimization Sprint Phase 0–3)
+
+---
+
+## ✓ Session 076 Complete (2026-03-31) — UI/UX Optimization Sprint (Phase 0–3)
+
+UI/UX Optimization Sprint initial pass. Fixed a latent animation bug (tw-animate-css installed; all dialog/dropdown animations now functional). Replaced the 465-line custom command palette with cmdk (polished fuzzy search, keyboard nav, animations). Added sonner toast system (global `<Toaster>` in layout; replaced custom `[toast, setToast]` inline state in 3 admin pages). Created Radix-backed UI components: `tabs.tsx` (applied to registry agents/workflows toggle), `select.tsx`, `sheet.tsx`. Added `animate-in slide-in-from-right` to the mobile intake sidebar overlay. Installed Recharts and created 3 shared chart wrappers (`BarChart`, `LineChart`, `DonutChart`) with a design token map (`chart-tokens.ts`). Created `Skeleton`/`SkeletonList` and `EmptyState` utility components; applied both to `registry/page.tsx` (replacing manual pulse arrays and inline empty state divs). 9 new files, 8 modified, 6 new dependencies. tsc: 0 errors.
 
 ---
 

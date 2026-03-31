@@ -4,6 +4,9 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Search, Bot, ChevronRight, Copy, X, Inbox, GitBranch } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -145,20 +148,12 @@ export default function RegistryPage() {
       </div>
 
       {/* Artifact-type tabs */}
-      <div className="mb-5 flex gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 w-fit">
-        <button
-          onClick={() => switchTab("agents")}
-          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === "agents" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-        >
-          <Bot size={14} /> Agents
-        </button>
-        <button
-          onClick={() => switchTab("workflows")}
-          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === "workflows" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-        >
-          <GitBranch size={14} /> Workflows
-        </button>
-      </div>
+      <Tabs value={activeTab} onValueChange={(v) => switchTab(v as ArtifactTab)} className="mb-5">
+        <TabsList>
+          <TabsTrigger value="agents"><Bot size={14} /> Agents</TabsTrigger>
+          <TabsTrigger value="workflows"><GitBranch size={14} /> Workflows</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Search + filter bar */}
       <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -202,14 +197,7 @@ export default function RegistryPage() {
         )}
       </div>
 
-      {/* Loading */}
-      {loading && (
-        <div className="space-y-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-xl bg-gray-100" />
-          ))}
-        </div>
-      )}
+      {loading && <SkeletonList rows={4} />}
 
       {/* Error */}
       {error && (
@@ -220,22 +208,28 @@ export default function RegistryPage() {
       {activeTab === "agents" && !agentsLoading && !agentsError && (
         <>
           {agents.length === 0 && (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
-              <Inbox size={32} className="mb-4 text-gray-300" />
-              <p className="mb-1 text-sm font-medium text-gray-500">No agents in the registry yet</p>
-              <Link href="/intake" className="mt-2 text-xs text-violet-600 hover:text-violet-700">Start an intake session →</Link>
-              <Link href="/templates" className="mt-1 text-xs text-violet-600 hover:text-violet-700">Browse templates →</Link>
-            </div>
+            <EmptyState
+              icon={Inbox}
+              heading="No agents in the registry yet"
+              action={
+                <div className="flex flex-col items-center gap-1">
+                  <Link href="/intake" className="text-xs text-violet-600 hover:text-violet-700">Start an intake session →</Link>
+                  <Link href="/templates" className="text-xs text-violet-600 hover:text-violet-700">Browse templates →</Link>
+                </div>
+              }
+            />
           )}
 
           {agents.length > 0 && filteredAgents.length === 0 && (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
-              <Search size={28} className="mb-3 text-gray-300" />
-              <p className="text-sm text-gray-500">No agents match your filters</p>
-              <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="mt-2 text-xs text-violet-600 hover:text-violet-700 underline">
-                Clear filters
-              </button>
-            </div>
+            <EmptyState
+              icon={Search}
+              heading="No agents match your filters"
+              action={
+                <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="text-xs text-violet-600 hover:text-violet-700 underline">
+                  Clear filters
+                </button>
+              }
+            />
           )}
 
           {filteredAgents.length > 0 && (
@@ -295,21 +289,23 @@ export default function RegistryPage() {
       {activeTab === "workflows" && !wflowsLoading && !wflowsError && (
         <>
           {wflows.length === 0 && (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
-              <Inbox size={32} className="mb-4 text-gray-300" />
-              <p className="mb-1 text-sm font-medium text-gray-500">No workflows yet</p>
-              <p className="text-xs text-gray-400">Create a workflow to orchestrate multiple agents into a pipeline.</p>
-            </div>
+            <EmptyState
+              icon={Inbox}
+              heading="No workflows yet"
+              subtext="Create a workflow to orchestrate multiple agents into a pipeline."
+            />
           )}
 
           {wflows.length > 0 && filteredWflows.length === 0 && (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
-              <Search size={28} className="mb-3 text-gray-300" />
-              <p className="text-sm text-gray-500">No workflows match your filters</p>
-              <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="mt-2 text-xs text-violet-600 hover:text-violet-700 underline">
-                Clear filters
-              </button>
-            </div>
+            <EmptyState
+              icon={Search}
+              heading="No workflows match your filters"
+              action={
+                <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="text-xs text-violet-600 hover:text-violet-700 underline">
+                  Clear filters
+                </button>
+              }
+            />
           )}
 
           {filteredWflows.length > 0 && (

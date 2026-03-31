@@ -2,6 +2,22 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 076 — 2026-03-31: From Functional to Professional
+
+Sessions 074 and 075 made the intake trustworthy. Session 076 addresses a different kind of problem: Intellios works, but it doesn't yet *feel* professional. UX 7.5/10 and UI 7/10 are respectable scores for a product at this stage, but a design partner's first impression is formed by details: does the modal animate smoothly when it opens? Does the keyboard navigation in the search palette feel polished? Do error messages appear in place or as native browser alerts? These are the details that distinguish "this is a working prototype" from "this is a product I could demo."
+
+**The animation bug was embarrassing to discover but easy to fix.** `tw-animate-css` was referenced in two component files but not installed — meaning every Radix dialog and dropdown menu had been animating incorrectly (or not at all) since these components were written. The fix is one npm install and one CSS import. The lesson is that this kind of dependency gap is invisible during development because the components still render; only close inspection of the actual animation behavior reveals the problem. This is why verification passes matter.
+
+**The command palette replacement is the highest-leverage change.** The custom 465-line implementation was functionally correct but brittle — manual keyboard index tracking, manual scroll-into-view, custom fuzzy search. cmdk is a battle-tested library used by thousands of applications (including linear, shadcn/ui itself, and many others). It handles all of this correctly, including edge cases (vim bindings, list wrapping, IME input). The replacement is 260 lines with better behavior across the board. The architecture of the component (nav catalogue, role filtering, debounced agent search) is completely preserved — only the rendering and interaction layer was replaced.
+
+**The sonner migration removes a category of repetitive code.** Three admin pages had identical patterns: state variable, useCallback with setTimeout, inline JSX toast div. This is the kind of code that accumulates because it works, not because it's the right design. With a global `<Toaster>` in layout and `toast.success()` / `toast.error()` available anywhere, the pages get shorter and more readable, and the toast behavior is now consistent across the app rather than per-page.
+
+**The component library additions (Tabs, Select, Sheet, Skeleton, EmptyState) are infrastructure investments.** They don't change what the app does today, but they define the vocabulary for building it going forward. When a new page needs a skeleton loading state, it uses `<SkeletonList>`. When a new form needs a dropdown, it uses `<Select>`. The Recharts chart wrappers are particularly important because they create a bridge from Tailwind v4 design tokens (CSS variables, which Recharts can't read) to hex values that Recharts can consume directly. Future chart implementations don't need to rediscover this mapping.
+
+**This sprint is deliberately not trying to replace everything at once.** The Tabs component is applied to the simple registry tab toggle; the complex registry agent detail page (with its 8-tab navigation) is a Phase 1B follow-on. The Select component is created but not yet applied to all raw `<select>` elements. The chart wrappers are created but not yet applied to the quality dashboard and fleet governance pages. This is the right sequencing: build the infrastructure, apply it incrementally, verify at each step. The alternative — touching 30 files at once — would create a large diff with significant regression risk for minimal additional first-impression benefit.
+
+---
+
 ## Session 075 — 2026-03-31: Hardening Before Showing
 
 Session 074 built the transparency layer. Session 075 is about making it robust.

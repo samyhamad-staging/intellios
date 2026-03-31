@@ -16,6 +16,7 @@ const geistMono = localFont({
   display: "swap",
   weight: "100 900",
 });
+import { Toaster } from "sonner";
 import Sidebar from "@/components/nav/sidebar";
 import Providers from "@/components/providers";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
@@ -45,6 +46,7 @@ export default async function RootLayout({
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="antialiased" style={{ backgroundColor: "var(--content-bg)" }}>
         <Providers session={session}>
+          <Toaster position="bottom-right" richColors />
           {session?.user ? (
             <div className="flex h-screen overflow-hidden">
               <Sidebar

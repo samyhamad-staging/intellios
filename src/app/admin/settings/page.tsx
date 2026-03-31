@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
 import type { EnterpriseSettings, ApprovalChainStep } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
@@ -9,8 +10,6 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<EnterpriseSettings>(DEFAULT_ENTERPRISE_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
-
   useEffect(() => {
     fetch("/api/admin/settings")
       .then((r) => r.json())
@@ -21,11 +20,6 @@ export default function AdminSettingsPage() {
       .catch(() => {
         setLoading(false);
       });
-  }, []);
-
-  const showToast = useCallback((type: "success" | "error", message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 4000);
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -42,13 +36,13 @@ export default function AdminSettingsPage() {
       }
       const data = await res.json();
       setSettings(data.settings);
-      showToast("success", "Settings saved successfully.");
+      toast.success("Settings saved successfully.");
     } catch (err) {
-      showToast("error", err instanceof Error ? err.message : "Save failed");
+      toast.error(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSaving(false);
     }
-  }, [settings, showToast]);
+  }, [settings]);
 
   if (loading) {
     return (
@@ -76,19 +70,6 @@ export default function AdminSettingsPage() {
           {saving ? "Saving…" : "Save Settings"}
         </button>
       </div>
-
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 rounded-lg border px-4 py-3 text-sm shadow-lg ${
-            toast.type === "success"
-              ? "border-green-200 bg-green-50 text-green-800"
-              : "border-red-200 bg-red-50 text-red-800"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
 
       <div className="space-y-6">
 

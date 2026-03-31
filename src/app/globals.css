@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 /* ── Design token layer — semantic aliases exposed as Tailwind utilities ─ */
 @theme {
@@ -139,6 +140,24 @@
 
 /* ── Design tokens ─────────────────────────────────────────────────────── */
 :root {
+  /* shadcn/ui compat aliases */
+  --radius: 0.5rem;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --border: #e1e5ef;
+  --input: #e1e5ef;
+  --ring: #4f46e5;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --muted: #f0f2f8;
+  --muted-foreground: #64748b;
+  --accent: #eef2ff;
+  --accent-foreground: #4f46e5;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
   /* Sidebar */
   --sidebar-bg: #0c1222;
   --sidebar-border: #1a2338;

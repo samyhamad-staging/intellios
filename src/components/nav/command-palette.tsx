@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Command } from "cmdk";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -18,11 +19,10 @@ import {
   Settings,
   Webhook,
   Search,
-  ArrowRight,
   Bot,
 } from "lucide-react";
 
-// ── Nav item catalogue ─────────────────────────────────────────────────────────
+// ── Nav item catalogue ──────────────────────────────────────────────────────
 
 interface NavEntry {
   label: string;
@@ -30,7 +30,7 @@ interface NavEntry {
   href: string;
   section: string;
   icon: React.ElementType;
-  roles: string[]; // "all" = every role
+  roles: string[];
   keywords: string[];
 }
 
@@ -163,27 +163,6 @@ const ALL_ENTRIES: NavEntry[] = [
   },
 ];
 
-function matchesRole(entry: NavEntry, role: string): boolean {
-  return entry.roles.includes("all") || entry.roles.includes(role);
-}
-
-function matchesQuery(entry: NavEntry, query: string): boolean {
-  if (!query) return true;
-  const q = query.toLowerCase();
-  return (
-    entry.label.toLowerCase().includes(q) ||
-    entry.description.toLowerCase().includes(q) ||
-    entry.keywords.some((k) => k.includes(q))
-  );
-}
-
-// ── Component ──────────────────────────────────────────────────────────────────
-
-interface Props {
-  role: string;
-  onClose: () => void;
-}
-
 interface AgentResult {
   agentId: string;
   name: string | null;
@@ -192,16 +171,39 @@ interface AgentResult {
   tags: string[];
 }
 
+const STATUS_DOTS: Record<string, string> = {
+  draft: "bg-gray-400",
+  in_review: "bg-amber-400",
+  approved: "bg-green-400",
+  deployed: "bg-violet-400",
+  rejected: "bg-red-400",
+  deprecated: "bg-gray-300",
+};
+
+// ── Component ───────────────────────────────────────────────────────────────
+
+interface Props {
+  role: string;
+  onClose: () => void;
+}
+
 export function CommandPalette({ role, onClose }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-
-  // Dynamic agent search
   const [agentResults, setAgentResults] = useState<AgentResult[]>([]);
   const agentFetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const entries = ALL_ENTRIES.filter(
+    (e) => e.roles.includes("all") || e.roles.includes(role)
+  );
+
+  // Group nav entries by section
+  const grouped = new Map<string, NavEntry[]>();
+  for (const entry of entries) {
+    const arr = grouped.get(entry.section) ?? [];
+    arr.push(entry);
+    grouped.set(entry.section, arr);
+  }
 
   const fetchAgents = useCallback(async (q: string) => {
     if (q.length < 2) { setAgentResults([]); return; }
@@ -223,242 +225,123 @@ export function CommandPalette({ role, onClose }: Props) {
     } catch { /* non-critical */ }
   }, []);
 
-  // Debounced agent search
   useEffect(() => {
     if (agentFetchTimer.current) clearTimeout(agentFetchTimer.current);
     agentFetchTimer.current = setTimeout(() => fetchAgents(query), 200);
     return () => { if (agentFetchTimer.current) clearTimeout(agentFetchTimer.current); };
   }, [query, fetchAgents]);
 
-  const entries = useMemo(() => {
-    return ALL_ENTRIES.filter(
-      (e) => matchesRole(e, role) && matchesQuery(e, query)
-    );
-  }, [role, query]);
-
-  // Total items = nav entries + agent results
-  const totalItems = entries.length + agentResults.length;
-
-  // Group by section
-  const grouped = useMemo(() => {
-    const map = new Map<string, NavEntry[]>();
-    for (const entry of entries) {
-      const arr = map.get(entry.section) ?? [];
-      arr.push(entry);
-      map.set(entry.section, arr);
-    }
-    return map;
-  }, [entries]);
-
-  // Reset selection when query changes
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
-
-  // Focus input on mount
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  // Keyboard navigation
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        onClose();
-        return;
-      }
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setSelectedIndex((i) => Math.min(i + 1, totalItems - 1));
-      }
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setSelectedIndex((i) => Math.max(i - 1, 0));
-      }
-      if (e.key === "Enter") {
-        e.preventDefault();
-        if (selectedIndex < entries.length) {
-          const entry = entries[selectedIndex];
-          if (entry) navigate(entry.href);
-        } else {
-          const agentIdx = selectedIndex - entries.length;
-          const agent = agentResults[agentIdx];
-          if (agent) navigate(`/registry/${agent.agentId}`);
-        }
-      }
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [entries, selectedIndex, onClose, totalItems, agentResults]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Scroll selected item into view
-  useEffect(() => {
-    const el = listRef.current?.querySelector("[data-selected=true]");
-    el?.scrollIntoView({ block: "nearest" });
-  }, [selectedIndex]);
-
   function navigate(href: string) {
     router.push(href);
     onClose();
   }
 
-  // Flat index across sections for keyboard selection
-  let flatIndex = 0;
-
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px]"
+        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] animate-in fade-in-0 duration-150"
         onClick={onClose}
       />
 
       {/* Palette */}
-      <div className="fixed left-1/2 top-[20vh] z-50 w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl shadow-black/10">
-        {/* Search input */}
-        <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-3.5">
-          <Search size={15} className="shrink-0 text-gray-400" />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search pages and agents…"
-            className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
-          />
-          <kbd className="shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-2xs font-medium text-gray-400">
-            ESC
-          </kbd>
-        </div>
+      <div className="fixed left-1/2 top-[20vh] z-50 w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl shadow-black/10 animate-in fade-in-0 zoom-in-95 duration-150">
+        <Command
+          label="Command palette"
+          onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
+          shouldFilter
+        >
+          {/* Search input */}
+          <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-3.5">
+            <Search size={15} className="shrink-0 text-gray-400" />
+            <Command.Input
+              value={query}
+              onValueChange={setQuery}
+              placeholder="Search pages and agents…"
+              className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
+            />
+            <kbd className="shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-2xs font-medium text-gray-400">
+              ESC
+            </kbd>
+          </div>
 
-        {/* Results */}
-        <div ref={listRef} className="max-h-80 overflow-y-auto py-2">
-          {totalItems === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-gray-400">
+          {/* Results */}
+          <Command.List className="max-h-80 overflow-y-auto py-2">
+            <Command.Empty className="px-4 py-6 text-center text-sm text-gray-400">
               No results for &ldquo;{query}&rdquo;
-            </p>
-          ) : (
-            <>
+            </Command.Empty>
+
             {Array.from(grouped.entries()).map(([section, items]) => (
-              <div key={section} className="mb-1">
-                <p className="mb-1 px-4 pt-1 text-2xs font-semibold uppercase tracking-widest text-gray-400">
-                  {section}
-                </p>
+              <Command.Group key={section} heading={section} className="mb-1 [&_[cmdk-group-heading]]:mb-1 [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:pt-1 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-gray-400">
                 {items.map((entry) => {
                   const Icon = entry.icon;
-                  const isSelected = flatIndex === selectedIndex;
-                  const currentFlatIndex = flatIndex;
-                  flatIndex++;
-
+                  const searchValue = [entry.label, entry.description, ...entry.keywords].join(" ");
                   return (
-                    <button
+                    <Command.Item
                       key={entry.href}
-                      data-selected={isSelected}
-                      onClick={() => navigate(entry.href)}
-                      onMouseEnter={() => setSelectedIndex(currentFlatIndex)}
-                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                        isSelected ? "bg-violet-50" : "hover:bg-gray-50"
-                      }`}
+                      value={searchValue}
+                      onSelect={() => navigate(entry.href)}
+                      className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 hover:bg-gray-50"
                     >
-                      <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
-                          isSelected
-                            ? "border-violet-200 bg-violet-100 text-violet-600"
-                            : "border-gray-200 bg-gray-50 text-gray-500"
-                        }`}
-                      >
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-500 group-aria-selected:border-violet-200 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600">
                         <Icon size={14} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p
-                          className={`text-sm font-medium ${
-                            isSelected ? "text-violet-700" : "text-gray-800"
-                          }`}
-                        >
+                        <p className="text-sm font-medium text-gray-800 group-aria-selected:text-violet-700">
                           {entry.label}
                         </p>
-                        <p className="truncate text-xs text-gray-400">
-                          {entry.description}
-                        </p>
+                        <p className="truncate text-xs text-gray-400">{entry.description}</p>
                       </div>
-                      {isSelected && (
-                        <ArrowRight size={13} className="shrink-0 text-violet-400" />
-                      )}
-                    </button>
+                    </Command.Item>
                   );
                 })}
-              </div>
+              </Command.Group>
             ))}
 
-            {/* Agent search results */}
             {agentResults.length > 0 && (
-              <div className="mb-1">
-                <p className="mb-1 px-4 pt-1 text-2xs font-semibold uppercase tracking-widest text-gray-400">
-                  Agents
-                </p>
-                {agentResults.map((agent, i) => {
-                  const agentFlatIndex = entries.length + i;
-                  const isSelected = agentFlatIndex === selectedIndex;
-                  const STATUS_DOTS: Record<string, string> = {
-                    draft: "bg-gray-400", in_review: "bg-amber-400",
-                    approved: "bg-green-400", deployed: "bg-violet-400",
-                    rejected: "bg-red-400", deprecated: "bg-gray-300",
-                  };
-                  return (
-                    <button
-                      key={agent.agentId}
-                      data-selected={isSelected}
-                      onClick={() => navigate(`/registry/${agent.agentId}`)}
-                      onMouseEnter={() => setSelectedIndex(agentFlatIndex)}
-                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                        isSelected ? "bg-violet-50" : "hover:bg-gray-50"
-                      }`}
-                    >
-                      <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
-                          isSelected
-                            ? "border-violet-200 bg-violet-100 text-violet-600"
-                            : "border-gray-200 bg-gray-50 text-gray-500"
-                        }`}
-                      >
-                        <Bot size={14} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-sm font-medium ${isSelected ? "text-violet-700" : "text-gray-800"}`}>
-                          {agent.name ?? "Unnamed Agent"}
-                        </p>
-                        <p className="truncate text-xs text-gray-400">
-                          <span className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOTS[agent.status] ?? "bg-gray-300"}`} />
-                          {agent.status.replace("_", " ")} · v{agent.version}
-                          {agent.tags?.length > 0 && ` · ${agent.tags.slice(0, 2).join(", ")}`}
-                        </p>
-                      </div>
-                      {isSelected && (
-                        <ArrowRight size={13} className="shrink-0 text-violet-400" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              <Command.Group heading="Agents" className="mb-1 [&_[cmdk-group-heading]]:mb-1 [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:pt-1 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-gray-400">
+                {agentResults.map((agent) => (
+                  <Command.Item
+                    key={agent.agentId}
+                    value={[agent.name ?? "", agent.agentId, ...(agent.tags ?? [])].join(" ")}
+                    onSelect={() => navigate(`/registry/${agent.agentId}`)}
+                    className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 hover:bg-gray-50"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-500 group-aria-selected:border-violet-200 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600">
+                      <Bot size={14} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-800">
+                        {agent.name ?? "Unnamed Agent"}
+                      </p>
+                      <p className="truncate text-xs text-gray-400">
+                        <span className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOTS[agent.status] ?? "bg-gray-300"}`} />
+                        {agent.status.replace("_", " ")} · v{agent.version}
+                        {agent.tags?.length > 0 && ` · ${agent.tags.slice(0, 2).join(", ")}`}
+                      </p>
+                    </div>
+                  </Command.Item>
+                ))}
+              </Command.Group>
             )}
-            </>
-          )}
-        </div>
+          </Command.List>
 
-        {/* Footer hint */}
-        <div className="flex items-center gap-3 border-t border-gray-100 px-4 py-2">
-          <div className="flex items-center gap-1 text-2xs text-gray-400">
-            <kbd className="rounded border border-gray-200 bg-gray-50 px-1 py-0.5 font-medium">↑↓</kbd>
-            <span>navigate</span>
+          {/* Footer hint */}
+          <div className="flex items-center gap-3 border-t border-gray-100 px-4 py-2">
+            <div className="flex items-center gap-1 text-2xs text-gray-400">
+              <kbd className="rounded border border-gray-200 bg-gray-50 px-1 py-0.5 font-medium">↑↓</kbd>
+              <span>navigate</span>
+            </div>
+            <div className="flex items-center gap-1 text-2xs text-gray-400">
+              <kbd className="rounded border border-gray-200 bg-gray-50 px-1 py-0.5 font-medium">↵</kbd>
+              <span>open</span>
+            </div>
+            <div className="ml-auto flex items-center gap-1 text-2xs text-gray-400">
+              <kbd className="rounded border border-gray-200 bg-gray-50 px-1 py-0.5 font-medium">⌘K</kbd>
+              <span>close</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1 text-2xs text-gray-400">
-            <kbd className="rounded border border-gray-200 bg-gray-50 px-1 py-0.5 font-medium">↵</kbd>
-            <span>open</span>
-          </div>
-          <div className="ml-auto flex items-center gap-1 text-2xs text-gray-400">
-            <kbd className="rounded border border-gray-200 bg-gray-50 px-1 py-0.5 font-medium">⌘K</kbd>
-            <span>close</span>
-          </div>
-        </div>
+        </Command>
       </div>
     </>
   );

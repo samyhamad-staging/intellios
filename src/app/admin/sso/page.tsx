@@ -11,6 +11,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
 import type { EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
@@ -56,8 +57,6 @@ export default function AdminSsoPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [platformConfigured, setPlatformConfigured] = useState(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
-
   // Group-role mapping as editable rows
   const [groupRows, setGroupRows] = useState<{ group: string; role: string }[]>([]);
 
@@ -80,11 +79,6 @@ export default function AdminSsoPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  const showToast = useCallback((type: "success" | "error", message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 4000);
-  }, []);
-
   const handleSave = useCallback(async () => {
     setSaving(true);
     const groupRoleMapping = Object.fromEntries(
@@ -99,13 +93,13 @@ export default function AdminSsoPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Save failed");
       setSso(data.sso);
-      showToast("success", "SSO settings saved.");
+      toast.success("SSO settings saved.");
     } catch (err) {
-      showToast("error", err instanceof Error ? err.message : "Save failed");
+      toast.error(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSaving(false);
     }
-  }, [sso, groupRows, showToast]);
+  }, [sso, groupRows]);
 
   if (loading) {
     return (
@@ -117,19 +111,6 @@ export default function AdminSsoPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 z-50 rounded-lg px-4 py-3 text-sm font-medium shadow-lg ${
-            toast.type === "success"
-              ? "bg-green-600 text-white"
-              : "bg-red-600 text-white"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
-
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
