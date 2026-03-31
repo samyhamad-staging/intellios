@@ -8,6 +8,14 @@ import { IntakeProgress } from "@/components/intake/intake-progress";
 import { IntakeReview } from "@/components/intake/intake-review";
 import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
 
+/** Static opener injected for fresh sessions — appears instantly, no API call needed. */
+const INTAKE_OPENER: UIMessage = {
+  id: "intake-opener",
+  role: "assistant",
+  parts: [{ type: "text" as const, text: "Tell me about the agent you want to build — what problem is it meant to solve, and who will use it?" }],
+  content: "Tell me about the agent you want to build — what problem is it meant to solve, and who will use it?",
+};
+
 interface DBMessage {
   id: string;
   role: string;
@@ -113,7 +121,8 @@ export default function IntakeSessionPage({
 
         // Go directly to conversation — context is collected conversationally
         const uiMessages = mapToUIMessages(messages ?? []);
-        setInitialMessages(uiMessages.length > 0 ? uiMessages : undefined);
+        // New sessions get the opener injected immediately (no loading delay, no API call)
+        setInitialMessages(uiMessages.length > 0 ? uiMessages : [INTAKE_OPENER]);
         setPhase("conversation");
       } catch {
         setPhase("conversation");
@@ -411,6 +420,32 @@ export default function IntakeSessionPage({
           <h1 className="text-lg font-semibold">Intellios</h1>
           <p className="text-xs text-text-secondary">Agent Intake</p>
         </div>
+
+        {/* Phase stepper */}
+        <div className="flex items-center gap-0">
+          {(["Context", "Requirements", "Review"] as const).map((label, i) => {
+            const done = (label === "Context" && !!intakeContext);
+            const active = (label === "Context" && !intakeContext) || (label === "Requirements" && !!intakeContext);
+            return (
+              <div key={label} className="flex items-center">
+                {i > 0 && <div className="w-6 h-px bg-border mx-1" />}
+                <div className="flex items-center gap-1.5">
+                  <span className={`flex h-4 w-4 items-center justify-center rounded-full text-2xs font-bold transition-colors ${
+                    done    ? "bg-primary text-white" :
+                    active  ? "border border-primary text-primary" :
+                              "border border-border text-text-tertiary"
+                  }`}>
+                    {done ? "✓" : i + 1}
+                  </span>
+                  <span className={`text-xs font-medium transition-colors ${
+                    active ? "text-text" : "text-text-tertiary"
+                  }`}>{label}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
         <div className="flex items-center gap-3">
           {discardConfirm ? (
             <>

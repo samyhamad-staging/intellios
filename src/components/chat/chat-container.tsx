@@ -127,10 +127,6 @@ export function ChatContainer({
               ))}
             </div>
           </div>
-        ) : isEmpty ? (
-          <div className="flex h-full items-center justify-center text-gray-400 text-sm">
-            Start by describing the agent you want to build.
-          </div>
         ) : null}
 
         {messages.map((msg) => {
