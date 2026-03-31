@@ -4,6 +4,8 @@ import { and, eq, inArray, isNull, lt, isNotNull } from "drizzle-orm";
 import Link from "next/link";
 import type { ValidationReport } from "@/lib/governance/types";
 import type { ABP } from "@/lib/types/abp";
+import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
 
 /**
  * FleetGovernanceDashboard — Phase 51.
@@ -71,11 +73,25 @@ function deriveGovernanceHealth(
   return { health: "pass", errorCount: 0, warningCount: 0 };
 }
 
-const TIER_CONFIG: Record<RiskTier, { label: string; bg: string; text: string; border: string }> = {
-  critical: { label: "Critical", bg: "bg-red-50",    text: "text-red-700",    border: "border-red-200" },
-  high:     { label: "High",     bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" },
-  medium:   { label: "Medium",   bg: "bg-amber-50",  text: "text-amber-700",  border: "border-amber-200" },
-  low:      { label: "Low",      bg: "bg-green-50",  text: "text-green-700",  border: "border-green-200" },
+const TIER_LABEL: Record<RiskTier, string> = {
+  critical: "Critical",
+  high:     "High",
+  medium:   "Medium",
+  low:      "Low",
+};
+
+const TIER_VARIANT: Record<RiskTier, BadgeVariant> = {
+  critical: "danger",
+  high:     "danger",
+  medium:   "warning",
+  low:      "success",
+};
+
+const TIER_TEXT_COLOR: Record<RiskTier, string> = {
+  critical: "text-red-700",
+  high:     "text-red-700",
+  medium:   "text-amber-700",
+  low:      "text-emerald-700",
 };
 
 const TIERS: RiskTier[] = ["critical", "high", "medium", "low"];
@@ -173,12 +189,11 @@ export async function FleetGovernanceDashboard({
         <div className="flex items-center gap-4">
           <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Risk</span>
           {TIERS.map((tier) => {
-            const cfg = TIER_CONFIG[tier];
             const count = tierCounts[tier];
             return (
               <span key={tier} className="flex items-center gap-1.5">
-                <span className={`text-sm font-bold ${cfg.text}`}>{count}</span>
-                <span className={`text-xs ${cfg.text} opacity-70`}>{cfg.label}</span>
+                <span className={`text-sm font-bold ${TIER_TEXT_COLOR[tier]}`}>{count}</span>
+                <span className={`text-xs ${TIER_TEXT_COLOR[tier]} opacity-70`}>{TIER_LABEL[tier]}</span>
               </span>
             );
           })}
@@ -186,22 +201,13 @@ export async function FleetGovernanceDashboard({
         {hasAlerts && (
           <div className="flex items-center gap-2">
             {overdueCount > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                {overdueCount} overdue
-              </span>
+              <Badge variant="danger" dot>{overdueCount} overdue</Badge>
             )}
             {errorCount > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-medium text-orange-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-                {errorCount} error{errorCount !== 1 ? "s" : ""}
-              </span>
+              <Badge variant="warning" dot>{errorCount} error{errorCount !== 1 ? "s" : ""}</Badge>
             )}
             {unvalidatedCount > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-500">
-                <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
-                {unvalidatedCount} unvalidated
-              </span>
+              <Badge variant="neutral" dot>{unvalidatedCount} unvalidated</Badge>
             )}
           </div>
         )}
@@ -231,7 +237,6 @@ export async function FleetGovernanceDashboard({
           </thead>
           <tbody>
             {agents.map((agent, i) => {
-              const tierCfg = TIER_CONFIG[agent.riskTier];
               return (
                 <tr
                   key={agent.id}
@@ -258,32 +263,24 @@ export async function FleetGovernanceDashboard({
 
                   {/* Risk tier badge */}
                   <td className="px-4 py-3">
-                    <span
-                      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${tierCfg.bg} ${tierCfg.text} border ${tierCfg.border}`}
-                    >
-                      {tierCfg.label}
-                    </span>
+                    <Badge variant={TIER_VARIANT[agent.riskTier]}>
+                      {TIER_LABEL[agent.riskTier]}
+                    </Badge>
                   </td>
 
                   {/* Governance health */}
                   <td className="px-4 py-3">
                     {agent.governance === "pass" && (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
-                        <span className="text-green-500">✓</span> Passes
-                      </span>
+                      <Badge variant="success">Passes</Badge>
                     )}
                     {agent.governance === "warning" && (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700">
-                        <span>⚠</span> {agent.warningCount} warning{agent.warningCount !== 1 ? "s" : ""}
-                      </span>
+                      <Badge variant="warning">{agent.warningCount} warning{agent.warningCount !== 1 ? "s" : ""}</Badge>
                     )}
                     {agent.governance === "error" && (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700">
-                        <span>✗</span> {agent.errorCount} error{agent.errorCount !== 1 ? "s" : ""}
-                      </span>
+                      <Badge variant="danger">{agent.errorCount} error{agent.errorCount !== 1 ? "s" : ""}</Badge>
                     )}
                     {agent.governance === "unvalidated" && (
-                      <span className="text-xs text-gray-400">Not validated</span>
+                      <Badge variant="muted">Not validated</Badge>
                     )}
                   </td>
 
@@ -292,9 +289,7 @@ export async function FleetGovernanceDashboard({
                     {agent.nextReviewDue == null ? (
                       <span className="text-xs text-gray-300">—</span>
                     ) : agent.isOverdue ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-                        Overdue
-                      </span>
+                      <Badge variant="danger">Overdue</Badge>
                     ) : (
                       <span className="text-xs text-gray-500">
                         {agent.nextReviewDue.toLocaleDateString(undefined, { dateStyle: "medium" })}

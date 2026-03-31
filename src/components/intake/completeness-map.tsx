@@ -20,6 +20,7 @@
 
 import { IntakePayload, IntakeContext, IntakeRiskTier, StakeholderContribution, ContributionDomain } from "@/lib/types/intake";
 import { getExpectedContributionDomains } from "@/lib/intake/coverage";
+import { Badge } from "@/components/ui/badge";
 
 interface DomainStatus {
   key: string;
@@ -303,26 +304,26 @@ export function CompletenessMap({
           <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
             Completeness Map
           </div>
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+          <Badge variant="neutral">
             {filledCount} of {domains.length} sections captured
-          </span>
+          </Badge>
         </div>
         {/* Summary badges */}
         <div className="flex items-center gap-1.5">
           {requiredEmptyCount > 0 && (
-            <span className="rounded-full bg-red-100 border border-red-200 px-2 py-0.5 text-xs text-red-700">
+            <Badge variant="danger">
               {requiredEmptyCount} required missing
-            </span>
+            </Badge>
           )}
           {sparseCount > 0 && (
-            <span className="rounded-full bg-amber-100 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">
+            <Badge variant="warning">
               {sparseCount} sparse
-            </span>
+            </Badge>
           )}
           {requiredEmptyCount === 0 && sparseCount === 0 && (
-            <span className="rounded-full bg-green-100 border border-green-200 px-2 py-0.5 text-xs text-green-700">
+            <Badge variant="success">
               Requirements Sufficient
-            </span>
+            </Badge>
           )}
         </div>
       </div>
@@ -370,12 +371,13 @@ export function CompletenessMap({
                 </span>
                 {/* Stakeholder badge */}
                 {domain.hasStakeholderInput && (
-                  <span
-                    className="ml-auto text-[10px] rounded-full bg-violet-100 border border-violet-200 px-1.5 py-0.5 text-violet-700 shrink-0"
+                  <Badge
+                    variant="accent"
+                    className="ml-auto shrink-0"
                     title="Stakeholder input received"
                   >
                     ★
-                  </span>
+                  </Badge>
                 )}
               </div>
               <div

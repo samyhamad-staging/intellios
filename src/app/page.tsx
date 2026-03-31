@@ -35,13 +35,15 @@ function timeAgo(dateStr: string | Date): string {
   return `${Math.floor(diffDays / 7)}w ago`;
 }
 
+// Aligned with Badge design system variants:
+// neutral=gray, info=blue, success=emerald, warning=amber, danger=red, accent=violet, muted=gray-50
 const STATUS_CONFIG = {
-  draft:      { label: "Draft",      bg: "bg-slate-100",  text: "text-slate-600",  border: "border-slate-200" },
-  in_review:  { label: "In Review",  bg: "bg-blue-50",    text: "text-blue-700",   border: "border-blue-200"  },
-  approved:   { label: "Approved",   bg: "bg-green-50",   text: "text-green-700",  border: "border-green-200" },
-  deployed:   { label: "Deployed",   bg: "bg-violet-50",  text: "text-violet-700", border: "border-violet-200"},
-  rejected:   { label: "Rejected",   bg: "bg-red-50",     text: "text-red-700",    border: "border-red-200"   },
-  deprecated: { label: "Deprecated", bg: "bg-amber-50",   text: "text-amber-700",  border: "border-amber-200" },
+  draft:      { label: "Draft",      text: "text-gray-600"    },
+  in_review:  { label: "In Review",  text: "text-blue-700"    },
+  approved:   { label: "Approved",   text: "text-emerald-700" },
+  deployed:   { label: "Deployed",   text: "text-violet-700"  },
+  rejected:   { label: "Rejected",   text: "text-red-700"     },
+  deprecated: { label: "Deprecated", text: "text-gray-500"    },
 } as const;
 
 export default async function Home() {
