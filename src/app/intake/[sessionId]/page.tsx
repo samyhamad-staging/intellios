@@ -5,9 +5,16 @@ import { useRouter } from "next/navigation";
 import type { UIMessage } from "ai";
 import { ChatContainer } from "@/components/chat/chat-container";
 import { IntakeProgress } from "@/components/intake/intake-progress";
-import { IntakeContextForm } from "@/components/intake/intake-context-form";
 import { IntakeReview } from "@/components/intake/intake-review";
 import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
+
+/** Static opener injected for fresh sessions — appears instantly, no API call needed. */
+const INTAKE_OPENER: UIMessage = {
+  id: "intake-opener",
+  role: "assistant",
+  parts: [{ type: "text" as const, text: "Tell me about the agent you want to build — what problem is it meant to solve, and who will use it?" }],
+  content: "Tell me about the agent you want to build — what problem is it meant to solve, and who will use it?",
+};
 
 interface DBMessage {
   id: string;
@@ -25,7 +32,7 @@ function mapToUIMessages(dbMessages: DBMessage[]): UIMessage[] {
 }
 
 /** Which phase the UI is currently showing */
-type Phase = "loading" | "context-form" | "conversation" | "review";
+type Phase = "loading" | "conversation" | "review";
 
 export default function IntakeSessionPage({
   params,
@@ -112,18 +119,13 @@ export default function IntakeSessionPage({
           return;
         }
 
-        // If no context yet → show Phase 1 form
-        if (!storedContext) {
-          setPhase("context-form");
-          return;
-        }
-
-        // Context present → show conversation
+        // Go directly to conversation — context is collected conversationally
         const uiMessages = mapToUIMessages(messages ?? []);
-        setInitialMessages(uiMessages.length > 0 ? uiMessages : undefined);
+        // New sessions get the opener injected immediately (no loading delay, no API call)
+        setInitialMessages(uiMessages.length > 0 ? uiMessages : [INTAKE_OPENER]);
         setPhase("conversation");
       } catch {
-        setPhase("context-form");
+        setPhase("conversation");
       }
     }
     loadSession();
@@ -137,6 +139,21 @@ export default function IntakeSessionPage({
         const res = await fetch(`/api/intake/sessions/${sessionId}`);
         if (!res.ok) return;
         const { session } = await res.json();
+        // Pick up context + classification as conversation progresses
+        if (session?.intakeContext) {
+          setIntakeContext(session.intakeContext as IntakeContext);
+          if (!session.agentType) {
+            setClassificationLoading(true);
+          }
+        }
+        if (session?.agentType && session?.riskTier) {
+          setClassification({
+            agentType: session.agentType as AgentType,
+            riskTier: session.riskTier as IntakeRiskTier,
+            rationale: "",
+          });
+          setClassificationLoading(false);
+        }
         if (session?.status === "completed") {
           setIntakeScoreLoading(true);
           await Promise.all([
@@ -174,39 +191,6 @@ export default function IntakeSessionPage({
 
   function handleResponseComplete() {
     setRefreshTick((t) => t + 1);
-  }
-
-  function handleContextComplete(context: IntakeContext) {
-    setIntakeContext(context);
-    setPhase("conversation");
-    // Poll for async classification result (fires after context save)
-    setClassificationLoading(true);
-    let polls = 0;
-    const interval = setInterval(async () => {
-      polls++;
-      try {
-        const res = await fetch(`/api/intake/sessions/${sessionId}`);
-        if (res.ok) {
-          const { session } = await res.json();
-          if (session?.agentType && session?.riskTier) {
-            setClassification({
-              agentType: session.agentType as AgentType,
-              riskTier: session.riskTier as IntakeRiskTier,
-              rationale: "",
-            });
-            setClassificationLoading(false);
-            clearInterval(interval);
-            return;
-          }
-        }
-      } catch {
-        // Non-critical — keep polling
-      }
-      if (polls >= 10) {
-        setClassificationLoading(false);
-        clearInterval(interval);
-      }
-    }, 1500);
   }
 
   function handleContributionAdded(contribution: StakeholderContribution) {
@@ -302,24 +286,7 @@ export default function IntakeSessionPage({
     );
   }
 
-  // ─── Phase 1: Context Form ───────────────────────────────────────────────────
-
-  if (phase === "context-form") {
-    return (
-      <div className="flex h-screen flex-col">
-        <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-3">
-          <div>
-            <h1 className="text-lg font-semibold">Intellios</h1>
-            <p className="text-xs text-text-secondary">Agent Intake</p>
-          </div>
-          <div className="text-xs text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
-        </header>
-        <IntakeContextForm sessionId={sessionId} onComplete={handleContextComplete} />
-      </div>
-    );
-  }
-
-  // ─── Phase 3: Review ─────────────────────────────────────────────────────────
+  // ─── Phase: Review ───────────────────────────────────────────────────────────
 
   if (phase === "review") {
     const scoreColor =
@@ -393,7 +360,7 @@ export default function IntakeSessionPage({
                                 {d.value != null ? `${d.value.toFixed(1)}` : "—"}
                               </span>
                             </div>
-                            <p className="pl-[88px] text-[11px] text-text-tertiary leading-snug">{DIMENSION_DESCRIPTIONS[d.label]}</p>
+                            <p className="pl-[88px] text-xs-tight text-text-tertiary leading-snug">{DIMENSION_DESCRIPTIONS[d.label]}</p>
                           </div>
                         );
                       })}
@@ -453,6 +420,32 @@ export default function IntakeSessionPage({
           <h1 className="text-lg font-semibold">Intellios</h1>
           <p className="text-xs text-text-secondary">Agent Intake</p>
         </div>
+
+        {/* Phase stepper */}
+        <div className="flex items-center gap-0">
+          {(["Context", "Requirements", "Review"] as const).map((label, i) => {
+            const done = (label === "Context" && !!intakeContext);
+            const active = (label === "Context" && !intakeContext) || (label === "Requirements" && !!intakeContext);
+            return (
+              <div key={label} className="flex items-center">
+                {i > 0 && <div className="w-6 h-px bg-border mx-1" />}
+                <div className="flex items-center gap-1.5">
+                  <span className={`flex h-4 w-4 items-center justify-center rounded-full text-2xs font-bold transition-colors ${
+                    done    ? "bg-primary text-white" :
+                    active  ? "border border-primary text-primary" :
+                              "border border-border text-text-tertiary"
+                  }`}>
+                    {done ? "✓" : i + 1}
+                  </span>
+                  <span className={`text-xs font-medium transition-colors ${
+                    active ? "text-text" : "text-text-tertiary"
+                  }`}>{label}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
         <div className="flex items-center gap-3">
           {discardConfirm ? (
             <>

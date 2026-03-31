@@ -117,6 +117,25 @@ interface IntakeProgressProps {
   riskTier?: IntakeRiskTier | null;
 }
 
+const CONTEXT_AREAS = [
+  "Agent purpose",
+  "Deployment type",
+  "Data sensitivity",
+  "Regulatory scope",
+  "System integrations",
+  "Stakeholders",
+];
+
+const BLUEPRINT_SECTIONS = [
+  "Agent Identity",
+  "Tools & Capabilities",
+  "Behavioral Instructions",
+  "Knowledge Sources",
+  "Constraints",
+  "Governance Policies",
+  "Audit Configuration",
+];
+
 export function IntakeProgress({ sessionId, refreshTick, contributions = [], onContributionAdded, context, riskTier }: IntakeProgressProps) {
   const [sections, setSections] = useState<Section[]>(getSections({}));
   const [agentName, setAgentName] = useState<string | null>(null);
@@ -150,6 +169,60 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
   const pct = Math.round((filled / sections.length) * 100);
   const activeKey = sections.find((s) => s.required && !s.filled)?.key ?? null;
 
+  // Phase 1: no context yet — show session overview instead of Blueprint Progress
+  if (!context) {
+    return (
+      <aside className="w-72 shrink-0 border-l border-gray-200 bg-white p-5 flex flex-col gap-5 overflow-y-auto">
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Session Overview</h2>
+          <p className="text-xs text-gray-400">Here's what this conversation will cover.</p>
+        </div>
+
+        {/* Phase 1: Context */}
+        <div>
+          <div className="flex items-center gap-2 mb-2.5">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-white text-2xs font-bold">1</span>
+            <span className="text-xs font-semibold text-gray-800">Context</span>
+            <span className="text-2xs font-medium text-primary bg-primary/10 rounded-full px-1.5 py-0.5">Now</span>
+          </div>
+          <ul className="ml-7 flex flex-col gap-1.5">
+            {CONTEXT_AREAS.map((item) => (
+              <li key={item} className="flex items-center gap-2 text-xs text-gray-500">
+                <span className="h-1 w-1 rounded-full bg-gray-300 shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Phase 2: Requirements */}
+        <div>
+          <div className="flex items-center gap-2 mb-2.5">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-gray-200 text-gray-300 text-2xs font-bold">2</span>
+            <span className="text-xs font-semibold text-gray-400">Requirements</span>
+          </div>
+          <ul className="ml-7 flex flex-col gap-1.5">
+            {BLUEPRINT_SECTIONS.map((item) => (
+              <li key={item} className="flex items-center gap-2 text-xs text-gray-400">
+                <span className="h-1 w-1 rounded-full bg-gray-200 shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Phase 3: Review */}
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-gray-200 text-gray-300 text-2xs font-bold">3</span>
+            <span className="text-xs font-semibold text-gray-400">Review & Generate</span>
+          </div>
+          <p className="ml-7 mt-1.5 text-xs text-gray-400">Review captured requirements and generate the blueprint.</p>
+        </div>
+      </aside>
+    );
+  }
+
   return (
     <aside className="w-72 shrink-0 border-l border-gray-200 bg-white p-5 flex flex-col gap-4 overflow-y-auto">
       <div>
@@ -178,7 +251,7 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
         {sections.map((section) => (
           <li key={section.key} className="flex items-start gap-2.5">
             <span
-              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-2xs font-bold ${
                 section.filled
                   ? "bg-blue-500 text-white"
                   : section.key === activeKey
@@ -204,7 +277,7 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
                   {section.label}
                 </span>
                 {section.required && !section.filled && (
-                  <span className="text-[10px] text-red-400">required</span>
+                  <span className="text-2xs text-red-400">required</span>
                 )}
               </div>
               {section.detail && (
@@ -217,8 +290,8 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
         ))}
       </ul>
 
-      {/* Live Readiness Score — Phase 49 */}
-      {readiness !== null && (
+      {/* Live Readiness Score — only show once something has been captured */}
+      {readiness !== null && readiness.score > 0 && (
         <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-3">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-medium text-gray-500">Intake Readiness</span>
@@ -249,7 +322,7 @@ export function IntakeProgress({ sessionId, refreshTick, contributions = [], onC
           </div>
           {/* Label */}
           <div
-            className={`text-[11px] text-center font-medium ${
+            className={`text-xs-tight text-center font-medium ${
               readiness.label === "ready"
                 ? "text-green-700"
                 : readiness.label === "near-complete"
