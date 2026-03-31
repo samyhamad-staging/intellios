@@ -26,6 +26,7 @@ import {
   Package,
   Plug,
   Key,
+  ChevronDown,
 } from "lucide-react";
 import NotificationBell from "@/components/nav/notification-bell";
 import { HelpPanel } from "@/components/help/help-panel";
@@ -102,15 +103,24 @@ function getNavSections(role: string | null | undefined): NavSection[] {
   if (isReviewer || isViewer) opsItems.push({ label: "Monitor", href: "/monitor", icon: Activity });
   if (isCompliance || isViewer) opsItems.push({ label: "Dashboard", href: "/dashboard", icon: BarChart3 });
   if (isCompliance || isViewer) opsItems.push({ label: "Audit", href: "/audit", icon: ScrollText });
-  if (isAdmin) opsItems.push({ label: "Users", href: "/admin/users", icon: Users });
-  if (isAdmin) opsItems.push({ label: "Settings", href: "/admin/settings", icon: Settings });
-  if (isAdmin) opsItems.push({ label: "Webhooks", href: "/admin/webhooks", icon: Webhook });
-  if (isAdmin) opsItems.push({ label: "Fleet", href: "/admin/fleet", icon: Globe });
-  if (isAdmin) opsItems.push({ label: "Integrations", href: "/admin/integrations", icon: Plug });
-  if (isAdmin) opsItems.push({ label: "API Keys", href: "/admin/api-keys", icon: Key });
 
   if (opsItems.length > 0) {
     sections.push({ label: "Operations", items: opsItems });
+  }
+
+  // Admin settings — collapsed into a single expandable group
+  if (isAdmin) {
+    sections.push({
+      label: "Admin",
+      items: [
+        { label: "Users", href: "/admin/users", icon: Users },
+        { label: "Settings", href: "/admin/settings", icon: Settings },
+        { label: "Webhooks", href: "/admin/webhooks", icon: Webhook },
+        { label: "Fleet", href: "/admin/fleet", icon: Globe },
+        { label: "Integrations", href: "/admin/integrations", icon: Plug },
+        { label: "API Keys", href: "/admin/api-keys", icon: Key },
+      ],
+    });
   }
 
   return sections;
@@ -128,6 +138,10 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
     : "?";
 
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [adminExpanded, setAdminExpanded] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("intellios:admin-nav-expanded") === "true";
+  });
 
   // Global Cmd+K / Ctrl+K shortcut
   useEffect(() => {
@@ -204,16 +218,41 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
 
       {/* Nav */}
       <nav className="sidebar-scroll flex-1 overflow-y-auto px-2 py-3">
-        {sections.map((section, si) => (
+        {sections.map((section, si) => {
+          const isAdminSection = section.label === "Admin";
+          const isCollapsed = isAdminSection && !adminExpanded;
+
+          return (
           <div key={si} className={si > 0 ? "mt-4" : ""}>
             {section.label && (
+              isAdminSection ? (
+                <button
+                  onClick={() => {
+                    const next = !adminExpanded;
+                    setAdminExpanded(next);
+                    localStorage.setItem("intellios:admin-nav-expanded", String(next));
+                  }}
+                  className="mb-1 flex w-full items-center justify-between px-2 text-[10px] font-semibold uppercase tracking-widest"
+                  style={{ color: "var(--sidebar-text)", opacity: 0.5 }}
+                  aria-expanded={adminExpanded}
+                  aria-label="Toggle admin settings"
+                >
+                  {section.label}
+                  <ChevronDown
+                    size={10}
+                    className={`transition-transform ${adminExpanded ? "rotate-180" : ""}`}
+                  />
+                </button>
+              ) : (
               <p
                 className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest"
                 style={{ color: "var(--sidebar-text)", opacity: 0.5 }}
               >
                 {section.label}
               </p>
+              )
             )}
+            {!isCollapsed && (
             <ul className="space-y-0.5">
               {section.items.map((item) => {
                 const active = isActive(item.href);
@@ -242,8 +281,10 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
                 );
               })}
             </ul>
+            )}
           </div>
-        ))}
+          );
+        })}
       </nav>
 
       {/* User */}
