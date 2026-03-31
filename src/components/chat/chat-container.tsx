@@ -148,9 +148,12 @@ export function ChatContainer({
                   const toolName = part.type.replace("tool-", "");
                   const args =
                     "input" in part ? (part.input as Record<string, unknown>) : {};
+                  const state = "state" in part ? (part.state as string) : undefined;
+                  const output = "output" in part ? part.output : undefined;
+                  const errorText = "errorText" in part ? (part.errorText as string) : undefined;
                   return (
                     <div key={i} className="mb-2">
-                      <ToolCallDisplay toolName={toolName} args={args} />
+                      <ToolCallDisplay toolName={toolName} args={args} state={state} output={output} errorText={errorText} />
                     </div>
                   );
                 }
