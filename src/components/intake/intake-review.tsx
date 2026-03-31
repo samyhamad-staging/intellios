@@ -57,24 +57,10 @@ const DOMAIN_LABELS: Record<ContributionDomain, string> = {
   business: "Business",
 };
 
-const DOMAIN_COLORS: Record<ContributionDomain, string> = {
-  compliance: "bg-blue-50 text-blue-700 border-blue-200",
-  risk: "bg-orange-50 text-orange-700 border-orange-200",
-  legal: "bg-purple-50 text-purple-700 border-purple-200",
-  security: "bg-red-50 text-red-700 border-red-200",
-  it: "bg-gray-50 text-gray-700 border-gray-200",
-  operations: "bg-green-50 text-green-700 border-green-200",
-  business: "bg-yellow-50 text-yellow-700 border-yellow-200",
-};
+// All domain and policy badges use the neutral variant for consistency —
+// the label text provides the semantic differentiation, not the color.
 
-// RV-009: Policy type colored chips
-const POLICY_TYPE_COLORS: Record<string, string> = {
-  safety:         "bg-orange-50 text-orange-800 border-orange-200",
-  compliance:     "bg-sky-50 text-sky-800 border-sky-200",
-  data_handling:  "bg-violet-50 text-violet-800 border-violet-200",
-  access_control: "bg-indigo-50 text-indigo-800 border-indigo-200",
-  audit:          "bg-slate-50 text-slate-700 border-slate-200",
-};
+// RV-009: Policy type chips — all neutral
 
 // RV-004: Human-readable retention duration
 function formatRetentionDays(days: number): string {
@@ -89,13 +75,23 @@ function formatRetentionDays(days: number): string {
   return `${days}-day retention`;
 }
 
-// RV-012: Data sensitivity badge colors
-const DATA_SENSITIVITY_COLORS: Record<string, string> = {
-  public:       "bg-green-50 text-green-700 border-green-200",
-  internal:     "bg-blue-50 text-blue-700 border-blue-200",
-  confidential: "bg-amber-50 text-amber-700 border-amber-200",
-  pii:          "bg-orange-50 text-orange-700 border-orange-200",
-  regulated:    "bg-red-50 text-red-700 border-red-200",
+// RV-012: Data sensitivity uses semantic variants
+import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
+
+const DATA_SENSITIVITY_VARIANT: Record<string, BadgeVariant> = {
+  public:       "success",
+  internal:     "info",
+  confidential: "warning",
+  pii:          "danger",
+  regulated:    "danger",
+};
+
+const RISK_TIER_VARIANT: Record<string, BadgeVariant> = {
+  low:      "success",
+  medium:   "warning",
+  high:     "danger",
+  critical: "danger",
 };
 
 function formatDate(iso: string): string {
@@ -222,9 +218,9 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
                 <span className="text-gray-400">🛡</span>
                 <span className="font-medium">{p.name}</span>
                 {/* RV-009: Colored policy type chip */}
-                <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${POLICY_TYPE_COLORS[p.type] ?? "bg-gray-100 text-gray-500 border-gray-200"}`}>
+                <Badge variant="neutral">
                   {p.type.replace(/_/g, " ")}
-                </span>
+                </Badge>
               </div>
               {p.description && <div className="ml-5 text-xs text-gray-500 mt-0.5">{p.description}</div>}
             </li>
@@ -352,14 +348,9 @@ export function IntakeReview({
             <div className="flex items-center justify-between mb-3">
               <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Enterprise Context</div>
               {riskTier && (
-                <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase ${
-                  riskTier === "critical" ? "bg-red-50 text-red-800 border-red-200" :
-                  riskTier === "high"     ? "bg-orange-50 text-orange-800 border-orange-200" :
-                  riskTier === "medium"   ? "bg-amber-50 text-amber-800 border-amber-200" :
-                                            "bg-emerald-50 text-emerald-800 border-emerald-200"
-                }`}>
-                  {riskTier} risk
-                </span>
+                <Badge variant={RISK_TIER_VARIANT[riskTier] ?? "neutral"}>
+                  {riskTier.toUpperCase()} RISK
+                </Badge>
               )}
             </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
@@ -369,9 +360,9 @@ export function IntakeReview({
               </div>
               <div>
                 <div className="text-xs text-gray-400 mb-1">Data sensitivity</div>
-                <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold uppercase ${DATA_SENSITIVITY_COLORS[context.dataSensitivity] ?? "bg-gray-50 text-gray-700 border-gray-200"}`}>
-                  {context.dataSensitivity}
-                </span>
+                <Badge variant={DATA_SENSITIVITY_VARIANT[context.dataSensitivity] ?? "neutral"}>
+                  {context.dataSensitivity.toUpperCase()}
+                </Badge>
               </div>
               <div>
                 <div className="text-xs text-gray-400 mb-1">Regulatory scope</div>
@@ -457,14 +448,13 @@ export function IntakeReview({
               <div className="space-y-4">
                 {contributions.map((c) => {
                   const domain = c.domain as ContributionDomain;
-                  const colorClass = DOMAIN_COLORS[domain] ?? "bg-gray-50 text-gray-700 border-gray-200";
                   const nonEmptyEntries = Object.entries(c.fields).filter(([, v]) => v.trim().length > 0);
                   return (
                     <div key={c.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`inline-flex px-2 py-0.5 rounded border text-xs font-medium ${colorClass}`}>
+                        <Badge variant="neutral">
                           {DOMAIN_LABELS[domain] ?? domain}
-                        </span>
+                        </Badge>
                         <span className="text-xs text-gray-600">{c.contributorEmail}</span>
                         {c.contributorRole && (
                           <span className="text-xs text-gray-400">· {c.contributorRole}</span>
@@ -502,9 +492,9 @@ export function IntakeReview({
                         {missing.map((domain, i) => (
                           <span key={domain}>
                             {i > 0 && ", "}
-                            <span className={`inline-flex px-1.5 py-0.5 rounded border text-xs font-medium ${DOMAIN_COLORS[domain] ?? "bg-gray-50 text-gray-700 border-gray-200"}`}>
+                            <Badge variant="neutral">
                               {DOMAIN_LABELS[domain] ?? domain}
-                            </span>
+                            </Badge>
                           </span>
                         ))}
                       </p>

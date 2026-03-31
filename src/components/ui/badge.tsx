@@ -2,30 +2,50 @@ import * as React from "react";
 import { cn } from "./cn";
 
 type BadgeVariant =
-  | "default"
-  | "primary"
+  | "neutral"
+  | "info"
   | "success"
   | "warning"
   | "danger"
-  | "info"
+  | "accent"
   | "muted";
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default:  "bg-surface-muted text-text-secondary border border-border",
-  primary:  "bg-primary-subtle text-primary border border-primary/20",
-  success:  "bg-green-100 text-green-700",
-  warning:  "bg-amber-100 text-amber-700",
-  danger:   "bg-danger-subtle text-danger",
-  info:     "bg-indigo-100 text-indigo-700",
-  muted:    "bg-surface-muted text-text-tertiary",
+  neutral: "bg-gray-100 text-gray-600",
+  info:    "bg-blue-100 text-blue-700",
+  success: "bg-emerald-100 text-emerald-700",
+  warning: "bg-amber-100 text-amber-700",
+  danger:  "bg-red-100 text-red-700",
+  accent:  "bg-violet-100 text-violet-700",
+  muted:   "bg-gray-50 text-gray-500",
+};
+
+const dotClasses: Record<BadgeVariant, string> = {
+  neutral: "bg-gray-400",
+  info:    "bg-blue-500",
+  success: "bg-emerald-500",
+  warning: "bg-amber-500",
+  danger:  "bg-red-500",
+  accent:  "bg-violet-500",
+  muted:   "bg-gray-300",
 };
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
   dot?: boolean;
+  pulse?: boolean;
 }
 
-export function Badge({ variant = "default", dot = false, className, children, ...props }: BadgeProps) {
+export type { BadgeVariant };
+
+export function Badge({
+  variant = "neutral",
+  dot = false,
+  pulse = false,
+  className,
+  children,
+  ...props
+}: BadgeProps) {
   return (
     <span
       className={cn(
@@ -36,7 +56,13 @@ export function Badge({ variant = "default", dot = false, className, children, .
       {...props}
     >
       {dot && (
-        <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+        <span
+          className={cn(
+            "h-1.5 w-1.5 rounded-full",
+            dotClasses[variant],
+            pulse && "animate-pulse"
+          )}
+        />
       )}
       {children}
     </span>
