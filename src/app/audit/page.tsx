@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { ScrollText, Download } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AuditEntry {
   id: string;
@@ -201,18 +202,20 @@ export default function AuditTrailPage() {
         <div className="flex flex-wrap gap-3 rounded-card border border-gray-200 bg-white px-5 py-4">
           <div className="flex flex-1 min-w-40 flex-col gap-1">
             <label className="text-xs font-medium text-gray-500">Entity Type</label>
-            <select
-              value={entityType}
-              onChange={(e) => setEntityType(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900"
+            <Select
+              value={entityType || "_all_"}
+              onValueChange={(v) => setEntityType(v === "_all_" ? "" : v)}
             >
-              <option value="">All types</option>
-              {ENTITY_TYPES.filter(Boolean).map((t) => (
-                <option key={t} value={t}>
-                  {t.replace("_", " ")}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_all_">All types</SelectItem>
+                {ENTITY_TYPES.filter(Boolean).map((t) => (
+                  <SelectItem key={t} value={t}>{t.replace("_", " ")}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex flex-1 min-w-48 flex-col gap-1">

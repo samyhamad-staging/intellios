@@ -4,6 +4,7 @@ import { use, useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { UIMessage } from "ai";
 import { ChatContainer } from "@/components/chat/chat-container";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { IntakeProgress } from "@/components/intake/intake-progress";
 import { IntakeReview } from "@/components/intake/intake-review";
 import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
@@ -537,28 +538,28 @@ export default function IntakeSessionPage({
           ) : classification && editingClassification ? (
             <div className="flex items-center gap-2">
               <span className="text-xs text-text-tertiary">Override classification:</span>
-              <select
-                value={editAgentType}
-                onChange={(e) => setEditAgentType(e.target.value as AgentType)}
-                className="h-[20px] rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
-                title="Agent type"
-              >
-                <option value="automation">Automation</option>
-                <option value="decision-support">Decision Support</option>
-                <option value="autonomous">Autonomous</option>
-                <option value="data-access">Data Access</option>
-              </select>
-              <select
-                value={editRiskTier}
-                onChange={(e) => setEditRiskTier(e.target.value as IntakeRiskTier)}
-                className="h-[20px] rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
-                title="Risk tier"
-              >
-                <option value="low">LOW risk</option>
-                <option value="medium">MEDIUM risk</option>
-                <option value="high">HIGH risk</option>
-                <option value="critical">CRITICAL risk</option>
-              </select>
+              <Select value={editAgentType} onValueChange={(v) => setEditAgentType(v as AgentType)}>
+                <SelectTrigger className="h-6 text-xs px-2 w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="automation">Automation</SelectItem>
+                  <SelectItem value="decision-support">Decision Support</SelectItem>
+                  <SelectItem value="autonomous">Autonomous</SelectItem>
+                  <SelectItem value="data-access">Data Access</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={editRiskTier} onValueChange={(v) => setEditRiskTier(v as IntakeRiskTier)}>
+                <SelectTrigger className="h-6 text-xs px-2 w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">LOW risk</SelectItem>
+                  <SelectItem value="medium">MEDIUM risk</SelectItem>
+                  <SelectItem value="high">HIGH risk</SelectItem>
+                  <SelectItem value="critical">CRITICAL risk</SelectItem>
+                </SelectContent>
+              </Select>
               <button
                 onClick={handleSaveClassification}
                 disabled={classificationSaving}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import type { EnterpriseSettings, ApprovalChainStep } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
@@ -410,21 +411,25 @@ export default function AdminSettingsPage() {
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
                   {idx + 1}
                 </span>
-                <select
+                <Select
                   value={step.role}
-                  onChange={(e) =>
+                  onValueChange={(v) =>
                     setSettings((s) => {
                       const chain = [...(s.approvalChain ?? [])];
-                      chain[idx] = { ...chain[idx], role: e.target.value as ApprovalChainStep["role"] };
+                      chain[idx] = { ...chain[idx], role: v as ApprovalChainStep["role"] };
                       return { ...s, approvalChain: chain };
                     })
                   }
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:border-gray-400 focus:outline-none"
                 >
-                  <option value="reviewer">reviewer</option>
-                  <option value="compliance_officer">compliance_officer</option>
-                  <option value="admin">admin</option>
-                </select>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="reviewer">reviewer</SelectItem>
+                    <SelectItem value="compliance_officer">compliance_officer</SelectItem>
+                    <SelectItem value="admin">admin</SelectItem>
+                  </SelectContent>
+                </Select>
                 <input
                   type="text"
                   value={step.label}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getSlaStatus } from "@/lib/sla/config";
 import { Search, ShieldCheck, ShieldAlert, AlertCircle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Agent {
   id: string;
@@ -112,14 +113,18 @@ export default function PipelinePage() {
               />
             </div>
             {allTags.length > 0 && (
-              <select
-                value={filterTag}
-                onChange={(e) => setFilterTag(e.target.value)}
-                className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"
+              <Select
+                value={filterTag || "_all_"}
+                onValueChange={(v) => setFilterTag(v === "_all_" ? "" : v)}
               >
-                <option value="">All tags</option>
-                {allTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
-              </select>
+                <SelectTrigger className="text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_all_">All tags</SelectItem>
+                  {allTags.map((tag) => <SelectItem key={tag} value={tag}>{tag}</SelectItem>)}
+                </SelectContent>
+              </Select>
             )}
             {(searchQuery || filterTag) && (
               <button

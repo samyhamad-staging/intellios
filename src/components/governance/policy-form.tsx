@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -213,20 +214,20 @@ function RuleRow({
         {/* Operator */}
         <div>
           <label className="block text-xs text-gray-500 mb-1">Operator</label>
-          <select
+          <Select
             value={rule.operator}
-            onChange={(e) =>
-              onChange({ ...rule, operator: e.target.value as Operator, value: "" })
-            }
+            onValueChange={(v) => onChange({ ...rule, operator: v as Operator, value: "" })}
             disabled={readOnly}
-            className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
           >
-            {OPERATORS.map((op) => (
-              <option key={op.value} value={op.value}>
-                {op.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {OPERATORS.map((op) => (
+                <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Value */}
@@ -247,17 +248,19 @@ function RuleRow({
         {/* Severity */}
         <div>
           <label className="block text-xs text-gray-500 mb-1">Severity</label>
-          <select
+          <Select
             value={rule.severity}
-            onChange={(e) =>
-              onChange({ ...rule, severity: e.target.value as "error" | "warning" })
-            }
+            onValueChange={(v) => onChange({ ...rule, severity: v as "error" | "warning" })}
             disabled={readOnly}
-            className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
           >
-            <option value="error">error — blocks finalization</option>
-            <option value="warning">warning — informational</option>
-          </select>
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="error">error — blocks finalization</SelectItem>
+              <SelectItem value="warning">warning — informational</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -315,20 +318,20 @@ function RuntimeRuleRow({
         {/* Operator */}
         <div className="col-span-2">
           <label className="block text-xs text-gray-500 mb-1">Operator</label>
-          <select
+          <Select
             value={rule.operator}
-            onChange={(e) =>
-              onChange({ ...rule, operator: e.target.value as RuntimeOperator, value: "" })
-            }
+            onValueChange={(v) => onChange({ ...rule, operator: v as RuntimeOperator, value: "" })}
             disabled={readOnly}
-            className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
           >
-            {RUNTIME_OPERATORS.map((op) => (
-              <option key={op.value} value={op.value}>
-                {op.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {RUNTIME_OPERATORS.map((op) => (
+                <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {opDef && (
             <p className="mt-1 text-xs text-gray-400">{opDef.description}</p>
           )}
@@ -338,16 +341,20 @@ function RuntimeRuleRow({
         {opDef?.valueType === "pii_action" ? (
           <div>
             <label className="block text-xs text-gray-500 mb-1">PII Action</label>
-            <select
+            <Select
               value={String(rule.value ?? "block")}
-              onChange={(e) => onChange({ ...rule, value: e.target.value })}
+              onValueChange={(v) => onChange({ ...rule, value: v })}
               disabled={readOnly}
-              className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
             >
-              <option value="block">block — reject request</option>
-              <option value="redact">redact — mask PII in response</option>
-              <option value="log">log — allow but audit</option>
-            </select>
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="block">block — reject request</SelectItem>
+                <SelectItem value="redact">redact — mask PII in response</SelectItem>
+                <SelectItem value="log">log — allow but audit</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         ) : (
           <div>
@@ -367,17 +374,19 @@ function RuntimeRuleRow({
         {/* Severity */}
         <div>
           <label className="block text-xs text-gray-500 mb-1">Severity</label>
-          <select
+          <Select
             value={rule.severity}
-            onChange={(e) =>
-              onChange({ ...rule, severity: e.target.value as "error" | "warning" })
-            }
+            onValueChange={(v) => onChange({ ...rule, severity: v as "error" | "warning" })}
             disabled={readOnly}
-            className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
           >
-            <option value="error">error — alert + auto-suspend (H2-1.4)</option>
-            <option value="warning">warning — alert only</option>
-          </select>
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="error">error — alert + auto-suspend (H2-1.4)</SelectItem>
+              <SelectItem value="warning">warning — alert only</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -575,24 +584,25 @@ export default function PolicyForm({
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Type <span className="text-red-500">*</span>
           </label>
-          <select
+          <Select
             value={type}
-            onChange={(e) => {
-              const newType = e.target.value as PolicyType;
-              // Reset rules when switching between runtime ↔ design-time
+            onValueChange={(v) => {
+              const newType = v as PolicyType;
               if ((newType === "runtime") !== (type === "runtime")) setRules([]);
               setType(newType);
               setSimDirty(true);
             }}
             disabled={readOnly}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-blue-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
           >
-            {POLICY_TYPES.map((pt) => (
-              <option key={pt.value} value={pt.value}>
-                {pt.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {POLICY_TYPES.map((pt) => (
+                <SelectItem key={pt.value} value={pt.value}>{pt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>

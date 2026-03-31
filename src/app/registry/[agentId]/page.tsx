@@ -9,6 +9,7 @@ import {
   DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
 import { BlueprintSummary } from "@/components/blueprint/blueprint-summary";
 import { StatusBadge } from "@/components/registry/status-badge";
@@ -1126,14 +1127,15 @@ export default function AgentDetailPage({
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-text mb-1">Severity</label>
-                        <select
-                          value={testFormSeverity}
-                          onChange={(e) => setTestFormSeverity(e.target.value as "required" | "informational")}
-                          className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
-                        >
-                          <option value="required">required</option>
-                          <option value="informational">informational</option>
-                        </select>
+                        <Select value={testFormSeverity} onValueChange={(v) => setTestFormSeverity(v as "required" | "informational")}>
+                          <SelectTrigger className="w-full text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="required">required</SelectItem>
+                            <SelectItem value="informational">informational</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <p className="text-xs text-text-tertiary mt-0.5">Required failures block the overall pass verdict</p>
                       </div>
                     </div>
@@ -1540,20 +1542,24 @@ export default function AgentDetailPage({
               <div className="border border-border rounded-lg p-5 space-y-4">
                 <div className="flex items-center gap-4">
                   <span className="text-sm font-medium text-text">Compare versions:</span>
-                  <select
-                    value={compareVersionId ?? ""}
-                    onChange={(e) => setCompareVersionId(e.target.value || null)}
-                    className="rounded-lg border border-border px-3 py-1.5 text-sm text-text bg-surface focus:outline-none focus:ring-2 focus:ring-border-strong"
+                  <Select
+                    value={compareVersionId ?? "_none_"}
+                    onValueChange={(v) => setCompareVersionId(v === "_none_" ? null : v)}
                   >
-                    <option value="">Select a version to compare…</option>
-                    {versions
-                      .filter((v) => v.id !== latest.id)
-                      .map((v) => (
-                        <option key={v.id} value={v.id}>
-                          v{v.version} ({v.status}) — {new Date(v.createdAt).toLocaleDateString()}
-                        </option>
-                      ))}
-                  </select>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none_">Select a version to compare…</SelectItem>
+                      {versions
+                        .filter((v) => v.id !== latest.id)
+                        .map((v) => (
+                          <SelectItem key={v.id} value={v.id}>
+                            v{v.version} ({v.status}) — {new Date(v.createdAt).toLocaleDateString()}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {compareVersionId && (

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Package, Search, Star, TrendingUp } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Template {
   id: string;
@@ -87,15 +88,19 @@ export default function TemplateMarketplacePage() {
             className="w-full rounded-lg border border-slate-200 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
         </div>
-        <select
-          value={sourceFilter}
-          onChange={(e) => setSourceFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+        <Select
+          value={sourceFilter || "_all_"}
+          onValueChange={(v) => setSourceFilter(v === "_all_" ? "" : v)}
         >
-          <option value="">All sources</option>
-          <option value="built-in">Built-in</option>
-          <option value="community">Community</option>
-        </select>
+          <SelectTrigger className="text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="_all_">All sources</SelectItem>
+            <SelectItem value="built-in">Built-in</SelectItem>
+            <SelectItem value="community">Community</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {loading && (

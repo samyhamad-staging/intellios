@@ -15,6 +15,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ViolationRow {
   id: string;
@@ -149,17 +150,16 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
         </div>
 
         {/* Time range */}
-        <select
-          value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-          className="text-xs rounded-md border border-gray-200 bg-white px-3 py-1.5 text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400"
-        >
-          {TIME_RANGE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
+          <SelectTrigger className="text-xs h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {TIME_RANGE_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Content */}

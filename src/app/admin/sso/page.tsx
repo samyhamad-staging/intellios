@@ -13,6 +13,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 
@@ -185,16 +186,18 @@ export default function AdminSsoPage() {
         {/* IdP configuration */}
         <Section title="Identity Provider">
           <Field label="Protocol">
-            <select
+            <Select
               value={sso.protocol}
-              onChange={(e) =>
-                setSso((s) => ({ ...s, protocol: e.target.value as "oidc" | "saml" }))
-              }
-              className={inputCls}
+              onValueChange={(v) => setSso((s) => ({ ...s, protocol: v as "oidc" | "saml" }))}
             >
-              <option value="oidc">OIDC (OpenID Connect) — Azure AD, Okta, Google Workspace</option>
-              <option value="saml">SAML 2.0 — requires additional server setup</option>
-            </select>
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="oidc">OIDC (OpenID Connect) — Azure AD, Okta, Google Workspace</SelectItem>
+                <SelectItem value="saml">SAML 2.0 — requires additional server setup</SelectItem>
+              </SelectContent>
+            </Select>
           </Field>
 
           <Field
@@ -304,21 +307,19 @@ export default function AdminSsoPage() {
                   placeholder="IdP group name"
                   className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-mono focus:border-violet-500 focus:outline-none"
                 />
-                <select
+                <Select
                   value={row.role}
-                  onChange={(e) =>
-                    setGroupRows((rows) =>
-                      rows.map((r, j) => (j === i ? { ...r, role: e.target.value } : r))
-                    )
-                  }
-                  className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-violet-500 focus:outline-none"
+                  onValueChange={(v) => setGroupRows((rows) => rows.map((r, j) => (j === i ? { ...r, role: v } : r)))}
                 >
-                  {ROLES.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="text-sm w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLES.map((r) => (
+                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <button
                   onClick={() => setGroupRows((rows) => rows.filter((_, j) => j !== i))}
                   className="text-gray-400 hover:text-red-500 text-lg leading-none px-1"
@@ -338,17 +339,19 @@ export default function AdminSsoPage() {
           </button>
 
           <Field label="Default role" hint="Assigned to users not matched by any group mapping above">
-            <select
+            <Select
               value={sso.defaultRole}
-              onChange={(e) => setSso((s) => ({ ...s, defaultRole: e.target.value }))}
-              className={inputCls}
+              onValueChange={(v) => setSso((s) => ({ ...s, defaultRole: v }))}
             >
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLES.map((r) => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
         </Section>
 
