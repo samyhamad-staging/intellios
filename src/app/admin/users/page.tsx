@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Mail, PenLine } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -145,15 +146,16 @@ function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
-          >
-            {ROLES.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
-          </select>
+          <Select value={role} onValueChange={setRole}>
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -260,15 +262,16 @@ function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
-          >
-            {ROLES.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
-          </select>
+          <Select value={role} onValueChange={setRole}>
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -353,17 +356,16 @@ function InlineRoleEditor({ user, currentUserId, onUpdated }: RoleEditorProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <select
-        value={role}
-        onChange={(e) => setRole(e.target.value)}
-        disabled={saving}
-        autoFocus
-        className="rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:border-blue-400"
-      >
-        {ROLES.map((r) => (
-          <option key={r.value} value={r.value}>{r.label}</option>
-        ))}
-      </select>
+      <Select value={role} onValueChange={setRole} disabled={saving}>
+        <SelectTrigger className="h-7 text-xs px-2">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {ROLES.map((r) => (
+            <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <button
         onClick={saveRole}
         disabled={saving}

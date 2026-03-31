@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Activity, RefreshCw, Cpu } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AgentHealth {
   agentId: string;
@@ -337,17 +338,18 @@ export default function MonitorPage() {
         </div>
         <div className="flex min-w-40 flex-col gap-1">
           <label className="text-xs font-medium text-gray-500">Health</label>
-          <select
-            value={healthFilter}
-            onChange={(e) => setHealthFilter(e.target.value as typeof healthFilter)}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-          >
-            <option value="all">All</option>
-            <option value="clean">Clean</option>
-            <option value="degraded">Degraded</option>
-            <option value="critical">Critical</option>
-            <option value="unknown">Not Checked</option>
-          </select>
+          <Select value={healthFilter} onValueChange={(v) => setHealthFilter(v as typeof healthFilter)}>
+            <SelectTrigger className="text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="clean">Clean</SelectItem>
+              <SelectItem value="degraded">Degraded</SelectItem>
+              <SelectItem value="critical">Critical</SelectItem>
+              <SelectItem value="unknown">Not Checked</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         {(searchQuery || healthFilter !== "all") && (
           <div className="flex items-end">

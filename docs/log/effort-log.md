@@ -38,6 +38,34 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 077 — 2026-03-31
+
+**UI/UX Sprint Phase 2B + Phase 1C**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Codebase reads | quality-dashboard.tsx, governance/page.tsx, monitor/page.tsx, admin/users/page.tsx, effort-log.md, _index.md | ~60k in / ~2k out |
+| Implementation | 4 files modified (Recharts + Select replacements) | ~20k in / ~10k out |
+| TypeScript check | tsc --noEmit (2 formatter type errors fixed) | ~5k in / ~0.5k out |
+| Documentation | Session log 077, _index, effort log | ~8k in / ~3k out |
+| **Session total (est.)** | | **~93k in / ~15.5k out** |
+
+**Estimated session cost:** Sonnet ~93k in × $3/1M + ~15.5k out × $15/1M = **$0.28 + $0.23 = ~$0.51**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~1 (continuation) |
+| Decisions made | 0 |
+| Engagement type | Continuation from context summary |
+| Estimated time | ~5 min |
+
+---
+
 ## Session 076 — 2026-03-31
 
 **UI/UX Optimization Sprint (Phase 0–3)**

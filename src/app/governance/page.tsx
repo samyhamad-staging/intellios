@@ -4,6 +4,19 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Shield, Plus, Download } from "lucide-react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import { chartColors, chartFontSize, chartGridColor, chartTextColor } from "@/lib/chart-tokens";
 
 interface Agent {
   id: string;
@@ -356,59 +369,34 @@ export default function GovernanceHubPage() {
                   <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
                     Monthly Activity (last 6 months)
                   </h3>
-                  {(() => {
-                    const maxCount = Math.max(
-                      ...analytics.monthlySubmissions.map((m) => m.count),
-                      ...analytics.monthlyApprovals.map((m) => m.count),
-                      1
-                    );
-                    return (
-                      <div className="space-y-3">
-                        {analytics.monthlySubmissions.map((sub, i) => {
-                          const appr = analytics.monthlyApprovals[i];
-                          const subPct = Math.round((sub.count / maxCount) * 100);
-                          const apprPct = Math.round(((appr?.count ?? 0) / maxCount) * 100);
-                          const label = sub.month.slice(0, 7);
-                          return (
-                            <div key={sub.month}>
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs text-gray-500">{label}</span>
-                                <div className="flex items-center gap-3 text-xs text-gray-400">
-                                  <span className="flex items-center gap-1">
-                                    <span className="inline-block w-2 h-2 rounded-full bg-blue-400" />
-                                    {sub.count} submitted
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <span className="inline-block w-2 h-2 rounded-full bg-green-400" />
-                                    {appr?.count ?? 0} approved
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="space-y-1">
-                                <div className="h-2 w-full rounded-full bg-gray-100">
-                                  <div
-                                    className="h-2 rounded-full bg-blue-400 transition-all"
-                                    style={{ width: `${subPct}%` }}
-                                  />
-                                </div>
-                                <div className="h-2 w-full rounded-full bg-gray-100">
-                                  <div
-                                    className="h-2 rounded-full bg-green-400 transition-all"
-                                    style={{ width: `${apprPct}%` }}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {analytics.monthlySubmissions.every((m) => m.count === 0) && (
-                          <p className="text-center text-xs text-gray-400 py-4">
-                            No submission activity in the last 6 months
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })()}
+                  {analytics.monthlySubmissions.every((m) => m.count === 0) ? (
+                    <p className="text-center text-xs text-gray-400 py-8">
+                      No submission activity in the last 6 months
+                    </p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart
+                        data={analytics.monthlySubmissions.map((sub, i) => ({
+                          month: sub.month.slice(0, 7),
+                          submitted: sub.count,
+                          approved: analytics.monthlyApprovals[i]?.count ?? 0,
+                        }))}
+                        margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+                        barCategoryGap="30%"
+                        barGap={2}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
+                        <XAxis dataKey="month" tick={{ fontSize: chartFontSize, fill: chartTextColor }} tickLine={false} axisLine={false} />
+                        <YAxis tick={{ fontSize: chartFontSize, fill: chartTextColor }} tickLine={false} axisLine={false} allowDecimals={false} />
+                        <Tooltip
+                          contentStyle={{ fontSize: chartFontSize, borderRadius: 6, border: "1px solid #e1e5ef", padding: "4px 8px" }}
+                          cursor={{ fill: "#f0f2f8" }}
+                        />
+                        <Bar dataKey="submitted" name="Submitted" fill={chartColors.info} radius={[3, 3, 0, 0]} />
+                        <Bar dataKey="approved" name="Approved" fill={chartColors.success} radius={[3, 3, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
 
                 {/* Right column: Top Violated Policies + Agent Status Distribution */}
@@ -485,49 +473,54 @@ export default function GovernanceHubPage() {
                     </h3>
                     {Object.keys(analytics.agentStatusCounts).length === 0 ? (
                       <p className="text-xs text-gray-400 py-2">No agents in registry</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {(() => {
-                          const total = Object.values(analytics.agentStatusCounts).reduce(
-                            (s, c) => s + c,
-                            0
-                          );
-                          const STATUS_COLORS: Record<string, string> = {
-                            draft: "bg-gray-300",
-                            in_review: "bg-amber-400",
-                            approved: "bg-blue-400",
-                            deployed: "bg-green-400",
-                            rejected: "bg-red-400",
-                            deprecated: "bg-gray-400",
+                    ) : (() => {
+                          const STATUS_HEX: Record<string, string> = {
+                            draft:      chartColors.gray,
+                            in_review:  chartColors.warning,
+                            approved:   chartColors.info,
+                            deployed:   chartColors.success,
+                            rejected:   chartColors.danger,
+                            deprecated: "#9ca3af",
                           };
-                          return Object.entries(analytics.agentStatusCounts)
+                          const pieData = Object.entries(analytics.agentStatusCounts)
                             .sort((a, b) => b[1] - a[1])
-                            .map(([status, count]) => {
-                              const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                              return (
-                                <div key={status}>
-                                  <div className="flex items-center justify-between mb-0.5">
-                                    <span className="text-xs capitalize text-gray-600">
-                                      {status.replace("_", " ")}
-                                    </span>
-                                    <span className="text-xs text-gray-400">
-                                      {count} ({pct}%)
-                                    </span>
-                                  </div>
-                                  <div className="h-2 w-full rounded-full bg-gray-100">
-                                    <div
-                                      className={`h-2 rounded-full transition-all ${
-                                        STATUS_COLORS[status] ?? "bg-gray-400"
-                                      }`}
-                                      style={{ width: `${pct}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            });
-                        })()}
-                      </div>
-                    )}
+                            .map(([status, count]) => ({ name: status.replace("_", " "), value: count, status }));
+                          return (
+                            <div className="flex flex-col items-center gap-3">
+                              <ResponsiveContainer width="100%" height={120}>
+                                <PieChart>
+                                  <Pie
+                                    data={pieData}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={32}
+                                    outerRadius={52}
+                                    paddingAngle={2}
+                                  >
+                                    {pieData.map((entry) => (
+                                      <Cell key={entry.status} fill={STATUS_HEX[entry.status] ?? chartColors.gray} />
+                                    ))}
+                                  </Pie>
+                                  <Tooltip
+                                    contentStyle={{ fontSize: chartFontSize, borderRadius: 6, border: "1px solid #e1e5ef", padding: "4px 8px" }}
+                                    formatter={(_value, name) => [_value, name]}
+                                  />
+                                </PieChart>
+                              </ResponsiveContainer>
+                              <div className="flex flex-wrap justify-center gap-x-3 gap-y-1">
+                                {pieData.map((entry) => (
+                                  <span key={entry.status} className="flex items-center gap-1 text-xs text-gray-500 capitalize">
+                                    <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: STATUS_HEX[entry.status] ?? chartColors.gray }} />
+                                    {entry.name} ({entry.value})
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()
+                    }
                   </div>
                 </div>
               </div>
