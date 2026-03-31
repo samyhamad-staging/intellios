@@ -13,7 +13,6 @@ const INTAKE_OPENER: UIMessage = {
   id: "intake-opener",
   role: "assistant",
   parts: [{ type: "text" as const, text: "Tell me about the agent you want to build — what problem is it meant to solve, and who will use it?" }],
-  content: "Tell me about the agent you want to build — what problem is it meant to solve, and who will use it?",
 };
 
 interface DBMessage {
@@ -27,7 +26,6 @@ function mapToUIMessages(dbMessages: DBMessage[]): UIMessage[] {
     id: m.id,
     role: m.role as UIMessage["role"],
     parts: [{ type: "text" as const, text: m.content }],
-    content: m.content,
   }));
 }
 
