@@ -46,7 +46,7 @@ export function RegisterForm() {
       });
 
       if (res.status === 201) {
-        router.push("/login?registered=1");
+        router.push("/login?registered=1&callbackUrl=/welcome");
         return;
       }
 

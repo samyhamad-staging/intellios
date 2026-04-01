@@ -1039,9 +1039,25 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             {/* Message history */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
               {refinementHistory.length === 0 && (
-                <p className="py-6 text-center text-xs text-text-tertiary">
-                  No refinements yet. Describe what to change below.
-                </p>
+                <div className="py-4 px-2 space-y-2">
+                  <p className="text-center text-xs text-text-tertiary mb-3">
+                    Describe what to change. For example:
+                  </p>
+                  {[
+                    "Add an email notification tool",
+                    "Make the denied actions stricter around PII",
+                    "Add a data_handling governance policy",
+                    "Change the persona to be more formal",
+                  ].map((hint) => (
+                    <button
+                      key={hint}
+                      onClick={() => setChange(hint)}
+                      className="block w-full rounded-lg border border-border px-3 py-2 text-left text-xs text-text-secondary hover:bg-surface-muted hover:text-text transition-colors"
+                    >
+                      {hint}
+                    </button>
+                  ))}
+                </div>
               )}
               {refinementHistory.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
