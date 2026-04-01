@@ -116,8 +116,8 @@ export function IntakeProgress({
       {/* ── Transparency panels ─────────────────────────────────────────── */}
       <div className="flex flex-col gap-2.5 px-4 py-3">
 
-        {/* Empty state */}
-        {!transparency && (
+        {/* Empty state — shown until the AI has produced classification metadata */}
+        {!transparency?.classification && (
           <div className="rounded-lg border border-dashed border-border p-4 text-center">
             <BrainCircuit size={20} className="mx-auto mb-2 text-text-tertiary" />
             <p className="text-2xs font-mono text-text-tertiary">AWAITING SIGNAL</p>

@@ -111,6 +111,16 @@ export function ChatContainer({
     return null;
   }, [messages]);
 
+  // Only show domain tags once the AI has started capturing data (first tool call made).
+  // Before that, activeDomain always falls back to "identity" on every message — which
+  // looks broken rather than informative.
+  const hasToolCalls = useMemo(
+    () => messages.some((msg) =>
+      msg.parts.some((part) => part.type.startsWith("tool-") && "toolCallId" in part)
+    ),
+    [messages]
+  );
+
   const streamingLabel = lastToolCallName
     ? (STREAMING_LABELS[lastToolCallName] ?? "Thinking…")
     : "Thinking…";
@@ -165,7 +175,7 @@ export function ChatContainer({
                 <MessageBubble
                   role={msg.role as "user" | "assistant"}
                   content={text}
-                  activeDomain={msg.role === "assistant" && msg.metadata ? (msg.metadata as Record<string, unknown>).activeDomain as string | null : undefined}
+                  activeDomain={msg.role === "assistant" && msg.metadata && hasToolCalls ? (msg.metadata as Record<string, unknown>).activeDomain as string | null : undefined}
                 />
               )}
             </div>
