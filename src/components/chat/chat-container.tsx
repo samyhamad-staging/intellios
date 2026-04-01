@@ -117,7 +117,9 @@ export function ChatContainer({
 
   return (
     <div className="flex h-full flex-1 flex-col">
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col justify-end min-h-0">
+        {/* Spacer pushes messages to the bottom when content is short */}
+        <div className="flex-1" />
         {isEmpty && showSuggestedPrompts ? (
           <div className="flex h-full flex-col items-center justify-center gap-6 px-4">
             <div className="text-center">
@@ -192,7 +194,11 @@ export function ChatContainer({
         )}
       </div>
 
-      <ChatInput onSend={handleSend} disabled={isStreaming} />
+      <ChatInput
+        onSend={handleSend}
+        disabled={isStreaming}
+        placeholder={messages.length > 1 ? "Reply..." : "Describe your agent..."}
+      />
     </div>
   );
 }

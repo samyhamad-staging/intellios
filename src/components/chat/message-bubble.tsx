@@ -66,7 +66,7 @@ export function MessageBubble({ role, content, activeDomain }: MessageBubbleProp
       <div
         className={`max-w-[80%] rounded-2xl px-4 py-3 ${
           isUser
-            ? "bg-gray-900 text-white"
+            ? "bg-indigo-600 text-white"
             : "bg-white text-gray-900 border border-gray-200"
         }`}
       >
