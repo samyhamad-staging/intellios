@@ -10,6 +10,10 @@ import { IntakeReview } from "@/components/intake/intake-review";
 import { DomainProgressStrip } from "@/components/intake/domain-progress-strip";
 import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
 import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
+import { computeDomainProgress } from "@/lib/intake/domains";
+
+/** Empty-payload domain state — shown in the strip before the first AI response. */
+const INITIAL_DOMAINS = computeDomainProgress({}, null, null);
 
 /** Static opener injected for fresh sessions — appears instantly, no API call needed. */
 const INTAKE_OPENER: UIMessage = {
@@ -424,6 +428,7 @@ export default function IntakeSessionPage({
         <div className="flex-1 min-w-0">
           <DomainProgressStrip
             transparency={transparency}
+            initialDomains={INITIAL_DOMAINS}
             classification={classification}
             classificationLoading={classificationLoading}
             onOverrideClick={() => {

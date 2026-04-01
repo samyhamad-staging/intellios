@@ -4,6 +4,7 @@ All interactions and actions taken on the Intellios project, in reverse chronolo
 
 | Session | Date | Summary |
 |---|---|---|
+| [083](2026-04-01_session-083.md) | 2026-04-01 | DPR continuation: 2.2 skeleton loading (10 pages), 2.3 demo data (10 trend snapshots), 1.2 error boundaries (4 routes), 2.4 onboarding (register redirect + blueprint hints), 1.3 performance baseline (N+1 fixed). Intake chat fixes: domain strip visible on load (initialDomains), sidebar refactor (removed stepper/sections, kept transparency panels), Catalyst Subheading+Divider applied. |
 | [082](2026-04-01_session-082.md) | 2026-04-01 | P3 CVE fix (0 vulns), merge + deploy, Domain Progress Strip (stepper → live topology), DPR roadmap revision (3 tracks), DPR-2.1 chat UX (bottom-anchor, indigo bubbles, contextual placeholder, 1-question-per-turn), DPR-1.1 tests (62→155). 5 commits, 8 new files. |
 | [081](2026-03-31_session-081.md) | 2026-03-31 | Sprint close: merged feat/intake-v2-hardening → master (272 files, 27 438 insertions). Consolidates sessions 075–080: P1 hardening, UI/UX sprint, landing page, Catalyst UI Kit phases 1–2. |
 | [080](2026-03-31_session-080.md) | 2026-03-31 | Catalyst Phase 2: Switch applied to integrations (×4) + settings AgentCore toggle; DescriptionList to deploy modal + blueprint summary; Divider to chat markdown hr. tsc 0 errors. |

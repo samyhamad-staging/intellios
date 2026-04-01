@@ -45,6 +45,8 @@ interface DomainProgressStripProps {
   classification: { agentType: AgentType; riskTier: IntakeRiskTier } | null;
   classificationLoading?: boolean;
   onOverrideClick?: () => void;
+  /** Shown before the first AI response populates transparency.domains */
+  initialDomains?: DomainProgress[];
 }
 
 export function DomainProgressStrip({
@@ -52,12 +54,13 @@ export function DomainProgressStrip({
   classification,
   classificationLoading,
   onOverrideClick,
+  initialDomains,
 }: DomainProgressStripProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hoveredDomain, setHoveredDomain] = useState<string | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ left: number; top: number } | null>(null);
 
-  const domains = transparency?.domains ?? [];
+  const domains = transparency?.domains ?? initialDomains ?? [];
   const activeDomain = transparency?.activeDomain ?? null;
   const score = transparency?.readiness?.score ?? 0;
 
