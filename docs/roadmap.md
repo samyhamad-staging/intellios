@@ -2,7 +2,43 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-03-31 (Session 076 — UI/UX Optimization Sprint Phase 0–3)
+**Last updated:** 2026-04-01 (Session 082 — DPR Roadmap Revision)
+
+---
+
+## ✓ Session 082 Complete (2026-04-01) — Domain Progress Strip + DPR Roadmap
+
+Replaced 3-step stepper (Context → Requirements → Review) and classification bar with a unified Domain Progress Strip. 7 ABP domains rendered as chips with 4-dot fill indicators (0-4 richness scale, risk-tier-aware thresholds), active domain glow (inferred from tool calls → probing topics → lowest fill), classification badges inline, readiness score badge. AI messages now show subtle domain tag. New `domains.ts` lib with `computeDomainProgress()` + `inferActiveDomain()`. Transparency metadata extended with `domains[]` and `activeDomain`. Strategic roadmap revision: archived H1/H2 horizons, introduced DPR (Design Partner Readiness) phase with 3 tracks. 2 new files, 6 modified, 0 migrations, 0 new deps. tsc: 0 errors.
+
+---
+
+## ✓ Session 081 Complete (2026-04-01) — CVE Fix + Merge + Vercel Deploy
+
+Resolved all 10 npm CVEs: `npm audit fix` (brace-expansion, flatted, picomatch, fast-xml-parser, Next.js ×5), drizzle-kit 0.31.9→0.31.10, `overrides.esbuild ^0.25.12` to force patched esbuild into @esbuild-kit/core-utils nested install. 0 vulnerabilities. Merged `feat/intake-v2-hardening` → `master`, pushed to `origin/main` triggering Vercel production deploy. tsc: 0 errors.
+
+---
+
+## ✓ Session 080 Complete (2026-03-31) — Catalyst Phase 2 (Switch + DescriptionList + Divider)
+
+Applied Catalyst Switch to 2 files (integrations ×4 checkboxes, settings AgentCore toggle). DescriptionList to 2 files (deploy modal, blueprint summary). Divider to 1 file (chat markdown hr). Skipped genuine form checkboxes and print-layout fields. tsc: 0 errors.
+
+---
+
+## ✓ Session 079 Complete (2026-03-31) — Catalyst UI Kit Integration + Table Migration
+
+7 Catalyst components added (Table, Switch, DescriptionList, Heading, Divider, Text, CatalystLink). @headlessui/react installed. SSO toggle → Switch. All 12 raw-table files migrated to Catalyst Table (striped, dense variants). 0 raw tables remain. tsc: 0 errors.
+
+---
+
+## ✓ Session 078 Complete (2026-03-31) — Premium Landing Page
+
+Full premium marketing page at /landing with @heroicons/react. 9 sections: sticky nav, hero with gradient blob, compliance framework badges (SR 11-7/EU AI Act/NIST/ISO/SOC 2), 5-step pipeline visualization, 3 feature cards, 4-stat bar, 8-item feature grid, 4 role cards, dark CTA, columnar footer. tsc: 0 errors.
+
+---
+
+## ✓ Session 077 Complete (2026-03-31) — Recharts + Radix Select Deployment
+
+Applied Recharts to quality dashboard (line chart), governance page (bar + donut charts). Replaced all 20 remaining raw `<select>` elements across 11 files with Radix Select. Responsive grid breakpoints on governance + monitor. aria-label on 4 icon-only buttons. tsc: 0 errors.
 
 ---
 
@@ -97,6 +133,62 @@ This document is the **source of truth** for what has been built and what needs 
 | | | | | |
 | **Current Product (P+A+G+D)** | **55** | **55** | **100%** | Production-ready; all planned capabilities shipped |
 | **Full Vision (all horizons)** | **92** | **103** | **89%** | Core product 100%; H1+H2 100%; H3 7/14 (governance + ecosystem shipped; foundry deferred) |
+| **UI/UX Sprint (076–082)** | **7** | **7** | **100%** | Catalyst UI, landing page, domain progress strip, CVE fix, Recharts, Radix Select |
+| **DPR — Design Partner Readiness** | **0** | **10** | **0%** | New phase: hardening, polish, GTM (see below) |
+
+---
+
+## DPR — Design Partner Readiness
+
+**Status: Active** — Introduced session 082. Replaces feature development with product maturity.
+
+**Why:** Intellios reached feature saturation (89% of full vision). The problem is no longer "what to build" — it's "how to make what exists feel enterprise-grade." H3-1/H3-2 remain correctly gated on 3 design partners. The priority is now: strengthen the product, polish first impressions, define GTM strategy.
+
+### Track 1: Product Hardening
+
+| Item | Description | Status | Sessions |
+|------|-------------|--------|----------|
+| **DPR-1.1** | Test coverage for critical paths (intake, governance, lifecycle, domains) — target 80%+ on `src/lib/` | Pending | 2-3 |
+| **DPR-1.2** | Error handling audit — structured error responses, error boundaries, graceful degradation | Pending | 1 |
+| **DPR-1.3** | Performance baseline — Lighthouse, N+1 queries, streaming latency | Pending | 1 |
+
+### Track 2: First Impression Polish
+
+| Item | Description | Status | Sessions |
+|------|-------------|--------|----------|
+| **DPR-2.1** | Chat UX fixes — bottom-anchor messages, softer user bubbles, contextual placeholder, one-question-per-turn | Pending | 1 |
+| **DPR-2.2** | Loading states pass — skeleton loading + empty states on every page | Pending | 1 |
+| **DPR-2.3** | Demo data refresh — Acme Financial seed updated for latest features | Pending | 1 |
+| **DPR-2.4** | Onboarding refinement — guided first-agent-blueprint experience | Pending | 1 |
+
+### Track 3: GTM Foundation (Samy-led, Claude assists)
+
+| Item | Description | Status | Owner |
+|------|-------------|--------|-------|
+| **DPR-3.1** | Target persona definition — buyer, user, pain, trigger | Pending | Samy |
+| **DPR-3.2** | Positioning & messaging — value prop, differentiators, "why now" | Pending | Samy |
+| **DPR-3.3** | Pricing model — tiers, design partner offer | Pending | Samy |
+| **DPR-3.4** | Outreach materials — one-pager, demo script, email templates | Pending | Claude + Samy |
+
+### Sequencing
+
+1. **DPR-2.1** Chat UX fixes (highest-visibility, low-effort)
+2. **DPR-1.1** Test coverage (confidence foundation)
+3. **DPR-2.2 + 2.3** Loading states + demo data
+4. **DPR-3.1 + 3.2** Persona + positioning (parallel, Samy)
+5. **DPR-1.2** Error handling audit
+6. **DPR-2.4** Onboarding refinement
+7. **DPR-3.4** Outreach materials
+
+### Definition of Done
+
+- 80%+ test coverage on `src/lib/intake/`, `src/lib/governance/`, `src/lib/sla/`
+- Every page loads in <2s (3G simulation)
+- Chat UX passes the "screenshot test" (no embarrassing gaps)
+- Demo data tells a compelling 12-minute story
+- Landing page communicates value in 5 seconds
+- Target persona defined and documented
+- One-pager exists for leave-behind
 
 ---
 
