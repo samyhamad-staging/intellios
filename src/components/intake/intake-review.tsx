@@ -78,6 +78,7 @@ function formatRetentionDays(days: number): string {
 // RV-012: Data sensitivity uses semantic variants
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 const DATA_SENSITIVITY_VARIANT: Record<string, BadgeVariant> = {
   public:       "success",
@@ -533,30 +534,30 @@ export function IntakeReview({
             </p>
             {expandedCapture && (
               <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-100">
-                      <th className="pb-2 text-left font-medium text-gray-400 w-1/4">Area</th>
-                      <th className="pb-2 text-left font-medium text-gray-400 w-2/5">What was discussed</th>
-                      <th className="pb-2 text-left font-medium text-gray-400">Captured as</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
+                <Table dense>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Area</TableHeader>
+                      <TableHeader>What was discussed</TableHeader>
+                      <TableHeader>Captured as</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {captureVerification.map((item, i) => (
-                      <tr key={i} className="align-top">
-                        <td className="py-2 pr-3 font-medium text-gray-600">{item.area}</td>
-                        <td className="py-2 pr-3 text-gray-600">{item.mentioned}</td>
-                        <td className="py-2">
+                      <TableRow key={i}>
+                        <TableCell className="font-medium text-gray-600">{item.area}</TableCell>
+                        <TableCell className="text-gray-600">{item.mentioned}</TableCell>
+                        <TableCell>
                           {item.capturedAs ? (
                             <span className="font-mono text-green-700">{item.capturedAs}</span>
                           ) : (
                             <span className="text-red-500 font-medium">Not captured</span>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             )}
           </div>

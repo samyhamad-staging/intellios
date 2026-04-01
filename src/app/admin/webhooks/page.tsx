@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -83,10 +84,10 @@ function formatRelative(iso: string) {
 
 function DeliveryRow({ d }: { d: DeliveryRecord }) {
   return (
-    <tr className="border-t border-gray-100 text-xs">
-      <td className="py-1.5 pr-3 text-gray-500">{formatRelative(d.createdAt)}</td>
-      <td className="py-1.5 pr-3 font-mono text-gray-700">{d.eventType}</td>
-      <td className="py-1.5 pr-3">
+    <TableRow>
+      <TableCell className="text-gray-500">{formatRelative(d.createdAt)}</TableCell>
+      <TableCell className="font-mono text-gray-700">{d.eventType}</TableCell>
+      <TableCell>
         {d.status === "success" ? (
           <span className="text-green-600 font-medium">✓ success</span>
         ) : d.status === "failed" ? (
@@ -94,12 +95,12 @@ function DeliveryRow({ d }: { d: DeliveryRecord }) {
         ) : (
           <span className="text-amber-600">pending</span>
         )}
-      </td>
-      <td className="py-1.5 pr-3 text-gray-500">
+      </TableCell>
+      <TableCell className="text-gray-500">
         {d.responseStatus ?? "—"}
-      </td>
-      <td className="py-1.5 text-gray-500">{d.attempts}</td>
-    </tr>
+      </TableCell>
+      <TableCell className="text-gray-500">{d.attempts}</TableCell>
+    </TableRow>
   );
 }
 
@@ -235,22 +236,22 @@ function WebhookCard({
           ) : deliveries.length === 0 ? (
             <p className="text-xs text-gray-400">No deliveries yet.</p>
           ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="text-xs text-gray-400">
-                  <th className="text-left pb-1 pr-3 font-normal">When</th>
-                  <th className="text-left pb-1 pr-3 font-normal">Event</th>
-                  <th className="text-left pb-1 pr-3 font-normal">Status</th>
-                  <th className="text-left pb-1 pr-3 font-normal">HTTP</th>
-                  <th className="text-left pb-1 font-normal">Attempts</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table dense>
+              <TableHead>
+                <TableRow>
+                  <TableHeader>When</TableHeader>
+                  <TableHeader>Event</TableHeader>
+                  <TableHeader>Status</TableHeader>
+                  <TableHeader>HTTP</TableHeader>
+                  <TableHeader>Attempts</TableHeader>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {deliveries.map((d) => (
                   <DeliveryRow key={d.id} d={d} />
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
       )}

@@ -26,6 +26,7 @@ import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 import type { TestCase, TestRun } from "@/lib/testing/types";
 import { SimulatePanel } from "@/components/registry/simulate-panel";
 import { QualityDashboard } from "@/components/blueprint/quality-dashboard";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 interface CurrentUser {
   email: string;
@@ -978,32 +979,32 @@ export default function AgentDetailPage({
                       Prior Approvals
                     </p>
                   </div>
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-border text-left text-text-tertiary">
-                        <th className="px-4 py-2 font-medium">Step</th>
-                        <th className="px-4 py-2 font-medium">Label</th>
-                        <th className="px-4 py-2 font-medium">Approver</th>
-                        <th className="px-4 py-2 font-medium">Date</th>
-                        <th className="px-4 py-2 font-medium">Comment</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
+                  <Table dense>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader>Step</TableHeader>
+                        <TableHeader>Label</TableHeader>
+                        <TableHeader>Approver</TableHeader>
+                        <TableHeader>Date</TableHeader>
+                        <TableHeader>Comment</TableHeader>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {priorApprovals.map((step, i) => (
-                        <tr key={i} className="text-text-secondary">
-                          <td className="px-4 py-2">{step.step + 1}</td>
-                          <td className="px-4 py-2">{step.label}</td>
-                          <td className="px-4 py-2 font-medium">{step.approvedBy}</td>
-                          <td className="px-4 py-2 whitespace-nowrap">
+                        <TableRow key={i}>
+                          <TableCell>{step.step + 1}</TableCell>
+                          <TableCell>{step.label}</TableCell>
+                          <TableCell className="font-medium">{step.approvedBy}</TableCell>
+                          <TableCell className="whitespace-nowrap">
                             {new Date(step.approvedAt).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
-                          </td>
-                          <td className="px-4 py-2 text-text-secondary italic">
+                          </TableCell>
+                          <TableCell className="italic">
                             {step.comment ?? "—"}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               )}
 
@@ -1329,25 +1330,25 @@ export default function AgentDetailPage({
 
       {activeTab === "versions" && (
           <div className="p-6 space-y-6">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                  <th className="pb-3 pr-4">Version</th>
-                  <th className="pb-3 pr-4">Status</th>
-                  <th className="pb-3 pr-4">Governance</th>
-                  <th className="pb-3 pr-4">Refinements</th>
-                  <th className="pb-3 pr-4">Created</th>
-                  <th className="pb-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeader>Version</TableHeader>
+                  <TableHeader>Status</TableHeader>
+                  <TableHeader>Governance</TableHeader>
+                  <TableHeader>Refinements</TableHeader>
+                  <TableHeader>Created</TableHeader>
+                  <TableHeader>Actions</TableHeader>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {versions.map((v) => (
-                  <tr key={v.id} className="py-3">
-                    <td className="py-3 pr-4 font-mono text-text">v{v.version}</td>
-                    <td className="py-3 pr-4">
+                  <TableRow key={v.id}>
+                    <TableCell className="font-mono text-text">v{v.version}</TableCell>
+                    <TableCell>
                       <StatusBadge status={v.status} />
-                    </td>
-                    <td className="py-3 pr-4">
+                    </TableCell>
+                    <TableCell>
                       {v.validationReport == null ? (
                         <span className="text-text-tertiary">—</span>
                       ) : (() => {
@@ -1377,23 +1378,23 @@ export default function AgentDetailPage({
                           </div>
                         );
                       })()}
-                    </td>
-                    <td className="py-3 pr-4 text-text-secondary">{v.refinementCount ?? "0"}</td>
-                    <td className="py-3 pr-4 text-text-secondary">
+                    </TableCell>
+                    <TableCell className="text-text-secondary">{v.refinementCount ?? "0"}</TableCell>
+                    <TableCell className="text-text-secondary">
                       {new Date(v.createdAt).toLocaleString()}
-                    </td>
-                    <td className="py-3">
+                    </TableCell>
+                    <TableCell>
                       <Link
                         href={`/blueprints/${v.id}`}
                         className="text-text-secondary hover:text-text underline"
                       >
                         Open
                       </Link>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
 
             {/* Version Lineage — governance diff per version */}
             {versions.some((v) => v.governanceDiff != null) && (

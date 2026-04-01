@@ -4,6 +4,7 @@ All interactions and actions taken on the Intellios project, in reverse chronolo
 
 | Session | Date | Summary |
 |---|---|---|
+| [079](2026-03-31_session-079.md) | 2026-03-31 | Catalyst UI Kit integration: 7 components added (Table, Switch, DescriptionList, Heading, Divider, Text, CatalystLink), @headlessui/react installed, SSO toggle → Switch, all 12 raw-table files migrated to Catalyst Table. 0 raw tables remain. tsc 0 errors. |
 | [078](2026-03-31_session-078.md) | 2026-03-31 | Landing page rebuild: full premium marketing page with Heroicons, gradient hero, compliance badges, pipeline steps, features grid, stats, roles, CTA, footer. @heroicons/react installed. tsc 0 errors. |
 | [077](2026-03-31_session-077.md) | 2026-03-31 | UI/UX Sprint Phases 2B+1C+3D+3E: Recharts charts (quality trend, governance monthly+donut); Radix Select across all 20 raw selects in 11 files (_all_/_none_ sentinel fix); responsive grid breakpoints on governance+monitor; aria-label on 4 icon-only buttons. tsc 0 errors. |
 | [076](2026-03-31_session-076.md) | 2026-03-31 | UI/UX Optimization Sprint (Phase 0–3): tw-animate-css animation fix, cmdk command palette, sonner toast system, Tabs/Select/Sheet/Skeleton/EmptyState components, Recharts infrastructure (BarChart/LineChart/DonutChart wrappers). 9 new files, 8 modified, 6 deps installed. tsc 0 errors. |

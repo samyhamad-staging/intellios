@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { CheckSquare, AlertTriangle, Download } from "lucide-react";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -396,39 +397,39 @@ export default function CompliancePage() {
                     </span>
                   </div>
                   <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-gray-100 bg-gray-50">
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Agent</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Review Due</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Days Overdue</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Last Review</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
+                    <Table striped>
+                      <TableHead>
+                        <TableRow>
+                          <TableHeader>Agent</TableHeader>
+                          <TableHeader>Review Due</TableHeader>
+                          <TableHeader>Days Overdue</TableHeader>
+                          <TableHeader>Last Review</TableHeader>
+                          <TableHeader>Action</TableHeader>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {posture.overdueReviews.map((item) => {
                           const daysOverdue = Math.floor((Date.now() - new Date(item.nextReviewDue).getTime()) / (1000 * 60 * 60 * 24));
                           return (
-                            <tr key={item.blueprintId} className="hover:bg-gray-50">
-                              <td className="px-4 py-3">
+                            <TableRow key={item.blueprintId}>
+                              <TableCell>
                                 <div className="font-medium text-gray-900">{item.agentName}</div>
                                 <div className="text-xs text-gray-400">v{item.version}</div>
-                              </td>
-                              <td className="px-4 py-3 text-sm text-red-700">
+                              </TableCell>
+                              <TableCell className="text-sm text-red-700">
                                 {new Date(item.nextReviewDue).toLocaleDateString(undefined, { dateStyle: "medium" })}
-                              </td>
-                              <td className="px-4 py-3">
+                              </TableCell>
+                              <TableCell>
                                 <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
                                   {daysOverdue}d overdue
                                 </span>
-                              </td>
-                              <td className="px-4 py-3 text-xs text-gray-500">
+                              </TableCell>
+                              <TableCell className="text-xs text-gray-500">
                                 {item.lastPeriodicReviewAt
                                   ? new Date(item.lastPeriodicReviewAt).toLocaleDateString(undefined, { dateStyle: "medium" })
                                   : "Never"}
-                              </td>
-                              <td className="px-4 py-3">
+                              </TableCell>
+                              <TableCell>
                                 <div className="flex items-center gap-3">
                                   <Link href={`/registry/${item.agentId}`} className="text-xs text-blue-600 hover:underline">View →</Link>
                                   <button
@@ -438,12 +439,12 @@ export default function CompliancePage() {
                                     Complete Review
                                   </button>
                                 </div>
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           );
                         })}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               )}
@@ -469,43 +470,33 @@ export default function CompliancePage() {
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-100 bg-gray-50">
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Agent
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Status
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Issues
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Health
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Action
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
+                  <Table striped>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader>Agent</TableHeader>
+                        <TableHeader>Status</TableHeader>
+                        <TableHeader>Issues</TableHeader>
+                        <TableHeader>Health</TableHeader>
+                        <TableHeader>Action</TableHeader>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {posture.atRiskAgents.map((agent) => (
-                        <tr key={agent.blueprintId} className="hover:bg-gray-50">
-                          <td className="px-4 py-3">
+                        <TableRow key={agent.blueprintId}>
+                          <TableCell>
                             <div className="font-medium text-gray-900">
                               {agent.agentName}
                             </div>
                             <div className="text-xs text-gray-400">
                               v{agent.version}
                             </div>
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell>
                             <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs capitalize text-gray-600">
                               {agent.status.replace("_", " ")}
                             </span>
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell>
                             <ul className="space-y-0.5">
                               {agent.issues.map((issue, i) => (
                                 <li
@@ -516,8 +507,8 @@ export default function CompliancePage() {
                                 </li>
                               ))}
                             </ul>
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell>
                             {agent.healthStatus ? (
                               <span
                                 className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
@@ -533,19 +524,19 @@ export default function CompliancePage() {
                             ) : (
                               <span className="text-xs text-gray-400">—</span>
                             )}
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell>
                             <Link
                               href={`/registry/${agent.agentId}`}
                               className="text-xs text-blue-600 hover:underline"
                             >
                               View →
                             </Link>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </section>
@@ -631,38 +622,27 @@ export default function CompliancePage() {
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-100 bg-gray-50">
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Policy
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Type
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Violations
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Affected Agents
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
+                  <Table striped>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader>Policy</TableHeader>
+                        <TableHeader>Type</TableHeader>
+                        <TableHeader>Violations</TableHeader>
+                        <TableHeader>Affected Agents</TableHeader>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {posture.policyCoverage.map((policy) => (
-                        <tr
-                          key={policy.name}
-                          className="hover:bg-gray-50"
-                        >
-                          <td className="px-4 py-3 font-medium text-gray-900">
+                        <TableRow key={policy.name}>
+                          <TableCell className="font-medium text-gray-900">
                             {policy.name}
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell>
                             <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs capitalize text-gray-600">
                               {policy.type.replace("_", " ")}
                             </span>
-                          </td>
-                          <td className="px-4 py-3 text-right">
+                          </TableCell>
+                          <TableCell className="text-right">
                             {policy.violationCount > 0 ? (
                               <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
                                 {policy.violationCount}
@@ -670,8 +650,8 @@ export default function CompliancePage() {
                             ) : (
                               <span className="text-xs text-gray-400">0</span>
                             )}
-                          </td>
-                          <td className="px-4 py-3 text-right">
+                          </TableCell>
+                          <TableCell className="text-right">
                             {policy.affectedAgentCount > 0 ? (
                               <Link
                                 href="/registry"
@@ -682,11 +662,11 @@ export default function CompliancePage() {
                             ) : (
                               <span className="text-xs text-gray-400">0 agents</span>
                             )}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                   {posture.policyCoverage.every(
                     (p) => p.violationCount === 0
                   ) && (

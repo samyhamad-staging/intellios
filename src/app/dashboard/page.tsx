@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 interface AgentSummary {
   id: string;
@@ -267,24 +268,24 @@ export default function ExecutiveDashboardPage() {
 
           {!loading && recentDeployed.length > 0 && (
             <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
-                    <th className="px-5 py-3 text-left">Agent</th>
-                    <th className="px-5 py-3 text-left">Version</th>
-                    <th className="px-5 py-3 text-left">Tags</th>
-                    <th className="px-5 py-3 text-left">Deployed</th>
-                    <th className="px-5 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
+              <Table striped>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Agent</TableHeader>
+                    <TableHeader>Version</TableHeader>
+                    <TableHeader>Tags</TableHeader>
+                    <TableHeader>Deployed</TableHeader>
+                    <TableHeader></TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {recentDeployed.map((agent) => (
-                    <tr key={agent.agentId} className="hover:bg-gray-50">
-                      <td className="px-5 py-3 font-medium text-gray-900">
+                    <TableRow key={agent.agentId}>
+                      <TableCell className="font-medium text-gray-900">
                         {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
-                      </td>
-                      <td className="px-5 py-3 font-mono text-xs text-gray-500">v{agent.version}</td>
-                      <td className="px-5 py-3">
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-gray-500">v{agent.version}</TableCell>
+                      <TableCell>
                         <div className="flex gap-1">
                           {(agent.tags ?? []).slice(0, 2).map((tag) => (
                             <span key={tag} className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
@@ -292,20 +293,20 @@ export default function ExecutiveDashboardPage() {
                             </span>
                           ))}
                         </div>
-                      </td>
-                      <td className="px-5 py-3 text-xs text-gray-400">{timeAgo(agent.updatedAt)}</td>
-                      <td className="px-5 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</TableCell>
+                      <TableCell className="text-right">
                         <Link
                           href={`/registry/${agent.agentId}`}
                           className="text-xs text-gray-400 hover:text-gray-700 underline"
                         >
                           View →
                         </Link>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </section>

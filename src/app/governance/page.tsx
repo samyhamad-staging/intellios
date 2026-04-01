@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Shield, Plus, Download } from "lucide-react";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 import {
   ResponsiveContainer,
   BarChart,
@@ -817,26 +818,26 @@ export default function GovernanceHubPage() {
                       ) : (policyHistories[policy.id] ?? []).length === 0 ? (
                         <div className="text-xs text-gray-400 py-2">No history available.</div>
                       ) : (
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="text-gray-400 uppercase tracking-wider">
-                              <th className="text-left pb-1 pr-4 font-medium">Version</th>
-                              <th className="text-left pb-1 pr-4 font-medium">Date</th>
-                              <th className="text-left pb-1 font-medium">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100">
+                        <Table dense>
+                          <TableHead>
+                            <TableRow>
+                              <TableHeader>Version</TableHeader>
+                              <TableHeader>Date</TableHeader>
+                              <TableHeader>Status</TableHeader>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
                             {(policyHistories[policy.id] ?? []).map((entry) => (
-                              <tr key={entry.id} className="text-gray-600">
-                                <td className="py-1.5 pr-4 font-medium">v{entry.policyVersion}</td>
-                                <td className="py-1.5 pr-4">
+                              <TableRow key={entry.id}>
+                                <TableCell className="font-medium text-gray-600">v{entry.policyVersion}</TableCell>
+                                <TableCell className="text-gray-600">
                                   {new Date(entry.createdAt).toLocaleDateString(undefined, {
                                     year: "numeric",
                                     month: "short",
                                     day: "numeric",
                                   })}
-                                </td>
-                                <td className="py-1.5">
+                                </TableCell>
+                                <TableCell>
                                   {entry.isActive ? (
                                     <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700 font-medium">
                                       Active
@@ -846,11 +847,11 @@ export default function GovernanceHubPage() {
                                       Superseded
                                     </span>
                                   )}
-                                </td>
-                              </tr>
+                                </TableCell>
+                              </TableRow>
                             ))}
-                          </tbody>
-                        </table>
+                          </TableBody>
+                        </Table>
                       )}
                     </div>
                   )}
@@ -963,38 +964,38 @@ export default function GovernanceHubPage() {
               Compliance by Stage
             </h2>
             <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
-                    <th className="px-5 py-3 text-left">Stage</th>
-                    <th className="px-5 py-3 text-right">Agents</th>
-                    <th className="px-5 py-3 text-right">With Errors</th>
-                    <th className="px-5 py-3 text-right">Clean</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
+              <Table striped>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Stage</TableHeader>
+                    <TableHeader>Agents</TableHeader>
+                    <TableHeader>With Errors</TableHeader>
+                    <TableHeader>Clean</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {Object.entries(statusGroups).map(([status, { count, withErrors: we }]) => (
-                    <tr key={status} className="hover:bg-gray-50">
-                      <td className="px-5 py-3 font-medium text-gray-900 capitalize">
+                    <TableRow key={status}>
+                      <TableCell className="font-medium text-gray-900 capitalize">
                         {status.replace("_", " ")}
-                      </td>
-                      <td className="px-5 py-3 text-right text-gray-600">{count}</td>
-                      <td className="px-5 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-right text-gray-600">{count}</TableCell>
+                      <TableCell className="text-right">
                         {we > 0 ? (
                           <span className="font-medium text-red-600">{we}</span>
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}
-                      </td>
-                      <td className="px-5 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         <span className={count - we > 0 ? "text-green-600 font-medium" : "text-gray-400"}>
                           {count - we}
                         </span>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </section>
         )}

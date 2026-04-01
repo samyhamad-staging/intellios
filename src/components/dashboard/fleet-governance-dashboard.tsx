@@ -6,6 +6,7 @@ import type { ValidationReport } from "@/lib/governance/types";
 import type { ABP } from "@/lib/types/abp";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 /**
  * FleetGovernanceDashboard — Phase 51.
@@ -215,35 +216,22 @@ export async function FleetGovernanceDashboard({
 
       {/* Per-agent fleet table */}
       <div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50 text-left">
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[35%]">
-                Agent
-              </th>
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[14%]">
-                Risk Tier
-              </th>
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[18%]">
-                Governance
-              </th>
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[18%]">
-                Next Review
-              </th>
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[15%]">
-                Evidence
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {agents.map((agent, i) => {
+        <Table striped>
+          <TableHead>
+            <TableRow>
+              <TableHeader>Agent</TableHeader>
+              <TableHeader>Risk Tier</TableHeader>
+              <TableHeader>Governance</TableHeader>
+              <TableHeader>Next Review</TableHeader>
+              <TableHeader>Evidence</TableHeader>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {agents.map((agent) => {
               return (
-                <tr
-                  key={agent.id}
-                  className={`${i > 0 ? "border-t border-gray-100" : ""} hover:bg-gray-50 transition-colors`}
-                >
+                <TableRow key={agent.id}>
                   {/* Agent name + version + status */}
-                  <td className="px-4 py-3">
+                  <TableCell>
                     <Link
                       href={`/registry/${agent.agentId}`}
                       className="font-medium text-gray-900 hover:text-violet-700 transition-colors"
@@ -259,17 +247,17 @@ export async function FleetGovernanceDashboard({
                       <span>·</span>
                       <span>{agent.policyCount} polic{agent.policyCount === 1 ? "y" : "ies"}</span>
                     </div>
-                  </td>
+                  </TableCell>
 
                   {/* Risk tier badge */}
-                  <td className="px-4 py-3">
+                  <TableCell>
                     <Badge variant={TIER_VARIANT[agent.riskTier]}>
                       {TIER_LABEL[agent.riskTier]}
                     </Badge>
-                  </td>
+                  </TableCell>
 
                   {/* Governance health */}
-                  <td className="px-4 py-3">
+                  <TableCell>
                     {agent.governance === "pass" && (
                       <Badge variant="success">Passes</Badge>
                     )}
@@ -282,10 +270,10 @@ export async function FleetGovernanceDashboard({
                     {agent.governance === "unvalidated" && (
                       <Badge variant="muted">Not validated</Badge>
                     )}
-                  </td>
+                  </TableCell>
 
                   {/* Next review / overdue */}
-                  <td className="px-4 py-3">
+                  <TableCell>
                     {agent.nextReviewDue == null ? (
                       <span className="text-xs text-gray-300">—</span>
                     ) : agent.isOverdue ? (
@@ -295,10 +283,10 @@ export async function FleetGovernanceDashboard({
                         {agent.nextReviewDue.toLocaleDateString(undefined, { dateStyle: "medium" })}
                       </span>
                     )}
-                  </td>
+                  </TableCell>
 
                   {/* Evidence package link */}
-                  <td className="px-4 py-3">
+                  <TableCell>
                     <Link
                       href={`/blueprints/${agent.id}/report`}
                       className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
@@ -306,12 +294,12 @@ export async function FleetGovernanceDashboard({
                     >
                       View Report
                     </Link>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

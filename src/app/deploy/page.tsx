@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Rocket } from "lucide-react";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 /**
  * Map raw AWS SDK / server error strings to actionable operator messages.
@@ -668,25 +669,25 @@ export default function DeploymentConsolePage() {
 
           {!loading && deployed.length > 0 && (
             <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
-                    <th className="px-5 py-3 text-left">Agent</th>
-                    <th className="px-5 py-3 text-left">Version</th>
-                    <th className="px-5 py-3 text-left">Tags</th>
-                    <th className="px-5 py-3 text-left">Deployed</th>
-                    <th className="px-5 py-3 text-left">Governance</th>
-                    <th className="px-5 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
+              <Table striped>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Agent</TableHeader>
+                    <TableHeader>Version</TableHeader>
+                    <TableHeader>Tags</TableHeader>
+                    <TableHeader>Deployed</TableHeader>
+                    <TableHeader>Governance</TableHeader>
+                    <TableHeader></TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {deployed.map((agent) => (
-                    <tr key={agent.agentId} className="hover:bg-gray-50">
-                      <td className="px-5 py-3">
+                    <TableRow key={agent.agentId}>
+                      <TableCell>
                         <span className="font-medium text-gray-900">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</span>
-                      </td>
-                      <td className="px-5 py-3 font-mono text-gray-500 text-xs">v{agent.version}</td>
-                      <td className="px-5 py-3">
+                      </TableCell>
+                      <TableCell className="font-mono text-gray-500 text-xs">v{agent.version}</TableCell>
+                      <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {(agent.tags ?? []).slice(0, 2).map((tag) => (
                             <span key={tag} className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
@@ -694,9 +695,9 @@ export default function DeploymentConsolePage() {
                             </span>
                           ))}
                         </div>
-                      </td>
-                      <td className="px-5 py-3 text-gray-400 text-xs">{timeAgo(agent.updatedAt)}</td>
-                      <td className="px-5 py-3">
+                      </TableCell>
+                      <TableCell className="text-gray-400 text-xs">{timeAgo(agent.updatedAt)}</TableCell>
+                      <TableCell>
                         {agent.violationCount === 0 && (
                           <span className="text-xs font-medium text-green-600">✓ Clean</span>
                         )}
@@ -708,8 +709,8 @@ export default function DeploymentConsolePage() {
                         {agent.violationCount === null && (
                           <span className="text-xs text-gray-400">Not validated</span>
                         )}
-                      </td>
-                      <td className="px-5 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-3">
                           <a
                             href={`/api/blueprints/${agent.id}/export/agentcore`}
@@ -726,11 +727,11 @@ export default function DeploymentConsolePage() {
                             View →
                           </Link>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </section>

@@ -10,6 +10,7 @@ import { writeAuditLog } from "@/lib/audit/log";
 import { MRMReport } from "@/lib/mrm/types";
 import PrintButton from "@/components/mrm/print-button";
 import DownloadEvidenceButton from "@/components/mrm/download-evidence-button";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 import { assessAllFrameworks } from "@/lib/regulatory/classifier";
 import type { RegulatoryAssessment } from "@/lib/regulatory/frameworks";
 import type { ABP } from "@/lib/types/abp";
@@ -373,46 +374,46 @@ function ReportDocument({
             {r.capabilities.tools.length > 0 && (
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Tools</p>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs font-medium text-gray-400">
-                      <th className="pb-1.5 pr-4">Name</th>
-                      <th className="pb-1.5 pr-4">Type</th>
-                      <th className="pb-1.5">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
+                <Table dense>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Name</TableHeader>
+                      <TableHeader>Type</TableHeader>
+                      <TableHeader>Description</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {r.capabilities.tools.map((t, i) => (
-                      <tr key={i}>
-                        <td className="py-1.5 pr-4 font-medium text-gray-900">{t.name}</td>
-                        <td className="py-1.5 pr-4 text-gray-500">{t.type}</td>
-                        <td className="py-1.5 text-gray-600">{t.description ?? "—"}</td>
-                      </tr>
+                      <TableRow key={i}>
+                        <TableCell className="font-medium text-gray-900">{t.name}</TableCell>
+                        <TableCell className="text-gray-500">{t.type}</TableCell>
+                        <TableCell className="text-gray-600">{t.description ?? "—"}</TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             )}
 
             {r.capabilities.knowledgeSources.length > 0 && (
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Knowledge Sources</p>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs font-medium text-gray-400">
-                      <th className="pb-1.5 pr-4">Name</th>
-                      <th className="pb-1.5">Type</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
+                <Table dense>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Name</TableHeader>
+                      <TableHeader>Type</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {r.capabilities.knowledgeSources.map((k, i) => (
-                      <tr key={i}>
-                        <td className="py-1.5 pr-4 font-medium text-gray-900">{k.name}</td>
-                        <td className="py-1.5 text-gray-500">{k.type}</td>
-                      </tr>
+                      <TableRow key={i}>
+                        <TableCell className="font-medium text-gray-900">{k.name}</TableCell>
+                        <TableCell className="text-gray-500">{k.type}</TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             )}
           </div>
@@ -504,20 +505,20 @@ function ReportDocument({
                     <p className="mb-3 text-xs text-gray-500">
                       Policies evaluated at validation time ({validationGeneratedAt ? fmt(validationGeneratedAt) : "—"}). Superseded indicators show whether a policy has been revised since this blueprint was validated.
                     </p>
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-gray-100 text-left font-semibold uppercase tracking-wider text-gray-400">
-                          <th className="pb-2 pr-4">Policy</th>
-                          <th className="pb-2 pr-3">Version at Evaluation</th>
-                          <th className="pb-2">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-50">
+                    <Table dense>
+                      <TableHead>
+                        <TableRow>
+                          <TableHeader>Policy</TableHeader>
+                          <TableHeader>Version at Evaluation</TableHeader>
+                          <TableHeader>Status</TableHeader>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {policyVersionRows.map((p) => (
-                          <tr key={p.id}>
-                            <td className="py-1.5 pr-4 text-gray-700 font-medium">{p.name}</td>
-                            <td className="py-1.5 pr-3 text-gray-500 font-mono">v{p.policyVersion}</td>
-                            <td className="py-1.5">
+                          <TableRow key={p.id}>
+                            <TableCell className="text-gray-700 font-medium">{p.name}</TableCell>
+                            <TableCell className="text-gray-500 font-mono">v{p.policyVersion}</TableCell>
+                            <TableCell>
                               {p.supersededAt ? (
                                 <span className="inline-flex items-center gap-1 text-amber-700">
                                   <span>⚠</span>
@@ -526,11 +527,11 @@ function ReportDocument({
                               ) : (
                                 <span className="text-green-700">✓ Current version</span>
                               )}
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 )}
               </>
@@ -558,32 +559,32 @@ function ReportDocument({
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
                   6.1  Approval Chain Evidence
                 </p>
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-100 text-left font-semibold uppercase tracking-wider text-gray-400">
-                      <th className="pb-2 pr-3 w-10">Step</th>
-                      <th className="pb-2 pr-3">Role</th>
-                      <th className="pb-2 pr-3">Label</th>
-                      <th className="pb-2 pr-3">Approver</th>
-                      <th className="pb-2 pr-3">Decision</th>
-                      <th className="pb-2">Timestamp</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
+                <Table dense>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Step</TableHeader>
+                      <TableHeader>Role</TableHeader>
+                      <TableHeader>Label</TableHeader>
+                      <TableHeader>Approver</TableHeader>
+                      <TableHeader>Decision</TableHeader>
+                      <TableHeader>Timestamp</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {approvalProgress.map((step) => (
-                      <tr key={step.step} className={step.decision === "rejected" ? "bg-red-50" : ""}>
-                        <td className="py-1.5 pr-3 text-gray-500">{step.step + 1}</td>
-                        <td className="py-1.5 pr-3 text-gray-600 capitalize">{step.role.replace("_", " ")}</td>
-                        <td className="py-1.5 pr-3 text-gray-700 font-medium">{step.label}</td>
-                        <td className="py-1.5 pr-3 text-gray-700">{step.approvedBy}</td>
-                        <td className={`py-1.5 pr-3 font-semibold ${step.decision === "approved" ? "text-green-700" : "text-red-700"}`}>
+                      <TableRow key={step.step}>
+                        <TableCell className="text-gray-500">{step.step + 1}</TableCell>
+                        <TableCell className="text-gray-600 capitalize">{step.role.replace("_", " ")}</TableCell>
+                        <TableCell className="text-gray-700 font-medium">{step.label}</TableCell>
+                        <TableCell className="text-gray-700">{step.approvedBy}</TableCell>
+                        <TableCell className={`font-semibold ${step.decision === "approved" ? "text-green-700" : "text-red-700"}`}>
                           {step.decision === "approved" ? "✓ Approved" : "✗ Rejected"}
-                        </td>
-                        <td className="py-1.5 text-gray-500 whitespace-nowrap">{fmt(step.approvedAt)}</td>
-                      </tr>
+                        </TableCell>
+                        <TableCell className="text-gray-500 whitespace-nowrap">{fmt(step.approvedAt)}</TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
                 <p className="mt-2 text-xs text-gray-500">
                   Final Status: {r.reviewDecision.outcome?.toUpperCase() ?? "PENDING"} — {approvalProgress.length} approval step{approvalProgress.length === 1 ? "" : "s"} recorded
                   {approvalProgress.every((s) => s.decision === "approved")
@@ -707,28 +708,28 @@ function ReportDocument({
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Version History ({r.modelLineage.versionHistory.length})
               </p>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 text-left text-xs font-medium text-gray-400">
-                    <th className="pb-1.5 pr-4">Version</th>
-                    <th className="pb-1.5 pr-4">Status</th>
-                    <th className="pb-1.5 pr-4">Refinements</th>
-                    <th className="pb-1.5 pr-4">Created By</th>
-                    <th className="pb-1.5">Created At</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
+              <Table dense>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Version</TableHeader>
+                    <TableHeader>Status</TableHeader>
+                    <TableHeader>Refinements</TableHeader>
+                    <TableHeader>Created By</TableHeader>
+                    <TableHeader>Created At</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {r.modelLineage.versionHistory.map((v, i) => (
-                    <tr key={i}>
-                      <td className="py-1.5 pr-4 font-mono font-medium text-gray-900">v{v.version}</td>
-                      <td className="py-1.5 pr-4 text-gray-500 uppercase text-xs">{v.status}</td>
-                      <td className="py-1.5 pr-4 text-gray-500">{v.refinementCount}</td>
-                      <td className="py-1.5 pr-4 text-gray-500">{v.createdBy ?? "—"}</td>
-                      <td className="py-1.5 text-gray-500">{fmtDate(v.createdAt)}</td>
-                    </tr>
+                    <TableRow key={i}>
+                      <TableCell className="font-mono font-medium text-gray-900">v{v.version}</TableCell>
+                      <TableCell className="text-gray-500 uppercase text-xs">{v.status}</TableCell>
+                      <TableCell className="text-gray-500">{v.refinementCount}</TableCell>
+                      <TableCell className="text-gray-500">{v.createdBy ?? "—"}</TableCell>
+                      <TableCell className="text-gray-500">{fmtDate(v.createdAt)}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
 
             <div>
@@ -738,26 +739,26 @@ function ReportDocument({
               {r.modelLineage.deploymentLineage.length === 0 ? (
                 <p className="text-sm text-gray-400">No production deployments recorded.</p>
               ) : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs font-medium text-gray-400">
-                      <th className="pb-1.5 pr-4">Version</th>
-                      <th className="pb-1.5 pr-4">Deployed At</th>
-                      <th className="pb-1.5 pr-4">Deployed By</th>
-                      <th className="pb-1.5">Change Ref</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
+                <Table dense>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Version</TableHeader>
+                      <TableHeader>Deployed At</TableHeader>
+                      <TableHeader>Deployed By</TableHeader>
+                      <TableHeader>Change Ref</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {r.modelLineage.deploymentLineage.map((d, i) => (
-                      <tr key={i}>
-                        <td className="py-1.5 pr-4 font-mono text-gray-900">v{d.version}</td>
-                        <td className="py-1.5 pr-4 text-gray-500">{fmt(d.deployedAt)}</td>
-                        <td className="py-1.5 pr-4 text-gray-500">{d.deployedBy}</td>
-                        <td className="py-1.5 font-mono text-xs text-gray-500">{d.changeRef ?? "—"}</td>
-                      </tr>
+                      <TableRow key={i}>
+                        <TableCell className="font-mono text-gray-900">v{d.version}</TableCell>
+                        <TableCell className="text-gray-500">{fmt(d.deployedAt)}</TableCell>
+                        <TableCell className="text-gray-500">{d.deployedBy}</TableCell>
+                        <TableCell className="font-mono text-xs text-gray-500">{d.changeRef ?? "—"}</TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               )}
             </div>
           </div>
@@ -770,34 +771,34 @@ function ReportDocument({
             {r.auditChain.length === 0 ? (
               <p className="text-sm text-gray-400">No audit events recorded for this version.</p>
             ) : (
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-gray-100 text-left font-semibold uppercase tracking-wider text-gray-400">
-                    <th className="pb-2 pr-4">Timestamp</th>
-                    <th className="pb-2 pr-4">Action</th>
-                    <th className="pb-2 pr-4">Actor</th>
-                    <th className="pb-2 pr-4">Role</th>
-                    <th className="pb-2">Transition</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
+              <Table dense>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Timestamp</TableHeader>
+                    <TableHeader>Action</TableHeader>
+                    <TableHeader>Actor</TableHeader>
+                    <TableHeader>Role</TableHeader>
+                    <TableHeader>Transition</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {r.auditChain.map((e, i) => (
-                    <tr key={i} className="align-top">
-                      <td className="py-2 pr-4 font-mono text-gray-500 whitespace-nowrap">
+                    <TableRow key={i}>
+                      <TableCell className="font-mono text-gray-500 whitespace-nowrap">
                         {fmt(e.timestamp)}
-                      </td>
-                      <td className="py-2 pr-4 font-mono text-gray-700">{e.action}</td>
-                      <td className="py-2 pr-4 text-gray-700">{e.actor}</td>
-                      <td className="py-2 pr-4 text-gray-500">{e.actorRole}</td>
-                      <td className="py-2 text-gray-500">
+                      </TableCell>
+                      <TableCell className="font-mono text-gray-700">{e.action}</TableCell>
+                      <TableCell className="text-gray-700">{e.actor}</TableCell>
+                      <TableCell className="text-gray-500">{e.actorRole}</TableCell>
+                      <TableCell className="text-gray-500">
                         {e.fromStatus && e.toStatus
                           ? `${e.fromStatus} → ${e.toStatus}`
                           : e.toStatus ?? "—"}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             )}
           </div>
         </section>
@@ -991,16 +992,16 @@ function ReportDocument({
                     )}
 
                     {/* Per-requirement evidence table */}
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-gray-100 text-left font-semibold uppercase tracking-wider text-gray-400">
-                          <th className="pb-2 pr-3 w-20">Code</th>
-                          <th className="pb-2 pr-3">Requirement</th>
-                          <th className="pb-2 pr-3 w-24">Status</th>
-                          <th className="pb-2">Evidence</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-50">
+                    <Table dense>
+                      <TableHead>
+                        <TableRow>
+                          <TableHeader>Code</TableHeader>
+                          <TableHeader>Requirement</TableHeader>
+                          <TableHeader>Status</TableHeader>
+                          <TableHeader>Evidence</TableHeader>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {fw.requirements.map((req, ri) => {
                           const statusIcon =
                             req.evidenceStatus === "satisfied"
@@ -1019,7 +1020,7 @@ function ReportDocument({
                               ? "text-red-700"
                               : "text-gray-400";
                           return (
-                            <tr
+                            <TableRow
                               key={ri}
                               className={
                                 req.evidenceStatus === "not_applicable"
@@ -1027,30 +1028,30 @@ function ReportDocument({
                                   : ""
                               }
                             >
-                              <td className="py-2 pr-3 font-mono font-medium text-gray-700 align-top">
+                              <TableCell className="font-mono font-medium text-gray-700 align-top">
                                 {req.code}
-                              </td>
-                              <td className="py-2 pr-3 text-gray-700 align-top">
+                              </TableCell>
+                              <TableCell className="text-gray-700 align-top">
                                 <span className="font-medium">{req.title}</span>
                                 <span className="block text-gray-400 mt-0.5 text-xs leading-relaxed">
                                   {req.description}
                                 </span>
-                              </td>
-                              <td className={`py-2 pr-3 font-semibold align-top whitespace-nowrap ${statusColor}`}>
+                              </TableCell>
+                              <TableCell className={`font-semibold align-top whitespace-nowrap ${statusColor}`}>
                                 {statusIcon}{" "}
                                 {req.evidenceStatus === "not_applicable"
                                   ? "N/A"
                                   : req.evidenceStatus.charAt(0).toUpperCase() +
                                     req.evidenceStatus.slice(1)}
-                              </td>
-                              <td className="py-2 text-gray-500 align-top">
+                              </TableCell>
+                              <TableCell className="text-gray-500 align-top">
                                 {req.evidence ?? "—"}
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           );
                         })}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 );
               })}
@@ -1093,22 +1094,22 @@ function ReportDocument({
               {/* Per-case results table */}
               {latestTestRun.testResults.length > 0 && (
                 <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-gray-100 bg-gray-50 text-left text-gray-500">
-                        <th className="w-6 px-4 py-2.5 font-semibold">#</th>
-                        <th className="px-4 py-2.5 font-semibold">Test Case</th>
-                        <th className="w-20 px-4 py-2.5 font-semibold">Verdict</th>
-                        <th className="px-4 py-2.5 font-semibold">Evaluation Rationale</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
+                  <Table dense>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader>#</TableHeader>
+                        <TableHeader>Test Case</TableHeader>
+                        <TableHeader>Verdict</TableHeader>
+                        <TableHeader>Evaluation Rationale</TableHeader>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {latestTestRun.testResults.map((result, i) => (
-                        <tr key={result.testCaseId} className="align-top">
-                          <td className="px-4 py-2.5 text-gray-400">{i + 1}</td>
-                          <td className="px-4 py-2.5 font-medium text-gray-900">{result.name}</td>
-                          <td
-                            className={`px-4 py-2.5 font-semibold ${
+                        <TableRow key={result.testCaseId} className="align-top">
+                          <TableCell className="text-gray-400">{i + 1}</TableCell>
+                          <TableCell className="font-medium text-gray-900">{result.name}</TableCell>
+                          <TableCell
+                            className={`font-semibold ${
                               result.status === "passed"
                                 ? "text-green-700"
                                 : result.status === "failed"
@@ -1117,14 +1118,14 @@ function ReportDocument({
                             }`}
                           >
                             {result.status === "passed" ? "✓ Passed" : result.status === "failed" ? "✗ Failed" : "⚠ Error"}
-                          </td>
-                          <td className="px-4 py-2.5 text-gray-600 leading-relaxed">
+                          </TableCell>
+                          <TableCell className="text-gray-600 leading-relaxed">
                             {result.evaluationRationale || "—"}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </div>
