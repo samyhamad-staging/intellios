@@ -67,6 +67,25 @@ export interface ProbingTopic {
   covered: boolean;
 }
 
+// ── Domain Progress ─────────────────────────────────────────────────────────
+
+export interface DomainProgress {
+  /** Domain key (e.g., "identity", "tools", "governance") */
+  key: string;
+  /** User-friendly label (e.g., "Purpose", "Capabilities") */
+  label: string;
+  /** Visual icon */
+  icon: string;
+  /** 0–4 richness scale: 0=empty, 1=started, 2=developing, 3=adequate, 4=rich */
+  fillLevel: 0 | 1 | 2 | 3 | 4;
+  /** Human-readable status label */
+  status: "empty" | "started" | "developing" | "adequate" | "rich";
+  /** Number of items captured in this domain */
+  itemCount: number;
+  /** Whether this domain is required for the current risk tier */
+  required: boolean;
+}
+
 // ── Full Metadata Object ─────────────────────────────────────────────────────
 
 export interface IntakeTransparencyMetadata {
@@ -76,4 +95,8 @@ export interface IntakeTransparencyMetadata {
   model: ModelTransparency;
   expertiseLevel: ExpertiseLevel | null;
   probingTopics: ProbingTopic[];
+  /** Per-domain fill status for the domain progress strip */
+  domains: DomainProgress[];
+  /** Key of the domain the AI is currently targeting (null if undetermined) */
+  activeDomain: string | null;
 }

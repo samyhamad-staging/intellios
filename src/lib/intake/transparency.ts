@@ -17,6 +17,7 @@ import type {
   ProbingTopic,
 } from "@/lib/types/intake-transparency";
 import { computeReadinessScore } from "./readiness";
+import { computeDomainProgress, inferActiveDomain } from "./domains";
 import type { ExpertiseLevel, ModelSelectionContext } from "./model-selector";
 
 // ── Risk Tier Signal Explainer ───────────────────────────────────────────────
@@ -375,7 +376,8 @@ export function buildTransparencyMetadata(
   classification: IntakeClassification | null,
   selectedModel: string,
   expertiseLevel: ExpertiseLevel | null,
-  modelCtx: ModelSelectionContext
+  modelCtx: ModelSelectionContext,
+  toolCallNames: string[] = []
 ): IntakeTransparencyMetadata {
   // Readiness
   const readinessResult = computeReadinessScore(payload, classification?.riskTier ?? null);
@@ -416,6 +418,11 @@ export function buildTransparencyMetadata(
     ? getProbingTopicsStructured(context, classification?.agentType ?? null, payload)
     : [];
 
+  // Domain progress
+  const riskTier = classification?.riskTier ?? null;
+  const domains = computeDomainProgress(payload, context, riskTier);
+  const activeDomain = inferActiveDomain(toolCallNames, probingTopics, domains);
+
   return {
     classification: classificationData,
     readiness,
@@ -423,5 +430,7 @@ export function buildTransparencyMetadata(
     model,
     expertiseLevel,
     probingTopics,
+    domains,
+    activeDomain,
   };
 }

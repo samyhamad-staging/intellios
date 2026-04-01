@@ -246,8 +246,14 @@ export async function POST(
       expertiseLevel: currentExpertiseLevel,
     };
 
+    // Collect tool call names for active domain inference
+    const collectedToolNames: string[] = [];
     return result.toUIMessageStreamResponse({
       messageMetadata: ({ part }) => {
+        // Track tool calls as they stream through
+        if ("toolName" in part && typeof part.toolName === "string") {
+          collectedToolNames.push(part.toolName);
+        }
         if (part.type !== "finish") return undefined;
         return buildTransparencyMetadata(
           currentPayload,
@@ -256,6 +262,7 @@ export async function POST(
           selectedModel,
           currentExpertiseLevel,
           modelSelectionCtx,
+          collectedToolNames,
         );
       },
     });

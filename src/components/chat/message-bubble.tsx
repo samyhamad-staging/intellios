@@ -2,9 +2,22 @@ import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
 import { Divider } from "@/components/ui/divider";
 
+// Domain key → user-friendly label for the domain tag
+const DOMAIN_LABELS: Record<string, { label: string; icon: string }> = {
+  identity:     { label: "Purpose",      icon: "\u25CE" },
+  tools:        { label: "Capabilities", icon: "\u2699" },
+  instructions: { label: "Behavior",     icon: "\uD83D\uDCCB" },
+  knowledge:    { label: "Knowledge",    icon: "\uD83D\uDCDA" },
+  constraints:  { label: "Guardrails",   icon: "\uD83D\uDEA7" },
+  governance:   { label: "Governance",   icon: "\uD83D\uDEE1" },
+  audit:        { label: "Audit",        icon: "\uD83D\uDCDD" },
+};
+
 interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
+  /** Key of the domain this AI response targets (e.g., "governance") */
+  activeDomain?: string | null;
 }
 
 const assistantComponents: Components = {
@@ -44,8 +57,9 @@ const assistantComponents: Components = {
   hr: () => <Divider soft className="my-2" />,
 };
 
-export function MessageBubble({ role, content }: MessageBubbleProps) {
+export function MessageBubble({ role, content, activeDomain }: MessageBubbleProps) {
   const isUser = role === "user";
+  const domainInfo = activeDomain ? DOMAIN_LABELS[activeDomain] : null;
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
@@ -56,6 +70,13 @@ export function MessageBubble({ role, content }: MessageBubbleProps) {
             : "bg-white text-gray-900 border border-gray-200"
         }`}
       >
+        {/* Domain tag for AI messages */}
+        {!isUser && domainInfo && (
+          <div className="flex items-center gap-1 mb-1.5">
+            <span className="text-2xs leading-none">{domainInfo.icon}</span>
+            <span className="text-2xs font-medium text-gray-400">{domainInfo.label}</span>
+          </div>
+        )}
         {isUser ? (
           <p className="whitespace-pre-wrap text-sm leading-relaxed">{content}</p>
         ) : (

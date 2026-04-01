@@ -7,6 +7,7 @@ import { ChatContainer } from "@/components/chat/chat-container";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { IntakeProgress } from "@/components/intake/intake-progress";
 import { IntakeReview } from "@/components/intake/intake-review";
+import { DomainProgressStrip } from "@/components/intake/domain-progress-strip";
 import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
 import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
 
@@ -410,77 +411,54 @@ export default function IntakeSessionPage({
 
   // ─── Phase 2: Conversation ───────────────────────────────────────────────────
 
-  const RISK_TIER_BADGE_COLORS: Record<IntakeRiskTier, string> = {
-    low: "bg-green-100 text-green-700",
-    medium: "bg-amber-100 text-amber-700",
-    high: "bg-orange-100 text-orange-700",
-    critical: "bg-red-100 text-red-700",
-  };
-
-  const AGENT_TYPE_LABELS: Record<AgentType, string> = {
-    "automation": "Automation",
-    "decision-support": "Decision Support",
-    "autonomous": "Autonomous",
-    "data-access": "Data Access",
-  };
-
   return (
     <div className="flex h-screen flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-3">
-        <div>
-          <h1 className="text-lg font-semibold">Intellios</h1>
-          <p className="text-xs text-text-secondary">Agent Intake</p>
+      {/* Header — Logo + Domain Progress Strip + Actions */}
+      <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-2.5 gap-3">
+        <div className="shrink-0">
+          <h1 className="text-lg font-semibold leading-tight">Intellios</h1>
+          <p className="text-2xs text-text-secondary">Agent Intake</p>
         </div>
 
-        {/* Phase stepper */}
-        <div className="flex items-center gap-0">
-          {(["Context", "Requirements", "Review"] as const).map((label, i) => {
-            const done = (label === "Context" && !!intakeContext);
-            const active = (label === "Context" && !intakeContext) || (label === "Requirements" && !!intakeContext);
-            return (
-              <div key={label} className="flex items-center">
-                {i > 0 && <div className="w-6 h-px bg-border mx-1" />}
-                <div className="flex items-center gap-1.5">
-                  <span className={`flex h-4 w-4 items-center justify-center rounded-full text-2xs font-bold transition-colors ${
-                    done    ? "bg-primary text-white" :
-                    active  ? "border border-primary text-primary" :
-                              "border border-border text-text-tertiary"
-                  }`}>
-                    {done ? "✓" : i + 1}
-                  </span>
-                  <span className={`text-xs font-medium transition-colors ${
-                    active ? "text-text" : "text-text-tertiary"
-                  }`}>{label}</span>
-                </div>
-              </div>
-            );
-          })}
+        {/* Domain Progress Strip — replaces stepper + classification bar */}
+        <div className="flex-1 min-w-0">
+          <DomainProgressStrip
+            transparency={transparency}
+            classification={classification}
+            classificationLoading={classificationLoading}
+            onOverrideClick={() => {
+              if (classification) {
+                setEditAgentType(classification.agentType);
+                setEditRiskTier(classification.riskTier);
+                setEditingClassification(true);
+              }
+            }}
+          />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {/* Mobile-only progress toggle */}
           <button
             onClick={() => setMobileSidebarOpen((o) => !o)}
             className="lg:hidden rounded-lg border border-border px-2.5 py-1 text-xs text-text-secondary hover:border-border-strong transition-colors"
           >
-            {mobileSidebarOpen ? "Hide progress" : "Progress"}
+            {mobileSidebarOpen ? "Hide" : "Details"}
           </button>
           {discardConfirm ? (
             <>
-              <span className="text-xs text-text-secondary">Discard this session?</span>
+              <span className="text-xs text-text-secondary">Discard?</span>
               <button
                 onClick={handleDiscard}
                 disabled={discarding}
                 className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
               >
-                {discarding ? "Discarding…" : "Yes, discard"}
+                {discarding ? "…" : "Yes"}
               </button>
               <button
                 onClick={() => setDiscardConfirm(false)}
                 className="text-xs text-text-tertiary hover:text-text-secondary transition-colors"
               >
-                Cancel
+                No
               </button>
             </>
           ) : (
@@ -495,86 +473,45 @@ export default function IntakeSessionPage({
         </div>
       </header>
 
-      {/* Classification header — shown below nav header, above chat */}
-      {(classificationLoading || classification) && (
-        <div className="border-b border-border bg-surface-raised px-6 py-2 flex min-h-[32px] items-center">
-          {classificationLoading && !classification ? (
-            <div className="flex animate-pulse items-center gap-2">
-              <div className="h-5 w-24 rounded-full bg-surface-muted" />
-              <div className="h-5 w-16 rounded-full bg-surface-muted" />
-              <span className="text-xs text-text-tertiary">Classifying…</span>
-            </div>
-          ) : classification && !editingClassification ? (
-            <div className="flex flex-col gap-0.5">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-text-tertiary mr-1">Agent classification:</span>
-                <span
-                  className="rounded-full bg-surface-muted px-2.5 py-0.5 text-xs font-medium text-text-secondary"
-                  title="Agent type — how this agent operates (auto-classified from your description)"
-                >
-                  {AGENT_TYPE_LABELS[classification.agentType]}
-                </span>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${RISK_TIER_BADGE_COLORS[classification.riskTier]}`}
-                  title="Risk tier — governs review requirements and governance policies applied"
-                >
-                  {classification.riskTier.toUpperCase()} risk
-                </span>
-                <button
-                  onClick={() => {
-                    setEditAgentType(classification.agentType);
-                    setEditRiskTier(classification.riskTier);
-                    setEditingClassification(true);
-                  }}
-                  className="ml-1 text-xs text-text-tertiary hover:text-text-secondary underline-offset-2 hover:underline"
-                >
-                  Override
-                </button>
-              </div>
-              {classification.rationale && (
-                <p className="text-xs italic text-text-tertiary">{classification.rationale}</p>
-              )}
-            </div>
-          ) : classification && editingClassification ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-text-tertiary">Override classification:</span>
-              <Select value={editAgentType} onValueChange={(v) => setEditAgentType(v as AgentType)}>
-                <SelectTrigger className="h-6 text-xs px-2 w-36">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="automation">Automation</SelectItem>
-                  <SelectItem value="decision-support">Decision Support</SelectItem>
-                  <SelectItem value="autonomous">Autonomous</SelectItem>
-                  <SelectItem value="data-access">Data Access</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={editRiskTier} onValueChange={(v) => setEditRiskTier(v as IntakeRiskTier)}>
-                <SelectTrigger className="h-6 text-xs px-2 w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">LOW risk</SelectItem>
-                  <SelectItem value="medium">MEDIUM risk</SelectItem>
-                  <SelectItem value="high">HIGH risk</SelectItem>
-                  <SelectItem value="critical">CRITICAL risk</SelectItem>
-                </SelectContent>
-              </Select>
-              <button
-                onClick={handleSaveClassification}
-                disabled={classificationSaving}
-                className="rounded bg-text px-2.5 py-0.5 text-xs font-medium text-surface hover:opacity-80 disabled:opacity-50"
-              >
-                {classificationSaving ? "Saving…" : "Save classification"}
-              </button>
-              <button
-                onClick={() => setEditingClassification(false)}
-                className="text-xs text-text-tertiary hover:text-text-secondary"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : null}
+      {/* Classification override bar — only visible when editing */}
+      {editingClassification && classification && (
+        <div className="border-b border-border bg-surface-raised px-6 py-2 flex items-center gap-2">
+          <span className="text-xs text-text-tertiary">Override classification:</span>
+          <Select value={editAgentType} onValueChange={(v) => setEditAgentType(v as AgentType)}>
+            <SelectTrigger className="h-6 text-xs px-2 w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="automation">Automation</SelectItem>
+              <SelectItem value="decision-support">Decision Support</SelectItem>
+              <SelectItem value="autonomous">Autonomous</SelectItem>
+              <SelectItem value="data-access">Data Access</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={editRiskTier} onValueChange={(v) => setEditRiskTier(v as IntakeRiskTier)}>
+            <SelectTrigger className="h-6 text-xs px-2 w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low">LOW risk</SelectItem>
+              <SelectItem value="medium">MEDIUM risk</SelectItem>
+              <SelectItem value="high">HIGH risk</SelectItem>
+              <SelectItem value="critical">CRITICAL risk</SelectItem>
+            </SelectContent>
+          </Select>
+          <button
+            onClick={handleSaveClassification}
+            disabled={classificationSaving}
+            className="rounded bg-text px-2.5 py-0.5 text-xs font-medium text-surface hover:opacity-80 disabled:opacity-50"
+          >
+            {classificationSaving ? "Saving…" : "Save"}
+          </button>
+          <button
+            onClick={() => setEditingClassification(false)}
+            className="text-xs text-text-tertiary hover:text-text-secondary"
+          >
+            Cancel
+          </button>
         </div>
       )}
 

@@ -160,7 +160,11 @@ export function ChatContainer({
                 return null;
               })}
               {text && (
-                <MessageBubble role={msg.role as "user" | "assistant"} content={text} />
+                <MessageBubble
+                  role={msg.role as "user" | "assistant"}
+                  content={text}
+                  activeDomain={msg.role === "assistant" && msg.metadata ? (msg.metadata as Record<string, unknown>).activeDomain as string | null : undefined}
+                />
               )}
             </div>
           );
