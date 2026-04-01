@@ -59,7 +59,7 @@ function InvitePage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setFormError(data.message ?? "Failed to create account. Please try again.");
+        setFormError(data.error ?? "Failed to create account. Please try again.");
         return;
       }
 
@@ -77,13 +77,13 @@ function InvitePage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-sm">
         {/* Header */}
-        <div className="mb-8 text-center">
+        <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Intellios</h1>
           <p className="mt-1 text-sm text-gray-500">Enterprise Agent Factory</p>
         </div>
 
         {/* Card */}
-        <div className="rounded-card border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
           {status === "loading" && (
             <p className="text-center text-sm text-gray-500">Verifying invitation…</p>
           )}

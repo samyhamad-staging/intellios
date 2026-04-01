@@ -21,12 +21,13 @@ import { eq } from "drizzle-orm";
 import { buildSimulationSystemPrompt } from "@/lib/testing/executor";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { getRequestId } from "@/lib/request-id";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
 import type { ABP } from "@/lib/types/abp";
+import { readABP } from "@/lib/abp/read";
 
 const ChatBody = z.object({
   messages: z.array(z.unknown()).min(1).max(200),
@@ -39,7 +40,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { session: authSession, error } = await requireAuth([
-    "designer",
+    "architect",
     "reviewer",
     "compliance_officer",
     "admin",
@@ -47,7 +48,7 @@ export async function POST(
   if (error) return error;
   const requestId = getRequestId(request);
 
-  const rateLimitResponse = rateLimit(authSession.user.email!, {
+  const rateLimitResponse = await rateLimit(authSession.user.email!, {
     endpoint: "simulate",
     max: 30,
     windowMs: 60_000,
@@ -72,22 +73,22 @@ export async function POST(
     const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, authSession.user);
     if (enterpriseError) return enterpriseError;
 
-    const abp = blueprint.abp as ABP;
+    const abp = readABP(blueprint.abp);
 
     // Write audit entry on first message of a simulation session
     if (body.firstMessage) {
-      void writeAuditLog({
-        entityType: "blueprint",
-        entityId: blueprintId,
-        action: "blueprint.simulated",
-        actorEmail: authSession.user.email!,
-        actorRole: authSession.user.role,
-        enterpriseId: blueprint.enterpriseId,
-        metadata: {
-          agentId: blueprint.agentId,
-          agentName: blueprint.name,
-          version: blueprint.version,
+      void publishEvent({
+        event: {
+          type: "blueprint.simulated",
+          payload: {
+            blueprintId,
+            agentId: blueprint.agentId,
+            agentName: blueprint.name ?? "",
+          },
         },
+        actor: { email: authSession.user.email!, role: authSession.user.role },
+        entity: { type: "blueprint", id: blueprintId },
+        enterpriseId: blueprint.enterpriseId ?? null,
       });
     }
 

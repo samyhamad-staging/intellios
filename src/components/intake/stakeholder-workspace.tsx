@@ -135,7 +135,7 @@ export function StakeholderWorkspace({
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
             {/* AI Interview — takes 3/5 width */}
             <div className="lg:col-span-3">
-              <div className="rounded-card border border-gray-200 bg-white p-5">
+              <div className="rounded-xl border border-gray-200 bg-white p-5">
                 <h2 className="mb-4 text-sm font-semibold text-gray-700">
                   AI Requirements Interview
                 </h2>
@@ -152,7 +152,7 @@ export function StakeholderWorkspace({
             <div className="lg:col-span-2 space-y-4">
               {/* Contributors */}
               {collaborators.length > 0 && (
-                <div className="rounded-card border border-gray-200 bg-white p-4">
+                <div className="rounded-xl border border-gray-200 bg-white p-4">
                   <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
                     Collaboration Team
                   </h3>
@@ -167,9 +167,9 @@ export function StakeholderWorkspace({
                             <p className="text-xs font-medium text-gray-700 truncate">
                               {c.roleTitle}
                             </p>
-                            <p className="text-[10px] text-gray-400">{DOMAIN_LABELS[c.domain] ?? c.domain}</p>
+                            <p className="text-2xs text-gray-400">{DOMAIN_LABELS[c.domain] ?? c.domain}</p>
                           </div>
-                          <span className={`text-[10px] shrink-0 ${st.color}`}>{st.label}</span>
+                          <span className={`text-2xs shrink-0 ${st.color}`}>{st.label}</span>
                         </div>
                       );
                     })}
@@ -179,7 +179,7 @@ export function StakeholderWorkspace({
 
               {/* Synthesis */}
               {synthesis && (
-                <div className="rounded-card border border-gray-200 bg-white p-4">
+                <div className="rounded-xl border border-gray-200 bg-white p-4">
                   <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
                     What&apos;s Been Agreed
                   </h3>
@@ -193,7 +193,7 @@ export function StakeholderWorkspace({
 
               {/* Empty state */}
               {collaborators.length === 0 && !synthesis && (
-                <div className="rounded-card border border-dashed border-gray-200 bg-white p-4">
+                <div className="rounded-xl border border-dashed border-gray-200 bg-white p-4">
                   <p className="text-xs text-gray-400 text-center">
                     You&apos;re the first contributor. Other stakeholders will appear here as they join.
                   </p>
@@ -229,7 +229,7 @@ function SubmittedState({
       </p>
 
       {synthesis && (
-        <div className="rounded-card border border-gray-200 bg-white p-6 text-left">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 text-left">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
             Collaboration Summary
           </h3>
@@ -242,7 +242,7 @@ function SubmittedState({
       )}
 
       {collaborators.length > 0 && (
-        <div className="mt-4 rounded-card border border-gray-200 bg-white p-4 text-left">
+        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 text-left">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Team</h3>
           <div className="space-y-1.5">
             {collaborators.map((c, i) => {
@@ -252,7 +252,7 @@ function SubmittedState({
                   <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
                   <span className="text-xs text-gray-600">{c.roleTitle}</span>
                   <span className="text-xs text-gray-400">· {DOMAIN_LABELS[c.domain] ?? c.domain}</span>
-                  <span className={`ml-auto text-[10px] ${st.color}`}>{st.label}</span>
+                  <span className={`ml-auto text-2xs ${st.color}`}>{st.label}</span>
                 </div>
               );
             })}

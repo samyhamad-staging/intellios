@@ -224,7 +224,7 @@ export function BlueprintView({ abp }: BlueprintViewProps) {
 
 function Section({ title, icon: Icon, children }: { title: string; icon?: LucideIcon; children: React.ReactNode }) {
   return (
-    <div className="rounded-card border border-gray-200 bg-white p-5">
+    <div className="rounded-xl border border-gray-200 bg-white p-5">
       <h3 className="mb-4 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider text-gray-500">
         {Icon && <Icon size={13} className="text-gray-400" />}
         {title}

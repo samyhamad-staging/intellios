@@ -7,7 +7,7 @@ import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { z } from "zod";
 import { ContributionDomain, StakeholderContribution } from "@/lib/types/intake";
 
@@ -22,7 +22,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   // Any authenticated enterprise user can contribute — no role restriction
-  const { session: authSession, error } = await requireAuth(["designer", "reviewer", "compliance_officer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "reviewer", "compliance_officer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
@@ -59,18 +59,19 @@ export async function POST(
       })
       .returning();
 
-    void writeAuditLog({
-      entityType: "intake_session",
-      entityId: sessionId,
-      action: "intake.contribution_submitted",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
-      enterpriseId: session.enterpriseId,
-      metadata: {
-        domain: body.domain,
-        contributorEmail: authSession.user.email!,
-        contributionId: row.id,
+    void publishEvent({
+      event: {
+        type: "intake.contribution_submitted",
+        payload: {
+          sessionId,
+          domain: body.domain,
+          raciRole: authSession.user.role,
+          sessionCreatedBy: session.createdBy ?? "",
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "intake_session", id: sessionId },
+      enterpriseId: session.enterpriseId ?? null,
     });
 
     const contribution: StakeholderContribution = {
@@ -95,7 +96,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["designer", "reviewer", "compliance_officer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "reviewer", "compliance_officer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 

@@ -26,7 +26,7 @@ const ForgotPasswordBody = z.object({
 export async function POST(request: NextRequest) {
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-  const rateLimitResponse = rateLimit(ip, {
+  const rateLimitResponse = await rateLimit(ip, {
     endpoint: "forgot-password",
     max: 5,
     windowMs: 60 * 60 * 1000, // 5 per hour per IP

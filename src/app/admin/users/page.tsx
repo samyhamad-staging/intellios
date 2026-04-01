@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Mail, PenLine } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,7 +25,7 @@ interface Invitation {
 }
 
 const ROLES = [
-  { value: "designer",          label: "Designer" },
+  { value: "architect",          label: "Architect" },
   { value: "reviewer",          label: "Reviewer" },
   { value: "compliance_officer", label: "Compliance Officer" },
   { value: "admin",             label: "Admin" },
@@ -32,7 +33,7 @@ const ROLES = [
 ] as const;
 
 const ROLE_COLORS: Record<string, string> = {
-  designer:          "bg-blue-50 text-blue-700 border-blue-200",
+  architect:         "bg-blue-50 text-blue-700 border-blue-200",
   reviewer:          "bg-amber-50 text-amber-700 border-amber-200",
   compliance_officer: "bg-green-50 text-green-700 border-green-200",
   admin:             "bg-purple-50 text-purple-700 border-purple-200",
@@ -40,7 +41,7 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 const ROLE_ACCENT: Record<string, string> = {
-  designer:          "border-blue-400",
+  architect:         "border-blue-400",
   reviewer:          "border-amber-400",
   compliance_officer: "border-green-400",
   admin:             "border-purple-400",
@@ -79,7 +80,7 @@ interface CreateFormProps {
 function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<string>("designer");
+  const [role, setRole] = useState<string>("architect");
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,7 +112,7 @@ function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-card border border-blue-200 bg-blue-50 px-6 py-5 space-y-4">
+    <form onSubmit={handleSubmit} className="rounded-xl border border-blue-200 bg-blue-50 px-6 py-5 space-y-4">
       <h3 className="text-sm font-semibold text-gray-900">New User</h3>
 
       {error && (
@@ -145,15 +146,16 @@ function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
-          >
-            {ROLES.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
-          </select>
+          <Select value={role} onValueChange={setRole}>
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -201,7 +203,7 @@ interface InviteFormProps {
 
 function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<string>("designer");
+  const [role, setRole] = useState<string>("architect");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -232,7 +234,7 @@ function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-card border border-violet-200 bg-violet-50 px-6 py-5 space-y-4">
+    <form onSubmit={handleSubmit} className="rounded-xl border border-violet-200 bg-violet-50 px-6 py-5 space-y-4">
       <div>
         <h3 className="text-sm font-semibold text-gray-900">Invite User</h3>
         <p className="mt-0.5 text-xs text-gray-500">
@@ -260,15 +262,16 @@ function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
-          >
-            {ROLES.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
-          </select>
+          <Select value={role} onValueChange={setRole}>
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -340,6 +343,7 @@ function InlineRoleEditor({ user, currentUserId, onUpdated }: RoleEditorProps) {
             onClick={() => setEditing(true)}
             className="opacity-0 group-hover:opacity-100 rounded p-0.5 text-gray-400 hover:text-gray-600 transition-all"
             title="Edit role"
+            aria-label="Edit role"
           >
             <PenLine size={12} />
           </button>
@@ -353,17 +357,16 @@ function InlineRoleEditor({ user, currentUserId, onUpdated }: RoleEditorProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <select
-        value={role}
-        onChange={(e) => setRole(e.target.value)}
-        disabled={saving}
-        autoFocus
-        className="rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:border-blue-400"
-      >
-        {ROLES.map((r) => (
-          <option key={r.value} value={r.value}>{r.label}</option>
-        ))}
-      </select>
+      <Select value={role} onValueChange={setRole} disabled={saving}>
+        <SelectTrigger className="h-7 text-xs px-2">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {ROLES.map((r) => (
+            <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <button
         onClick={saveRole}
         disabled={saving}
@@ -453,7 +456,7 @@ export default function AdminUsersPage() {
   const showingForm = showCreate || showInvite;
 
   return (
-    <div className="px-8 py-8 space-y-6">
+    <div className="px-6 py-6 space-y-6">
       {/* Success toast */}
       {inviteSuccessToast && (
         <div className="fixed bottom-6 right-6 z-50 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800 shadow-lg">
@@ -525,7 +528,7 @@ export default function AdminUsersPage() {
         )}
 
         {/* User table */}
-        <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
           {loading && (
             <div className="space-y-0 divide-y divide-gray-100">
               {[1, 2, 3].map((i) => (
@@ -610,7 +613,7 @@ export default function AdminUsersPage() {
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Pending Invitations</h2>
 
           {invitationsLoading && (
-            <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
               {[1, 2].map((i) => (
                 <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-gray-100 last:border-0">
                   <div className="h-3 w-48 animate-pulse rounded bg-gray-100" />
@@ -621,13 +624,13 @@ export default function AdminUsersPage() {
           )}
 
           {!invitationsLoading && invitations.length === 0 && (
-            <div className="rounded-card border border-gray-200 bg-white px-6 py-8 text-center">
+            <div className="rounded-xl border border-gray-200 bg-white px-6 py-8 text-center">
               <p className="text-sm text-gray-400">No pending invitations.</p>
             </div>
           )}
 
           {!invitationsLoading && invitations.length > 0 && (
-            <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
               <div className="border-b border-gray-100 bg-gray-50 px-6 py-2.5">
                 <div className="grid grid-cols-[2fr_1.5fr_2fr_1fr] gap-4 text-xs font-medium uppercase tracking-wider text-gray-400">
                   <span>Email</span>

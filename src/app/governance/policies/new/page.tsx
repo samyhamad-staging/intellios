@@ -36,9 +36,9 @@ export default function NewPolicyPage() {
   }
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-6 py-6">
       {/* Page header */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">New Policy</h1>
           <p className="mt-0.5 text-sm text-gray-500">

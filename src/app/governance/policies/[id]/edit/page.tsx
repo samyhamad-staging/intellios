@@ -125,9 +125,9 @@ export default function EditPolicyPage({
   };
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-6 py-6">
       {/* Page header */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Edit Policy</h1>
           <p className="mt-0.5 text-sm text-gray-500">{policy.name}</p>
@@ -162,7 +162,7 @@ export default function EditPolicyPage({
 
         {/* Delete section — only shown for non-global policies */}
         {policy.enterpriseId !== null && (
-          <div className="mt-10 rounded-card border border-red-200 bg-white px-6 py-5">
+          <div className="mt-10 rounded-xl border border-red-200 bg-white px-6 py-5">
             <h3 className="text-sm font-semibold text-red-700 mb-1">Delete Policy</h3>
             <p className="text-xs text-gray-500 mb-4">
               Permanently remove this policy. Existing validation reports are not affected, but

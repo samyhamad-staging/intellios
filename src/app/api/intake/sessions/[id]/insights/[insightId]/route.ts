@@ -10,7 +10,7 @@ import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
 import { randomBytes } from "crypto";
 import { sendEmail, buildInvitationEmail } from "@/lib/notifications/email";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 
 const PatchBody = z.object({
   status: z.enum(["approved", "dismissed"]),
@@ -21,7 +21,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; insightId: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
 
   const requestId = getRequestId(request);
@@ -105,19 +105,18 @@ export async function PATCH(
           });
         }
 
-        void writeAuditLog({
-          entityType: "intake_session",
-          entityId: sessionId,
-          action: "intake.invitation_sent",
-          actorEmail: authSession.user.email!,
-          actorRole: authSession.user.role ?? "designer",
-          enterpriseId: session.enterpriseId,
-          metadata: {
-            invitationId: invitation.id,
-            domain: meta.domain,
-            source: "insight_approved",
-            insightId,
+        void publishEvent({
+          event: {
+            type: "intake.invitation_sent",
+            payload: {
+              sessionId,
+              inviteeEmail: meta.suggestedEmail ?? "unknown@placeholder.com",
+              raciRole: "consulted",
+            },
           },
+          actor: { email: authSession.user.email!, role: authSession.user.role ?? "architect" },
+          entity: { type: "intake_session", id: sessionId },
+          enterpriseId: session.enterpriseId ?? null,
         });
       }
     }

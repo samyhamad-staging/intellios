@@ -10,7 +10,7 @@ import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { rateLimit } from "@/lib/rate-limit";
 
 /**
@@ -29,11 +29,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
-  const rateLimitResponse = rateLimit(authSession.user.email!, {
+  const rateLimitResponse = await rateLimit(authSession.user.email!, {
     endpoint: "generate",
     max: 10,
     windowMs: 60_000,
@@ -118,18 +118,18 @@ export async function POST(
       })
       .where(eq(agentBlueprints.id, id));
 
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: id,
-      action: "blueprint.regenerated",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
-      enterpriseId,
-      metadata: {
-        sessionId: source.sessionId,
-        agentName: name ?? "Unnamed Agent",
-        violationCount: validationReport?.violations?.length ?? 0,
+    await publishEvent({
+      event: {
+        type: "blueprint.regenerated",
+        payload: {
+          blueprintId: id,
+          agentId: source.agentId,
+          agentName: name ?? "",
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id },
+      enterpriseId,
     });
 
     return NextResponse.json({ abp, validationReport, refinementCount: "0" });

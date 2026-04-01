@@ -26,11 +26,12 @@ export default auth((req) => {
   }
 
   const isLoginPage = pathname === "/login";
+  const isLandingPage = pathname === "/landing";
   const isRegisterPage = pathname === "/register";
   const isTemplatesPage = pathname === "/templates";
 
   // Public-only pages — redirect logged-in users to the app
-  if (isRegisterPage) {
+  if (isLandingPage || isRegisterPage) {
     if (isLoggedIn) {
       return withId(NextResponse.redirect(new URL("/", req.url)), requestId);
     }
@@ -48,6 +49,10 @@ export default auth((req) => {
   }
 
   if (!isLoggedIn && !isLoginPage) {
+    // Unauthenticated visitors to / see the landing page instead of login
+    if (pathname === "/") {
+      return withId(NextResponse.redirect(new URL("/landing", req.url)), requestId);
+    }
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return withId(NextResponse.redirect(loginUrl), requestId);

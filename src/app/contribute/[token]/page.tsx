@@ -147,13 +147,13 @@ function CompletedPage({
         <h1 className="mb-2 text-xl font-semibold text-gray-900">
           {inviteeName ? `Thanks, ${inviteeName}!` : "Contribution received"}
         </h1>
-        <p className="mb-8 text-sm text-gray-500">
+        <p className="mb-6 text-sm text-gray-500">
           Your requirements have been recorded and will be incorporated into the agent design for{" "}
           <strong>{sessionName}</strong>.
         </p>
 
         {synthesis && (
-          <div className="rounded-card border border-gray-200 bg-white p-6 text-left mb-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 text-left mb-4">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
               Team Summary
             </h3>
@@ -166,7 +166,7 @@ function CompletedPage({
         )}
 
         {collaborators.length > 0 && (
-          <div className="rounded-card border border-gray-200 bg-white p-4 text-left">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 text-left">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Team</h3>
             <div className="space-y-2">
               {collaborators.map((c, i) => {
@@ -177,7 +177,7 @@ function CompletedPage({
                     <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${dot}`} />
                     <span className="text-xs text-gray-700">{c.roleTitle}</span>
                     <span className="text-xs text-gray-400">· {DOMAIN_LABELS[c.domain] ?? c.domain}</span>
-                    <span className={`ml-auto text-[10px] ${st.color}`}>{st.label}</span>
+                    <span className={`ml-auto text-2xs ${st.color}`}>{st.label}</span>
                   </div>
                 );
               })}

@@ -10,6 +10,7 @@ import { writeAuditLog } from "@/lib/audit/log";
 import { MRMReport } from "@/lib/mrm/types";
 import PrintButton from "@/components/mrm/print-button";
 import DownloadEvidenceButton from "@/components/mrm/download-evidence-button";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 import { assessAllFrameworks } from "@/lib/regulatory/classifier";
 import type { RegulatoryAssessment } from "@/lib/regulatory/frameworks";
 import type { ABP } from "@/lib/types/abp";
@@ -17,6 +18,7 @@ import type { IntakeContext } from "@/lib/types/intake";
 import type { ValidationReport } from "@/lib/governance/types";
 import type { ApprovalStepRecord } from "@/lib/settings/types";
 import type { TestRun } from "@/lib/testing/types";
+import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -84,7 +86,10 @@ export default async function MRMReportPage({
   const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, session.user);
   if (enterpriseError) redirect("/registry");
 
-  const companyName = "Intellios";
+  // Fetch branding for white-label header
+  const companyName = blueprint.enterpriseId
+    ? (await getEnterpriseSettings(blueprint.enterpriseId)).branding?.companyName ?? "Intellios"
+    : "Intellios";
 
   // Assemble report + regulatory assessment in parallel
   const [report, intakeSession] = await Promise.all([
@@ -205,19 +210,19 @@ function ReportDocument({
 
   const riskColor =
     r.riskClassification.riskTier === "High"
-      ? "badge-risk-high border"
+      ? "bg-red-100 text-red-800 border-red-200"
       : r.riskClassification.riskTier === "Medium"
-      ? "badge-risk-medium border"
-      : "badge-risk-low border";
+      ? "bg-amber-100 text-amber-800 border-amber-200"
+      : "bg-green-100 text-green-800 border-green-200";
 
   const outcomeColor =
     r.reviewDecision.outcome === "approved"
-      ? "badge-gov-pass border"
+      ? "bg-green-100 text-green-800 border-green-200"
       : r.reviewDecision.outcome === "rejected"
-      ? "badge-gov-error border"
+      ? "bg-red-100 text-red-800 border-red-200"
       : r.reviewDecision.outcome === "changes_requested"
-      ? "badge-gov-warn border"
-      : "badge-draft border";
+      ? "bg-amber-100 text-amber-800 border-amber-200"
+      : "bg-gray-100 text-gray-600 border-gray-200";
 
   return (
     <div className="min-h-screen bg-gray-50 print:bg-white">
@@ -248,7 +253,7 @@ function ReportDocument({
       <div className="mx-auto max-w-4xl px-6 py-10 print:py-0 print:px-0 print:max-w-none">
 
         {/* ── Cover ────────────────────────────────────────────────────────── */}
-        <div className="mb-12 print:mb-8">
+        <div className="mb-12 print:mb-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
             SR 11-7 Model Risk Management — Compliance Report
           </p>
@@ -262,7 +267,7 @@ function ReportDocument({
             />
             <Chip
               label={`Version ${r.cover.currentVersion}`}
-              color="badge-role-designer border"
+              color="bg-blue-50 text-blue-700 border border-blue-200"
             />
             {r.cover.enterpriseId && (
               <Chip
@@ -282,7 +287,7 @@ function ReportDocument({
         {/* ── Section 2: Risk Classification ───────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={2} title="Risk Classification" />
-          <div className="rounded-card border border-gray-200 bg-white p-6">
+          <div className="rounded-xl border border-gray-200 bg-white p-6">
             <div className="flex items-start gap-6">
               <div className="shrink-0">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Risk Tier</p>
@@ -324,7 +329,7 @@ function ReportDocument({
         {/* ── Section 3: Agent Identity ─────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={3} title="Agent Identity" />
-          <div className="rounded-card border border-gray-200 bg-white p-6">
+          <div className="rounded-xl border border-gray-200 bg-white p-6">
             <dl className="grid grid-cols-1 gap-y-0">
               <Field label="Name" value={r.identity.name} />
               <Field label="Description" value={r.identity.description} />
@@ -348,7 +353,7 @@ function ReportDocument({
         {/* ── Section 4: Capabilities ───────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={4} title="Capabilities" />
-          <div className="rounded-card border border-gray-200 bg-white p-6 space-y-5">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
             <div className="flex gap-6">
               <div className="text-center">
                 <p className="text-3xl font-bold text-gray-900">{r.capabilities.toolCount}</p>
@@ -359,7 +364,7 @@ function ReportDocument({
                 <p className="text-xs text-gray-500">Knowledge Sources</p>
               </div>
               <div className="text-center">
-                <p className={`text-3xl font-bold ${r.capabilities.instructionsConfigured ? "text-[color:var(--gov-pass-text)]" : "text-gray-400"}`}>
+                <p className={`text-3xl font-bold ${r.capabilities.instructionsConfigured ? "text-green-700" : "text-gray-400"}`}>
                   {r.capabilities.instructionsConfigured ? "✓" : "✗"}
                 </p>
                 <p className="text-xs text-gray-500">Instructions</p>
@@ -369,46 +374,46 @@ function ReportDocument({
             {r.capabilities.tools.length > 0 && (
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Tools</p>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs font-medium text-gray-400">
-                      <th className="pb-1.5 pr-4">Name</th>
-                      <th className="pb-1.5 pr-4">Type</th>
-                      <th className="pb-1.5">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
+                <Table dense>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Name</TableHeader>
+                      <TableHeader>Type</TableHeader>
+                      <TableHeader>Description</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {r.capabilities.tools.map((t, i) => (
-                      <tr key={i}>
-                        <td className="py-1.5 pr-4 font-medium text-gray-900">{t.name}</td>
-                        <td className="py-1.5 pr-4 text-gray-500">{t.type}</td>
-                        <td className="py-1.5 text-gray-600">{t.description ?? "—"}</td>
-                      </tr>
+                      <TableRow key={i}>
+                        <TableCell className="font-medium text-gray-900">{t.name}</TableCell>
+                        <TableCell className="text-gray-500">{t.type}</TableCell>
+                        <TableCell className="text-gray-600">{t.description ?? "—"}</TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             )}
 
             {r.capabilities.knowledgeSources.length > 0 && (
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Knowledge Sources</p>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs font-medium text-gray-400">
-                      <th className="pb-1.5 pr-4">Name</th>
-                      <th className="pb-1.5">Type</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
+                <Table dense>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Name</TableHeader>
+                      <TableHeader>Type</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {r.capabilities.knowledgeSources.map((k, i) => (
-                      <tr key={i}>
-                        <td className="py-1.5 pr-4 font-medium text-gray-900">{k.name}</td>
-                        <td className="py-1.5 text-gray-500">{k.type}</td>
-                      </tr>
+                      <TableRow key={i}>
+                        <TableCell className="font-medium text-gray-900">{k.name}</TableCell>
+                        <TableCell className="text-gray-500">{k.type}</TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             )}
           </div>
@@ -417,14 +422,14 @@ function ReportDocument({
         {/* ── Section 5: Governance Validation ─────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={5} title="Governance Validation" />
-          <div className="rounded-card border border-gray-200 bg-white p-6 space-y-5">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
             {!r.governanceValidation.validated ? (
-              <p className="text-sm text-[color:var(--gov-warn-text)]">No validation has been run for this blueprint version.</p>
+              <p className="text-sm text-amber-700">No validation has been run for this blueprint version.</p>
             ) : (
               <>
                 <div className="flex flex-wrap gap-4">
                   <div className="text-center">
-                    <p className={`text-3xl font-bold ${r.governanceValidation.valid ? "text-[color:var(--gov-pass-text)]" : "text-[color:var(--gov-error-text)]"}`}>
+                    <p className={`text-3xl font-bold ${r.governanceValidation.valid ? "text-green-700" : "text-red-700"}`}>
                       {r.governanceValidation.valid ? "✓" : "✗"}
                     </p>
                     <p className="text-xs text-gray-500">{r.governanceValidation.valid ? "Valid" : "Invalid"}</p>
@@ -434,13 +439,13 @@ function ReportDocument({
                     <p className="text-xs text-gray-500">Policies Evaluated</p>
                   </div>
                   <div className="text-center">
-                    <p className={`text-3xl font-bold ${r.governanceValidation.errorCount > 0 ? "text-[color:var(--gov-error-text)]" : "text-gray-900"}`}>
+                    <p className={`text-3xl font-bold ${r.governanceValidation.errorCount > 0 ? "text-red-700" : "text-gray-900"}`}>
                       {r.governanceValidation.errorCount}
                     </p>
                     <p className="text-xs text-gray-500">Errors</p>
                   </div>
                   <div className="text-center">
-                    <p className={`text-3xl font-bold ${r.governanceValidation.warningCount > 0 ? "text-[color:var(--gov-warn-text)]" : "text-gray-900"}`}>
+                    <p className={`text-3xl font-bold ${r.governanceValidation.warningCount > 0 ? "text-amber-600" : "text-gray-900"}`}>
                       {r.governanceValidation.warningCount}
                     </p>
                     <p className="text-xs text-gray-500">Warnings</p>
@@ -457,11 +462,19 @@ function ReportDocument({
                       {r.governanceValidation.violations.map((v, i) => (
                         <div
                           key={i}
-                          className={`rounded-lg border p-3 text-xs ${v.severity === "error" ? "badge-gov-error" : "badge-gov-warn"}`}
+                          className={`rounded-lg border p-3 text-xs ${
+                            v.severity === "error"
+                              ? "border-red-200 bg-red-50"
+                              : "border-amber-200 bg-amber-50"
+                          }`}
                         >
                           <div className="flex items-start gap-2">
                             <span
-                              className={`shrink-0 rounded px-1 py-0.5 text-xs font-semibold ${v.severity === "error" ? "badge-gov-error" : "badge-gov-warn"}`}
+                              className={`shrink-0 rounded px-1 py-0.5 text-xs font-semibold ${
+                                v.severity === "error"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-amber-100 text-amber-700"
+                              }`}
                             >
                               {v.severity.toUpperCase()}
                             </span>
@@ -480,7 +493,7 @@ function ReportDocument({
                 )}
 
                 {r.governanceValidation.violations.length === 0 && (
-                  <p className="text-sm text-[color:var(--gov-pass-text)]">No violations found — blueprint passes all applicable governance policies.</p>
+                  <p className="text-sm text-green-700">No violations found — blueprint passes all applicable governance policies.</p>
                 )}
 
                 {/* Policy Version Evidence (Phase 22) */}
@@ -492,33 +505,33 @@ function ReportDocument({
                     <p className="mb-3 text-xs text-gray-500">
                       Policies evaluated at validation time ({validationGeneratedAt ? fmt(validationGeneratedAt) : "—"}). Superseded indicators show whether a policy has been revised since this blueprint was validated.
                     </p>
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-gray-100 text-left font-semibold uppercase tracking-wider text-gray-400">
-                          <th className="pb-2 pr-4">Policy</th>
-                          <th className="pb-2 pr-3">Version at Evaluation</th>
-                          <th className="pb-2">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-50">
+                    <Table dense>
+                      <TableHead>
+                        <TableRow>
+                          <TableHeader>Policy</TableHeader>
+                          <TableHeader>Version at Evaluation</TableHeader>
+                          <TableHeader>Status</TableHeader>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {policyVersionRows.map((p) => (
-                          <tr key={p.id}>
-                            <td className="py-1.5 pr-4 text-gray-700 font-medium">{p.name}</td>
-                            <td className="py-1.5 pr-3 text-gray-500 font-mono">v{p.policyVersion}</td>
-                            <td className="py-1.5">
+                          <TableRow key={p.id}>
+                            <TableCell className="text-gray-700 font-medium">{p.name}</TableCell>
+                            <TableCell className="text-gray-500 font-mono">v{p.policyVersion}</TableCell>
+                            <TableCell>
                               {p.supersededAt ? (
-                                <span className="inline-flex items-center gap-1 text-[color:var(--gov-warn-text)]">
+                                <span className="inline-flex items-center gap-1 text-amber-700">
                                   <span>⚠</span>
                                   <span>Policy revised since approval</span>
                                 </span>
                               ) : (
-                                <span className="text-[color:var(--gov-pass-text)]">✓ Current version</span>
+                                <span className="text-green-700">✓ Current version</span>
                               )}
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 )}
               </>
@@ -529,7 +542,7 @@ function ReportDocument({
         {/* ── Section 6: Review Decision ────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={6} title="Review Decision" />
-          <div className="rounded-card border border-gray-200 bg-white p-6 space-y-5">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
             <div className="flex items-start gap-4">
               <span
                 className={`inline-block rounded-lg border px-3 py-1.5 text-sm font-semibold ${outcomeColor}`}
@@ -546,32 +559,32 @@ function ReportDocument({
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
                   6.1  Approval Chain Evidence
                 </p>
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-100 text-left font-semibold uppercase tracking-wider text-gray-400">
-                      <th className="pb-2 pr-3 w-10">Step</th>
-                      <th className="pb-2 pr-3">Role</th>
-                      <th className="pb-2 pr-3">Label</th>
-                      <th className="pb-2 pr-3">Approver</th>
-                      <th className="pb-2 pr-3">Decision</th>
-                      <th className="pb-2">Timestamp</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
+                <Table dense>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Step</TableHeader>
+                      <TableHeader>Role</TableHeader>
+                      <TableHeader>Label</TableHeader>
+                      <TableHeader>Approver</TableHeader>
+                      <TableHeader>Decision</TableHeader>
+                      <TableHeader>Timestamp</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {approvalProgress.map((step) => (
-                      <tr key={step.step} className={step.decision === "rejected" ? "bg-[color:var(--status-rejected-col-bg)]" : ""}>
-                        <td className="py-1.5 pr-3 text-gray-500">{step.step + 1}</td>
-                        <td className="py-1.5 pr-3 text-gray-600 capitalize">{step.role.replace("_", " ")}</td>
-                        <td className="py-1.5 pr-3 text-gray-700 font-medium">{step.label}</td>
-                        <td className="py-1.5 pr-3 text-gray-700">{step.approvedBy}</td>
-                        <td className={`py-1.5 pr-3 font-semibold ${step.decision === "approved" ? "text-[color:var(--gov-pass-text)]" : "text-[color:var(--gov-error-text)]"}`}>
+                      <TableRow key={step.step}>
+                        <TableCell className="text-gray-500">{step.step + 1}</TableCell>
+                        <TableCell className="text-gray-600 capitalize">{step.role.replace("_", " ")}</TableCell>
+                        <TableCell className="text-gray-700 font-medium">{step.label}</TableCell>
+                        <TableCell className="text-gray-700">{step.approvedBy}</TableCell>
+                        <TableCell className={`font-semibold ${step.decision === "approved" ? "text-green-700" : "text-red-700"}`}>
                           {step.decision === "approved" ? "✓ Approved" : "✗ Rejected"}
-                        </td>
-                        <td className="py-1.5 text-gray-500 whitespace-nowrap">{fmt(step.approvedAt)}</td>
-                      </tr>
+                        </TableCell>
+                        <TableCell className="text-gray-500 whitespace-nowrap">{fmt(step.approvedAt)}</TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
                 <p className="mt-2 text-xs text-gray-500">
                   Final Status: {r.reviewDecision.outcome?.toUpperCase() ?? "PENDING"} — {approvalProgress.length} approval step{approvalProgress.length === 1 ? "" : "s"} recorded
                   {approvalProgress.every((s) => s.decision === "approved")
@@ -592,10 +605,12 @@ function ReportDocument({
         {/* ── Section 7: SOD Evidence ───────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={7} title="Separation of Duties Evidence" />
-          <div className="rounded-card border border-gray-200 bg-white p-6">
+          <div className="rounded-xl border border-gray-200 bg-white p-6">
             <div className="mb-4 flex items-center gap-2">
               <span
-                className={`text-sm font-semibold ${r.sodEvidence.sodSatisfied ? "text-[color:var(--gov-pass-text)]" : "text-[color:var(--gov-error-text)]"}`}
+                className={`text-sm font-semibold ${
+                  r.sodEvidence.sodSatisfied ? "text-green-700" : "text-red-700"
+                }`}
               >
                 {r.sodEvidence.sodSatisfied
                   ? "✓ SOD requirements satisfied — all roles held by distinct individuals"
@@ -603,7 +618,7 @@ function ReportDocument({
               </span>
             </div>
             <dl className="grid grid-cols-3 gap-x-8 gap-y-0">
-              <Field label="Designer (submitted)" value={r.sodEvidence.designer} />
+              <Field label="Architect (submitted)" value={r.sodEvidence.architect} />
               <Field label="Reviewer (approved/rejected)" value={r.sodEvidence.reviewer} />
               <Field label="Deployer (deployed to production)" value={r.sodEvidence.deployer} />
             </dl>
@@ -613,15 +628,19 @@ function ReportDocument({
         {/* ── Section 8: Deployment Record ─────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={8} title="Deployment Change Record" />
-          <div className="rounded-card border border-gray-200 bg-white p-6 space-y-5">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
             <div className="flex items-center gap-3">
               <span
-                className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${r.deploymentRecord.deployed ? "badge-approved" : "badge-draft"}`}
+                className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  r.deploymentRecord.deployed
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-100 text-gray-500"
+                }`}
               >
                 {r.deploymentRecord.deployed ? "Deployed to Production" : "Not Deployed"}
               </span>
               {r.deploymentRecord.deploymentTarget === "agentcore" && (
-                <span className="inline-block rounded-full badge-risk-high border px-2 py-0.5 text-xs font-semibold">
+                <span className="inline-block rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700 border border-orange-200">
                   Amazon Bedrock AgentCore
                 </span>
               )}
@@ -636,33 +655,33 @@ function ReportDocument({
 
             {/* AgentCore deployment details */}
             {r.deploymentRecord.agentcoreRecord && (
-              <div className="rounded-lg border badge-risk-high p-4">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wider">
+              <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-orange-700">
                   Amazon Bedrock AgentCore — AWS Resource Details
                 </p>
                 <dl className="grid grid-cols-1 gap-y-0 sm:grid-cols-2">
                   <div className="py-1.5">
-                    <dt className="text-xs font-semibold uppercase tracking-wider opacity-70">Agent ID</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-orange-600">Agent ID</dt>
                     <dd className="mt-0.5 font-mono text-xs text-gray-900">{r.deploymentRecord.agentcoreRecord.agentId}</dd>
                   </div>
                   <div className="py-1.5">
-                    <dt className="text-xs font-semibold uppercase tracking-wider opacity-70">Region</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-orange-600">Region</dt>
                     <dd className="mt-0.5 text-sm text-gray-900">{r.deploymentRecord.agentcoreRecord.region}</dd>
                   </div>
                   <div className="py-1.5 sm:col-span-2">
-                    <dt className="text-xs font-semibold uppercase tracking-wider opacity-70">Agent ARN</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-orange-600">Agent ARN</dt>
                     <dd className="mt-0.5 break-all font-mono text-xs text-gray-900">{r.deploymentRecord.agentcoreRecord.agentArn}</dd>
                   </div>
                   <div className="py-1.5">
-                    <dt className="text-xs font-semibold uppercase tracking-wider opacity-70">Foundation Model</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-orange-600">Foundation Model</dt>
                     <dd className="mt-0.5 text-sm text-gray-900">{r.deploymentRecord.agentcoreRecord.foundationModel}</dd>
                   </div>
                   <div className="py-1.5">
-                    <dt className="text-xs font-semibold uppercase tracking-wider opacity-70">AgentCore Deployed By</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-orange-600">AgentCore Deployed By</dt>
                     <dd className="mt-0.5 text-sm text-gray-900">{r.deploymentRecord.agentcoreRecord.deployedBy}</dd>
                   </div>
                   <div className="py-1.5">
-                    <dt className="text-xs font-semibold uppercase tracking-wider opacity-70">AgentCore Deployed At</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-orange-600">AgentCore Deployed At</dt>
                     <dd className="mt-0.5 text-sm text-gray-900">{fmt(r.deploymentRecord.agentcoreRecord.deployedAt)}</dd>
                   </div>
                   <div className="py-1.5 flex items-end">
@@ -670,7 +689,7 @@ function ReportDocument({
                       href={`https://${r.deploymentRecord.agentcoreRecord.region}.console.aws.amazon.com/bedrock/home?region=${r.deploymentRecord.agentcoreRecord.region}#/agents/${r.deploymentRecord.agentcoreRecord.agentId}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs font-medium underline opacity-80 hover:opacity-100 print:hidden"
+                      className="text-xs font-medium text-orange-700 underline hover:text-orange-900 print:hidden"
                     >
                       View in AWS Console ↗
                     </a>
@@ -684,33 +703,33 @@ function ReportDocument({
         {/* ── Section 9: Model Lineage ──────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={9} title="Model Lineage" />
-          <div className="space-y-5 rounded-card border border-gray-200 bg-white p-6">
+          <div className="space-y-5 rounded-xl border border-gray-200 bg-white p-6">
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Version History ({r.modelLineage.versionHistory.length})
               </p>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 text-left text-xs font-medium text-gray-400">
-                    <th className="pb-1.5 pr-4">Version</th>
-                    <th className="pb-1.5 pr-4">Status</th>
-                    <th className="pb-1.5 pr-4">Refinements</th>
-                    <th className="pb-1.5 pr-4">Created By</th>
-                    <th className="pb-1.5">Created At</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
+              <Table dense>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Version</TableHeader>
+                    <TableHeader>Status</TableHeader>
+                    <TableHeader>Refinements</TableHeader>
+                    <TableHeader>Created By</TableHeader>
+                    <TableHeader>Created At</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {r.modelLineage.versionHistory.map((v, i) => (
-                    <tr key={i}>
-                      <td className="py-1.5 pr-4 font-mono font-medium text-gray-900">v{v.version}</td>
-                      <td className="py-1.5 pr-4 text-gray-500 uppercase text-xs">{v.status}</td>
-                      <td className="py-1.5 pr-4 text-gray-500">{v.refinementCount}</td>
-                      <td className="py-1.5 pr-4 text-gray-500">{v.createdBy ?? "—"}</td>
-                      <td className="py-1.5 text-gray-500">{fmtDate(v.createdAt)}</td>
-                    </tr>
+                    <TableRow key={i}>
+                      <TableCell className="font-mono font-medium text-gray-900">v{v.version}</TableCell>
+                      <TableCell className="text-gray-500 uppercase text-xs">{v.status}</TableCell>
+                      <TableCell className="text-gray-500">{v.refinementCount}</TableCell>
+                      <TableCell className="text-gray-500">{v.createdBy ?? "—"}</TableCell>
+                      <TableCell className="text-gray-500">{fmtDate(v.createdAt)}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
 
             <div>
@@ -720,26 +739,26 @@ function ReportDocument({
               {r.modelLineage.deploymentLineage.length === 0 ? (
                 <p className="text-sm text-gray-400">No production deployments recorded.</p>
               ) : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs font-medium text-gray-400">
-                      <th className="pb-1.5 pr-4">Version</th>
-                      <th className="pb-1.5 pr-4">Deployed At</th>
-                      <th className="pb-1.5 pr-4">Deployed By</th>
-                      <th className="pb-1.5">Change Ref</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
+                <Table dense>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Version</TableHeader>
+                      <TableHeader>Deployed At</TableHeader>
+                      <TableHeader>Deployed By</TableHeader>
+                      <TableHeader>Change Ref</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {r.modelLineage.deploymentLineage.map((d, i) => (
-                      <tr key={i}>
-                        <td className="py-1.5 pr-4 font-mono text-gray-900">v{d.version}</td>
-                        <td className="py-1.5 pr-4 text-gray-500">{fmt(d.deployedAt)}</td>
-                        <td className="py-1.5 pr-4 text-gray-500">{d.deployedBy}</td>
-                        <td className="py-1.5 font-mono text-xs text-gray-500">{d.changeRef ?? "—"}</td>
-                      </tr>
+                      <TableRow key={i}>
+                        <TableCell className="font-mono text-gray-900">v{d.version}</TableCell>
+                        <TableCell className="text-gray-500">{fmt(d.deployedAt)}</TableCell>
+                        <TableCell className="text-gray-500">{d.deployedBy}</TableCell>
+                        <TableCell className="font-mono text-xs text-gray-500">{d.changeRef ?? "—"}</TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               )}
             </div>
           </div>
@@ -748,38 +767,38 @@ function ReportDocument({
         {/* ── Section 10: Audit Chain ───────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={10} title="Audit Chain" />
-          <div className="rounded-card border border-gray-200 bg-white p-6">
+          <div className="rounded-xl border border-gray-200 bg-white p-6">
             {r.auditChain.length === 0 ? (
               <p className="text-sm text-gray-400">No audit events recorded for this version.</p>
             ) : (
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-gray-100 text-left font-semibold uppercase tracking-wider text-gray-400">
-                    <th className="pb-2 pr-4">Timestamp</th>
-                    <th className="pb-2 pr-4">Action</th>
-                    <th className="pb-2 pr-4">Actor</th>
-                    <th className="pb-2 pr-4">Role</th>
-                    <th className="pb-2">Transition</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
+              <Table dense>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Timestamp</TableHeader>
+                    <TableHeader>Action</TableHeader>
+                    <TableHeader>Actor</TableHeader>
+                    <TableHeader>Role</TableHeader>
+                    <TableHeader>Transition</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {r.auditChain.map((e, i) => (
-                    <tr key={i} className="align-top">
-                      <td className="py-2 pr-4 font-mono text-gray-500 whitespace-nowrap">
+                    <TableRow key={i}>
+                      <TableCell className="font-mono text-gray-500 whitespace-nowrap">
                         {fmt(e.timestamp)}
-                      </td>
-                      <td className="py-2 pr-4 font-mono text-gray-700">{e.action}</td>
-                      <td className="py-2 pr-4 text-gray-700">{e.actor}</td>
-                      <td className="py-2 pr-4 text-gray-500">{e.actorRole}</td>
-                      <td className="py-2 text-gray-500">
+                      </TableCell>
+                      <TableCell className="font-mono text-gray-700">{e.action}</TableCell>
+                      <TableCell className="text-gray-700">{e.actor}</TableCell>
+                      <TableCell className="text-gray-500">{e.actorRole}</TableCell>
+                      <TableCell className="text-gray-500">
                         {e.fromStatus && e.toStatus
                           ? `${e.fromStatus} → ${e.toStatus}`
                           : e.toStatus ?? "—"}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             )}
           </div>
         </section>
@@ -787,7 +806,7 @@ function ReportDocument({
         {/* ── Section 11: Stakeholder Contributions ────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={11} title="Stakeholder Contributions" />
-          <div className="rounded-card border border-gray-200 bg-white p-6 space-y-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
 
             {/* Coverage gaps callout */}
             {r.stakeholderCoverageGaps && r.stakeholderCoverageGaps.length > 0 && (
@@ -840,7 +859,7 @@ function ReportDocument({
         <section className="mb-10">
           <SectionHeader number={12} title="Regulatory Framework Assessment" />
           {!regulatoryAssessment ? (
-            <div className="rounded-card border border-gray-200 bg-white p-6">
+            <div className="rounded-xl border border-gray-200 bg-white p-6">
               <p className="text-sm text-amber-700">
                 Not available — this report was generated before Phase 20 (Regulatory Intelligence)
                 was introduced. Re-generate the report to include the regulatory framework assessment.
@@ -861,17 +880,17 @@ function ReportDocument({
 
                 const overallColor =
                   fw.overallStatus === "compliant"
-                    ? "badge-gov-pass"
+                    ? "bg-green-100 text-green-700 border-green-200"
                     : fw.overallStatus === "gaps_identified"
-                    ? "badge-gov-error"
-                    : "badge-gov-warn";
+                    ? "bg-red-100 text-red-700 border-red-200"
+                    : "bg-amber-100 text-amber-700 border-amber-200";
 
                 const tierColor =
                   fw.euAiActRiskTier === "high-risk" || fw.euAiActRiskTier === "review-required"
-                    ? "badge-gov-error"
+                    ? "bg-red-100 text-red-700 border-red-200"
                     : fw.euAiActRiskTier === "limited-risk"
-                    ? "badge-gov-warn"
-                    : "badge-gov-pass";
+                    ? "bg-amber-100 text-amber-700 border-amber-200"
+                    : "bg-green-100 text-green-700 border-green-200";
 
                 // NIST: group requirements by function prefix
                 const isNist = fw.frameworkId === "nist-rmf";
@@ -891,10 +910,10 @@ function ReportDocument({
                           : "Weak";
                       const strengthColor =
                         strength === "Strong"
-                          ? "text-[color:var(--gov-pass-text)]"
+                          ? "text-green-700"
                           : strength === "Partial"
-                          ? "text-[color:var(--gov-warn-text)]"
-                          : "text-[color:var(--gov-error-text)]";
+                          ? "text-amber-600"
+                          : "text-red-700";
                       return { fn: fn.toUpperCase(), reqs, satisfiedCount, strength, strengthColor };
                     })
                   : [];
@@ -902,7 +921,7 @@ function ReportDocument({
                 return (
                   <div
                     key={fw.frameworkId}
-                    className="rounded-card border border-gray-200 bg-white p-6"
+                    className="rounded-xl border border-gray-200 bg-white p-6"
                   >
                     {/* Framework header */}
                     <div className="mb-4 flex flex-wrap items-start gap-3 border-b border-gray-100 pb-4">
@@ -954,12 +973,12 @@ function ReportDocument({
                                   key={ri}
                                   className={`inline-block h-2 w-2 rounded-full ${
                                     req.evidenceStatus === "satisfied"
-                                      ? "dot-approved"
+                                      ? "bg-green-500"
                                       : req.evidenceStatus === "partial"
-                                      ? "dot-alert-warn"
+                                      ? "bg-amber-400"
                                       : req.evidenceStatus === "missing"
-                                      ? "dot-alert-critical"
-                                      : "dot-draft"
+                                      ? "bg-red-400"
+                                      : "bg-gray-200"
                                   }`}
                                 />
                               ))}
@@ -973,16 +992,16 @@ function ReportDocument({
                     )}
 
                     {/* Per-requirement evidence table */}
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-gray-100 text-left font-semibold uppercase tracking-wider text-gray-400">
-                          <th className="pb-2 pr-3 w-20">Code</th>
-                          <th className="pb-2 pr-3">Requirement</th>
-                          <th className="pb-2 pr-3 w-24">Status</th>
-                          <th className="pb-2">Evidence</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-50">
+                    <Table dense>
+                      <TableHead>
+                        <TableRow>
+                          <TableHeader>Code</TableHeader>
+                          <TableHeader>Requirement</TableHeader>
+                          <TableHeader>Status</TableHeader>
+                          <TableHeader>Evidence</TableHeader>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {fw.requirements.map((req, ri) => {
                           const statusIcon =
                             req.evidenceStatus === "satisfied"
@@ -994,14 +1013,14 @@ function ReportDocument({
                               : "—";
                           const statusColor =
                             req.evidenceStatus === "satisfied"
-                              ? "text-[color:var(--gov-pass-text)]"
+                              ? "text-green-700"
                               : req.evidenceStatus === "partial"
-                              ? "text-[color:var(--gov-warn-text)]"
+                              ? "text-amber-600"
                               : req.evidenceStatus === "missing"
-                              ? "text-[color:var(--gov-error-text)]"
+                              ? "text-red-700"
                               : "text-gray-400";
                           return (
-                            <tr
+                            <TableRow
                               key={ri}
                               className={
                                 req.evidenceStatus === "not_applicable"
@@ -1009,30 +1028,30 @@ function ReportDocument({
                                   : ""
                               }
                             >
-                              <td className="py-2 pr-3 font-mono font-medium text-gray-700 align-top">
+                              <TableCell className="font-mono font-medium text-gray-700 align-top">
                                 {req.code}
-                              </td>
-                              <td className="py-2 pr-3 text-gray-700 align-top">
+                              </TableCell>
+                              <TableCell className="text-gray-700 align-top">
                                 <span className="font-medium">{req.title}</span>
                                 <span className="block text-gray-400 mt-0.5 text-xs leading-relaxed">
                                   {req.description}
                                 </span>
-                              </td>
-                              <td className={`py-2 pr-3 font-semibold align-top whitespace-nowrap ${statusColor}`}>
+                              </TableCell>
+                              <TableCell className={`font-semibold align-top whitespace-nowrap ${statusColor}`}>
                                 {statusIcon}{" "}
                                 {req.evidenceStatus === "not_applicable"
                                   ? "N/A"
                                   : req.evidenceStatus.charAt(0).toUpperCase() +
                                     req.evidenceStatus.slice(1)}
-                              </td>
-                              <td className="py-2 text-gray-500 align-top">
+                              </TableCell>
+                              <TableCell className="text-gray-500 align-top">
                                 {req.evidence ?? "—"}
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           );
                         })}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 );
               })}
@@ -1056,10 +1075,10 @@ function ReportDocument({
                     <span
                       className={`font-semibold ${
                         latestTestRun.status === "passed"
-                          ? "text-[color:var(--gov-pass-text)]"
+                          ? "text-green-700"
                           : latestTestRun.status === "failed"
-                          ? "text-[color:var(--gov-error-text)]"
-                          : "text-[color:var(--gov-warn-text)]"
+                          ? "text-red-700"
+                          : "text-amber-700"
                       }`}
                     >
                       {latestTestRun.status === "passed"
@@ -1075,38 +1094,38 @@ function ReportDocument({
               {/* Per-case results table */}
               {latestTestRun.testResults.length > 0 && (
                 <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-gray-100 bg-gray-50 text-left text-gray-500">
-                        <th className="w-6 px-4 py-2.5 font-semibold">#</th>
-                        <th className="px-4 py-2.5 font-semibold">Test Case</th>
-                        <th className="w-20 px-4 py-2.5 font-semibold">Verdict</th>
-                        <th className="px-4 py-2.5 font-semibold">Evaluation Rationale</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
+                  <Table dense>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader>#</TableHeader>
+                        <TableHeader>Test Case</TableHeader>
+                        <TableHeader>Verdict</TableHeader>
+                        <TableHeader>Evaluation Rationale</TableHeader>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {latestTestRun.testResults.map((result, i) => (
-                        <tr key={result.testCaseId} className="align-top">
-                          <td className="px-4 py-2.5 text-gray-400">{i + 1}</td>
-                          <td className="px-4 py-2.5 font-medium text-gray-900">{result.name}</td>
-                          <td
-                            className={`px-4 py-2.5 font-semibold ${
+                        <TableRow key={result.testCaseId} className="align-top">
+                          <TableCell className="text-gray-400">{i + 1}</TableCell>
+                          <TableCell className="font-medium text-gray-900">{result.name}</TableCell>
+                          <TableCell
+                            className={`font-semibold ${
                               result.status === "passed"
-                                ? "text-[color:var(--gov-pass-text)]"
+                                ? "text-green-700"
                                 : result.status === "failed"
-                                ? "text-[color:var(--gov-error-text)]"
-                                : "text-[color:var(--gov-warn-text)]"
+                                ? "text-red-700"
+                                : "text-amber-700"
                             }`}
                           >
                             {result.status === "passed" ? "✓ Passed" : result.status === "failed" ? "✗ Failed" : "⚠ Error"}
-                          </td>
-                          <td className="px-4 py-2.5 text-gray-600 leading-relaxed">
+                          </TableCell>
+                          <TableCell className="text-gray-600 leading-relaxed">
                             {result.evaluationRationale || "—"}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </div>
@@ -1141,10 +1160,10 @@ function ReportDocument({
                     label="Next Review Due"
                     value={
                       r.periodicReviewSchedule.nextReviewDueAt ? (
-                        <span className={`inline-flex items-center gap-2 ${r.periodicReviewSchedule.isOverdue ? "text-[color:var(--gov-error-text)]" : "text-gray-900"}`}>
+                        <span className={`inline-flex items-center gap-2 ${r.periodicReviewSchedule.isOverdue ? "text-red-700" : "text-gray-900"}`}>
                           {fmtDate(r.periodicReviewSchedule.nextReviewDueAt)}
                           {r.periodicReviewSchedule.isOverdue && (
-                            <span className="badge-overdue rounded-full px-2 py-0.5 text-xs font-medium">OVERDUE</span>
+                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">OVERDUE</span>
                           )}
                         </span>
                       ) : "Not yet scheduled"
@@ -1160,11 +1179,11 @@ function ReportDocument({
                     label="SR 11-7 Compliance Status"
                     value={
                       r.periodicReviewSchedule.isOverdue ? (
-                        <Chip label="Review Overdue" color="badge-gov-error border" />
+                        <Chip label="Review Overdue" color="bg-red-100 text-red-800 border border-red-200" />
                       ) : r.periodicReviewSchedule.nextReviewDueAt ? (
-                        <Chip label="On Schedule" color="badge-gov-pass border" />
+                        <Chip label="On Schedule" color="bg-green-100 text-green-800 border border-green-200" />
                       ) : (
-                        <Chip label="Not Deployed" color="badge-draft border" />
+                        <Chip label="Not Deployed" color="bg-gray-100 text-gray-600 border border-gray-200" />
                       )
                     }
                   />

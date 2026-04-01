@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 
 const CORRECT_ROLES: Record<string, string> = {
   "admin@intellios.dev": "admin",
-  "designer@intellios.dev": "designer",
+  "designer@intellios.dev": "architect",
   "reviewer@intellios.dev": "reviewer",
   "officer@intellios.dev": "compliance_officer",
 };

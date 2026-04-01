@@ -6,8 +6,9 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { assembleMRMReport } from "@/lib/mrm/report";
+import { artifactExists, getSignedUrl, uploadArtifact } from "@/lib/storage/s3";
 import type { ApprovalStepRecord } from "@/lib/settings/types";
 
 /**
@@ -36,7 +37,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { session: authSession, error } = await requireAuth([
-    "designer",
+    "architect",
     "reviewer",
     "compliance_officer",
     "admin",
@@ -185,21 +186,17 @@ export async function GET(
     };
 
     // Audit every evidence package export
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: id,
-      action: "blueprint.evidence_package_exported",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
-      enterpriseId: blueprint.enterpriseId ?? null,
-      metadata: {
-        agentId: blueprint.agentId,
-        agentName: blueprint.name ?? "Unnamed Agent",
-        blueprintVersion: blueprint.version,
-        hasQualityScore: qualityScore !== null,
-        testRunCount: testRunRows.length,
-        approvalStepCount: approvalProgress.length,
+    await publishEvent({
+      event: {
+        type: "blueprint.evidence_package_exported",
+        payload: {
+          blueprintId: id,
+          agentId: blueprint.agentId,
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id },
+      enterpriseId: blueprint.enterpriseId ?? null,
     });
 
     const safeName =
@@ -207,6 +204,17 @@ export async function GET(
     const filename = `evidence-package-${safeName}-v${blueprint.version}-${new Date()
       .toISOString()
       .slice(0, 10)}.json`;
+
+    // S3 cache: check for a pre-generated artifact, serve via signed URL if present
+    const s3Key = `evidence/${id}/${blueprint.version}.json`;
+    const cached = await artifactExists(s3Key);
+    if (cached) {
+      const signedUrl = await getSignedUrl(s3Key, 3600);
+      if (signedUrl) return NextResponse.redirect(signedUrl, 302);
+    }
+
+    // Upload to S3 for future requests (fire-and-forget)
+    void uploadArtifact(s3Key, JSON.stringify(pkg, null, 2), "application/json");
 
     return new NextResponse(JSON.stringify(pkg, null, 2), {
       status: 200,

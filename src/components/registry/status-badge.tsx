@@ -1,34 +1,39 @@
 "use client";
 
-import { Archive, CheckCircle, Circle, Clock, XCircle, Zap } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
 
-type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
+type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed" | "suspended";
 
-const STATUS_CONFIG: Record<Status, { badge: string; icon: LucideIcon; label: string }> = {
-  draft:      { badge: "badge-draft",      icon: Circle,       label: "Draft"      },
-  in_review:  { badge: "badge-review",     icon: Clock,        label: "In Review"  },
-  approved:   { badge: "badge-approved",   icon: CheckCircle,  label: "Approved"   },
-  deployed:   { badge: "badge-deployed",   icon: Zap,          label: "Deployed"   },
-  rejected:   { badge: "badge-rejected",   icon: XCircle,      label: "Rejected"   },
-  deprecated: { badge: "badge-deprecated", icon: Archive,      label: "Deprecated" },
+const STATUS_VARIANT: Record<Status, BadgeVariant> = {
+  draft:      "neutral",
+  in_review:  "info",
+  approved:   "success",
+  deployed:   "accent",
+  rejected:   "danger",
+  deprecated: "muted",
+  suspended:  "danger",
+};
+
+const STATUS_LABELS: Record<Status, string> = {
+  draft:      "Draft",
+  in_review:  "In Review",
+  approved:   "Approved",
+  deployed:   "Deployed",
+  rejected:   "Rejected",
+  deprecated: "Deprecated",
+  suspended:  "Suspended",
 };
 
 export function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status as Status];
-  if (!cfg) {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-        <Circle size={10} />
-        {status}
-      </span>
-    );
-  }
-  const Icon = cfg.icon;
+  const s = status as Status;
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.badge}`}>
-      <Icon size={10} strokeWidth={2.5} />
-      {cfg.label}
-    </span>
+    <Badge
+      variant={STATUS_VARIANT[s] ?? "neutral"}
+      dot
+      pulse={s === "suspended"}
+    >
+      {STATUS_LABELS[s] ?? status}
+    </Badge>
   );
 }

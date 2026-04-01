@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, jsonb, timestamp, boolean, integer, index, numeric, date } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, jsonb, timestamp, boolean, integer, index, numeric, date, real, uniqueIndex } from "drizzle-orm/pg-core";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 // ─── Users ───────────────────────────────────────────────────────────────────
@@ -8,7 +8,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   passwordHash: text("password_hash").notNull(),
-  role: text("role").notNull(), // designer | reviewer | compliance_officer | admin
+  role: text("role").notNull(), // architect | reviewer | compliance_officer | admin | viewer
   enterpriseId: text("enterprise_id"),  // tenant identifier — null for platform admins
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -100,6 +100,9 @@ export const agentBlueprints = pgTable(
     // Phase 52: Blueprint lineage — records predecessor + governance diff computed at version creation
     previousBlueprintId:   uuid("previous_blueprint_id"),  // which blueprint this was forked from (null for v1)
     governanceDiff:        jsonb("governance_diff"),         // ABPDiff stored at creation time; null for v1
+    // H3-3.1: Governance drift detection
+    baselineValidationReport: jsonb("baseline_validation_report"), // ValidationReport snapshot taken at approval time
+    governanceDrift:           jsonb("governance_drift"),            // { status: 'clean'|'drifted', newViolations: [], checkedAt: string } | null
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -172,13 +175,17 @@ export const deploymentHealth = pgTable(
     agentId:          uuid("agent_id").notNull().unique(),
     blueprintId:      uuid("blueprint_id").notNull(),
     enterpriseId:     text("enterprise_id"),
-    healthStatus:     text("health_status").notNull().default("unknown"), // clean | critical | unknown
-    errorCount:       integer("error_count").notNull().default(0),
-    warningCount:     integer("warning_count").notNull().default(0),
-    validationReport: jsonb("validation_report"),
-    lastCheckedAt:    timestamp("last_checked_at", { withTimezone: true }).defaultNow(),
-    deployedAt:       timestamp("deployed_at", { withTimezone: true }).notNull(),
-    createdAt:        timestamp("created_at", { withTimezone: true }).defaultNow(),
+    healthStatus:          text("health_status").notNull().default("unknown"), // clean | degraded | critical | unknown
+    errorCount:            integer("error_count").notNull().default(0),
+    warningCount:          integer("warning_count").notNull().default(0),
+    validationReport:      jsonb("validation_report"),
+    lastCheckedAt:         timestamp("last_checked_at", { withTimezone: true }).defaultNow(),
+    deployedAt:            timestamp("deployed_at", { withTimezone: true }).notNull(),
+    // H1-1.4: production telemetry metrics (updated by checkDeploymentHealth when telemetry available)
+    productionErrorRate:   real("production_error_rate"),          // 0.0–1.0; null = no telemetry
+    productionLatencyP99:  integer("production_latency_p99"),      // ms; null = no telemetry
+    lastTelemetryAt:       timestamp("last_telemetry_at", { withTimezone: true }),
+    createdAt:             timestamp("created_at", { withTimezone: true }).defaultNow(),
   },
   (table) => [index("idx_deployment_health_enterprise").on(table.enterpriseId)]
 );
@@ -467,7 +474,7 @@ export const userInvitations = pgTable(
     id:           uuid("id").primaryKey().defaultRandom(),
     enterpriseId: text("enterprise_id"),
     email:        text("email").notNull(),
-    role:         text("role").notNull(), // designer | reviewer | compliance_officer | admin
+    role:         text("role").notNull(), // architect | reviewer | compliance_officer | admin | viewer
     invitedBy:    uuid("invited_by").notNull().references(() => users.id),
     tokenHash:    text("token_hash").notNull(),
     expiresAt:    timestamp("expires_at", { withTimezone: true }).notNull(),
@@ -477,5 +484,232 @@ export const userInvitations = pgTable(
   (t) => [
     index("idx_ui_enterprise_id").on(t.enterpriseId),
     index("idx_ui_token_hash").on(t.tokenHash),
+  ]
+);
+
+// ─── Agent Telemetry ──────────────────────────────────────────────────────────
+// H1-1.1: Production Observability Pipeline.
+// Time-series metrics pushed by deployed agents (source="push") or pulled from
+// ─── Alert Thresholds (H1-1.5) ────────────────────────────────────────────────
+// Per-agent threshold rules for production health alerts. When a threshold is
+// breached during a cron check, a notification + event is fired.
+
+export const alertThresholds = pgTable(
+  "alert_thresholds",
+  {
+    id:            uuid("id").primaryKey().defaultRandom(),
+    agentId:       uuid("agent_id").notNull(),
+    enterpriseId:  text("enterprise_id"),
+    // metric: "error_rate" | "latency_p99" | "zero_invocations" | "policy_violations"
+    metric:        text("metric").notNull(),
+    // operator: "gt" | "lt" | "eq"
+    operator:      text("operator").notNull(),
+    value:         real("value").notNull(),
+    windowMinutes: integer("window_minutes").notNull().default(60),
+    enabled:       boolean("enabled").notNull().default(true),
+    createdBy:     text("created_by").notNull(),
+    createdAt:     timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt:     timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_alert_thresholds_agent").on(t.agentId),
+    index("idx_alert_thresholds_enterprise").on(t.enterpriseId),
+  ]
+);
+
+// CloudWatch (source="cloudwatch"). Indexed for time-range queries per agent.
+// Append-only — never UPDATE or DELETE rows from this table.
+
+export const agentTelemetry = pgTable(
+  "agent_telemetry",
+  {
+    id:               uuid("id").primaryKey().defaultRandom(),
+    agentId:          uuid("agent_id").notNull(),  // FK → agentBlueprints.agentId (logical agent)
+    enterpriseId:     text("enterprise_id"),
+    timestamp:        timestamp("timestamp", { withTimezone: true }).notNull(),
+    invocations:      integer("invocations").notNull().default(0),
+    errors:           integer("errors").notNull().default(0),
+    latencyP50Ms:     integer("latency_p50_ms"),
+    latencyP99Ms:     integer("latency_p99_ms"),
+    tokensIn:         integer("tokens_in").notNull().default(0),
+    tokensOut:        integer("tokens_out").notNull().default(0),
+    policyViolations: integer("policy_violations").notNull().default(0),
+    customMetrics:    jsonb("custom_metrics"),  // arbitrary key→number pairs
+    source:           text("source").notNull().default("push"), // "push" | "cloudwatch"
+    createdAt:        timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_telemetry_agent_time").on(t.agentId, t.timestamp),
+    index("idx_telemetry_enterprise").on(t.enterpriseId),
+  ]
+);
+
+// ─── Runtime Violations (H2-1.2) ─────────────────────────────────────────────
+// Written by `evaluateRuntimePolicies()` when deployed agents breach runtime
+// policy thresholds. Append-only — never UPDATE or DELETE rows.
+// CASCADE on policyId: deleting a policy removes its historical violations.
+
+export const runtimeViolations = pgTable(
+  "runtime_violations",
+  {
+    id:                  uuid("id").primaryKey().defaultRandom(),
+    agentId:             uuid("agent_id").notNull(),
+    enterpriseId:        text("enterprise_id"),
+    policyId:            uuid("policy_id").notNull().references(() => governancePolicies.id, { onDelete: "cascade" }),
+    policyName:          text("policy_name").notNull(),
+    ruleId:              text("rule_id").notNull(),
+    severity:            text("severity").notNull(),            // "error" | "warning"
+    metric:              text("metric").notNull(),              // e.g. "tokens_daily", "error_rate"
+    observedValue:       real("observed_value").notNull(),
+    threshold:           real("threshold").notNull(),
+    message:             text("message").notNull(),
+    telemetryTimestamp:  timestamp("telemetry_timestamp", { withTimezone: true }).notNull(),
+    detectedAt:          timestamp("detected_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_runtime_violations_agent").on(t.agentId, t.detectedAt),
+    index("idx_runtime_violations_policy").on(t.policyId),
+    index("idx_runtime_violations_enterprise").on(t.enterpriseId, t.detectedAt),
+  ]
+);
+
+// ─── Quality Trends (H2-2.2) ──────────────────────────────────────────────────
+// Weekly quality snapshots per agent — one row per (agentId, weekStart).
+// Written by the /api/cron/quality-trends job every Sunday at 00:00 UTC.
+
+export const qualityTrends = pgTable(
+  "quality_trends",
+  {
+    id:                   uuid("id").primaryKey().defaultRandom(),
+    agentId:              uuid("agent_id").notNull(),
+    enterpriseId:         text("enterprise_id"),
+    weekStart:            date("week_start").notNull(),    // ISO date of Monday for this week
+    designScore:          real("design_score"),            // overall quality score 0-100 (null if never evaluated)
+    productionScore:      real("production_score"),        // production composite 0-100 (null if not deployed)
+    policyAdherenceRate:  real("policy_adherence_rate"),  // 0-1, null if not deployed
+    createdAt:            timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("idx_quality_trends_agent_week").on(t.agentId, t.weekStart),
+    index("idx_quality_trends_enterprise").on(t.enterpriseId, t.weekStart),
+  ]
+);
+
+// ─── Portfolio Snapshots (H2-5.1) ────────────────────────────────────────────
+// Weekly fleet-level metrics per enterprise — written by the portfolio-snapshot
+// cron and read by the trends API and executive dashboard.
+
+export const portfolioSnapshots = pgTable(
+  "portfolio_snapshots",
+  {
+    id:               uuid("id").primaryKey().defaultRandom(),
+    enterpriseId:     text("enterprise_id"),
+    weekStart:        date("week_start").notNull(),         // ISO date of Monday for this week
+    totalAgents:      integer("total_agents").notNull().default(0),
+    deployedAgents:   integer("deployed_agents").notNull().default(0),
+    complianceRate:   real("compliance_rate"),              // 0-100, null if no prod agents
+    avgQualityScore:  real("avg_quality_score"),            // 0-100, null if no quality scores
+    totalViolations:  integer("total_violations").notNull().default(0),
+    violationsByType: jsonb("violations_by_type"),          // { error: N, warning: N }
+    agentsByRiskTier: jsonb("agents_by_risk_tier"),         // { low: N, medium: N, high: N, critical: N }
+    createdAt:        timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_portfolio_snapshots_enterprise_week").on(t.enterpriseId, t.weekStart),
+    index("idx_portfolio_snapshots_week").on(t.weekStart),
+  ]
+);
+
+// ─── Workflows (H2-4.1) ───────────────────────────────────────────────────────
+// An orchestration artifact that composes multiple AI agents into a pipeline.
+// Multiple versions of the same logical workflow share the same workflowId.
+// The definition column is validated against WorkflowSchema at write time.
+
+export const workflows = pgTable(
+  "workflows",
+  {
+    id:           uuid("id").primaryKey().defaultRandom(),
+    /** Logical workflow identifier — shared across all versions of this workflow. */
+    workflowId:   uuid("workflow_id").notNull().defaultRandom(),
+    version:      text("version").notNull().default("1.0.0"),
+    name:         text("name").notNull(),
+    description:  text("description").notNull().default(""),
+    /** Serialised WorkflowDefinition — validated against WorkflowSchema. */
+    definition:   jsonb("definition").notNull().default({}),
+    /** draft | in_review | approved | rejected | deprecated */
+    status:       text("status").notNull().default("draft"),
+    enterpriseId: text("enterprise_id"),
+    createdBy:    text("created_by").notNull(),             // user email
+    createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt:    timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_workflows_workflow_id").on(t.workflowId, t.createdAt),
+    index("idx_workflows_enterprise").on(t.enterpriseId, t.status),
+    index("idx_workflows_status").on(t.status),
+  ]
+);
+
+// ─── Templates (H3-4.1 Template Marketplace) ─────────────────────────────────
+
+export const templates = pgTable(
+  "templates",
+  {
+    id:           uuid("id").primaryKey().defaultRandom(),
+    enterpriseId: text("enterprise_id"),
+    name:         text("name").notNull(),
+    description:  text("description"),
+    category:     text("category"),
+    riskTier:     text("risk_tier"),
+    abpTemplate:  jsonb("abp_template").notNull(),
+    tags:         jsonb("tags").notNull().default([]),
+    // H3-4.1 marketplace metadata
+    source:       text("source").notNull().default("built-in"), // 'built-in' | 'community'
+    rating:       real("rating"),
+    usageCount:   integer("usage_count").notNull().default(0),
+    author:       text("author"),
+    publishedAt:  timestamp("published_at", { withTimezone: true }),
+    createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt:    timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_templates_enterprise").on(table.enterpriseId),
+    index("idx_templates_source").on(table.source),
+  ]
+);
+
+export const templateRatings = pgTable(
+  "template_ratings",
+  {
+    id:         uuid("id").primaryKey().defaultRandom(),
+    templateId: uuid("template_id").notNull(),
+    userEmail:  text("user_email").notNull(),
+    rating:     integer("rating").notNull(),
+    createdAt:  timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_template_ratings_template").on(table.templateId),
+  ]
+);
+
+// ─── API Keys (H3-4.3 API-First + SDK) ───────────────────────────────────────
+
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id:           uuid("id").primaryKey().defaultRandom(),
+    enterpriseId: text("enterprise_id"),
+    name:         text("name").notNull(),
+    keyHash:      text("key_hash").notNull(),      // bcrypt hash of the actual key
+    keyPrefix:    text("key_prefix").notNull(),    // first 12 chars for display (e.g. "ik_live_xxxx")
+    scopes:       jsonb("scopes").notNull().default([]), // ["blueprints:read", "policies:read", etc.]
+    createdBy:    text("created_by").notNull(),
+    createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    lastUsedAt:   timestamp("last_used_at", { withTimezone: true }),
+    revokedAt:    timestamp("revoked_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("idx_api_keys_enterprise").on(table.enterpriseId),
+    index("idx_api_keys_prefix").on(table.keyPrefix),
   ]
 );

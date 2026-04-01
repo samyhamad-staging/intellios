@@ -107,13 +107,13 @@ export function StakeholderAIChat({
     <div className="flex flex-col gap-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+        <p className="text-2xs font-semibold uppercase tracking-wider text-gray-400">
           AI Interview · {DOMAIN_LABELS[domain]}
         </p>
         {onCancel && (
           <button
             onClick={onCancel}
-            className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-2xs text-gray-400 hover:text-gray-600 transition-colors"
           >
             Cancel
           </button>
@@ -137,14 +137,14 @@ export function StakeholderAIChat({
                 {!isDone ? (
                   <>
                     <span className="h-1 w-1 animate-pulse rounded-full bg-violet-400" />
-                    <p className="text-[10px] text-violet-500">
+                    <p className="text-2xs text-violet-500">
                       Saving requirements…
                     </p>
                   </>
                 ) : (
                   <>
-                    <span className="text-[10px] text-green-500">✓</span>
-                    <p className="text-[10px] font-medium text-green-600">
+                    <span className="text-2xs text-green-500">✓</span>
+                    <p className="text-2xs font-medium text-green-600">
                       Requirements captured
                     </p>
                   </>
@@ -165,7 +165,7 @@ export function StakeholderAIChat({
           return (
             <div key={i} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
               <div
-                className={`max-w-[86%] rounded-card px-3 py-2 text-xs leading-relaxed ${
+                className={`max-w-[86%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
                   isUser
                     ? "bg-violet-600 text-white"
                     : "bg-gray-100 text-gray-700"
@@ -180,7 +180,7 @@ export function StakeholderAIChat({
         {/* Thinking dots */}
         {isLoading && !isSaved && (
           <div className="flex justify-start">
-            <div className="flex items-center gap-1 rounded-card bg-gray-100 px-3 py-2.5">
+            <div className="flex items-center gap-1 rounded-xl bg-gray-100 px-3 py-2.5">
               <span
                 className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400"
                 style={{ animationDelay: "0ms" }}

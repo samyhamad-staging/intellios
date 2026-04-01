@@ -89,7 +89,7 @@ export function ReviewPanel({
     try {
       const res = await fetch(`/api/blueprints/${blueprintId}/review-brief`, { method: "POST" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message ?? "Failed to generate brief");
+      if (!res.ok) throw new Error(data.error ?? "Failed to generate brief");
       setAiBrief(data.brief as RiskBrief);
     } catch (err) {
       console.error("[review-panel] AI brief fetch failed:", err);
@@ -125,6 +125,17 @@ export function ReviewPanel({
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.message ?? "Review submission failed");
+      }
+      if (data.nextApproverLabel) {
+        // Intermediate step — show advancement toast, then notify parent
+        setStepToast(`Approval submitted — advancing to ${data.nextApproverLabel}`);
+        setTimeout(() => {
+          setStepToast(null);
+          onReviewComplete(data.status);
+        }, 2000);
+      } else {
+        // Final step — close immediately
+        onReviewComplete(data.status);
       }
       if (data.nextApproverLabel) {
         // Intermediate step — show advancement toast, then notify parent

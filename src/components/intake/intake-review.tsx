@@ -21,6 +21,7 @@ interface IntakeReviewProps {
   contributions?: StakeholderContribution[];
   riskTier?: IntakeRiskTier | null;
   onGenerate: () => void;
+  onRevise?: () => void;
   generating: boolean;
   generateSuccess?: boolean;
   generateError: string | null;
@@ -56,24 +57,10 @@ const DOMAIN_LABELS: Record<ContributionDomain, string> = {
   business: "Business",
 };
 
-const DOMAIN_COLORS: Record<ContributionDomain, string> = {
-  compliance: "bg-blue-50 text-blue-700 border-blue-200",
-  risk: "bg-orange-50 text-orange-700 border-orange-200",
-  legal: "bg-purple-50 text-purple-700 border-purple-200",
-  security: "bg-red-50 text-red-700 border-red-200",
-  it: "bg-gray-50 text-gray-700 border-gray-200",
-  operations: "bg-green-50 text-green-700 border-green-200",
-  business: "bg-yellow-50 text-yellow-700 border-yellow-200",
-};
+// All domain and policy badges use the neutral variant for consistency —
+// the label text provides the semantic differentiation, not the color.
 
-// RV-009: Policy type colored chips
-const POLICY_TYPE_COLORS: Record<string, string> = {
-  safety:         "bg-orange-50 text-orange-800 border-orange-200",
-  compliance:     "bg-sky-50 text-sky-800 border-sky-200",
-  data_handling:  "bg-violet-50 text-violet-800 border-violet-200",
-  access_control: "bg-indigo-50 text-indigo-800 border-indigo-200",
-  audit:          "bg-slate-50 text-slate-700 border-slate-200",
-};
+// RV-009: Policy type chips — all neutral
 
 // RV-004: Human-readable retention duration
 function formatRetentionDays(days: number): string {
@@ -88,13 +75,24 @@ function formatRetentionDays(days: number): string {
   return `${days}-day retention`;
 }
 
-// RV-012: Data sensitivity badge colors
-const DATA_SENSITIVITY_COLORS: Record<string, string> = {
-  public:       "bg-green-50 text-green-700 border-green-200",
-  internal:     "bg-blue-50 text-blue-700 border-blue-200",
-  confidential: "bg-amber-50 text-amber-700 border-amber-200",
-  pii:          "bg-orange-50 text-orange-700 border-orange-200",
-  regulated:    "bg-red-50 text-red-700 border-red-200",
+// RV-012: Data sensitivity uses semantic variants
+import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
+
+const DATA_SENSITIVITY_VARIANT: Record<string, BadgeVariant> = {
+  public:       "success",
+  internal:     "info",
+  confidential: "warning",
+  pii:          "danger",
+  regulated:    "danger",
+};
+
+const RISK_TIER_VARIANT: Record<string, BadgeVariant> = {
+  low:      "success",
+  medium:   "warning",
+  high:     "danger",
+  critical: "danger",
 };
 
 function formatDate(iso: string): string {
@@ -200,7 +198,7 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
               <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 space-y-1">
                 {c.denied_actions.map((a) => (
                   <div key={a} className="flex items-center gap-2 text-xs">
-                    <span className="shrink-0 h-4 w-4 flex items-center justify-center rounded-full bg-red-200 text-red-700 font-bold text-[10px]">✕</span>
+                    <span className="shrink-0 h-4 w-4 flex items-center justify-center rounded-full bg-red-200 text-red-700 font-bold text-2xs">✕</span>
                     <span className="text-red-800 font-medium">{a}</span>
                   </div>
                 ))}
@@ -221,9 +219,9 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
                 <span className="text-gray-400">🛡</span>
                 <span className="font-medium">{p.name}</span>
                 {/* RV-009: Colored policy type chip */}
-                <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${POLICY_TYPE_COLORS[p.type] ?? "bg-gray-100 text-gray-500 border-gray-200"}`}>
+                <Badge variant="neutral">
                   {p.type.replace(/_/g, " ")}
-                </span>
+                </Badge>
               </div>
               {p.description && <div className="ml-5 text-xs text-gray-500 mt-0.5">{p.description}</div>}
             </li>
@@ -285,6 +283,7 @@ export function IntakeReview({
   contributions = [],
   riskTier,
   onGenerate,
+  onRevise,
   generating,
   generateSuccess = false,
   generateError,
@@ -350,14 +349,9 @@ export function IntakeReview({
             <div className="flex items-center justify-between mb-3">
               <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Enterprise Context</div>
               {riskTier && (
-                <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase ${
-                  riskTier === "critical" ? "bg-red-50 text-red-800 border-red-200" :
-                  riskTier === "high"     ? "bg-orange-50 text-orange-800 border-orange-200" :
-                  riskTier === "medium"   ? "bg-amber-50 text-amber-800 border-amber-200" :
-                                            "bg-emerald-50 text-emerald-800 border-emerald-200"
-                }`}>
-                  {riskTier} risk
-                </span>
+                <Badge variant={RISK_TIER_VARIANT[riskTier] ?? "neutral"}>
+                  {riskTier.toUpperCase()} RISK
+                </Badge>
               )}
             </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
@@ -367,16 +361,16 @@ export function IntakeReview({
               </div>
               <div>
                 <div className="text-xs text-gray-400 mb-1">Data sensitivity</div>
-                <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold uppercase ${DATA_SENSITIVITY_COLORS[context.dataSensitivity] ?? "bg-gray-50 text-gray-700 border-gray-200"}`}>
-                  {context.dataSensitivity}
-                </span>
+                <Badge variant={DATA_SENSITIVITY_VARIANT[context.dataSensitivity] ?? "neutral"}>
+                  {context.dataSensitivity.toUpperCase()}
+                </Badge>
               </div>
               <div>
                 <div className="text-xs text-gray-400 mb-1">Regulatory scope</div>
                 {(context.regulatoryScope ?? []).filter((s) => s !== "none").length > 0 ? (
                   <div className="flex flex-wrap gap-1">
                     {(context.regulatoryScope ?? []).filter((s) => s !== "none").map((s) => (
-                      <span key={s} className="inline-flex rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-slate-700">{s.toUpperCase()}</span>
+                      <span key={s} className="inline-flex rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-xs-tight font-medium text-slate-700">{s.toUpperCase()}</span>
                     ))}
                   </div>
                 ) : (
@@ -439,7 +433,7 @@ export function IntakeReview({
 
         {/* Stakeholder contributions */}
         {(contributions.length > 0 || (context && getMissingContributionDomains(context, contributions, riskTier).length > 0)) && (
-          <div className="mb-6 rounded-card border border-gray-200 bg-white px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
             <div className="flex items-baseline gap-2 mb-3">
               <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Stakeholder Input
@@ -455,14 +449,13 @@ export function IntakeReview({
               <div className="space-y-4">
                 {contributions.map((c) => {
                   const domain = c.domain as ContributionDomain;
-                  const colorClass = DOMAIN_COLORS[domain] ?? "bg-gray-50 text-gray-700 border-gray-200";
                   const nonEmptyEntries = Object.entries(c.fields).filter(([, v]) => v.trim().length > 0);
                   return (
                     <div key={c.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`inline-flex px-2 py-0.5 rounded border text-xs font-medium ${colorClass}`}>
+                        <Badge variant="neutral">
                           {DOMAIN_LABELS[domain] ?? domain}
-                        </span>
+                        </Badge>
                         <span className="text-xs text-gray-600">{c.contributorEmail}</span>
                         {c.contributorRole && (
                           <span className="text-xs text-gray-400">· {c.contributorRole}</span>
@@ -500,9 +493,9 @@ export function IntakeReview({
                         {missing.map((domain, i) => (
                           <span key={domain}>
                             {i > 0 && ", "}
-                            <span className={`inline-flex px-1.5 py-0.5 rounded border text-xs font-medium ${DOMAIN_COLORS[domain] ?? "bg-gray-50 text-gray-700 border-gray-200"}`}>
+                            <Badge variant="neutral">
                               {DOMAIN_LABELS[domain] ?? domain}
-                            </span>
+                            </Badge>
                           </span>
                         ))}
                       </p>
@@ -519,7 +512,7 @@ export function IntakeReview({
 
         {/* Capture verification — only shown when assessments are present */}
         {captureVerification.length > 0 && (
-          <div className="mb-6 rounded-card border border-gray-200 bg-white px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -541,30 +534,30 @@ export function IntakeReview({
             </p>
             {expandedCapture && (
               <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-100">
-                      <th className="pb-2 text-left font-medium text-gray-400 w-1/4">Area</th>
-                      <th className="pb-2 text-left font-medium text-gray-400 w-2/5">What was discussed</th>
-                      <th className="pb-2 text-left font-medium text-gray-400">Captured as</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
+                <Table dense>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Area</TableHeader>
+                      <TableHeader>What was discussed</TableHeader>
+                      <TableHeader>Captured as</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {captureVerification.map((item, i) => (
-                      <tr key={i} className="align-top">
-                        <td className="py-2 pr-3 font-medium text-gray-600">{item.area}</td>
-                        <td className="py-2 pr-3 text-gray-600">{item.mentioned}</td>
-                        <td className="py-2">
+                      <TableRow key={i}>
+                        <TableCell className="font-medium text-gray-600">{item.area}</TableCell>
+                        <TableCell className="text-gray-600">{item.mentioned}</TableCell>
+                        <TableCell>
                           {item.capturedAs ? (
                             <span className="font-mono text-green-700">{item.capturedAs}</span>
                           ) : (
                             <span className="text-red-500 font-medium">Not captured</span>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             )}
           </div>
@@ -572,7 +565,7 @@ export function IntakeReview({
 
         {/* Policy quality warnings — only shown when inadequate policies exist */}
         {inadequatePolicies.length > 0 && (
-          <div className="mb-6 rounded-card border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-amber-600">⚠</span>
               <div className="text-xs font-semibold uppercase tracking-wider text-amber-700">
@@ -651,19 +644,21 @@ export function IntakeReview({
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="text-sm font-semibold text-gray-900">{SECTION_LABELS[key]}</h3>
                       {isRequired && !filled && (
-                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-600">required</span>
+                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-2xs font-medium text-red-600">required</span>
                       )}
                       {!filled && (
                         <span className="text-xs text-gray-400">Not captured</span>
                       )}
                       {/* RV-003: Revise affordance */}
-                      <a
-                        href={`/intake/${sessionId}`}
-                        className="ml-auto text-xs text-gray-400 hover:text-primary transition-colors shrink-0"
-                        title={`Return to intake conversation to revise ${SECTION_LABELS[key]}`}
-                      >
-                        ← Revise
-                      </a>
+                      {onRevise && (
+                        <button
+                          onClick={onRevise}
+                          className="ml-auto text-xs text-gray-400 hover:text-primary transition-colors shrink-0"
+                          title={`Return to intake conversation to revise ${SECTION_LABELS[key]}`}
+                        >
+                          ← Revise
+                        </button>
+                      )}
                     </div>
                     <div className="text-sm">
                       {getSectionContent(key, payload)}

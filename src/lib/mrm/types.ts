@@ -121,7 +121,7 @@ export interface MRMReport {
   // ── Section 7: SOD Evidence ───────────────────────────────────────────────
   sodEvidence: {
     /** Email of the user who submitted the blueprint for review. */
-    designer: string | null;
+    architect: string | null;
     /** Email of the reviewer who made the approval/rejection decision. */
     reviewer: string | null;
     /** Email of the user who executed the production deployment. */
@@ -240,6 +240,23 @@ export interface MRMReport {
       gaps: string[];
     }>;
   } | null;
+
+  // ── Section 13: Workflow Context ──────────────────────────────────────────
+  /**
+   * When this agent participates in one or more approved or deprecated workflows,
+   * this section lists those workflows for traceability. An agent operating inside
+   * a governed workflow pipeline has additional governance implications that
+   * reviewers and auditors should consider. null for agents not referenced by any workflow.
+   */
+  workflowContext: Array<{
+    workflowId: string;
+    name: string;
+    status: string;
+    version: string;
+    /** The role this agent plays within the workflow (e.g. "Intake Classifier"). */
+    role: string;
+    required: boolean;
+  }> | null;
 
   // ── Section 14: Periodic Review Schedule ─────────────────────────────────
   /**

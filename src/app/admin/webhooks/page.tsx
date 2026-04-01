@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,10 +84,10 @@ function formatRelative(iso: string) {
 
 function DeliveryRow({ d }: { d: DeliveryRecord }) {
   return (
-    <tr className="border-t border-gray-100 text-xs">
-      <td className="py-1.5 pr-3 text-gray-500">{formatRelative(d.createdAt)}</td>
-      <td className="py-1.5 pr-3 font-mono text-gray-700">{d.eventType}</td>
-      <td className="py-1.5 pr-3">
+    <TableRow>
+      <TableCell className="text-gray-500">{formatRelative(d.createdAt)}</TableCell>
+      <TableCell className="font-mono text-gray-700">{d.eventType}</TableCell>
+      <TableCell>
         {d.status === "success" ? (
           <span className="text-green-600 font-medium">✓ success</span>
         ) : d.status === "failed" ? (
@@ -93,12 +95,12 @@ function DeliveryRow({ d }: { d: DeliveryRecord }) {
         ) : (
           <span className="text-amber-600">pending</span>
         )}
-      </td>
-      <td className="py-1.5 pr-3 text-gray-500">
+      </TableCell>
+      <TableCell className="text-gray-500">
         {d.responseStatus ?? "—"}
-      </td>
-      <td className="py-1.5 text-gray-500">{d.attempts}</td>
-    </tr>
+      </TableCell>
+      <TableCell className="text-gray-500">{d.attempts}</TableCell>
+    </TableRow>
   );
 }
 
@@ -234,22 +236,22 @@ function WebhookCard({
           ) : deliveries.length === 0 ? (
             <p className="text-xs text-gray-400">No deliveries yet.</p>
           ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="text-xs text-gray-400">
-                  <th className="text-left pb-1 pr-3 font-normal">When</th>
-                  <th className="text-left pb-1 pr-3 font-normal">Event</th>
-                  <th className="text-left pb-1 pr-3 font-normal">Status</th>
-                  <th className="text-left pb-1 pr-3 font-normal">HTTP</th>
-                  <th className="text-left pb-1 font-normal">Attempts</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table dense>
+              <TableHead>
+                <TableRow>
+                  <TableHeader>When</TableHeader>
+                  <TableHeader>Event</TableHeader>
+                  <TableHeader>Status</TableHeader>
+                  <TableHeader>HTTP</TableHeader>
+                  <TableHeader>Attempts</TableHeader>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {deliveries.map((d) => (
                   <DeliveryRow key={d.id} d={d} />
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
       )}
@@ -286,11 +288,6 @@ export default function AdminWebhooksPage() {
     responseStatus: number | null;
   } | null>(null);
 
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
-  const showToast = useCallback((type: "success" | "error", message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 4000);
-  }, []);
 
   // Load webhooks
   const loadWebhooks = useCallback(async () => {
@@ -364,12 +361,12 @@ export default function AdminWebhooksPage() {
         setWebhookList((prev) =>
           prev.map((wh) => (wh.id === id ? { ...wh, active } : wh))
         );
-        showToast("success", active ? "Webhook activated." : "Webhook paused.");
+        toast.success(active ? "Webhook activated." : "Webhook paused.");
       }
     } catch {
-      showToast("error", "Failed to update webhook.");
+      toast.error("Failed to update webhook.");
     }
-  }, [showToast]);
+  }, []);
 
   // Delete webhook
   const handleDelete = useCallback(async (id: string) => {
@@ -377,12 +374,12 @@ export default function AdminWebhooksPage() {
       const res = await fetch(`/api/admin/webhooks/${id}`, { method: "DELETE" });
       if (res.ok) {
         setWebhookList((prev) => prev.filter((wh) => wh.id !== id));
-        showToast("success", "Webhook deleted.");
+        toast.success("Webhook deleted.");
       }
     } catch {
-      showToast("error", "Failed to delete webhook.");
+      toast.error("Failed to delete webhook.");
     }
-  }, [showToast]);
+  }, []);
 
   // Test delivery
   const handleTest = useCallback(async (id: string) => {
@@ -392,9 +389,9 @@ export default function AdminWebhooksPage() {
       setTestResult({ id, status: data.status, responseStatus: data.responseStatus });
       setTimeout(() => setTestResult(null), 6000);
     } catch {
-      showToast("error", "Test delivery failed.");
+      toast.error("Test delivery failed.");
     }
-  }, [showToast]);
+  }, []);
 
   // Rotate secret
   const handleRotateSecret = useCallback(async (id: string) => {
@@ -407,9 +404,9 @@ export default function AdminWebhooksPage() {
         setRevealedSecret({ name: wh.name, secret: data.secret, type: "rotated" });
       }
     } catch {
-      showToast("error", "Failed to rotate secret.");
+      toast.error("Failed to rotate secret.");
     }
-  }, [webhookList, showToast]);
+  }, [webhookList]);
 
   if (loading) {
     return (
@@ -420,20 +417,7 @@ export default function AdminWebhooksPage() {
   }
 
   return (
-    <div className="px-8 py-8 space-y-6">
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 z-50 rounded-lg px-4 py-3 text-sm shadow-lg ${
-            toast.type === "success"
-              ? "bg-green-50 text-green-800 border border-green-200"
-              : "bg-red-50 text-red-800 border border-red-200"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
-
+    <div className="px-6 py-6 space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -477,7 +461,7 @@ export default function AdminWebhooksPage() {
               <button
                 onClick={() => {
                   void navigator.clipboard.writeText(revealedSecret.secret);
-                  showToast("success", "Secret copied to clipboard.");
+                  toast.success("Secret copied to clipboard.");
                 }}
                 className="flex-shrink-0 rounded bg-amber-200 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-300"
               >

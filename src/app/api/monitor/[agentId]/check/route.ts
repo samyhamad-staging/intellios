@@ -6,7 +6,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { checkDeploymentHealth } from "@/lib/monitoring/health";
 
 /**
@@ -72,24 +72,21 @@ export async function POST(
 
     // Write audit entry — notification handler routes this to compliance officers
     // when a clean→critical or critical→clean transition is detected.
-    await writeAuditLog({
-      entityType:   "blueprint",
-      entityId:     blueprint.id,
-      action:       "blueprint.health_checked",
-      actorEmail:   authSession.user.email!,
-      actorRole:    authSession.user.role,
-      enterpriseId: blueprint.enterpriseId ?? null,
-      fromState:    { healthStatus: result.previousStatus },
-      toState:      { healthStatus: result.healthStatus },
-      metadata: {
-        agentId:        agentId,
-        agentName,
-        errorCount:     result.errorCount,
-        warningCount:   result.warningCount,
-        previousStatus: result.previousStatus,
-        healthStatus:   result.healthStatus,
-        triggeredBy:    "manual",
+    await publishEvent({
+      event: {
+        type: "blueprint.health_checked",
+        payload: {
+          blueprintId: blueprint.id,
+          agentId,
+          agentName: String(agentName),
+          healthStatus: result.healthStatus,
+          previousStatus: result.previousStatus ?? "",
+          errorCount: result.errorCount,
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id: blueprint.id },
+      enterpriseId: blueprint.enterpriseId ?? null,
     });
 
     return NextResponse.json({

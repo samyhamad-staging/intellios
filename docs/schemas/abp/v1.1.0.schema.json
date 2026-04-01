@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intellios.dev/schemas/abp/v1.1.0",
+  "title": "Agent Blueprint Package",
+  "description": "ABP v1.1.0 — adds explicit version field and execution configuration (observability, runtime constraints, alert feedback). All execution fields have defaults; fully backwards-compatible with v1.0.0 via migrate-on-read.",
+  "type": "object",
+  "required": ["version", "metadata", "identity", "capabilities", "constraints", "governance"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version of this ABP.",
+      "default": "1.0.0"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Provenance and lifecycle metadata.",
+      "required": ["id", "created_at", "created_by", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "created_by": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "in_review", "approved", "rejected", "deprecated", "deployed"]
+        },
+        "enterprise_id": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "description": "Agent identity and presentation.",
+      "required": ["name", "description"],
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "persona": { "type": "string" },
+        "branding": {
+          "type": "object",
+          "properties": {
+            "display_name": { "type": "string" },
+            "icon_url": { "type": "string" },
+            "color_primary": { "type": "string" },
+            "color_secondary": { "type": "string" }
+          }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "required": ["tools"],
+      "properties": {
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": "string", "enum": ["api", "function", "mcp_server", "plugin"] },
+              "description": { "type": "string" },
+              "config": { "type": "object" }
+            }
+          }
+        },
+        "instructions": { "type": "string" },
+        "knowledge_sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": "string", "enum": ["file", "database", "api", "vector_store"] },
+              "uri": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "allowed_domains": { "type": "array", "items": { "type": "string" } },
+        "denied_actions": { "type": "array", "items": { "type": "string" } },
+        "max_tokens_per_response": { "type": "number" },
+        "rate_limits": {
+          "type": "object",
+          "properties": {
+            "requests_per_minute": { "type": "number" },
+            "requests_per_day": { "type": "number" }
+          }
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "required": ["policies"],
+      "properties": {
+        "policies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": "string", "enum": ["safety", "compliance", "data_handling", "access_control", "audit"] },
+              "description": { "type": "string" },
+              "rules": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "audit": {
+          "type": "object",
+          "properties": {
+            "log_interactions": { "type": "boolean" },
+            "retention_days": { "type": "number" },
+            "pii_redaction": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "ownership": {
+      "type": "object",
+      "description": "Organizational ownership and data classification (optional).",
+      "properties": {
+        "businessUnit": { "type": "string" },
+        "ownerEmail": { "type": "string", "format": "email" },
+        "costCenter": { "type": "string" },
+        "deploymentEnvironment": { "type": "string", "enum": ["production", "staging", "sandbox", "internal"] },
+        "dataClassification": { "type": "string", "enum": ["public", "internal", "confidential", "regulated"] }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "description": "Execution configuration — observability, runtime constraints, and alert feedback. Added in v1.1.0.",
+      "properties": {
+        "observability": {
+          "type": "object",
+          "properties": {
+            "metricsEnabled": { "type": "boolean", "default": true },
+            "logLevel": { "type": "string", "enum": ["none", "errors", "info", "debug"], "default": "errors" },
+            "samplingRate": { "type": "number", "minimum": 0, "maximum": 1, "default": 1.0 },
+            "telemetryEndpoint": { "type": ["string", "null"], "default": null }
+          }
+        },
+        "runtimeConstraints": {
+          "type": "object",
+          "properties": {
+            "maxTokensPerInteraction": { "type": ["number", "null"], "default": null },
+            "maxConcurrentSessions": { "type": ["number", "null"], "default": null },
+            "circuitBreakerThreshold": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "default": null },
+            "sessionTimeoutMinutes": { "type": ["number", "null"], "default": null }
+          }
+        },
+        "feedback": {
+          "type": "object",
+          "properties": {
+            "alertWebhook": { "type": ["string", "null"], "default": null },
+            "escalationEmail": { "type": ["string", "null"], "default": null }
+          }
+        }
+      }
+    }
+  }
+}

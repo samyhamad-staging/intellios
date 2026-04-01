@@ -4,10 +4,18 @@ import { use, useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { UIMessage } from "ai";
 import { ChatContainer } from "@/components/chat/chat-container";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { IntakeProgress } from "@/components/intake/intake-progress";
-import { IntakeContextForm } from "@/components/intake/intake-context-form";
 import { IntakeReview } from "@/components/intake/intake-review";
 import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
+import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
+
+/** Static opener injected for fresh sessions — appears instantly, no API call needed. */
+const INTAKE_OPENER: UIMessage = {
+  id: "intake-opener",
+  role: "assistant",
+  parts: [{ type: "text" as const, text: "Tell me about the agent you want to build — what problem is it meant to solve, and who will use it?" }],
+};
 
 interface DBMessage {
   id: string;
@@ -20,12 +28,11 @@ function mapToUIMessages(dbMessages: DBMessage[]): UIMessage[] {
     id: m.id,
     role: m.role as UIMessage["role"],
     parts: [{ type: "text" as const, text: m.content }],
-    content: m.content,
   }));
 }
 
 /** Which phase the UI is currently showing */
-type Phase = "loading" | "context-form" | "conversation" | "review";
+type Phase = "loading" | "conversation" | "review";
 
 export default function IntakeSessionPage({
   params,
@@ -35,6 +42,7 @@ export default function IntakeSessionPage({
   const { sessionId } = use(params);
   const router = useRouter();
   const [refreshTick, setRefreshTick] = useState(0);
+  const [transparency, setTransparency] = useState<IntakeTransparencyMetadata | null>(null);
   const [phase, setPhase] = useState<Phase>("loading");
   const [generating, setGenerating] = useState(false);
   const [generateSuccess, setGenerateSuccess] = useState(false);
@@ -57,6 +65,12 @@ export default function IntakeSessionPage({
   const [intakeScoreLoading, setIntakeScoreLoading] = useState(false);
   const [scorePopoverOpen, setScorePopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const [discardConfirm, setDiscardConfirm] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  // Tracks consecutive ticks where classificationLoading is true but no classification arrived.
+  // After 2 unanswered ticks we bail out to prevent an infinite spinner.
+  const classificationLoadingTicksRef = useRef(0);
 
   // Load session status + message history + contributions on mount
   useEffect(() => {
@@ -90,6 +104,9 @@ export default function IntakeSessionPage({
         }
 
         if (session?.status === "completed") {
+          // Store messages so they're available if the user clicks Revise
+          const uiMessages = mapToUIMessages(messages ?? []);
+          setInitialMessages(uiMessages.length > 0 ? uiMessages : undefined);
           // Load payload and quality score for review screen
           setIntakeScoreLoading(true);
           await Promise.all([
@@ -107,18 +124,13 @@ export default function IntakeSessionPage({
           return;
         }
 
-        // If no context yet → show Phase 1 form
-        if (!storedContext) {
-          setPhase("context-form");
-          return;
-        }
-
-        // Context present → show conversation
+        // Go directly to conversation — context is collected conversationally
         const uiMessages = mapToUIMessages(messages ?? []);
-        setInitialMessages(uiMessages.length > 0 ? uiMessages : undefined);
+        // New sessions get the opener injected immediately (no loading delay, no API call)
+        setInitialMessages(uiMessages.length > 0 ? uiMessages : [INTAKE_OPENER]);
         setPhase("conversation");
       } catch {
-        setPhase("context-form");
+        setPhase("conversation");
       }
     }
     loadSession();
@@ -132,6 +144,28 @@ export default function IntakeSessionPage({
         const res = await fetch(`/api/intake/sessions/${sessionId}`);
         if (!res.ok) return;
         const { session } = await res.json();
+        // Pick up context + classification as conversation progresses
+        if (session?.intakeContext) {
+          setIntakeContext(session.intakeContext as IntakeContext);
+          if (!session.agentType) {
+            classificationLoadingTicksRef.current += 1;
+            // Bail out after 2 unanswered ticks — classification failed silently, don't spin forever
+            if (classificationLoadingTicksRef.current <= 2) {
+              setClassificationLoading(true);
+            } else {
+              setClassificationLoading(false);
+            }
+          }
+        }
+        if (session?.agentType && session?.riskTier) {
+          setClassification({
+            agentType: session.agentType as AgentType,
+            riskTier: session.riskTier as IntakeRiskTier,
+            rationale: "",
+          });
+          classificationLoadingTicksRef.current = 0;
+          setClassificationLoading(false);
+        }
         if (session?.status === "completed") {
           setIntakeScoreLoading(true);
           await Promise.all([
@@ -171,39 +205,6 @@ export default function IntakeSessionPage({
     setRefreshTick((t) => t + 1);
   }
 
-  function handleContextComplete(context: IntakeContext) {
-    setIntakeContext(context);
-    setPhase("conversation");
-    // Poll for async classification result (fires after context save)
-    setClassificationLoading(true);
-    let polls = 0;
-    const interval = setInterval(async () => {
-      polls++;
-      try {
-        const res = await fetch(`/api/intake/sessions/${sessionId}`);
-        if (res.ok) {
-          const { session } = await res.json();
-          if (session?.agentType && session?.riskTier) {
-            setClassification({
-              agentType: session.agentType as AgentType,
-              riskTier: session.riskTier as IntakeRiskTier,
-              rationale: "",
-            });
-            setClassificationLoading(false);
-            clearInterval(interval);
-            return;
-          }
-        }
-      } catch {
-        // Non-critical — keep polling
-      }
-      if (polls >= 10) {
-        setClassificationLoading(false);
-        clearInterval(interval);
-      }
-    }, 1500);
-  }
-
   function handleContributionAdded(contribution: StakeholderContribution) {
     setContributions((prev) => [...prev, contribution]);
   }
@@ -232,6 +233,29 @@ export default function IntakeSessionPage({
       setClassificationSaving(false);
     }
   }
+
+  const handleDiscard = useCallback(async () => {
+    setDiscarding(true);
+    try {
+      await fetch(`/api/intake/sessions/${sessionId}`, { method: "DELETE" });
+    } catch {
+      // Non-critical — navigate away regardless
+    }
+    router.push("/intake");
+  }, [sessionId, router]);
+
+  const handleRevise = useCallback(async () => {
+    try {
+      await fetch(`/api/intake/sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "in_progress" }),
+      });
+    } catch {
+      // Non-critical — switch to conversation regardless
+    }
+    setPhase("conversation");
+  }, [sessionId]);
 
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
@@ -274,24 +298,7 @@ export default function IntakeSessionPage({
     );
   }
 
-  // ─── Phase 1: Context Form ───────────────────────────────────────────────────
-
-  if (phase === "context-form") {
-    return (
-      <div className="flex h-screen flex-col">
-        <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-3">
-          <div>
-            <h1 className="text-lg font-semibold">Intellios</h1>
-            <p className="text-xs text-text-secondary">Agent Intake</p>
-          </div>
-          <div className="text-xs text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
-        </header>
-        <IntakeContextForm sessionId={sessionId} onComplete={handleContextComplete} />
-      </div>
-    );
-  }
-
-  // ─── Phase 3: Review ─────────────────────────────────────────────────────────
+  // ─── Phase: Review ───────────────────────────────────────────────────────────
 
   if (phase === "review") {
     const scoreColor =
@@ -365,7 +372,7 @@ export default function IntakeSessionPage({
                                 {d.value != null ? `${d.value.toFixed(1)}` : "—"}
                               </span>
                             </div>
-                            <p className="pl-[88px] text-[11px] text-text-tertiary leading-snug">{DIMENSION_DESCRIPTIONS[d.label]}</p>
+                            <p className="pl-[88px] text-xs-tight text-text-tertiary leading-snug">{DIMENSION_DESCRIPTIONS[d.label]}</p>
                           </div>
                         );
                       })}
@@ -392,6 +399,7 @@ export default function IntakeSessionPage({
           contributions={contributions}
           riskTier={classification?.riskTier ?? null}
           onGenerate={handleGenerate}
+          onRevise={handleRevise}
           generating={generating}
           generateSuccess={generateSuccess}
           generateError={generateError}
@@ -424,7 +432,65 @@ export default function IntakeSessionPage({
           <h1 className="text-lg font-semibold">Intellios</h1>
           <p className="text-xs text-text-secondary">Agent Intake</p>
         </div>
+
+        {/* Phase stepper */}
+        <div className="flex items-center gap-0">
+          {(["Context", "Requirements", "Review"] as const).map((label, i) => {
+            const done = (label === "Context" && !!intakeContext);
+            const active = (label === "Context" && !intakeContext) || (label === "Requirements" && !!intakeContext);
+            return (
+              <div key={label} className="flex items-center">
+                {i > 0 && <div className="w-6 h-px bg-border mx-1" />}
+                <div className="flex items-center gap-1.5">
+                  <span className={`flex h-4 w-4 items-center justify-center rounded-full text-2xs font-bold transition-colors ${
+                    done    ? "bg-primary text-white" :
+                    active  ? "border border-primary text-primary" :
+                              "border border-border text-text-tertiary"
+                  }`}>
+                    {done ? "✓" : i + 1}
+                  </span>
+                  <span className={`text-xs font-medium transition-colors ${
+                    active ? "text-text" : "text-text-tertiary"
+                  }`}>{label}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
         <div className="flex items-center gap-3">
+          {/* Mobile-only progress toggle */}
+          <button
+            onClick={() => setMobileSidebarOpen((o) => !o)}
+            className="lg:hidden rounded-lg border border-border px-2.5 py-1 text-xs text-text-secondary hover:border-border-strong transition-colors"
+          >
+            {mobileSidebarOpen ? "Hide progress" : "Progress"}
+          </button>
+          {discardConfirm ? (
+            <>
+              <span className="text-xs text-text-secondary">Discard this session?</span>
+              <button
+                onClick={handleDiscard}
+                disabled={discarding}
+                className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+              >
+                {discarding ? "Discarding…" : "Yes, discard"}
+              </button>
+              <button
+                onClick={() => setDiscardConfirm(false)}
+                className="text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setDiscardConfirm(true)}
+              className="text-xs text-text-tertiary hover:text-red-500 transition-colors"
+            >
+              Discard
+            </button>
+          )}
           <div className="text-xs text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
         </div>
       </header>
@@ -472,28 +538,28 @@ export default function IntakeSessionPage({
           ) : classification && editingClassification ? (
             <div className="flex items-center gap-2">
               <span className="text-xs text-text-tertiary">Override classification:</span>
-              <select
-                value={editAgentType}
-                onChange={(e) => setEditAgentType(e.target.value as AgentType)}
-                className="h-[20px] rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
-                title="Agent type"
-              >
-                <option value="automation">Automation</option>
-                <option value="decision-support">Decision Support</option>
-                <option value="autonomous">Autonomous</option>
-                <option value="data-access">Data Access</option>
-              </select>
-              <select
-                value={editRiskTier}
-                onChange={(e) => setEditRiskTier(e.target.value as IntakeRiskTier)}
-                className="h-[20px] rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
-                title="Risk tier"
-              >
-                <option value="low">LOW risk</option>
-                <option value="medium">MEDIUM risk</option>
-                <option value="high">HIGH risk</option>
-                <option value="critical">CRITICAL risk</option>
-              </select>
+              <Select value={editAgentType} onValueChange={(v) => setEditAgentType(v as AgentType)}>
+                <SelectTrigger className="h-6 text-xs px-2 w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="automation">Automation</SelectItem>
+                  <SelectItem value="decision-support">Decision Support</SelectItem>
+                  <SelectItem value="autonomous">Autonomous</SelectItem>
+                  <SelectItem value="data-access">Data Access</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={editRiskTier} onValueChange={(v) => setEditRiskTier(v as IntakeRiskTier)}>
+                <SelectTrigger className="h-6 text-xs px-2 w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">LOW risk</SelectItem>
+                  <SelectItem value="medium">MEDIUM risk</SelectItem>
+                  <SelectItem value="high">HIGH risk</SelectItem>
+                  <SelectItem value="critical">CRITICAL risk</SelectItem>
+                </SelectContent>
+              </Select>
               <button
                 onClick={handleSaveClassification}
                 disabled={classificationSaving}
@@ -513,12 +579,13 @@ export default function IntakeSessionPage({
       )}
 
       {/* Body: chat + progress sidebar */}
-      <main className="flex flex-1 overflow-hidden">
+      <main className="flex flex-1 overflow-hidden relative">
         <ChatContainer
           sessionId={sessionId}
           initialMessages={initialMessages}
           showSuggestedPrompts={false}
           onResponseComplete={handleResponseComplete}
+          onTransparencyUpdate={setTransparency}
         />
         <IntakeProgress
           sessionId={sessionId}
@@ -527,6 +594,8 @@ export default function IntakeSessionPage({
           onContributionAdded={handleContributionAdded}
           context={intakeContext ?? undefined}
           riskTier={classification?.riskTier ?? null}
+          transparency={transparency}
+          mobileOpen={mobileSidebarOpen}
         />
       </main>
     </div>

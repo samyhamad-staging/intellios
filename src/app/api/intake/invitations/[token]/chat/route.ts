@@ -9,7 +9,7 @@ import { eq } from "drizzle-orm";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { runForSession, getLatestSynthesis } from "@/lib/intake/orchestrator";
 import type { IntakeContext, IntakePayload, ContributionDomain } from "@/lib/types/intake";
 
@@ -182,21 +182,19 @@ OUTPUT FORMAT for save_requirements:
           .where(eq(intakeInvitations.id, invitation.id));
 
         // Write audit log
-        void writeAuditLog({
-          entityType: "intake_session",
-          entityId: invitation.sessionId,
-          action: "intake.contribution_submitted",
-          actorEmail: invitation.inviteeEmail,
-          actorRole: invitation.roleTitle ?? invitation.raciRole,
-          enterpriseId: session.enterpriseId,
-          metadata: {
-            contributionId: contribution.id,
-            invitationId: invitation.id,
-            domain: invitation.domain,
-            raciRole: invitation.raciRole,
-            fieldCount: Object.keys(fields).length,
-            sessionCreatedBy: session.createdBy,
+        void publishEvent({
+          event: {
+            type: "intake.contribution_submitted",
+            payload: {
+              sessionId: invitation.sessionId,
+              domain: invitation.domain,
+              raciRole: invitation.raciRole,
+              sessionCreatedBy: session.createdBy ?? "",
+            },
           },
+          actor: { email: invitation.inviteeEmail, role: invitation.roleTitle ?? invitation.raciRole },
+          entity: { type: "intake_session", id: invitation.sessionId },
+          enterpriseId: session.enterpriseId ?? null,
         });
 
         // Run orchestrator (fire-and-forget)

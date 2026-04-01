@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
 import type { EnterpriseSettings, ApprovalChainStep } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
@@ -9,8 +12,6 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<EnterpriseSettings>(DEFAULT_ENTERPRISE_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
-
   useEffect(() => {
     fetch("/api/admin/settings")
       .then((r) => r.json())
@@ -23,11 +24,6 @@ export default function AdminSettingsPage() {
       });
   }, []);
 
-  const showToast = useCallback((type: "success" | "error", message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 4000);
-  }, []);
-
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
@@ -38,17 +34,17 @@ export default function AdminSettingsPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message ?? "Save failed");
+        throw new Error(data.error ?? "Save failed");
       }
       const data = await res.json();
       setSettings(data.settings);
-      showToast("success", "Settings saved successfully.");
+      toast.success("Settings saved successfully.");
     } catch (err) {
-      showToast("error", err instanceof Error ? err.message : "Save failed");
+      toast.error(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSaving(false);
     }
-  }, [settings, showToast]);
+  }, [settings]);
 
   if (loading) {
     return (
@@ -59,7 +55,7 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="px-8 py-8 space-y-6">
+    <div className="px-6 py-6 space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -77,23 +73,85 @@ export default function AdminSettingsPage() {
         </button>
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 rounded-lg border px-4 py-3 text-sm shadow-lg ${
-            toast.type === "success"
-              ? "border-green-200 bg-green-50 text-green-800"
-              : "border-red-200 bg-red-50 text-red-800"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
-
       <div className="space-y-6">
 
+        {/* Branding */}
+        <section className="rounded-xl border border-gray-200 bg-white p-6">
+          <h2 className="text-base font-semibold text-gray-900">Branding</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Customize how Intellios appears to your users.
+          </p>
+          <div className="mt-5 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Company Name</label>
+              <p className="text-xs text-gray-400 mt-0.5">Shown in the sidebar and compliance reports.</p>
+              <input
+                type="text"
+                value={settings.branding?.companyName ?? "Intellios"}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    branding: { ...s.branding, companyName: e.target.value },
+                  }))
+                }
+                placeholder="Intellios"
+                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Logo URL <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <p className="text-xs text-gray-400 mt-0.5">If set, displayed in the sidebar instead of the default icon.</p>
+              <input
+                type="url"
+                value={settings.branding?.logoUrl ?? ""}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    branding: { ...s.branding, logoUrl: e.target.value || null },
+                  }))
+                }
+                placeholder="https://your-company.com/logo.png"
+                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Brand Color</label>
+              <p className="text-xs text-gray-400 mt-0.5">Used as the sidebar logo background color.</p>
+              <div className="mt-2 flex items-center gap-3">
+                <input
+                  type="color"
+                  value={settings.branding?.primaryColor ?? "#7c3aed"}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      branding: { ...s.branding, primaryColor: e.target.value },
+                    }))
+                  }
+                  className="h-9 w-12 cursor-pointer rounded border border-gray-200 p-0.5"
+                />
+                <code className="text-sm text-gray-600">{settings.branding?.primaryColor ?? "#7c3aed"}</code>
+              </div>
+            </div>
+            {/* Live preview */}
+            <div className="mt-3 flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <div
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
+                style={{ backgroundColor: settings.branding?.primaryColor ?? "#7c3aed" }}
+              >
+                {(settings.branding?.companyName ?? "Intellios").charAt(0).toUpperCase()}
+              </div>
+              <span className="text-sm font-semibold text-gray-900">
+                {settings.branding?.companyName ?? "Intellios"}
+              </span>
+              <span className="ml-auto text-xs text-gray-400">Preview</span>
+            </div>
+          </div>
+        </section>
+
         {/* Periodic Review */}
-        <section className="rounded-card border border-gray-200 bg-white p-6">
+        <section className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Periodic Model Review</h2>
           <p className="mt-1 text-sm text-gray-500">
             SR 11-7 requires periodic model revalidation after initial deployment.
@@ -163,7 +221,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Review SLA */}
-        <section className="rounded-card border border-gray-200 bg-white p-6">
+        <section className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Review SLA</h2>
           <p className="mt-1 text-sm text-gray-500">
             Time thresholds for blueprints in the <code className="text-xs bg-gray-100 px-1 rounded">in_review</code> state.
@@ -217,7 +275,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Governance Rules */}
-        <section className="rounded-card border border-gray-200 bg-white p-6">
+        <section className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Governance Rules</h2>
           <p className="mt-1 text-sm text-gray-500">
             Control which governance gates are enforced in the design and review workflow.
@@ -273,7 +331,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Notifications */}
-        <section className="rounded-card border border-gray-200 bg-white p-6">
+        <section className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Notifications</h2>
           <p className="mt-1 text-sm text-gray-500">
             Configure who receives email alerts for governance events.
@@ -338,7 +396,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Approval Chain */}
-        <section className="rounded-card border border-gray-200 bg-white p-6">
+        <section className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Approval Chain</h2>
           <p className="mt-1 text-sm text-gray-500">
             Define a sequential multi-step approval workflow. Each step requires a reviewer with the specified role
@@ -354,21 +412,25 @@ export default function AdminSettingsPage() {
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
                   {idx + 1}
                 </span>
-                <select
+                <Select
                   value={step.role}
-                  onChange={(e) =>
+                  onValueChange={(v) =>
                     setSettings((s) => {
                       const chain = [...(s.approvalChain ?? [])];
-                      chain[idx] = { ...chain[idx], role: e.target.value as ApprovalChainStep["role"] };
+                      chain[idx] = { ...chain[idx], role: v as ApprovalChainStep["role"] };
                       return { ...s, approvalChain: chain };
                     })
                   }
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:border-gray-400 focus:outline-none"
                 >
-                  <option value="reviewer">reviewer</option>
-                  <option value="compliance_officer">compliance_officer</option>
-                  <option value="admin">admin</option>
-                </select>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="reviewer">reviewer</SelectItem>
+                    <SelectItem value="compliance_officer">compliance_officer</SelectItem>
+                    <SelectItem value="admin">admin</SelectItem>
+                  </SelectContent>
+                </Select>
                 <input
                   type="text"
                   value={step.label}
@@ -413,7 +475,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Deployment Targets */}
-        <section className="rounded-card border border-gray-200 bg-white p-6">
+        <section className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Deployment Targets</h2>
           <p className="mt-1 text-sm text-gray-500">
             Configure direct deployment targets. AWS credentials are read from server environment
@@ -434,20 +496,19 @@ export default function AdminSettingsPage() {
                   <p className="text-xs text-gray-500">Deploy agents directly to AWS Bedrock runtime</p>
                 </div>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-500">
                   {settings.deploymentTargets?.agentcore?.enabled ? "Enabled" : "Disabled"}
                 </span>
-                <input
-                  type="checkbox"
+                <Switch
                   checked={settings.deploymentTargets?.agentcore?.enabled ?? false}
-                  onChange={(e) =>
+                  onChange={(v) =>
                     setSettings((s) => ({
                       ...s,
                       deploymentTargets: {
                         ...s.deploymentTargets,
                         agentcore: {
-                          enabled: e.target.checked,
+                          enabled: v,
                           region: s.deploymentTargets?.agentcore?.region ?? "us-east-1",
                           agentResourceRoleArn: s.deploymentTargets?.agentcore?.agentResourceRoleArn ?? "",
                           foundationModel:
@@ -459,9 +520,9 @@ export default function AdminSettingsPage() {
                       },
                     }))
                   }
-                  className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  color="orange"
                 />
-              </label>
+              </div>
             </div>
 
             {settings.deploymentTargets?.agentcore?.enabled && (

@@ -17,7 +17,7 @@ import type { ABP } from "@/lib/types/abp";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { findBlueprintTemplate } from "@/lib/templates/blueprint-templates";
 import { validateBlueprint } from "@/lib/governance/validator";
 
@@ -25,7 +25,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
 
   const requestId = getRequestId(request);
@@ -96,19 +96,20 @@ export async function POST(
     });
 
     // Audit trail
-    void writeAuditLog({
-      entityType: "blueprint",
-      entityId: newBlueprintId,
-      action: "blueprint.created_from_template",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
-      enterpriseId,
-      metadata: {
-        templateId,
-        templateName: template.name,
-        agentName: template.abp.identity.name,
-        agentId: newAgentId,
+    void publishEvent({
+      event: {
+        type: "blueprint.created_from_template",
+        payload: {
+          blueprintId: newBlueprintId,
+          agentId: newAgentId,
+          name: template.abp.identity.name ?? "",
+          createdBy: authSession.user.email!,
+          templateId,
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id: newBlueprintId },
+      enterpriseId,
     });
 
     return NextResponse.json({ blueprintId: newBlueprintId, agentId: newAgentId }, { status: 201 });

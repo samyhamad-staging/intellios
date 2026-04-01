@@ -6,7 +6,7 @@ import { z } from "zod";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 
@@ -66,6 +66,11 @@ const SettingsBody = z.object({
     requireAllPhase3Acknowledgments: z.boolean(),
     allowSelfApproval: z.boolean(),
     requireTestsBeforeApproval: z.boolean().optional().default(false),
+    // H2-1.4: circuit breaker — optional so legacy PUT bodies still parse
+    circuitBreaker: z.object({
+      action: z.enum(["auto_suspend", "alert_only"]),
+      errorViolationThreshold: z.number().int().min(1).max(100),
+    }).optional(),
   }).optional(),
   notifications: z.object({
     adminEmail: z.string().email().nullable(),
@@ -73,6 +78,11 @@ const SettingsBody = z.object({
     notifyOnApproval: z.boolean(),
   }).optional(),
   approvalChain: z.array(ApprovalChainStepSchema).optional(),
+  branding: z.object({
+    companyName: z.string().min(1).max(60).optional(),
+    logoUrl: z.string().url().nullable().optional(),
+    primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a valid hex color").optional(),
+  }).optional(),
   periodicReview: z.object({
     enabled: z.boolean().optional(),
     defaultCadenceMonths: z.number().int().min(1).max(60).optional(),
@@ -80,6 +90,10 @@ const SettingsBody = z.object({
   }).optional(),
   deploymentTargets: z.object({
     agentcore: AgentCoreConfigSchema,
+  }).optional(),
+  costRates: z.object({
+    inputCostPer1kTokens:  z.number().min(0).max(1),
+    outputCostPer1kTokens: z.number().min(0).max(1),
   }).optional(),
 }).refine(
   (data) => {
@@ -128,11 +142,19 @@ export async function PUT(request: NextRequest) {
     // Deep merge: apply new values on top of existing
     const merged = { ...existingSettings };
     if (body.sla) merged.sla = body.sla;
-    if (body.governance) merged.governance = body.governance;
+    if (body.governance) {
+      // Deep-merge governance so circuitBreaker is preserved when not provided
+      const existing_gov = (existingSettings.governance ?? {}) as Record<string, unknown>;
+      merged.governance = { ...existing_gov, ...body.governance };
+    }
     if (body.notifications) merged.notifications = body.notifications;
     if (body.approvalChain !== undefined) {
       // Normalize: fill in step from index if missing (handles legacy seed data)
       merged.approvalChain = body.approvalChain.map((s, i) => ({ ...s, step: s.step ?? i }));
+    }
+    if (body.branding !== undefined) {
+      const existing_br = (existingSettings.branding ?? {}) as Record<string, unknown>;
+      merged.branding = { ...existing_br, ...body.branding };
     }
     if (body.periodicReview !== undefined) {
       const existing_pr = (existingSettings.periodicReview ?? {}) as Record<string, unknown>;
@@ -141,6 +163,10 @@ export async function PUT(request: NextRequest) {
     if (body.deploymentTargets !== undefined) {
       const existing_dt = (existingSettings.deploymentTargets ?? {}) as Record<string, unknown>;
       merged.deploymentTargets = { ...existing_dt, ...body.deploymentTargets };
+    }
+    if (body.costRates !== undefined) {
+      const existing_cr = (existingSettings.costRates ?? {}) as Record<string, unknown>;
+      merged.costRates = { ...existing_cr, ...body.costRates };
     }
 
     // Upsert
@@ -162,14 +188,11 @@ export async function PUT(request: NextRequest) {
       });
 
     // Audit
-    await writeAuditLog({
-      entityType: "blueprint", // reusing nearest entity type — settings are enterprise-level
-      entityId: enterpriseId,
-      action: "settings.updated",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
+    await publishEvent({
+      event: { type: "settings.updated", payload: { enterpriseId } },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id: enterpriseId },
       enterpriseId,
-      metadata: { sections: Object.keys(body) },
     });
 
     // Return merged result

@@ -9,7 +9,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 
 /**
  * POST /api/blueprints/[id]/clone
@@ -29,7 +29,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
@@ -89,19 +89,19 @@ export async function POST(
       .returning();
 
     // Audit — links clone to source for full traceability
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: newBlueprintId,
-      action: "blueprint.cloned",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
-      enterpriseId: source.enterpriseId ?? null,
-      metadata: {
-        sourceBlueprint: id,
-        sourceName: source.name ?? "Unnamed Agent",
-        sourceVersion: source.version,
-        newAgentId,
+    await publishEvent({
+      event: {
+        type: "blueprint.cloned",
+        payload: {
+          originalBlueprintId: id,
+          newBlueprintId,
+          agentId: newAgentId,
+          agentName: cloneName,
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id: newBlueprintId },
+      enterpriseId: source.enterpriseId ?? null,
     });
 
     return NextResponse.json(cloned, { status: 201 });

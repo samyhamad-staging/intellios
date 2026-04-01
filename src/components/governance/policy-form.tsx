@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -11,9 +12,70 @@ const POLICY_TYPES = [
   { value: "data_handling",  label: "Data Handling" },
   { value: "access_control", label: "Access Control" },
   { value: "audit",          label: "Audit" },
+  { value: "runtime",        label: "Runtime" },
 ] as const;
 
 type PolicyType = (typeof POLICY_TYPES)[number]["value"];
+
+// ─── Runtime rule types ───────────────────────────────────────────────────────
+
+const RUNTIME_OPERATORS = [
+  {
+    value:       "token_budget_daily",
+    label:       "Token budget (daily)",
+    description: "Max total tokens (in + out) per 24-hour window",
+    valueType:   "number" as const,
+    placeholder: "e.g. 100000",
+  },
+  {
+    value:       "token_budget_per_interaction",
+    label:       "Token budget (per interaction)",
+    description: "Max average tokens per invocation",
+    valueType:   "number" as const,
+    placeholder: "e.g. 4000",
+  },
+  {
+    value:       "pii_action",
+    label:       "PII action",
+    description: "Documents intended PII handling — enforced at runtime in H3",
+    valueType:   "pii_action" as const,
+    placeholder: "",
+  },
+  {
+    value:       "scope_constraint",
+    label:       "Scope constraint",
+    description: "Comma-separated list of allowed tool names",
+    valueType:   "text" as const,
+    placeholder: "e.g. web_search, calculator",
+  },
+  {
+    value:       "circuit_breaker_error_rate",
+    label:       "Circuit breaker — error rate",
+    description: "Error rate threshold (0–1). Fires when errors/invocations exceeds this.",
+    valueType:   "number" as const,
+    placeholder: "e.g. 0.1",
+  },
+] as const;
+
+type RuntimeOperator = (typeof RUNTIME_OPERATORS)[number]["value"];
+
+export interface RuntimePolicyRule {
+  id:       string;
+  operator: RuntimeOperator;
+  value:    unknown; // string in form state; numbers parsed on submit
+  severity: "error" | "warning";
+  message:  string;
+}
+
+function emptyRuntimeRule(): RuntimePolicyRule {
+  return {
+    id:       crypto.randomUUID(),
+    operator: "circuit_breaker_error_rate",
+    value:    "",
+    severity: "error",
+    message:  "",
+  };
+}
 
 const OPERATORS = [
   { value: "exists",            label: "exists",            hasValue: false },
@@ -44,7 +106,7 @@ export interface PolicyFormValues {
   name: string;
   type: PolicyType;
   description: string;
-  rules: PolicyRule[];
+  rules: PolicyRule[] | RuntimePolicyRule[];
 }
 
 // ─── Simulation result types ──────────────────────────────────────────────────
@@ -152,20 +214,20 @@ function RuleRow({
         {/* Operator */}
         <div>
           <label className="block text-xs text-gray-500 mb-1">Operator</label>
-          <select
+          <Select
             value={rule.operator}
-            onChange={(e) =>
-              onChange({ ...rule, operator: e.target.value as Operator, value: "" })
-            }
+            onValueChange={(v) => onChange({ ...rule, operator: v as Operator, value: "" })}
             disabled={readOnly}
-            className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
           >
-            {OPERATORS.map((op) => (
-              <option key={op.value} value={op.value}>
-                {op.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {OPERATORS.map((op) => (
+                <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Value */}
@@ -186,17 +248,19 @@ function RuleRow({
         {/* Severity */}
         <div>
           <label className="block text-xs text-gray-500 mb-1">Severity</label>
-          <select
+          <Select
             value={rule.severity}
-            onChange={(e) =>
-              onChange({ ...rule, severity: e.target.value as "error" | "warning" })
-            }
+            onValueChange={(v) => onChange({ ...rule, severity: v as "error" | "warning" })}
             disabled={readOnly}
-            className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
           >
-            <option value="error">error — blocks finalization</option>
-            <option value="warning">warning — informational</option>
-          </select>
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="error">error — blocks finalization</SelectItem>
+              <SelectItem value="warning">warning — informational</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -208,6 +272,132 @@ function RuleRow({
           value={rule.message}
           onChange={(e) => onChange({ ...rule, message: e.target.value })}
           placeholder="Shown when this rule is violated"
+          disabled={readOnly}
+          className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 placeholder-gray-300 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Runtime Rule Row ─────────────────────────────────────────────────────────
+
+function RuntimeRuleRow({
+  rule,
+  index,
+  onChange,
+  onRemove,
+  readOnly,
+}: {
+  rule: RuntimePolicyRule;
+  index: number;
+  onChange: (updated: RuntimePolicyRule) => void;
+  onRemove: () => void;
+  readOnly: boolean;
+}) {
+  const opDef = RUNTIME_OPERATORS.find((o) => o.value === rule.operator);
+
+  return (
+    <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-blue-500 uppercase tracking-wider">
+          Runtime Rule {index + 1}
+        </span>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+          >
+            Remove
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {/* Operator */}
+        <div className="col-span-2">
+          <label className="block text-xs text-gray-500 mb-1">Operator</label>
+          <Select
+            value={rule.operator}
+            onValueChange={(v) => onChange({ ...rule, operator: v as RuntimeOperator, value: "" })}
+            disabled={readOnly}
+          >
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {RUNTIME_OPERATORS.map((op) => (
+                <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {opDef && (
+            <p className="mt-1 text-xs text-gray-400">{opDef.description}</p>
+          )}
+        </div>
+
+        {/* Value — varies by operator */}
+        {opDef?.valueType === "pii_action" ? (
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">PII Action</label>
+            <Select
+              value={String(rule.value ?? "block")}
+              onValueChange={(v) => onChange({ ...rule, value: v })}
+              disabled={readOnly}
+            >
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="block">block — reject request</SelectItem>
+                <SelectItem value="redact">redact — mask PII in response</SelectItem>
+                <SelectItem value="log">log — allow but audit</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        ) : (
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Value</label>
+            <input
+              type={opDef?.valueType === "number" ? "number" : "text"}
+              step={opDef?.valueType === "number" ? "any" : undefined}
+              value={String(rule.value ?? "")}
+              onChange={(e) => onChange({ ...rule, value: e.target.value })}
+              placeholder={opDef?.placeholder ?? ""}
+              disabled={readOnly}
+              className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 placeholder-gray-300 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
+            />
+          </div>
+        )}
+
+        {/* Severity */}
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Severity</label>
+          <Select
+            value={rule.severity}
+            onValueChange={(v) => onChange({ ...rule, severity: v as "error" | "warning" })}
+            disabled={readOnly}
+          >
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="error">error — alert + auto-suspend (H2-1.4)</SelectItem>
+              <SelectItem value="warning">warning — alert only</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Alert message */}
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">Alert message</label>
+        <input
+          type="text"
+          value={rule.message}
+          onChange={(e) => onChange({ ...rule, message: e.target.value })}
+          placeholder="Shown when this threshold is breached"
           disabled={readOnly}
           className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 placeholder-gray-300 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
         />
@@ -229,7 +419,8 @@ export default function PolicyForm({
   const [name, setName] = useState(initialValues?.name ?? "");
   const [type, setType] = useState<PolicyType>(initialValues?.type ?? "compliance");
   const [description, setDescription] = useState(initialValues?.description ?? "");
-  const [rules, setRules] = useState<PolicyRule[]>(initialValues?.rules ?? []);
+  const [rules, setRules] = useState<PolicyRule[] | RuntimePolicyRule[]>(initialValues?.rules ?? []);
+  const isRuntime = type === "runtime";
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // ── Impact simulation state ────────────────────────────────────────────────
@@ -241,12 +432,24 @@ export default function PolicyForm({
   function validate(): boolean {
     const errs: Record<string, string> = {};
     if (!name.trim()) errs.name = "Name is required";
-    for (let i = 0; i < rules.length; i++) {
-      const r = rules[i];
-      if (!r.field.trim()) errs[`rule_${i}_field`] = "Field is required";
-      if (!r.message.trim()) errs[`rule_${i}_message`] = "Message is required";
-      if (operatorHasValue(r.operator) && !r.value?.trim()) {
-        errs[`rule_${i}_value`] = "Value is required for this operator";
+    if (isRuntime) {
+      const runtimeRules = rules as RuntimePolicyRule[];
+      for (let i = 0; i < runtimeRules.length; i++) {
+        const r = runtimeRules[i];
+        if (!r.message.trim()) errs[`rule_${i}_message`] = "Message is required";
+        if (r.operator !== "pii_action" && !r.value?.toString().trim()) {
+          errs[`rule_${i}_value`] = "Value is required for this operator";
+        }
+      }
+    } else {
+      const dtRules = rules as PolicyRule[];
+      for (let i = 0; i < dtRules.length; i++) {
+        const r = dtRules[i];
+        if (!r.field.trim()) errs[`rule_${i}_field`] = "Field is required";
+        if (!r.message.trim()) errs[`rule_${i}_message`] = "Message is required";
+        if (operatorHasValue(r.operator) && !r.value?.trim()) {
+          errs[`rule_${i}_value`] = "Value is required for this operator";
+        }
       }
     }
     setErrors(errs);
@@ -257,14 +460,25 @@ export default function PolicyForm({
     e.preventDefault();
     if (readOnly || !validate()) return;
 
-    // Strip empty value fields for exists/not_exists
-    const cleanedRules = rules.map((r) => {
-      const { value, ...rest } = r;
-      if (operatorHasValue(r.operator)) {
-        return { ...rest, value: value ?? "" };
-      }
-      return rest;
-    });
+    let cleanedRules: PolicyRule[] | RuntimePolicyRule[];
+    if (isRuntime) {
+      // For runtime rules, parse numeric values to their proper types
+      cleanedRules = (rules as RuntimePolicyRule[]).map((r): RuntimePolicyRule => {
+        const opDef = RUNTIME_OPERATORS.find((o) => o.value === r.operator);
+        const parsedValue: unknown =
+          opDef?.valueType === "number" ? Number(r.value) : r.value;
+        return { ...r, value: parsedValue };
+      });
+    } else {
+      // Strip empty value fields for exists/not_exists
+      cleanedRules = (rules as PolicyRule[]).map((r): PolicyRule => {
+        if (operatorHasValue(r.operator as Operator)) {
+          return { ...r, value: r.value ?? "" };
+        }
+        const { value: _v, ...rest } = r;
+        return rest as PolicyRule;
+      });
+    }
 
     onSubmit({
       name: name.trim(),
@@ -274,26 +488,29 @@ export default function PolicyForm({
     });
   }
 
-  function updateRule(index: number, updated: PolicyRule) {
-    setRules((prev) => prev.map((r, i) => (i === index ? updated : r)));
+  function updateRule(index: number, updated: PolicyRule | RuntimePolicyRule) {
+    setRules((prev) => prev.map((r, i) => (i === index ? updated : r)) as PolicyRule[] | RuntimePolicyRule[]);
     setSimDirty(true);
   }
 
   function removeRule(index: number) {
-    setRules((prev) => prev.filter((_, i) => i !== index));
+    setRules((prev) => prev.filter((_, i) => i !== index) as PolicyRule[] | RuntimePolicyRule[]);
     setSimDirty(true);
   }
 
   function addRule() {
-    setRules((prev) => [...prev, emptyRule()]);
+    const newRule = isRuntime ? emptyRuntimeRule() : emptyRule();
+    setRules((prev) => [...prev, newRule] as PolicyRule[] | RuntimePolicyRule[]);
     setSimDirty(true);
   }
 
   async function handleSimulate() {
+    if (isRuntime) return; // runtime policies cannot be simulated against blueprints
     if (rules.length === 0) {
       setSimError("Add at least one rule before previewing impact.");
       return;
     }
+    const dtRulesForSim = rules as PolicyRule[];
     setSimulating(true);
     setSimError(null);
     setSimResult(null);
@@ -305,7 +522,7 @@ export default function PolicyForm({
           name: name.trim() || "Draft Policy",
           description: description.trim() || undefined,
           type,
-          rules: rules.map((r) => ({
+          rules: dtRulesForSim.map((r) => ({
             id: r.id,
             field: r.field,
             operator: r.operator,
@@ -345,7 +562,7 @@ export default function PolicyForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* ── Name ──────────────────────────────────────────────────────────────── */}
-      <div className="rounded-card border border-gray-200 bg-white px-6 py-5 space-y-4">
+      <div className="rounded-xl border border-gray-200 bg-white px-6 py-5 space-y-4">
         <h2 className="text-sm font-semibold text-gray-900">Policy Details</h2>
 
         <div>
@@ -367,18 +584,25 @@ export default function PolicyForm({
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Type <span className="text-red-500">*</span>
           </label>
-          <select
+          <Select
             value={type}
-            onChange={(e) => { setType(e.target.value as PolicyType); setSimDirty(true); }}
+            onValueChange={(v) => {
+              const newType = v as PolicyType;
+              if ((newType === "runtime") !== (type === "runtime")) setRules([]);
+              setType(newType);
+              setSimDirty(true);
+            }}
             disabled={readOnly}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-blue-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
           >
-            {POLICY_TYPES.map((pt) => (
-              <option key={pt.value} value={pt.value}>
-                {pt.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {POLICY_TYPES.map((pt) => (
+                <SelectItem key={pt.value} value={pt.value}>{pt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
@@ -398,7 +622,7 @@ export default function PolicyForm({
       </div>
 
       {/* ── Rules ─────────────────────────────────────────────────────────────── */}
-      <div className="rounded-card border border-gray-200 bg-white px-6 py-5">
+      <div className="rounded-xl border border-gray-200 bg-white px-6 py-5">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-sm font-semibold text-gray-900">
@@ -408,8 +632,9 @@ export default function PolicyForm({
               </span>
             </h2>
             <p className="mt-0.5 text-xs text-gray-400">
-              Each rule asserts a condition against an ABP field. Violations block deployment when
-              severity is error.
+              {isRuntime
+                ? "Each rule defines a telemetry threshold. Breaches fire alerts and may auto-suspend the agent (H2-1.4)."
+                : "Each rule asserts a condition against an ABP field. Violations block deployment when severity is error."}
             </p>
           </div>
           {!readOnly && (
@@ -436,13 +661,23 @@ export default function PolicyForm({
         <div className="space-y-3">
           {rules.map((rule, i) => (
             <div key={rule.id}>
-              <RuleRow
-                rule={rule}
-                index={i}
-                onChange={(updated) => updateRule(i, updated)}
-                onRemove={() => removeRule(i)}
-                readOnly={readOnly}
-              />
+              {isRuntime ? (
+                <RuntimeRuleRow
+                  rule={rule as RuntimePolicyRule}
+                  index={i}
+                  onChange={(updated) => updateRule(i, updated)}
+                  onRemove={() => removeRule(i)}
+                  readOnly={readOnly}
+                />
+              ) : (
+                <RuleRow
+                  rule={rule as PolicyRule}
+                  index={i}
+                  onChange={(updated) => updateRule(i, updated)}
+                  onRemove={() => removeRule(i)}
+                  readOnly={readOnly}
+                />
+              )}
               {/* Inline rule-level validation hints */}
               {(errors[`rule_${i}_field`] ||
                 errors[`rule_${i}_value`] ||
@@ -464,9 +699,21 @@ export default function PolicyForm({
         </div>
       </div>
 
+      {/* ── Runtime Policy Note ───────────────────────────────────────────────── */}
+      {!readOnly && isRuntime && (
+        <div className="rounded-xl border border-blue-100 bg-blue-50 px-6 py-4">
+          <p className="text-sm font-semibold text-blue-800 mb-1">Runtime Policy</p>
+          <p className="text-xs text-blue-700">
+            This policy evaluates against live telemetry — it cannot be previewed against stored blueprints.
+            Rules are checked every 15 minutes via the alert-check cron job. Breaches create in-app notifications
+            and fire webhook events. Auto-suspension (H2-1.4) will be added in the next sprint.
+          </p>
+        </div>
+      )}
+
       {/* ── Impact Simulation ─────────────────────────────────────────────────── */}
-      {!readOnly && (
-        <div className="rounded-card border border-gray-200 bg-white px-6 py-5">
+      {!readOnly && !isRuntime && (
+        <div className="rounded-xl border border-gray-200 bg-white px-6 py-5">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-sm font-semibold text-gray-900">Impact Preview</h2>

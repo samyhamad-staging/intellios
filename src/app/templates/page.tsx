@@ -1,230 +1,184 @@
-import Link from "next/link";
-import { auth } from "@/auth";
-import { LayoutTemplate, Shield, AlertTriangle, CheckCircle } from "lucide-react";
-import { BLUEPRINT_TEMPLATES } from "@/lib/templates/blueprint-templates";
-import { UseTemplateButton } from "@/components/templates/use-template-button";
-import type { BlueprintTemplate } from "@/lib/templates/blueprint-templates";
+"use client";
 
-// ─── Tier badge ───────────────────────────────────────────────────────────────
+import { useEffect, useState } from "react";
+import { Package, Search, Star, TrendingUp } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const TIER_STYLES = {
-  standard: "bg-gray-100 text-gray-600",
-  enhanced: "bg-blue-100 text-blue-700",
-  critical: "bg-rose-100 text-rose-700",
-};
-
-const TIER_ICONS = {
-  standard: CheckCircle,
-  enhanced: Shield,
-  critical: AlertTriangle,
-};
-
-function TierBadge({ tier }: { tier: BlueprintTemplate["governanceTier"] }) {
-  const Icon = TIER_ICONS[tier];
-  return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium capitalize ${TIER_STYLES[tier]}`}>
-      <Icon className="h-3 w-3" />
-      {tier}
-    </span>
-  );
+interface Template {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  riskTier: string | null;
+  source: string;
+  rating: number | null;
+  usageCount: number;
+  author: string | null;
+  publishedAt: string | null;
+  tags: string[];
 }
 
-// ─── Category badge ───────────────────────────────────────────────────────────
+export default function TemplateMarketplacePage() {
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [sourceFilter, setSourceFilter] = useState("");
+  const [ratingFilter, setRatingFilter] = useState<Record<string, number>>({});
 
-const CATEGORY_LABELS: Record<BlueprintTemplate["category"], string> = {
-  "financial-services": "Financial Services",
-  compliance: "Compliance",
-  operations: "Operations",
-  hr: "HR",
-};
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+    if (sourceFilter) params.set("source", sourceFilter);
+    fetch(`/api/templates?${params}`)
+      .then((r) => r.json())
+      .then((d) => { setTemplates(d.templates ?? []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [search, sourceFilter]);
 
-function CategoryBadge({ category }: { category: BlueprintTemplate["category"] }) {
+  async function handleRate(templateId: string, rating: number) {
+    const r = await fetch(`/api/templates/${templateId}/rate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating }),
+    });
+    if (r.ok) {
+      const { rating: newAvg } = await r.json();
+      setTemplates((prev) =>
+        prev.map((t) => t.id === templateId ? { ...t, rating: newAvg } : t)
+      );
+      setRatingFilter((prev) => ({ ...prev, [templateId]: rating }));
+    }
+  }
+
+  const sourceLabel: Record<string, string> = {
+    "built-in": "Built-in",
+    "community": "Community",
+  };
+
+  const riskColor: Record<string, string> = {
+    low: "bg-emerald-100 text-emerald-700",
+    medium: "bg-yellow-100 text-yellow-700",
+    high: "bg-orange-100 text-orange-700",
+    critical: "bg-red-100 text-red-700",
+  };
+
   return (
-    <span className="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
-      {CATEGORY_LABELS[category]}
-    </span>
-  );
-}
-
-// ─── Template card ────────────────────────────────────────────────────────────
-
-function TemplateCard({
-  template,
-  isAuthenticated,
-}: {
-  template: BlueprintTemplate;
-  isAuthenticated: boolean;
-}) {
-  const tools = template.abp.capabilities.tools ?? [];
-  const deniedActions = template.abp.constraints?.denied_actions ?? [];
-
-  return (
-    <div className="flex flex-col rounded-card border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex-1 p-5">
-        {/* Badges */}
-        <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-          <TierBadge tier={template.governanceTier} />
-          <CategoryBadge category={template.category} />
+    <div className="p-6 max-w-6xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-2">
+            <Package className="h-6 w-6 text-violet-600" />
+            Template Marketplace
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Browse built-in and community agent templates
+          </p>
         </div>
+      </div>
 
-        {/* Name + description */}
-        <h3 className="text-sm font-semibold text-gray-900 mb-1">{template.name}</h3>
-        <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">{template.description}</p>
+      {/* Filters */}
+      <div className="flex gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search templates…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-slate-200 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+          />
+        </div>
+        <Select
+          value={sourceFilter || "_all_"}
+          onValueChange={(v) => setSourceFilter(v === "_all_" ? "" : v)}
+        >
+          <SelectTrigger className="text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="_all_">All sources</SelectItem>
+            <SelectItem value="built-in">Built-in</SelectItem>
+            <SelectItem value="community">Community</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        {/* Tags */}
-        <div className="mt-3 flex flex-wrap gap-1">
-          {template.tags.slice(0, 4).map((tag) => (
-            <span key={tag} className="rounded-md bg-gray-50 px-1.5 py-0.5 text-xs text-gray-500 border border-gray-100">
-              {tag}
-            </span>
+      {loading && (
+        <div className="text-center text-slate-500 py-16">Loading templates…</div>
+      )}
+
+      {!loading && templates.length === 0 && (
+        <div className="text-center text-slate-500 py-16 rounded-xl border border-slate-200 bg-slate-50">
+          <Package className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+          <p className="font-medium">No templates found</p>
+          <p className="text-sm mt-1">Try adjusting your search or filters</p>
+        </div>
+      )}
+
+      {!loading && templates.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {templates.map((t) => (
+            <div
+              key={t.id}
+              className="rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md transition-shadow space-y-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-medium text-slate-900 text-sm leading-tight">{t.name}</h3>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                  t.source === "community" ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-600"
+                }`}>
+                  {sourceLabel[t.source] ?? t.source}
+                </span>
+              </div>
+
+              {t.description && (
+                <p className="text-xs text-slate-500 line-clamp-2">{t.description}</p>
+              )}
+
+              <div className="flex flex-wrap gap-1.5">
+                {t.riskTier && (
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${riskColor[t.riskTier] ?? "bg-slate-100 text-slate-600"}`}>
+                    {t.riskTier}
+                  </span>
+                )}
+                {t.category && (
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                    {t.category}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                <div className="flex items-center gap-1">
+                  {[1,2,3,4,5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => handleRate(t.id, star)}
+                      className="focus:outline-none"
+                      title={`Rate ${star} stars`}
+                    >
+                      <Star
+                        className={`h-3.5 w-3.5 ${
+                          star <= (ratingFilter[t.id] ?? Math.round(t.rating ?? 0))
+                            ? "fill-amber-400 text-amber-400"
+                            : "text-slate-300"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                  <span className="text-xs text-slate-400 ml-1">
+                    {t.rating ? t.rating.toFixed(1) : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-slate-400">
+                  <TrendingUp className="h-3 w-3" />
+                  {t.usageCount} uses
+                </div>
+              </div>
+            </div>
           ))}
         </div>
-
-        {/* Preview panel */}
-        <details className="mt-4 group">
-          <summary className="cursor-pointer list-none text-xs text-violet-600 hover:text-violet-700 font-medium select-none">
-            <span className="group-open:hidden">Show details ▾</span>
-            <span className="hidden group-open:inline">Hide details ▴</span>
-          </summary>
-          <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
-            {tools.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1.5">Tools</p>
-                <ul className="space-y-1">
-                  {tools.map((tool) => (
-                    <li key={tool.name} className="text-xs text-gray-600">
-                      <span className="font-medium">{tool.name}</span>
-                      {tool.description && (
-                        <span className="text-gray-400"> — {tool.description.slice(0, 60)}{tool.description.length > 60 ? "…" : ""}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {deniedActions.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1.5">Key Constraints</p>
-                <ul className="space-y-1">
-                  {deniedActions.slice(0, 4).map((action) => (
-                    <li key={action} className="flex items-start gap-1.5 text-xs text-gray-600">
-                      <span className="mt-0.5 text-red-400 shrink-0">✕</span>
-                      <span>{action}</span>
-                    </li>
-                  ))}
-                  {deniedActions.length > 4 && (
-                    <li className="text-xs text-gray-400">+{deniedActions.length - 4} more constraints</li>
-                  )}
-                </ul>
-              </div>
-            )}
-          </div>
-        </details>
-      </div>
-
-      {/* CTA footer */}
-      <div className="border-t border-gray-100 px-5 py-3">
-        {isAuthenticated ? (
-          <UseTemplateButton
-            templateId={template.id}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-          />
-        ) : (
-          <Link
-            href={`/login?callbackUrl=/templates`}
-            className="text-xs font-medium text-violet-600 hover:text-violet-700"
-          >
-            Sign in to use →
-          </Link>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Category section ─────────────────────────────────────────────────────────
-
-function CategorySection({
-  category,
-  templates,
-  isAuthenticated,
-}: {
-  category: BlueprintTemplate["category"];
-  templates: BlueprintTemplate[];
-  isAuthenticated: boolean;
-}) {
-  return (
-    <section>
-      <h2 className="mb-4 text-sm font-semibold text-gray-700">{CATEGORY_LABELS[category]}</h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {templates.map((t) => (
-          <TemplateCard key={t.id} template={t} isAuthenticated={isAuthenticated} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
-const CATEGORY_ORDER: BlueprintTemplate["category"][] = [
-  "financial-services",
-  "compliance",
-  "operations",
-  "hr",
-];
-
-export default async function TemplatesPage() {
-  const session = await auth();
-  const isAuthenticated = !!session;
-
-  // Group templates by category
-  const grouped = CATEGORY_ORDER.reduce<Record<string, BlueprintTemplate[]>>((acc, cat) => {
-    const items = BLUEPRINT_TEMPLATES.filter((t) => t.category === cat);
-    if (items.length > 0) acc[cat] = items;
-    return acc;
-  }, {});
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        {/* Header */}
-        <div className="mb-10 flex items-start justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-card bg-violet-100">
-              <LayoutTemplate className="h-6 w-6 text-violet-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Template Library</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Production-ready agent starters for financial services and compliance teams. Clone any template into your workspace in one click.
-              </p>
-            </div>
-          </div>
-          {isAuthenticated && (
-            <Link
-              href="/registry"
-              className="shrink-0 text-xs text-gray-500 hover:text-gray-700 mt-1"
-            >
-              ← Back to registry
-            </Link>
-          )}
-        </div>
-
-        {/* Template sections */}
-        <div className="space-y-10">
-          {CATEGORY_ORDER.map((cat) =>
-            grouped[cat] ? (
-              <CategorySection
-                key={cat}
-                category={cat}
-                templates={grouped[cat]}
-                isAuthenticated={isAuthenticated}
-              />
-            ) : null
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

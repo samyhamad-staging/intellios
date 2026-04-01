@@ -6,7 +6,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { ABP } from "@/lib/types/abp";
 import { buildAgentCoreExportManifest } from "@/lib/agentcore/translate";
 
@@ -68,21 +68,17 @@ export async function GET(
     });
 
     // Audit the export for compliance tracking
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: id,
-      action: "blueprint.agentcore_exported",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role!,
-      enterpriseId: blueprint.enterpriseId ?? null,
-      fromState: { status },
-      toState: { status },
-      metadata: {
-        exportTarget: "agentcore",
-        agentName: abp.identity.name,
-        toolCount: (abp.capabilities.tools ?? []).length,
-        foundationModel: manifest.createAgentRequest.foundationModel,
+    await publishEvent({
+      event: {
+        type: "blueprint.agentcore_exported",
+        payload: {
+          blueprintId: id,
+          agentId: blueprint.agentId,
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role! },
+      entity: { type: "blueprint", id },
+      enterpriseId: blueprint.enterpriseId ?? null,
     });
 
     // Return as downloadable JSON with a filename header

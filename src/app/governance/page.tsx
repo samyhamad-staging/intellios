@@ -3,7 +3,21 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Shield, Plus, Download, ShieldAlert } from "lucide-react";
+import { Shield, Plus, Download } from "lucide-react";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import { chartColors, chartFontSize, chartGridColor, chartTextColor } from "@/lib/chart-tokens";
 
 interface Agent {
   id: string;
@@ -194,7 +208,7 @@ export default function GovernanceHubPage() {
       }
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message ?? "Import failed");
+        throw new Error(data.error ?? "Import failed");
       }
       const data = await res.json();
       showToast(`✓ Imported ${data.created} polic${data.created === 1 ? "y" : "ies"} from pack`, "success");
@@ -246,7 +260,7 @@ export default function GovernanceHubPage() {
     .sort((a, b) => (b.violationCount ?? 0) - (a.violationCount ?? 0));
 
   return (
-    <div className="px-8 py-8 space-y-8">
+    <div className="px-6 py-6 space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -264,32 +278,11 @@ export default function GovernanceHubPage() {
         </Link>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
           </div>
-        )}
-
-        {/* Active violations banner */}
-        {!loading && withErrors > 0 && (
-          <a
-            href="#violations"
-            className="flex items-center justify-between rounded-lg border badge-gov-error px-4 py-3 transition-opacity hover:opacity-90"
-          >
-            <div className="flex items-center gap-3">
-              <ShieldAlert size={16} strokeWidth={2} />
-              <div>
-                <p className="text-sm font-semibold">
-                  {withErrors} agent{withErrors !== 1 ? "s" : ""} with active governance violations
-                </p>
-                <p className="text-xs opacity-70 mt-0.5">
-                  {withErrors !== 1 ? "These agents require" : "This agent requires"} remediation before deployment
-                </p>
-              </div>
-            </div>
-            <span className="text-xs font-semibold shrink-0">View violations ↓</span>
-          </a>
         )}
 
         {/* ── Governance Analytics ─────────────────────────────────────────── */}
@@ -300,7 +293,7 @@ export default function GovernanceHubPage() {
             </h2>
 
             {/* KPI Row */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               {[
                 {
                   label: "Validation Pass Rate",
@@ -312,19 +305,19 @@ export default function GovernanceHubPage() {
                   sub: "of validated agents",
                   color:
                     analytics?.validationPassRate != null && analytics.validationPassRate >= 80
-                      ? "badge-gov-pass"
+                      ? "bg-green-50 border-green-200 text-green-900"
                       : analytics?.validationPassRate != null && analytics.validationPassRate >= 50
-                      ? "badge-gov-warn"
+                      ? "bg-amber-50 border-amber-200 text-amber-900"
                       : analytics?.validationPassRate != null
-                      ? "badge-gov-error"
-                      : "kpi-neutral",
+                      ? "bg-red-50 border-red-200 text-red-900"
+                      : "bg-white border-gray-200 text-gray-900",
                   subColor:
                     analytics?.validationPassRate != null && analytics.validationPassRate >= 80
-                      ? "text-[color:var(--gov-pass-icon)]"
+                      ? "text-green-600"
                       : analytics?.validationPassRate != null && analytics.validationPassRate >= 50
-                      ? "text-[color:var(--gov-warn-icon)]"
+                      ? "text-amber-600"
                       : analytics?.validationPassRate != null
-                      ? "text-[color:var(--gov-error-text)]"
+                      ? "text-red-600"
                       : "text-gray-400",
                 },
                 {
@@ -337,7 +330,7 @@ export default function GovernanceHubPage() {
                       : `${Math.round(analytics.avgTimeToApprovalHours / 24)}d`
                     : "N/A",
                   sub: "from review submission",
-                  color: "kpi-neutral",
+                  color: "bg-white border-gray-200 text-gray-900",
                   subColor: "text-gray-400",
                 },
                 {
@@ -352,17 +345,17 @@ export default function GovernanceHubPage() {
                     !analyticsLoading &&
                     analytics &&
                     analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0) > 0
-                      ? "badge-gov-error"
-                      : "kpi-neutral",
+                      ? "bg-red-50 border-red-200 text-red-900"
+                      : "bg-white border-gray-200 text-gray-900",
                   subColor:
                     !analyticsLoading &&
                     analytics &&
                     analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0) > 0
-                      ? "text-[color:var(--gov-error-text)]"
+                      ? "text-red-600"
                       : "text-gray-400",
                 },
               ].map(({ label, value, sub, color, subColor }) => (
-                <div key={label} className={`rounded-card border p-5 ${color}`}>
+                <div key={label} className={`rounded-xl border p-5 ${color}`}>
                   <div className="text-3xl font-bold">{value}</div>
                   <div className="mt-1 text-sm font-medium">{label}</div>
                   <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
@@ -371,71 +364,46 @@ export default function GovernanceHubPage() {
             </div>
 
             {!analyticsLoading && analytics && (
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Monthly Submissions vs Approvals bar chart */}
-                <div className="rounded-card border border-gray-200 bg-white p-5">
+                <div className="rounded-xl border border-gray-200 bg-white p-5">
                   <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
                     Monthly Activity (last 6 months)
                   </h3>
-                  {(() => {
-                    const maxCount = Math.max(
-                      ...analytics.monthlySubmissions.map((m) => m.count),
-                      ...analytics.monthlyApprovals.map((m) => m.count),
-                      1
-                    );
-                    return (
-                      <div className="space-y-3">
-                        {analytics.monthlySubmissions.map((sub, i) => {
-                          const appr = analytics.monthlyApprovals[i];
-                          const subPct = Math.round((sub.count / maxCount) * 100);
-                          const apprPct = Math.round(((appr?.count ?? 0) / maxCount) * 100);
-                          const label = sub.month.slice(0, 7);
-                          return (
-                            <div key={sub.month}>
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs text-gray-500">{label}</span>
-                                <div className="flex items-center gap-3 text-xs text-gray-400">
-                                  <span className="flex items-center gap-1">
-                                    <span className="inline-block w-2 h-2 rounded-full bg-blue-400" />
-                                    {sub.count} submitted
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <span className="inline-block w-2 h-2 rounded-full bg-green-400" />
-                                    {appr?.count ?? 0} approved
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="space-y-1">
-                                <div className="h-2 w-full rounded-full bg-gray-100">
-                                  <div
-                                    className="h-2 rounded-full bg-blue-400 transition-all"
-                                    style={{ width: `${subPct}%` }}
-                                  />
-                                </div>
-                                <div className="h-2 w-full rounded-full bg-gray-100">
-                                  <div
-                                    className="h-2 rounded-full bg-green-400 transition-all"
-                                    style={{ width: `${apprPct}%` }}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {analytics.monthlySubmissions.every((m) => m.count === 0) && (
-                          <p className="text-center text-xs text-gray-400 py-4">
-                            No submission activity in the last 6 months
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })()}
+                  {analytics.monthlySubmissions.every((m) => m.count === 0) ? (
+                    <p className="text-center text-xs text-gray-400 py-8">
+                      No submission activity in the last 6 months
+                    </p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart
+                        data={analytics.monthlySubmissions.map((sub, i) => ({
+                          month: sub.month.slice(0, 7),
+                          submitted: sub.count,
+                          approved: analytics.monthlyApprovals[i]?.count ?? 0,
+                        }))}
+                        margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+                        barCategoryGap="30%"
+                        barGap={2}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
+                        <XAxis dataKey="month" tick={{ fontSize: chartFontSize, fill: chartTextColor }} tickLine={false} axisLine={false} />
+                        <YAxis tick={{ fontSize: chartFontSize, fill: chartTextColor }} tickLine={false} axisLine={false} allowDecimals={false} />
+                        <Tooltip
+                          contentStyle={{ fontSize: chartFontSize, borderRadius: 6, border: "1px solid #e1e5ef", padding: "4px 8px" }}
+                          cursor={{ fill: "#f0f2f8" }}
+                        />
+                        <Bar dataKey="submitted" name="Submitted" fill={chartColors.info} radius={[3, 3, 0, 0]} />
+                        <Bar dataKey="approved" name="Approved" fill={chartColors.success} radius={[3, 3, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
 
                 {/* Right column: Top Violated Policies + Agent Status Distribution */}
                 <div className="space-y-6">
                   {/* Top Violated Policies */}
-                  <div className="rounded-card border border-gray-200 bg-white p-5">
+                  <div className="rounded-xl border border-gray-200 bg-white p-5">
                     <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
                       Top Violated Policies
                     </h3>
@@ -483,12 +451,12 @@ export default function GovernanceHubPage() {
                             </div>
                             <div className="mt-1.5 flex flex-wrap gap-1">
                               {rule.affectedBlueprints.map((name) => (
-                                <span key={name} className="rounded bg-white px-1.5 py-0.5 text-[11px] text-gray-600 border border-gray-200">
+                                <span key={name} className="rounded bg-white px-1.5 py-0.5 text-xs-tight text-gray-600 border border-gray-200">
                                   {name}
                                 </span>
                               ))}
                               {rule.affectedCount > rule.affectedBlueprints.length && (
-                                <span className="text-[11px] text-gray-400">
+                                <span className="text-xs-tight text-gray-400">
                                   +{rule.affectedCount - rule.affectedBlueprints.length} more
                                 </span>
                               )}
@@ -500,66 +468,71 @@ export default function GovernanceHubPage() {
                   )}
 
                   {/* Agent Status Distribution */}
-                  <div className="rounded-card border border-gray-200 bg-white p-5">
+                  <div className="rounded-xl border border-gray-200 bg-white p-5">
                     <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
                       Agent Status Distribution
                     </h3>
                     {Object.keys(analytics.agentStatusCounts).length === 0 ? (
                       <p className="text-xs text-gray-400 py-2">No agents in registry</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {(() => {
-                          const total = Object.values(analytics.agentStatusCounts).reduce(
-                            (s, c) => s + c,
-                            0
-                          );
-                          const STATUS_COLORS: Record<string, string> = {
-                            draft: "bg-gray-300",
-                            in_review: "bg-amber-400",
-                            approved: "bg-blue-400",
-                            deployed: "bg-green-400",
-                            rejected: "bg-red-400",
-                            deprecated: "bg-gray-400",
+                    ) : (() => {
+                          const STATUS_HEX: Record<string, string> = {
+                            draft:      chartColors.gray,
+                            in_review:  chartColors.warning,
+                            approved:   chartColors.info,
+                            deployed:   chartColors.success,
+                            rejected:   chartColors.danger,
+                            deprecated: "#9ca3af",
                           };
-                          return Object.entries(analytics.agentStatusCounts)
+                          const pieData = Object.entries(analytics.agentStatusCounts)
                             .sort((a, b) => b[1] - a[1])
-                            .map(([status, count]) => {
-                              const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                              return (
-                                <div key={status}>
-                                  <div className="flex items-center justify-between mb-0.5">
-                                    <span className="text-xs capitalize text-gray-600">
-                                      {status.replace("_", " ")}
-                                    </span>
-                                    <span className="text-xs text-gray-400">
-                                      {count} ({pct}%)
-                                    </span>
-                                  </div>
-                                  <div className="h-2 w-full rounded-full bg-gray-100">
-                                    <div
-                                      className={`h-2 rounded-full transition-all ${
-                                        STATUS_COLORS[status] ?? "bg-gray-400"
-                                      }`}
-                                      style={{ width: `${pct}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            });
-                        })()}
-                      </div>
-                    )}
+                            .map(([status, count]) => ({ name: status.replace("_", " "), value: count, status }));
+                          return (
+                            <div className="flex flex-col items-center gap-3">
+                              <ResponsiveContainer width="100%" height={120}>
+                                <PieChart>
+                                  <Pie
+                                    data={pieData}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={32}
+                                    outerRadius={52}
+                                    paddingAngle={2}
+                                  >
+                                    {pieData.map((entry) => (
+                                      <Cell key={entry.status} fill={STATUS_HEX[entry.status] ?? chartColors.gray} />
+                                    ))}
+                                  </Pie>
+                                  <Tooltip
+                                    contentStyle={{ fontSize: chartFontSize, borderRadius: 6, border: "1px solid #e1e5ef", padding: "4px 8px" }}
+                                    formatter={(_value, name) => [_value, name]}
+                                  />
+                                </PieChart>
+                              </ResponsiveContainer>
+                              <div className="flex flex-wrap justify-center gap-x-3 gap-y-1">
+                                {pieData.map((entry) => (
+                                  <span key={entry.status} className="flex items-center gap-1 text-xs text-gray-500 capitalize">
+                                    <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: STATUS_HEX[entry.status] ?? chartColors.gray }} />
+                                    {entry.name} ({entry.value})
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()
+                    }
                   </div>
                 </div>
               </div>
             )}
 
             {analyticsLoading && (
-              <div className="grid grid-cols-2 gap-6">
-                <div className="h-64 animate-pulse rounded-card bg-gray-100" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="h-64 animate-pulse rounded-xl bg-gray-100" />
                 <div className="space-y-4">
-                  <div className="h-28 animate-pulse rounded-card bg-gray-100" />
-                  <div className="h-32 animate-pulse rounded-card bg-gray-100" />
+                  <div className="h-28 animate-pulse rounded-xl bg-gray-100" />
+                  <div className="h-32 animate-pulse rounded-xl bg-gray-100" />
                 </div>
               </div>
             )}
@@ -571,7 +544,7 @@ export default function GovernanceHubPage() {
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
             Coverage Overview
           </h2>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               {
                 label: "Total Agents",
@@ -845,26 +818,26 @@ export default function GovernanceHubPage() {
                       ) : (policyHistories[policy.id] ?? []).length === 0 ? (
                         <div className="text-xs text-gray-400 py-2">No history available.</div>
                       ) : (
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="text-gray-400 uppercase tracking-wider">
-                              <th className="text-left pb-1 pr-4 font-medium">Version</th>
-                              <th className="text-left pb-1 pr-4 font-medium">Date</th>
-                              <th className="text-left pb-1 font-medium">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100">
+                        <Table dense>
+                          <TableHead>
+                            <TableRow>
+                              <TableHeader>Version</TableHeader>
+                              <TableHeader>Date</TableHeader>
+                              <TableHeader>Status</TableHeader>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
                             {(policyHistories[policy.id] ?? []).map((entry) => (
-                              <tr key={entry.id} className="text-gray-600">
-                                <td className="py-1.5 pr-4 font-medium">v{entry.policyVersion}</td>
-                                <td className="py-1.5 pr-4">
+                              <TableRow key={entry.id}>
+                                <TableCell className="font-medium text-gray-600">v{entry.policyVersion}</TableCell>
+                                <TableCell className="text-gray-600">
                                   {new Date(entry.createdAt).toLocaleDateString(undefined, {
                                     year: "numeric",
                                     month: "short",
                                     day: "numeric",
                                   })}
-                                </td>
-                                <td className="py-1.5">
+                                </TableCell>
+                                <TableCell>
                                   {entry.isActive ? (
                                     <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700 font-medium">
                                       Active
@@ -874,11 +847,11 @@ export default function GovernanceHubPage() {
                                       Superseded
                                     </span>
                                   )}
-                                </td>
-                              </tr>
+                                </TableCell>
+                              </TableRow>
                             ))}
-                          </tbody>
-                        </table>
+                          </TableBody>
+                        </Table>
                       )}
                     </div>
                   )}
@@ -902,11 +875,11 @@ export default function GovernanceHubPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {templatePacks.map((pack) => (
                 <div
                   key={pack.id}
-                  className="rounded-card border border-gray-200 bg-white p-5 flex flex-col gap-3"
+                  className="rounded-xl border border-gray-200 bg-white p-5 flex flex-col gap-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -942,7 +915,7 @@ export default function GovernanceHubPage() {
 
             {/* Duplicate conflict prompt */}
             {duplicatePrompt && (
-              <div className="mt-4 rounded-card border border-amber-200 bg-amber-50 px-5 py-4">
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
                 <p className="text-sm font-medium text-amber-800 mb-1">
                   {duplicatePrompt.duplicates.length} existing polic{duplicatePrompt.duplicates.length === 1 ? "y" : "ies"} would be replaced:
                 </p>
@@ -991,38 +964,38 @@ export default function GovernanceHubPage() {
               Compliance by Stage
             </h2>
             <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
-                    <th className="px-5 py-3 text-left">Stage</th>
-                    <th className="px-5 py-3 text-right">Agents</th>
-                    <th className="px-5 py-3 text-right">With Errors</th>
-                    <th className="px-5 py-3 text-right">Clean</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
+              <Table striped>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Stage</TableHeader>
+                    <TableHeader>Agents</TableHeader>
+                    <TableHeader>With Errors</TableHeader>
+                    <TableHeader>Clean</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {Object.entries(statusGroups).map(([status, { count, withErrors: we }]) => (
-                    <tr key={status} className="hover:bg-gray-50">
-                      <td className="px-5 py-3 font-medium text-gray-900 capitalize">
+                    <TableRow key={status}>
+                      <TableCell className="font-medium text-gray-900 capitalize">
                         {status.replace("_", " ")}
-                      </td>
-                      <td className="px-5 py-3 text-right text-gray-600">{count}</td>
-                      <td className="px-5 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-right text-gray-600">{count}</TableCell>
+                      <TableCell className="text-right">
                         {we > 0 ? (
                           <span className="font-medium text-red-600">{we}</span>
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}
-                      </td>
-                      <td className="px-5 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         <span className={count - we > 0 ? "text-green-600 font-medium" : "text-gray-400"}>
                           {count - we}
                         </span>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </section>
         )}

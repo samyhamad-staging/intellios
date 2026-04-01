@@ -18,10 +18,11 @@ import { eq } from "drizzle-orm";
 import { runRedTeam } from "@/lib/testing/red-team";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { getRequestId } from "@/lib/request-id";
 import { rateLimit } from "@/lib/rate-limit";
 import type { ABP } from "@/lib/types/abp";
+import { readABP } from "@/lib/abp/read";
 
 // Red-team runs are expensive — limit to 5 per minute per user
 const MAX_PER_MINUTE = 5;
@@ -31,7 +32,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { session: authSession, error } = await requireAuth([
-    "designer",
+    "architect",
     "reviewer",
     "compliance_officer",
     "admin",
@@ -40,7 +41,7 @@ export async function POST(
 
   const requestId = getRequestId(request);
 
-  const rateLimitResponse = rateLimit(authSession.user.email!, {
+  const rateLimitResponse = await rateLimit(authSession.user.email!, {
     endpoint: "red-team",
     max: MAX_PER_MINUTE,
     windowMs: 60_000,
@@ -60,7 +61,7 @@ export async function POST(
     const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, authSession.user);
     if (enterpriseError) return enterpriseError;
 
-    const abp = blueprint.abp as ABP;
+    const abp = readABP(blueprint.abp);
 
     // Run evaluation (may take 15–30s)
     const report = await runRedTeam(
@@ -71,21 +72,18 @@ export async function POST(
     );
 
     // Audit trail
-    void writeAuditLog({
-      entityType: "blueprint",
-      entityId: blueprintId,
-      action: "blueprint.red_team_run",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
-      enterpriseId: blueprint.enterpriseId,
-      metadata: {
-        agentId: blueprint.agentId,
-        agentName: blueprint.name ?? `Agent ${blueprintId.slice(0, 8)}`,
-        version: blueprint.version,
-        score: report.score,
-        riskTier: report.riskTier,
-        attackCount: report.attacks.length,
+    void publishEvent({
+      event: {
+        type: "blueprint.red_team_run",
+        payload: {
+          blueprintId,
+          agentId: blueprint.agentId,
+          agentName: blueprint.name ?? `Agent ${blueprintId.slice(0, 8)}`,
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id: blueprintId },
+      enterpriseId: blueprint.enterpriseId ?? null,
     });
 
     return NextResponse.json(report);

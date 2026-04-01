@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Activity, RefreshCw, Cpu } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 interface AgentHealth {
   agentId: string;
@@ -13,10 +15,14 @@ interface AgentHealth {
   tags: string[];
   deployedAt: string;
   deploymentTarget: string | null;
-  healthStatus: "clean" | "critical" | "unknown";
+  healthStatus: "clean" | "degraded" | "critical" | "unknown";
   errorCount: number;
   warningCount: number;
   lastCheckedAt: string | null;
+  productionErrorRate: number | null;
+  productionLatencyP99: number | null;
+  lastTelemetryAt: string | null;
+  governanceDrift: { status?: string; newViolations?: unknown[]; checkedAt?: string } | null;
 }
 
 type BedrockAgentStatus =
@@ -47,6 +53,7 @@ interface AgentCoreHealthSummary {
 interface MonitorSummary {
   total: number;
   clean: number;
+  degraded: number;
   critical: number;
   unknown: number;
 }
@@ -65,11 +72,18 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diffDays / 30)}mo ago`;
 }
 
-function HealthBadge({ status, errorCount }: { status: "clean" | "critical" | "unknown"; errorCount: number }) {
+function HealthBadge({ status, errorCount }: { status: "clean" | "degraded" | "critical" | "unknown"; errorCount: number }) {
   if (status === "clean") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
         ✓ Clean
+      </span>
+    );
+  }
+  if (status === "degraded") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+        ⚠ Degraded
       </span>
     );
   }
@@ -101,7 +115,7 @@ function KpiCard({
   subColor: string;
 }) {
   return (
-    <div className={`rounded-card border p-5 ${color}`}>
+    <div className={`rounded-xl border p-5 ${color}`}>
       <div className="text-3xl font-bold">{value}</div>
       <div className="mt-1 text-sm font-semibold">{label}</div>
       <div className={`mt-0.5 text-xs ${subColor}`}>{sub}</div>
@@ -111,13 +125,13 @@ function KpiCard({
 
 export default function MonitorPage() {
   const [agents, setAgents] = useState<AgentHealth[]>([]);
-  const [summary, setSummary] = useState<MonitorSummary>({ total: 0, clean: 0, critical: 0, unknown: 0 });
+  const [summary, setSummary] = useState<MonitorSummary>({ total: 0, clean: 0, degraded: 0, critical: 0, unknown: 0 });
   const [loading, setLoading] = useState(true);
   const [checkingAll, setCheckingAll] = useState(false);
   const [checkingId, setCheckingId] = useState<string | null>(null);
   const [role, setRole] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [healthFilter, setHealthFilter] = useState<"all" | "clean" | "critical" | "unknown">("all");
+  const [healthFilter, setHealthFilter] = useState<"all" | "clean" | "degraded" | "critical" | "unknown">("all");
 
   // AgentCore live status
   const [agcHealth, setAgcHealth] = useState<AgentCoreHealthEntry[]>([]);
@@ -140,7 +154,7 @@ export default function MonitorPage() {
       const res = await fetch("/api/monitor");
       const data = await res.json();
       setAgents(data.agents ?? []);
-      setSummary(data.summary ?? { total: 0, clean: 0, critical: 0, unknown: 0 });
+      setSummary(data.summary ?? { total: 0, clean: 0, degraded: 0, critical: 0, unknown: 0 });
     } catch {
       // Keep existing state on fetch failure
     } finally {
@@ -170,16 +184,20 @@ export default function MonitorPage() {
             a.agentId === agentId
               ? {
                   ...a,
-                  healthStatus:  result.healthStatus as "clean" | "critical" | "unknown",
-                  errorCount:    result.errorCount,
-                  warningCount:  result.warningCount,
-                  lastCheckedAt: result.checkedAt,
+                  healthStatus:        result.healthStatus as "clean" | "degraded" | "critical" | "unknown",
+                  errorCount:          result.errorCount,
+                  warningCount:        result.warningCount,
+                  lastCheckedAt:       result.checkedAt,
+                  productionErrorRate: result.productionErrorRate ?? null,
+                  productionLatencyP99: result.productionLatencyP99 ?? null,
+                  lastTelemetryAt:     result.lastTelemetryAt ?? null,
                 }
               : a
           );
           setSummary({
             total:    updated.length,
             clean:    updated.filter((a) => a.healthStatus === "clean").length,
+            degraded: updated.filter((a) => a.healthStatus === "degraded").length,
             critical: updated.filter((a) => a.healthStatus === "critical").length,
             unknown:  updated.filter((a) => a.healthStatus === "unknown").length,
           });
@@ -230,7 +248,7 @@ export default function MonitorPage() {
   }
 
   return (
-    <main className="px-8 py-8">
+    <main className="px-6 py-6">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -269,7 +287,7 @@ export default function MonitorPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="mb-6 grid grid-cols-4 gap-4">
+      <div className="mb-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <KpiCard
           label="Deployed"
           value={summary.total}
@@ -285,7 +303,14 @@ export default function MonitorPage() {
           subColor="text-green-600"
         />
         <KpiCard
-          label="Needs Attention"
+          label="Degraded"
+          value={summary.degraded}
+          sub="production issues detected"
+          color={summary.degraded > 0 ? "bg-amber-50 border border-amber-200 text-amber-900" : "bg-white border border-gray-200 text-gray-900"}
+          subColor={summary.degraded > 0 ? "text-amber-600" : "text-gray-500"}
+        />
+        <KpiCard
+          label="Critical"
           value={summary.critical}
           sub="governance errors found"
           color={summary.critical > 0 ? "bg-red-50 border border-red-200 text-red-900" : "bg-white border border-gray-200 text-gray-900"}
@@ -295,13 +320,13 @@ export default function MonitorPage() {
           label="Not Checked"
           value={summary.unknown}
           sub="awaiting first health check"
-          color={summary.unknown > 0 ? "bg-amber-50 border border-amber-200 text-amber-900" : "bg-white border border-gray-200 text-gray-900"}
-          subColor={summary.unknown > 0 ? "text-amber-600" : "text-gray-500"}
+          color={summary.unknown > 0 ? "bg-gray-50 border border-gray-200 text-gray-700" : "bg-white border border-gray-200 text-gray-900"}
+          subColor={summary.unknown > 0 ? "text-gray-500" : "text-gray-400"}
         />
       </div>
 
       {/* Filter bar */}
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-card border border-gray-200 bg-white px-5 py-4">
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4">
         <div className="flex flex-1 min-w-48 flex-col gap-1">
           <label className="text-xs font-medium text-gray-500">Search</label>
           <input
@@ -314,16 +339,18 @@ export default function MonitorPage() {
         </div>
         <div className="flex min-w-40 flex-col gap-1">
           <label className="text-xs font-medium text-gray-500">Health</label>
-          <select
-            value={healthFilter}
-            onChange={(e) => setHealthFilter(e.target.value as typeof healthFilter)}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-          >
-            <option value="all">All</option>
-            <option value="clean">Clean</option>
-            <option value="critical">Needs Attention</option>
-            <option value="unknown">Not Checked</option>
-          </select>
+          <Select value={healthFilter} onValueChange={(v) => setHealthFilter(v as typeof healthFilter)}>
+            <SelectTrigger className="text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="clean">Clean</SelectItem>
+              <SelectItem value="degraded">Degraded</SelectItem>
+              <SelectItem value="critical">Critical</SelectItem>
+              <SelectItem value="unknown">Not Checked</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         {(searchQuery || healthFilter !== "all") && (
           <div className="flex items-end">
@@ -339,7 +366,7 @@ export default function MonitorPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="flex items-center gap-4 border-b border-gray-100 px-5 py-4">
               <div className="h-4 w-48 animate-pulse rounded bg-gray-100" />
@@ -349,7 +376,7 @@ export default function MonitorPage() {
           ))}
         </div>
       ) : agents.length === 0 ? (
-        <div className="rounded-card border-2 border-dashed border-gray-200 bg-white p-12 text-center">
+        <div className="rounded-xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
           <p className="text-sm font-medium text-gray-500">No deployed agents yet.</p>
           <p className="mt-1 text-xs text-gray-400">
             Deploy an approved agent to begin monitoring its governance health.
@@ -362,28 +389,29 @@ export default function MonitorPage() {
           </Link>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-card border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
           <div className="border-b border-gray-100 px-5 py-2.5 text-xs text-gray-400">
             {filtered.length} agent{filtered.length === 1 ? "" : "s"}
             {filtered.length !== agents.length && ` (filtered from ${agents.length})`}
           </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
-                <th className="px-5 py-3 text-left">Agent</th>
-                <th className="px-4 py-3 text-left">Version</th>
-                <th className="px-4 py-3 text-left">Health</th>
-                <th className="px-4 py-3 text-right">Errors</th>
-                <th className="px-4 py-3 text-right">Warnings</th>
-                <th className="px-4 py-3 text-left">Deployed</th>
-                <th className="px-4 py-3 text-left">Last Checked</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
+          <Table striped>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Agent</TableHeader>
+                <TableHeader>Version</TableHeader>
+                <TableHeader>Health</TableHeader>
+                <TableHeader>Errors</TableHeader>
+                <TableHeader>Warnings</TableHeader>
+                <TableHeader>Production</TableHeader>
+                <TableHeader>Deployed</TableHeader>
+                <TableHeader>Last Checked</TableHeader>
+                <TableHeader>Actions</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-5 py-8 text-center text-sm text-gray-400">
+                <TableRow>
+                  <TableCell colSpan={9} className="px-5 py-8 text-center text-sm text-gray-400">
                     No agents match your filters.{" "}
                     <button
                       onClick={() => { setSearchQuery(""); setHealthFilter("all"); }}
@@ -391,14 +419,14 @@ export default function MonitorPage() {
                     >
                       Clear filters
                     </button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 filtered.map((agent) => {
                   const isChecking = checkingId === agent.agentId;
                   return (
-                    <tr key={agent.agentId} className="hover:bg-gray-50">
-                      <td className="px-5 py-3">
+                    <TableRow key={agent.agentId}>
+                      <TableCell>
                         <div className="font-medium text-gray-900 truncate max-w-48">
                           {agent.name ?? "Unnamed Agent"}
                         </div>
@@ -420,32 +448,53 @@ export default function MonitorPage() {
                             )}
                           </div>
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">v{agent.version}</td>
-                      <td className="px-4 py-3">
-                        <HealthBadge status={agent.healthStatus} errorCount={agent.errorCount} />
-                      </td>
-                      <td className="px-4 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-gray-600">v{agent.version}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          <HealthBadge status={agent.healthStatus} errorCount={agent.errorCount} />
+                          {agent.governanceDrift?.status === "drifted" && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                              ⚠ Drifted
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
                         {agent.errorCount > 0 ? (
                           <span className="font-semibold text-red-600">{agent.errorCount}</span>
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         {agent.warningCount > 0 ? (
                           <span className="text-amber-600">{agent.warningCount}</span>
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">
+                      </TableCell>
+                      <TableCell className="text-xs text-gray-500">
+                        {agent.lastTelemetryAt ? (
+                          <div>
+                            <div className="text-gray-600">
+                              {agent.productionErrorRate !== null
+                                ? `${(agent.productionErrorRate * 100).toFixed(1)}% err`
+                                : "—"}
+                            </div>
+                            <div className="text-gray-400">seen {timeAgo(agent.lastTelemetryAt)}</div>
+                          </div>
+                        ) : (
+                          <span className="text-gray-300">No data</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-gray-500">
                         {timeAgo(agent.deployedAt)}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">
+                      </TableCell>
+                      <TableCell className="text-xs text-gray-500">
                         {agent.lastCheckedAt ? timeAgo(agent.lastCheckedAt) : "—"}
-                      </td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center justify-end gap-3">
                           {canCheck && (
                             <button
@@ -470,13 +519,13 @@ export default function MonitorPage() {
                             View →
                           </Link>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 
@@ -516,7 +565,7 @@ export default function MonitorPage() {
           )}
 
           {agcSummary === null ? (
-            <div className="rounded-card border-2 border-dashed border-gray-200 bg-white px-6 py-8 text-center">
+            <div className="rounded-xl border-2 border-dashed border-gray-200 bg-white px-6 py-8 text-center">
               <p className="text-sm text-gray-500">
                 Click <strong>Check Live AWS Status</strong> to query the live Bedrock agent status for each deployed agent.
               </p>
@@ -527,55 +576,55 @@ export default function MonitorPage() {
           ) : (
             <>
               {/* Summary strip */}
-              <div className="mb-4 grid grid-cols-3 gap-3">
-                <div className="rounded-card border border-gray-200 bg-white p-4">
+              <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-xl border border-gray-200 bg-white p-4">
                   <div className="text-2xl font-bold text-gray-900">{agcSummary.total}</div>
                   <div className="mt-0.5 text-xs text-gray-500">AgentCore agents</div>
                 </div>
-                <div className={`rounded-card border p-4 ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "border-green-200 bg-green-50" : "border-gray-200 bg-white"}`}>
+                <div className={`rounded-xl border p-4 ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "border-green-200 bg-green-50" : "border-gray-200 bg-white"}`}>
                   <div className={`text-2xl font-bold ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "text-green-700" : "text-gray-900"}`}>{agcSummary.prepared}</div>
                   <div className="mt-0.5 text-xs text-gray-500">PREPARED (callable)</div>
                 </div>
-                <div className={`rounded-card border p-4 ${agcSummary.unreachable > 0 ? "border-red-200 bg-red-50" : "border-gray-200 bg-white"}`}>
+                <div className={`rounded-xl border p-4 ${agcSummary.unreachable > 0 ? "border-red-200 bg-red-50" : "border-gray-200 bg-white"}`}>
                   <div className={`text-2xl font-bold ${agcSummary.unreachable > 0 ? "text-red-700" : "text-gray-900"}`}>{agcSummary.unreachable}</div>
                   <div className="mt-0.5 text-xs text-gray-500">Unreachable</div>
                 </div>
               </div>
 
               {/* Per-agent table */}
-              <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
-                      <th className="px-5 py-3 text-left">Agent</th>
-                      <th className="px-4 py-3 text-left">AWS Agent ID</th>
-                      <th className="px-4 py-3 text-left">Region</th>
-                      <th className="px-4 py-3 text-left">Bedrock Status</th>
-                      <th className="px-4 py-3 text-left">Last Deployed</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
+              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <Table striped>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Agent</TableHeader>
+                      <TableHeader>AWS Agent ID</TableHeader>
+                      <TableHeader>Region</TableHeader>
+                      <TableHeader>Bedrock Status</TableHeader>
+                      <TableHeader>Last Deployed</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {agcHealth.map((entry) => (
-                      <tr key={entry.blueprintId} className="hover:bg-gray-50">
-                        <td className="px-5 py-3 font-medium text-gray-900">
+                      <TableRow key={entry.blueprintId}>
+                        <TableCell className="font-medium text-gray-900">
                           {entry.agentName ?? "Unnamed Agent"}
-                        </td>
-                        <td className="px-4 py-3 font-mono text-xs text-gray-500">
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-gray-500">
                           {entry.agentId}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-gray-600">
+                        </TableCell>
+                        <TableCell className="text-xs text-gray-600">
                           {entry.region}
-                        </td>
-                        <td className="px-4 py-3">
+                        </TableCell>
+                        <TableCell>
                           <BedrockStatusBadge status={entry.bedrockStatus} />
-                        </td>
-                        <td className="px-4 py-3 text-xs text-gray-500">
+                        </TableCell>
+                        <TableCell className="text-xs text-gray-500">
                           {timeAgo(entry.lastDeployedAt)}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </>
           )}

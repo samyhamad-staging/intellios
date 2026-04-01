@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { CheckSquare, AlertTriangle } from "lucide-react";
+import { CheckSquare, AlertTriangle, Download } from "lucide-react";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,6 +97,33 @@ export default function CompliancePage() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Report download state
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownloadReport() {
+    setDownloading(true);
+    try {
+      const now = new Date();
+      const period = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+      const res = await fetch(`/api/compliance/report?period=${period}`);
+      if (!res.ok) throw new Error("Report failed");
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `compliance-report-${period}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // silently ignore download errors
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   // Complete Review modal state
   const [completeModal, setCompleteModal] = useState<OverdueReviewItem | null>(null);
@@ -192,7 +220,7 @@ export default function CompliancePage() {
   }
 
   return (
-    <div className="px-8 py-8 space-y-8">
+    <div className="px-6 py-6 space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -202,15 +230,27 @@ export default function CompliancePage() {
           </div>
           <p className="text-sm text-gray-500 pl-7">Enterprise compliance posture, at-risk agents, and review queue</p>
         </div>
-        <Link
-          href="/governance"
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
-        >
-          Governance Hub →
-        </Link>
+        <div className="flex items-center gap-2">
+          {(session?.user?.role === "admin" || session?.user?.role === "compliance_officer") && (
+            <button
+              onClick={handleDownloadReport}
+              disabled={downloading}
+              className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm text-violet-700 hover:bg-violet-100 transition-colors disabled:opacity-50"
+            >
+              <Download size={14} />
+              {downloading ? "Generating…" : "Download Report"}
+            </button>
+          )}
+          <Link
+            href="/governance"
+            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+          >
+            Governance Hub →
+          </Link>
+        </div>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {posture && (
           <>
             {/* ── Section A: Enterprise Posture KPIs ─────────────────────── */}
@@ -326,11 +366,11 @@ export default function CompliancePage() {
                     </>
                   );
                   return anchor ? (
-                    <a key={label} href={anchor} className={`block rounded-card border p-4 hover:shadow-sm hover:border-violet-200 transition-all ${color}`}>
+                    <a key={label} href={anchor} className={`block rounded-xl border p-4 hover:shadow-sm hover:border-violet-200 transition-all ${color}`}>
                       {inner}
                     </a>
                   ) : (
-                    <div key={label} className={`rounded-card border p-4 ${color}`}>
+                    <div key={label} className={`rounded-xl border p-4 ${color}`}>
                       {inner}
                     </div>
                   );
@@ -344,7 +384,7 @@ export default function CompliancePage() {
                 Periodic Review Status (SR 11-7)
               </h2>
               {(posture.overdueReviews?.length ?? 0) === 0 ? (
-                <div className="rounded-card border border-green-200 bg-green-50 p-5 text-center">
+                <div className="rounded-xl border border-green-200 bg-green-50 p-5 text-center">
                   <p className="text-sm font-medium text-green-800">✓ All deployments on schedule</p>
                   <p className="mt-0.5 text-xs text-green-600">No deployed agents have overdue periodic reviews.</p>
                 </div>
@@ -356,40 +396,40 @@ export default function CompliancePage() {
                       {posture.overdueReviews.length} agent{posture.overdueReviews.length !== 1 ? "s" : ""} with overdue periodic review
                     </span>
                   </div>
-                  <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-gray-100 bg-gray-50">
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Agent</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Review Due</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Days Overdue</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Last Review</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
+                  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                    <Table striped>
+                      <TableHead>
+                        <TableRow>
+                          <TableHeader>Agent</TableHeader>
+                          <TableHeader>Review Due</TableHeader>
+                          <TableHeader>Days Overdue</TableHeader>
+                          <TableHeader>Last Review</TableHeader>
+                          <TableHeader>Action</TableHeader>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {posture.overdueReviews.map((item) => {
                           const daysOverdue = Math.floor((Date.now() - new Date(item.nextReviewDue).getTime()) / (1000 * 60 * 60 * 24));
                           return (
-                            <tr key={item.blueprintId} className="hover:bg-gray-50">
-                              <td className="px-4 py-3">
+                            <TableRow key={item.blueprintId}>
+                              <TableCell>
                                 <div className="font-medium text-gray-900">{item.agentName}</div>
                                 <div className="text-xs text-gray-400">v{item.version}</div>
-                              </td>
-                              <td className="px-4 py-3 text-sm text-red-700">
+                              </TableCell>
+                              <TableCell className="text-sm text-red-700">
                                 {new Date(item.nextReviewDue).toLocaleDateString(undefined, { dateStyle: "medium" })}
-                              </td>
-                              <td className="px-4 py-3">
+                              </TableCell>
+                              <TableCell>
                                 <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
                                   {daysOverdue}d overdue
                                 </span>
-                              </td>
-                              <td className="px-4 py-3 text-xs text-gray-500">
+                              </TableCell>
+                              <TableCell className="text-xs text-gray-500">
                                 {item.lastPeriodicReviewAt
                                   ? new Date(item.lastPeriodicReviewAt).toLocaleDateString(undefined, { dateStyle: "medium" })
                                   : "Never"}
-                              </td>
-                              <td className="px-4 py-3">
+                              </TableCell>
+                              <TableCell>
                                 <div className="flex items-center gap-3">
                                   <Link href={`/registry/${item.agentId}`} className="text-xs text-blue-600 hover:underline">View →</Link>
                                   <button
@@ -399,12 +439,12 @@ export default function CompliancePage() {
                                     Complete Review
                                   </button>
                                 </div>
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           );
                         })}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               )}
@@ -419,7 +459,7 @@ export default function CompliancePage() {
                 <p className="text-xs text-gray-400 mt-0.5">Agents with unresolved validation errors</p>
               </div>
               {posture.atRiskAgents.length === 0 ? (
-                <div className="rounded-card border border-green-200 bg-green-50 p-6 text-center">
+                <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
                   <p className="text-sm font-medium text-green-800">
                     ✓ No agents at risk
                   </p>
@@ -429,44 +469,34 @@ export default function CompliancePage() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-100 bg-gray-50">
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Agent
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Status
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Issues
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Health
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Action
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
+                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                  <Table striped>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader>Agent</TableHeader>
+                        <TableHeader>Status</TableHeader>
+                        <TableHeader>Issues</TableHeader>
+                        <TableHeader>Health</TableHeader>
+                        <TableHeader>Action</TableHeader>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {posture.atRiskAgents.map((agent) => (
-                        <tr key={agent.blueprintId} className="hover:bg-gray-50">
-                          <td className="px-4 py-3">
+                        <TableRow key={agent.blueprintId}>
+                          <TableCell>
                             <div className="font-medium text-gray-900">
                               {agent.agentName}
                             </div>
                             <div className="text-xs text-gray-400">
                               v{agent.version}
                             </div>
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell>
                             <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs capitalize text-gray-600">
                               {agent.status.replace("_", " ")}
                             </span>
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell>
                             <ul className="space-y-0.5">
                               {agent.issues.map((issue, i) => (
                                 <li
@@ -477,8 +507,8 @@ export default function CompliancePage() {
                                 </li>
                               ))}
                             </ul>
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell>
                             {agent.healthStatus ? (
                               <span
                                 className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
@@ -494,19 +524,19 @@ export default function CompliancePage() {
                             ) : (
                               <span className="text-xs text-gray-400">—</span>
                             )}
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell>
                             <Link
                               href={`/registry/${agent.agentId}`}
                               className="text-xs text-blue-600 hover:underline"
                             >
                               View →
                             </Link>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </section>
@@ -528,7 +558,7 @@ export default function CompliancePage() {
               </div>
 
               {posture.reviewQueue.length === 0 ? (
-                <div className="rounded-card border border-gray-200 bg-white p-6 text-center">
+                <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
                   <p className="text-sm text-gray-400">
                     No blueprints pending review
                   </p>
@@ -579,7 +609,7 @@ export default function CompliancePage() {
               </h2>
 
               {posture.policyCoverage.length === 0 ? (
-                <div className="rounded-card border border-gray-200 bg-white p-6 text-center">
+                <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
                   <p className="text-sm text-gray-400">
                     No active governance policies.{" "}
                     <Link
@@ -591,39 +621,28 @@ export default function CompliancePage() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-100 bg-gray-50">
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Policy
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Type
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Violations
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                          Affected Agents
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
+                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                  <Table striped>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader>Policy</TableHeader>
+                        <TableHeader>Type</TableHeader>
+                        <TableHeader>Violations</TableHeader>
+                        <TableHeader>Affected Agents</TableHeader>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {posture.policyCoverage.map((policy) => (
-                        <tr
-                          key={policy.name}
-                          className="hover:bg-gray-50"
-                        >
-                          <td className="px-4 py-3 font-medium text-gray-900">
+                        <TableRow key={policy.name}>
+                          <TableCell className="font-medium text-gray-900">
                             {policy.name}
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell>
                             <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs capitalize text-gray-600">
                               {policy.type.replace("_", " ")}
                             </span>
-                          </td>
-                          <td className="px-4 py-3 text-right">
+                          </TableCell>
+                          <TableCell className="text-right">
                             {policy.violationCount > 0 ? (
                               <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
                                 {policy.violationCount}
@@ -631,8 +650,8 @@ export default function CompliancePage() {
                             ) : (
                               <span className="text-xs text-gray-400">0</span>
                             )}
-                          </td>
-                          <td className="px-4 py-3 text-right">
+                          </TableCell>
+                          <TableCell className="text-right">
                             {policy.affectedAgentCount > 0 ? (
                               <Link
                                 href="/registry"
@@ -643,11 +662,11 @@ export default function CompliancePage() {
                             ) : (
                               <span className="text-xs text-gray-400">0 agents</span>
                             )}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                   {posture.policyCoverage.every(
                     (p) => p.violationCount === 0
                   ) && (
@@ -677,7 +696,7 @@ export default function CompliancePage() {
                     </span>
                   </div>
                 </div>
-                <div className="rounded-card border border-gray-200 bg-white p-5">
+                <div className="rounded-xl border border-gray-200 bg-white p-5">
                   {analytics.monthlySubmissions.every((m) => m.count === 0) &&
                   analytics.monthlyApprovals.every((m) => m.count === 0) ? (
                     <div className="flex flex-col items-center gap-1 py-6 text-center">

@@ -25,7 +25,7 @@ const ResetPasswordBody = z.object({
 export async function POST(request: NextRequest) {
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-  const rateLimitResponse = rateLimit(ip, {
+  const rateLimitResponse = await rateLimit(ip, {
     endpoint: "reset-password",
     max: 10,
     windowMs: 60 * 60 * 1000, // 10 per hour per IP

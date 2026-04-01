@@ -11,7 +11,7 @@ import { MessageBubble } from "@/components/chat/message-bubble";
 // Falls back to role-level default, then global fallback.
 const SUGGESTED_QUESTIONS: Record<string, Record<string, string[]>> = {
   "/intake": {
-    designer: [
+    architect: [
       "What makes a strong agent description?",
       "Why do stakeholders need to add input?",
       "What happens after I finalize intake?",
@@ -19,7 +19,7 @@ const SUGGESTED_QUESTIONS: Record<string, Record<string, string[]>> = {
     ],
   },
   "/blueprints": {
-    designer: [
+    architect: [
       "How do I fix a governance violation?",
       "What should behavioral instructions include?",
       "When can I submit for review?",
@@ -67,7 +67,7 @@ const SUGGESTED_QUESTIONS: Record<string, Record<string, string[]>> = {
     ],
   },
   "/": {
-    designer: [
+    architect: [
       "How do I start creating a new agent?",
       "What information do I need to define an agent?",
       "How does the blueprint generation process work?",
@@ -95,7 +95,7 @@ const SUGGESTED_QUESTIONS: Record<string, Record<string, string[]>> = {
 };
 
 const FALLBACK_QUESTIONS: Record<string, string[]> = {
-  designer: [
+    architect: [
     "How do I start creating a new agent?",
     "What is an Agent Blueprint Package?",
     "How does the agent governance lifecycle work?",
@@ -238,6 +238,7 @@ export function HelpPanel({ role }: HelpPanelProps) {
       <button
         onClick={() => setOpen(true)}
         title="Help & guidance"
+        aria-label="Help"
         className="rounded p-1 transition-colors hover:bg-white/10"
         style={{ color: "var(--sidebar-text)" }}
       >
@@ -267,6 +268,7 @@ export function HelpPanel({ role }: HelpPanelProps) {
                   <button
                     onClick={() => setMessages([])}
                     title="Clear conversation"
+                    aria-label="Clear conversation"
                     className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                   >
                     <Trash2 size={13} />
@@ -274,6 +276,7 @@ export function HelpPanel({ role }: HelpPanelProps) {
                 )}
                 <button
                   onClick={() => setOpen(false)}
+                  aria-label="Close help panel"
                   className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                 >
                   <X size={14} />
@@ -323,7 +326,7 @@ export function HelpPanel({ role }: HelpPanelProps) {
                                 router.push(action.href);
                                 setOpen(false);
                               }}
-                              className="flex items-center gap-2 rounded-card border border-violet-200 bg-violet-50 px-4 py-2.5 text-left hover:bg-violet-100 hover:border-violet-300 transition-colors"
+                              className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-left hover:bg-violet-100 hover:border-violet-300 transition-colors"
                             >
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-violet-700">

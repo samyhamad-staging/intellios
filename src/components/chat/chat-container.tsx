@@ -8,6 +8,7 @@ import { MessageBubble } from "./message-bubble";
 import { ToolCallDisplay } from "./tool-call-display";
 import { ChatInput } from "./chat-input";
 import { ArrowRight } from "lucide-react";
+import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
 
 const STREAMING_LABELS: Record<string, string> = {
   set_agent_identity:    "Defining agent identity…",
@@ -30,6 +31,7 @@ interface ChatContainerProps {
   initialMessages?: UIMessage[];
   showSuggestedPrompts?: boolean;
   onResponseComplete?: () => void;
+  onTransparencyUpdate?: (metadata: IntakeTransparencyMetadata) => void;
 }
 
 export function ChatContainer({
@@ -37,6 +39,7 @@ export function ChatContainer({
   initialMessages,
   showSuggestedPrompts,
   onResponseComplete,
+  onTransparencyUpdate,
 }: ChatContainerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevStatus = useRef<string | null>(null);
@@ -46,7 +49,7 @@ export function ChatContainer({
     [sessionId]
   );
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, error } = useChat({
     transport,
     id: sessionId,
     messages: initialMessages,
@@ -60,9 +63,16 @@ export function ChatContainer({
     const isDone = !isStreaming;
     if (wasStreaming && isDone) {
       onResponseComplete?.();
+      // Extract transparency metadata from the latest assistant message
+      if (onTransparencyUpdate && messages.length > 0) {
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg.role === "assistant" && lastMsg.metadata) {
+          onTransparencyUpdate(lastMsg.metadata as IntakeTransparencyMetadata);
+        }
+      }
     }
     prevStatus.current = status;
-  }, [status, isStreaming, onResponseComplete]);
+  }, [status, isStreaming, onResponseComplete, onTransparencyUpdate, messages]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -119,17 +129,13 @@ export function ChatContainer({
                 <button
                   key={prompt}
                   onClick={() => handleSend(prompt)}
-                  className="flex items-center justify-between gap-2 rounded-card border border-gray-200 bg-white px-4 py-3 text-left text-sm text-gray-700 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 transition-colors"
+                  className="flex items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm text-gray-700 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 transition-colors"
                 >
                   <span>{prompt}</span>
                   <ArrowRight size={13} className="shrink-0 text-gray-300 group-hover:text-violet-400" />
                 </button>
               ))}
             </div>
-          </div>
-        ) : isEmpty ? (
-          <div className="flex h-full items-center justify-center text-gray-400 text-sm">
-            Start by describing the agent you want to build.
           </div>
         ) : null}
 
@@ -142,9 +148,12 @@ export function ChatContainer({
                   const toolName = part.type.replace("tool-", "");
                   const args =
                     "input" in part ? (part.input as Record<string, unknown>) : {};
+                  const state = "state" in part ? (part.state as string) : undefined;
+                  const output = "output" in part ? part.output : undefined;
+                  const errorText = "errorText" in part ? (part.errorText as string) : undefined;
                   return (
                     <div key={i} className="mb-2">
-                      <ToolCallDisplay toolName={toolName} args={args} />
+                      <ToolCallDisplay toolName={toolName} args={args} state={state} output={output} errorText={errorText} />
                     </div>
                   );
                 }
@@ -156,6 +165,12 @@ export function ChatContainer({
             </div>
           );
         })}
+
+        {error && !isStreaming && (
+          <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <span>Something went wrong. Check your connection and try again.</span>
+          </div>
+        )}
 
         {isStreaming && (
           <div className="flex justify-start">

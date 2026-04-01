@@ -7,6 +7,7 @@ import Link from "next/link";
 export function RegisterForm() {
   const router = useRouter();
   const [form, setForm] = useState({
+    companyName: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -36,6 +37,7 @@ export function RegisterForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          companyName: form.companyName,
           firstName: form.firstName,
           lastName: form.lastName,
           email: form.email,
@@ -64,12 +66,29 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="rounded-card border border-gray-200 bg-white p-8 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
       <h2 className="mb-6 text-lg font-semibold text-gray-900">
         Create your account
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Company */}
+        <div>
+          <label htmlFor="companyName" className="mb-1 block text-sm font-medium text-gray-700">
+            Company name
+          </label>
+          <input
+            id="companyName"
+            type="text"
+            required
+            maxLength={80}
+            value={form.companyName}
+            onChange={set("companyName")}
+            placeholder="Acme Financial"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+          />
+        </div>
+
         {/* Name */}
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -84,7 +103,7 @@ export function RegisterForm() {
               value={form.firstName}
               onChange={set("firstName")}
               placeholder="Jane"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus-accent"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
             />
           </div>
           <div>
@@ -99,7 +118,7 @@ export function RegisterForm() {
               value={form.lastName}
               onChange={set("lastName")}
               placeholder="Smith"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus-accent"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
             />
           </div>
         </div>
@@ -118,7 +137,7 @@ export function RegisterForm() {
             value={form.email}
             onChange={set("email")}
             placeholder="jane@acme.com"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus-accent"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
           />
         </div>
 
@@ -137,7 +156,7 @@ export function RegisterForm() {
             value={form.password}
             onChange={set("password")}
             placeholder="At least 8 characters"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus-accent"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
           />
         </div>
 
@@ -153,12 +172,12 @@ export function RegisterForm() {
             required
             value={form.confirmPassword}
             onChange={set("confirmPassword")}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus-accent"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
           />
         </div>
 
         {error && (
-          <p className="rounded-lg badge-gov-error px-3 py-2 text-sm">
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
             {error}
           </p>
         )}
@@ -166,7 +185,7 @@ export function RegisterForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg btn-primary py-2 text-sm font-semibold transition-colors"
+          className="w-full rounded-lg bg-violet-600 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
         >
           {loading ? "Creating account…" : "Create account"}
         </button>
@@ -174,7 +193,7 @@ export function RegisterForm() {
         <div className="text-center">
           <span className="text-xs text-gray-500">
             Already have an account?{" "}
-            <Link href="/login" className="text-[color:var(--sidebar-accent)] hover:text-[color:#7c3aed] underline-offset-2 hover:underline">
+            <Link href="/login" className="text-violet-600 hover:text-violet-700 underline-offset-2 hover:underline">
               Sign in
             </Link>
           </span>

@@ -4,8 +4,9 @@ import { and, eq, inArray, isNull, lt, isNotNull } from "drizzle-orm";
 import Link from "next/link";
 import type { ValidationReport } from "@/lib/governance/types";
 import type { ABP } from "@/lib/types/abp";
-import { Shield, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 /**
  * FleetGovernanceDashboard — Phase 51.
@@ -73,11 +74,25 @@ function deriveGovernanceHealth(
   return { health: "pass", errorCount: 0, warningCount: 0 };
 }
 
-const TIER_CONFIG: Record<RiskTier, { label: string; cardCls: string; badgeCls: string; icon: LucideIcon }> = {
-  critical: { label: "Critical", cardCls: "card-risk-critical", badgeCls: "badge-risk-critical", icon: ShieldX     },
-  high:     { label: "High",     cardCls: "card-risk-high",     badgeCls: "badge-risk-high",     icon: ShieldAlert },
-  medium:   { label: "Medium",   cardCls: "card-risk-medium",   badgeCls: "badge-risk-medium",   icon: Shield      },
-  low:      { label: "Low",      cardCls: "card-risk-low",      badgeCls: "badge-risk-low",      icon: ShieldCheck },
+const TIER_LABEL: Record<RiskTier, string> = {
+  critical: "Critical",
+  high:     "High",
+  medium:   "Medium",
+  low:      "Low",
+};
+
+const TIER_VARIANT: Record<RiskTier, BadgeVariant> = {
+  critical: "danger",
+  high:     "danger",
+  medium:   "warning",
+  low:      "success",
+};
+
+const TIER_TEXT_COLOR: Record<RiskTier, string> = {
+  critical: "text-red-700",
+  high:     "text-red-700",
+  medium:   "text-amber-700",
+  low:      "text-emerald-700",
 };
 
 const TIERS: RiskTier[] = ["critical", "high", "medium", "low"];
@@ -160,92 +175,63 @@ export async function FleetGovernanceDashboard({
 
   if (agents.length === 0) {
     return (
-      <div className="rounded-card border border-dashed border-gray-200 bg-white px-6 py-10 text-center text-sm text-gray-400">
+      <div className="rounded-xl border border-dashed border-gray-200 bg-white px-6 py-10 text-center text-sm text-gray-400">
         No approved or deployed agents yet. Fleet governance posture will appear here once agents are approved.
       </div>
     );
   }
 
+  const hasAlerts = overdueCount > 0 || errorCount > 0 || unvalidatedCount > 0;
+
   return (
-    <div className="space-y-4">
-      {/* Risk tier distribution */}
-      <div className="grid grid-cols-4 gap-3">
-        {TIERS.map((tier) => {
-          const cfg = TIER_CONFIG[tier];
-          const count = tierCounts[tier];
-          return (
-            <div
-              key={tier}
-              className={`rounded-card border ${cfg.cardCls} px-4 py-3`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="text-2xl font-bold">{count}</div>
-                <cfg.icon size={14} strokeWidth={2} className="mt-1 opacity-50" />
-              </div>
-              <div className="mt-0.5 text-xs font-medium opacity-80">
-                {cfg.label} Risk
-              </div>
-            </div>
-          );
-        })}
+    <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
+      {/* Risk distribution + governance alerts — compact summary bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+        <div className="flex items-center gap-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Risk</span>
+          {TIERS.map((tier) => {
+            const count = tierCounts[tier];
+            return (
+              <span key={tier} className="flex items-center gap-1.5">
+                <span className={`text-sm font-bold ${TIER_TEXT_COLOR[tier]}`}>{count}</span>
+                <span className={`text-xs ${TIER_TEXT_COLOR[tier]} opacity-70`}>{TIER_LABEL[tier]}</span>
+              </span>
+            );
+          })}
+        </div>
+        {hasAlerts && (
+          <div className="flex items-center gap-2">
+            {overdueCount > 0 && (
+              <Badge variant="danger" dot>{overdueCount} overdue</Badge>
+            )}
+            {errorCount > 0 && (
+              <Badge variant="warning" dot>{errorCount} error{errorCount !== 1 ? "s" : ""}</Badge>
+            )}
+            {unvalidatedCount > 0 && (
+              <Badge variant="neutral" dot>{unvalidatedCount} unvalidated</Badge>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Governance alerts */}
-      {(overdueCount > 0 || errorCount > 0 || unvalidatedCount > 0) && (
-        <div className="flex flex-wrap gap-2">
-          {overdueCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border badge-gov-error px-3 py-1 text-xs font-medium">
-              <ShieldX size={11} strokeWidth={2.5} />
-              {overdueCount} overdue for periodic review
-            </span>
-          )}
-          {errorCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border badge-risk-high px-3 py-1 text-xs font-medium">
-              <ShieldAlert size={11} strokeWidth={2.5} />
-              {errorCount} with governance errors
-            </span>
-          )}
-          {unvalidatedCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border badge-draft px-3 py-1 text-xs font-medium">
-              <Shield size={11} strokeWidth={2.5} />
-              {unvalidatedCount} not yet validated
-            </span>
-          )}
-        </div>
-      )}
-
       {/* Per-agent fleet table */}
-      <div className="overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50 text-left">
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[35%]">
-                Agent
-              </th>
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[14%]">
-                Risk Tier
-              </th>
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[18%]">
-                Governance
-              </th>
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[18%]">
-                Next Review
-              </th>
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[15%]">
-                Evidence
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {agents.map((agent, i) => {
-              const tierCfg = TIER_CONFIG[agent.riskTier];
+      <div>
+        <Table striped>
+          <TableHead>
+            <TableRow>
+              <TableHeader>Agent</TableHeader>
+              <TableHeader>Risk Tier</TableHeader>
+              <TableHeader>Governance</TableHeader>
+              <TableHeader>Next Review</TableHeader>
+              <TableHeader>Evidence</TableHeader>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {agents.map((agent) => {
               return (
-                <tr
-                  key={agent.id}
-                  className={`${i > 0 ? "border-t border-gray-100" : ""} hover:bg-gray-50 transition-colors`}
-                >
+                <TableRow key={agent.id}>
                   {/* Agent name + version + status */}
-                  <td className="px-4 py-3">
+                  <TableCell>
                     <Link
                       href={`/registry/${agent.agentId}`}
                       className="font-medium text-gray-900 hover:text-violet-700 transition-colors"
@@ -261,57 +247,46 @@ export async function FleetGovernanceDashboard({
                       <span>·</span>
                       <span>{agent.policyCount} polic{agent.policyCount === 1 ? "y" : "ies"}</span>
                     </div>
-                  </td>
+                  </TableCell>
 
                   {/* Risk tier badge */}
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium border ${tierCfg.badgeCls}`}
-                    >
-                      <tierCfg.icon size={10} strokeWidth={2.5} />
-                      {tierCfg.label}
-                    </span>
-                  </td>
+                  <TableCell>
+                    <Badge variant={TIER_VARIANT[agent.riskTier]}>
+                      {TIER_LABEL[agent.riskTier]}
+                    </Badge>
+                  </TableCell>
 
                   {/* Governance health */}
-                  <td className="px-4 py-3">
+                  <TableCell>
                     {agent.governance === "pass" && (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--gov-pass-text)]">
-                        <span className="text-[color:var(--gov-pass-icon)]">✓</span> Passes
-                      </span>
+                      <Badge variant="success">Passes</Badge>
                     )}
                     {agent.governance === "warning" && (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--gov-warn-text)]">
-                        <span>⚠</span> {agent.warningCount} warning{agent.warningCount !== 1 ? "s" : ""}
-                      </span>
+                      <Badge variant="warning">{agent.warningCount} warning{agent.warningCount !== 1 ? "s" : ""}</Badge>
                     )}
                     {agent.governance === "error" && (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--gov-error-text)]">
-                        <span>✗</span> {agent.errorCount} error{agent.errorCount !== 1 ? "s" : ""}
-                      </span>
+                      <Badge variant="danger">{agent.errorCount} error{agent.errorCount !== 1 ? "s" : ""}</Badge>
                     )}
                     {agent.governance === "unvalidated" && (
-                      <span className="text-xs text-gray-400">Not validated</span>
+                      <Badge variant="muted">Not validated</Badge>
                     )}
-                  </td>
+                  </TableCell>
 
                   {/* Next review / overdue */}
-                  <td className="px-4 py-3">
+                  <TableCell>
                     {agent.nextReviewDue == null ? (
                       <span className="text-xs text-gray-300">—</span>
                     ) : agent.isOverdue ? (
-                      <span className="inline-flex items-center gap-1 rounded-full badge-overdue px-2 py-0.5 text-xs font-medium">
-                        Overdue
-                      </span>
+                      <Badge variant="danger">Overdue</Badge>
                     ) : (
                       <span className="text-xs text-gray-500">
                         {agent.nextReviewDue.toLocaleDateString(undefined, { dateStyle: "medium" })}
                       </span>
                     )}
-                  </td>
+                  </TableCell>
 
                   {/* Evidence package link */}
-                  <td className="px-4 py-3">
+                  <TableCell>
                     <Link
                       href={`/blueprints/${agent.id}/report`}
                       className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
@@ -319,12 +294,12 @@ export async function FleetGovernanceDashboard({
                     >
                       View Report
                     </Link>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import { z } from "zod";
 
@@ -87,19 +87,18 @@ export async function POST(
       .set({ lastPeriodicReviewAt, nextReviewDue })
       .where(eq(agentBlueprints.id, id));
 
-    void writeAuditLog({
-      entityType: "blueprint",
-      entityId: id,
-      action: "blueprint.periodic_review_completed",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
-      enterpriseId: blueprint.enterpriseId ?? null,
-      toState: {
-        lastPeriodicReviewAt: lastPeriodicReviewAt.toISOString(),
-        nextReviewDue: nextReviewDue.toISOString(),
-        cadenceMonths: settings.periodicReview.defaultCadenceMonths,
-        ...(body.notes ? { notes: body.notes } : {}),
+    void publishEvent({
+      event: {
+        type: "blueprint.periodic_review_completed",
+        payload: {
+          blueprintId: id,
+          agentId: blueprint.agentId,
+          agentName: blueprint.name ?? "",
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id },
+      enterpriseId: blueprint.enterpriseId ?? null,
     });
 
     return NextResponse.json({

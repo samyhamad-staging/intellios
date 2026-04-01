@@ -7,7 +7,7 @@ import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { findTemplatePack } from "@/lib/governance/policy-templates";
 import { randomUUID } from "crypto";
 
@@ -87,19 +87,17 @@ export async function POST(
           .where(inArray(governancePolicies.id, existingIds));
 
         for (const deleted of existingFull) {
-          void writeAuditLog({
-            entityType: "policy",
-            entityId: deleted.id,
-            action: "policy.deleted",
-            actorEmail: authSession.user.email!,
-            actorRole: authSession.user.role!,
-            enterpriseId: deleted.enterpriseId,
-            fromState: {
-              name: deleted.name,
-              type: deleted.type,
-              ruleCount: (deleted.rules as unknown[]).length,
+          void publishEvent({
+            event: {
+              type: "policy.deleted",
+              payload: {
+                policyId: deleted.id,
+                name: deleted.name,
+              },
             },
-            metadata: { reason: "template_force_reimport", pack: packId },
+            actor: { email: authSession.user.email!, role: authSession.user.role! },
+            entity: { type: "policy", id: deleted.id },
+            enterpriseId: deleted.enterpriseId ?? null,
           });
         }
       }
@@ -126,19 +124,18 @@ export async function POST(
         })
         .returning();
 
-      void writeAuditLog({
-        entityType: "policy",
-        entityId: policy.id,
-        action: "policy.created",
-        actorEmail: authSession.user.email!,
-        actorRole: authSession.user.role!,
-        enterpriseId: policy.enterpriseId,
-        toState: {
-          name: policy.name,
-          type: policy.type,
-          ruleCount: (policy.rules as unknown[]).length,
+      void publishEvent({
+        event: {
+          type: "policy.created",
+          payload: {
+            policyId: policy.id,
+            name: policy.name,
+            type: policy.type,
+          },
         },
-        metadata: { source: "template", pack: packId },
+        actor: { email: authSession.user.email!, role: authSession.user.role! },
+        entity: { type: "policy", id: policy.id },
+        enterpriseId: policy.enterpriseId ?? null,
       });
 
       createdPolicies.push({ id: policy.id, name: policy.name, type: policy.type });

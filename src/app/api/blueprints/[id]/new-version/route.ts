@@ -8,7 +8,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 import { diffABP } from "@/lib/diff/abp-diff";
 
 /**
@@ -25,7 +25,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
@@ -120,22 +120,19 @@ export async function POST(
       })
       .returning();
 
-    await writeAuditLog({
-      entityType: "blueprint",
-      entityId: newBlueprintId,
-      action: "blueprint.created",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role,
-      enterpriseId: source.enterpriseId ?? null,
-      metadata: {
-        agentName: source.name ?? "Unnamed Agent",
-        agentId: source.agentId,
-        version: newVersion,
-        fromVersion: source.version,
-        fromBlueprintId: id,
-        governanceDiffSignificance: governanceDiff.significance,
-        governanceDiffChangeCount: governanceDiff.totalChanges,
+    await publishEvent({
+      event: {
+        type: "blueprint.created",
+        payload: {
+          blueprintId: newBlueprintId,
+          agentId: source.agentId,
+          name: source.name ?? "",
+          createdBy: authSession.user.email!,
+        },
       },
+      actor: { email: authSession.user.email!, role: authSession.user.role },
+      entity: { type: "blueprint", id: newBlueprintId },
+      enterpriseId: source.enterpriseId ?? null,
     });
 
     return NextResponse.json(

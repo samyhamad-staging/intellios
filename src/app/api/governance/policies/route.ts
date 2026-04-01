@@ -7,16 +7,43 @@ import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
-import { writeAuditLog } from "@/lib/audit/log";
+import { publishEvent } from "@/lib/events/publish";
 
-const POLICY_TYPES = ["safety", "compliance", "data_handling", "access_control", "audit"] as const;
+const DESIGN_TIME_POLICY_TYPES = ["safety", "compliance", "data_handling", "access_control", "audit"] as const;
+const RUNTIME_POLICY_TYPE = "runtime" as const;
+const ALL_POLICY_TYPES = [...DESIGN_TIME_POLICY_TYPES, RUNTIME_POLICY_TYPE] as const;
 
-const CreatePolicyBody = z.object({
-  name: z.string().min(1).max(200),
-  type: z.enum(POLICY_TYPES),
-  description: z.string().max(1000).optional(),
-  rules: z.array(z.unknown()).default([]),
+const RuntimeRuleSchema = z.object({
+  id:       z.string(),
+  operator: z.enum(["token_budget_daily", "token_budget_per_interaction", "pii_action", "scope_constraint", "circuit_breaker_error_rate"]),
+  value:    z.unknown(),
+  severity: z.enum(["error", "warning"]),
+  message:  z.string().min(1),
 });
+
+const DesignTimeRuleSchema = z.object({
+  id:       z.string(),
+  field:    z.string(),
+  operator: z.string(),
+  value:    z.unknown().optional(),
+  severity: z.enum(["error", "warning"]),
+  message:  z.string().min(1),
+});
+
+const CreatePolicyBody = z.discriminatedUnion("type", [
+  z.object({
+    name:        z.string().min(1).max(200),
+    type:        z.literal(RUNTIME_POLICY_TYPE),
+    description: z.string().max(1000).optional(),
+    rules:       z.array(RuntimeRuleSchema).default([]),
+  }),
+  z.object({
+    name:        z.string().min(1).max(200),
+    type:        z.enum(DESIGN_TIME_POLICY_TYPES),
+    description: z.string().max(1000).optional(),
+    rules:       z.array(DesignTimeRuleSchema).default([]),
+  }),
+]);
 
 /**
  * GET /api/governance/policies
@@ -79,14 +106,18 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    void writeAuditLog({
-      entityType: "policy",
-      entityId: policy.id,
-      action: "policy.created",
-      actorEmail: authSession.user.email!,
-      actorRole: authSession.user.role!,
-      enterpriseId: policy.enterpriseId,
-      toState: { name: policy.name, type: policy.type, ruleCount: (policy.rules as unknown[]).length },
+    void publishEvent({
+      event: {
+        type: "policy.created",
+        payload: {
+          policyId: policy.id,
+          name: policy.name,
+          type: policy.type,
+        },
+      },
+      actor: { email: authSession.user.email!, role: authSession.user.role! },
+      entity: { type: "policy", id: policy.id },
+      enterpriseId: policy.enterpriseId ?? null,
     });
 
     return NextResponse.json({ policy }, { status: 201 });
