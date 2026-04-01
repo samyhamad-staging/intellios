@@ -16,7 +16,7 @@ function makeContext(overrides: Partial<IntakeContext> = {}): IntakeContext {
     dataSensitivity: "public",
     regulatoryScope: [],
     integrationTypes: [],
-    stakeholders: [],
+    stakeholdersConsulted: [],
     ...overrides,
   };
 }

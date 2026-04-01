@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
+import { SkeletonList } from "@/components/ui/skeleton";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -410,8 +411,8 @@ export default function AdminWebhooksPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center text-sm text-gray-400">
-        Loading webhooks…
+      <div className="px-6 py-6 space-y-4">
+        <SkeletonList rows={3} height="h-20" />
       </div>
     );
   }

@@ -11,7 +11,7 @@ function makeContext(overrides: Partial<IntakeContext> = {}): IntakeContext {
     dataSensitivity: "public",
     regulatoryScope: [],
     integrationTypes: [],
-    stakeholders: [],
+    stakeholdersConsulted: [],
     ...overrides,
   };
 }
@@ -116,7 +116,8 @@ describe("getMissingContributionDomains", () => {
       id: domain,
       sessionId: "test",
       domain,
-      contributorName: "Test User",
+      contributorEmail: "test@example.com",
+      contributorRole: "analyst",
       fields: {},
       createdAt: new Date().toISOString(),
     }));
@@ -130,7 +131,7 @@ describe("getMissingContributionDomains", () => {
       deploymentType: "customer-facing",
     });
     const contributions: StakeholderContribution[] = [
-      { id: "1", sessionId: "t", domain: "compliance", contributorName: "A", fields: {}, createdAt: "" },
+      { id: "1", sessionId: "t", domain: "compliance", contributorEmail: "a@test.com", contributorRole: "analyst", fields: {}, createdAt: "" },
     ];
     const result = getMissingContributionDomains(context, contributions, "medium");
     expect(result).not.toContain("compliance");

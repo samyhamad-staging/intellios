@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Key, Plus, Trash2, Copy, Check, AlertTriangle } from "lucide-react";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface ApiKey {
   id: string;
@@ -140,11 +142,9 @@ export default function ApiKeysPage() {
       {/* Key list */}
       <section className="space-y-2">
         <h2 className="font-medium text-slate-800">Active Keys</h2>
-        {loading && <div className="text-sm text-slate-500 py-4">Loading...</div>}
+        {loading && <SkeletonList rows={3} height="h-14" />}
         {!loading && keys.length === 0 && (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
-            No API keys yet. Create one above.
-          </div>
+          <EmptyState icon={Key} heading="No API keys yet" subtext="Create one above to start using the Intellios API." />
         )}
         {keys.map((k) => (
           <div key={k.id} className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white px-5 py-3.5">

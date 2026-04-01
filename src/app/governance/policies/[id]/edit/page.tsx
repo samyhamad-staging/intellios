@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { SkeletonList } from "@/components/ui/skeleton";
 import PolicyForm, { PolicyFormValues } from "@/components/governance/policy-form";
 
 interface Policy {
@@ -98,8 +99,8 @@ export default function EditPolicyPage({
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <p className="text-sm text-gray-400">Loading policy…</p>
+      <div className="px-6 py-6 space-y-4">
+        <SkeletonList rows={4} height="h-16" />
       </div>
     );
   }

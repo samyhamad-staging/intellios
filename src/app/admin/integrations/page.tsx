@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Plug, Save, CheckCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { SkeletonList } from "@/components/ui/skeleton";
 
 interface IntegrationsData {
   servicenow?: { enabled: boolean; instanceUrl?: string; username?: string; assignmentGroup?: string };
@@ -67,7 +68,7 @@ export default function IntegrationsPage() {
         </button>
       </div>
 
-      {loading && <div className="text-center text-slate-500 py-10">Loading...</div>}
+      {loading && <SkeletonList rows={4} height="h-24" />}
 
       {!loading && (
         <div className="space-y-6">

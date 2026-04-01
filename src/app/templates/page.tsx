@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Package, Search, Star, TrendingUp } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Template {
   id: string;
@@ -104,15 +106,13 @@ export default function TemplateMarketplacePage() {
       </div>
 
       {loading && (
-        <div className="text-center text-slate-500 py-16">Loading templates…</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <SkeletonList rows={6} height="h-40" />
+        </div>
       )}
 
       {!loading && templates.length === 0 && (
-        <div className="text-center text-slate-500 py-16 rounded-xl border border-slate-200 bg-slate-50">
-          <Package className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-          <p className="font-medium">No templates found</p>
-          <p className="text-sm mt-1">Try adjusting your search or filters</p>
-        </div>
+        <EmptyState icon={Package} heading="No templates found" subtext="Try adjusting your search or filters." />
       )}
 
       {!loading && templates.length > 0 && (

@@ -22,6 +22,7 @@ import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
 import { CheckCircle, XCircle } from "lucide-react";
 import type { ApprovalChainStep, ApprovalStepRecord, EnterpriseSettings } from "@/lib/settings/types";
+import { SkeletonList } from "@/components/ui/skeleton";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 import type { TestCase, TestRun } from "@/lib/testing/types";
 import { SimulatePanel } from "@/components/registry/simulate-panel";
@@ -427,8 +428,8 @@ export default function AgentDetailPage({
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center text-sm text-text-tertiary">
-        Loading agent…
+      <div className="px-6 py-6 space-y-4">
+        <SkeletonList rows={6} height="h-20" />
       </div>
     );
   }

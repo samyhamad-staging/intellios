@@ -103,8 +103,8 @@ describe("computeReadinessScore", () => {
   it("deducts 5 per unresolved ambiguity flag", () => {
     const payload = makePayload({
       _flags: [
-        { field: "tools", description: "Unclear scope", severity: "warning" as const },
-        { field: "constraints", description: "Contradictory", severity: "warning" as const },
+        { id: "f1", field: "tools", description: "Unclear scope", userStatement: "maybe search", flaggedAt: new Date().toISOString(), resolved: false },
+        { id: "f2", field: "constraints", description: "Contradictory", userStatement: "both allow and deny", flaggedAt: new Date().toISOString(), resolved: false },
       ],
     });
     const result = computeReadinessScore(payload, null);
@@ -114,10 +114,10 @@ describe("computeReadinessScore", () => {
   it("floors specificity at 0", () => {
     const payload = makePayload({
       _flags: [
-        { field: "a", description: "x", severity: "warning" as const },
-        { field: "b", description: "y", severity: "warning" as const },
-        { field: "c", description: "z", severity: "warning" as const },
-        { field: "d", description: "w", severity: "warning" as const },
+        { id: "f1", field: "a", description: "x", userStatement: "u1", flaggedAt: "", resolved: false },
+        { id: "f2", field: "b", description: "y", userStatement: "u2", flaggedAt: "", resolved: false },
+        { id: "f3", field: "c", description: "z", userStatement: "u3", flaggedAt: "", resolved: false },
+        { id: "f4", field: "d", description: "w", userStatement: "u4", flaggedAt: "", resolved: false },
       ],
     });
     const result = computeReadinessScore(payload, null);

@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { SkeletonList } from "@/components/ui/skeleton";
 import type { EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 
@@ -105,8 +106,8 @@ export default function AdminSsoPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center text-sm text-gray-400">
-        Loading SSO settings…
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-2xl mx-auto"><SkeletonList rows={4} height="h-16" /></div>
       </div>
     );
   }

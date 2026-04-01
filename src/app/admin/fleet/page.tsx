@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { SkeletonList } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Globe, Users, CheckSquare, Activity } from "lucide-react";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
@@ -86,8 +87,8 @@ export default function AdminFleetPage() {
 
   if (sessionStatus === "loading" || loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <p className="text-sm text-gray-400">Loading fleet overview…</p>
+      <div className="px-6 py-6 space-y-4">
+        <SkeletonList rows={4} height="h-16" />
       </div>
     );
   }
