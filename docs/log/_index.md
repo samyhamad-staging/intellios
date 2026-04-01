@@ -4,6 +4,7 @@ All interactions and actions taken on the Intellios project, in reverse chronolo
 
 | Session | Date | Summary |
 |---|---|---|
+| [078](2026-03-31_session-078.md) | 2026-03-31 | Landing page rebuild: full premium marketing page with Heroicons, gradient hero, compliance badges, pipeline steps, features grid, stats, roles, CTA, footer. @heroicons/react installed. tsc 0 errors. |
 | [077](2026-03-31_session-077.md) | 2026-03-31 | UI/UX Sprint Phases 2B+1C+3D+3E: Recharts charts (quality trend, governance monthly+donut); Radix Select across all 20 raw selects in 11 files (_all_/_none_ sentinel fix); responsive grid breakpoints on governance+monitor; aria-label on 4 icon-only buttons. tsc 0 errors. |
 | [076](2026-03-31_session-076.md) | 2026-03-31 | UI/UX Optimization Sprint (Phase 0–3): tw-animate-css animation fix, cmdk command palette, sonner toast system, Tabs/Select/Sheet/Skeleton/EmptyState components, Recharts infrastructure (BarChart/LineChart/DonutChart wrappers). 9 new files, 8 modified, 6 deps installed. tsc 0 errors. |
 | [075](2026-03-31_session-075.md) | 2026-03-31 | Intake v2 P1 hardening: mobile sidebar (`hidden lg:flex` + mobileOpen overlay prop + "Progress" toggle button in header), classification loading resilience (classificationLoadingTicksRef clears spinner after 2 unanswered ticks), onContextSubmit cold-path (try/catch + explicit throw on DB failure). 0 new files, 3 modified, 0 migrations, tsc 0 errors. |
