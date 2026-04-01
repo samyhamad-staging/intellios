@@ -38,6 +38,118 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 081 — 2026-03-31
+
+**Sprint close: merge feat/intake-v2-hardening → master**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Gap check + log reads | _index.md, session 079/080 logs, effort-log, project-journal | ~50k in / ~1k out |
+| Merge operation | git checkout + merge command | ~3k in / ~0.5k out |
+| Documentation | Session log 081, _index, effort log, project journal | ~8k in / ~4k out |
+| **Session total (est.)** | | **~61k in / ~5.5k out** |
+
+**Estimated session cost:** Sonnet ~61k in × $3/1M + ~5.5k out × $15/1M = **$0.18 + $0.08 = ~$0.26**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | 1 ("Merge claude/zealous-banzai → main") |
+| Decisions made | 1 (D-Approve: merge sprint to master) |
+| Engagement type | Single approval instruction |
+| Estimated time | ~2 min |
+
+---
+
+## Session 080 — 2026-03-31
+
+**Catalyst Phase 2: Switch, DescriptionList, Divider**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Codebase reads | integrations/page.tsx, settings/page.tsx, deploy/page.tsx, blueprint-summary.tsx, message-bubble.tsx | ~40k in / ~2k out |
+| Implementation | 5 files modified | ~15k in / ~8k out |
+| TypeScript check | tsc --noEmit | ~5k in / ~0.5k out |
+| Documentation | Session log 080, _index, effort log | ~8k in / ~3k out |
+| **Session total (est.)** | | **~68k in / ~13.5k out** |
+
+**Estimated session cost:** Sonnet ~68k in × $3/1M + ~13.5k out × $15/1M = **$0.20 + $0.20 = ~$0.40**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~1 (continuation) |
+| Decisions made | 0 |
+| Engagement type | Continuation |
+| Estimated time | ~3 min |
+
+---
+
+## Session 079 — 2026-03-31
+
+**Catalyst UI Kit integration phase 1: 7 components + 12 table migrations**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Codebase reads | ZIP validation, dependency check, 12 table files | ~80k in / ~3k out |
+| Component creation | 7 new component files | ~20k in / ~15k out |
+| Table migration | 12 files, 13 tables | ~60k in / ~20k out |
+| TypeScript check | tsc --noEmit | ~5k in / ~0.5k out |
+| Documentation | Session log 079, _index, effort log | ~8k in / ~3k out |
+| **Session total (est.)** | | **~173k in / ~41.5k out** |
+
+**Estimated session cost:** Sonnet ~173k in × $3/1M + ~41.5k out × $15/1M = **$0.52 + $0.62 = ~$1.14**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~4 |
+| Decisions made | 2 (D-Approve: validate approach; D-Approve: proceed with table migration) |
+| Engagement type | Direction + approval |
+| Estimated time | ~10 min |
+
+---
+
+## Session 078 — 2026-03-31
+
+**Landing page rebuild**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Research | Tailwind Plus content extraction attempt (blocked), design approach | ~30k in / ~5k out |
+| Implementation | landing/page.tsx full rewrite (~320 lines) | ~15k in / ~12k out |
+| TypeScript check | tsc --noEmit | ~5k in / ~0.5k out |
+| Documentation | Session log 078, _index, effort log | ~8k in / ~3k out |
+| **Session total (est.)** | | **~58k in / ~20.5k out** |
+
+**Estimated session cost:** Sonnet ~58k in × $3/1M + ~20.5k out × $15/1M = **$0.17 + $0.31 = ~$0.48**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~3 |
+| Decisions made | 1 (D-Approve: build from scratch vs. extract verbatim) |
+| Engagement type | Direction + approval |
+| Estimated time | ~8 min |
+
+---
+
 ## Session 077 — 2026-03-31
 
 **UI/UX Sprint Phase 2B + Phase 1C**

@@ -2,6 +2,24 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Sessions 077–081 — 2026-03-31: Finishing the Sprint
+
+Sessions 077 through 081 completed the UI/UX optimization sprint and landed it all on master. The strategic arc is simple: Intellios had solid bones (89% of the full product vision shipped) but showed its prototype origins in small, compounding ways — native browser alerts, raw HTML tables, unstyled select dropdowns, div-based charts, broken modal animations. None of these were functional bugs. All of them eroded the first-impression credibility that design partner conversations require.
+
+**The Select migration was operationally tedious and strategically necessary.** Twenty raw `<select>` elements across eleven files, each individually styled by the developer who wrote it. The Radix Select implementation looks identical across the entire product — same chevron, same focus ring, same open animation, same portal behavior. The `_all_` / `_none_` sentinel fix (Radix forbids `value=""`) was the one genuine technical wrinkle; once solved, it applied consistently everywhere.
+
+**The Recharts integration closes a visible credibility gap.** A product that positions itself as a professional AI governance platform cannot have CSS div bars as its primary data visualization. The chart wrapper strategy — `lib/chart-tokens.ts` bridging Tailwind CSS variables to hex values — is the right architectural move. Recharts reads no CSS; it needs concrete color strings at render time. A single token file that owns this mapping means the rest of the app can stay in design-token vocabulary.
+
+**The landing page is a statement of intent.** The previous placeholder said "Enterprise AI Agent Platform" in gray text on a white background. The rebuilt page communicates framework badges (SR 11-7, EU AI Act, NIST AI RMF, ISO 42001), a credible pipeline metaphor, a 4-stat proof bar, role-specific benefit language, and a CTA. This is not decoration — it is the first thing a prospective design partner sees before they agree to a demo login. First impressions are formed in seconds.
+
+**Tailwind Plus Catalyst UI Kit was the right call for tables and toggles.** The 12 raw HTML table migrations removed 800+ lines of repetitive `<thead>/<tbody>/<tr>/<th>/<td>` boilerplate. The Catalyst Table handles stripes, density, grid lines, and row links through props rather than class stacks. The Switch component replaced DIY toggle patterns (absolute-positioned overlay, accent-violet-600 checkboxes, orange text-color checkboxes) with a single consistent, keyboard-accessible, animated control. These are the kinds of changes that are invisible to a casual user but immediately apparent to a developer reviewing the codebase — and to any design partner who tabs through the UI with a keyboard.
+
+**The merge closes the sprint.** All of sessions 075–080 — 272 files, 27 438 insertions — landed on master in a single merge commit. The product is now in the state it should be for design partner outreach: the intake conversation works and is transparent, the tables are polished, the toggles animate, the charts are real, the landing page is credible.
+
+What's next is gated on external events (3 enterprise design partners, H3-1/H3-2) or is a routine maintenance item (esbuild/drizzle-kit CVE upgrade, P3). The sprint is done.
+
+---
+
 ## Session 076 — 2026-03-31: From Functional to Professional
 
 Sessions 074 and 075 made the intake trustworthy. Session 076 addresses a different kind of problem: Intellios works, but it doesn't yet *feel* professional. UX 7.5/10 and UI 7/10 are respectable scores for a product at this stage, but a design partner's first impression is formed by details: does the modal animate smoothly when it opens? Does the keyboard navigation in the search palette feel polished? Do error messages appear in place or as native browser alerts? These are the details that distinguish "this is a working prototype" from "this is a product I could demo."

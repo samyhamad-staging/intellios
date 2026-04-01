@@ -4,6 +4,7 @@ All interactions and actions taken on the Intellios project, in reverse chronolo
 
 | Session | Date | Summary |
 |---|---|---|
+| [081](2026-03-31_session-081.md) | 2026-03-31 | Sprint close: merged feat/intake-v2-hardening → master (272 files, 27 438 insertions). Consolidates sessions 075–080: P1 hardening, UI/UX sprint, landing page, Catalyst UI Kit phases 1–2. |
 | [080](2026-03-31_session-080.md) | 2026-03-31 | Catalyst Phase 2: Switch applied to integrations (×4) + settings AgentCore toggle; DescriptionList to deploy modal + blueprint summary; Divider to chat markdown hr. tsc 0 errors. |
 | [079](2026-03-31_session-079.md) | 2026-03-31 | Catalyst UI Kit integration: 7 components added (Table, Switch, DescriptionList, Heading, Divider, Text, CatalystLink), @headlessui/react installed, SSO toggle → Switch, all 12 raw-table files migrated to Catalyst Table. 0 raw tables remain. tsc 0 errors. |
 | [078](2026-03-31_session-078.md) | 2026-03-31 | Landing page rebuild: full premium marketing page with Heroicons, gradient hero, compliance badges, pipeline steps, features grid, stats, roles, CTA, footer. @heroicons/react installed. tsc 0 errors. |
