@@ -14,6 +14,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import type { EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 
@@ -153,34 +154,21 @@ export default function AdminSsoPage() {
 
         {/* Enable toggle */}
         <Section title="SSO Status">
-          <label className="flex cursor-pointer items-center gap-3">
-            <div className="relative">
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={sso.enabled}
-                onChange={(e) => setSso((s) => ({ ...s, enabled: e.target.checked }))}
-              />
-              <div
-                className={`h-6 w-11 rounded-full transition-colors ${
-                  sso.enabled ? "bg-violet-600" : "bg-gray-300"
-                }`}
-              />
-              <div
-                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                  sso.enabled ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </div>
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <span className="text-sm font-medium text-gray-800">
+              <p className="text-sm font-medium text-gray-800">
                 {sso.enabled ? "SSO enabled" : "SSO disabled"}
-              </span>
-              <p className="text-xs text-gray-400">
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
                 When enabled, users with a matching email domain will see the SSO login option.
               </p>
             </div>
-          </label>
+            <Switch
+              checked={sso.enabled}
+              onChange={(enabled) => setSso((s) => ({ ...s, enabled }))}
+              color="indigo"
+            />
+          </div>
         </Section>
 
         {/* IdP configuration */}
