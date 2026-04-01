@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plug, Save, CheckCircle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 interface IntegrationsData {
   servicenow?: { enabled: boolean; instanceUrl?: string; username?: string; assignmentGroup?: string };
@@ -74,15 +75,14 @@ export default function IntegrationsPage() {
           <section className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-medium text-slate-900">ServiceNow</h2>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={data.servicenow?.enabled ?? false}
-                  onChange={(e) => update("servicenow", "enabled", e.target.checked)}
-                  className="h-4 w-4 accent-violet-600"
-                />
+              <div className="flex items-center gap-2">
                 <span className="text-sm text-slate-600">Enabled</span>
-              </label>
+                <Switch
+                  checked={data.servicenow?.enabled ?? false}
+                  onChange={(v) => update("servicenow", "enabled", v)}
+                  color="violet"
+                />
+              </div>
             </div>
             {data.servicenow?.enabled && (
               <div className="grid grid-cols-2 gap-3">
@@ -98,15 +98,14 @@ export default function IntegrationsPage() {
           <section className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-medium text-slate-900">Jira</h2>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={data.jira?.enabled ?? false}
-                  onChange={(e) => update("jira", "enabled", e.target.checked)}
-                  className="h-4 w-4 accent-violet-600"
-                />
+              <div className="flex items-center gap-2">
                 <span className="text-sm text-slate-600">Enabled</span>
-              </label>
+                <Switch
+                  checked={data.jira?.enabled ?? false}
+                  onChange={(v) => update("jira", "enabled", v)}
+                  color="violet"
+                />
+              </div>
             </div>
             {data.jira?.enabled && (
               <div className="grid grid-cols-2 gap-3">
@@ -123,15 +122,14 @@ export default function IntegrationsPage() {
           <section className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-medium text-slate-900">Slack</h2>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={data.slack?.enabled ?? false}
-                  onChange={(e) => update("slack", "enabled", e.target.checked)}
-                  className="h-4 w-4 accent-violet-600"
-                />
+              <div className="flex items-center gap-2">
                 <span className="text-sm text-slate-600">Enabled</span>
-              </label>
+                <Switch
+                  checked={data.slack?.enabled ?? false}
+                  onChange={(v) => update("slack", "enabled", v)}
+                  color="violet"
+                />
+              </div>
             </div>
             {data.slack?.enabled && (
               <div className="grid grid-cols-2 gap-3">
@@ -145,15 +143,14 @@ export default function IntegrationsPage() {
           <section className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-medium text-slate-900">Microsoft Teams</h2>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={data.teams?.enabled ?? false}
-                  onChange={(e) => update("teams", "enabled", e.target.checked)}
-                  className="h-4 w-4 accent-violet-600"
-                />
+              <div className="flex items-center gap-2">
                 <span className="text-sm text-slate-600">Enabled</span>
-              </label>
+                <Switch
+                  checked={data.teams?.enabled ?? false}
+                  onChange={(v) => update("teams", "enabled", v)}
+                  color="violet"
+                />
+              </div>
             </div>
             {data.teams?.enabled && (
               <div className="grid grid-cols-1 gap-3">

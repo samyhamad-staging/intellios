@@ -5,6 +5,7 @@ import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Rocket } from "lucide-react";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
+import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/ui/description-list";
 
 /**
  * Map raw AWS SDK / server error strings to actionable operator messages.
@@ -295,23 +296,17 @@ function AgentCoreDeployModal({
                 <span className="text-lg">✓</span>
                 <p className="text-sm font-semibold">Agent deployed to AgentCore</p>
               </div>
-              <div className="rounded-lg border border-green-100 bg-green-50 p-4 space-y-1.5 text-xs font-mono">
-                <div className="flex gap-2">
-                  <span className="text-gray-400 min-w-[100px]">Agent ID</span>
-                  <span className="text-gray-700">{agcModal.deploymentRecord.agentId}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-gray-400 min-w-[100px]">Region</span>
-                  <span className="text-gray-700">{agcModal.deploymentRecord.region}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-gray-400 min-w-[100px]">Model</span>
-                  <span className="text-gray-700">{agcModal.deploymentRecord.foundationModel}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-gray-400 min-w-[100px]">ARN</span>
-                  <span className="text-gray-700 break-all">{agcModal.deploymentRecord.agentArn}</span>
-                </div>
+              <div className="rounded-lg border border-green-100 bg-green-50 p-4 text-xs font-mono">
+                <DescriptionList>
+                  <DescriptionTerm className="text-gray-400 font-mono text-xs">Agent ID</DescriptionTerm>
+                  <DescriptionDetails className="text-gray-700 font-mono text-xs">{agcModal.deploymentRecord.agentId}</DescriptionDetails>
+                  <DescriptionTerm className="text-gray-400 font-mono text-xs">Region</DescriptionTerm>
+                  <DescriptionDetails className="text-gray-700 font-mono text-xs">{agcModal.deploymentRecord.region}</DescriptionDetails>
+                  <DescriptionTerm className="text-gray-400 font-mono text-xs">Model</DescriptionTerm>
+                  <DescriptionDetails className="text-gray-700 font-mono text-xs">{agcModal.deploymentRecord.foundationModel}</DescriptionDetails>
+                  <DescriptionTerm className="text-gray-400 font-mono text-xs">ARN</DescriptionTerm>
+                  <DescriptionDetails className="text-gray-700 font-mono text-xs break-all">{agcModal.deploymentRecord.agentArn}</DescriptionDetails>
+                </DescriptionList>
               </div>
               <a
                 href={`https://console.aws.amazon.com/bedrock/home?region=${agcModal.deploymentRecord.region}#/agents/${agcModal.deploymentRecord.agentId}`}

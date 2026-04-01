@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
 import type { EnterpriseSettings, ApprovalChainStep } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
@@ -495,20 +496,19 @@ export default function AdminSettingsPage() {
                   <p className="text-xs text-gray-500">Deploy agents directly to AWS Bedrock runtime</p>
                 </div>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-500">
                   {settings.deploymentTargets?.agentcore?.enabled ? "Enabled" : "Disabled"}
                 </span>
-                <input
-                  type="checkbox"
+                <Switch
                   checked={settings.deploymentTargets?.agentcore?.enabled ?? false}
-                  onChange={(e) =>
+                  onChange={(v) =>
                     setSettings((s) => ({
                       ...s,
                       deploymentTargets: {
                         ...s.deploymentTargets,
                         agentcore: {
-                          enabled: e.target.checked,
+                          enabled: v,
                           region: s.deploymentTargets?.agentcore?.region ?? "us-east-1",
                           agentResourceRoleArn: s.deploymentTargets?.agentcore?.agentResourceRoleArn ?? "",
                           foundationModel:
@@ -520,9 +520,9 @@ export default function AdminSettingsPage() {
                       },
                     }))
                   }
-                  className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  color="orange"
                 />
-              </label>
+              </div>
             </div>
 
             {settings.deploymentTargets?.agentcore?.enabled && (

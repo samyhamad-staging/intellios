@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
+import { Divider } from "@/components/ui/divider";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
@@ -40,7 +41,7 @@ const assistantComponents: Components = {
       {children}
     </pre>
   ),
-  hr: () => <hr className="my-2 border-gray-200" />,
+  hr: () => <Divider soft className="my-2" />,
 };
 
 export function MessageBubble({ role, content }: MessageBubbleProps) {
