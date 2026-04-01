@@ -164,6 +164,7 @@ export default function ApiKeysPage() {
               onClick={() => handleRevoke(k.id)}
               className="text-slate-400 hover:text-red-500 transition-colors"
               title="Revoke key"
+              aria-label="Revoke key"
             >
               <Trash2 className="h-4 w-4" />
             </button>

@@ -343,6 +343,7 @@ function InlineRoleEditor({ user, currentUserId, onUpdated }: RoleEditorProps) {
             onClick={() => setEditing(true)}
             className="opacity-0 group-hover:opacity-100 rounded p-0.5 text-gray-400 hover:text-gray-600 transition-all"
             title="Edit role"
+            aria-label="Edit role"
           >
             <PenLine size={12} />
           </button>

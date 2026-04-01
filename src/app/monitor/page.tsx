@@ -286,7 +286,7 @@ export default function MonitorPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="mb-6 grid grid-cols-5 gap-4">
+      <div className="mb-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <KpiCard
           label="Deployed"
           value={summary.total}
@@ -575,7 +575,7 @@ export default function MonitorPage() {
           ) : (
             <>
               {/* Summary strip */}
-              <div className="mb-4 grid grid-cols-3 gap-3">
+              <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="rounded-xl border border-gray-200 bg-white p-4">
                   <div className="text-2xl font-bold text-gray-900">{agcSummary.total}</div>
                   <div className="mt-0.5 text-xs text-gray-500">AgentCore agents</div>

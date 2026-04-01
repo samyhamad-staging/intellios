@@ -324,6 +324,7 @@ export default function AdminSsoPage() {
                   onClick={() => setGroupRows((rows) => rows.filter((_, j) => j !== i))}
                   className="text-gray-400 hover:text-red-500 text-lg leading-none px-1"
                   title="Remove"
+                  aria-label="Remove group mapping"
                 >
                   ×
                 </button>

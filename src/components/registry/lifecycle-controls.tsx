@@ -134,7 +134,7 @@ export function LifecycleControls({
         {dangerActions.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="md" title="More actions" disabled={transitioning || creatingVersion}>
+              <Button variant="ghost" size="md" title="More actions" aria-label="More actions" disabled={transitioning || creatingVersion}>
                 ⋯
               </Button>
             </DropdownMenuTrigger>

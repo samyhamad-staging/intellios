@@ -292,7 +292,7 @@ export default function GovernanceHubPage() {
             </h2>
 
             {/* KPI Row */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               {[
                 {
                   label: "Validation Pass Rate",
@@ -363,7 +363,7 @@ export default function GovernanceHubPage() {
             </div>
 
             {!analyticsLoading && analytics && (
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Monthly Submissions vs Approvals bar chart */}
                 <div className="rounded-xl border border-gray-200 bg-white p-5">
                   <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -527,7 +527,7 @@ export default function GovernanceHubPage() {
             )}
 
             {analyticsLoading && (
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="h-64 animate-pulse rounded-xl bg-gray-100" />
                 <div className="space-y-4">
                   <div className="h-28 animate-pulse rounded-xl bg-gray-100" />
@@ -543,7 +543,7 @@ export default function GovernanceHubPage() {
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
             Coverage Overview
           </h2>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               {
                 label: "Total Agents",
@@ -874,7 +874,7 @@ export default function GovernanceHubPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {templatePacks.map((pack) => (
                 <div
                   key={pack.id}
