@@ -703,9 +703,17 @@ OUT OF SCOPE: Credit decisions, rate negotiations, underwriting exceptions, lega
   // ── 10. System health snapshots ────────────────────────────────────────────────
   console.log("\nStep 10/11 — System health snapshots");
   const snapDefs = [
-    { id: "80000000-0000-0000-0000-000000000001", daysBack: 5, qi: "62.00", validity: "0.6000", queue: 3, sla: "0.9000" },
-    { id: "80000000-0000-0000-0000-000000000002", daysBack: 3, qi: "70.00", validity: "0.7500", queue: 2, sla: "0.9500" },
-    { id: "80000000-0000-0000-0000-000000000003", daysBack: 1, qi: "76.00", validity: "0.8000", queue: 1, sla: "1.0000" },
+    // 10-day trend showing platform maturity progression
+    { id: "80000000-0000-0000-0000-000000000001", daysBack: 10, qi: "42.00", validity: "0.4000", queue: 4, sla: "0.7500" },
+    { id: "80000000-0000-0000-0000-000000000004", daysBack: 9,  qi: "48.00", validity: "0.4000", queue: 4, sla: "0.8000" },
+    { id: "80000000-0000-0000-0000-000000000005", daysBack: 8,  qi: "53.00", validity: "0.5000", queue: 3, sla: "0.8500" },
+    { id: "80000000-0000-0000-0000-000000000006", daysBack: 7,  qi: "55.00", validity: "0.6000", queue: 3, sla: "0.8500" },
+    { id: "80000000-0000-0000-0000-000000000007", daysBack: 6,  qi: "58.00", validity: "0.6000", queue: 3, sla: "0.9000" },
+    { id: "80000000-0000-0000-0000-000000000002", daysBack: 5,  qi: "62.00", validity: "0.6000", queue: 3, sla: "0.9000" },
+    { id: "80000000-0000-0000-0000-000000000008", daysBack: 4,  qi: "66.00", validity: "0.7000", queue: 2, sla: "0.9500" },
+    { id: "80000000-0000-0000-0000-000000000003", daysBack: 3,  qi: "70.00", validity: "0.7500", queue: 2, sla: "0.9500" },
+    { id: "80000000-0000-0000-0000-000000000009", daysBack: 2,  qi: "73.00", validity: "0.8000", queue: 1, sla: "1.0000" },
+    { id: "80000000-0000-0000-0000-000000000010", daysBack: 1,  qi: "76.00", validity: "0.8000", queue: 1, sla: "1.0000" },
   ];
   for (const sn of snapDefs) {
     const existing = await db.query.systemHealthSnapshots.findFirst({ where: eq(systemHealthSnapshots.id, sn.id) });
@@ -738,9 +746,9 @@ OUT OF SCOPE: Credit decisions, rate negotiations, underwriting exceptions, lega
         sections: [
           {
             title: "Platform Health Assessment",
-            content: "The Acme Financial agent platform is operating within normal parameters. Quality Index has improved from 62 to 76 over the past 5 days, driven by the deployment of the Customer Inquiry Bot and completion of the Loan Application Assistant review cycle. One agent remains in draft state with blocking governance violations requiring designer attention.",
+            content: "The Acme Financial agent platform is operating within normal parameters. Quality Index has improved from 42 to 76 over the past 10 days — an 81% gain driven by the deployment of the Customer Inquiry Bot, completion of the Loan Application Assistant review cycle, and strengthened governance policies. One agent remains in draft state with blocking governance violations requiring designer attention.",
             severity: "nominal",
-            details: ["QI: 76/100 (+14 from 5-day baseline)", "Governance validity rate: 80% (4/5 agents passing)", "Active review queue: 1 agent (Fraud Detection Advisor at Step 2/3)"],
+            details: ["QI: 76/100 (+34 from 10-day baseline of 42)", "Governance validity rate: 80% (4/5 agents passing)", "SLA compliance: 100% (up from 75%)", "Active review queue: 1 agent (Fraud Detection Advisor at Step 2/3)"],
           },
           {
             title: "Quality Trends",
