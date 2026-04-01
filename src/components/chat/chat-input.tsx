@@ -38,7 +38,7 @@ export function ChatInput({ onSend, disabled, placeholder = "Describe your agent
   }
 
   return (
-    <div className="flex items-end gap-2 border-t border-gray-200 bg-white p-4">
+    <div className="flex items-end gap-2 border-t border-border bg-surface p-4">
       <textarea
         ref={textareaRef}
         value={value}
@@ -48,12 +48,12 @@ export function ChatInput({ onSend, disabled, placeholder = "Describe your agent
         placeholder={placeholder}
         disabled={disabled}
         rows={1}
-        className="flex-1 resize-none rounded-card border border-gray-300 px-4 py-3 text-sm outline-none focus:border-gray-400 disabled:opacity-50"
+        className="flex-1 resize-none rounded-lg border border-border bg-surface px-4 py-3 text-sm text-text outline-none placeholder:text-text-tertiary focus:border-primary/60 focus:ring-1 focus:ring-primary/20 disabled:opacity-50 transition-colors"
       />
       <button
         onClick={handleSend}
         disabled={disabled || !value.trim()}
-        className="rounded-xl bg-violet-600 px-4 py-3 text-sm text-white hover:bg-violet-700 disabled:opacity-50"
+        className="btn-primary rounded-xl px-4 py-3 text-sm font-medium disabled:opacity-50"
       >
         Send
       </button>

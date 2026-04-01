@@ -17,13 +17,13 @@ const DOMAIN_DEFINITIONS: ReadonlyArray<{
   label: string;
   icon: string;
 }> = [
-  { key: "identity",     label: "Purpose",      icon: "\u25CE" }, // ◎
-  { key: "tools",        label: "Capabilities", icon: "\u2699" }, // ⚙
-  { key: "instructions", label: "Behavior",     icon: "\uD83D\uDCCB" }, // 📋
-  { key: "knowledge",    label: "Knowledge",    icon: "\uD83D\uDCDA" }, // 📚
-  { key: "constraints",  label: "Guardrails",   icon: "\uD83D\uDEA7" }, // 🚧
-  { key: "governance",   label: "Governance",   icon: "\uD83D\uDEE1" }, // 🛡
-  { key: "audit",        label: "Audit",        icon: "\uD83D\uDCDD" }, // 📝
+  { key: "identity",     label: "Purpose",      icon: "Target"      },
+  { key: "tools",        label: "Capabilities", icon: "Cpu"         },
+  { key: "instructions", label: "Behavior",     icon: "GitBranch"   },
+  { key: "knowledge",    label: "Knowledge",    icon: "Database"    },
+  { key: "constraints",  label: "Guardrails",   icon: "ShieldAlert" },
+  { key: "governance",   label: "Governance",   icon: "Lock"        },
+  { key: "audit",        label: "Audit",        icon: "ScrollText"  },
 ];
 
 // ── Item count per domain (mirrors completeness-map.tsx logic) ──────────────

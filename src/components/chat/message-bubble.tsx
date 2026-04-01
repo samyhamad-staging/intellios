@@ -1,17 +1,33 @@
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
 import { Divider } from "@/components/ui/divider";
+import {
+  Target, Cpu, GitBranch, Database, ShieldAlert, Lock, ScrollText,
+} from "lucide-react";
 
-// Domain key → user-friendly label for the domain tag
-const DOMAIN_LABELS: Record<string, { label: string; icon: string }> = {
-  identity:     { label: "Purpose",      icon: "\u25CE" },
-  tools:        { label: "Capabilities", icon: "\u2699" },
-  instructions: { label: "Behavior",     icon: "\uD83D\uDCCB" },
-  knowledge:    { label: "Knowledge",    icon: "\uD83D\uDCDA" },
-  constraints:  { label: "Guardrails",   icon: "\uD83D\uDEA7" },
-  governance:   { label: "Governance",   icon: "\uD83D\uDEE1" },
-  audit:        { label: "Audit",        icon: "\uD83D\uDCDD" },
+// ── Domain icon + label map ───────────────────────────────────────────────────
+
+const DOMAIN_ICONS: Record<string, React.ElementType> = {
+  identity:     Target,
+  tools:        Cpu,
+  instructions: GitBranch,
+  knowledge:    Database,
+  constraints:  ShieldAlert,
+  governance:   Lock,
+  audit:        ScrollText,
 };
+
+const DOMAIN_LABELS: Record<string, string> = {
+  identity:     "PURPOSE",
+  tools:        "CAPABILITIES",
+  instructions: "BEHAVIOR",
+  knowledge:    "KNOWLEDGE",
+  constraints:  "GUARDRAILS",
+  governance:   "GOVERNANCE",
+  audit:        "AUDIT",
+};
+
+// ── Markdown components ───────────────────────────────────────────────────────
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
@@ -45,36 +61,41 @@ const assistantComponents: Components = {
     <h3 className="text-sm font-semibold mt-2 mb-1">{children}</h3>
   ),
   code: ({ children }) => (
-    <code className="text-xs bg-gray-100 rounded px-1 py-0.5 font-mono">
+    <code className="text-xs bg-surface-muted rounded px-1 py-0.5 font-mono">
       {children}
     </code>
   ),
   pre: ({ children }) => (
-    <pre className="text-xs bg-gray-100 rounded p-3 overflow-x-auto mb-2 font-mono">
+    <pre className="text-xs bg-surface-muted rounded p-3 overflow-x-auto mb-2 font-mono">
       {children}
     </pre>
   ),
   hr: () => <Divider soft className="my-2" />,
 };
 
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export function MessageBubble({ role, content, activeDomain }: MessageBubbleProps) {
   const isUser = role === "user";
-  const domainInfo = activeDomain ? DOMAIN_LABELS[activeDomain] : null;
+  const DomainIcon = activeDomain ? DOMAIN_ICONS[activeDomain] : null;
+  const domainLabel = activeDomain ? DOMAIN_LABELS[activeDomain] : null;
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+        className={`max-w-[80%] rounded-xl px-4 py-3 ${
           isUser
-            ? "bg-indigo-600 text-white"
-            : "bg-white text-gray-900 border border-gray-200"
+            ? "bg-primary text-white"
+            : "bg-surface text-text border border-border"
         }`}
       >
-        {/* Domain tag for AI messages */}
-        {!isUser && domainInfo && (
-          <div className="flex items-center gap-1 mb-1.5">
-            <span className="text-2xs leading-none">{domainInfo.icon}</span>
-            <span className="text-2xs font-medium text-gray-400">{domainInfo.label}</span>
+        {/* Domain annotation for AI messages */}
+        {!isUser && DomainIcon && domainLabel && (
+          <div className="flex items-center gap-1.5 mb-2 opacity-70">
+            <DomainIcon size={11} className="text-indigo-400 shrink-0" />
+            <span className="text-2xs font-mono tracking-widest text-indigo-400">
+              {domainLabel}
+            </span>
           </div>
         )}
         {isUser ? (

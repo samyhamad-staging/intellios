@@ -123,18 +123,18 @@ export function ChatContainer({
         {isEmpty && showSuggestedPrompts ? (
           <div className="flex h-full flex-col items-center justify-center gap-6 px-4">
             <div className="text-center">
-              <p className="text-base font-medium text-gray-700">What kind of agent do you want to build?</p>
-              <p className="mt-1 text-sm text-gray-400">Choose a starting point or describe your own idea below.</p>
+              <p className="text-base font-medium text-text">What kind of agent do you want to build?</p>
+              <p className="mt-1 text-sm text-text-secondary">Choose a starting point or describe your own idea below.</p>
             </div>
             <div className="grid w-full max-w-lg grid-cols-2 gap-2">
               {SUGGESTED_PROMPTS.map((prompt) => (
                 <button
                   key={prompt}
                   onClick={() => handleSend(prompt)}
-                  className="flex items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm text-gray-700 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 transition-colors"
+                  className="group flex items-center justify-between gap-2 rounded-xl border border-border bg-surface-raised px-4 py-3 text-left text-sm text-text-secondary hover:border-primary/40 hover:bg-primary/5 hover:text-text transition-colors"
                 >
                   <span>{prompt}</span>
-                  <ArrowRight size={13} className="shrink-0 text-gray-300 group-hover:text-violet-400" />
+                  <ArrowRight size={13} className="shrink-0 text-text-tertiary group-hover:text-primary transition-colors" />
                 </button>
               ))}
             </div>
@@ -180,14 +180,19 @@ export function ChatContainer({
 
         {isStreaming && (
           <div className="flex justify-start">
-            <div className="rounded-2xl bg-white border border-gray-200 px-4 py-3">
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "0ms" }} />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "150ms" }} />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "300ms" }} />
+            <div className="rounded-xl bg-surface-raised border border-border px-4 py-3">
+              <div className="flex items-center gap-3">
+                {/* Signal waveform indicator */}
+                <div className="flex items-end gap-0.5 h-4">
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="w-0.5 rounded-full bg-primary/60 animate-[signal-bar_1.2s_ease-in-out_infinite]"
+                      style={{ animationDelay: `${i * 120}ms`, height: "8px", transformOrigin: "bottom" }}
+                    />
+                  ))}
                 </div>
-                <span className="text-xs text-gray-400">{streamingLabel}</span>
+                <span className="text-2xs font-mono text-text-tertiary">{streamingLabel}</span>
               </div>
             </div>
           </div>
