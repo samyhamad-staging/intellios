@@ -2,6 +2,24 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 087 — 2026-04-02: The Session List as a Workspace
+
+The conversation phase (session 086) tells a user what's possible. The session list tells a user where they are. This session addressed the session list — the workspace home for architects building agents — which had accumulated a structural problem that made it unusable as a real working surface.
+
+**The ghost session problem is a trust problem.** When 12 of 14 "In Progress" sessions are labeled "New session / No conversation started," the count stops meaning anything. "In Progress — 14" implies 14 agents are being built. The reality was 2. An architect arriving at this screen after a week away cannot orient themselves. Which sessions are real? Which are accidents? Is my loan calculator agent in here somewhere?
+
+The root cause was architectural — not visual. `NewIntakeButton` called `POST /api/intake/sessions` the moment a user clicked the button, regardless of whether they had any intention of filling it out. Back-navigation, accidental clicks, session exploration — all created permanent records. The fix is not a softer button or a different color. The fix is: don't create the record until there's intent. `QuickStartModal` captures a minimum viable description (10 characters) before the session is created. The button now opens a modal. The modal creates the session.
+
+**The tab bar is the right architecture for two distinct collections.** Completed sessions and in-progress sessions are different things. A completed session is a read-only record — find it, generate from it, reference it. An in-progress session is an active workspace — return to it, continue it. Displaying both in one scrolling list conflates lookup behavior with workspace behavior. Putting them in separate tabs means the default view (In Progress) is always clean and focused; the Complete tab is always reachable without scroll. Tab count badges make the distribution immediately visible.
+
+**Staleness is information.** A session last touched in November reads differently from a session touched today. The existing UI showed both as "In Progress" with relative timestamps ("Nov 2"). An architect returning after two months doesn't know which sessions are genuinely active versus long-abandoned. The amber "Inactive Xd" badge, shown only when `diffDays > 7`, adds signal without adding noise — it's invisible for recent sessions and immediately visible for stale ones.
+
+**Ghost cleanup should require one decision, not twenty.** Twelve ghost sessions × two clicks each = 24 interactions to clean up an accident. The collapsed "Empty — N" section with a single "Clean up N" button inverts this: the ghost sessions are out of the way by default (collapsed), and eliminating all of them is one intentional action. The collapsible pattern is also honest about what ghost sessions are — they exist but shouldn't dominate the interface.
+
+**Pattern note.** Both this session and session 086 follow the same diagnostic method: screenshot → spec → code cross-reference → ranked findings → implementation. The discipline of writing the findings before writing the code forces a commitment to prioritization. Not everything is P0. Ghost prevention is P0. The domain strip size is P1. Agent name validation is P3. Treating all findings equally produces unfocused sprints; ranking them produces a release with a clear center of gravity.
+
+---
+
 ## Session 086 — 2026-04-02: The Conversation Phase as a Product Surface
 
 This session focused on a part of the product that had received implementation attention across many sessions but had never been evaluated holistically as a user experience: the Design Studio conversation phase — the screen a user sees while actively talking to the AI to define their agent.

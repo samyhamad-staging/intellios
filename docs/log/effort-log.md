@@ -38,6 +38,34 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 087 — 2026-04-02
+
+**Design Studio Session List — UX/UI Enhancement Pass (P0–P3)**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| UX analysis | Cross-referenced screenshot vs. page.tsx, new-intake-button.tsx, spec | ~35k in / ~3k out |
+| Implementation (4 files) | QuickStartModal, NewIntakeButton refactor, IntakePageClient, page.tsx refactor | ~45k in / ~10k out |
+| Documentation | Session log 087, _index, effort-log, project-journal | ~10k in / ~3.5k out |
+| **Session total (est.)** | | **~90k in / ~16.5k out** |
+
+**Estimated session cost:** Sonnet ~90k in × $3/1M + ~16.5k out × $15/1M = **$0.27 + $0.25 = ~$0.52**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Provided screenshot + requested UX/UI analysis of session list | D-Arch | Initiated analysis session |
+| 2 | Approved plan (via plan mode) — all P0–P3 scope | D-Approve | Approved 7-item implementation scope |
+| 3 | Context continued from previous session — implementation resumed | D-Approve | No additional direction needed |
+
+**Totals:** 3 messages · 1 D-Arch · 2 D-Approve · ~10 min
+
+---
+
 ## Session 086 — 2026-04-02
 
 **Design Studio Conversation Phase — UX/UI Enhancement Pass (P0–P3)**
