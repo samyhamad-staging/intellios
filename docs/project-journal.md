@@ -2,6 +2,20 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 086 — 2026-04-02: The Conversation Phase as a Product Surface
+
+This session focused on a part of the product that had received implementation attention across many sessions but had never been evaluated holistically as a user experience: the Design Studio conversation phase — the screen a user sees while actively talking to the AI to define their agent.
+
+**Why this mattered.** The conversation phase is the highest-stakes moment in the entire Intellios workflow. It's where the enterprise user decides what they're building, where governance context gets captured, and where the system's intelligence is most visible. Yet when examined against a live screenshot, the experience had several critical gaps: the right panel showed a static "ANALYZING" state that never resolved, the risk tier classification badge could be obscured by the shell, the domain progress counter showed "0/7" regardless of conversation state, and Phase 1 context was invisible.
+
+**The resolution pattern.** Every fix in this session followed the same principle: connect existing data to existing UI. The payload was already being fetched; it just needed to drive the panel's visual state machine. The agent name was already being captured; it just needed to surface in the breadcrumb. The classification was already being computed; it just needed to be in the header. The Phase 1 context was already in state; it just needed a banner. Nothing new was computed — the intelligence already existed, it just wasn't being shown.
+
+**The two-state panel.** The chosen pattern — ghost checklist at low opacity during the analysing state, resolving to live data the moment the first tool call fires — serves two purposes: it shows users what *will* be captured (instructional), and it makes the transition visible and satisfying. The "ANALYZING" label stops bouncing when real content arrives.
+
+**On merging into an advanced main.** Main had progressed 16 sessions beyond this branch, incorporating the Design Intelligence panel, `DomainProgressStrip`, and clickable domain chips that steer the conversation. Our changes were superseded in the source files. The documentation additions (session log, effort log, journal entry) carry forward as the permanent record of the analysis and decision-making in this session.
+
+---
+
 ## Session 085 — 2026-04-01: Reading the Interface Like a User
 
 Session 084 made the intake interface look like an enterprise AI product. Session 085 is the next step: reading it as a first-time user would, catching the signals that still felt wrong.
