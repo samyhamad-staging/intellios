@@ -2,6 +2,24 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 069 — 2026-04-02: The Conversation Phase as a Product Surface
+
+This session focused on a part of the product that had received implementation attention across many sessions but had never been evaluated holistically as a user experience: the Design Studio conversation phase — the screen a user sees while actively talking to the AI to define their agent.
+
+**Why this mattered now.** The conversation phase is the highest-stakes moment in the entire Intellios workflow. It's where the enterprise user decides what they're building, where governance context gets captured, and where the system's intelligence is most visible. Yet when examined against a live screenshot, the experience had several critical gaps: the right panel appeared empty (showing only "ANALYZING" with no resolution), the risk tier classification badge was in a floating bar that could be obscured, the domain progress counter showed "0/7" regardless of conversation state, and the Phase 1 context the user had already submitted was invisible above the conversation. The chat input said "Reply..." — generic enough that it could belong to any messaging app.
+
+**The analysis methodology.** Rather than listing cosmetic issues, the session ran a structured cross-reference: screenshot versus spec, spec versus code, code versus rendered behavior. This revealed a category of problem that's easy to miss in incremental development: features that are implemented correctly in isolation but that don't communicate their state to the user. The right panel was fetching payload data correctly and building a section checklist correctly — but showed a static "ANALYZING" message with no transition. The classification bar existed in code but was in a layout position that made it invisible in the redesigned shell. The domain nav bar existed in the screenshot as a static element with no data binding.
+
+**The resolution pattern.** Every fix in this session followed the same principle: connect existing data to existing UI. The payload was already being fetched; it just needed to drive the panel's visual state machine. The agent name was already being captured by tool calls; it just needed to surface in the breadcrumb. The classification was already being computed; it just needed to be in the header, not a secondary bar. The Phase 1 context was already in state; it just needed a banner above the chat. Nothing new was computed — the intelligence already existed, it just wasn't being shown.
+
+**The two-state panel.** The most substantive design decision was how to handle the transition between "nothing captured yet" and "data is coming in." The chosen pattern — ghost checklist at low opacity during the analysing state, resolving to live data the moment the first tool call fires — serves two purposes: it shows users what *will* be captured (the ghost list is instructional), and it makes the transition visible and satisfying rather than abrupt. The "ANALYZING" label stops bouncing when real content arrives. This is the design language of a system that's thinking, not waiting.
+
+**The stable callback problem.** A subtle correctness issue emerged during implementation: passing a callback from a parent component into a `useEffect` dependency array causes re-renders if the callback reference isn't stable. The `onSectionsChange` prop needed the stable `useRef` pattern in `IntakeProgress` to avoid infinite re-fetch loops. This is a known React pattern but one that's easy to miss when writing the callback handler inline. The fix was adding a single `useRef` to capture the latest callback reference, then calling through the ref inside the effect without listing it as a dependency.
+
+**What this session reveals about the product.** Intellios is now feature-complete in its core workflow. The remaining work is in the second layer: making the features visible, coherent, and trustworthy as a user experience. The conversation phase is the entry point to everything. If it doesn't communicate what's being built in real time, the intelligence behind it becomes invisible. This session was about closing that gap.
+
+---
+
 ## Sessions 065b–066b — 2026-03-28: Production Hardening and the Review Experience
 
 Two sessions on the same day. The first spent almost entirely fixing the gap between what works locally and what works in production. The second on the quality of the moment just before a user commits to generating a blueprint.

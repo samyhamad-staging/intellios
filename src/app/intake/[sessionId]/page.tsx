@@ -4,7 +4,7 @@ import { use, useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { UIMessage } from "ai";
 import { ChatContainer } from "@/components/chat/chat-container";
-import { IntakeProgress } from "@/components/intake/intake-progress";
+import { IntakeProgress, SectionSummary } from "@/components/intake/intake-progress";
 import { IntakeContextForm } from "@/components/intake/intake-context-form";
 import { IntakeReview } from "@/components/intake/intake-review";
 import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
@@ -57,6 +57,9 @@ export default function IntakeSessionPage({
   const [intakeScoreLoading, setIntakeScoreLoading] = useState(false);
   const [scorePopoverOpen, setScorePopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+  // Live payload state — synced from IntakeProgress on every refresh
+  const [liveSections, setLiveSections] = useState<SectionSummary[]>([]);
+  const [liveAgentName, setLiveAgentName] = useState<string | null>(null);
 
   // Load session status + message history + contributions on mount
   useEffect(() => {
@@ -166,6 +169,11 @@ export default function IntakeSessionPage({
       return () => document.removeEventListener("mousedown", handleOutside);
     }
   }, [scorePopoverOpen]);
+
+  const handleSectionsChange = useCallback((sections: SectionSummary[], name: string | null) => {
+    setLiveSections(sections);
+    if (name) setLiveAgentName(name);
+  }, []);
 
   function handleResponseComplete() {
     setRefreshTick((t) => t + 1);
@@ -403,56 +411,71 @@ export default function IntakeSessionPage({
   // ─── Phase 2: Conversation ───────────────────────────────────────────────────
 
   const RISK_TIER_BADGE_COLORS: Record<IntakeRiskTier, string> = {
-    low: "bg-green-100 text-green-700",
-    medium: "bg-amber-100 text-amber-700",
-    high: "bg-orange-100 text-orange-700",
+    low:      "bg-green-100 text-green-700",
+    medium:   "bg-amber-100 text-amber-700",
+    high:     "bg-orange-100 text-orange-700",
     critical: "bg-red-100 text-red-700",
   };
 
   const AGENT_TYPE_LABELS: Record<AgentType, string> = {
-    "automation": "Automation",
+    "automation":       "Automation",
     "decision-support": "Decision Support",
-    "autonomous": "Autonomous",
-    "data-access": "Data Access",
+    "autonomous":       "Autonomous",
+    "data-access":      "Data Access",
   };
+
+  const DOMAIN_NAV = [
+    { key: "identity",     label: "Purpose" },
+    { key: "tools",        label: "Capabilities" },
+    { key: "instructions", label: "Behavior" },
+    { key: "knowledge",    label: "Knowledge" },
+    { key: "constraints",  label: "Guardrails" },
+    { key: "governance",   label: "Governance" },
+    { key: "audit",        label: "Audit" },
+  ] as const;
+
+  const domainsFilled = liveSections.filter((s) => s.filled).length;
 
   return (
     <div className="flex h-screen flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-3">
-        <div>
-          <h1 className="text-lg font-semibold">Intellios</h1>
-          <p className="text-xs text-text-secondary">Agent Intake</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-xs text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
-        </div>
-      </header>
+      {/* ── Unified header ─────────────────────────────────────────── */}
+      <header className="border-b border-border bg-surface">
 
-      {/* Classification header — shown below nav header, above chat */}
-      {(classificationLoading || classification) && (
-        <div className="border-b border-border bg-surface-raised px-6 py-2 flex min-h-[32px] items-center">
-          {classificationLoading && !classification ? (
-            <div className="flex animate-pulse items-center gap-2">
-              <div className="h-5 w-24 rounded-full bg-surface-muted" />
-              <div className="h-5 w-16 rounded-full bg-surface-muted" />
-              <span className="text-xs text-text-tertiary">Classifying…</span>
-            </div>
-          ) : classification && !editingClassification ? (
-            <div className="flex flex-col gap-0.5">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-text-tertiary mr-1">Agent classification:</span>
-                <span
-                  className="rounded-full bg-surface-muted px-2.5 py-0.5 text-xs font-medium text-text-secondary"
-                  title="Agent type — how this agent operates (auto-classified from your description)"
-                >
-                  {AGENT_TYPE_LABELS[classification.agentType]}
-                </span>
+        {/* Row 1: breadcrumb + classification + session id */}
+        <div className="flex items-center justify-between px-6 py-3">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-sm">
+            <span className="text-text-tertiary">Design Studio</span>
+            <span className="text-text-tertiary">›</span>
+            <span className={`font-medium transition-colors duration-300 ${liveAgentName ? "text-text" : "text-text-secondary"}`}>
+              {liveAgentName ?? "New session"}
+            </span>
+          </div>
+
+          {/* Right: classification + session id */}
+          <div className="flex items-center gap-2.5">
+            {/* Classification loading pulse */}
+            {classificationLoading && !classification && (
+              <div className="flex animate-pulse items-center gap-1.5">
+                <div className="h-5 w-20 rounded-full bg-surface-muted" />
+                <div className="h-5 w-16 rounded-full bg-surface-muted" />
+              </div>
+            )}
+
+            {/* Classification chips — read mode */}
+            {classification && !editingClassification && (
+              <div className="flex items-center gap-1.5">
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${RISK_TIER_BADGE_COLORS[classification.riskTier]}`}
                   title="Risk tier — governs review requirements and governance policies applied"
                 >
                   {classification.riskTier.toUpperCase()} risk
+                </span>
+                <span
+                  className="rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-secondary"
+                  title="Agent type — how this agent operates"
+                >
+                  {AGENT_TYPE_LABELS[classification.agentType]}
                 </span>
                 <button
                   onClick={() => {
@@ -460,66 +483,154 @@ export default function IntakeSessionPage({
                     setEditRiskTier(classification.riskTier);
                     setEditingClassification(true);
                   }}
-                  className="ml-1 text-xs text-text-tertiary hover:text-text-secondary underline-offset-2 hover:underline"
+                  className="text-[11px] text-text-tertiary hover:text-text-secondary underline-offset-2 hover:underline"
                 >
                   Override
                 </button>
               </div>
-              {classification.rationale && (
-                <p className="text-xs italic text-text-tertiary">{classification.rationale}</p>
-              )}
-            </div>
-          ) : classification && editingClassification ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-text-tertiary">Override classification:</span>
-              <select
-                value={editAgentType}
-                onChange={(e) => setEditAgentType(e.target.value as AgentType)}
-                className="h-[20px] rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
-                title="Agent type"
-              >
-                <option value="automation">Automation</option>
-                <option value="decision-support">Decision Support</option>
-                <option value="autonomous">Autonomous</option>
-                <option value="data-access">Data Access</option>
-              </select>
-              <select
-                value={editRiskTier}
-                onChange={(e) => setEditRiskTier(e.target.value as IntakeRiskTier)}
-                className="h-[20px] rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
-                title="Risk tier"
-              >
-                <option value="low">LOW risk</option>
-                <option value="medium">MEDIUM risk</option>
-                <option value="high">HIGH risk</option>
-                <option value="critical">CRITICAL risk</option>
-              </select>
-              <button
-                onClick={handleSaveClassification}
-                disabled={classificationSaving}
-                className="rounded bg-text px-2.5 py-0.5 text-xs font-medium text-surface hover:opacity-80 disabled:opacity-50"
-              >
-                {classificationSaving ? "Saving…" : "Save classification"}
-              </button>
-              <button
-                onClick={() => setEditingClassification(false)}
-                className="text-xs text-text-tertiary hover:text-text-secondary"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : null}
+            )}
+
+            {/* Classification — edit mode */}
+            {classification && editingClassification && (
+              <div className="flex items-center gap-2">
+                <select
+                  value={editAgentType}
+                  onChange={(e) => setEditAgentType(e.target.value as AgentType)}
+                  className="h-[22px] rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
+                >
+                  <option value="automation">Automation</option>
+                  <option value="decision-support">Decision Support</option>
+                  <option value="autonomous">Autonomous</option>
+                  <option value="data-access">Data Access</option>
+                </select>
+                <select
+                  value={editRiskTier}
+                  onChange={(e) => setEditRiskTier(e.target.value as IntakeRiskTier)}
+                  className="h-[22px] rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
+                >
+                  <option value="low">LOW risk</option>
+                  <option value="medium">MEDIUM risk</option>
+                  <option value="high">HIGH risk</option>
+                  <option value="critical">CRITICAL risk</option>
+                </select>
+                <button
+                  onClick={handleSaveClassification}
+                  disabled={classificationSaving}
+                  className="rounded bg-text px-2.5 py-0.5 text-xs font-medium text-surface hover:opacity-80 disabled:opacity-50"
+                >
+                  {classificationSaving ? "Saving…" : "Save"}
+                </button>
+                <button
+                  onClick={() => setEditingClassification(false)}
+                  className="text-xs text-text-tertiary hover:text-text-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
+            <div className="text-[11px] text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
+          </div>
         </div>
-      )}
+
+        {/* Row 2: live domain nav */}
+        <div className="flex items-center justify-between px-6 pb-3">
+          <div className="flex items-center gap-0.5">
+            {DOMAIN_NAV.map(({ key, label }) => {
+              const s = liveSections.find((sec) => sec.key === key);
+              const isFilled   = s?.filled ?? false;
+              const isRequired = s?.required ?? false;
+              return (
+                <div
+                  key={key}
+                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-all duration-300 ${
+                    isFilled
+                      ? "text-primary"
+                      : isRequired
+                      ? "text-amber-700"
+                      : "text-text-tertiary"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
+                      isFilled ? "bg-primary" : isRequired ? "bg-amber-400 animate-pulse" : "bg-border"
+                    }`}
+                  />
+                  {label}
+                </div>
+              );
+            })}
+          </div>
+          <span className={`text-xs font-medium tabular-nums transition-colors duration-300 ${
+            domainsFilled === 7 ? "text-green-700" : "text-text-tertiary"
+          }`}>
+            {domainsFilled}/7 domains
+          </span>
+        </div>
+      </header>
 
       {/* Body: chat + progress sidebar */}
       <main className="flex flex-1 overflow-hidden">
-        <ChatContainer
-          sessionId={sessionId}
-          initialMessages={initialMessages}
-          showSuggestedPrompts={false}
-          onResponseComplete={handleResponseComplete}
-        />
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Phase 1 context summary banner — fills whitespace, anchors the conversation */}
+          {intakeContext && (
+            <div className="shrink-0 border-b border-border bg-surface-raised px-6 py-2.5">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-text-tertiary shrink-0">
+                  Session context
+                </span>
+                {intakeContext.deploymentType && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-text-tertiary">Deployment</span>
+                    <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-text-secondary capitalize">
+                      {intakeContext.deploymentType.replace(/-/g, " ")}
+                    </span>
+                  </div>
+                )}
+                {intakeContext.dataSensitivity && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-text-tertiary">Data</span>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium capitalize ${
+                      intakeContext.dataSensitivity === "pii" || intakeContext.dataSensitivity === "regulated"
+                        ? "bg-amber-50 text-amber-700 border border-amber-200"
+                        : "bg-surface-muted text-text-secondary"
+                    }`}>
+                      {intakeContext.dataSensitivity.replace(/-/g, " ")}
+                    </span>
+                  </div>
+                )}
+                {intakeContext.regulatoryScope.filter((s) => s !== "none").length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-text-tertiary">Regulatory</span>
+                    <div className="flex gap-1">
+                      {intakeContext.regulatoryScope.filter((s) => s !== "none").map((scope) => (
+                        <span key={scope} className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-text-secondary">
+                          {scope}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {intakeContext.agentPurpose && (
+                  <p
+                    className="text-[11px] text-text-tertiary italic truncate max-w-xs"
+                    title={intakeContext.agentPurpose}
+                  >
+                    &ldquo;{intakeContext.agentPurpose.length > 80
+                      ? intakeContext.agentPurpose.slice(0, 80) + "…"
+                      : intakeContext.agentPurpose}&rdquo;
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+          <ChatContainer
+            sessionId={sessionId}
+            initialMessages={initialMessages}
+            showSuggestedPrompts={false}
+            onResponseComplete={handleResponseComplete}
+          />
+        </div>
         <IntakeProgress
           sessionId={sessionId}
           refreshTick={refreshTick}
@@ -527,6 +638,7 @@ export default function IntakeSessionPage({
           onContributionAdded={handleContributionAdded}
           context={intakeContext ?? undefined}
           riskTier={classification?.riskTier ?? null}
+          onSectionsChange={handleSectionsChange}
         />
       </main>
     </div>

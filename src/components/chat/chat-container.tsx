@@ -18,6 +18,17 @@ const STREAMING_LABELS: Record<string, string> = {
   finalize_requirements: "Finalizing requirements…",
 };
 
+// Context-adaptive placeholder: shifts as the conversation progresses
+const PLACEHOLDER_BY_TOOL: Record<string, string> = {
+  set_agent_identity:    "Describe the capabilities you need…",
+  add_tool:              "Any other tools or integrations required?",
+  set_instructions:      "Describe how the agent should behave…",
+  add_knowledge_source:  "What knowledge sources should it access?",
+  set_constraints:       "Any domains to restrict or actions to deny?",
+  add_governance_policy: "Describe any regulatory or compliance requirements…",
+  set_audit_config:      "Any specific audit or retention requirements?",
+};
+
 const SUGGESTED_PROMPTS = [
   "I want to build a customer support agent",
   "I need an internal knowledge base assistant",
@@ -105,6 +116,14 @@ export function ChatContainer({
     ? (STREAMING_LABELS[lastToolCallName] ?? "Thinking…")
     : "Thinking…";
 
+  const inputPlaceholder = useMemo(() => {
+    if (isEmpty) return "Describe the agent you want to build…";
+    if (lastToolCallName && PLACEHOLDER_BY_TOOL[lastToolCallName]) {
+      return PLACEHOLDER_BY_TOOL[lastToolCallName];
+    }
+    return "Continue the conversation…";
+  }, [isEmpty, lastToolCallName]);
+
   return (
     <div className="flex h-full flex-1 flex-col">
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -179,7 +198,7 @@ export function ChatContainer({
         )}
       </div>
 
-      <ChatInput onSend={handleSend} disabled={isStreaming} />
+      <ChatInput onSend={handleSend} disabled={isStreaming} placeholder={inputPlaceholder} />
     </div>
   );
 }
