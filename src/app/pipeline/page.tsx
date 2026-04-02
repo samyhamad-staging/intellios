@@ -421,7 +421,7 @@ function AgentCard({ agent }: { agent: Agent }) {
   return (
     <Link
       href={`/registry/${agent.agentId}`}
-      className={`block rounded-lg border bg-surface p-3 transition-all hover:-translate-y-px ${borderCls} ${shadowCls}`}
+      className={`flex h-[156px] flex-col rounded-lg border bg-surface p-3 transition-all hover:-translate-y-px ${borderCls} ${shadowCls}`}
     >
       {/* Name + governance shield */}
       <div className="flex items-start gap-2">
@@ -453,21 +453,23 @@ function AgentCard({ agent }: { agent: Agent }) {
         </div>
       )}
 
-      {/* Footer: SLA badge + age (color-coded for overdue) */}
-      <div className="mt-2.5 flex items-center gap-1.5">
-        {sla === "alert" && <Badge variant="danger">SLA breach</Badge>}
-        {sla === "warn"  && <Badge variant="warning">Nearing SLA</Badge>}
-        <span className={`ml-auto text-xs ${ageClass(agent.updatedAt, agent.status)}`}>
-          {timeAgo(agent.updatedAt)}
-        </span>
-      </div>
-
-      {/* CTA hint — visible when there's a clear next action for this stage */}
-      {ctaLabel && (
-        <div className="mt-2 border-t border-border/60 pt-1.5">
-          <span className="text-2xs font-medium text-primary/80">{ctaLabel} →</span>
+      {/* Footer anchored to bottom — SLA + age + optional CTA */}
+      <div className="mt-auto">
+        <div className="flex items-center gap-1.5">
+          {sla === "alert" && <Badge variant="danger">SLA breach</Badge>}
+          {sla === "warn"  && <Badge variant="warning">Nearing SLA</Badge>}
+          <span className={`ml-auto text-xs ${ageClass(agent.updatedAt, agent.status)}`}>
+            {timeAgo(agent.updatedAt)}
+          </span>
         </div>
-      )}
+
+        {/* CTA hint — visible when there's a clear next action for this stage */}
+        {ctaLabel && (
+          <div className="mt-1.5 border-t border-border/60 pt-1.5">
+            <span className="text-2xs font-medium text-primary/80">{ctaLabel} →</span>
+          </div>
+        )}
+      </div>
     </Link>
   );
 }
