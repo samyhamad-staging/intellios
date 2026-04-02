@@ -71,6 +71,10 @@ const assistantComponents: Components = {
     </pre>
   ),
   hr: () => <Divider soft className="my-2" />,
+  // Strip link styling — AI-generated links in intake chat have no valid destination.
+  // Without this override, ReactMarkdown renders <a> tags with full browser default
+  // styles (blue, underlined, cursor:pointer), creating false click affordances.
+  a: ({ children }) => <>{children}</>,
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
