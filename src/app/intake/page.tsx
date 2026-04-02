@@ -119,60 +119,66 @@ export default async function IntakeSessionsPage() {
   const completed = sessions.filter((s) => s.status === "completed");
 
   return (
-    <div className="px-6 py-6">
+    <div className="flex flex-col">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-text">Design Studio</h1>
-          <p className="mt-0.5 text-sm text-text-secondary">
-            {sessions.length === 0
-              ? "Start a session to begin designing an agent."
-              : `${sessions.length} session${sessions.length > 1 ? "s" : ""} — ${active.length} in progress, ${completed.length} complete`}
-          </p>
+      <header className="shrink-0 border-b border-border bg-surface px-6 py-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-text">Design Studio</h1>
+            <p className="mt-0.5 text-sm text-text-secondary">
+              {sessions.length === 0
+                ? "Start a session to begin designing an agent."
+                : `${sessions.length} session${sessions.length > 1 ? "s" : ""} — ${active.length} in progress, ${completed.length} complete`}
+            </p>
+          </div>
+          <NewIntakeButton className="btn-primary inline-flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50" />
         </div>
-        <NewIntakeButton className="btn-primary inline-flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50" />
+      </header>
+
+      {/* ── Content ─────────────────────────────────────────────────────── */}
+      <div className="px-6 py-6">
+
+        {/* Empty state */}
+        {sessions.length === 0 && (
+          <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface py-16 text-center">
+            <Inbox size={28} className="mb-3 text-text-tertiary" />
+            <h2 className="mb-1 text-sm font-medium text-text">No intake sessions yet</h2>
+            <p className="mb-6 max-w-xs text-xs text-text-secondary">
+              Each agent starts with an intake conversation where you define its purpose, capabilities, and governance requirements.
+            </p>
+            <NewIntakeButton className="btn-primary inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium" />
+          </div>
+        )}
+
+        {/* In Progress */}
+        {active.length > 0 && (
+          <section className="mb-6">
+            <h2 className="mb-2.5 text-2xs font-mono font-semibold uppercase tracking-widest text-text-tertiary">
+              In Progress — {active.length}
+            </h2>
+            <div className="overflow-hidden rounded-xl border border-border bg-surface">
+              {active.map((s, i) => (
+                <SessionRow key={s.id} session={s} isLast={i === active.length - 1} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Completed */}
+        {completed.length > 0 && (
+          <section>
+            <h2 className="mb-2.5 text-2xs font-mono font-semibold uppercase tracking-widest text-text-tertiary">
+              Completed — {completed.length}
+            </h2>
+            <div className="overflow-hidden rounded-xl border border-border bg-surface">
+              {completed.map((s, i) => (
+                <SessionRow key={s.id} session={s} isLast={i === completed.length - 1} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
-
-      {/* ── Empty state ─────────────────────────────────────────────────── */}
-      {sessions.length === 0 && (
-        <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface py-16 text-center">
-          <Inbox size={28} className="mb-3 text-text-tertiary" />
-          <h2 className="mb-1 text-sm font-medium text-text">No intake sessions yet</h2>
-          <p className="mb-6 max-w-xs text-xs text-text-secondary">
-            Each agent starts with an intake conversation where you define its purpose, capabilities, and governance requirements.
-          </p>
-          <NewIntakeButton className="btn-primary inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium" />
-        </div>
-      )}
-
-      {/* ── In Progress ─────────────────────────────────────────────────── */}
-      {active.length > 0 && (
-        <section className="mb-6">
-          <h2 className="mb-2.5 text-2xs font-mono font-semibold uppercase tracking-widest text-text-tertiary">
-            In Progress — {active.length}
-          </h2>
-          <div className="overflow-hidden rounded-xl border border-border bg-surface">
-            {active.map((s, i) => (
-              <SessionRow key={s.id} session={s} isLast={i === active.length - 1} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── Completed ───────────────────────────────────────────────────── */}
-      {completed.length > 0 && (
-        <section>
-          <h2 className="mb-2.5 text-2xs font-mono font-semibold uppercase tracking-widest text-text-tertiary">
-            Completed — {completed.length}
-          </h2>
-          <div className="overflow-hidden rounded-xl border border-border bg-surface">
-            {completed.map((s, i) => (
-              <SessionRow key={s.id} session={s} isLast={i === completed.length - 1} />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }
