@@ -121,6 +121,7 @@ export function ChatInput({
 
   return (
     <div className="border-t border-border bg-surface">
+      <div className="max-w-4xl mx-auto w-full">
 
       {/* ── Attachment preview ─────────────────────────────────────────────── */}
       {attachment && (
@@ -225,6 +226,7 @@ export function ChatInput({
           {filesUsedInSession}/{maxFilesPerSession} file uploads used this session
         </p>
       )}
+      </div> {/* end max-w-4xl wrapper */}
     </div>
   );
 }

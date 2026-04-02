@@ -109,7 +109,7 @@ export function IntakeProgress({
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <span className="text-2xs font-mono font-semibold text-text-tertiary tracking-widest uppercase">
-          System Analysis
+          Design Intelligence
         </span>
         {/* Live indicator — pulses when transparency is active */}
         {transparency && (
@@ -129,9 +129,9 @@ export function IntakeProgress({
         {!transparency?.classification && (
           <div className="rounded-lg border border-dashed border-border p-4 text-center">
             <BrainCircuit size={20} className="mx-auto mb-2 text-text-tertiary" />
-            <p className="text-2xs font-mono text-text-tertiary">AWAITING SIGNAL</p>
+            <p className="text-2xs font-mono text-text-tertiary">ANALYZING</p>
             <p className="mt-1 text-xs text-text-tertiary">
-              Classification and coverage signals populate as the conversation progresses.
+              Insights appear as your agent design takes shape.
             </p>
           </div>
         )}
@@ -215,7 +215,7 @@ export function IntakeProgress({
             );
           })()}
 
-        {/* Probing Topics */}
+        {/* Coverage Analysis */}
         {transparency && transparency.probingTopics.length > 0 &&
           (() => {
             const covered = transparency.probingTopics.filter((t) => t.covered).length;
@@ -223,7 +223,7 @@ export function IntakeProgress({
             return (
               <DisclosureSection
                 defaultOpen={true}
-                title="Probing Topics"
+                title="Coverage Analysis"
                 badge={
                   <span className={`text-2xs font-mono font-medium tabular-nums ${covered === total ? "text-emerald-600" : "text-text-tertiary"}`}>
                     {covered}/{total}

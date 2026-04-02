@@ -124,7 +124,7 @@ export default async function IntakeSessionsPage() {
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-text">Intake Sessions</h1>
+          <h1 className="text-xl font-semibold text-text">Design Studio</h1>
           <p className="mt-0.5 text-sm text-text-secondary">
             {sessions.length === 0
               ? "Start a session to begin designing an agent."

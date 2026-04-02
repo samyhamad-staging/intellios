@@ -127,11 +127,13 @@ function ScoreRing({ score }: { score: number }) {
 function DomainChip({
   domain,
   isActive,
+  onClick,
   onMouseEnter,
   onMouseLeave,
 }: {
   domain: DomainProgress;
   isActive: boolean;
+  onClick?: () => void;
   onMouseEnter: (e: React.MouseEvent) => void;
   onMouseLeave: () => void;
 }) {
@@ -139,14 +141,16 @@ function DomainChip({
   const barClass = fillBarClass(domain.fillLevel);
 
   return (
-    <div
+    <button
+      type="button"
       data-domain={domain.key}
+      onClick={onClick}
       className={`
         relative flex h-9 items-center gap-1.5 rounded-lg px-2.5 shrink-0
-        transition-all duration-300 cursor-default select-none overflow-hidden
+        transition-all duration-300 cursor-pointer select-none overflow-hidden
         ${isActive
           ? "bg-primary/8 border border-primary/50"
-          : "bg-transparent border border-transparent hover:bg-surface-muted/60"
+          : "bg-transparent border border-transparent hover:border-primary/30 hover:bg-primary/5"
         }
       `}
       style={isActive ? { boxShadow: "0 0 0 1px rgba(99,102,241,0.2), 0 0 12px rgba(99,102,241,0.15)" } : undefined}
@@ -185,7 +189,7 @@ function DomainChip({
           style={{ width: `${domain.fillLevel * 25}%` }}
         />
       )}
-    </div>
+    </button>
   );
 }
 
@@ -196,6 +200,8 @@ interface DomainProgressStripProps {
   classification: { agentType: AgentType; riskTier: IntakeRiskTier } | null;
   classificationLoading?: boolean;
   onOverrideClick?: () => void;
+  /** Click a domain chip to steer the conversation toward that topic */
+  onDomainClick?: (domainKey: string) => void;
   /** Shown before the first AI response populates transparency.domains */
   initialDomains?: DomainProgress[];
 }
@@ -205,6 +211,7 @@ export function DomainProgressStrip({
   classification,
   classificationLoading,
   onOverrideClick,
+  onDomainClick,
   initialDomains,
 }: DomainProgressStripProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -262,6 +269,7 @@ export function DomainProgressStrip({
             <DomainChip
               domain={domain}
               isActive={domain.key === activeDomain}
+              onClick={() => onDomainClick?.(domain.key)}
               onMouseEnter={(e) => handleMouseEnter(domain.key, e)}
               onMouseLeave={handleMouseLeave}
             />
@@ -354,9 +362,13 @@ function DomainTooltip({
           {domain.itemCount} {domain.itemCount === 1 ? "item" : "items"} captured
         </p>
       )}
-      {domain.key === activeDomain && (
+      {domain.key === activeDomain ? (
         <p className="text-indigo-400 font-mono text-2xs font-medium mt-1">
           ▸ AI focusing here
+        </p>
+      ) : (
+        <p className="text-slate-500 font-mono text-2xs mt-1">
+          Click to focus here
         </p>
       )}
     </div>

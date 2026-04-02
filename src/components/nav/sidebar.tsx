@@ -77,7 +77,7 @@ function getNavSections(role: string | null | undefined): NavSection[] {
     {
       items: [
         { label: "Overview", href: "/", icon: LayoutDashboard },
-        ...(isArchitect ? [{ label: "Intake", href: "/intake", icon: MessageSquare }] : []),
+        ...(isArchitect ? [{ label: "Design Studio", href: "/intake", icon: MessageSquare }] : []),
         { label: "Pipeline", href: "/pipeline", icon: Kanban },
         { label: "Registry", href: "/registry", icon: Library },
         { label: "Templates", href: "/templates", icon: Package },
@@ -90,7 +90,7 @@ function getNavSections(role: string | null | undefined): NavSection[] {
       label: "Governance",
       items: [
         ...(isReviewer ? [{ label: "Review Queue", href: "/review", icon: ClipboardList }] : []),
-        ...(isCompliance || isViewer ? [{ label: "Governance", href: "/governance", icon: Shield }] : []),
+        ...(isCompliance || isViewer ? [{ label: "Policies", href: "/governance", icon: Shield }] : []),
         ...(isCompliance || isViewer ? [{ label: "Compliance", href: "/compliance", icon: CheckSquare }] : []),
         ...(isReviewer ? [{ label: "Governor", href: "/governor", icon: Building2 }] : []),
       ],
@@ -100,8 +100,8 @@ function getNavSections(role: string | null | undefined): NavSection[] {
   const opsItems: NavItem[] = [];
   if (isReviewer) opsItems.push({ label: "Deploy", href: "/deploy", icon: Rocket });
   if (isReviewer || isViewer) opsItems.push({ label: "Monitor", href: "/monitor", icon: Activity });
-  if (isCompliance || isViewer) opsItems.push({ label: "Dashboard", href: "/dashboard", icon: BarChart3 });
-  if (isCompliance || isViewer) opsItems.push({ label: "Audit", href: "/audit", icon: ScrollText });
+  if (isCompliance || isViewer) opsItems.push({ label: "Analytics", href: "/dashboard", icon: BarChart3 });
+  if (isCompliance || isViewer) opsItems.push({ label: "Audit Trail", href: "/audit", icon: ScrollText });
 
   if (opsItems.length > 0) {
     sections.push({ label: "Operations", items: opsItems });
@@ -112,7 +112,7 @@ function getNavSections(role: string | null | undefined): NavSection[] {
     sections.push({
       label: "Admin",
       items: [
-        { label: "Users", href: "/admin/users", icon: Users },
+        { label: "Team", href: "/admin/users", icon: Users },
         { label: "Settings", href: "/admin/settings", icon: Settings },
         { label: "Webhooks", href: "/admin/webhooks", icon: Webhook },
         { label: "Fleet", href: "/admin/fleet", icon: Globe },

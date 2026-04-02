@@ -32,6 +32,8 @@ interface ChatContainerProps {
   showSuggestedPrompts?: boolean;
   onResponseComplete?: () => void;
   onTransparencyUpdate?: (metadata: IntakeTransparencyMetadata) => void;
+  /** Injected message from parent (e.g. domain chip click). Keyed to avoid duplicates. */
+  externalMessage?: { text: string; key: number } | null;
 }
 
 export function ChatContainer({
@@ -40,6 +42,7 @@ export function ChatContainer({
   showSuggestedPrompts,
   onResponseComplete,
   onTransparencyUpdate,
+  externalMessage,
 }: ChatContainerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevStatus = useRef<string | null>(null);
@@ -85,6 +88,15 @@ export function ChatContainer({
       behavior: "smooth",
     });
   }, [messages]);
+
+  // Handle externally injected messages (e.g. domain chip click → "Let's focus on…")
+  const lastExternalKey = useRef<number>(0);
+  useEffect(() => {
+    if (externalMessage && externalMessage.key !== lastExternalKey.current) {
+      lastExternalKey.current = externalMessage.key;
+      sendMessage({ text: externalMessage.text });
+    }
+  }, [externalMessage, sendMessage]);
 
   const handleSend = useCallback(
     (text: string, attachment?: FileAttachment) => {
@@ -170,7 +182,7 @@ export function ChatContainer({
         still allowing full upward scroll when history grows.
       */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
-        <div className="flex min-h-full flex-col p-4 space-y-3">
+        <div className="flex min-h-full flex-col p-4 space-y-3 max-w-4xl mx-auto w-full">
           {/* Empty / suggested prompts state: takes full available height, centers content */}
           {isEmpty && showSuggestedPrompts ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4">

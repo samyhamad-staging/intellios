@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect, useCallback, useRef } from "react";
+import { use, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { UIMessage } from "ai";
 import { ChatContainer } from "@/components/chat/chat-container";
@@ -12,8 +12,16 @@ import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, Intak
 import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
 import { computeDomainProgress } from "@/lib/intake/domains";
 
-/** Empty-payload domain state — shown in the strip before the first AI response. */
-const INITIAL_DOMAINS = computeDomainProgress({}, null, null);
+/** Domain navigation labels — used when clicking a chip to steer the conversation */
+const DOMAIN_NAV_LABELS: Record<string, string> = {
+  identity: "the agent's purpose and identity",
+  tools: "the agent's capabilities and tools",
+  instructions: "behavioral instructions",
+  knowledge: "knowledge sources",
+  constraints: "operational constraints and guardrails",
+  governance: "governance policies",
+  audit: "audit configuration",
+};
 
 /** Static opener injected for fresh sessions — appears instantly, no API call needed. */
 const INTAKE_OPENER: UIMessage = {
@@ -71,9 +79,23 @@ export default function IntakeSessionPage({
   const [scorePopoverOpen, setScorePopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  // Domain navigation: clicking a chip sends a user message steering conversation
+  const [domainNavMessage, setDomainNavMessage] = useState<{ text: string; key: number } | null>(null);
   // Tracks consecutive ticks where classificationLoading is true but no classification arrived.
   // After 2 unanswered ticks we bail out to prevent an infinite spinner.
   const classificationLoadingTicksRef = useRef(0);
+
+  // Compute initial domains from whatever payload/context/classification is loaded.
+  // This replaces the static INITIAL_DOMAINS so revisited sessions show actual progress.
+  const computedDomains = useMemo(
+    () => computeDomainProgress(currentPayload, intakeContext, classification?.riskTier ?? null),
+    [currentPayload, intakeContext, classification?.riskTier]
+  );
+
+  function handleDomainClick(domainKey: string) {
+    const label = DOMAIN_NAV_LABELS[domainKey] ?? domainKey;
+    setDomainNavMessage({ text: `Let's focus on ${label}.`, key: Date.now() });
+  }
 
   // Load session status + message history + contributions on mount
   useEffect(() => {
@@ -131,6 +153,14 @@ export default function IntakeSessionPage({
         const uiMessages = mapToUIMessages(messages ?? []);
         // New sessions get the opener injected immediately (no loading delay, no API call)
         setInitialMessages(uiMessages.length > 0 ? uiMessages : [INTAKE_OPENER]);
+
+        // Fetch current payload so the domain strip reflects actual progress on revisit
+        // (non-blocking — UI loads immediately, strip updates when payload arrives)
+        fetch(`/api/intake/sessions/${sessionId}/payload`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((payload) => { if (payload) setCurrentPayload(payload as IntakePayload); })
+          .catch(() => {});
+
         setPhase("conversation");
       } catch {
         setPhase("conversation");
@@ -305,7 +335,7 @@ export default function IntakeSessionPage({
         <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-3">
           <div>
             <h1 className="text-lg font-semibold">Intellios</h1>
-            <p className="text-xs text-text-secondary">Agent Intake</p>
+            <p className="text-xs text-text-secondary">Agent Design Studio</p>
           </div>
           <div className="flex items-center gap-3">
             {/* Intake quality score chip: loading pulse → real chip with popover */}
@@ -408,16 +438,17 @@ export default function IntakeSessionPage({
       <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-2.5 gap-3">
         <div className="shrink-0">
           <h1 className="text-lg font-semibold leading-tight">Intellios</h1>
-          <p className="text-2xs text-text-secondary">Agent Intake</p>
+          <p className="text-2xs text-text-secondary">Agent Design Studio</p>
         </div>
 
         {/* Domain Progress Strip — replaces stepper + classification bar */}
         <div className="flex-1 min-w-0">
           <DomainProgressStrip
             transparency={transparency}
-            initialDomains={INITIAL_DOMAINS}
+            initialDomains={computedDomains}
             classification={classification}
             classificationLoading={classificationLoading}
+            onDomainClick={handleDomainClick}
             onOverrideClick={() => {
               if (classification) {
                 setEditAgentType(classification.agentType);
@@ -495,6 +526,7 @@ export default function IntakeSessionPage({
           showSuggestedPrompts={false}
           onResponseComplete={handleResponseComplete}
           onTransparencyUpdate={setTransparency}
+          externalMessage={domainNavMessage}
         />
         <IntakeProgress
           sessionId={sessionId}
