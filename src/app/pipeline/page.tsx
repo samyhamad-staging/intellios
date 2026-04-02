@@ -177,7 +177,7 @@ export default function PipelinePage() {
       )}
 
       {/* ── Board ────────────────────────────────────────────────────────── */}
-      <div className="flex flex-1 gap-0 overflow-x-auto">
+      <div className="flex flex-1 gap-0 overflow-x-auto bg-surface-muted/30">
         {error && (
           <div className="m-6 w-full rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
@@ -185,7 +185,7 @@ export default function PipelinePage() {
         )}
 
         {!error && (
-          <div className="flex gap-4 p-6 items-start">
+          <div className="flex gap-4 p-6 items-start min-h-full">
             {/* Active pipeline columns */}
             {activeColumns.map(({ status, label, colBg, dotColor, badgeCls }) => (
               <Column
@@ -255,7 +255,7 @@ function Column({ status, label, colBg, dotColor, badgeCls, cards, loading }: Co
       </div>
 
       {/* Card list — content-height, scrolls internally when full */}
-      <div className={`flex flex-col gap-2 rounded-xl border p-2 ${colBg} min-h-16 max-h-[calc(100vh-200px)] overflow-y-auto`}>
+      <div className={`flex flex-col gap-2 rounded-xl border p-2 ${colBg} min-h-[240px] max-h-[calc(100vh-200px)] overflow-y-auto`}>
         {loading && (
           <div className="flex h-24 items-center justify-center">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary" />
@@ -454,12 +454,10 @@ function AgentCard({ agent }: { agent: Agent }) {
       )}
 
       {/* Footer: SLA badge + age (color-coded for overdue) */}
-      <div className="mt-2.5 flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          {sla === "alert" && <Badge variant="danger">SLA breach</Badge>}
-          {sla === "warn"  && <Badge variant="warning">Nearing SLA</Badge>}
-        </div>
-        <span className={`text-xs ${ageClass(agent.updatedAt, agent.status)}`}>
+      <div className="mt-2.5 flex items-center gap-1.5">
+        {sla === "alert" && <Badge variant="danger">SLA breach</Badge>}
+        {sla === "warn"  && <Badge variant="warning">Nearing SLA</Badge>}
+        <span className={`ml-auto text-xs ${ageClass(agent.updatedAt, agent.status)}`}>
           {timeAgo(agent.updatedAt)}
         </span>
       </div>
