@@ -192,3 +192,13 @@ export interface IntakePayload {
   /** Policy quality assessment produced by Claude at finalization */
   _policyQualityAssessment?: PolicyQualityItem[];
 }
+
+/** Session recap data passed to ChatContainer for returning users */
+export interface SessionRecap {
+  agentName: string | null;
+  filledDomains: string[];
+  totalDomains: number;
+  nextDomain: string | null;
+  readinessScore: number;
+  lastActiveAt: string | null;
+}

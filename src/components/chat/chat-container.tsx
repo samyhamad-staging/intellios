@@ -7,8 +7,9 @@ import { useEffect, useRef, useMemo, useCallback, useState } from "react";
 import { MessageBubble } from "./message-bubble";
 import { ToolCallDisplay } from "./tool-call-display";
 import { ChatInput, type FileAttachment } from "./chat-input";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, X, CheckCircle2 } from "lucide-react";
 import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
+import type { SessionRecap } from "@/lib/types/intake";
 
 const STREAMING_LABELS: Record<string, string> = {
   set_agent_identity:    "Defining agent identity…",
@@ -34,6 +35,10 @@ interface ChatContainerProps {
   onTransparencyUpdate?: (metadata: IntakeTransparencyMetadata) => void;
   /** Injected message from parent (e.g. domain chip click). Keyed to avoid duplicates. */
   externalMessage?: { text: string; key: number } | null;
+  /** Recap data shown to returning users — dismisses on first send */
+  sessionRecap?: SessionRecap;
+  /** Override default chat input placeholder */
+  placeholder?: string;
 }
 
 export function ChatContainer({
@@ -43,9 +48,14 @@ export function ChatContainer({
   onResponseComplete,
   onTransparencyUpdate,
   externalMessage,
+  sessionRecap,
+  placeholder: placeholderOverride,
 }: ChatContainerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevStatus = useRef<string | null>(null);
+
+  // Welcome-back recap banner state — auto-dismisses on first user send
+  const [showRecap, setShowRecap] = useState(true);
 
   // Track file uploads for session-level cost control
   const [filesUsedInSession, setFilesUsedInSession] = useState(0);
@@ -105,6 +115,7 @@ export function ChatContainer({
 
   const handleSend = useCallback(
     (text: string, attachment?: FileAttachment) => {
+      setShowRecap(false); // Dismiss recap on first user message
       let fullText = text;
       if (attachment) {
         const truncNote = attachment.truncated
@@ -213,6 +224,47 @@ export function ChatContainer({
             <div className="flex-1" />
           )}
 
+          {/* Session recap banner for returning users (G1) */}
+          {sessionRecap && showRecap && (
+            <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 mb-2 relative">
+              <button
+                onClick={() => setShowRecap(false)}
+                className="absolute top-2 right-2 p-1 rounded hover:bg-primary/10 text-text-tertiary hover:text-text-secondary transition-colors"
+                title="Dismiss"
+              >
+                <X size={14} />
+              </button>
+              <p className="text-xs font-medium text-text mb-1.5">
+                Welcome back{sessionRecap.agentName ? ` \u2014 ${sessionRecap.agentName}` : ""}
+              </p>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-2xs text-text-secondary">
+                  {sessionRecap.filledDomains.length} of {sessionRecap.totalDomains} domains captured
+                </span>
+                <div className="h-1 flex-1 max-w-24 rounded-full bg-border overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary/60 transition-all duration-500"
+                    style={{ width: `${(sessionRecap.filledDomains.length / sessionRecap.totalDomains) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-1 flex-wrap text-2xs text-text-tertiary">
+                {sessionRecap.filledDomains.map((d) => (
+                  <span key={d} className="inline-flex items-center gap-0.5">
+                    <CheckCircle2 size={10} className="text-emerald-500" />
+                    <span>{d}</span>
+                  </span>
+                ))}
+                {sessionRecap.nextDomain && (
+                  <>
+                    <span className="mx-1 text-border-strong">|</span>
+                    <span className="text-text-secondary font-medium">Next: {sessionRecap.nextDomain}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
         {messages.map((msg) => {
           const text = getMessageText(msg.parts);
           return (
@@ -276,7 +328,7 @@ export function ChatContainer({
       <ChatInput
         onSend={handleSend}
         disabled={isStreaming}
-        placeholder={messages.length > 1 ? "Reply..." : "Describe your agent..."}
+        placeholder={placeholderOverride ?? (messages.length > 1 ? "Reply..." : "Describe your agent...")}
         filesUsedInSession={filesUsedInSession}
         maxFilesPerSession={MAX_FILES_PER_SESSION}
       />

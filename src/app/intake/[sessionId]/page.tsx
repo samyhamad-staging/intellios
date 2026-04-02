@@ -8,10 +8,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { IntakeProgress } from "@/components/intake/intake-progress";
 import { IntakeReview } from "@/components/intake/intake-review";
 import { DomainProgressStrip } from "@/components/intake/domain-progress-strip";
-import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
+import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification, SessionRecap } from "@/lib/types/intake";
 import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
 import { computeDomainProgress } from "@/lib/intake/domains";
+import { computeReadinessScore } from "@/lib/intake/readiness";
 import { ChevronRight, LayoutGrid } from "lucide-react";
+
+/** Format a relative time string from an ISO date */
+function formatRelativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
 
 /** Domain navigation labels — used when clicking a chip to steer the conversation */
 const DOMAIN_NAV_LABELS: Record<string, string> = {
@@ -35,6 +49,7 @@ interface DBMessage {
   id: string;
   role: string;
   content: string;
+  createdAt?: string;
 }
 
 function mapToUIMessages(dbMessages: DBMessage[]): UIMessage[] {
@@ -89,6 +104,8 @@ export default function IntakeSessionPage({
   // Tracks consecutive ticks where classificationLoading is true but no classification arrived.
   // After 2 unanswered ticks we bail out to prevent an infinite spinner.
   const classificationLoadingTicksRef = useRef(0);
+  // Last activity timestamp for returning sessions
+  const [lastActivityAt, setLastActivityAt] = useState<string | null>(null);
 
   // Compute initial domains from whatever payload/context/classification is loaded.
   // This replaces the static INITIAL_DOMAINS so revisited sessions show actual progress.
@@ -102,6 +119,35 @@ export default function IntakeSessionPage({
     const name = (currentPayload?.identity as Record<string, unknown> | undefined)?.name as string | undefined;
     return name ?? null;
   }, [currentPayload]);
+
+  // Returning session detection: more than just the opener message
+  const isReturningSession = (initialMessages?.length ?? 0) > 1;
+
+  // Session recap for the chat banner (G1) + contextual placeholder (G4)
+  const sessionRecap = useMemo<SessionRecap | undefined>(() => {
+    if (!isReturningSession) return undefined;
+    const domains = computeDomainProgress(currentPayload, intakeContext, classification?.riskTier ?? null);
+    const filled = domains.filter(d => d.fillLevel > 0);
+    const next = domains.find(d => d.fillLevel === 0);
+    const readiness = computeReadinessScore(currentPayload, classification?.riskTier ?? null);
+    return {
+      agentName: (currentPayload?.identity as Record<string, unknown> | undefined)?.name as string ?? null,
+      filledDomains: filled.map(d => d.label),
+      totalDomains: domains.length,
+      nextDomain: next?.label ?? null,
+      readinessScore: readiness.score,
+      lastActiveAt,
+    };
+  }, [isReturningSession, currentPayload, intakeContext, classification, lastActivityAt]);
+
+  // Dynamic placeholder based on session state (G4)
+  const chatPlaceholder = useMemo(() => {
+    if (!isReturningSession) return undefined;
+    const domains = computeDomainProgress(currentPayload, intakeContext, classification?.riskTier ?? null);
+    const next = domains.find(d => d.fillLevel === 0);
+    if (next) return `Continue with ${next.label.toLowerCase()}, or click a domain above...`;
+    return `Add more detail or say "finalize" when ready...`;
+  }, [isReturningSession, currentPayload, intakeContext, classification]);
 
   function handleDomainClick(domainKey: string) {
     const label = DOMAIN_NAV_LABELS[domainKey] ?? domainKey;
@@ -165,6 +211,13 @@ export default function IntakeSessionPage({
         const uiMessages = mapToUIMessages(messages ?? []);
         // New sessions get the opener injected immediately (no loading delay, no API call)
         setInitialMessages(uiMessages.length > 0 ? uiMessages : [INTAKE_OPENER]);
+
+        // Derive last activity for returning sessions (G5)
+        const dbMessages = (messages ?? []) as DBMessage[];
+        if (dbMessages.length > 0) {
+          const lastMsg = dbMessages[dbMessages.length - 1];
+          setLastActivityAt(lastMsg.createdAt ?? session?.updatedAt ?? null);
+        }
 
         // Fetch current payload so the domain strip reflects actual progress on revisit
         // (non-blocking — UI loads immediately, strip updates when payload arrives)
@@ -488,6 +541,15 @@ export default function IntakeSessionPage({
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
+          {/* Last active timestamp for returning sessions (G5) */}
+          {isReturningSession && lastActivityAt && (
+            <span
+              className="text-2xs text-text-tertiary hidden sm:inline"
+              title={new Date(lastActivityAt).toLocaleString()}
+            >
+              Last active {formatRelativeTime(lastActivityAt)}
+            </span>
+          )}
           {/* Mobile-only progress toggle */}
           <button
             onClick={() => setMobileSidebarOpen((o) => !o)}
@@ -547,6 +609,8 @@ export default function IntakeSessionPage({
           initialMessages={initialMessages}
           showSuggestedPrompts={false}
           onResponseComplete={handleResponseComplete}
+          sessionRecap={sessionRecap}
+          placeholder={chatPlaceholder}
           onTransparencyUpdate={(meta) => {
             setTransparency(meta);
             // Do NOT clear pendingActiveDomain here. The AI's reported activeDomain
@@ -563,6 +627,7 @@ export default function IntakeSessionPage({
           onContributionAdded={handleContributionAdded}
           context={intakeContext ?? undefined}
           riskTier={classification?.riskTier ?? null}
+          agentType={classification?.agentType ?? null}
           transparency={transparency}
           mobileOpen={mobileSidebarOpen}
         />

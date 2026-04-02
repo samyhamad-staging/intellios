@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { IntakeContext, IntakeRiskTier, StakeholderContribution } from "@/lib/types/intake";
+import { useState, useEffect } from "react";
+import { AgentType, IntakeContext, IntakePayload, IntakeRiskTier, StakeholderContribution } from "@/lib/types/intake";
 import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
 import { StakeholderContributionsPanel } from "./stakeholder-contributions-panel";
+import { computeReadinessScore, ReadinessResult } from "@/lib/intake/readiness";
 import { Divider } from "@/components/ui/divider";
 import {
   Shield, Lightbulb, CheckCircle2, Circle, ChevronDown, Cpu, BrainCircuit, Users,
@@ -43,8 +44,57 @@ interface IntakeProgressProps {
   onContributionAdded?: (contribution: StakeholderContribution) => void;
   context?: IntakeContext;
   riskTier?: IntakeRiskTier | null;
+  agentType?: AgentType | null;
   transparency?: IntakeTransparencyMetadata | null;
   mobileOpen?: boolean;
+}
+
+// ── Payload-derived section info (fallback when transparency is null) ──────
+
+interface FallbackSection {
+  key: string;
+  label: string;
+  filled: boolean;
+  required: boolean;
+  detail?: string;
+}
+
+function truncateList(items: string[], max = 3): string {
+  if (items.length <= max) return items.join(", ");
+  return items.slice(0, max).join(", ") + ` +${items.length - max} more`;
+}
+
+function getSections(payload: IntakePayload): FallbackSection[] {
+  const identity = payload.identity;
+  const capabilities = payload.capabilities;
+  const constraints = payload.constraints;
+  const governance = payload.governance;
+  const tools = capabilities?.tools ?? [];
+  const sources = capabilities?.knowledge_sources ?? [];
+  const policies = governance?.policies ?? [];
+  const domains = constraints?.allowed_domains ?? [];
+  const denied = constraints?.denied_actions ?? [];
+
+  return [
+    { key: "identity", label: "Agent Identity", filled: !!(identity?.name && identity?.description), required: true,
+      detail: identity?.name ? `"${identity.name}"` : undefined },
+    { key: "capabilities", label: "Tools & Capabilities", filled: tools.length > 0, required: true,
+      detail: tools.length > 0 ? `${tools.length} tool${tools.length > 1 ? "s" : ""}: ${truncateList(tools.map(t => t.name))}` : undefined },
+    { key: "instructions", label: "Behavioral Instructions", filled: !!capabilities?.instructions, required: false,
+      detail: capabilities?.instructions ? "Configured" : undefined },
+    { key: "knowledge", label: "Knowledge Sources", filled: sources.length > 0, required: false,
+      detail: sources.length > 0 ? `${sources.length} source${sources.length > 1 ? "s" : ""}` : undefined },
+    { key: "constraints", label: "Constraints", filled: domains.length > 0 || denied.length > 0, required: false,
+      detail: [domains.length > 0 && `${domains.length} domain${domains.length > 1 ? "s" : ""}`,
+               denied.length > 0 && `${denied.length} denied`].filter(Boolean).join(" + ") || undefined },
+    { key: "governance", label: "Governance Policies", filled: policies.length > 0, required: false,
+      detail: policies.length > 0 ? `${policies.length} polic${policies.length > 1 ? "ies" : "y"}` : undefined },
+    { key: "audit", label: "Audit Configuration", filled: governance?.audit !== undefined, required: false,
+      detail: governance?.audit ? [
+        governance.audit.log_interactions !== undefined && `Logging ${governance.audit.log_interactions ? "on" : "off"}`,
+        governance.audit.retention_days !== undefined && `${governance.audit.retention_days}d retention`,
+      ].filter(Boolean).join(" + ") || "Configured" : undefined },
+  ];
 }
 
 // ── Collapsible section ───────────────────────────────────────────────────────
@@ -258,12 +308,32 @@ export function IntakeProgress({
   onContributionAdded,
   context,
   riskTier,
+  agentType,
   transparency,
   mobileOpen,
 }: IntakeProgressProps) {
   const isContextReady = !!context;
   const modelName = transparency?.model?.name ?? "";
   const isHaiku = modelName.includes("haiku");
+
+  // Fallback: fetch payload on mount for sidebar content when transparency is null (G2)
+  const [fallbackSections, setFallbackSections] = useState<FallbackSection[] | null>(null);
+  const [fallbackReadiness, setFallbackReadiness] = useState<ReadinessResult | null>(null);
+
+  useEffect(() => {
+    if (transparency) return; // Live data available — no fallback needed
+    let cancelled = false;
+    fetch(`/api/intake/sessions/${sessionId}/payload`)
+      .then(r => r.ok ? r.json() : null)
+      .then((payload: IntakePayload | null) => {
+        if (cancelled || !payload) return;
+        const sections = getSections(payload);
+        setFallbackSections(sections);
+        setFallbackReadiness(computeReadinessScore(payload, riskTier ?? null));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [sessionId, riskTier, transparency]);
 
   return (
     <aside
@@ -308,8 +378,8 @@ export function IntakeProgress({
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="flex flex-col gap-2.5 px-4 py-3">
 
-          {/* Empty state — shown until the AI has produced classification metadata */}
-          {!transparency?.classification && (
+          {/* Empty state — shown only for brand-new sessions with no payload data */}
+          {!transparency?.classification && !fallbackSections?.some(s => s.filled) && (
             <div className="rounded-lg border border-dashed border-border p-4 text-center">
               <BrainCircuit size={20} className="mx-auto mb-2 text-text-tertiary" />
               <p className="text-2xs font-mono text-text-tertiary">ANALYZING</p>
@@ -317,6 +387,87 @@ export function IntakeProgress({
                 Insights appear as your agent design takes shape.
               </p>
             </div>
+          )}
+
+          {/* Fallback: payload-derived session summary for returning sessions (G2) */}
+          {!transparency && fallbackSections?.some(s => s.filled) && (
+            <>
+              {/* Classification from props */}
+              {riskTier && agentType && (
+                <div className="rounded-lg border border-border bg-surface-raised px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xs font-mono text-text-tertiary uppercase tracking-wide">Classification</span>
+                    <span className={`text-2xs font-mono font-medium rounded-full px-1.5 py-0.5 ${TIER_COLORS[riskTier] ?? "bg-surface-muted text-text-secondary"}`}>
+                      {riskTier.toUpperCase()}
+                    </span>
+                    <span className="text-2xs text-text-secondary">{AGENT_TYPE_LABELS[agentType] ?? agentType}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Section checklist */}
+              <DisclosureSection
+                defaultOpen={true}
+                title="Session Progress"
+                badge={
+                  <span className="text-2xs font-mono font-medium tabular-nums text-text-tertiary">
+                    {fallbackSections.filter(s => s.filled).length}/{fallbackSections.length}
+                  </span>
+                }
+              >
+                <ul className="flex flex-col gap-1.5 pt-1">
+                  {fallbackSections.map(section => (
+                    <li key={section.key} className="flex items-start gap-2">
+                      {section.filled
+                        ? <CheckCircle2 size={14} className="mt-0.5 text-emerald-500 shrink-0" />
+                        : <Circle size={14} className="mt-0.5 text-border-strong shrink-0" />
+                      }
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1">
+                          <span className={`text-xs ${section.filled ? "text-text-secondary" : "text-text-tertiary"}`}>
+                            {section.label}
+                          </span>
+                          {section.required && !section.filled && (
+                            <span className="text-2xs text-red-400 font-mono">REQ</span>
+                          )}
+                        </div>
+                        {section.detail && (
+                          <p className="text-2xs text-text-tertiary truncate" title={section.detail}>
+                            {section.detail}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </DisclosureSection>
+
+              {/* Readiness score */}
+              {fallbackReadiness && fallbackReadiness.score > 0 && (
+                <div className="rounded-lg border border-border bg-surface-raised px-3 py-2.5">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-2xs font-mono text-text-tertiary uppercase tracking-wide">Readiness</span>
+                    <span className={`text-sm font-bold font-mono tabular-nums ${
+                      fallbackReadiness.score >= 80 ? "text-emerald-600"
+                      : fallbackReadiness.score >= 50 ? "text-amber-600"
+                      : "text-text-tertiary"
+                    }`}>
+                      {fallbackReadiness.score}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-border overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        fallbackReadiness.score >= 80 ? "bg-emerald-500"
+                        : fallbackReadiness.score >= 50 ? "bg-amber-400"
+                        : "bg-slate-400"
+                      }`}
+                      style={{ width: `${fallbackReadiness.score}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Classification — closed by default (passive metadata, not action) */}
