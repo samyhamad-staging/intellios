@@ -100,11 +100,13 @@ const TIERS: RiskTier[] = ["critical", "high", "medium", "low"];
 interface FleetGovernanceDashboardProps {
   enterpriseId: string | null | undefined;
   userRole: string;
+  compact?: boolean;
 }
 
 export async function FleetGovernanceDashboard({
   enterpriseId,
   userRole,
+  compact,
 }: FleetGovernanceDashboardProps) {
   const enterpriseFilter =
     userRole === "admin"
@@ -182,6 +184,55 @@ export async function FleetGovernanceDashboard({
   }
 
   const hasAlerts = overdueCount > 0 || errorCount > 0 || unvalidatedCount > 0;
+
+  // ── Compact summary (for Overview page) ──────────────────────────────────
+  if (compact) {
+    return (
+      <div className="rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Risk distribution */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-2xs font-mono font-semibold uppercase tracking-wider text-text-tertiary">Risk</span>
+            {TIERS.map((tier) => {
+              const count = tierCounts[tier];
+              if (count === 0) return null;
+              return (
+                <span key={tier} className="flex items-center gap-1">
+                  <span className={`text-sm font-bold tabular-nums ${TIER_TEXT_COLOR[tier]}`}>{count}</span>
+                  <span className={`text-2xs ${TIER_TEXT_COLOR[tier]} opacity-70`}>{TIER_LABEL[tier]}</span>
+                </span>
+              );
+            })}
+            {agents.length === 0 && (
+              <span className="text-xs text-text-tertiary">No approved agents yet</span>
+            )}
+          </div>
+          {/* Alert badges */}
+          {hasAlerts && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {overdueCount > 0 && (
+                <Badge variant="danger" dot>{overdueCount} overdue</Badge>
+              )}
+              {errorCount > 0 && (
+                <Badge variant="warning" dot>{errorCount} error{errorCount !== 1 ? "s" : ""}</Badge>
+              )}
+              {unvalidatedCount > 0 && (
+                <Badge variant="neutral" dot>{unvalidatedCount} unvalidated</Badge>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="mt-3 border-t border-border pt-3">
+          <Link
+            href="/registry"
+            className="text-xs text-primary hover:text-primary-hover transition-colors"
+          >
+            View fleet governance details →
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">

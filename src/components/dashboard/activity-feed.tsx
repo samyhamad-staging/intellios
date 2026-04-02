@@ -88,7 +88,7 @@ function groupItems(items: ActivityItem[]): GroupedItem[] {
 
 // ─── Feed ─────────────────────────────────────────────────────────────────────
 
-export function ActivityFeed() {
+export function ActivityFeed({ compact }: { compact?: boolean }) {
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -129,7 +129,7 @@ export function ActivityFeed() {
     );
   }
 
-  const grouped = groupItems(items);
+  const grouped = groupItems(items).slice(0, compact ? 5 : 10);
 
   return (
     <div>
@@ -138,7 +138,7 @@ export function ActivityFeed() {
           const entityHref = item.entityType === "agent_blueprint" && item.entityId
             ? `/registry/${item.entityId}`
             : null;
-          const rowCls = "flex items-center gap-3 py-3 first:pt-0 last:pb-0 -mx-1 px-1 rounded transition-colors" + (entityHref ? " hover:bg-surface-raised/50 cursor-pointer" : " hover:bg-surface-raised/50");
+          const rowCls = `flex items-center gap-3 ${compact ? "py-2" : "py-3"} first:pt-0 last:pb-0 -mx-1 px-1 rounded transition-colors` + (entityHref ? " hover:bg-surface-raised/50 cursor-pointer" : " hover:bg-surface-raised/50");
           const inner = (
             <>
               {/* Avatar */}
@@ -175,11 +175,13 @@ export function ActivityFeed() {
       </div>
 
       {/* Footer */}
-      <div className="mt-3 border-t border-border pt-3">
-        <Link href="/audit" className="text-xs text-primary hover:text-primary-hover transition-colors">
-          View full audit trail →
-        </Link>
-      </div>
+      {!compact && (
+        <div className="mt-3 border-t border-border pt-3">
+          <Link href="/audit" className="text-xs text-primary hover:text-primary-hover transition-colors">
+            View full audit trail →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

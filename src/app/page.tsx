@@ -56,6 +56,11 @@ const STAT_HINTS: Record<string, string> = {
   approved:   "Ready to deploy",
 };
 
+const STAT_TINTS: Record<string, string> = {
+  in_review: "bg-amber-50/60",
+  approved:  "bg-emerald-50/60",
+};
+
 function QualityRing({ score, delta }: { score: number; delta: number | null }) {
   const circumference = 2 * Math.PI * 14;
   const offset = circumference * (1 - score / 100);
@@ -115,6 +120,7 @@ export default async function Home() {
           createdBy: agentBlueprints.createdBy,
           updatedAt: agentBlueprints.updatedAt,
           validationReport: agentBlueprints.validationReport,
+          nextReviewDue: agentBlueprints.nextReviewDue,
         })
         .from(agentBlueprints)
         .where(enterpriseFilter)
@@ -414,11 +420,12 @@ export default async function Home() {
         {(["draft", "in_review", "approved", "deployed"] as const).map((s) => {
           const cfg = STATUS_CONFIG[s];
           const hint = STAT_HINTS[s] as string | undefined;
+          const hasTint = hint != null && counts[s] > 0 && STAT_TINTS[s] != null;
           return (
             <Link
               key={s}
               href={activeStageLinks[s]}
-              className={`group rounded-xl border border-border ${STAT_BORDERS[s]} border-l-[3px] bg-surface px-4 py-3.5 shadow-[var(--shadow-card)] hover:bg-surface-raised transition-colors`}
+              className={`group rounded-xl border border-border ${STAT_BORDERS[s]} border-l-[3px] ${hasTint ? STAT_TINTS[s] : "bg-surface"} px-4 py-3.5 shadow-[var(--shadow-card)] hover:bg-surface-raised transition-colors`}
             >
               <span className={`text-2xl font-bold ${cfg.text}`}>{counts[s]}</span>
               <p className="mt-0.5 text-xs text-text-tertiary group-hover:text-text-secondary transition-colors">
@@ -444,13 +451,83 @@ export default async function Home() {
         </div>
       )}
 
+      {/* Admin Action Queue — alerts requiring attention */}
+      {(() => {
+        const now = new Date();
+        type AdminAction = { icon: typeof AlertTriangle; label: string; sub: string; href: string; color: string; bgColor: string };
+        const actions: AdminAction[] = [];
+
+        // Approved/deployed agents with governance errors
+        const govErrors = allAgents.filter((a) => {
+          if (!["approved", "deployed"].includes(a.status)) return false;
+          const report = a.validationReport as ValidationReport | null;
+          return report?.violations?.some((v) => v.severity === "error");
+        });
+        if (govErrors.length > 0) {
+          actions.push({
+            icon: ShieldAlert,
+            label: `${govErrors.length} deployed agent${govErrors.length === 1 ? "" : "s"} with governance errors`,
+            sub: "Errors in approved or deployed agents require immediate resolution",
+            href: "/registry",
+            color: "text-red-700", bgColor: "bg-red-50 border-red-200",
+          });
+        }
+
+        // Overdue periodic reviews
+        const overdue = allAgents.filter(
+          (a) => a.nextReviewDue != null && new Date(a.nextReviewDue) < now
+        );
+        if (overdue.length > 0) {
+          actions.push({
+            icon: Clock,
+            label: `${overdue.length} agent${overdue.length === 1 ? "" : "s"} overdue for periodic review`,
+            sub: "Scheduled reviews are past their due date",
+            href: "/registry",
+            color: "text-amber-700", bgColor: "bg-amber-50 border-amber-200",
+          });
+        }
+
+        // Agents waiting for review approval
+        if (counts.in_review > 0) {
+          actions.push({
+            icon: AlertTriangle,
+            label: `${counts.in_review} agent${counts.in_review === 1 ? "" : "s"} awaiting review approval`,
+            sub: "Review queue has pending submissions",
+            href: "/review",
+            color: "text-blue-700", bgColor: "bg-blue-50 border-blue-200",
+          });
+        }
+
+        if (actions.length === 0) return null;
+
+        return (
+          <div className="mb-6 space-y-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Action Queue</h2>
+            {actions.slice(0, 4).map((action, i) => (
+              <Link
+                key={i}
+                href={action.href}
+                className={`group flex items-center gap-3 rounded-lg border px-4 py-3 transition-all hover:shadow-sm ${action.bgColor}`}
+              >
+                <action.icon size={16} className={`shrink-0 ${action.color}`} />
+                <div className="min-w-0 flex-1">
+                  <p className={`text-sm font-medium ${action.color}`}>{action.label}</p>
+                  <p className="text-xs text-text-tertiary">{action.sub}</p>
+                </div>
+                <ChevronRight size={14} className="shrink-0 text-text-tertiary group-hover:text-text-secondary" />
+              </Link>
+            ))}
+          </div>
+        );
+      })()}
+
       {/* Governance + Activity — two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
             Governance Health
           </h2>
-          <FleetGovernanceDashboard enterpriseId={user.enterpriseId} userRole={role} />
+          <FleetGovernanceDashboard enterpriseId={user.enterpriseId} userRole={role} compact />
         </div>
         <section className="lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
@@ -460,7 +537,7 @@ export default async function Home() {
             </Link>
           </div>
           <div className="rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
-            <ActivityFeed />
+            <ActivityFeed compact />
           </div>
         </section>
       </div>
