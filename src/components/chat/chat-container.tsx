@@ -3,10 +3,10 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { UIMessage } from "ai";
-import { useEffect, useRef, useMemo, useCallback } from "react";
+import { useEffect, useRef, useMemo, useCallback, useState } from "react";
 import { MessageBubble } from "./message-bubble";
 import { ToolCallDisplay } from "./tool-call-display";
-import { ChatInput } from "./chat-input";
+import { ChatInput, type FileAttachment } from "./chat-input";
 import { ArrowRight } from "lucide-react";
 import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
 
@@ -43,6 +43,11 @@ export function ChatContainer({
 }: ChatContainerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevStatus = useRef<string | null>(null);
+
+  // Track file uploads for session-level cost control
+  const [filesUsedInSession, setFilesUsedInSession] = useState(0);
+  const MAX_FILES_PER_SESSION = 3;
+  const MAX_EMBED_CHARS = 4_000;
 
   const transport = useMemo(
     () => new DefaultChatTransport({ api: `/api/intake/sessions/${sessionId}/chat` }),
@@ -82,10 +87,22 @@ export function ChatContainer({
   }, [messages]);
 
   const handleSend = useCallback(
-    (text: string) => {
-      sendMessage({ text });
+    (text: string, attachment?: FileAttachment) => {
+      let fullText = text;
+      if (attachment) {
+        const truncNote = attachment.truncated
+          ? ` (truncated to ${MAX_EMBED_CHARS.toLocaleString()} characters to control cost)`
+          : "";
+        const userNote = text === "(see attached file)"
+          ? "Please read this file and continue our conversation with it in mind."
+          : text;
+        fullText =
+          `[Attached file: ${attachment.name}${truncNote}]\n\`\`\`\n${attachment.content}\n\`\`\`\n\n${userNote}`;
+        setFilesUsedInSession((prev) => prev + 1);
+      }
+      sendMessage({ text: fullText });
     },
-    [sendMessage]
+    [sendMessage, MAX_EMBED_CHARS]
   );
 
   function getMessageText(parts: (typeof messages)[0]["parts"]): string {
@@ -145,29 +162,39 @@ export function ChatContainer({
 
   return (
     <div className="flex h-full flex-1 flex-col">
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col justify-end min-h-0">
-        {/* Spacer pushes messages to the bottom when content is short */}
-        <div className="flex-1" />
-        {isEmpty && showSuggestedPrompts ? (
-          <div className="flex h-full flex-col items-center justify-center gap-6 px-4">
-            <div className="text-center">
-              <p className="text-base font-medium text-text">What kind of agent do you want to build?</p>
-              <p className="mt-1 text-sm text-text-secondary">Choose a starting point or describe your own idea below.</p>
+      {/*
+        Scroll container is intentionally separate from the flex-col layout.
+        Combining overflow-y-auto with justify-end on the same element causes
+        top-overflow that cannot be scrolled to. Instead: outer div scrolls,
+        inner div is min-h-full flex-col so messages anchor to the bottom while
+        still allowing full upward scroll when history grows.
+      */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex min-h-full flex-col p-4 space-y-3">
+          {/* Empty / suggested prompts state: takes full available height, centers content */}
+          {isEmpty && showSuggestedPrompts ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4">
+              <div className="text-center">
+                <p className="text-base font-medium text-text">What kind of agent do you want to build?</p>
+                <p className="mt-1 text-sm text-text-secondary">Choose a starting point or describe your own idea below.</p>
+              </div>
+              <div className="grid w-full max-w-lg grid-cols-2 gap-2">
+                {SUGGESTED_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => handleSend(prompt)}
+                    className="group flex items-center justify-between gap-2 rounded-xl border border-border bg-surface-raised px-4 py-3 text-left text-sm text-text-secondary hover:border-primary/40 hover:bg-primary/5 hover:text-text transition-colors"
+                  >
+                    <span>{prompt}</span>
+                    <ArrowRight size={13} className="shrink-0 text-text-tertiary group-hover:text-primary transition-colors" />
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="grid w-full max-w-lg grid-cols-2 gap-2">
-              {SUGGESTED_PROMPTS.map((prompt) => (
-                <button
-                  key={prompt}
-                  onClick={() => handleSend(prompt)}
-                  className="group flex items-center justify-between gap-2 rounded-xl border border-border bg-surface-raised px-4 py-3 text-left text-sm text-text-secondary hover:border-primary/40 hover:bg-primary/5 hover:text-text transition-colors"
-                >
-                  <span>{prompt}</span>
-                  <ArrowRight size={13} className="shrink-0 text-text-tertiary group-hover:text-primary transition-colors" />
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
+          ) : (
+            /* Spacer pushes messages to the bottom when history is short */
+            <div className="flex-1" />
+          )}
 
         {messages.map((msg) => {
           const text = getMessageText(msg.parts);
@@ -225,12 +252,15 @@ export function ChatContainer({
             </div>
           </div>
         )}
-      </div>
+        </div> {/* end inner flex-col */}
+      </div>  {/* end scroll container */}
 
       <ChatInput
         onSend={handleSend}
         disabled={isStreaming}
         placeholder={messages.length > 1 ? "Reply..." : "Describe your agent..."}
+        filesUsedInSession={filesUsedInSession}
+        maxFilesPerSession={MAX_FILES_PER_SESSION}
       />
     </div>
   );
