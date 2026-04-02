@@ -175,7 +175,7 @@ export async function FleetGovernanceDashboard({
 
   if (agents.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-200 bg-white px-6 py-10 text-center text-sm text-gray-400">
+      <div className="rounded-xl border border-dashed border-border bg-surface px-6 py-10 text-center text-sm text-text-tertiary">
         No approved or deployed agents yet. Fleet governance posture will appear here once agents are approved.
       </div>
     );
@@ -234,14 +234,14 @@ export async function FleetGovernanceDashboard({
                   <TableCell>
                     <Link
                       href={`/registry/${agent.agentId}`}
-                      className="font-medium text-gray-900 hover:text-violet-700 transition-colors"
+                      className="font-medium text-text hover:text-primary transition-colors"
                     >
                       {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
                     </Link>
-                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-400">
+                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-text-tertiary">
                       <span>v{agent.version}</span>
                       <span>·</span>
-                      <span className={`font-medium ${agent.status === "deployed" ? "text-violet-600" : "text-green-600"}`}>
+                      <span className={`font-medium ${agent.status === "deployed" ? "text-violet-600" : "text-emerald-600"}`}>
                         {agent.status}
                       </span>
                       <span>·</span>
@@ -275,11 +275,11 @@ export async function FleetGovernanceDashboard({
                   {/* Next review / overdue */}
                   <TableCell>
                     {agent.nextReviewDue == null ? (
-                      <span className="text-xs text-gray-300">—</span>
+                      <span className="text-xs text-text-tertiary/40">Not scheduled</span>
                     ) : agent.isOverdue ? (
                       <Badge variant="danger">Overdue</Badge>
                     ) : (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-text-secondary">
                         {agent.nextReviewDue.toLocaleDateString(undefined, { dateStyle: "medium" })}
                       </span>
                     )}

@@ -14,8 +14,6 @@ import {
   Bot,
   Inbox,
   CheckCircle,
-  TrendingUp,
-  TrendingDown,
   AlertTriangle,
   Rocket,
   ShieldAlert,
@@ -45,6 +43,54 @@ const STATUS_CONFIG = {
   rejected:   { label: "Rejected",   text: "text-red-700"     },
   deprecated: { label: "Deprecated", text: "text-gray-500"    },
 } as const;
+
+const STAT_BORDERS: Record<string, string> = {
+  draft:      "border-l-gray-400",
+  in_review:  "border-l-amber-400",
+  approved:   "border-l-emerald-400",
+  deployed:   "border-l-indigo-500",
+};
+
+const STAT_HINTS: Record<string, string> = {
+  in_review:  "Awaiting review",
+  approved:   "Ready to deploy",
+};
+
+function QualityRing({ score, delta }: { score: number; delta: number | null }) {
+  const circumference = 2 * Math.PI * 14;
+  const offset = circumference * (1 - score / 100);
+  const ringColor =
+    score >= 80 ? "stroke-emerald-500" : score >= 60 ? "stroke-amber-500" : "stroke-red-500";
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="relative">
+        <svg viewBox="0 0 32 32" width="40" height="40">
+          <circle
+            cx="16" cy="16" r="14" fill="none" stroke="currentColor"
+            strokeWidth="2.5" className="text-border" opacity={0.3}
+          />
+          <circle
+            cx="16" cy="16" r="14" fill="none" strokeWidth="2.5"
+            strokeDasharray={circumference} strokeDashoffset={offset}
+            strokeLinecap="round" transform="rotate(-90 16 16)"
+            className={`${ringColor} score-ring-circle`}
+          />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-2xs font-bold font-mono tabular-nums text-text">
+          {score}
+        </span>
+      </div>
+      <div>
+        <p className="text-2xs font-mono text-text-tertiary uppercase tracking-wide">Quality Index</p>
+        {delta != null && (
+          <p className={`text-xs font-mono font-medium ${delta >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+            {delta >= 0 ? "+" : ""}{delta} pts
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default async function Home() {
   const session = await auth();
@@ -336,21 +382,6 @@ export default async function Home() {
     console.error("[dashboard] Failed to fetch quality snapshots:", err);
   }
 
-  const actionCallouts = [
-    counts.in_review > 0 && {
-      href: "/review",
-      label: `${counts.in_review} blueprint${counts.in_review !== 1 ? "s" : ""} awaiting review`,
-      cta: "Go to Review Queue →",
-      color: "border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-300",
-    },
-    counts.approved > 0 && {
-      href: "/deploy",
-      label: `${counts.approved} approved agent${counts.approved !== 1 ? "s" : ""} ready to deploy`,
-      cta: "Go to Deploy →",
-      color: "border-green-200 bg-green-50 text-green-800 hover:border-green-300",
-    },
-  ].filter(Boolean) as { href: string; label: string; cta: string; color: string }[];
-
   const activeStageLinks: Record<string, string> = {
     draft: "/pipeline",
     in_review: "/review",
@@ -362,25 +393,15 @@ export default async function Home() {
     <div className="px-6 py-6">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold text-text">Overview</h1>
-          <span className="text-sm text-text-tertiary">
-            {allAgents.length} agent{allAgents.length === 1 ? "" : "s"}
-          </span>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-text">Overview</h1>
+            <p className="mt-0.5 text-sm text-text-tertiary">
+              {allAgents.length} agent{allAgents.length === 1 ? "" : "s"}
+            </p>
+          </div>
           {qualityIndex != null && (
-            <div className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${
-              qualityIndex >= 80 ? "bg-green-50 text-green-700 border-green-200" :
-              qualityIndex >= 60 ? "bg-amber-50 text-amber-700 border-amber-200" :
-              "bg-red-50 text-red-700 border-red-200"
-            }`}>
-              {qualityIndexDelta != null && (
-                qualityIndexDelta >= 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />
-              )}
-              QI {qualityIndex}/100
-              {qualityIndexDelta != null && (
-                <span className="opacity-60">({qualityIndexDelta >= 0 ? "+" : ""}{qualityIndexDelta})</span>
-              )}
-            </div>
+            <QualityRing score={qualityIndex} delta={qualityIndexDelta} />
           )}
         </div>
         {role !== "viewer" && (
@@ -388,70 +409,61 @@ export default async function Home() {
         )}
       </div>
 
-      {/* Pipeline strip + inline alerts */}
-      <div className="mb-6 rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
-        {/* Stat row */}
-        <div className="flex items-stretch divide-x divide-border">
-          {(["draft", "in_review", "approved", "deployed"] as const).map((s) => {
-            const cfg = STATUS_CONFIG[s];
-            return (
-              <Link
-                key={s}
-                href={activeStageLinks[s]}
-                className="group flex flex-1 flex-col px-5 py-4 hover:bg-surface-raised transition-colors min-w-0"
-              >
-                <span className={`text-2xl font-bold ${cfg.text}`}>{counts[s]}</span>
-                <span className="mt-0.5 text-xs text-text-tertiary group-hover:text-text-secondary transition-colors">{cfg.label}</span>
-              </Link>
-            );
-          })}
-          {/* Terminal states — right-aligned, muted */}
-          <div className="flex flex-col justify-center gap-1 px-5 py-4">
-            {(["rejected", "deprecated"] as const).map((s) => {
-              const cfg = STATUS_CONFIG[s];
-              return (
-                <span key={s} className={`text-xs ${cfg.text} opacity-60 whitespace-nowrap`}>
-                  {counts[s]} {cfg.label}
-                </span>
-              );
-            })}
-          </div>
-        </div>
-        {/* Inline alerts — only when actionable */}
-        {actionCallouts.length > 0 && (
-          <div className="flex items-center gap-1 border-t border-border px-5 py-2.5">
-            {actionCallouts.map(({ href, label, cta, color }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`inline-flex items-center gap-2 rounded-md border px-3 py-1 text-xs font-medium transition-colors ${color}`}
-              >
-                {label} <span className="opacity-70">→</span>
-              </Link>
-            ))}
-          </div>
-        )}
+      {/* Pipeline stats — status-coded cards */}
+      <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {(["draft", "in_review", "approved", "deployed"] as const).map((s) => {
+          const cfg = STATUS_CONFIG[s];
+          const hint = STAT_HINTS[s] as string | undefined;
+          return (
+            <Link
+              key={s}
+              href={activeStageLinks[s]}
+              className={`group rounded-xl border border-border ${STAT_BORDERS[s]} border-l-[3px] bg-surface px-4 py-3.5 shadow-[var(--shadow-card)] hover:bg-surface-raised transition-colors`}
+            >
+              <span className={`text-2xl font-bold ${cfg.text}`}>{counts[s]}</span>
+              <p className="mt-0.5 text-xs text-text-tertiary group-hover:text-text-secondary transition-colors">
+                {cfg.label}
+              </p>
+              {counts[s] > 0 && hint && (
+                <p className="mt-1.5 text-2xs font-medium text-primary/70">{hint} →</p>
+              )}
+            </Link>
+          );
+        })}
       </div>
 
-      {/* Governance Health */}
-      <div className="mb-6">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Governance Health</h2>
-        <FleetGovernanceDashboard
-          enterpriseId={user.enterpriseId}
-          userRole={role}
-        />
-      </div>
+      {/* Terminal states — inline muted badges, only when non-zero */}
+      {(counts.rejected > 0 || counts.deprecated > 0) && (
+        <div className="-mt-3 mb-6 flex items-center gap-3 px-1">
+          {counts.rejected > 0 && (
+            <span className="text-xs font-medium text-red-500/60">{counts.rejected} Rejected</span>
+          )}
+          {counts.deprecated > 0 && (
+            <span className="text-xs text-text-tertiary">{counts.deprecated} Deprecated</span>
+          )}
+        </div>
+      )}
 
-      {/* Activity */}
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Activity</h2>
-          <Link href="/audit" className="text-xs text-primary hover:text-primary-hover">Audit trail →</Link>
+      {/* Governance + Activity — two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-3">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+            Governance Health
+          </h2>
+          <FleetGovernanceDashboard enterpriseId={user.enterpriseId} userRole={role} />
         </div>
-        <div className="rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
-          <ActivityFeed />
-        </div>
-      </section>
+        <section className="lg:col-span-2">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Activity</h2>
+            <Link href="/audit" className="text-xs text-primary hover:text-primary-hover">
+              Audit trail →
+            </Link>
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
+            <ActivityFeed />
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
