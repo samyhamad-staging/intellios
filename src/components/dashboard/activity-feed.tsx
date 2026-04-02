@@ -57,6 +57,8 @@ interface GroupedItem {
   description: string;
   createdAt: string;
   count: number;
+  entityId: string;
+  entityType: string;
 }
 
 function groupItems(items: ActivityItem[]): GroupedItem[] {
@@ -76,6 +78,8 @@ function groupItems(items: ActivityItem[]): GroupedItem[] {
         description: item.description,
         createdAt: item.createdAt,
         count: 1,
+        entityId: item.entityId,
+        entityType: item.entityType,
       });
     }
   }
@@ -130,29 +134,44 @@ export function ActivityFeed() {
   return (
     <div>
       <div className="space-y-0 divide-y divide-border">
-        {grouped.map((item) => (
-          <div key={item.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 hover:bg-surface-raised/50 -mx-1 px-1 rounded transition-colors">
-            {/* Avatar */}
-            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarColor(item.actorName)}`}>
-              {initials(item.actorName)}
+        {grouped.map((item) => {
+          const entityHref = item.entityType === "agent_blueprint" && item.entityId
+            ? `/registry/${item.entityId}`
+            : null;
+          const rowCls = "flex items-center gap-3 py-3 first:pt-0 last:pb-0 -mx-1 px-1 rounded transition-colors" + (entityHref ? " hover:bg-surface-raised/50 cursor-pointer" : " hover:bg-surface-raised/50");
+          const inner = (
+            <>
+              {/* Avatar */}
+              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarColor(item.actorName)}`}>
+                {initials(item.actorName)}
+              </div>
+              {/* Content */}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-text">
+                  <span className="font-medium capitalize">{item.actorName}</span>
+                  {" "}
+                  <span className="text-text-secondary">{item.description}</span>
+                </p>
+                <p className="text-xs text-text-tertiary">{relativeTime(item.createdAt)}</p>
+              </div>
+              {/* Repeat count badge */}
+              {item.count > 1 && (
+                <span className="shrink-0 rounded-full bg-surface-raised px-2 py-0.5 text-xs font-medium text-text-tertiary">
+                  ×{item.count}
+                </span>
+              )}
+            </>
+          );
+          return entityHref ? (
+            <Link key={item.id} href={entityHref} className={rowCls}>
+              {inner}
+            </Link>
+          ) : (
+            <div key={item.id} className={rowCls}>
+              {inner}
             </div>
-            {/* Content */}
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-text">
-                <span className="font-medium capitalize">{item.actorName}</span>
-                {" "}
-                <span className="text-text-secondary">{item.description}</span>
-              </p>
-              <p className="text-xs text-text-tertiary">{relativeTime(item.createdAt)}</p>
-            </div>
-            {/* Repeat count badge */}
-            {item.count > 1 && (
-              <span className="shrink-0 rounded-full bg-surface-raised px-2 py-0.5 text-xs font-medium text-text-tertiary">
-                ×{item.count}
-              </span>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Footer */}

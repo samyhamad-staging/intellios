@@ -68,11 +68,11 @@ export default function TemplateMarketplacePage() {
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-2">
-            <Package className="h-6 w-6 text-violet-600" />
+          <h1 className="text-xl font-semibold text-text flex items-center gap-2">
+            <Package className="h-5 w-5 text-primary" />
             Template Marketplace
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-text-secondary mt-1">
             Browse built-in and community agent templates
           </p>
         </div>
@@ -87,7 +87,7 @@ export default function TemplateMarketplacePage() {
             placeholder="Search templates…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="w-full rounded-lg border border-border bg-surface pl-9 pr-3 py-2 text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50"
           />
         </div>
         <Select
@@ -120,10 +120,10 @@ export default function TemplateMarketplacePage() {
           {templates.map((t) => (
             <div
               key={t.id}
-              className="rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md transition-shadow space-y-3"
+              className="rounded-xl border border-border bg-surface p-5 hover:border-primary/20 hover:shadow-[var(--shadow-raised)] transition-all space-y-3 cursor-pointer"
             >
               <div className="flex items-start justify-between gap-2">
-                <h3 className="font-medium text-slate-900 text-sm leading-tight">{t.name}</h3>
+                <h3 className="font-medium text-text text-sm leading-tight">{t.name}</h3>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
                   t.source === "community" ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-600"
                 }`}>
@@ -132,7 +132,7 @@ export default function TemplateMarketplacePage() {
               </div>
 
               {t.description && (
-                <p className="text-xs text-slate-500 line-clamp-2">{t.description}</p>
+                <p className="text-xs text-text-secondary line-clamp-2">{t.description}</p>
               )}
 
               <div className="flex flex-wrap gap-1.5">
@@ -142,39 +142,43 @@ export default function TemplateMarketplacePage() {
                   </span>
                 )}
                 {t.category && (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                  <span className="rounded-full bg-surface-raised px-2 py-0.5 text-xs text-text-secondary">
                     {t.category}
                   </span>
                 )}
               </div>
 
-              <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-                <div className="flex items-center gap-1">
-                  {[1,2,3,4,5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => handleRate(t.id, star)}
-                      className="focus:outline-none"
-                      title={`Rate ${star} stars`}
-                    >
-                      <Star
-                        className={`h-3.5 w-3.5 ${
-                          star <= (ratingFilter[t.id] ?? Math.round(t.rating ?? 0))
-                            ? "fill-amber-400 text-amber-400"
-                            : "text-slate-300"
-                        }`}
-                      />
-                    </button>
-                  ))}
-                  <span className="text-xs text-slate-400 ml-1">
-                    {t.rating ? t.rating.toFixed(1) : "—"}
-                  </span>
+              {(t.rating != null || t.usageCount > 0 || ratingFilter[t.id] != null) && (
+                <div className="flex items-center justify-between pt-1 border-t border-border">
+                  <div className="flex items-center gap-1">
+                    {[1,2,3,4,5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => handleRate(t.id, star)}
+                        className="focus:outline-none"
+                        title={`Rate ${star} stars`}
+                      >
+                        <Star
+                          className={`h-3.5 w-3.5 ${
+                            star <= (ratingFilter[t.id] ?? Math.round(t.rating ?? 0))
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-text-tertiary/40"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                    {t.rating != null && (
+                      <span className="text-xs text-text-tertiary ml-1">{t.rating.toFixed(1)}</span>
+                    )}
+                  </div>
+                  {t.usageCount > 0 && (
+                    <div className="flex items-center gap-1 text-xs text-text-tertiary">
+                      <TrendingUp className="h-3 w-3" />
+                      {t.usageCount} uses
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-1 text-xs text-slate-400">
-                  <TrendingUp className="h-3 w-3" />
-                  {t.usageCount} uses
-                </div>
-              </div>
+              )}
             </div>
           ))}
         </div>

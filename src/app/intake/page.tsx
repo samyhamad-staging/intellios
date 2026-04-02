@@ -200,7 +200,7 @@ function SessionRow({ session: s, isLast }: { session: SessionData; isLast: bool
 
   return (
     <div
-      className={`group relative flex items-stretch ${!isLast ? "border-b border-border" : ""}`}
+      className={`group relative flex items-stretch ${!isLast ? "border-b border-border" : ""} ${s.filledDomains === 0 && s.status === "active" ? "opacity-55" : ""}`}
     >
       {/* Left accent bar */}
       <div

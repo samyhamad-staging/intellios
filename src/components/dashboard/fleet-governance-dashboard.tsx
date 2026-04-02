@@ -289,7 +289,7 @@ export async function FleetGovernanceDashboard({
                   <TableCell>
                     <Link
                       href={`/blueprints/${agent.id}/report`}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition-colors"
                       title="View compliance report"
                     >
                       View Report

@@ -404,7 +404,7 @@ export default async function Home() {
             <QualityRing score={qualityIndex} delta={qualityIndexDelta} />
           )}
         </div>
-        {role !== "viewer" && (
+        {role !== "viewer" && role !== "admin" && (
           <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg btn-primary px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50" />
         )}
       </div>

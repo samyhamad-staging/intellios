@@ -39,7 +39,7 @@ const COLUMNS: {
   { status: "approved",   label: "Approved",   colBg: "bg-green-50 border-green-200",   dotColor: "bg-green-500",  badgeCls: "bg-green-100 text-green-700",   group: "active"   },
   { status: "deployed",   label: "Deployed",   colBg: "bg-indigo-50 border-indigo-200", dotColor: "bg-indigo-500", badgeCls: "bg-indigo-100 text-indigo-700", group: "active"   },
   { status: "rejected",   label: "Rejected",   colBg: "bg-red-50 border-red-200",       dotColor: "bg-red-500",    badgeCls: "bg-red-100 text-red-700",       group: "terminal" },
-  { status: "deprecated", label: "Deprecated", colBg: "bg-amber-50 border-amber-200",   dotColor: "bg-amber-400",  badgeCls: "bg-amber-100 text-amber-700",   group: "terminal" },
+  { status: "deprecated", label: "Deprecated", colBg: "bg-gray-50/80 border-gray-200",  dotColor: "bg-gray-400",   badgeCls: "bg-gray-100 text-gray-500",     group: "terminal" },
 ];
 
 // Next-action label shown on cards to guide the user to the right action
