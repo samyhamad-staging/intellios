@@ -107,13 +107,13 @@ export function StakeholderAIChat({
     <div className="flex flex-col gap-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+        <p className="text-2xs font-semibold uppercase tracking-wider text-gray-400">
           AI Interview · {DOMAIN_LABELS[domain]}
         </p>
         {onCancel && (
           <button
             onClick={onCancel}
-            className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-2xs text-gray-400 hover:text-gray-600 transition-colors"
           >
             Cancel
           </button>
@@ -137,14 +137,14 @@ export function StakeholderAIChat({
                 {!isDone ? (
                   <>
                     <span className="h-1 w-1 animate-pulse rounded-full bg-violet-400" />
-                    <p className="text-[10px] text-violet-500">
+                    <p className="text-2xs text-violet-500">
                       Saving requirements…
                     </p>
                   </>
                 ) : (
                   <>
-                    <span className="text-[10px] text-green-500">✓</span>
-                    <p className="text-[10px] font-medium text-green-600">
+                    <span className="text-2xs text-green-500">✓</span>
+                    <p className="text-2xs font-medium text-green-600">
                       Requirements captured
                     </p>
                   </>

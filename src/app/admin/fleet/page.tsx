@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { SkeletonList } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Globe, Users, CheckSquare, Activity } from "lucide-react";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -85,8 +87,8 @@ export default function AdminFleetPage() {
 
   if (sessionStatus === "loading" || loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <p className="text-sm text-gray-400">Loading fleet overview…</p>
+      <div className="px-6 py-6 space-y-4">
+        <SkeletonList rows={4} height="h-16" />
       </div>
     );
   }
@@ -94,7 +96,7 @@ export default function AdminFleetPage() {
   if (error) {
     if (error === "super-admin-only") {
       return (
-        <div className="px-8 py-8">
+        <div className="px-6 py-6">
           <p className="text-sm text-gray-500">
             Platform fleet overview is only available to super-admins (admin accounts without an enterprise scope).
           </p>
@@ -113,7 +115,7 @@ export default function AdminFleetPage() {
   const { enterprises, totals } = data;
 
   return (
-    <div className="px-8 py-8 space-y-8">
+    <div className="px-6 py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -174,7 +176,7 @@ export default function AdminFleetPage() {
           >
             <div className="flex items-center gap-2 mb-2">
               {card.icon}
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+              <span className="text-2xs font-semibold uppercase tracking-wider text-gray-500">
                 {card.label}
               </span>
             </div>
@@ -193,70 +195,56 @@ export default function AdminFleetPage() {
           </h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Enterprise ID
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Total
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Deployed
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  In Review
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Draft
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Compliance
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
+          <Table striped>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Enterprise ID</TableHeader>
+                <TableHeader>Total</TableHeader>
+                <TableHeader>Deployed</TableHeader>
+                <TableHeader>In Review</TableHeader>
+                <TableHeader>Draft</TableHeader>
+                <TableHeader>Compliance</TableHeader>
+                <TableHeader>Actions</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {enterprises.map((e) => (
-                <tr key={e.enterpriseId ?? "__platform__"} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-3 font-mono text-xs text-gray-700">
+                <TableRow key={e.enterpriseId ?? "__platform__"}>
+                  <TableCell className="font-mono text-xs text-gray-700">
                     {e.enterpriseId ?? (
                       <span className="italic text-gray-400">platform (no enterprise)</span>
                     )}
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                  </TableCell>
+                  <TableCell className="text-right font-semibold text-gray-900">
                     {e.totalAgents}
-                  </td>
-                  <td className="px-4 py-3 text-right text-green-700">
+                  </TableCell>
+                  <TableCell className="text-right text-green-700">
                     {e.deployedAgents}
-                  </td>
-                  <td className="px-4 py-3 text-right text-amber-600">
+                  </TableCell>
+                  <TableCell className="text-right text-amber-600">
                     {e.statusCounts["in_review"] ?? 0}
-                  </td>
-                  <td className="px-4 py-3 text-right text-gray-500">
+                  </TableCell>
+                  <TableCell className="text-right text-gray-500">
                     {e.statusCounts["draft"] ?? 0}
-                  </td>
-                  <td className="px-4 py-3 text-center">
+                  </TableCell>
+                  <TableCell className="text-center">
                     <ComplianceBadge rate={e.complianceRate} />
-                  </td>
-                  <td className="px-4 py-3 text-right">
+                  </TableCell>
+                  <TableCell className="text-right">
                     <Link
                       href={`/registry?enterprise=${e.enterpriseId ?? ""}`}
                       className="text-xs text-violet-600 hover:text-violet-800 hover:underline"
                     >
                       View agents →
                     </Link>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
+            </TableBody>
             {/* Platform total row */}
             <tfoot>
               <tr className="border-t-2 border-gray-200 bg-gray-50 font-semibold">
-                <td className="px-6 py-3 text-xs text-gray-700 uppercase tracking-wide">
+                <td className="px-4 py-3 text-xs text-gray-700 uppercase tracking-wide">
                   Platform Total
                 </td>
                 <td className="px-4 py-3 text-right text-gray-900">{totals.totalAgents}</td>
@@ -273,7 +261,7 @@ export default function AdminFleetPage() {
                 <td />
               </tr>
             </tfoot>
-          </table>
+          </Table>
         </div>
       </div>
     </div>

@@ -70,6 +70,7 @@ src/                   ← Application source code
 - Never modify a released schema file in place.
 
 ### Session Logging
+- **Step 0 — Gap check (before any work):** Read `docs/log/_index.md` to find the date of the most recent log entry. Run `git log --since=YYYY-MM-DD --oneline` for that date. If commits exist that are not yet logged, create retroactive session logs for that unlogged work before starting new work. This keeps the audit trail continuous even when documentation was skipped at session end.
 - At the start of each session, create a new log file in `docs/log/` named `YYYY-MM-DD_session-NNN.md`.
 - After every significant action (file created, decision made, spec changed, question resolved), append to the action log.
 - Before ending a session, write the summary section.

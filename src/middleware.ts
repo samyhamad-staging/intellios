@@ -49,9 +49,9 @@ export default auth((req) => {
   }
 
   if (!isLoggedIn && !isLoginPage) {
-    // Unauthenticated visitors to / see the landing page instead of login
+    // Unauthenticated visitors to / go directly to login
     if (pathname === "/") {
-      return withId(NextResponse.redirect(new URL("/landing", req.url)), requestId);
+      return withId(NextResponse.redirect(new URL("/login", req.url)), requestId);
     }
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);

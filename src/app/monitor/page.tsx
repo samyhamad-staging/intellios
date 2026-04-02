@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Activity, RefreshCw, Cpu } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 interface AgentHealth {
   agentId: string;
@@ -246,7 +248,7 @@ export default function MonitorPage() {
   }
 
   return (
-    <main className="px-8 py-8">
+    <main className="px-6 py-6">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -285,7 +287,7 @@ export default function MonitorPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="mb-6 grid grid-cols-5 gap-4">
+      <div className="mb-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <KpiCard
           label="Deployed"
           value={summary.total}
@@ -337,17 +339,18 @@ export default function MonitorPage() {
         </div>
         <div className="flex min-w-40 flex-col gap-1">
           <label className="text-xs font-medium text-gray-500">Health</label>
-          <select
-            value={healthFilter}
-            onChange={(e) => setHealthFilter(e.target.value as typeof healthFilter)}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-          >
-            <option value="all">All</option>
-            <option value="clean">Clean</option>
-            <option value="degraded">Degraded</option>
-            <option value="critical">Critical</option>
-            <option value="unknown">Not Checked</option>
-          </select>
+          <Select value={healthFilter} onValueChange={(v) => setHealthFilter(v as typeof healthFilter)}>
+            <SelectTrigger className="text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="clean">Clean</SelectItem>
+              <SelectItem value="degraded">Degraded</SelectItem>
+              <SelectItem value="critical">Critical</SelectItem>
+              <SelectItem value="unknown">Not Checked</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         {(searchQuery || healthFilter !== "all") && (
           <div className="flex items-end">
@@ -391,24 +394,24 @@ export default function MonitorPage() {
             {filtered.length} agent{filtered.length === 1 ? "" : "s"}
             {filtered.length !== agents.length && ` (filtered from ${agents.length})`}
           </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
-                <th className="px-5 py-3 text-left">Agent</th>
-                <th className="px-4 py-3 text-left">Version</th>
-                <th className="px-4 py-3 text-left">Health</th>
-                <th className="px-4 py-3 text-right">Errors</th>
-                <th className="px-4 py-3 text-right">Warnings</th>
-                <th className="px-4 py-3 text-left">Production</th>
-                <th className="px-4 py-3 text-left">Deployed</th>
-                <th className="px-4 py-3 text-left">Last Checked</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
+          <Table striped>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Agent</TableHeader>
+                <TableHeader>Version</TableHeader>
+                <TableHeader>Health</TableHeader>
+                <TableHeader>Errors</TableHeader>
+                <TableHeader>Warnings</TableHeader>
+                <TableHeader>Production</TableHeader>
+                <TableHeader>Deployed</TableHeader>
+                <TableHeader>Last Checked</TableHeader>
+                <TableHeader>Actions</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="px-5 py-8 text-center text-sm text-gray-400">
+                <TableRow>
+                  <TableCell colSpan={9} className="px-5 py-8 text-center text-sm text-gray-400">
                     No agents match your filters.{" "}
                     <button
                       onClick={() => { setSearchQuery(""); setHealthFilter("all"); }}
@@ -416,14 +419,14 @@ export default function MonitorPage() {
                     >
                       Clear filters
                     </button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 filtered.map((agent) => {
                   const isChecking = checkingId === agent.agentId;
                   return (
-                    <tr key={agent.agentId} className="hover:bg-gray-50">
-                      <td className="px-5 py-3">
+                    <TableRow key={agent.agentId}>
+                      <TableCell>
                         <div className="font-medium text-gray-900 truncate max-w-48">
                           {agent.name ?? "Unnamed Agent"}
                         </div>
@@ -445,9 +448,9 @@ export default function MonitorPage() {
                             )}
                           </div>
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">v{agent.version}</td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell className="text-gray-600">v{agent.version}</TableCell>
+                      <TableCell>
                         <div className="flex flex-wrap gap-1">
                           <HealthBadge status={agent.healthStatus} errorCount={agent.errorCount} />
                           {agent.governanceDrift?.status === "drifted" && (
@@ -456,22 +459,22 @@ export default function MonitorPage() {
                             </span>
                           )}
                         </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         {agent.errorCount > 0 ? (
                           <span className="font-semibold text-red-600">{agent.errorCount}</span>
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         {agent.warningCount > 0 ? (
                           <span className="text-amber-600">{agent.warningCount}</span>
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">
+                      </TableCell>
+                      <TableCell className="text-xs text-gray-500">
                         {agent.lastTelemetryAt ? (
                           <div>
                             <div className="text-gray-600">
@@ -484,14 +487,14 @@ export default function MonitorPage() {
                         ) : (
                           <span className="text-gray-300">No data</span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">
+                      </TableCell>
+                      <TableCell className="text-xs text-gray-500">
                         {timeAgo(agent.deployedAt)}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">
+                      </TableCell>
+                      <TableCell className="text-xs text-gray-500">
                         {agent.lastCheckedAt ? timeAgo(agent.lastCheckedAt) : "—"}
-                      </td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center justify-end gap-3">
                           {canCheck && (
                             <button
@@ -516,13 +519,13 @@ export default function MonitorPage() {
                             View →
                           </Link>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 
@@ -573,7 +576,7 @@ export default function MonitorPage() {
           ) : (
             <>
               {/* Summary strip */}
-              <div className="mb-4 grid grid-cols-3 gap-3">
+              <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="rounded-xl border border-gray-200 bg-white p-4">
                   <div className="text-2xl font-bold text-gray-900">{agcSummary.total}</div>
                   <div className="mt-0.5 text-xs text-gray-500">AgentCore agents</div>
@@ -590,38 +593,38 @@ export default function MonitorPage() {
 
               {/* Per-agent table */}
               <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
-                      <th className="px-5 py-3 text-left">Agent</th>
-                      <th className="px-4 py-3 text-left">AWS Agent ID</th>
-                      <th className="px-4 py-3 text-left">Region</th>
-                      <th className="px-4 py-3 text-left">Bedrock Status</th>
-                      <th className="px-4 py-3 text-left">Last Deployed</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
+                <Table striped>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Agent</TableHeader>
+                      <TableHeader>AWS Agent ID</TableHeader>
+                      <TableHeader>Region</TableHeader>
+                      <TableHeader>Bedrock Status</TableHeader>
+                      <TableHeader>Last Deployed</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {agcHealth.map((entry) => (
-                      <tr key={entry.blueprintId} className="hover:bg-gray-50">
-                        <td className="px-5 py-3 font-medium text-gray-900">
+                      <TableRow key={entry.blueprintId}>
+                        <TableCell className="font-medium text-gray-900">
                           {entry.agentName ?? "Unnamed Agent"}
-                        </td>
-                        <td className="px-4 py-3 font-mono text-xs text-gray-500">
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-gray-500">
                           {entry.agentId}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-gray-600">
+                        </TableCell>
+                        <TableCell className="text-xs text-gray-600">
                           {entry.region}
-                        </td>
-                        <td className="px-4 py-3">
+                        </TableCell>
+                        <TableCell>
                           <BedrockStatusBadge status={entry.bedrockStatus} />
-                        </td>
-                        <td className="px-4 py-3 text-xs text-gray-500">
+                        </TableCell>
+                        <TableCell className="text-xs text-gray-500">
                           {timeAgo(entry.lastDeployedAt)}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </>
           )}

@@ -57,6 +57,8 @@ interface GroupedItem {
   description: string;
   createdAt: string;
   count: number;
+  entityId: string;
+  entityType: string;
 }
 
 function groupItems(items: ActivityItem[]): GroupedItem[] {
@@ -76,6 +78,8 @@ function groupItems(items: ActivityItem[]): GroupedItem[] {
         description: item.description,
         createdAt: item.createdAt,
         count: 1,
+        entityId: item.entityId,
+        entityType: item.entityType,
       });
     }
   }
@@ -84,7 +88,7 @@ function groupItems(items: ActivityItem[]): GroupedItem[] {
 
 // ─── Feed ─────────────────────────────────────────────────────────────────────
 
-export function ActivityFeed() {
+export function ActivityFeed({ compact }: { compact?: boolean }) {
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -101,10 +105,10 @@ export function ActivityFeed() {
       <div className="space-y-3">
         {[...Array(5)].map((_, i) => (
           <div key={i} className="flex items-center gap-3 animate-pulse">
-            <div className="h-8 w-8 rounded-full bg-gray-200 shrink-0" />
+            <div className="h-8 w-8 rounded-full bg-surface-muted shrink-0" />
             <div className="flex-1 space-y-1.5">
-              <div className="h-3 w-2/3 rounded bg-gray-200" />
-              <div className="h-2.5 w-1/4 rounded bg-gray-100" />
+              <div className="h-3 w-2/3 rounded bg-surface-muted" />
+              <div className="h-2.5 w-1/4 rounded bg-surface-raised" />
             </div>
           </div>
         ))}
@@ -113,54 +117,71 @@ export function ActivityFeed() {
   }
 
   if (error) {
-    return <p className="text-sm text-gray-400">Unable to load activity.</p>;
+    return <p className="text-sm text-text-tertiary">Unable to load activity.</p>;
   }
 
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center gap-2 py-8 text-center">
-        <Activity className="h-7 w-7 text-gray-200" />
-        <p className="text-sm text-gray-400">No activity yet</p>
+        <Activity className="h-7 w-7 text-text-tertiary/30" />
+        <p className="text-sm text-text-tertiary">No activity yet</p>
       </div>
     );
   }
 
-  const grouped = groupItems(items);
+  const grouped = groupItems(items).slice(0, compact ? 5 : 10);
 
   return (
     <div>
-      <div className="space-y-0 divide-y divide-gray-50">
-        {grouped.map((item) => (
-          <div key={item.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-            {/* Avatar */}
-            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarColor(item.actorName)}`}>
-              {initials(item.actorName)}
+      <div className="space-y-0 divide-y divide-border">
+        {grouped.map((item) => {
+          const entityHref = item.entityType === "agent_blueprint" && item.entityId
+            ? `/registry/${item.entityId}`
+            : null;
+          const rowCls = `flex items-center gap-3 ${compact ? "py-2" : "py-3"} first:pt-0 last:pb-0 -mx-1 px-1 rounded transition-colors` + (entityHref ? " hover:bg-surface-raised/50 cursor-pointer" : " hover:bg-surface-raised/50");
+          const inner = (
+            <>
+              {/* Avatar */}
+              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarColor(item.actorName)}`}>
+                {initials(item.actorName)}
+              </div>
+              {/* Content */}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-text">
+                  <span className="font-medium capitalize">{item.actorName}</span>
+                  {" "}
+                  <span className="text-text-secondary">{item.description}</span>
+                </p>
+                <p className="text-xs text-text-tertiary">{relativeTime(item.createdAt)}</p>
+              </div>
+              {/* Repeat count badge */}
+              {item.count > 1 && (
+                <span className="shrink-0 rounded-full bg-surface-raised px-2 py-0.5 text-xs font-medium text-text-tertiary">
+                  ×{item.count}
+                </span>
+              )}
+            </>
+          );
+          return entityHref ? (
+            <Link key={item.id} href={entityHref} className={rowCls}>
+              {inner}
+            </Link>
+          ) : (
+            <div key={item.id} className={rowCls}>
+              {inner}
             </div>
-            {/* Content */}
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-gray-700">
-                <span className="font-medium capitalize">{item.actorName}</span>
-                {" "}
-                <span className="text-gray-500">{item.description}</span>
-              </p>
-              <p className="text-xs text-gray-400">{relativeTime(item.createdAt)}</p>
-            </div>
-            {/* Repeat count badge */}
-            {item.count > 1 && (
-              <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
-                ×{item.count}
-              </span>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Footer */}
-      <div className="mt-3 border-t border-gray-100 pt-3">
-        <Link href="/audit" className="text-xs text-violet-600 hover:text-violet-700">
-          View full audit trail →
-        </Link>
-      </div>
+      {!compact && (
+        <div className="mt-3 border-t border-border pt-3">
+          <Link href="/audit" className="text-xs text-primary hover:text-primary-hover transition-colors">
+            View full audit trail →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

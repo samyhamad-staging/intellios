@@ -121,14 +121,14 @@ export function GovernorSidebar({ user, branding }: GovernorSidebarProps) {
           >
             <Search size={12} className="shrink-0" />
             <span className="flex-1 text-left">Search…</span>
-            <kbd className="rounded border px-1 py-0.5 text-[9px] font-medium" style={{ borderColor: "var(--sidebar-border)", opacity: 0.6 }}>⌘K</kbd>
+            <kbd className="rounded border px-1 py-0.5 text-2xs font-medium" style={{ borderColor: "var(--sidebar-border)", opacity: 0.6 }}>⌘K</kbd>
           </button>
         </div>
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-2 py-3">
           <p
-            className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest"
+            className="mb-1 px-2 text-2xs font-semibold uppercase tracking-widest"
             style={{ color: "var(--sidebar-text)", opacity: 0.5 }}
           >
             Governor
@@ -178,13 +178,13 @@ export function GovernorSidebar({ user, branding }: GovernorSidebarProps) {
           style={{ borderTop: "1px solid var(--sidebar-border)" }}
         >
           <div className="flex items-center gap-2.5 rounded-lg px-2 py-2">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[11px] font-semibold text-white">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs-tight font-semibold text-white">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-medium text-white">{user.name ?? user.email}</p>
               {roleInfo && (
-                <span className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${roleInfo.color}`}>
+                <span className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-2xs font-medium ${roleInfo.color}`}>
                   {roleInfo.label}
                 </span>
               )}

@@ -2,7 +2,97 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-03-28 (Session 066b — RV-001–013 review enhancements + Design System v1.1; Session 065b — Vercel serverless fixes + UE-001–009)
+**Last updated:** 2026-04-01 (Session 085 — Agent Design Studio UX Polish)
+
+---
+
+## ✓ Session 085 Complete (2026-04-01) — Agent Design Studio UX Polish
+
+Six polish items addressing first-impression friction in the intake session page. Progressive disclosure in Required Governance and Coverage Analysis sidebar panels (satisfied first, pending capped at 3 + expand). Removed red dots from domain chips (redundant with fill bars, read as errors). Replaced SVG score ring with `X/7 domains` monospace counter (progress, not grade). Stakeholder Input section collapses to a single muted row during ANALYZING state. Domain chip clicks produce a ghost pill message style (bg-primary/8, border, italic, Navigation icon) tracked via `useRef<Set<string>>` — distinguishes navigation from user speech. Added `pendingActiveDomain` optimistic override so chip clicks highlight immediately without waiting for AI response metadata. Round 1 completions also documented: payload fetch on revisit, chat max-w-4xl, interactive domain chips with tooltip, panel label renames (DESIGN INTELLIGENCE, ANALYZING, Coverage Analysis), page header and sidebar label updates. 0 new files, 5 modified.
+
+---
+
+## ✓ Session 082 Complete (2026-04-01) — Domain Progress Strip + DPR Roadmap
+
+Replaced 3-step stepper (Context → Requirements → Review) and classification bar with a unified Domain Progress Strip. 7 ABP domains rendered as chips with 4-dot fill indicators (0-4 richness scale, risk-tier-aware thresholds), active domain glow (inferred from tool calls → probing topics → lowest fill), classification badges inline, readiness score badge. AI messages now show subtle domain tag. New `domains.ts` lib with `computeDomainProgress()` + `inferActiveDomain()`. Transparency metadata extended with `domains[]` and `activeDomain`. Strategic roadmap revision: archived H1/H2 horizons, introduced DPR (Design Partner Readiness) phase with 3 tracks. 2 new files, 6 modified, 0 migrations, 0 new deps. tsc: 0 errors.
+
+---
+
+## ✓ Session 081 Complete (2026-04-01) — CVE Fix + Merge + Vercel Deploy
+
+Resolved all 10 npm CVEs: `npm audit fix` (brace-expansion, flatted, picomatch, fast-xml-parser, Next.js ×5), drizzle-kit 0.31.9→0.31.10, `overrides.esbuild ^0.25.12` to force patched esbuild into @esbuild-kit/core-utils nested install. 0 vulnerabilities. Merged `feat/intake-v2-hardening` → `master`, pushed to `origin/main` triggering Vercel production deploy. tsc: 0 errors.
+
+---
+
+## ✓ Session 080 Complete (2026-03-31) — Catalyst Phase 2 (Switch + DescriptionList + Divider)
+
+Applied Catalyst Switch to 2 files (integrations ×4 checkboxes, settings AgentCore toggle). DescriptionList to 2 files (deploy modal, blueprint summary). Divider to 1 file (chat markdown hr). Skipped genuine form checkboxes and print-layout fields. tsc: 0 errors.
+
+---
+
+## ✓ Session 079 Complete (2026-03-31) — Catalyst UI Kit Integration + Table Migration
+
+7 Catalyst components added (Table, Switch, DescriptionList, Heading, Divider, Text, CatalystLink). @headlessui/react installed. SSO toggle → Switch. All 12 raw-table files migrated to Catalyst Table (striped, dense variants). 0 raw tables remain. tsc: 0 errors.
+
+---
+
+## ✓ Session 078 Complete (2026-03-31) — Premium Landing Page
+
+Full premium marketing page at /landing with @heroicons/react. 9 sections: sticky nav, hero with gradient blob, compliance framework badges (SR 11-7/EU AI Act/NIST/ISO/SOC 2), 5-step pipeline visualization, 3 feature cards, 4-stat bar, 8-item feature grid, 4 role cards, dark CTA, columnar footer. tsc: 0 errors.
+
+---
+
+## ✓ Session 077 Complete (2026-03-31) — Recharts + Radix Select Deployment
+
+Applied Recharts to quality dashboard (line chart), governance page (bar + donut charts). Replaced all 20 remaining raw `<select>` elements across 11 files with Radix Select. Responsive grid breakpoints on governance + monitor. aria-label on 4 icon-only buttons. tsc: 0 errors.
+
+---
+
+## ✓ Session 076 Complete (2026-03-31) — UI/UX Optimization Sprint (Phase 0–3)
+
+UI/UX Optimization Sprint initial pass. Fixed a latent animation bug (tw-animate-css installed; all dialog/dropdown animations now functional). Replaced the 465-line custom command palette with cmdk (polished fuzzy search, keyboard nav, animations). Added sonner toast system (global `<Toaster>` in layout; replaced custom `[toast, setToast]` inline state in 3 admin pages). Created Radix-backed UI components: `tabs.tsx` (applied to registry agents/workflows toggle), `select.tsx`, `sheet.tsx`. Added `animate-in slide-in-from-right` to the mobile intake sidebar overlay. Installed Recharts and created 3 shared chart wrappers (`BarChart`, `LineChart`, `DonutChart`) with a design token map (`chart-tokens.ts`). Created `Skeleton`/`SkeletonList` and `EmptyState` utility components; applied both to `registry/page.tsx` (replacing manual pulse arrays and inline empty state divs). 9 new files, 8 modified, 6 new dependencies. tsc: 0 errors.
+
+---
+
+## ✓ Session 075 Complete (2026-03-31) — Intake v2 P1 Hardening
+
+P1 hardening sprint against the all-conversation Intake v2. Three targeted fixes: (1) **Mobile sidebar** — `IntakeProgress` now `hidden lg:flex`; mobile users get a "Progress" toggle in the header that renders the sidebar as a full-viewport overlay, restoring full chat width on narrow screens; (2) **Classification loading resilience** — `classificationLoadingTicksRef` tracks consecutive refreshTicks where context is saved but `agentType` is absent; spinner clears after 2 unanswered ticks, preventing the infinite "Classifying…" state when classification API fails silently; (3) **Context cold-path** — `onContextSubmit` DB save now wrapped in try/catch with explicit throw + console.error; tool surfaces a clean "Failed to save context — please try again" message to Claude instead of an unhandled exception; classification failure remains non-fatal. 0 new files, 3 modified, 0 migrations, 0 new deps. tsc: 0 errors.
+
+---
+
+## ✓ Session 074 Complete (2026-03-31) — Intake Transparency Overhaul
+
+Evaluated the intake process (UX 7.5/10, UI 7/10, Transparency 3.5/10 → target 7+/10). Designed and implemented a `messageMetadata`-based transparency system using AI SDK v6 that streams AI calculations live alongside each response. Five new collapsible sidebar panels: score decomposition (3-dimension bars replacing opaque %), classification explainer (risk tier signals + rationale + conversation depth), governance checklist (live satisfied/pending status with reasons), probing topics (mandatory/recommended with covered status), model & expertise indicator (Sonnet/Haiku with reason + Guided/Adaptive/Expert). Tool call chips enhanced with "Captured"/"Failed" result status badges and result JSON on expand. TypeScript UIMessage content field fix. Local preview unblocked. Verified end-to-end with live AI conversation (sidebar panels populated correctly from streamed metadata). 2 new files, 4 modified, 0 migrations, 0 new deps.
+
+---
+
+## ✓ Session 073 Complete (2026-03-31) — Log Backfill + keen-pascal Merge
+
+Retroactive session logs for 069–071 created. Gap-check instruction added to CLAUDE.md (Step 0: read _index, compare with git log, create missing logs before starting new work). Strategic assessment: 4-sprint priority stack produced; H3 gate reconfirmed (requires 3 design partners). Squash merge of `claude/keen-pascal` → `main` (17 commits → 3 squash commits; 54 files; 1 conflict resolved). Preview server started but blocked by missing `.env.local` in zealous-banzai worktree. Session 072 log written.
+
+---
+
+## ✓ Session 072 Complete (2026-03-31) — All-Conversation Intake v2 + Font Tokenization + A11y
+
+All-conversation intake v2: Phase 1 structured form eliminated; `submit_intake_context` tool added (Claude calls after conversational confirmation of 6 context fields); `CONTEXT_COLLECTION_PROMPT` mode added (sole job: collect context, then transition to full governance probing prompt); cold start fix (`INTAKE_OPENER` pre-populated as first message — no blank loading state); 3-step phase stepper (Context · Requirements · Review); orientation panel (6 context areas + 7 blueprint sections, transitions to Blueprint Progress once context arrives); readiness score hidden until score > 0. Font tokenization: `text-2xs` (10px) and `text-xs-tight` (11px) tokens defined in globals.css; 90+ arbitrary `text-[10px]`/`text-[11px]` replacements across 48 files. Badge migration batch 4: intake-review + completeness-map migrated to unified Badge component. A11y: sidebar ARIA landmarks + `aria-current="page"`, `aria-label` on controls (help panel, command palette, contributions panel, violations panel, tool call display). Pipeline empty states for all 4 kanban columns. Admin section nav converted from collapsible to static label. 54 files, 0 migrations, 0 new deps.
+
+---
+
+## ✓ Session 071 Complete (2026-03-30) — Intake UX Hardening + Admin Overview Redesign + Unified Badge System
+
+Intake UX: /landing redirect loop fixed (ERR_TOO_MANY_REDIRECTS for all unauthenticated visitors); Revise button fixed (was anchor→full reload, now PATCH session status + client-side phase switch); chat history restored on Revise; discard button with inline confirm + DELETE endpoint (cascade-safe, completed sessions protected). Admin Overview: compact stats strip (3× vertical space saving), action callouts → inline chips, Fleet Governance summary bar replaces 4 tiles, side-by-side activity layout, redundant agents list removed. Unified Badge system: 7 semantic variants (neutral/info/success/warning/danger/accent/muted) replace 30+ inline color definitions; consistent `rounded-full px-2 py-0.5 text-xs font-medium` across all badge-like elements; 6 files migrated. 9 commits, 0 migrations, 0 new deps.
+
+---
+
+## ✓ Session 070 Complete (2026-03-30) — Cron Downgrade + Design System v1.2
+
+Cron downgrade: alert-check and telemetry-sync reduced to daily for Vercel Hobby plan compliance (restore to `*/15` and `0 *` on Pro). Design System v1.2: primary violet-700→indigo-600 (cooler, more enterprise-native tone); cool-shift all surfaces and borders to blue-tinted slate; indigo-tinted box shadows; new `.btn-primary` gradient+glow utility; glass-morphism login page; sidebar header gradient + active nav glow. 5 files modified, 0 migrations, 0 new deps.
+
+---
+
+## ✓ Session 069 Complete (2026-03-29) — SEC-001–007 Security Hardening
+
+86 API routes scanned against OWASP Top 10 patterns. 7 findings (0 critical/high, 3 medium, 4 low) — all resolved: SEC-001 cron fails-closed when CRON_SECRET unset; SEC-002 forgot-password IP rate limit (5/hr); SEC-003 webhook SSRF prevention (RFC 1918 + loopback blocked in schema); SEC-004/006 npm audit fix (Next.js CVEs + flatted/picomatch dev deps); SEC-005 requireAuth 403 no longer exposes role names; SEC-007 reset-password IP rate limit (10/hr). Deferred: esbuild/drizzle-kit CVEs (no prod runtime exposure, requires breaking drizzle-kit upgrade). Full report at `docs/log/health/2026-03-29_security.md`. 6 src files modified, 0 migrations, 0 new deps.
 
 ---
 
@@ -49,6 +139,62 @@ This document is the **source of truth** for what has been built and what needs 
 | | | | | |
 | **Current Product (P+A+G+D)** | **55** | **55** | **100%** | Production-ready; all planned capabilities shipped |
 | **Full Vision (all horizons)** | **92** | **103** | **89%** | Core product 100%; H1+H2 100%; H3 7/14 (governance + ecosystem shipped; foundry deferred) |
+| **UI/UX Sprint (076–082)** | **7** | **7** | **100%** | Catalyst UI, landing page, domain progress strip, CVE fix, Recharts, Radix Select |
+| **DPR — Design Partner Readiness** | **7** | **10** | **70%** | Tracks 1+2 complete (7/7 items); Track 3 GTM pending (Samy-led) |
+
+---
+
+## DPR — Design Partner Readiness
+
+**Status: Active** — Introduced session 082. Replaces feature development with product maturity.
+
+**Why:** Intellios reached feature saturation (89% of full vision). The problem is no longer "what to build" — it's "how to make what exists feel enterprise-grade." H3-1/H3-2 remain correctly gated on 3 design partners. The priority is now: strengthen the product, polish first impressions, define GTM strategy.
+
+### Track 1: Product Hardening
+
+| Item | Description | Status | Sessions |
+|------|-------------|--------|----------|
+| **DPR-1.1** | Test coverage for critical paths (intake, governance, lifecycle, domains) — target 80%+ on `src/lib/` | **Complete** (Session 082) | 2-3 |
+| **DPR-1.2** | Error handling audit — structured error responses, error boundaries, graceful degradation | **Complete** (Session 083) | 1 |
+| **DPR-1.3** | Performance baseline — Lighthouse, N+1 queries, streaming latency | **Complete** (Session 083) | 1 |
+
+### Track 2: First Impression Polish
+
+| Item | Description | Status | Sessions |
+|------|-------------|--------|----------|
+| **DPR-2.1** | Chat UX fixes — bottom-anchor messages, softer user bubbles, contextual placeholder, one-question-per-turn | **Complete** (Session 082) | 1 |
+| **DPR-2.2** | Loading states pass — skeleton loading + empty states on every page | **Complete** (Session 083) | 1 |
+| **DPR-2.3** | Demo data refresh — Acme Financial seed updated for latest features | **Complete** (Session 083) | 1 |
+| **DPR-2.4** | Onboarding refinement — guided first-agent-blueprint experience | **Complete** (Session 083) | 1 |
+
+### Track 3: GTM Foundation (Samy-led, Claude assists)
+
+| Item | Description | Status | Owner |
+|------|-------------|--------|-------|
+| **DPR-3.1** | Target persona definition — buyer, user, pain, trigger | Pending | Samy |
+| **DPR-3.2** | Positioning & messaging — value prop, differentiators, "why now" | Pending | Samy |
+| **DPR-3.3** | Pricing model — tiers, design partner offer | Pending | Samy |
+| **DPR-3.4** | Outreach materials — one-pager, demo script, email templates | Pending | Claude + Samy |
+
+### Sequencing
+
+1. **DPR-2.1** Chat UX fixes (highest-visibility, low-effort)
+2. **DPR-1.1** Test coverage (confidence foundation)
+3. **DPR-2.2 + 2.3** Loading states + demo data
+4. **DPR-3.1 + 3.2** Persona + positioning (parallel, Samy)
+5. **DPR-1.2** Error handling audit
+6. **DPR-2.4** Onboarding refinement
+7. **DPR-3.4** Outreach materials
+
+### Definition of Done
+
+- 80%+ test coverage on `src/lib/intake/`, `src/lib/governance/`, `src/lib/sla/`
+- Every page loads in <2s (3G simulation)
+- Chat UX passes the "screenshot test" (no embarrassing gaps)
+- Demo data tells a compelling 12-minute story
+- Landing page communicates value in 5 seconds
+- Target persona defined and documented
+- One-pager exists for leave-behind
 
 ---
 

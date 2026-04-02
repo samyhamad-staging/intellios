@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
+import { Cpu } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
@@ -61,36 +62,85 @@ function LoginForm() {
     await signIn("oidc", { callbackUrl });
   }
 
+  function handleQuickFill(fillEmail: string, fillPassword: string) {
+    setEmail(fillEmail);
+    setPassword(fillPassword);
+  }
+
+  const DEMO_ACCOUNTS = [
+    { email: "designer@intellios.dev",  password: "Designer1234!", role: "Architect",         badge: "text-blue-300 bg-blue-500/15 border-blue-500/25"    },
+    { email: "reviewer@intellios.dev",  password: "Reviewer1234!", role: "Reviewer",           badge: "text-amber-300 bg-amber-500/15 border-amber-500/25"  },
+    { email: "officer@intellios.dev",   password: "Officer1234!",  role: "Compliance Officer", badge: "text-emerald-300 bg-emerald-500/15 border-emerald-500/25" },
+    { email: "admin@intellios.dev",     password: "Admin1234!",    role: "Admin",              badge: "text-violet-300 bg-violet-500/15 border-violet-500/25" },
+  ] as const;
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ background: "var(--gradient-login-bg)" }}>
-      <div className="w-full max-w-sm">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            Intellios
-          </h1>
-          <p className="mt-1 text-sm text-gray-400">Enterprise Agent Factory</p>
+    <div
+      className="relative flex min-h-screen items-center justify-center overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #07071a 0%, #0d0d2b 50%, #07071a 100%)" }}
+    >
+      {/* Dot-grid overlay */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.15]"
+        style={{
+          backgroundImage: "radial-gradient(circle, rgba(99,102,241,0.5) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      />
+      {/* Ambient glow orbs */}
+      <div
+        className="pointer-events-none absolute left-1/4 top-1/4 h-96 w-96 rounded-full blur-3xl"
+        style={{ background: "radial-gradient(circle, rgba(99,102,241,0.12), transparent 70%)" }}
+      />
+      <div
+        className="pointer-events-none absolute bottom-1/4 right-1/4 h-64 w-64 rounded-full blur-3xl"
+        style={{ background: "radial-gradient(circle, rgba(139,92,246,0.10), transparent 70%)" }}
+      />
+
+      <div className="relative z-10 w-full max-w-sm px-4">
+        {/* ── Logo lockup ───────────────────────────────────────────────── */}
+        <div className="mb-8 flex flex-col items-center gap-3">
+          <div className="relative">
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-xl border border-indigo-500/30 bg-indigo-500/10"
+              style={{ boxShadow: "0 0 24px rgba(99,102,241,0.25), inset 0 0 12px rgba(99,102,241,0.05)" }}
+            >
+              <Cpu size={22} className="text-indigo-400" />
+            </div>
+            {/* Pulse ring */}
+            <div
+              className="absolute inset-0 rounded-xl border border-indigo-400/30"
+              style={{ animation: "ping 2.5s cubic-bezier(0,0,0.2,1) infinite" }}
+            />
+          </div>
+          <div className="text-center">
+            <h1 className="text-2xl font-bold tracking-tight text-white">Intellios</h1>
+            <p className="mt-0.5 font-mono text-2xs tracking-widest text-indigo-400/60 uppercase">
+              Enterprise Agent Factory
+            </p>
+          </div>
         </div>
 
         {/* Registration success banner */}
         {justRegistered && (
-          <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          <div className="mb-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
             Account created successfully. Sign in to get started.
           </div>
         )}
 
-        {/* Card */}
-        <div className="rounded-card border border-gray-200 bg-white p-8 shadow-sm">
-          <h2 className="mb-6 text-lg font-semibold text-gray-900">
-            Sign in to your account
-          </h2>
+        {/* ── Glass card ────────────────────────────────────────────────── */}
+        <div
+          className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl"
+          style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 24px 48px rgba(0,0,0,0.5)" }}
+        >
+          <div className="mb-6">
+            <p className="mb-1 font-mono text-2xs uppercase tracking-widest text-indigo-400/50">Authentication</p>
+            <h2 className="text-lg font-semibold text-white">Sign in to your account</h2>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label
-                htmlFor="email"
-                className="mb-1 block text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="email" className="mb-1.5 block font-mono text-2xs uppercase tracking-wide text-gray-500">
                 Email address
               </label>
               <input
@@ -100,37 +150,31 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus-accent"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
                 placeholder="you@intellios.dev"
               />
             </div>
 
-            {/* H2-3.1: SSO button — shown when domain matches an SSO enterprise */}
+            {/* SSO detection */}
             {ssoEnabled && (
-              <div className="rounded-lg border border-violet-200 bg-violet-50 p-3 space-y-2">
-                <p className="text-xs text-violet-700 font-medium">
-                  Your organization uses Single Sign-On.
-                </p>
+              <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/10 p-3 space-y-2">
+                <p className="text-xs font-mono text-indigo-300">Your organization uses Single Sign-On.</p>
                 <button
                   type="button"
                   onClick={handleSsoSignIn}
-                  className="w-full rounded-lg border border-violet-600 bg-white py-2 text-sm font-medium text-violet-700 hover:bg-violet-50"
+                  className="w-full rounded-lg border border-indigo-500/40 bg-white/5 py-2 text-sm font-medium text-indigo-300 hover:bg-indigo-500/10 transition-colors"
                 >
                   Continue with SSO →
                 </button>
-                <p className="text-[10px] text-violet-500 text-center">
+                <p className="text-center font-mono text-2xs text-indigo-400/50">
                   You will be redirected to your identity provider.
                 </p>
               </div>
             )}
 
-            {/* Hide password field while SSO check is loading or SSO is active */}
             {!ssoEnabled && (
               <div>
-                <label
-                  htmlFor="password"
-                  className="mb-1 block text-sm font-medium text-gray-700"
-                >
+                <label htmlFor="password" className="mb-1.5 block font-mono text-2xs uppercase tracking-wide text-gray-500">
                   Password
                 </label>
                 <input
@@ -140,13 +184,13 @@ function LoginForm() {
                   required={!ssoEnabled}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
                 />
               </div>
             )}
 
             {error && (
-              <p className="rounded-lg badge-gov-error px-3 py-2 text-sm">
+              <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
                 {error}
               </p>
             )}
@@ -155,69 +199,50 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={loading || ssoLoading}
-                className="w-full rounded-lg btn-primary py-2 text-sm font-medium disabled:opacity-50"
+                className="w-full rounded-lg btn-primary py-2.5 text-sm font-medium disabled:opacity-50"
               >
                 {loading ? "Signing in..." : "Sign in"}
               </button>
             )}
 
             <div className="text-center">
-              <a
-                href="/auth/forgot-password"
-                className="text-xs text-gray-400 hover:text-gray-300 underline-offset-2 hover:underline"
-              >
+              <a href="/auth/forgot-password" className="text-xs text-white/25 hover:text-white/50 transition-colors">
                 Forgot your password?
               </a>
-            </div>
-
-            <div className="text-center">
-              <span className="text-xs text-gray-400">
-                Don&apos;t have an account?{" "}
-                <a
-                  href="/register"
-                  className="font-medium text-indigo-400 hover:text-indigo-300 underline-offset-2 hover:underline"
-                >
-                  Start free trial
-                </a>
-              </span>
             </div>
           </form>
         </div>
 
-        {/* Role reference */}
-        <div className="mt-6 rounded-lg border border-white/10 bg-white/10 backdrop-blur-sm p-4">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-            Demo accounts
-          </p>
-          <div className="space-y-1.5 text-xs text-gray-300">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="font-medium text-white">designer@intellios.dev</span>
-                <span className="ml-2 text-gray-400">Designer1234!</span>
-              </div>
-              <span className="rounded bg-blue-500/20 px-1.5 py-0.5 text-blue-300">Architect</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="font-medium text-white">reviewer@intellios.dev</span>
-                <span className="ml-2 text-gray-400">Reviewer1234!</span>
-              </div>
-              <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-amber-300">Reviewer</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="font-medium text-white">officer@intellios.dev</span>
-                <span className="ml-2 text-gray-400">Officer1234!</span>
-              </div>
-              <span className="rounded bg-green-500/20 px-1.5 py-0.5 text-green-300">Compliance Officer</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="font-medium text-white">admin@intellios.dev</span>
-                <span className="ml-2 text-gray-400">Admin1234!</span>
-              </div>
-              <span className="rounded bg-violet-500/20 px-1.5 py-0.5 text-violet-300">Admin</span>
-            </div>
+        {/* ── Demo accounts ─────────────────────────────────────────────── */}
+        <div className="mt-4">
+          {/* Section divider */}
+          <div className="mb-3 flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/8" />
+            <span className="font-mono text-2xs uppercase tracking-widest text-white/20">Demo accounts</span>
+            <div className="h-px flex-1 bg-white/8" />
+          </div>
+          {/* Clickable rows — click to fill credentials */}
+          <div className="space-y-1">
+            {DEMO_ACCOUNTS.map((acc) => (
+              <button
+                key={acc.email}
+                type="button"
+                onClick={() => handleQuickFill(acc.email, acc.password)}
+                className="group flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-left transition-all hover:border-white/8 hover:bg-white/5"
+              >
+                <div className="min-w-0 flex-1">
+                  <span className="block truncate font-mono text-xs text-white/60 transition-colors group-hover:text-white/85">
+                    {acc.email}
+                  </span>
+                  <span className="block font-mono text-2xs text-white/20 transition-colors group-hover:text-white/40">
+                    {acc.password}
+                  </span>
+                </div>
+                <span className={`shrink-0 whitespace-nowrap rounded-md border px-2 py-0.5 font-mono text-2xs font-medium ${acc.badge}`}>
+                  {acc.role}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       </div>

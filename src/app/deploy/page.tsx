@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Rocket } from "lucide-react";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
+import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/ui/description-list";
 
 /**
  * Map raw AWS SDK / server error strings to actionable operator messages.
@@ -259,7 +261,7 @@ function AgentCoreDeployModal({
                 directly in your AWS account. No credentials are stored in Intellios.
               </p>
               <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 space-y-2 text-xs">
-                <p className="text-gray-400 font-medium uppercase tracking-wider text-[10px]">
+                <p className="text-gray-400 font-medium uppercase tracking-wider text-2xs">
                   Deployment configuration
                 </p>
                 <p className="text-gray-500">
@@ -294,23 +296,17 @@ function AgentCoreDeployModal({
                 <span className="text-lg">✓</span>
                 <p className="text-sm font-semibold">Agent deployed to AgentCore</p>
               </div>
-              <div className="rounded-lg border border-green-100 bg-green-50 p-4 space-y-1.5 text-xs font-mono">
-                <div className="flex gap-2">
-                  <span className="text-gray-400 min-w-[100px]">Agent ID</span>
-                  <span className="text-gray-700">{agcModal.deploymentRecord.agentId}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-gray-400 min-w-[100px]">Region</span>
-                  <span className="text-gray-700">{agcModal.deploymentRecord.region}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-gray-400 min-w-[100px]">Model</span>
-                  <span className="text-gray-700">{agcModal.deploymentRecord.foundationModel}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-gray-400 min-w-[100px]">ARN</span>
-                  <span className="text-gray-700 break-all">{agcModal.deploymentRecord.agentArn}</span>
-                </div>
+              <div className="rounded-lg border border-green-100 bg-green-50 p-4 text-xs font-mono">
+                <DescriptionList>
+                  <DescriptionTerm className="text-gray-400 font-mono text-xs">Agent ID</DescriptionTerm>
+                  <DescriptionDetails className="text-gray-700 font-mono text-xs">{agcModal.deploymentRecord.agentId}</DescriptionDetails>
+                  <DescriptionTerm className="text-gray-400 font-mono text-xs">Region</DescriptionTerm>
+                  <DescriptionDetails className="text-gray-700 font-mono text-xs">{agcModal.deploymentRecord.region}</DescriptionDetails>
+                  <DescriptionTerm className="text-gray-400 font-mono text-xs">Model</DescriptionTerm>
+                  <DescriptionDetails className="text-gray-700 font-mono text-xs">{agcModal.deploymentRecord.foundationModel}</DescriptionDetails>
+                  <DescriptionTerm className="text-gray-400 font-mono text-xs">ARN</DescriptionTerm>
+                  <DescriptionDetails className="text-gray-700 font-mono text-xs break-all">{agcModal.deploymentRecord.agentArn}</DescriptionDetails>
+                </DescriptionList>
               </div>
               <a
                 href={`https://console.aws.amazon.com/bedrock/home?region=${agcModal.deploymentRecord.region}#/agents/${agcModal.deploymentRecord.agentId}`}
@@ -504,7 +500,7 @@ export default function DeploymentConsolePage() {
   }
 
   return (
-    <div className="px-8 py-8 space-y-8">
+    <div className="px-6 py-6 space-y-6">
       {/* Standard deployment confirmation modal */}
       {modal && (
         <DeployConfirmModal
@@ -530,7 +526,7 @@ export default function DeploymentConsolePage() {
         <p className="mt-0.5 text-sm text-gray-500">Promote approved agents to production</p>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
@@ -668,25 +664,25 @@ export default function DeploymentConsolePage() {
 
           {!loading && deployed.length > 0 && (
             <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
-                    <th className="px-5 py-3 text-left">Agent</th>
-                    <th className="px-5 py-3 text-left">Version</th>
-                    <th className="px-5 py-3 text-left">Tags</th>
-                    <th className="px-5 py-3 text-left">Deployed</th>
-                    <th className="px-5 py-3 text-left">Governance</th>
-                    <th className="px-5 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
+              <Table striped>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Agent</TableHeader>
+                    <TableHeader>Version</TableHeader>
+                    <TableHeader>Tags</TableHeader>
+                    <TableHeader>Deployed</TableHeader>
+                    <TableHeader>Governance</TableHeader>
+                    <TableHeader></TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {deployed.map((agent) => (
-                    <tr key={agent.agentId} className="hover:bg-gray-50">
-                      <td className="px-5 py-3">
+                    <TableRow key={agent.agentId}>
+                      <TableCell>
                         <span className="font-medium text-gray-900">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</span>
-                      </td>
-                      <td className="px-5 py-3 font-mono text-gray-500 text-xs">v{agent.version}</td>
-                      <td className="px-5 py-3">
+                      </TableCell>
+                      <TableCell className="font-mono text-gray-500 text-xs">v{agent.version}</TableCell>
+                      <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {(agent.tags ?? []).slice(0, 2).map((tag) => (
                             <span key={tag} className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
@@ -694,9 +690,9 @@ export default function DeploymentConsolePage() {
                             </span>
                           ))}
                         </div>
-                      </td>
-                      <td className="px-5 py-3 text-gray-400 text-xs">{timeAgo(agent.updatedAt)}</td>
-                      <td className="px-5 py-3">
+                      </TableCell>
+                      <TableCell className="text-gray-400 text-xs">{timeAgo(agent.updatedAt)}</TableCell>
+                      <TableCell>
                         {agent.violationCount === 0 && (
                           <span className="text-xs font-medium text-green-600">✓ Clean</span>
                         )}
@@ -708,8 +704,8 @@ export default function DeploymentConsolePage() {
                         {agent.violationCount === null && (
                           <span className="text-xs text-gray-400">Not validated</span>
                         )}
-                      </td>
-                      <td className="px-5 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-3">
                           <a
                             href={`/api/blueprints/${agent.id}/export/agentcore`}
@@ -726,11 +722,11 @@ export default function DeploymentConsolePage() {
                             View →
                           </Link>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </section>

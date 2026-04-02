@@ -1,6 +1,7 @@
 "use client";
 
 import { ABP } from "@/lib/types/abp";
+import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/ui/description-list";
 
 interface BlueprintSummaryProps {
   abp: ABP;
@@ -218,38 +219,38 @@ export function BlueprintSummary({ abp, status }: BlueprintSummaryProps) {
       {/* Ownership & Classification */}
       {abp.ownership && (abp.ownership.businessUnit || abp.ownership.ownerEmail || abp.ownership.costCenter || abp.ownership.deploymentEnvironment || abp.ownership.dataClassification) && (
         <Section title="Ownership & Classification">
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+          <DescriptionList>
             {abp.ownership.businessUnit && (
-              <div>
-                <dt className="font-medium text-gray-400">Business Unit</dt>
-                <dd className="mt-0.5 text-gray-700">{abp.ownership.businessUnit}</dd>
-              </div>
+              <>
+                <DescriptionTerm>Business Unit</DescriptionTerm>
+                <DescriptionDetails>{abp.ownership.businessUnit}</DescriptionDetails>
+              </>
             )}
             {abp.ownership.ownerEmail && (
-              <div>
-                <dt className="font-medium text-gray-400">Owner</dt>
-                <dd className="mt-0.5 text-gray-700">{abp.ownership.ownerEmail}</dd>
-              </div>
+              <>
+                <DescriptionTerm>Owner</DescriptionTerm>
+                <DescriptionDetails>{abp.ownership.ownerEmail}</DescriptionDetails>
+              </>
             )}
             {abp.ownership.costCenter && (
-              <div>
-                <dt className="font-medium text-gray-400">Cost Center</dt>
-                <dd className="mt-0.5 text-gray-700">{abp.ownership.costCenter}</dd>
-              </div>
+              <>
+                <DescriptionTerm>Cost Center</DescriptionTerm>
+                <DescriptionDetails>{abp.ownership.costCenter}</DescriptionDetails>
+              </>
             )}
             {abp.ownership.deploymentEnvironment && (
-              <div>
-                <dt className="font-medium text-gray-400">Environment</dt>
-                <dd className="mt-0.5 capitalize text-gray-700">{abp.ownership.deploymentEnvironment}</dd>
-              </div>
+              <>
+                <DescriptionTerm>Environment</DescriptionTerm>
+                <DescriptionDetails className="capitalize">{abp.ownership.deploymentEnvironment}</DescriptionDetails>
+              </>
             )}
             {abp.ownership.dataClassification && (
-              <div>
-                <dt className="font-medium text-gray-400">Data Classification</dt>
-                <dd className="mt-0.5 capitalize text-gray-700">{abp.ownership.dataClassification}</dd>
-              </div>
+              <>
+                <DescriptionTerm>Data Classification</DescriptionTerm>
+                <DescriptionDetails className="capitalize">{abp.ownership.dataClassification}</DescriptionDetails>
+              </>
             )}
-          </dl>
+          </DescriptionList>
         </Section>
       )}
 

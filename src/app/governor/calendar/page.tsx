@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Calendar, Download, Clock, Shield, ChevronRight } from "lucide-react";
+import { SkeletonList } from "@/components/ui/skeleton";
 
 interface ReviewEvent {
   id: string;
@@ -71,7 +72,7 @@ export default function ComplianceCalendarPage() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-8">
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -93,9 +94,7 @@ export default function ComplianceCalendarPage() {
         </button>
       </div>
 
-      {loading && (
-        <div className="text-center text-slate-500 py-16">Loading calendar…</div>
-      )}
+      {loading && <SkeletonList rows={4} height="h-16" />}
 
       {!loading && data && (
         <>

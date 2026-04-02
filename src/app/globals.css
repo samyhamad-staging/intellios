@@ -1,10 +1,15 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 /* ── Design token layer — semantic aliases exposed as Tailwind utilities ─ */
 @theme {
   /* Fonts */
   --font-family-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-family-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* ── Type scale — micro sizes (tokenized from arbitrary text-[Npx]) ── */
+  --text-2xs: 0.625rem;      /* 10px — micro labels, section headers */
+  --text-xs-tight: 0.6875rem; /* 11px — compact tags, metadata */
 
   /* ── Brand — indigo-violet (cool, AI-native) ───────────────────────── */
   --color-primary:        #4f46e5; /* indigo-600 */
@@ -135,6 +140,24 @@
 
 /* ── Design tokens ─────────────────────────────────────────────────────── */
 :root {
+  /* shadcn/ui compat aliases */
+  --radius: 0.5rem;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --border: #e1e5ef;
+  --input: #e1e5ef;
+  --ring: #4f46e5;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --muted: #f0f2f8;
+  --muted-foreground: #64748b;
+  --accent: #eef2ff;
+  --accent-foreground: #4f46e5;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
   /* Sidebar */
   --sidebar-bg: #0c1222;
   --sidebar-border: #1a2338;
@@ -194,6 +217,26 @@ samp {
   opacity: 0.5;
   box-shadow: none;
 }
+
+/* ── Intake strip animations ─────────────────────────────────────────── */
+@keyframes domain-scan {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.6; }
+  100% { transform: translateX(200%); opacity: 0; }
+}
+
+@keyframes signal-bar {
+  0%, 100% { transform: scaleY(0.3); opacity: 0.4; }
+  50%       { transform: scaleY(1);   opacity: 1;   }
+}
+
+.score-ring-circle {
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {

@@ -3,6 +3,7 @@
 import { Fragment, useState, useEffect } from "react";
 import Link from "next/link";
 import type { BriefingResult, IntelligencePayload, MetricsSnapshot } from "@/lib/awareness/types";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 function pct(v: number | null): string {
   if (v == null) return "—";
@@ -604,19 +605,19 @@ export default function IntelligencePage() {
                 No quality scores yet. Scores are generated when blueprints enter review, or use &ldquo;Score Existing&rdquo; above.
               </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-400">
-                    <th className="px-5 py-2.5 text-left">Blueprint</th>
-                    <th className="px-4 py-2.5 text-right">Overall</th>
-                    <th className="px-4 py-2.5 text-right">Intent</th>
-                    <th className="px-4 py-2.5 text-right">Tools</th>
-                    <th className="px-4 py-2.5 text-right">Governance</th>
-                    <th className="px-4 py-2.5 text-left">Flags</th>
-                    <th className="px-4 py-2.5 text-left">Evaluated</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
+              <Table striped>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Blueprint</TableHeader>
+                    <TableHeader>Overall</TableHeader>
+                    <TableHeader>Intent</TableHeader>
+                    <TableHeader>Tools</TableHeader>
+                    <TableHeader>Governance</TableHeader>
+                    <TableHeader>Flags</TableHeader>
+                    <TableHeader>Evaluated</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {scores.map((score) => {
                     const overall = score.overallScore ?? 0;
                     const scoreColor =
@@ -633,30 +634,30 @@ export default function IntelligencePage() {
                     ];
                     return (
                       <Fragment key={score.id}>
-                        <tr
-                          className="cursor-pointer hover:bg-gray-50"
+                        <TableRow
+                          className="cursor-pointer"
                           onClick={() => setExpandedScoreId(isExpanded ? null : score.id)}
                         >
-                          <td className="px-5 py-2.5">
+                          <TableCell>
                             <span className="font-mono text-xs text-gray-500">
                               {score.blueprintId.slice(0, 8)}
                             </span>
-                          </td>
-                          <td className="px-4 py-2.5 text-right">
+                          </TableCell>
+                          <TableCell className="text-right">
                             <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${scoreColor}`}>
                               {num(score.overallScore, 0)}
                             </span>
-                          </td>
-                          <td className="px-4 py-2.5 text-right text-xs text-gray-600">
+                          </TableCell>
+                          <TableCell className="text-right text-xs text-gray-600">
                             {num(score.intentAlignment, 1)}
-                          </td>
-                          <td className="px-4 py-2.5 text-right text-xs text-gray-600">
+                          </TableCell>
+                          <TableCell className="text-right text-xs text-gray-600">
                             {num(score.toolAppropriateness, 1)}
-                          </td>
-                          <td className="px-4 py-2.5 text-right text-xs text-gray-600">
+                          </TableCell>
+                          <TableCell className="text-right text-xs text-gray-600">
                             {num(score.governanceAdequacy, 1)}
-                          </td>
-                          <td className="px-4 py-2.5">
+                          </TableCell>
+                          <TableCell>
                             {score.flags.length > 0 ? (
                               <span
                                 className="block max-w-48 truncate text-xs text-amber-600"
@@ -668,15 +669,15 @@ export default function IntelligencePage() {
                             ) : (
                               <span className="text-xs text-gray-300">—</span>
                             )}
-                          </td>
-                          <td className="px-4 py-2.5 text-xs text-gray-400">
+                          </TableCell>
+                          <TableCell className="text-xs text-gray-400">
                             {new Date(score.evaluatedAt).toLocaleDateString()}
                             <span className="ml-1 text-gray-300">{isExpanded ? "▲" : "▼"}</span>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                         {isExpanded && (
-                          <tr key={`${score.id}-detail`} className="bg-gray-50">
-                            <td colSpan={7} className="px-5 py-3">
+                          <TableRow key={`${score.id}-detail`} className="bg-gray-50">
+                            <TableCell colSpan={7} className="px-5 py-3">
                               <div className="space-y-1.5">
                                 {dims.map((d) => {
                                   const val = d.value ?? 0;
@@ -706,14 +707,14 @@ export default function IntelligencePage() {
                                   </div>
                                 )}
                               </div>
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         )}
                       </Fragment>
                     );
                   })}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             )}
           </div>
 
@@ -730,19 +731,19 @@ export default function IntelligencePage() {
                 No intake quality scores yet. Scores are generated automatically when sessions are finalized.
               </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-400">
-                    <th className="px-5 py-2.5 text-left">Session</th>
-                    <th className="px-4 py-2.5 text-right">Overall</th>
-                    <th className="px-4 py-2.5 text-right">Breadth</th>
-                    <th className="px-4 py-2.5 text-right">Ambiguity</th>
-                    <th className="px-4 py-2.5 text-right">Risk ID</th>
-                    <th className="px-4 py-2.5 text-right">Stakeholder</th>
-                    <th className="px-4 py-2.5 text-left">Evaluated</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
+              <Table striped>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Session</TableHeader>
+                    <TableHeader>Overall</TableHeader>
+                    <TableHeader>Breadth</TableHeader>
+                    <TableHeader>Ambiguity</TableHeader>
+                    <TableHeader>Risk ID</TableHeader>
+                    <TableHeader>Stakeholder</TableHeader>
+                    <TableHeader>Evaluated</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {intakeScores.map((score) => {
                     const overall = score.overallScore ?? 0;
                     const scoreColor =
@@ -750,40 +751,40 @@ export default function IntelligencePage() {
                       overall >= 50 ? "text-amber-700 bg-amber-50" :
                       "text-red-700 bg-red-50";
                     return (
-                      <tr key={score.id} className="hover:bg-gray-50">
-                        <td className="px-5 py-2.5">
+                      <TableRow key={score.id}>
+                        <TableCell>
                           <Link
                             href={`/intake/${score.sessionId}`}
                             className="font-mono text-xs text-indigo-600 hover:text-indigo-800"
                           >
                             {score.sessionId.slice(0, 8)}
                           </Link>
-                        </td>
-                        <td className="px-4 py-2.5 text-right">
+                        </TableCell>
+                        <TableCell className="text-right">
                           <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${scoreColor}`}>
                             {num(score.overallScore, 0)}
                           </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-right text-xs text-gray-600">
+                        </TableCell>
+                        <TableCell className="text-right text-xs text-gray-600">
                           {num(score.breadthScore, 1)}
-                        </td>
-                        <td className="px-4 py-2.5 text-right text-xs text-gray-600">
+                        </TableCell>
+                        <TableCell className="text-right text-xs text-gray-600">
                           {num(score.ambiguityScore, 1)}
-                        </td>
-                        <td className="px-4 py-2.5 text-right text-xs text-gray-600">
+                        </TableCell>
+                        <TableCell className="text-right text-xs text-gray-600">
                           {num(score.riskIdScore, 1)}
-                        </td>
-                        <td className="px-4 py-2.5 text-right text-xs text-gray-600">
+                        </TableCell>
+                        <TableCell className="text-right text-xs text-gray-600">
                           {num(score.stakeholderScore, 1)}
-                        </td>
-                        <td className="px-4 py-2.5 text-xs text-gray-400">
+                        </TableCell>
+                        <TableCell className="text-xs text-gray-400">
                           {new Date(score.evaluatedAt).toLocaleDateString()}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             )}
           </div>
         </div>

@@ -15,6 +15,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ViolationRow {
   id: string;
@@ -149,17 +150,16 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
         </div>
 
         {/* Time range */}
-        <select
-          value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-          className="text-xs rounded-md border border-gray-200 bg-white px-3 py-1.5 text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400"
-        >
-          {TIME_RANGE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
+          <SelectTrigger className="text-xs h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {TIME_RANGE_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Content */}
@@ -194,7 +194,7 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
                   {/* Row 1: severity + policy name */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wide ${
                         v.severity === "error"
                           ? "bg-red-100 text-red-700"
                           : "bg-amber-100 text-amber-700"
@@ -244,8 +244,8 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
 
                 {/* Timestamp */}
                 <div className="text-right shrink-0">
-                  <p className="text-[10px] text-gray-400">{timeAgo(v.detectedAt)}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">
+                  <p className="text-2xs text-gray-400">{timeAgo(v.detectedAt)}</p>
+                  <p className="text-2xs text-gray-400 mt-0.5">
                     {new Date(v.detectedAt).toLocaleDateString()}
                   </p>
                 </div>

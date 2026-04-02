@@ -9,6 +9,7 @@ import {
   DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
 import { BlueprintSummary } from "@/components/blueprint/blueprint-summary";
 import { StatusBadge } from "@/components/registry/status-badge";
@@ -21,10 +22,12 @@ import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
 import { CheckCircle, XCircle } from "lucide-react";
 import type { ApprovalChainStep, ApprovalStepRecord, EnterpriseSettings } from "@/lib/settings/types";
+import { SkeletonList } from "@/components/ui/skeleton";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 import type { TestCase, TestRun } from "@/lib/testing/types";
 import { SimulatePanel } from "@/components/registry/simulate-panel";
 import { QualityDashboard } from "@/components/blueprint/quality-dashboard";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 interface CurrentUser {
   email: string;
@@ -425,8 +428,8 @@ export default function AgentDetailPage({
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center text-sm text-text-tertiary">
-        Loading agent…
+      <div className="px-6 py-6 space-y-4">
+        <SkeletonList rows={6} height="h-20" />
       </div>
     );
   }
@@ -492,7 +495,7 @@ export default function AgentDetailPage({
                   href={`https://console.aws.amazon.com/bedrock/home?region=${latest.deploymentMetadata.region}#/agents/${latest.deploymentMetadata.agentId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-700 hover:bg-orange-100 transition-colors"
+                  className="flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-2xs font-semibold text-orange-700 hover:bg-orange-100 transition-colors"
                   title={`Deployed to Amazon Bedrock AgentCore in ${latest.deploymentMetadata.region}`}
                 >
                   AgentCore ↗
@@ -509,18 +512,18 @@ export default function AgentDetailPage({
                 return (
                   <>
                     {isOverdue ? (
-                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700">
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-2xs font-medium text-red-700">
                         Review Overdue
                       </span>
                     ) : (
-                      <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium text-text-secondary">
+                      <span className="rounded-full bg-surface-muted px-2 py-0.5 text-2xs font-medium text-text-secondary">
                         Next Review: {new Date(latest.nextReviewDue).toLocaleDateString(undefined, { dateStyle: "medium" })}
                       </span>
                     )}
                     {canComplete && (
                       <button
                         onClick={() => { setReviewCompleteOpen(true); setReviewCompleteNotes(""); setReviewCompleteError(null); }}
-                        className="rounded-full bg-primary-muted px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-primary-subtle"
+                        className="rounded-full bg-primary-muted px-2 py-0.5 text-2xs font-medium text-primary hover:bg-primary-subtle"
                       >
                         Complete Review
                       </button>
@@ -977,32 +980,32 @@ export default function AgentDetailPage({
                       Prior Approvals
                     </p>
                   </div>
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-border text-left text-text-tertiary">
-                        <th className="px-4 py-2 font-medium">Step</th>
-                        <th className="px-4 py-2 font-medium">Label</th>
-                        <th className="px-4 py-2 font-medium">Approver</th>
-                        <th className="px-4 py-2 font-medium">Date</th>
-                        <th className="px-4 py-2 font-medium">Comment</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
+                  <Table dense>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader>Step</TableHeader>
+                        <TableHeader>Label</TableHeader>
+                        <TableHeader>Approver</TableHeader>
+                        <TableHeader>Date</TableHeader>
+                        <TableHeader>Comment</TableHeader>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {priorApprovals.map((step, i) => (
-                        <tr key={i} className="text-text-secondary">
-                          <td className="px-4 py-2">{step.step + 1}</td>
-                          <td className="px-4 py-2">{step.label}</td>
-                          <td className="px-4 py-2 font-medium">{step.approvedBy}</td>
-                          <td className="px-4 py-2 whitespace-nowrap">
+                        <TableRow key={i}>
+                          <TableCell>{step.step + 1}</TableCell>
+                          <TableCell>{step.label}</TableCell>
+                          <TableCell className="font-medium">{step.approvedBy}</TableCell>
+                          <TableCell className="whitespace-nowrap">
                             {new Date(step.approvedAt).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
-                          </td>
-                          <td className="px-4 py-2 text-text-secondary italic">
+                          </TableCell>
+                          <TableCell className="italic">
                             {step.comment ?? "—"}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               )}
 
@@ -1126,14 +1129,15 @@ export default function AgentDetailPage({
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-text mb-1">Severity</label>
-                        <select
-                          value={testFormSeverity}
-                          onChange={(e) => setTestFormSeverity(e.target.value as "required" | "informational")}
-                          className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
-                        >
-                          <option value="required">required</option>
-                          <option value="informational">informational</option>
-                        </select>
+                        <Select value={testFormSeverity} onValueChange={(v) => setTestFormSeverity(v as "required" | "informational")}>
+                          <SelectTrigger className="w-full text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="required">required</SelectItem>
+                            <SelectItem value="informational">informational</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <p className="text-xs text-text-tertiary mt-0.5">Required failures block the overall pass verdict</p>
                       </div>
                     </div>
@@ -1327,25 +1331,25 @@ export default function AgentDetailPage({
 
       {activeTab === "versions" && (
           <div className="p-6 space-y-6">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                  <th className="pb-3 pr-4">Version</th>
-                  <th className="pb-3 pr-4">Status</th>
-                  <th className="pb-3 pr-4">Governance</th>
-                  <th className="pb-3 pr-4">Refinements</th>
-                  <th className="pb-3 pr-4">Created</th>
-                  <th className="pb-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeader>Version</TableHeader>
+                  <TableHeader>Status</TableHeader>
+                  <TableHeader>Governance</TableHeader>
+                  <TableHeader>Refinements</TableHeader>
+                  <TableHeader>Created</TableHeader>
+                  <TableHeader>Actions</TableHeader>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {versions.map((v) => (
-                  <tr key={v.id} className="py-3">
-                    <td className="py-3 pr-4 font-mono text-text">v{v.version}</td>
-                    <td className="py-3 pr-4">
+                  <TableRow key={v.id}>
+                    <TableCell className="font-mono text-text">v{v.version}</TableCell>
+                    <TableCell>
                       <StatusBadge status={v.status} />
-                    </td>
-                    <td className="py-3 pr-4">
+                    </TableCell>
+                    <TableCell>
                       {v.validationReport == null ? (
                         <span className="text-text-tertiary">—</span>
                       ) : (() => {
@@ -1375,23 +1379,23 @@ export default function AgentDetailPage({
                           </div>
                         );
                       })()}
-                    </td>
-                    <td className="py-3 pr-4 text-text-secondary">{v.refinementCount ?? "0"}</td>
-                    <td className="py-3 pr-4 text-text-secondary">
+                    </TableCell>
+                    <TableCell className="text-text-secondary">{v.refinementCount ?? "0"}</TableCell>
+                    <TableCell className="text-text-secondary">
                       {new Date(v.createdAt).toLocaleString()}
-                    </td>
-                    <td className="py-3">
+                    </TableCell>
+                    <TableCell>
                       <Link
                         href={`/blueprints/${v.id}`}
                         className="text-text-secondary hover:text-text underline"
                       >
                         Open
                       </Link>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
 
             {/* Version Lineage — governance diff per version */}
             {versions.some((v) => v.governanceDiff != null) && (
@@ -1540,20 +1544,24 @@ export default function AgentDetailPage({
               <div className="border border-border rounded-lg p-5 space-y-4">
                 <div className="flex items-center gap-4">
                   <span className="text-sm font-medium text-text">Compare versions:</span>
-                  <select
-                    value={compareVersionId ?? ""}
-                    onChange={(e) => setCompareVersionId(e.target.value || null)}
-                    className="rounded-lg border border-border px-3 py-1.5 text-sm text-text bg-surface focus:outline-none focus:ring-2 focus:ring-border-strong"
+                  <Select
+                    value={compareVersionId ?? "_none_"}
+                    onValueChange={(v) => setCompareVersionId(v === "_none_" ? null : v)}
                   >
-                    <option value="">Select a version to compare…</option>
-                    {versions
-                      .filter((v) => v.id !== latest.id)
-                      .map((v) => (
-                        <option key={v.id} value={v.id}>
-                          v{v.version} ({v.status}) — {new Date(v.createdAt).toLocaleDateString()}
-                        </option>
-                      ))}
-                  </select>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none_">Select a version to compare…</SelectItem>
+                      {versions
+                        .filter((v) => v.id !== latest.id)
+                        .map((v) => (
+                          <SelectItem key={v.id} value={v.id}>
+                            v{v.version} ({v.status}) — {new Date(v.createdAt).toLocaleDateString()}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {compareVersionId && (

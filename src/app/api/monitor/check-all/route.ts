@@ -6,7 +6,7 @@ import { publishEvent } from "@/lib/events/publish";
 import { checkAllDeployedAgents } from "@/lib/monitoring/health";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 
 /**
  * POST /api/monitor/check-all
@@ -25,13 +25,19 @@ export async function POST(request: NextRequest) {
 
     const { checked, critical, results } = await checkAllDeployedAgents(enterpriseId);
 
+    // Batch-fetch all blueprint names in one query (prevents N+1)
+    const bpIds = results.map((r) => r.blueprintId);
+    const bpRows = bpIds.length > 0
+      ? await db.query.agentBlueprints.findMany({
+          where: inArray(agentBlueprints.id, bpIds),
+          columns: { id: true, name: true, abp: true },
+        })
+      : [];
+    const bpMap = new Map(bpRows.map((bp) => [bp.id, bp]));
+
     // Write one audit entry per checked agent
     for (const result of results) {
-      // Best-effort: fetch agent name for audit metadata
-      const bp = await db.query.agentBlueprints.findFirst({
-        where: eq(agentBlueprints.id, result.blueprintId),
-        columns: { name: true, abp: true },
-      });
+      const bp = bpMap.get(result.blueprintId);
       const abp = bp?.abp as Record<string, unknown> | null;
       const agentName =
         (abp?.identity as Record<string, unknown> | undefined)?.name ??

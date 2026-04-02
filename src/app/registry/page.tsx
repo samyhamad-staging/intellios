@@ -4,6 +4,9 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Search, Bot, ChevronRight, Copy, X, Inbox, GitBranch } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -133,32 +136,24 @@ export default function RegistryPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-6 py-6">
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Registry</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
+          <h1 className="text-xl font-semibold text-text">Registry</h1>
+          <p className="mt-0.5 text-sm text-text-secondary">
             {loading ? "Loading…" : `${total} ${activeTab === "agents" ? `agent${total !== 1 ? "s" : ""}` : `workflow${total !== 1 ? "s" : ""}`} total`}
           </p>
         </div>
       </div>
 
       {/* Artifact-type tabs */}
-      <div className="mb-5 flex gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 w-fit">
-        <button
-          onClick={() => switchTab("agents")}
-          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === "agents" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-        >
-          <Bot size={14} /> Agents
-        </button>
-        <button
-          onClick={() => switchTab("workflows")}
-          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === "workflows" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-        >
-          <GitBranch size={14} /> Workflows
-        </button>
-      </div>
+      <Tabs value={activeTab} onValueChange={(v) => switchTab(v as ArtifactTab)} className="mb-5">
+        <TabsList>
+          <TabsTrigger value="agents"><Bot size={14} /> Agents</TabsTrigger>
+          <TabsTrigger value="workflows"><GitBranch size={14} /> Workflows</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Search + filter bar */}
       <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -169,10 +164,10 @@ export default function RegistryPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={`Search ${activeTab}…`}
-            className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-8 text-sm placeholder-gray-400 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/10"
+            className="w-full rounded-lg border border-border bg-surface py-2 pl-8 pr-8 text-sm placeholder:text-text-tertiary shadow-sm focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/10"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <button onClick={() => setSearchQuery("")} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
               <X size={13} />
             </button>
           )}
@@ -202,14 +197,7 @@ export default function RegistryPage() {
         )}
       </div>
 
-      {/* Loading */}
-      {loading && (
-        <div className="space-y-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-xl bg-gray-100" />
-          ))}
-        </div>
-      )}
+      {loading && <SkeletonList rows={4} />}
 
       {/* Error */}
       {error && (
@@ -220,50 +208,54 @@ export default function RegistryPage() {
       {activeTab === "agents" && !agentsLoading && !agentsError && (
         <>
           {agents.length === 0 && (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
-              <Inbox size={32} className="mb-4 text-gray-300" />
-              <p className="mb-1 text-sm font-medium text-gray-500">No agents in the registry yet</p>
-              <Link href="/intake" className="mt-2 text-xs text-violet-600 hover:text-violet-700">Start an intake session →</Link>
-              <Link href="/templates" className="mt-1 text-xs text-violet-600 hover:text-violet-700">Browse templates →</Link>
-            </div>
+            <EmptyState
+              icon={Inbox}
+              heading="No agents in the registry yet"
+              action={
+                <div className="flex flex-col items-center gap-1">
+                  <Link href="/intake" className="text-xs text-violet-600 hover:text-violet-700">Start an intake session →</Link>
+                  <Link href="/templates" className="text-xs text-violet-600 hover:text-violet-700">Browse templates →</Link>
+                </div>
+              }
+            />
           )}
 
           {agents.length > 0 && filteredAgents.length === 0 && (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
-              <Search size={28} className="mb-3 text-gray-300" />
-              <p className="text-sm text-gray-500">No agents match your filters</p>
-              <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="mt-2 text-xs text-violet-600 hover:text-violet-700 underline">
-                Clear filters
-              </button>
-            </div>
+            <EmptyState
+              icon={Search}
+              heading="No agents match your filters"
+              action={
+                <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="text-xs text-violet-600 hover:text-violet-700 underline">
+                  Clear filters
+                </button>
+              }
+            />
           )}
 
           {filteredAgents.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
               {filteredAgents.map((agent, i) => (
-                <div key={agent.agentId} className={`${i > 0 ? "border-t border-gray-100" : ""}`}>
-                  <Link href={`/registry/${agent.agentId}`} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500">
+                <div key={agent.agentId} className={`${i > 0 ? "border-t border-border" : ""}`}>
+                  <Link href={`/registry/${agent.agentId}`} className="flex items-center gap-4 px-5 py-4 hover:bg-surface-raised transition-colors">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-text-tertiary">
                       <Bot size={15} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="truncate text-sm font-medium text-gray-900">{agent.name ?? "Unnamed Agent"}</span>
+                        <span className="truncate text-sm font-medium text-text">{agent.name ?? "Unnamed Agent"}</span>
                         <StatusBadge status={agent.status} />
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <div className="flex items-center gap-2 text-xs text-text-tertiary">
                         <span>v{agent.version}</span>
-                        <span>·</span>
-                        <span className="font-mono">{agent.agentId.slice(0, 8)}</span>
                         <span>·</span>
                         <span>{new Date(agent.createdAt).toLocaleDateString()}</span>
                       </div>
                       {Array.isArray(agent.tags) && agent.tags.length > 0 && (
                         <div className="mt-1.5 flex flex-wrap gap-1">
                           {(agent.tags as string[]).slice(0, 5).map((tag) => (
-                            <span key={tag} className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-500">{tag}</span>
+                            <span key={tag} className="rounded-md bg-surface-raised px-1.5 py-0.5 text-xs-tight text-text-secondary">{tag}</span>
                           ))}
-                          {agent.tags.length > 5 && <span className="text-[11px] text-gray-400">+{agent.tags.length - 5} more</span>}
+                          {agent.tags.length > 5 && <span className="text-xs-tight text-text-tertiary">+{agent.tags.length - 5} more</span>}
                         </div>
                       )}
                     </div>
@@ -276,12 +268,12 @@ export default function RegistryPage() {
                       <button
                         onClick={(e) => handleClone(agent, e)}
                         disabled={cloningId === agent.id}
-                        className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-500 hover:border-gray-300 hover:text-gray-700 disabled:opacity-50 transition-colors"
+                        className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs text-text-secondary hover:border-primary/30 hover:text-text disabled:opacity-50 transition-colors"
                       >
                         <Copy size={11} />
                         {cloningId === agent.id ? "Cloning…" : "Clone"}
                       </button>
-                      <ChevronRight size={14} className="text-gray-300" />
+                      <ChevronRight size={14} className="text-text-tertiary" />
                     </div>
                   </Link>
                 </div>
@@ -295,21 +287,23 @@ export default function RegistryPage() {
       {activeTab === "workflows" && !wflowsLoading && !wflowsError && (
         <>
           {wflows.length === 0 && (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
-              <Inbox size={32} className="mb-4 text-gray-300" />
-              <p className="mb-1 text-sm font-medium text-gray-500">No workflows yet</p>
-              <p className="text-xs text-gray-400">Create a workflow to orchestrate multiple agents into a pipeline.</p>
-            </div>
+            <EmptyState
+              icon={Inbox}
+              heading="No workflows yet"
+              subtext="Create a workflow to orchestrate multiple agents into a pipeline."
+            />
           )}
 
           {wflows.length > 0 && filteredWflows.length === 0 && (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center shadow-sm">
-              <Search size={28} className="mb-3 text-gray-300" />
-              <p className="text-sm text-gray-500">No workflows match your filters</p>
-              <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="mt-2 text-xs text-violet-600 hover:text-violet-700 underline">
-                Clear filters
-              </button>
-            </div>
+            <EmptyState
+              icon={Search}
+              heading="No workflows match your filters"
+              action={
+                <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="text-xs text-violet-600 hover:text-violet-700 underline">
+                  Clear filters
+                </button>
+              }
+            />
           )}
 
           {filteredWflows.length > 0 && (

@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { SkeletonList } from "@/components/ui/skeleton";
 import Link from "next/link";
 import type { EnterpriseSettings, ApprovalChainStep } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
@@ -9,8 +13,6 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<EnterpriseSettings>(DEFAULT_ENTERPRISE_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
-
   useEffect(() => {
     fetch("/api/admin/settings")
       .then((r) => r.json())
@@ -21,11 +23,6 @@ export default function AdminSettingsPage() {
       .catch(() => {
         setLoading(false);
       });
-  }, []);
-
-  const showToast = useCallback((type: "success" | "error", message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 4000);
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -42,24 +39,24 @@ export default function AdminSettingsPage() {
       }
       const data = await res.json();
       setSettings(data.settings);
-      showToast("success", "Settings saved successfully.");
+      toast.success("Settings saved successfully.");
     } catch (err) {
-      showToast("error", err instanceof Error ? err.message : "Save failed");
+      toast.error(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSaving(false);
     }
-  }, [settings, showToast]);
+  }, [settings]);
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center text-sm text-gray-400">
-        Loading settings…
+      <div className="px-6 py-6 space-y-6">
+        <SkeletonList rows={5} height="h-16" />
       </div>
     );
   }
 
   return (
-    <div className="px-8 py-8 space-y-6">
+    <div className="px-6 py-6 space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -76,19 +73,6 @@ export default function AdminSettingsPage() {
           {saving ? "Saving…" : "Save Settings"}
         </button>
       </div>
-
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 rounded-lg border px-4 py-3 text-sm shadow-lg ${
-            toast.type === "success"
-              ? "border-green-200 bg-green-50 text-green-800"
-              : "border-red-200 bg-red-50 text-red-800"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
 
       <div className="space-y-6">
 
@@ -429,21 +413,25 @@ export default function AdminSettingsPage() {
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
                   {idx + 1}
                 </span>
-                <select
+                <Select
                   value={step.role}
-                  onChange={(e) =>
+                  onValueChange={(v) =>
                     setSettings((s) => {
                       const chain = [...(s.approvalChain ?? [])];
-                      chain[idx] = { ...chain[idx], role: e.target.value as ApprovalChainStep["role"] };
+                      chain[idx] = { ...chain[idx], role: v as ApprovalChainStep["role"] };
                       return { ...s, approvalChain: chain };
                     })
                   }
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:border-gray-400 focus:outline-none"
                 >
-                  <option value="reviewer">reviewer</option>
-                  <option value="compliance_officer">compliance_officer</option>
-                  <option value="admin">admin</option>
-                </select>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="reviewer">reviewer</SelectItem>
+                    <SelectItem value="compliance_officer">compliance_officer</SelectItem>
+                    <SelectItem value="admin">admin</SelectItem>
+                  </SelectContent>
+                </Select>
                 <input
                   type="text"
                   value={step.label}
@@ -509,20 +497,19 @@ export default function AdminSettingsPage() {
                   <p className="text-xs text-gray-500">Deploy agents directly to AWS Bedrock runtime</p>
                 </div>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-500">
                   {settings.deploymentTargets?.agentcore?.enabled ? "Enabled" : "Disabled"}
                 </span>
-                <input
-                  type="checkbox"
+                <Switch
                   checked={settings.deploymentTargets?.agentcore?.enabled ?? false}
-                  onChange={(e) =>
+                  onChange={(v) =>
                     setSettings((s) => ({
                       ...s,
                       deploymentTargets: {
                         ...s.deploymentTargets,
                         agentcore: {
-                          enabled: e.target.checked,
+                          enabled: v,
                           region: s.deploymentTargets?.agentcore?.region ?? "us-east-1",
                           agentResourceRoleArn: s.deploymentTargets?.agentcore?.agentResourceRoleArn ?? "",
                           foundationModel:
@@ -534,9 +521,9 @@ export default function AdminSettingsPage() {
                       },
                     }))
                   }
-                  className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  color="orange"
                 />
-              </label>
+              </div>
             </div>
 
             {settings.deploymentTargets?.agentcore?.enabled && (

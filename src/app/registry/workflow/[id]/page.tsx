@@ -75,7 +75,7 @@ export default function WorkflowDetailPage() {
 
   if (loading) {
     return (
-      <div className="px-8 py-8 space-y-4">
+      <div className="px-6 py-6 space-y-4">
         <div className="h-6 w-48 animate-pulse rounded bg-gray-100" />
         <div className="h-40 animate-pulse rounded-xl bg-gray-100" />
       </div>
@@ -84,7 +84,7 @@ export default function WorkflowDetailPage() {
 
   if (error || !workflow) {
     return (
-      <div className="px-8 py-8">
+      <div className="px-6 py-6">
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
           <AlertTriangle size={14} />
           {error ?? "Workflow not found"}
@@ -97,7 +97,7 @@ export default function WorkflowDetailPage() {
   const def = workflow.definition;
 
   return (
-    <div className="px-8 py-8 max-w-4xl">
+    <div className="px-6 py-6 max-w-4xl">
       {/* Breadcrumb */}
       <div className="mb-6 flex items-center gap-2 text-sm text-gray-400">
         <Link href="/registry" className="hover:text-gray-600 flex items-center gap-1">
@@ -211,7 +211,7 @@ export default function WorkflowDetailPage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {agent.required && (
-                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 border border-amber-200">Required</span>
+                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs-tight font-medium text-amber-700 border border-amber-200">Required</span>
                   )}
                   <Link
                     href={`/registry/${agent.agentId}`}
@@ -265,7 +265,7 @@ export default function WorkflowDetailPage() {
             {def.sharedContext.map((field, i) => (
               <div key={i} className="flex items-center gap-4 px-5 py-3">
                 <span className="font-mono text-xs text-gray-700">{field.field}</span>
-                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-500">{field.type}</span>
+                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs-tight text-gray-500">{field.type}</span>
                 <span className="text-xs text-gray-400 flex-1">{field.description}</span>
               </div>
             ))}

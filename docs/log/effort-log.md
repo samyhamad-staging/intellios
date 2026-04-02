@@ -38,9 +38,9 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
-## Session 069 — 2026-04-02
+## Session 086 — 2026-04-02
 
-**Design Studio Conversation Phase — UX/UI Enhancement Pass**
+**Design Studio Conversation Phase — UX/UI Enhancement Pass (P0–P3)**
 
 ### Claude Effort
 
@@ -48,15 +48,12 @@ Tracks resource consumption per session for post-project cost estimation.
 |---|---|---|
 | Model | claude-sonnet-4-6 | — |
 | UX analysis | Cross-referenced screenshot vs. intake-engine spec, intake-progress, session page, chat components | ~40k in / ~3k out |
-| Codebase exploration | intake-progress.tsx, [sessionId]/page.tsx, chat-container.tsx, chat-input.tsx, completeness-map.tsx, intake types | ~20k in / ~0.5k out |
-| P0.1 implementation | intake-progress.tsx full redesign (Design Intelligence panel, two-state, stable ref, SectionSummary export) | ~15k in / ~5k out |
-| P0.2 + P1.1 + P2.2 | Unified 2-row header (breadcrumb, domain nav, risk badge) in session page | ~20k in / ~4k out |
-| P2.1 implementation | Phase 1 context summary banner above chat | ~8k in / ~1.5k out |
-| P3.1 implementation | Context-adaptive placeholder in chat-container | ~5k in / ~0.5k out |
-| Documentation | Session log 069, _index, project journal, effort log | ~10k in / ~3k out |
-| **Session total (est.)** | | **~118k in / ~17.5k out** |
+| Codebase exploration | intake-progress.tsx, [sessionId]/page.tsx, chat-container.tsx, completeness-map.tsx, intake types | ~20k in / ~0.5k out |
+| Implementation (3 files) | Design Intelligence panel, unified header, domain nav, context banner, adaptive placeholder | ~48k in / ~11k out |
+| Documentation + merge | Session log 086, _index, effort-log, project-journal, conflict resolution | ~15k in / ~4k out |
+| **Session total (est.)** | | **~123k in / ~18.5k out** |
 
-**Estimated session cost:** Sonnet ~118k in × $3/1M + ~17.5k out × $15/1M = **$0.35 + $0.26 = ~$0.61**
+**Estimated session cost:** Sonnet ~123k in × $3/1M + ~18.5k out × $15/1M = **$0.37 + $0.28 = ~$0.65**
 
 ### Samy Effort
 
@@ -64,9 +61,444 @@ Tracks resource consumption per session for post-project cost estimation.
 |---|---|---|---|
 | 1 | Provided screenshot + requested UX/UI analysis against spec | D-Arch | Initiated full analysis session |
 | 2 | "Proceed" — approved all 9 priority items for implementation | D-Approve | Approved full P0–P3 scope |
-| 3 | "Proceed" — approved implementation output, triggered docs | D-Approve | Approved session close |
+| 3 | "Proceed" — approved implementation output | D-Approve | Triggered documentation pass |
+| 4 | "Ensure Vercel code is updated. Deploy and commit anything outstanding now." | D-Approve | Triggered merge + deploy |
 
-**Totals:** 3 messages · 1 D-Arch · 2 D-Approve · ~10 min
+**Totals:** 4 messages · 1 D-Arch · 3 D-Approve · ~15 min
+
+---
+
+## Session 085 — 2026-04-01
+
+**Agent Design Studio UX polish (Round 1 completions + Round 2 six-item polish pass)**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context resumption + gap check | Read _index, effort-log, project-journal, roadmap, intake-engine spec | ~60k in / ~1k out |
+| Documentation (all files) | Session log 085, _index, project-journal, roadmap, intake-engine spec, effort-log | ~15k in / ~8k out |
+| **Session total (est.)** | | **~75k in / ~9k out** |
+
+**Estimated session cost:** Sonnet ~75k in × $3/1M + ~9k out × $15/1M = **$0.23 + $0.14 = ~$0.37**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~1 (documentation task brief) |
+| Decisions made | 1 (D-Approve: documentation update for session 085 work) |
+| Engagement type | Documentation delegation |
+| Estimated time | ~5 min |
+
+---
+
+## Session 084 — 2026-04-01
+
+**AI/futuristic UI redesign + UX refinements + Vercel tracking fix**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context resumption + gap check | Continued from session 083 overflow; summary read + 4 source file reads | ~80k in / ~1k out |
+| Planning mode (redesign) | Full intake UI/UX plan — 8 files, visual spec, icon mapping, CSS animations | ~40k in / ~15k out |
+| Implementation (8 files) | globals.css, domain-progress-strip, domains, message-bubble, chat-container, chat-input, intake-progress, system-prompt | ~60k in / ~25k out |
+| UX refinement fixes (3) | hasToolCalls guard, AWAITING SIGNAL condition, filler word ban | ~20k in / ~4k out |
+| Vercel git tracking fix | git push + upstream config | ~5k in / ~0.5k out |
+| Documentation | Session log 084, _index, effort log, project journal | ~12k in / ~5k out |
+| **Session total (est.)** | | **~217k in / ~50.5k out** |
+
+**Estimated session cost:** Sonnet ~217k in × $3/1M + ~50.5k out × $15/1M = **$0.65 + $0.76 = ~$1.41**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~12 |
+| Decisions made | 3 (D-Arch: horizontal strip orientation confirmed; D-Approve: redesign plan; D-Approve: three UX refinements) |
+| Engagement type | Strategic direction + plan approval + screenshot feedback |
+| Estimated time | ~25 min |
+
+---
+
+## Session 081 — 2026-03-31
+
+**Sprint close: merge feat/intake-v2-hardening → master**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Gap check + log reads | _index.md, session 079/080 logs, effort-log, project-journal | ~50k in / ~1k out |
+| Merge operation | git checkout + merge command | ~3k in / ~0.5k out |
+| Documentation | Session log 081, _index, effort log, project journal | ~8k in / ~4k out |
+| **Session total (est.)** | | **~61k in / ~5.5k out** |
+
+**Estimated session cost:** Sonnet ~61k in × $3/1M + ~5.5k out × $15/1M = **$0.18 + $0.08 = ~$0.26**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | 1 ("Merge claude/zealous-banzai → main") |
+| Decisions made | 1 (D-Approve: merge sprint to master) |
+| Engagement type | Single approval instruction |
+| Estimated time | ~2 min |
+
+---
+
+## Session 080 — 2026-03-31
+
+**Catalyst Phase 2: Switch, DescriptionList, Divider**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Codebase reads | integrations/page.tsx, settings/page.tsx, deploy/page.tsx, blueprint-summary.tsx, message-bubble.tsx | ~40k in / ~2k out |
+| Implementation | 5 files modified | ~15k in / ~8k out |
+| TypeScript check | tsc --noEmit | ~5k in / ~0.5k out |
+| Documentation | Session log 080, _index, effort log | ~8k in / ~3k out |
+| **Session total (est.)** | | **~68k in / ~13.5k out** |
+
+**Estimated session cost:** Sonnet ~68k in × $3/1M + ~13.5k out × $15/1M = **$0.20 + $0.20 = ~$0.40**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~1 (continuation) |
+| Decisions made | 0 |
+| Engagement type | Continuation |
+| Estimated time | ~3 min |
+
+---
+
+## Session 079 — 2026-03-31
+
+**Catalyst UI Kit integration phase 1: 7 components + 12 table migrations**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Codebase reads | ZIP validation, dependency check, 12 table files | ~80k in / ~3k out |
+| Component creation | 7 new component files | ~20k in / ~15k out |
+| Table migration | 12 files, 13 tables | ~60k in / ~20k out |
+| TypeScript check | tsc --noEmit | ~5k in / ~0.5k out |
+| Documentation | Session log 079, _index, effort log | ~8k in / ~3k out |
+| **Session total (est.)** | | **~173k in / ~41.5k out** |
+
+**Estimated session cost:** Sonnet ~173k in × $3/1M + ~41.5k out × $15/1M = **$0.52 + $0.62 = ~$1.14**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~4 |
+| Decisions made | 2 (D-Approve: validate approach; D-Approve: proceed with table migration) |
+| Engagement type | Direction + approval |
+| Estimated time | ~10 min |
+
+---
+
+## Session 078 — 2026-03-31
+
+**Landing page rebuild**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Research | Tailwind Plus content extraction attempt (blocked), design approach | ~30k in / ~5k out |
+| Implementation | landing/page.tsx full rewrite (~320 lines) | ~15k in / ~12k out |
+| TypeScript check | tsc --noEmit | ~5k in / ~0.5k out |
+| Documentation | Session log 078, _index, effort log | ~8k in / ~3k out |
+| **Session total (est.)** | | **~58k in / ~20.5k out** |
+
+**Estimated session cost:** Sonnet ~58k in × $3/1M + ~20.5k out × $15/1M = **$0.17 + $0.31 = ~$0.48**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~3 |
+| Decisions made | 1 (D-Approve: build from scratch vs. extract verbatim) |
+| Engagement type | Direction + approval |
+| Estimated time | ~8 min |
+
+---
+
+## Session 077 — 2026-03-31
+
+**UI/UX Sprint Phase 2B + Phase 1C**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Codebase reads | quality-dashboard.tsx, governance/page.tsx, monitor/page.tsx, admin/users/page.tsx, effort-log.md, _index.md | ~60k in / ~2k out |
+| Implementation | 4 files modified (Recharts + Select replacements) | ~20k in / ~10k out |
+| TypeScript check | tsc --noEmit (2 formatter type errors fixed) | ~5k in / ~0.5k out |
+| Documentation | Session log 077, _index, effort log | ~8k in / ~3k out |
+| **Session total (est.)** | | **~93k in / ~15.5k out** |
+
+**Estimated session cost:** Sonnet ~93k in × $3/1M + ~15.5k out × $15/1M = **$0.28 + $0.23 = ~$0.51**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~1 (continuation) |
+| Decisions made | 0 |
+| Engagement type | Continuation from context summary |
+| Estimated time | ~5 min |
+
+---
+
+## Session 076 — 2026-03-31
+
+**UI/UX Optimization Sprint (Phase 0–3)**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Planning | 3 explore agents + 1 plan agent, plan file written | ~200k in / ~15k out |
+| Codebase exploration | Read globals.css, dialog.tsx, command-palette.tsx, layout.tsx, registry/page.tsx, intake-progress.tsx, sso/page.tsx, settings/page.tsx, webhooks/page.tsx | ~40k in / ~3k out |
+| Implementation | Phase 0–3: 9 new files + 8 modified | ~30k in / ~20k out |
+| TypeScript check | tsc --noEmit (2 type errors fixed) | ~5k in / ~0.5k out |
+| Documentation | Session log 076, _index, effort log, roadmap, project journal | ~10k in / ~4k out |
+| **Session total (est.)** | | **~285k in / ~42.5k out** |
+
+**Estimated session cost:** Sonnet ~285k in × $3/1M + ~42.5k out × $15/1M = **$0.86 + $0.64 = ~$1.50**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~3 |
+| Decisions made | 2 (D-Approve: UI/UX optimization plan; D-Approve: proceed with implementation) |
+| Engagement type | Strategic direction + plan approval |
+| Estimated time | ~15 min |
+
+---
+
+## Session 075 — 2026-03-31
+
+**Intake v2 P1 Hardening**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Codebase exploration | Read route.ts, page.tsx, intake-progress.tsx, tool-call-display.tsx, chat-container.tsx; explore agent | ~80k in / ~3k out |
+| Implementation | 3 targeted fixes (mobile sidebar, classification resilience, cold-path) | ~15k in / ~4k out |
+| TypeScript check | tsc --noEmit | ~5k in / ~0.5k out |
+| Documentation | Session log 075, _index, effort log, roadmap, project journal | ~10k in / ~3k out |
+| **Session total (est.)** | | **~110k in / ~10.5k out** |
+
+**Estimated session cost:** Sonnet ~110k in × $3/1M + ~10.5k out × $15/1M = **$0.33 + $0.16 = ~$0.49**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~2 |
+| Decisions made | 1 (D-Approve: proceed with P1 sprint) |
+| Engagement type | Strategic direction |
+| Estimated time | ~10 min |
+
+---
+
+## Session 074 — 2026-03-31
+
+**Intake Transparency Overhaul + Tool Call Enhancement**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-opus-4-6 (1M context) | — |
+| Intake evaluation | Read system-prompt.ts, tools.ts, chat/route.ts, intake-progress.tsx, chat-container.tsx, tool-call-display.tsx, completeness-map.tsx, model-selector.ts, probing.ts, coverage.ts, readiness.ts, classify.ts, classifier.ts | ~120k in / ~3k out |
+| AI SDK v6 research | Read messageMetadata docs, UIMessage types, ToolUIPart types from node_modules | ~40k in / ~1k out |
+| Plan design | Strategic plan agent + synthesis | ~60k in / ~15k out |
+| Transparency implementation | Types, helpers, route injection, client wiring, 5 sidebar panels | ~80k in / ~30k out |
+| Tool call enhancement | ToolCallDisplay result status + chat-container extraction | ~15k in / ~3k out |
+| Verification | Dev server start, login, navigate to intake, send message, verify panels | ~30k in / ~2k out |
+| Documentation | Session log 074, _index, effort log, roadmap, project journal | ~15k in / ~5k out |
+| **Session total (est.)** | | **~360k in / ~59k out** |
+
+**Estimated session cost:** Opus ~360k in × $15/1M + ~59k out × $75/1M = **$5.40 + $4.43 = ~$9.83**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~20 |
+| Decisions made | 3 (D-Arch: messageMetadata over DataUIPart; D-Approve: transparency plan; D-Approve: API credit purchase) |
+| Engagement type | Strategic direction + validation + approval |
+| Estimated time | ~1.5 hr |
+
+---
+
+## Session 073 — 2026-03-31
+
+**Log Backfill + Strategic Planning + keen-pascal Merge**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context restore | Read _index.md, git log, project state assessment | ~20k in / ~1k out |
+| Log backfill (069–071) | Retroactive session logs, _index, effort log, roadmap, journal | ~80k in / ~25k out |
+| Strategic planning | Next body of work assessment, 4-sprint plan | ~30k in / ~8k out |
+| Merge execution | Squash merge keen-pascal → main (conflict resolution, 3 commits) | ~30k in / ~5k out |
+| Session 072 log | All-conversation intake v2 documentation | ~10k in / ~4k out |
+| Session 073 log + docs | This session's documentation | ~10k in / ~4k out |
+| **Session total (est.)** | | **~180k in / ~47k out** |
+
+**Estimated session cost:** Sonnet ~180k in × $3/1M + ~47k out × $15/1M = **$0.54 + $0.71 = ~$1.25**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~12 |
+| Decisions made | 4 (D-Arch: squash merge; D-Scope: H3 gate confirmed; D-Approve: merge execution; D-Approve: strategic plan) |
+| Engagement type | Strategic direction + approval |
+| Estimated time | ~45 min |
+
+---
+
+## Session 072 — 2026-03-31
+
+**All-Conversation Intake v2 + Font Tokenization + A11y**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 / claude-opus-4-6 | — |
+| Intake v2 implementation | tools.ts, system-prompt.ts, chat/route.ts, page.tsx, intake-progress.tsx, chat-container.tsx | ~60k in / ~20k out |
+| Font tokenization | globals.css tokens + 48 files (90+ replacements) | ~80k in / ~15k out |
+| Badge migration batch 4 | intake-review.tsx, completeness-map.tsx | ~10k in / ~3k out |
+| A11y pass | sidebar, help-panel, command-palette, contributions-panel, violations-panel, tool-call-display | ~15k in / ~4k out |
+| Pipeline empty states + spacing | pipeline/page.tsx + 32 page files | ~30k in / ~8k out |
+| **Session total (est.)** | | **~195k in / ~50k out** |
+
+**Estimated session cost:** Sonnet ~195k in × $3/1M + ~50k out × $15/1M = **$0.59 + $0.75 = ~$1.34**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~8 |
+| Decisions made | 2 (D-Arch: all-conversation intake replaces form; D-Approve: font tokenization approach) |
+| Engagement type | Direction-setting + approval |
+| Estimated time | ~30 min |
+
+---
+
+## Session 071 — 2026-03-30 (afternoon)
+
+**Intake UX Hardening + Admin Overview Redesign + Unified Badge System**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-opus-4-6 (1M context) | — |
+| Context restore | Read page.tsx, fleet-governance-dashboard.tsx, badge.tsx, intake-review.tsx, completeness-map.tsx, status-badge.tsx, intake/[sessionId]/page.tsx, sessions/[id]/route.ts, next.config.ts | ~40k in / ~0.5k out |
+| Intake UX fixes | Redirect loop, Revise button PATCH flow, chat history restore, discard button + DELETE endpoint | ~20k in / ~8k out |
+| Admin overview redesign | Compact stats strip, inline chips, fleet summary bar, side-by-side layout, remove redundant list | ~25k in / ~10k out |
+| Badge system | badge.tsx 7-variant system + migration across 5 files | ~20k in / ~8k out |
+| Documentation | Session log 071, _index, effort log, roadmap, project journal | ~10k in / ~4k out |
+| **Session total (est.)** | | **~115k in / ~30.5k out** |
+
+**Estimated session cost:** Opus ~115k in × $15/1M + ~30.5k out × $75/1M = **$1.73 + $2.29 = ~$4.02**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Identified intake revision flow as broken in production | D-Correct | Directed fix of Revise, chat history, redirect loop |
+| 2 | Directed admin overview layout densification | D-Arch | Approved compact stats strip + side-by-side approach |
+| 3 | Approved Badge system consolidation | D-Approve | Recognized value of single source of truth for badges |
+
+**Totals:** 3 messages · 1 D-Arch · 1 D-Approve · 1 D-Correct · ~20 min
+
+---
+
+## Session 070 — 2026-03-30 (morning)
+
+**Cron Downgrade + Design System v1.2 Color Palette Evolution**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-opus-4-6 (1M context) / claude-sonnet-4-6 | — |
+| Cron diagnosis | Read vercel.json, identify Hobby plan constraint | ~5k in / ~0.5k out |
+| Cron fix | vercel.json 2-line change | ~2k in / ~0.5k out |
+| Palette design | globals.css token audit + redesign, sidebar, login, landing, page.tsx | ~30k in / ~10k out |
+| Documentation | Session log 070, effort log, roadmap, journal | ~8k in / ~3k out |
+| **Session total (est.)** | | **~45k in / ~14k out** |
+
+**Estimated session cost:** Opus ~45k in × $15/1M + ~14k out × $75/1M = **$0.68 + $1.05 = ~$1.73**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Identified Vercel Hobby plan cron constraint | D-Correct | Directed downgrade to daily |
+| 2 | Directed color palette evolution to indigo-600 | D-Arch | Key branding decision — shifts product positioning |
+
+**Totals:** 2 messages · 1 D-Arch · 1 D-Correct · ~15 min
+
+---
+
+## Session 069 — 2026-03-29
+
+**SEC-001–007: Security Hardening**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Security scan | 86 route files read + OWASP pattern analysis | ~60k in / ~2k out |
+| Health report | docs/log/health/2026-03-29_security.md (212 lines) | ~10k in / ~5k out |
+| SEC-001 fix | cron/review-reminders/route.ts fail-closed | ~5k in / ~1k out |
+| SEC-002 fix | forgot-password rate limit | ~4k in / ~1k out |
+| SEC-003 fix | webhook SSRF prevention | ~5k in / ~1.5k out |
+| SEC-004/006 | npm audit fix + package-lock update | ~5k in / ~0.5k out |
+| SEC-005 fix | requireAuth 403 role name removal | ~4k in / ~0.5k out |
+| SEC-007 fix | reset-password rate limit | ~4k in / ~1k out |
+| Documentation | Session log 069, effort log, roadmap, journal | ~8k in / ~3k out |
+| **Session total (est.)** | | **~105k in / ~15.5k out** |
+
+**Estimated session cost:** Sonnet ~105k in × $3/1M + ~15.5k out × $15/1M = **$0.32 + $0.23 = ~$0.55**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Initiated security audit at production-ready milestone | D-Arch | High-value decision — sets security baseline before expanding users |
+| 2 | Approved deferred esbuild/drizzle-kit CVEs | D-Approve | Accepted known risk with no production runtime exposure |
+
+**Totals:** 2 messages · 1 D-Arch · 1 D-Approve · ~10 min
 
 ---
 

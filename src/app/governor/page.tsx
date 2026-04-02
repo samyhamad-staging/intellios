@@ -213,7 +213,7 @@ export default function GovernorHomePage() {
                         <span className="font-medium">{entry.actorEmail}</span>{" "}
                         <span className="text-gray-500">{entry.action.replace(/_/g, " ")}</span>
                       </p>
-                      <p className="text-[10px] text-gray-400">{timeAgo(entry.createdAt)}</p>
+                      <p className="text-2xs text-gray-400">{timeAgo(entry.createdAt)}</p>
                     </div>
                   </li>
                 ))}
@@ -237,7 +237,7 @@ export default function GovernorHomePage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {/* Compliance rate sparkline */}
               <div>
-                <p className="text-[11px] text-gray-400 mb-1.5">Compliance Rate</p>
+                <p className="text-xs-tight text-gray-400 mb-1.5">Compliance Rate</p>
                 <div className="flex items-end gap-0.5 h-10">
                   {trends.map((s, i) => {
                     const val = s.complianceRate ?? 0;
@@ -256,7 +256,7 @@ export default function GovernorHomePage() {
               </div>
               {/* Violations sparkline */}
               <div>
-                <p className="text-[11px] text-gray-400 mb-1.5">Weekly Violations</p>
+                <p className="text-xs-tight text-gray-400 mb-1.5">Weekly Violations</p>
                 <div className="flex items-end gap-0.5 h-10">
                   {trends.map((s, i) => {
                     const max = Math.max(...trends.map((t) => t.totalViolations), 1);
@@ -275,7 +275,7 @@ export default function GovernorHomePage() {
               </div>
               {/* Fleet size sparkline */}
               <div>
-                <p className="text-[11px] text-gray-400 mb-1.5">Fleet Size</p>
+                <p className="text-xs-tight text-gray-400 mb-1.5">Fleet Size</p>
                 <div className="flex items-end gap-0.5 h-10">
                   {trends.map((s, i) => {
                     const max = Math.max(...trends.map((t) => t.totalAgents), 1);

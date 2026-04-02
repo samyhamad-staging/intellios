@@ -14,8 +14,6 @@ import {
   Bot,
   Inbox,
   CheckCircle,
-  TrendingUp,
-  TrendingDown,
   AlertTriangle,
   Rocket,
   ShieldAlert,
@@ -35,14 +33,69 @@ function timeAgo(dateStr: string | Date): string {
   return `${Math.floor(diffDays / 7)}w ago`;
 }
 
+// Aligned with Badge design system variants:
+// neutral=gray, info=blue, success=emerald, warning=amber, danger=red, accent=violet, muted=gray-50
 const STATUS_CONFIG = {
-  draft:      { label: "Draft",      bg: "bg-slate-100",  text: "text-slate-600",  border: "border-slate-200" },
-  in_review:  { label: "In Review",  bg: "bg-blue-50",    text: "text-blue-700",   border: "border-blue-200"  },
-  approved:   { label: "Approved",   bg: "bg-green-50",   text: "text-green-700",  border: "border-green-200" },
-  deployed:   { label: "Deployed",   bg: "bg-violet-50",  text: "text-violet-700", border: "border-violet-200"},
-  rejected:   { label: "Rejected",   bg: "bg-red-50",     text: "text-red-700",    border: "border-red-200"   },
-  deprecated: { label: "Deprecated", bg: "bg-amber-50",   text: "text-amber-700",  border: "border-amber-200" },
+  draft:      { label: "Draft",      text: "text-gray-600"    },
+  in_review:  { label: "In Review",  text: "text-blue-700"    },
+  approved:   { label: "Approved",   text: "text-emerald-700" },
+  deployed:   { label: "Deployed",   text: "text-violet-700"  },
+  rejected:   { label: "Rejected",   text: "text-red-700"     },
+  deprecated: { label: "Deprecated", text: "text-gray-500"    },
 } as const;
+
+const STAT_BORDERS: Record<string, string> = {
+  draft:      "border-l-gray-400",
+  in_review:  "border-l-amber-400",
+  approved:   "border-l-emerald-400",
+  deployed:   "border-l-indigo-500",
+};
+
+const STAT_HINTS: Record<string, string> = {
+  in_review:  "Awaiting review",
+  approved:   "Ready to deploy",
+};
+
+const STAT_TINTS: Record<string, string> = {
+  in_review: "bg-amber-50/60",
+  approved:  "bg-emerald-50/60",
+};
+
+function QualityRing({ score, delta }: { score: number; delta: number | null }) {
+  const circumference = 2 * Math.PI * 14;
+  const offset = circumference * (1 - score / 100);
+  const ringColor =
+    score >= 80 ? "stroke-emerald-500" : score >= 60 ? "stroke-amber-500" : "stroke-red-500";
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="relative">
+        <svg viewBox="0 0 32 32" width="40" height="40">
+          <circle
+            cx="16" cy="16" r="14" fill="none" stroke="currentColor"
+            strokeWidth="2.5" className="text-border" opacity={0.3}
+          />
+          <circle
+            cx="16" cy="16" r="14" fill="none" strokeWidth="2.5"
+            strokeDasharray={circumference} strokeDashoffset={offset}
+            strokeLinecap="round" transform="rotate(-90 16 16)"
+            className={`${ringColor} score-ring-circle`}
+          />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-2xs font-bold font-mono tabular-nums text-text">
+          {score}
+        </span>
+      </div>
+      <div>
+        <p className="text-2xs font-mono text-text-tertiary uppercase tracking-wide">Quality Index</p>
+        {delta != null && (
+          <p className={`text-xs font-mono font-medium ${delta >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+            {delta >= 0 ? "+" : ""}{delta} pts
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default async function Home() {
   const session = await auth();
@@ -67,6 +120,7 @@ export default async function Home() {
           createdBy: agentBlueprints.createdBy,
           updatedAt: agentBlueprints.updatedAt,
           validationReport: agentBlueprints.validationReport,
+          nextReviewDue: agentBlueprints.nextReviewDue,
         })
         .from(agentBlueprints)
         .where(enterpriseFilter)
@@ -98,7 +152,7 @@ export default async function Home() {
             </div>
           </div>
           <h1 className="mb-1 text-2xl font-semibold text-text">Intellios</h1>
-          <p className="mb-8 text-sm text-text-secondary">Enterprise Agent Factory</p>
+          <p className="mb-6 text-sm text-text-secondary">Enterprise Agent Factory</p>
           <Link href="/login" className="rounded-lg bg-text px-5 py-2.5 text-sm font-medium text-surface hover:opacity-90 transition-opacity">
             Sign in
           </Link>
@@ -110,9 +164,9 @@ export default async function Home() {
   // ── Architect ─────────────────────────────────────────────────────────────
   if (role === "architect") {
     return (
-      <div className="px-8 py-8">
+      <div className="px-6 py-6">
         {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
+        <div className="mb-6 flex items-start justify-between">
           <div>
             <h1 className="text-xl font-semibold text-text">My Work</h1>
             <p className="mt-0.5 text-sm text-text-secondary">Design, refine, and submit agent blueprints for review.</p>
@@ -121,7 +175,7 @@ export default async function Home() {
         </div>
 
         {/* Quick action cards */}
-        <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { href: "/pipeline", icon: Kanban,  label: "Pipeline Board", sub: `${allAgents.length} agents`, color: "text-primary" },
             { href: "/registry", icon: Library, label: "Agent Registry",  sub: "All versions",              color: "text-blue-600" },
@@ -244,8 +298,8 @@ export default async function Home() {
   // ── Reviewer / Compliance Officer ─────────────────────────────────────────
   if (role === "reviewer" || role === "compliance_officer") {
     return (
-      <div className="px-8 py-8">
-        <div className="mb-8 flex items-start justify-between">
+      <div className="px-6 py-6">
+        <div className="mb-6 flex items-start justify-between">
           <div>
             <h1 className="text-xl font-semibold text-text">
               {role === "compliance_officer" ? "Governance & Compliance" : "Review Queue"}
@@ -262,7 +316,7 @@ export default async function Home() {
           </Link>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { href: "/review",   icon: ClipboardList, label: "Review Queue",   sub: `${inReviewAgents.length} pending`, color: "text-amber-600" },
             { href: "/pipeline", icon: Kanban,         label: "Pipeline Board", sub: `${allAgents.length} total`,        color: "text-primary" },
@@ -334,21 +388,6 @@ export default async function Home() {
     console.error("[dashboard] Failed to fetch quality snapshots:", err);
   }
 
-  const actionCallouts = [
-    counts.in_review > 0 && {
-      href: "/review",
-      label: `${counts.in_review} blueprint${counts.in_review !== 1 ? "s" : ""} awaiting review`,
-      cta: "Go to Review Queue →",
-      color: "border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-300",
-    },
-    counts.approved > 0 && {
-      href: "/deploy",
-      label: `${counts.approved} approved agent${counts.approved !== 1 ? "s" : ""} ready to deploy`,
-      cta: "Go to Deploy →",
-      color: "border-green-200 bg-green-50 text-green-800 hover:border-green-300",
-    },
-  ].filter(Boolean) as { href: string; label: string; cta: string; color: string }[];
-
   const activeStageLinks: Record<string, string> = {
     draft: "/pipeline",
     in_review: "/review",
@@ -357,144 +396,151 @@ export default async function Home() {
   };
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-6 py-6">
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-text">Overview</h1>
-          <p className="mt-0.5 text-sm text-text-secondary">
-            {allAgents.length} agent{allAgents.length === 1 ? "" : "s"} across all teams
-          </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-text">Overview</h1>
+            <p className="mt-0.5 text-sm text-text-tertiary">
+              {allAgents.length} agent{allAgents.length === 1 ? "" : "s"}
+            </p>
+          </div>
+          {qualityIndex != null && (
+            <QualityRing score={qualityIndex} delta={qualityIndexDelta} />
+          )}
         </div>
-        {role !== "viewer" && (
+        {role !== "viewer" && role !== "admin" && (
           <NewIntakeButton className="inline-flex items-center gap-1.5 rounded-lg btn-primary px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50" />
         )}
       </div>
 
-      {/* Action callouts — only shown when something needs attention */}
-      {actionCallouts.length > 0 && (
-        <div className="mb-6 flex flex-col gap-2">
-          {actionCallouts.map(({ href, label, cta, color }) => (
+      {/* Pipeline stats — status-coded cards */}
+      <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {(["draft", "in_review", "approved", "deployed"] as const).map((s) => {
+          const cfg = STATUS_CONFIG[s];
+          const hint = STAT_HINTS[s] as string | undefined;
+          const hasTint = hint != null && counts[s] > 0 && STAT_TINTS[s] != null;
+          return (
             <Link
-              key={href}
-              href={href}
-              className={`flex items-center justify-between rounded-lg border px-4 py-2.5 text-sm transition-colors ${color}`}
+              key={s}
+              href={activeStageLinks[s]}
+              className={`group rounded-xl border border-border ${STAT_BORDERS[s]} border-l-[3px] ${hasTint ? STAT_TINTS[s] : "bg-surface"} px-4 py-3.5 shadow-[var(--shadow-card)] hover:bg-surface-raised transition-colors`}
             >
-              <span className="font-medium">{label}</span>
-              <span className="text-xs font-semibold opacity-80">{cta}</span>
+              <span className={`text-2xl font-bold ${cfg.text}`}>{counts[s]}</span>
+              <p className="mt-0.5 text-xs text-text-tertiary group-hover:text-text-secondary transition-colors">
+                {cfg.label}
+              </p>
+              {counts[s] > 0 && hint && (
+                <p className="mt-1.5 text-2xs font-medium text-primary/70">{hint} →</p>
+              )}
             </Link>
-          ))}
+          );
+        })}
+      </div>
+
+      {/* Terminal states — inline muted badges, only when non-zero */}
+      {(counts.rejected > 0 || counts.deprecated > 0) && (
+        <div className="-mt-3 mb-6 flex items-center gap-3 px-1">
+          {counts.rejected > 0 && (
+            <span className="text-xs font-medium text-red-500/60">{counts.rejected} Rejected</span>
+          )}
+          {counts.deprecated > 0 && (
+            <span className="text-xs text-text-tertiary">{counts.deprecated} Deprecated</span>
+          )}
         </div>
       )}
 
-      {/* Pipeline status — active stages link to relevant pages */}
-      <div className="mb-6">
-        <div className="grid grid-cols-4 gap-3">
-          {(["draft", "in_review", "approved", "deployed"] as const).map((s) => {
-            const cfg = STATUS_CONFIG[s];
-            return (
+      {/* Admin Action Queue — alerts requiring attention */}
+      {(() => {
+        const now = new Date();
+        type AdminAction = { icon: typeof AlertTriangle; label: string; sub: string; href: string; color: string; bgColor: string };
+        const actions: AdminAction[] = [];
+
+        // Approved/deployed agents with governance errors
+        const govErrors = allAgents.filter((a) => {
+          if (!["approved", "deployed"].includes(a.status)) return false;
+          const report = a.validationReport as ValidationReport | null;
+          return report?.violations?.some((v) => v.severity === "error");
+        });
+        if (govErrors.length > 0) {
+          actions.push({
+            icon: ShieldAlert,
+            label: `${govErrors.length} deployed agent${govErrors.length === 1 ? "" : "s"} with governance errors`,
+            sub: "Errors in approved or deployed agents require immediate resolution",
+            href: "/registry",
+            color: "text-red-700", bgColor: "bg-red-50 border-red-200",
+          });
+        }
+
+        // Overdue periodic reviews
+        const overdue = allAgents.filter(
+          (a) => a.nextReviewDue != null && new Date(a.nextReviewDue) < now
+        );
+        if (overdue.length > 0) {
+          actions.push({
+            icon: Clock,
+            label: `${overdue.length} agent${overdue.length === 1 ? "" : "s"} overdue for periodic review`,
+            sub: "Scheduled reviews are past their due date",
+            href: "/registry",
+            color: "text-amber-700", bgColor: "bg-amber-50 border-amber-200",
+          });
+        }
+
+        // Agents waiting for review approval
+        if (counts.in_review > 0) {
+          actions.push({
+            icon: AlertTriangle,
+            label: `${counts.in_review} agent${counts.in_review === 1 ? "" : "s"} awaiting review approval`,
+            sub: "Review queue has pending submissions",
+            href: "/review",
+            color: "text-blue-700", bgColor: "bg-blue-50 border-blue-200",
+          });
+        }
+
+        if (actions.length === 0) return null;
+
+        return (
+          <div className="mb-6 space-y-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Action Queue</h2>
+            {actions.slice(0, 4).map((action, i) => (
               <Link
-                key={s}
-                href={activeStageLinks[s]}
-                className={`rounded-xl border ${cfg.border} ${cfg.bg} p-4 hover:shadow-sm transition-shadow`}
+                key={i}
+                href={action.href}
+                className={`group flex items-center gap-3 rounded-lg border px-4 py-3 transition-all hover:shadow-sm ${action.bgColor}`}
               >
-                <div className={`text-2xl font-bold ${cfg.text}`}>{counts[s]}</div>
-                <div className={`mt-0.5 text-xs font-medium ${cfg.text} opacity-80`}>{cfg.label}</div>
+                <action.icon size={16} className={`shrink-0 ${action.color}`} />
+                <div className="min-w-0 flex-1">
+                  <p className={`text-sm font-medium ${action.color}`}>{action.label}</p>
+                  <p className="text-xs text-text-tertiary">{action.sub}</p>
+                </div>
+                <ChevronRight size={14} className="shrink-0 text-text-tertiary group-hover:text-text-secondary" />
               </Link>
-            );
-          })}
-        </div>
-        {/* Terminal states — compact, low-emphasis */}
-        <div className="mt-2.5 flex items-center gap-4 px-1">
-          {(["rejected", "deprecated"] as const).map((s) => {
-            const cfg = STATUS_CONFIG[s];
-            return (
-              <span key={s} className={`text-xs font-medium ${cfg.text} opacity-70`}>
-                {counts[s]} {cfg.label}
-              </span>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Governance Health KPI + Fleet Posture */}
-      <div className="mb-8">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Governance Health</h2>
-          {qualityIndex != null && (
-            <div className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
-              qualityIndex >= 80 ? "bg-green-50 text-green-700 border-green-200" :
-              qualityIndex >= 60 ? "bg-amber-50 text-amber-700 border-amber-200" :
-              "bg-red-50 text-red-700 border-red-200"
-            }`}>
-              {qualityIndexDelta != null && (
-                qualityIndexDelta >= 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />
-              )}
-              Quality Index: {qualityIndex}/100
-              {qualityIndexDelta != null && (
-                <span className="ml-0.5 opacity-70">
-                  ({qualityIndexDelta >= 0 ? "+" : ""}{qualityIndexDelta})
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-        <FleetGovernanceDashboard
-          enterpriseId={user.enterpriseId}
-          userRole={role}
-        />
-      </div>
-
-      {/* Recent activity */}
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Recent Activity</h2>
-          <Link href="/registry" className="text-xs text-primary hover:text-primary-hover">View all →</Link>
-        </div>
-        {allAgents.length === 0 ? (
-          <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface py-14 text-center">
-            <Inbox size={28} className="mb-3 text-text-tertiary" />
-            <p className="text-sm font-medium text-text-secondary">No agents in the system yet</p>
+            ))}
           </div>
-        ) : (
-          <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
-            {allAgents.slice(0, 8).map((agent, i) => {
-              const author = agent.createdBy
-                ? agent.createdBy.includes("@")
-                  ? agent.createdBy.split("@")[0]
-                  : agent.createdBy
-                : null;
-              return (
-                <Link
-                  key={agent.agentId}
-                  href={`/registry/${agent.agentId}`}
-                  className={`flex items-center gap-4 px-5 py-3 hover:bg-surface-raised transition-colors ${i > 0 ? "border-t border-border" : ""}`}
-                >
-                  <Bot size={15} className="shrink-0 text-text-tertiary" />
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate text-sm font-medium text-text">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</p>
-                    <p className="text-xs text-text-tertiary mt-0.5">
-                      {author ? `by ${author} · ` : ""}{timeAgo(agent.updatedAt)}
-                    </p>
-                  </div>
-                  <StatusBadge status={agent.status} />
-                  <ChevronRight size={13} className="shrink-0 text-text-tertiary" />
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </section>
+        );
+      })()}
 
-      {/* Workspace activity feed */}
-      <section className="mt-8">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-          Workspace Activity
-        </h2>
-        <div className="rounded-xl border border-border bg-surface p-5 shadow-[var(--shadow-card)]">
-          <ActivityFeed />
+      {/* Governance + Activity — two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-3">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+            Governance Health
+          </h2>
+          <FleetGovernanceDashboard enterpriseId={user.enterpriseId} userRole={role} compact />
         </div>
-      </section>
+        <section className="lg:col-span-2">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Activity</h2>
+            <Link href="/audit" className="text-xs text-primary hover:text-primary-hover">
+              Audit trail →
+            </Link>
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
+            <ActivityFeed compact />
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

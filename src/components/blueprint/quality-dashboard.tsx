@@ -1,6 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  ResponsiveContainer,
+  LineChart as ReLineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
+import { chartColors, chartFontSize, chartGridColor, chartTextColor } from "@/lib/chart-tokens";
 
 interface QualityScore {
   id: string;
@@ -163,7 +173,7 @@ export function QualityDashboard({ score, loading, agentId, agentStatus }: Props
           <p className="mt-0.5 text-xs text-gray-500">
             Average of 5 dimensions, scaled 0–100
           </p>
-          <p className="mt-2 text-[10px] text-gray-400">
+          <p className="mt-2 text-2xs text-gray-400">
             Last evaluated {timeAgo(score.evaluatedAt)}
           </p>
         </div>
@@ -253,14 +263,14 @@ export function QualityDashboard({ score, loading, agentId, agentStatus }: Props
                   <p className={`text-3xl font-bold tabular-nums ${overallColor(parseFloat(score.overallScore ?? "0"))}`}>
                     {Math.round(parseFloat(score.overallScore ?? "0"))}
                   </p>
-                  <p className="mt-0.5 text-[10px] text-gray-400">Design / 100</p>
+                  <p className="mt-0.5 text-2xs text-gray-400">Design / 100</p>
                 </div>
                 <div className="text-lg font-light text-indigo-300 shrink-0">vs</div>
                 <div className="text-center flex-1 rounded-lg bg-white border border-indigo-100 py-3">
                   <p className={`text-3xl font-bold tabular-nums ${overallColor(prodQuality.productionScore)}`}>
                     {prodQuality.productionScore}
                   </p>
-                  <p className="mt-0.5 text-[10px] text-gray-400">Production / 100</p>
+                  <p className="mt-0.5 text-2xs text-gray-400">Production / 100</p>
                 </div>
               </div>
 
@@ -326,48 +336,71 @@ export function QualityDashboard({ score, loading, agentId, agentStatus }: Props
       {/* H2-2.2: 12-week trend chart — shown when trend data is available */}
       {showProduction && trendData.length > 0 && (
         <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-          <div className="border-b border-gray-100 bg-gray-50 px-4 py-2.5">
+          <div className="border-b border-gray-100 bg-gray-50 px-4 py-2.5 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
               Quality Trend — Last {trendData.length} Week{trendData.length !== 1 ? "s" : ""}
             </p>
-          </div>
-          <div className="px-4 pt-4 pb-3">
-            {/* Mini bar chart: one column per week */}
-            <div className="flex items-end gap-1 h-20">
-              {trendData.map((row) => {
-                const design     = row.designScore     !== null ? row.designScore     : null;
-                const production = row.productionScore !== null ? row.productionScore : null;
-                const gap        = design !== null && production !== null ? design - production : null;
-                const isRegression = gap !== null && gap > 15;
-                const prodPct    = production !== null ? production / 100 : 0;
-                const desPct     = design     !== null ? design / 100     : 0;
-
-                return (
-                  <div key={row.weekStart} className="flex-1 flex flex-col items-center gap-0.5" title={`${row.weekStart}: Design ${design ?? "—"} / Prod ${production ?? "—"}`}>
-                    {/* Design score dot */}
-                    <div
-                      className="w-1 rounded-full bg-gray-300"
-                      style={{ height: `${Math.max(2, desPct * 64)}px` }}
-                    />
-                    {/* Production score bar */}
-                    <div
-                      className={`w-3 rounded-sm ${isRegression ? "bg-red-400" : "bg-indigo-400"}`}
-                      style={{ height: `${Math.max(2, prodPct * 64)}px` }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-            {/* X-axis labels: first + last week */}
-            <div className="flex justify-between mt-1.5 text-[9px] text-gray-400">
-              <span>{trendData[0]?.weekStart ?? ""}</span>
-              <span className="text-[9px] text-gray-400">
-                <span className="inline-block w-2 h-1 bg-indigo-400 rounded-sm mr-0.5 align-middle" />production
-                <span className="inline-block w-1.5 h-1.5 bg-gray-300 rounded-full mx-1 align-middle" />design
-                <span className="inline-block w-2 h-1 bg-red-400 rounded-sm mr-0.5 ml-1 align-middle" />regression
+            <div className="flex items-center gap-3 text-2xs text-gray-400">
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-3 h-0.5 rounded-full" style={{ backgroundColor: chartColors.primary }} />
+                Production
               </span>
-              <span>{trendData[trendData.length - 1]?.weekStart ?? ""}</span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-3 h-0.5 rounded-full" style={{ backgroundColor: chartColors.gray }} />
+                Design
+              </span>
             </div>
+          </div>
+          <div className="px-2 pt-3 pb-2">
+            <ResponsiveContainer width="100%" height={100}>
+              <ReLineChart
+                data={trendData.map((row) => ({
+                  week: row.weekStart.slice(5), // MM-DD
+                  design: row.designScore,
+                  production: row.productionScore,
+                }))}
+                margin={{ top: 4, right: 8, left: -24, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
+                <XAxis
+                  dataKey="week"
+                  tick={{ fontSize: chartFontSize, fill: chartTextColor }}
+                  tickLine={false}
+                  axisLine={false}
+                  interval="preserveStartEnd"
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  tick={{ fontSize: chartFontSize, fill: chartTextColor }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickCount={3}
+                />
+                <Tooltip
+                  contentStyle={{ fontSize: chartFontSize, borderRadius: 6, border: "1px solid #e1e5ef", padding: "4px 8px" }}
+                  labelFormatter={(label) => `Week of ${label}`}
+                  formatter={(_value, name) =>
+                    [_value !== undefined && _value !== null ? `${_value}` : "—", name === "production" ? "Production" : "Design"]
+                  }
+                />
+                <Line
+                  type="monotone"
+                  dataKey="design"
+                  stroke={chartColors.gray}
+                  strokeWidth={1.5}
+                  dot={false}
+                  connectNulls
+                />
+                <Line
+                  type="monotone"
+                  dataKey="production"
+                  stroke={chartColors.primary}
+                  strokeWidth={2}
+                  dot={false}
+                  connectNulls
+                />
+              </ReLineChart>
+            </ResponsiveContainer>
           </div>
         </div>
       )}

@@ -3,6 +3,7 @@
 import { use, useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ValidationReportView } from "@/components/governance/validation-report";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
@@ -944,31 +945,39 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                 ))}
                 <div>
                   <label className="text-xs font-medium text-text-secondary">Deployment Environment</label>
-                  <select
-                    value={ownershipDraft.deploymentEnvironment}
-                    onChange={(e) => setOwnershipDraft((d) => ({ ...d, deploymentEnvironment: e.target.value }))}
-                    className="mt-1 w-full rounded-lg border border-border px-3 py-1.5 text-xs focus:border-border-strong focus:outline-none"
+                  <Select
+                    value={ownershipDraft.deploymentEnvironment || "_none_"}
+                    onValueChange={(v) => setOwnershipDraft((d) => ({ ...d, deploymentEnvironment: v === "_none_" ? "" : v }))}
                   >
-                    <option value="">— Select —</option>
-                    <option value="production">Production</option>
-                    <option value="staging">Staging</option>
-                    <option value="sandbox">Sandbox</option>
-                    <option value="internal">Internal</option>
-                  </select>
+                    <SelectTrigger className="mt-1 w-full text-xs h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none_">— Select —</SelectItem>
+                      <SelectItem value="production">Production</SelectItem>
+                      <SelectItem value="staging">Staging</SelectItem>
+                      <SelectItem value="sandbox">Sandbox</SelectItem>
+                      <SelectItem value="internal">Internal</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-text-secondary">Data Classification</label>
-                  <select
-                    value={ownershipDraft.dataClassification}
-                    onChange={(e) => setOwnershipDraft((d) => ({ ...d, dataClassification: e.target.value }))}
-                    className="mt-1 w-full rounded-lg border border-border px-3 py-1.5 text-xs focus:border-border-strong focus:outline-none"
+                  <Select
+                    value={ownershipDraft.dataClassification || "_none_"}
+                    onValueChange={(v) => setOwnershipDraft((d) => ({ ...d, dataClassification: v === "_none_" ? "" : v }))}
                   >
-                    <option value="">— Select —</option>
-                    <option value="public">Public</option>
-                    <option value="internal">Internal</option>
-                    <option value="confidential">Confidential</option>
-                    <option value="regulated">Regulated</option>
-                  </select>
+                    <SelectTrigger className="mt-1 w-full text-xs h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none_">— Select —</SelectItem>
+                      <SelectItem value="public">Public</SelectItem>
+                      <SelectItem value="internal">Internal</SelectItem>
+                      <SelectItem value="confidential">Confidential</SelectItem>
+                      <SelectItem value="regulated">Regulated</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <button
                   onClick={handleSaveOwnership}
@@ -986,7 +995,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             <div className="border-b border-border px-5 py-4">
               <div className="flex items-center gap-2 mb-2">
                 <h2 className="text-sm font-semibold">Audit Evidence</h2>
-                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700 uppercase tracking-wide">
+                <span className="rounded-full bg-green-100 px-2 py-0.5 text-2xs font-semibold text-green-700 uppercase tracking-wide">
                   Exam-Ready
                 </span>
               </div>
@@ -1010,7 +1019,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                 >
                   {exportingEvidence ? "Exporting…" : "↓ Export Evidence Package"}
                 </button>
-                <p className="text-[10px] text-text-tertiary leading-tight">
+                <p className="text-2xs text-text-tertiary leading-tight">
                   JSON bundle: MRM report, approval chain, quality evaluation,
                   test evidence, stakeholder contributions.
                 </p>
@@ -1030,9 +1039,25 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             {/* Message history */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
               {refinementHistory.length === 0 && (
-                <p className="py-6 text-center text-xs text-text-tertiary">
-                  No refinements yet. Describe what to change below.
-                </p>
+                <div className="py-4 px-2 space-y-2">
+                  <p className="text-center text-xs text-text-tertiary mb-3">
+                    Describe what to change. For example:
+                  </p>
+                  {[
+                    "Add an email notification tool",
+                    "Make the denied actions stricter around PII",
+                    "Add a data_handling governance policy",
+                    "Change the persona to be more formal",
+                  ].map((hint) => (
+                    <button
+                      key={hint}
+                      onClick={() => setChange(hint)}
+                      className="block w-full rounded-lg border border-border px-3 py-2 text-left text-xs text-text-secondary hover:bg-surface-muted hover:text-text transition-colors"
+                    >
+                      {hint}
+                    </button>
+                  ))}
+                </div>
               )}
               {refinementHistory.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -1044,7 +1069,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                       : "bg-surface-raised text-text border border-border"
                   }`}>
                     <p className="whitespace-pre-wrap">{msg.content}</p>
-                    <p className={`mt-1 text-[10px] ${
+                    <p className={`mt-1 text-2xs ${
                       msg.role === "user" ? "text-primary-fg/60" : "text-text-tertiary"
                     }`}>
                       {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -1090,7 +1115,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                   {refining ? "…" : "Send"}
                 </button>
               </div>
-              <p className="mt-1 text-center text-[10px] text-text-tertiary">⌘ Enter to send</p>
+              <p className="mt-1 text-center text-2xs text-text-tertiary">⌘ Enter to send</p>
             </div>
           </div>
         </aside>

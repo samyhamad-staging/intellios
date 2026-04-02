@@ -4,6 +4,9 @@ import { and, eq, inArray, isNull, lt, isNotNull } from "drizzle-orm";
 import Link from "next/link";
 import type { ValidationReport } from "@/lib/governance/types";
 import type { ABP } from "@/lib/types/abp";
+import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 /**
  * FleetGovernanceDashboard — Phase 51.
@@ -71,11 +74,25 @@ function deriveGovernanceHealth(
   return { health: "pass", errorCount: 0, warningCount: 0 };
 }
 
-const TIER_CONFIG: Record<RiskTier, { label: string; bg: string; text: string; border: string }> = {
-  critical: { label: "Critical", bg: "bg-red-50",    text: "text-red-700",    border: "border-red-200" },
-  high:     { label: "High",     bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" },
-  medium:   { label: "Medium",   bg: "bg-amber-50",  text: "text-amber-700",  border: "border-amber-200" },
-  low:      { label: "Low",      bg: "bg-green-50",  text: "text-green-700",  border: "border-green-200" },
+const TIER_LABEL: Record<RiskTier, string> = {
+  critical: "Critical",
+  high:     "High",
+  medium:   "Medium",
+  low:      "Low",
+};
+
+const TIER_VARIANT: Record<RiskTier, BadgeVariant> = {
+  critical: "danger",
+  high:     "danger",
+  medium:   "warning",
+  low:      "success",
+};
+
+const TIER_TEXT_COLOR: Record<RiskTier, string> = {
+  critical: "text-red-700",
+  high:     "text-red-700",
+  medium:   "text-amber-700",
+  low:      "text-emerald-700",
 };
 
 const TIERS: RiskTier[] = ["critical", "high", "medium", "low"];
@@ -83,11 +100,13 @@ const TIERS: RiskTier[] = ["critical", "high", "medium", "low"];
 interface FleetGovernanceDashboardProps {
   enterpriseId: string | null | undefined;
   userRole: string;
+  compact?: boolean;
 }
 
 export async function FleetGovernanceDashboard({
   enterpriseId,
   userRole,
+  compact,
 }: FleetGovernanceDashboardProps) {
   const enterpriseFilter =
     userRole === "admin"
@@ -158,167 +177,180 @@ export async function FleetGovernanceDashboard({
 
   if (agents.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-200 bg-white px-6 py-10 text-center text-sm text-gray-400">
+      <div className="rounded-xl border border-dashed border-border bg-surface px-6 py-10 text-center text-sm text-text-tertiary">
         No approved or deployed agents yet. Fleet governance posture will appear here once agents are approved.
       </div>
     );
   }
 
-  return (
-    <div className="space-y-4">
-      {/* Risk tier distribution */}
-      <div className="grid grid-cols-4 gap-3">
-        {TIERS.map((tier) => {
-          const cfg = TIER_CONFIG[tier];
-          const count = tierCounts[tier];
-          return (
-            <div
-              key={tier}
-              className={`rounded-xl border ${cfg.border} ${cfg.bg} px-4 py-3`}
-            >
-              <div className={`text-2xl font-bold ${cfg.text}`}>{count}</div>
-              <div className={`mt-0.5 text-xs font-medium ${cfg.text} opacity-80`}>
-                {cfg.label} Risk
-              </div>
-            </div>
-          );
-        })}
-      </div>
+  const hasAlerts = overdueCount > 0 || errorCount > 0 || unvalidatedCount > 0;
 
-      {/* Governance alerts */}
-      {(overdueCount > 0 || errorCount > 0 || unvalidatedCount > 0) && (
-        <div className="flex flex-wrap gap-2">
-          {overdueCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-              {overdueCount} overdue for periodic review
-            </span>
-          )}
-          {errorCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-              {errorCount} with governance errors
-            </span>
-          )}
-          {unvalidatedCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-500">
-              <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
-              {unvalidatedCount} not yet validated
-            </span>
+  // ── Compact summary (for Overview page) ──────────────────────────────────
+  if (compact) {
+    return (
+      <div className="rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Risk distribution */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-2xs font-mono font-semibold uppercase tracking-wider text-text-tertiary">Risk</span>
+            {TIERS.map((tier) => {
+              const count = tierCounts[tier];
+              if (count === 0) return null;
+              return (
+                <span key={tier} className="flex items-center gap-1">
+                  <span className={`text-sm font-bold tabular-nums ${TIER_TEXT_COLOR[tier]}`}>{count}</span>
+                  <span className={`text-2xs ${TIER_TEXT_COLOR[tier]} opacity-70`}>{TIER_LABEL[tier]}</span>
+                </span>
+              );
+            })}
+            {agents.length === 0 && (
+              <span className="text-xs text-text-tertiary">No approved agents yet</span>
+            )}
+          </div>
+          {/* Alert badges */}
+          {hasAlerts && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {overdueCount > 0 && (
+                <Badge variant="danger" dot>{overdueCount} overdue</Badge>
+              )}
+              {errorCount > 0 && (
+                <Badge variant="warning" dot>{errorCount} error{errorCount !== 1 ? "s" : ""}</Badge>
+              )}
+              {unvalidatedCount > 0 && (
+                <Badge variant="neutral" dot>{unvalidatedCount} unvalidated</Badge>
+              )}
+            </div>
           )}
         </div>
-      )}
+        <div className="mt-3 border-t border-border pt-3">
+          <Link
+            href="/registry"
+            className="text-xs text-primary hover:text-primary-hover transition-colors"
+          >
+            View fleet governance details →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
+      {/* Risk distribution + governance alerts — compact summary bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+        <div className="flex items-center gap-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Risk</span>
+          {TIERS.map((tier) => {
+            const count = tierCounts[tier];
+            return (
+              <span key={tier} className="flex items-center gap-1.5">
+                <span className={`text-sm font-bold ${TIER_TEXT_COLOR[tier]}`}>{count}</span>
+                <span className={`text-xs ${TIER_TEXT_COLOR[tier]} opacity-70`}>{TIER_LABEL[tier]}</span>
+              </span>
+            );
+          })}
+        </div>
+        {hasAlerts && (
+          <div className="flex items-center gap-2">
+            {overdueCount > 0 && (
+              <Badge variant="danger" dot>{overdueCount} overdue</Badge>
+            )}
+            {errorCount > 0 && (
+              <Badge variant="warning" dot>{errorCount} error{errorCount !== 1 ? "s" : ""}</Badge>
+            )}
+            {unvalidatedCount > 0 && (
+              <Badge variant="neutral" dot>{unvalidatedCount} unvalidated</Badge>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Per-agent fleet table */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50 text-left">
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[35%]">
-                Agent
-              </th>
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[14%]">
-                Risk Tier
-              </th>
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[18%]">
-                Governance
-              </th>
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[18%]">
-                Next Review
-              </th>
-              <th className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 w-[15%]">
-                Evidence
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {agents.map((agent, i) => {
-              const tierCfg = TIER_CONFIG[agent.riskTier];
+      <div>
+        <Table striped>
+          <TableHead>
+            <TableRow>
+              <TableHeader>Agent</TableHeader>
+              <TableHeader>Risk Tier</TableHeader>
+              <TableHeader>Governance</TableHeader>
+              <TableHeader>Next Review</TableHeader>
+              <TableHeader>Evidence</TableHeader>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {agents.map((agent) => {
               return (
-                <tr
-                  key={agent.id}
-                  className={`${i > 0 ? "border-t border-gray-100" : ""} hover:bg-gray-50 transition-colors`}
-                >
+                <TableRow key={agent.id}>
                   {/* Agent name + version + status */}
-                  <td className="px-4 py-3">
+                  <TableCell>
                     <Link
                       href={`/registry/${agent.agentId}`}
-                      className="font-medium text-gray-900 hover:text-violet-700 transition-colors"
+                      className="font-medium text-text hover:text-primary transition-colors"
                     >
                       {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
                     </Link>
-                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-400">
+                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-text-tertiary">
                       <span>v{agent.version}</span>
                       <span>·</span>
-                      <span className={`font-medium ${agent.status === "deployed" ? "text-violet-600" : "text-green-600"}`}>
+                      <span className={`font-medium ${agent.status === "deployed" ? "text-violet-600" : "text-emerald-600"}`}>
                         {agent.status}
                       </span>
                       <span>·</span>
                       <span>{agent.policyCount} polic{agent.policyCount === 1 ? "y" : "ies"}</span>
                     </div>
-                  </td>
+                  </TableCell>
 
                   {/* Risk tier badge */}
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${tierCfg.bg} ${tierCfg.text} border ${tierCfg.border}`}
-                    >
-                      {tierCfg.label}
-                    </span>
-                  </td>
+                  <TableCell>
+                    <Badge variant={TIER_VARIANT[agent.riskTier]}>
+                      {TIER_LABEL[agent.riskTier]}
+                    </Badge>
+                  </TableCell>
 
                   {/* Governance health */}
-                  <td className="px-4 py-3">
+                  <TableCell>
                     {agent.governance === "pass" && (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
-                        <span className="text-green-500">✓</span> Passes
-                      </span>
+                      <Badge variant="success">Passes</Badge>
                     )}
                     {agent.governance === "warning" && (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700">
-                        <span>⚠</span> {agent.warningCount} warning{agent.warningCount !== 1 ? "s" : ""}
-                      </span>
+                      <Badge variant="warning">{agent.warningCount} warning{agent.warningCount !== 1 ? "s" : ""}</Badge>
                     )}
                     {agent.governance === "error" && (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700">
-                        <span>✗</span> {agent.errorCount} error{agent.errorCount !== 1 ? "s" : ""}
-                      </span>
+                      <Badge variant="danger">{agent.errorCount} error{agent.errorCount !== 1 ? "s" : ""}</Badge>
                     )}
                     {agent.governance === "unvalidated" && (
-                      <span className="text-xs text-gray-400">Not validated</span>
+                      <Badge variant="muted">Not validated</Badge>
                     )}
-                  </td>
+                  </TableCell>
 
                   {/* Next review / overdue */}
-                  <td className="px-4 py-3">
+                  <TableCell>
                     {agent.nextReviewDue == null ? (
-                      <span className="text-xs text-gray-300">—</span>
+                      <span className="text-xs text-text-tertiary/40">Not scheduled</span>
                     ) : agent.isOverdue ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-                        Overdue
-                      </span>
+                      <Badge variant="danger">Overdue</Badge>
                     ) : (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-text-secondary">
                         {agent.nextReviewDue.toLocaleDateString(undefined, { dateStyle: "medium" })}
                       </span>
                     )}
-                  </td>
+                  </TableCell>
 
                   {/* Evidence package link */}
-                  <td className="px-4 py-3">
+                  <TableCell>
                     <Link
                       href={`/blueprints/${agent.id}/report`}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition-colors"
                       title="View compliance report"
                     >
                       View Report
                     </Link>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

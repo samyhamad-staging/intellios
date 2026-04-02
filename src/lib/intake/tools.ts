@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { tool, zodSchema } from "ai";
-import { IntakePayload, IntakeContext, IntakeRiskTier, CaptureVerificationItem, PolicyQualityItem } from "@/lib/types/intake";
+import { IntakePayload, IntakeContext, AgentType, IntakeRiskTier, CaptureVerificationItem, PolicyQualityItem } from "@/lib/types/intake";
 
 /**
  * Derive which governance policies are required given the intake context.
@@ -151,9 +151,41 @@ export function createIntakeTools(
   updatePayload: (updater: (current: IntakePayload) => IntakePayload) => Promise<void>,
   finalizeSession: () => Promise<void>,
   getContext?: () => IntakeContext | null | undefined,
-  getRiskTier?: () => IntakeRiskTier | null | undefined
+  getRiskTier?: () => IntakeRiskTier | null | undefined,
+  onContextSubmit?: (context: IntakeContext) => Promise<{ agentType: AgentType; riskTier: IntakeRiskTier } | null>
 ) {
   return {
+    submit_intake_context: tool({
+      description:
+        "Submit the structured context collected from the user. Call this once you have confirmed all 6 context fields. " +
+        "This initializes the session and transitions to full requirement capture.",
+      inputSchema: zodSchema(z.object({
+        agentPurpose: z.string().describe("What the agent does and what problem it solves"),
+        deploymentType: z.enum(["internal-only", "customer-facing", "partner-facing", "automated-pipeline"])
+          .describe("How the agent will be deployed"),
+        dataSensitivity: z.enum(["public", "internal", "confidential", "pii", "regulated"])
+          .describe("Highest sensitivity level of data the agent will handle"),
+        regulatoryScope: z.array(z.enum(["FINRA", "SOX", "GDPR", "HIPAA", "PCI-DSS", "none"]))
+          .describe("Applicable regulatory frameworks"),
+        integrationTypes: z.array(z.enum(["internal-apis", "external-apis", "databases", "file-systems", "none"]))
+          .describe("Systems the agent will integrate with"),
+        stakeholdersConsulted: z.array(z.enum(["legal", "compliance", "security", "it", "business-owner", "none"]))
+          .describe("Stakeholders who should be consulted during intake"),
+      })),
+      execute: async (context) => {
+        if (onContextSubmit) {
+          const classification = await onContextSubmit(context);
+          return {
+            success: true,
+            message: classification
+              ? `Context saved. Agent classified as ${classification.agentType} with ${classification.riskTier.toUpperCase()} risk tier. Now proceed with capturing detailed requirements.`
+              : "Context saved. Classification in progress. Now proceed with capturing detailed requirements.",
+          };
+        }
+        return { success: true, message: "Context saved." };
+      },
+    }),
+
     set_agent_identity: tool({
       description:
         "Set the agent's name, description, and optional persona. Call this when you understand what the agent is and what it does.",

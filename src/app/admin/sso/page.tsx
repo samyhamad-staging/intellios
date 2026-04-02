@@ -11,7 +11,11 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { SkeletonList } from "@/components/ui/skeleton";
 import type { EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 
@@ -56,8 +60,6 @@ export default function AdminSsoPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [platformConfigured, setPlatformConfigured] = useState(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
-
   // Group-role mapping as editable rows
   const [groupRows, setGroupRows] = useState<{ group: string; role: string }[]>([]);
 
@@ -80,11 +82,6 @@ export default function AdminSsoPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  const showToast = useCallback((type: "success" | "error", message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 4000);
-  }, []);
-
   const handleSave = useCallback(async () => {
     setSaving(true);
     const groupRoleMapping = Object.fromEntries(
@@ -99,37 +96,24 @@ export default function AdminSsoPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Save failed");
       setSso(data.sso);
-      showToast("success", "SSO settings saved.");
+      toast.success("SSO settings saved.");
     } catch (err) {
-      showToast("error", err instanceof Error ? err.message : "Save failed");
+      toast.error(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSaving(false);
     }
-  }, [sso, groupRows, showToast]);
+  }, [sso, groupRows]);
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center text-sm text-gray-400">
-        Loading SSO settings…
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-2xl mx-auto"><SkeletonList rows={4} height="h-16" /></div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 z-50 rounded-lg px-4 py-3 text-sm font-medium shadow-lg ${
-            toast.type === "success"
-              ? "bg-green-600 text-white"
-              : "bg-red-600 text-white"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
-
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -171,49 +155,38 @@ export default function AdminSsoPage() {
 
         {/* Enable toggle */}
         <Section title="SSO Status">
-          <label className="flex cursor-pointer items-center gap-3">
-            <div className="relative">
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={sso.enabled}
-                onChange={(e) => setSso((s) => ({ ...s, enabled: e.target.checked }))}
-              />
-              <div
-                className={`h-6 w-11 rounded-full transition-colors ${
-                  sso.enabled ? "bg-violet-600" : "bg-gray-300"
-                }`}
-              />
-              <div
-                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                  sso.enabled ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </div>
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <span className="text-sm font-medium text-gray-800">
+              <p className="text-sm font-medium text-gray-800">
                 {sso.enabled ? "SSO enabled" : "SSO disabled"}
-              </span>
-              <p className="text-xs text-gray-400">
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
                 When enabled, users with a matching email domain will see the SSO login option.
               </p>
             </div>
-          </label>
+            <Switch
+              checked={sso.enabled}
+              onChange={(enabled) => setSso((s) => ({ ...s, enabled }))}
+              color="indigo"
+            />
+          </div>
         </Section>
 
         {/* IdP configuration */}
         <Section title="Identity Provider">
           <Field label="Protocol">
-            <select
+            <Select
               value={sso.protocol}
-              onChange={(e) =>
-                setSso((s) => ({ ...s, protocol: e.target.value as "oidc" | "saml" }))
-              }
-              className={inputCls}
+              onValueChange={(v) => setSso((s) => ({ ...s, protocol: v as "oidc" | "saml" }))}
             >
-              <option value="oidc">OIDC (OpenID Connect) — Azure AD, Okta, Google Workspace</option>
-              <option value="saml">SAML 2.0 — requires additional server setup</option>
-            </select>
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="oidc">OIDC (OpenID Connect) — Azure AD, Okta, Google Workspace</SelectItem>
+                <SelectItem value="saml">SAML 2.0 — requires additional server setup</SelectItem>
+              </SelectContent>
+            </Select>
           </Field>
 
           <Field
@@ -323,25 +296,24 @@ export default function AdminSsoPage() {
                   placeholder="IdP group name"
                   className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-mono focus:border-violet-500 focus:outline-none"
                 />
-                <select
+                <Select
                   value={row.role}
-                  onChange={(e) =>
-                    setGroupRows((rows) =>
-                      rows.map((r, j) => (j === i ? { ...r, role: e.target.value } : r))
-                    )
-                  }
-                  className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-violet-500 focus:outline-none"
+                  onValueChange={(v) => setGroupRows((rows) => rows.map((r, j) => (j === i ? { ...r, role: v } : r)))}
                 >
-                  {ROLES.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="text-sm w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLES.map((r) => (
+                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <button
                   onClick={() => setGroupRows((rows) => rows.filter((_, j) => j !== i))}
                   className="text-gray-400 hover:text-red-500 text-lg leading-none px-1"
                   title="Remove"
+                  aria-label="Remove group mapping"
                 >
                   ×
                 </button>
@@ -357,17 +329,19 @@ export default function AdminSsoPage() {
           </button>
 
           <Field label="Default role" hint="Assigned to users not matched by any group mapping above">
-            <select
+            <Select
               value={sso.defaultRole}
-              onChange={(e) => setSso((s) => ({ ...s, defaultRole: e.target.value }))}
-              className={inputCls}
+              onValueChange={(v) => setSso((s) => ({ ...s, defaultRole: v }))}
             >
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLES.map((r) => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
         </Section>
 

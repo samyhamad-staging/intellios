@@ -5,6 +5,9 @@ import { useState } from "react";
 interface ToolCallDisplayProps {
   toolName: string;
   args: Record<string, unknown>;
+  state?: string;
+  output?: unknown;
+  errorText?: string;
 }
 
 const TOOL_ICONS: Record<string, string> = {
@@ -96,11 +99,16 @@ function buildSummary(toolName: string, args: Record<string, unknown>): string {
   }
 }
 
-export function ToolCallDisplay({ toolName, args }: ToolCallDisplayProps) {
+export function ToolCallDisplay({ toolName, args, state, output, errorText }: ToolCallDisplayProps) {
   const [expanded, setExpanded] = useState(false);
   const icon = TOOL_ICONS[toolName] ?? "·";
   const label = TOOL_LABELS[toolName] ?? toolName;
   const summary = buildSummary(toolName, args ?? {});
+
+  // Derive result status from state + output
+  const isSuccess = state === "output-available" && (output as Record<string, unknown>)?.success !== false;
+  const isError = state === "output-error" || (state === "output-available" && (output as Record<string, unknown>)?.success === false);
+  const isPending = !state || state === "input-streaming" || state === "input-available";
 
   return (
     <div className="flex justify-start">
@@ -108,17 +116,35 @@ export function ToolCallDisplay({ toolName, args }: ToolCallDisplayProps) {
         onClick={() => setExpanded((e) => !e)}
         className="flex items-start gap-2 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-xs text-blue-700 max-w-[80%] text-left hover:bg-blue-100 transition-colors"
         title={expanded ? "Click to collapse" : "Click to expand captured values"}
+        aria-label={expanded ? "Collapse captured values" : "Expand captured values"}
       >
         <span className="shrink-0 mt-px">{icon}</span>
         <span className="flex-1 min-w-0">
           <span className="font-medium">{label}</span>
+          {/* Result status badge */}
+          {isSuccess && <span className="ml-1.5 text-2xs font-medium text-green-600 bg-green-50 rounded-full px-1.5 py-0.5">Captured</span>}
+          {isError && <span className="ml-1.5 text-2xs font-medium text-red-600 bg-red-50 rounded-full px-1.5 py-0.5">Failed</span>}
+          {isPending && <span className="ml-1.5 text-2xs font-medium text-gray-400 bg-gray-50 rounded-full px-1.5 py-0.5">…</span>}
           {summary && (
             <span className="text-blue-500 ml-1">— {summary}</span>
           )}
           {expanded && (
-            <pre className="mt-2 text-[10px] text-blue-600 whitespace-pre-wrap break-all font-mono bg-white rounded p-1.5 border border-blue-100">
-              {JSON.stringify(args, null, 2)}
-            </pre>
+            <div className="mt-2 flex flex-col gap-1.5">
+              <pre className="text-2xs text-blue-600 whitespace-pre-wrap break-all font-mono bg-white rounded p-1.5 border border-blue-100">
+                {JSON.stringify(args, null, 2)}
+              </pre>
+              {/* Tool result */}
+              {state === "output-available" && output != null && (
+                <pre className={`text-2xs whitespace-pre-wrap break-all font-mono rounded p-1.5 border ${isSuccess ? "text-green-700 bg-green-50 border-green-100" : "text-red-700 bg-red-50 border-red-100"}`}>
+                  {JSON.stringify(output as Record<string, unknown>, null, 2)}
+                </pre>
+              )}
+              {state === "output-error" && errorText && (
+                <pre className="text-2xs text-red-700 whitespace-pre-wrap break-all font-mono bg-red-50 rounded p-1.5 border border-red-100">
+                  {errorText}
+                </pre>
+              )}
+            </div>
           )}
         </span>
         <span className="shrink-0 mt-px text-blue-300 ml-2">{expanded ? "▲" : "▼"}</span>

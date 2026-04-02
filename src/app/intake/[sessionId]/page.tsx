@@ -1,13 +1,35 @@
 "use client";
 
-import { use, useState, useEffect, useCallback, useRef } from "react";
+import { use, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { UIMessage } from "ai";
 import { ChatContainer } from "@/components/chat/chat-container";
-import { IntakeProgress, SectionSummary } from "@/components/intake/intake-progress";
-import { IntakeContextForm } from "@/components/intake/intake-context-form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { IntakeProgress } from "@/components/intake/intake-progress";
 import { IntakeReview } from "@/components/intake/intake-review";
+import { DomainProgressStrip } from "@/components/intake/domain-progress-strip";
 import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
+import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
+import { computeDomainProgress } from "@/lib/intake/domains";
+import { ChevronRight, LayoutGrid } from "lucide-react";
+
+/** Domain navigation labels — used when clicking a chip to steer the conversation */
+const DOMAIN_NAV_LABELS: Record<string, string> = {
+  identity: "the agent's purpose and identity",
+  tools: "the agent's capabilities and tools",
+  instructions: "behavioral instructions",
+  knowledge: "knowledge sources",
+  constraints: "operational constraints and guardrails",
+  governance: "governance policies",
+  audit: "audit configuration",
+};
+
+/** Static opener injected for fresh sessions — appears instantly, no API call needed. */
+const INTAKE_OPENER: UIMessage = {
+  id: "intake-opener",
+  role: "assistant",
+  parts: [{ type: "text" as const, text: "Tell me about the agent you want to build — what problem is it meant to solve, and who will use it?" }],
+};
 
 interface DBMessage {
   id: string;
@@ -20,12 +42,11 @@ function mapToUIMessages(dbMessages: DBMessage[]): UIMessage[] {
     id: m.id,
     role: m.role as UIMessage["role"],
     parts: [{ type: "text" as const, text: m.content }],
-    content: m.content,
   }));
 }
 
 /** Which phase the UI is currently showing */
-type Phase = "loading" | "context-form" | "conversation" | "review";
+type Phase = "loading" | "conversation" | "review";
 
 export default function IntakeSessionPage({
   params,
@@ -35,6 +56,7 @@ export default function IntakeSessionPage({
   const { sessionId } = use(params);
   const router = useRouter();
   const [refreshTick, setRefreshTick] = useState(0);
+  const [transparency, setTransparency] = useState<IntakeTransparencyMetadata | null>(null);
   const [phase, setPhase] = useState<Phase>("loading");
   const [generating, setGenerating] = useState(false);
   const [generateSuccess, setGenerateSuccess] = useState(false);
@@ -57,9 +79,35 @@ export default function IntakeSessionPage({
   const [intakeScoreLoading, setIntakeScoreLoading] = useState(false);
   const [scorePopoverOpen, setScorePopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
-  // Live payload state — synced from IntakeProgress on every refresh
-  const [liveSections, setLiveSections] = useState<SectionSummary[]>([]);
-  const [liveAgentName, setLiveAgentName] = useState<string | null>(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  // Domain navigation: clicking a chip sends a user message steering conversation
+  const [domainNavMessage, setDomainNavMessage] = useState<{ text: string; key: number } | null>(null);
+  // Optimistic active-domain override — immediately reflect the clicked chip in the strip
+  // without waiting for the AI's next transparency metadata to arrive.
+  // Cleared when the AI responds (onTransparencyUpdate fires).
+  const [pendingActiveDomain, setPendingActiveDomain] = useState<string | null>(null);
+  // Tracks consecutive ticks where classificationLoading is true but no classification arrived.
+  // After 2 unanswered ticks we bail out to prevent an infinite spinner.
+  const classificationLoadingTicksRef = useRef(0);
+
+  // Compute initial domains from whatever payload/context/classification is loaded.
+  // This replaces the static INITIAL_DOMAINS so revisited sessions show actual progress.
+  const computedDomains = useMemo(
+    () => computeDomainProgress(currentPayload, intakeContext, classification?.riskTier ?? null),
+    [currentPayload, intakeContext, classification?.riskTier]
+  );
+
+  // Derive agent display name from payload identity for the header breadcrumb.
+  const agentDisplayName = useMemo(() => {
+    const name = (currentPayload?.identity as Record<string, unknown> | undefined)?.name as string | undefined;
+    return name ?? null;
+  }, [currentPayload]);
+
+  function handleDomainClick(domainKey: string) {
+    const label = DOMAIN_NAV_LABELS[domainKey] ?? domainKey;
+    setDomainNavMessage({ text: `Let's focus on ${label}.`, key: Date.now() });
+    setPendingActiveDomain(domainKey); // Optimistically highlight the clicked chip immediately
+  }
 
   // Load session status + message history + contributions on mount
   useEffect(() => {
@@ -93,6 +141,9 @@ export default function IntakeSessionPage({
         }
 
         if (session?.status === "completed") {
+          // Store messages so they're available if the user clicks Revise
+          const uiMessages = mapToUIMessages(messages ?? []);
+          setInitialMessages(uiMessages.length > 0 ? uiMessages : undefined);
           // Load payload and quality score for review screen
           setIntakeScoreLoading(true);
           await Promise.all([
@@ -110,18 +161,21 @@ export default function IntakeSessionPage({
           return;
         }
 
-        // If no context yet → show Phase 1 form
-        if (!storedContext) {
-          setPhase("context-form");
-          return;
-        }
-
-        // Context present → show conversation
+        // Go directly to conversation — context is collected conversationally
         const uiMessages = mapToUIMessages(messages ?? []);
-        setInitialMessages(uiMessages.length > 0 ? uiMessages : undefined);
+        // New sessions get the opener injected immediately (no loading delay, no API call)
+        setInitialMessages(uiMessages.length > 0 ? uiMessages : [INTAKE_OPENER]);
+
+        // Fetch current payload so the domain strip reflects actual progress on revisit
+        // (non-blocking — UI loads immediately, strip updates when payload arrives)
+        fetch(`/api/intake/sessions/${sessionId}/payload`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((payload) => { if (payload) setCurrentPayload(payload as IntakePayload); })
+          .catch(() => {});
+
         setPhase("conversation");
       } catch {
-        setPhase("context-form");
+        setPhase("conversation");
       }
     }
     loadSession();
@@ -135,6 +189,28 @@ export default function IntakeSessionPage({
         const res = await fetch(`/api/intake/sessions/${sessionId}`);
         if (!res.ok) return;
         const { session } = await res.json();
+        // Pick up context + classification as conversation progresses
+        if (session?.intakeContext) {
+          setIntakeContext(session.intakeContext as IntakeContext);
+          if (!session.agentType) {
+            classificationLoadingTicksRef.current += 1;
+            // Bail out after 2 unanswered ticks — classification failed silently, don't spin forever
+            if (classificationLoadingTicksRef.current <= 2) {
+              setClassificationLoading(true);
+            } else {
+              setClassificationLoading(false);
+            }
+          }
+        }
+        if (session?.agentType && session?.riskTier) {
+          setClassification({
+            agentType: session.agentType as AgentType,
+            riskTier: session.riskTier as IntakeRiskTier,
+            rationale: "",
+          });
+          classificationLoadingTicksRef.current = 0;
+          setClassificationLoading(false);
+        }
         if (session?.status === "completed") {
           setIntakeScoreLoading(true);
           await Promise.all([
@@ -170,46 +246,8 @@ export default function IntakeSessionPage({
     }
   }, [scorePopoverOpen]);
 
-  const handleSectionsChange = useCallback((sections: SectionSummary[], name: string | null) => {
-    setLiveSections(sections);
-    if (name) setLiveAgentName(name);
-  }, []);
-
   function handleResponseComplete() {
     setRefreshTick((t) => t + 1);
-  }
-
-  function handleContextComplete(context: IntakeContext) {
-    setIntakeContext(context);
-    setPhase("conversation");
-    // Poll for async classification result (fires after context save)
-    setClassificationLoading(true);
-    let polls = 0;
-    const interval = setInterval(async () => {
-      polls++;
-      try {
-        const res = await fetch(`/api/intake/sessions/${sessionId}`);
-        if (res.ok) {
-          const { session } = await res.json();
-          if (session?.agentType && session?.riskTier) {
-            setClassification({
-              agentType: session.agentType as AgentType,
-              riskTier: session.riskTier as IntakeRiskTier,
-              rationale: "",
-            });
-            setClassificationLoading(false);
-            clearInterval(interval);
-            return;
-          }
-        }
-      } catch {
-        // Non-critical — keep polling
-      }
-      if (polls >= 10) {
-        setClassificationLoading(false);
-        clearInterval(interval);
-      }
-    }, 1500);
   }
 
   function handleContributionAdded(contribution: StakeholderContribution) {
@@ -240,6 +278,19 @@ export default function IntakeSessionPage({
       setClassificationSaving(false);
     }
   }
+
+  const handleRevise = useCallback(async () => {
+    try {
+      await fetch(`/api/intake/sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "in_progress" }),
+      });
+    } catch {
+      // Non-critical — switch to conversation regardless
+    }
+    setPhase("conversation");
+  }, [sessionId]);
 
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
@@ -282,24 +333,7 @@ export default function IntakeSessionPage({
     );
   }
 
-  // ─── Phase 1: Context Form ───────────────────────────────────────────────────
-
-  if (phase === "context-form") {
-    return (
-      <div className="flex h-screen flex-col">
-        <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-3">
-          <div>
-            <h1 className="text-lg font-semibold">Intellios</h1>
-            <p className="text-xs text-text-secondary">Agent Intake</p>
-          </div>
-          <div className="text-xs text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
-        </header>
-        <IntakeContextForm sessionId={sessionId} onComplete={handleContextComplete} />
-      </div>
-    );
-  }
-
-  // ─── Phase 3: Review ─────────────────────────────────────────────────────────
+  // ─── Phase: Review ───────────────────────────────────────────────────────────
 
   if (phase === "review") {
     const scoreColor =
@@ -313,7 +347,7 @@ export default function IntakeSessionPage({
         <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-3">
           <div>
             <h1 className="text-lg font-semibold">Intellios</h1>
-            <p className="text-xs text-text-secondary">Agent Intake</p>
+            <p className="text-xs text-text-secondary">Agent Design Studio</p>
           </div>
           <div className="flex items-center gap-3">
             {/* Intake quality score chip: loading pulse → real chip with popover */}
@@ -373,7 +407,7 @@ export default function IntakeSessionPage({
                                 {d.value != null ? `${d.value.toFixed(1)}` : "—"}
                               </span>
                             </div>
-                            <p className="pl-[88px] text-[11px] text-text-tertiary leading-snug">{DIMENSION_DESCRIPTIONS[d.label]}</p>
+                            <p className="pl-[88px] text-xs-tight text-text-tertiary leading-snug">{DIMENSION_DESCRIPTIONS[d.label]}</p>
                           </div>
                         );
                       })}
@@ -390,7 +424,6 @@ export default function IntakeSessionPage({
             <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
               Complete
             </span>
-            <div className="text-xs text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
           </div>
         </header>
         <IntakeReview
@@ -400,6 +433,7 @@ export default function IntakeSessionPage({
           contributions={contributions}
           riskTier={classification?.riskTier ?? null}
           onGenerate={handleGenerate}
+          onRevise={handleRevise}
           generating={generating}
           generateSuccess={generateSuccess}
           generateError={generateError}
@@ -410,227 +444,118 @@ export default function IntakeSessionPage({
 
   // ─── Phase 2: Conversation ───────────────────────────────────────────────────
 
-  const RISK_TIER_BADGE_COLORS: Record<IntakeRiskTier, string> = {
-    low:      "bg-green-100 text-green-700",
-    medium:   "bg-amber-100 text-amber-700",
-    high:     "bg-orange-100 text-orange-700",
-    critical: "bg-red-100 text-red-700",
-  };
-
-  const AGENT_TYPE_LABELS: Record<AgentType, string> = {
-    "automation":       "Automation",
-    "decision-support": "Decision Support",
-    "autonomous":       "Autonomous",
-    "data-access":      "Data Access",
-  };
-
-  const DOMAIN_NAV = [
-    { key: "identity",     label: "Purpose" },
-    { key: "tools",        label: "Capabilities" },
-    { key: "instructions", label: "Behavior" },
-    { key: "knowledge",    label: "Knowledge" },
-    { key: "constraints",  label: "Guardrails" },
-    { key: "governance",   label: "Governance" },
-    { key: "audit",        label: "Audit" },
-  ] as const;
-
-  const domainsFilled = liveSections.filter((s) => s.filled).length;
-
   return (
     <div className="flex h-screen flex-col">
-      {/* ── Unified header ─────────────────────────────────────────── */}
-      <header className="border-b border-border bg-surface">
+      {/* Header — Breadcrumb + Domain Progress Strip + Actions */}
+      <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-2.5 gap-3">
 
-        {/* Row 1: breadcrumb + classification + session id */}
-        <div className="flex items-center justify-between px-6 py-3">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1.5 text-sm">
-            <span className="text-text-tertiary">Design Studio</span>
-            <span className="text-text-tertiary">›</span>
-            <span className={`font-medium transition-colors duration-300 ${liveAgentName ? "text-text" : "text-text-secondary"}`}>
-              {liveAgentName ?? "New session"}
-            </span>
-          </div>
+        {/* Breadcrumb — "Design Studio › Agent Name" */}
+        <button
+          onClick={() => router.push("/intake")}
+          className="group flex items-center gap-1.5 shrink-0 min-w-0 rounded-lg px-2 py-1 -ml-2 hover:bg-surface-muted transition-colors"
+          title="Back to Design Studio"
+        >
+          <LayoutGrid size={13} className="text-text-tertiary shrink-0 group-hover:text-text-secondary transition-colors" />
+          <span className="text-xs font-medium text-text-secondary group-hover:text-text transition-colors whitespace-nowrap">
+            Design Studio
+          </span>
+          <ChevronRight size={12} className="text-border-strong shrink-0" />
+          <span className="text-xs text-text truncate max-w-[140px]">
+            {agentDisplayName ?? "New session"}
+          </span>
+        </button>
 
-          {/* Right: classification + session id */}
-          <div className="flex items-center gap-2.5">
-            {/* Classification loading pulse */}
-            {classificationLoading && !classification && (
-              <div className="flex animate-pulse items-center gap-1.5">
-                <div className="h-5 w-20 rounded-full bg-surface-muted" />
-                <div className="h-5 w-16 rounded-full bg-surface-muted" />
-              </div>
-            )}
-
-            {/* Classification chips — read mode */}
-            {classification && !editingClassification && (
-              <div className="flex items-center gap-1.5">
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${RISK_TIER_BADGE_COLORS[classification.riskTier]}`}
-                  title="Risk tier — governs review requirements and governance policies applied"
-                >
-                  {classification.riskTier.toUpperCase()} risk
-                </span>
-                <span
-                  className="rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-secondary"
-                  title="Agent type — how this agent operates"
-                >
-                  {AGENT_TYPE_LABELS[classification.agentType]}
-                </span>
-                <button
-                  onClick={() => {
-                    setEditAgentType(classification.agentType);
-                    setEditRiskTier(classification.riskTier);
-                    setEditingClassification(true);
-                  }}
-                  className="text-[11px] text-text-tertiary hover:text-text-secondary underline-offset-2 hover:underline"
-                >
-                  Override
-                </button>
-              </div>
-            )}
-
-            {/* Classification — edit mode */}
-            {classification && editingClassification && (
-              <div className="flex items-center gap-2">
-                <select
-                  value={editAgentType}
-                  onChange={(e) => setEditAgentType(e.target.value as AgentType)}
-                  className="h-[22px] rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
-                >
-                  <option value="automation">Automation</option>
-                  <option value="decision-support">Decision Support</option>
-                  <option value="autonomous">Autonomous</option>
-                  <option value="data-access">Data Access</option>
-                </select>
-                <select
-                  value={editRiskTier}
-                  onChange={(e) => setEditRiskTier(e.target.value as IntakeRiskTier)}
-                  className="h-[22px] rounded border border-border px-2 py-0.5 text-xs focus:border-border-strong focus:outline-none"
-                >
-                  <option value="low">LOW risk</option>
-                  <option value="medium">MEDIUM risk</option>
-                  <option value="high">HIGH risk</option>
-                  <option value="critical">CRITICAL risk</option>
-                </select>
-                <button
-                  onClick={handleSaveClassification}
-                  disabled={classificationSaving}
-                  className="rounded bg-text px-2.5 py-0.5 text-xs font-medium text-surface hover:opacity-80 disabled:opacity-50"
-                >
-                  {classificationSaving ? "Saving…" : "Save"}
-                </button>
-                <button
-                  onClick={() => setEditingClassification(false)}
-                  className="text-xs text-text-tertiary hover:text-text-secondary"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-
-            <div className="text-[11px] text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
-          </div>
+        {/* Domain Progress Strip — replaces stepper + classification bar */}
+        <div className="flex-1 min-w-0">
+          <DomainProgressStrip
+            transparency={
+              transparency && pendingActiveDomain
+                ? { ...transparency, activeDomain: pendingActiveDomain }
+                : transparency
+            }
+            initialDomains={computedDomains}
+            classification={classification}
+            classificationLoading={classificationLoading}
+            onDomainClick={handleDomainClick}
+            onOverrideClick={() => {
+              if (classification) {
+                setEditAgentType(classification.agentType);
+                setEditRiskTier(classification.riskTier);
+                setEditingClassification(true);
+              }
+            }}
+          />
         </div>
 
-        {/* Row 2: live domain nav */}
-        <div className="flex items-center justify-between px-6 pb-3">
-          <div className="flex items-center gap-0.5">
-            {DOMAIN_NAV.map(({ key, label }) => {
-              const s = liveSections.find((sec) => sec.key === key);
-              const isFilled   = s?.filled ?? false;
-              const isRequired = s?.required ?? false;
-              return (
-                <div
-                  key={key}
-                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-all duration-300 ${
-                    isFilled
-                      ? "text-primary"
-                      : isRequired
-                      ? "text-amber-700"
-                      : "text-text-tertiary"
-                  }`}
-                >
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
-                      isFilled ? "bg-primary" : isRequired ? "bg-amber-400 animate-pulse" : "bg-border"
-                    }`}
-                  />
-                  {label}
-                </div>
-              );
-            })}
-          </div>
-          <span className={`text-xs font-medium tabular-nums transition-colors duration-300 ${
-            domainsFilled === 7 ? "text-green-700" : "text-text-tertiary"
-          }`}>
-            {domainsFilled}/7 domains
-          </span>
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Mobile-only progress toggle */}
+          <button
+            onClick={() => setMobileSidebarOpen((o) => !o)}
+            className="lg:hidden rounded-lg border border-border px-2.5 py-1 text-xs text-text-secondary hover:border-border-strong transition-colors"
+          >
+            {mobileSidebarOpen ? "Hide" : "Details"}
+          </button>
         </div>
       </header>
 
-      {/* Body: chat + progress sidebar */}
-      <main className="flex flex-1 overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Phase 1 context summary banner — fills whitespace, anchors the conversation */}
-          {intakeContext && (
-            <div className="shrink-0 border-b border-border bg-surface-raised px-6 py-2.5">
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-text-tertiary shrink-0">
-                  Session context
-                </span>
-                {intakeContext.deploymentType && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] text-text-tertiary">Deployment</span>
-                    <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-text-secondary capitalize">
-                      {intakeContext.deploymentType.replace(/-/g, " ")}
-                    </span>
-                  </div>
-                )}
-                {intakeContext.dataSensitivity && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] text-text-tertiary">Data</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium capitalize ${
-                      intakeContext.dataSensitivity === "pii" || intakeContext.dataSensitivity === "regulated"
-                        ? "bg-amber-50 text-amber-700 border border-amber-200"
-                        : "bg-surface-muted text-text-secondary"
-                    }`}>
-                      {intakeContext.dataSensitivity.replace(/-/g, " ")}
-                    </span>
-                  </div>
-                )}
-                {intakeContext.regulatoryScope.filter((s) => s !== "none").length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] text-text-tertiary">Regulatory</span>
-                    <div className="flex gap-1">
-                      {intakeContext.regulatoryScope.filter((s) => s !== "none").map((scope) => (
-                        <span key={scope} className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-text-secondary">
-                          {scope}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {intakeContext.agentPurpose && (
-                  <p
-                    className="text-[11px] text-text-tertiary italic truncate max-w-xs"
-                    title={intakeContext.agentPurpose}
-                  >
-                    &ldquo;{intakeContext.agentPurpose.length > 80
-                      ? intakeContext.agentPurpose.slice(0, 80) + "…"
-                      : intakeContext.agentPurpose}&rdquo;
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-          <ChatContainer
-            sessionId={sessionId}
-            initialMessages={initialMessages}
-            showSuggestedPrompts={false}
-            onResponseComplete={handleResponseComplete}
-          />
+      {/* Classification override bar — only visible when editing */}
+      {editingClassification && classification && (
+        <div className="border-b border-border bg-surface-raised px-6 py-2 flex items-center gap-2">
+          <span className="text-xs text-text-tertiary">Override classification:</span>
+          <Select value={editAgentType} onValueChange={(v) => setEditAgentType(v as AgentType)}>
+            <SelectTrigger className="h-6 text-xs px-2 w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="automation">Automation</SelectItem>
+              <SelectItem value="decision-support">Decision Support</SelectItem>
+              <SelectItem value="autonomous">Autonomous</SelectItem>
+              <SelectItem value="data-access">Data Access</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={editRiskTier} onValueChange={(v) => setEditRiskTier(v as IntakeRiskTier)}>
+            <SelectTrigger className="h-6 text-xs px-2 w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low">LOW risk</SelectItem>
+              <SelectItem value="medium">MEDIUM risk</SelectItem>
+              <SelectItem value="high">HIGH risk</SelectItem>
+              <SelectItem value="critical">CRITICAL risk</SelectItem>
+            </SelectContent>
+          </Select>
+          <button
+            onClick={handleSaveClassification}
+            disabled={classificationSaving}
+            className="rounded bg-text px-2.5 py-0.5 text-xs font-medium text-surface hover:opacity-80 disabled:opacity-50"
+          >
+            {classificationSaving ? "Saving…" : "Save"}
+          </button>
+          <button
+            onClick={() => setEditingClassification(false)}
+            className="text-xs text-text-tertiary hover:text-text-secondary"
+          >
+            Cancel
+          </button>
         </div>
+      )}
+
+      {/* Body: chat + progress sidebar */}
+      <main className="flex flex-1 overflow-hidden relative">
+        <ChatContainer
+          sessionId={sessionId}
+          initialMessages={initialMessages}
+          showSuggestedPrompts={false}
+          onResponseComplete={handleResponseComplete}
+          onTransparencyUpdate={(meta) => {
+            setTransparency(meta);
+            // Do NOT clear pendingActiveDomain here. The AI's reported activeDomain
+            // reflects its internal probing state and lags behind (or ignores) user
+            // navigation intent. The pending override persists until the user clicks
+            // a different chip, ensuring explicit navigation choices are respected.
+          }}
+          externalMessage={domainNavMessage}
+        />
         <IntakeProgress
           sessionId={sessionId}
           refreshTick={refreshTick}
@@ -638,7 +563,8 @@ export default function IntakeSessionPage({
           onContributionAdded={handleContributionAdded}
           context={intakeContext ?? undefined}
           riskTier={classification?.riskTier ?? null}
-          onSectionsChange={handleSectionsChange}
+          transparency={transparency}
+          mobileOpen={mobileSidebarOpen}
         />
       </main>
     </div>

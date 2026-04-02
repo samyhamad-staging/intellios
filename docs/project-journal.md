@@ -2,21 +2,193 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
-## Session 069 — 2026-04-02: The Conversation Phase as a Product Surface
+## Session 086 — 2026-04-02: The Conversation Phase as a Product Surface
 
 This session focused on a part of the product that had received implementation attention across many sessions but had never been evaluated holistically as a user experience: the Design Studio conversation phase — the screen a user sees while actively talking to the AI to define their agent.
 
-**Why this mattered now.** The conversation phase is the highest-stakes moment in the entire Intellios workflow. It's where the enterprise user decides what they're building, where governance context gets captured, and where the system's intelligence is most visible. Yet when examined against a live screenshot, the experience had several critical gaps: the right panel appeared empty (showing only "ANALYZING" with no resolution), the risk tier classification badge was in a floating bar that could be obscured, the domain progress counter showed "0/7" regardless of conversation state, and the Phase 1 context the user had already submitted was invisible above the conversation. The chat input said "Reply..." — generic enough that it could belong to any messaging app.
+**Why this mattered.** The conversation phase is the highest-stakes moment in the entire Intellios workflow. It's where the enterprise user decides what they're building, where governance context gets captured, and where the system's intelligence is most visible. Yet when examined against a live screenshot, the experience had several critical gaps: the right panel showed a static "ANALYZING" state that never resolved, the risk tier classification badge could be obscured by the shell, the domain progress counter showed "0/7" regardless of conversation state, and Phase 1 context was invisible.
 
-**The analysis methodology.** Rather than listing cosmetic issues, the session ran a structured cross-reference: screenshot versus spec, spec versus code, code versus rendered behavior. This revealed a category of problem that's easy to miss in incremental development: features that are implemented correctly in isolation but that don't communicate their state to the user. The right panel was fetching payload data correctly and building a section checklist correctly — but showed a static "ANALYZING" message with no transition. The classification bar existed in code but was in a layout position that made it invisible in the redesigned shell. The domain nav bar existed in the screenshot as a static element with no data binding.
+**The resolution pattern.** Every fix in this session followed the same principle: connect existing data to existing UI. The payload was already being fetched; it just needed to drive the panel's visual state machine. The agent name was already being captured; it just needed to surface in the breadcrumb. The classification was already being computed; it just needed to be in the header. The Phase 1 context was already in state; it just needed a banner. Nothing new was computed — the intelligence already existed, it just wasn't being shown.
 
-**The resolution pattern.** Every fix in this session followed the same principle: connect existing data to existing UI. The payload was already being fetched; it just needed to drive the panel's visual state machine. The agent name was already being captured by tool calls; it just needed to surface in the breadcrumb. The classification was already being computed; it just needed to be in the header, not a secondary bar. The Phase 1 context was already in state; it just needed a banner above the chat. Nothing new was computed — the intelligence already existed, it just wasn't being shown.
+**The two-state panel.** The chosen pattern — ghost checklist at low opacity during the analysing state, resolving to live data the moment the first tool call fires — serves two purposes: it shows users what *will* be captured (instructional), and it makes the transition visible and satisfying. The "ANALYZING" label stops bouncing when real content arrives.
 
-**The two-state panel.** The most substantive design decision was how to handle the transition between "nothing captured yet" and "data is coming in." The chosen pattern — ghost checklist at low opacity during the analysing state, resolving to live data the moment the first tool call fires — serves two purposes: it shows users what *will* be captured (the ghost list is instructional), and it makes the transition visible and satisfying rather than abrupt. The "ANALYZING" label stops bouncing when real content arrives. This is the design language of a system that's thinking, not waiting.
+**On merging into an advanced main.** Main had progressed 16 sessions beyond this branch, incorporating the Design Intelligence panel, `DomainProgressStrip`, and clickable domain chips that steer the conversation. Our changes were superseded in the source files. The documentation additions (session log, effort log, journal entry) carry forward as the permanent record of the analysis and decision-making in this session.
 
-**The stable callback problem.** A subtle correctness issue emerged during implementation: passing a callback from a parent component into a `useEffect` dependency array causes re-renders if the callback reference isn't stable. The `onSectionsChange` prop needed the stable `useRef` pattern in `IntakeProgress` to avoid infinite re-fetch loops. This is a known React pattern but one that's easy to miss when writing the callback handler inline. The fix was adding a single `useRef` to capture the latest callback reference, then calling through the ref inside the effect without listing it as a dependency.
+---
 
-**What this session reveals about the product.** Intellios is now feature-complete in its core workflow. The remaining work is in the second layer: making the features visible, coherent, and trustworthy as a user experience. The conversation phase is the entry point to everything. If it doesn't communicate what's being built in real time, the intelligence behind it becomes invisible. This session was about closing that gap.
+## Session 085 — 2026-04-01: Reading the Interface Like a User
+
+Session 084 made the intake interface look like an enterprise AI product. Session 085 is the next step: reading it as a first-time user would, catching the signals that still felt wrong.
+
+**The score ring was the most instructive failure.** It looked like a grade. An SVG arc that was 60% full communicated "you scored 60 on a test" — not "you've covered 4 of 7 domains." The replacement — a monospace `4/7 domains` counter — is less visually dramatic and more semantically honest. The user is making progress through a checklist, not being evaluated. This distinction matters in a product that already has governance scoring elsewhere; adding a second score-shaped element at the top of the progress strip created ambiguity about what was being measured.
+
+**The red dots were anxiety without information.** Five red dots appearing simultaneously on domain chips signaled "five things are wrong" — the same visual pattern as error states, badge counts, and notification indicators across every UI the user has ever used. But the dots weren't errors; they were the default state before the conversation started. Removing them makes the un-filled chips feel like neutral starting points rather than failures to correct.
+
+**Progressive disclosure in the sidebar addressed a different kind of noise.** Governance and Coverage Analysis panels that showed every open item — including trivial ones — made it impossible to see which items actually needed attention. The pattern of showing satisfied items first (confirmation that work is being captured) and capping pending items at 3 with "+N more" mirrors how a human would organize a checklist for someone mid-task: show them what's done, then show them the next few things that need doing, not the whole list.
+
+**The navigation message differentiation solves a trust problem.** When a user clicks a domain chip to redirect the conversation, the chat should not look like they typed a question. A full dark user bubble next to "Tell me more about the Governance domain" creates a false record of what the user said. The ghost pill style — lighter background, italic text, navigation icon — signals "the interface did this on your behalf" without hiding that the redirection happened. The `useRef<Set<string>>` tracking ensures the visual treatment is applied consistently regardless of render order.
+
+**The pendingActiveDomain fix removes a specific confusion.** A user clicks "Behavior" in the domain strip. The Behavior chip does not highlight. They click again. Still nothing. They assume the chip is broken. In reality, the active domain is derived from AI response metadata — which hasn't arrived yet for the redirected message. The optimistic override applied at click time means the visual feedback is immediate, even if the AI's metadata later confirms a different domain. First impression: the interface responded. That's all that was needed.
+
+These six changes have no new files and no API surface changes. They are all presentation-layer adjustments. Individually, each one is small. Together, they address the most visible ways the interface could mislead or frustrate a first-time user — which is the audience that matters most for design partner conversations.
+
+---
+
+## Session 084 — 2026-04-01: Making the Machine Look Like a Machine
+
+Sessions 082–083 built the transparency layer and hardened the intake pipeline. Session 084 addresses what screenshots made undeniable: Intellios works like an enterprise AI product, but it didn't yet *look* like one.
+
+**The aesthetic gap was the problem.** The domain strip was functional — seven chips that filled as the AI captured data — but it communicated nothing distinctly AI about the interface. Emoji icons. Rounded pill shapes. A consumer-grade bouncing-dot streaming indicator. A sidebar with hardcoded gray values that bypassed the design token system entirely. None of these were bugs. All of them undermined the credibility signal the product needs to project in design partner conversations.
+
+**The redesign has a clear visual thesis.** Every decision maps to one of three metaphors: circuit boards, data pipelines, or telemetry systems. These are the visual languages of the tools enterprise engineers trust — Datadog, Vercel, Linear, GitHub Actions. Rectangular chips instead of pill shapes (nodes, not tags). A fill bar along the chip's bottom edge that animates like a signal level meter. Connector traces between chips that glow emerald when data flows through them. A shimmer that sweeps horizontally across the active chip — a domain-scan effect. An SVG arc ring for the readiness score instead of a text circle (telemetry, not a badge). A 5-bar waveform for streaming instead of bouncing dots.
+
+**The icon choices are deliberate.** `Target` for Purpose because it's a mechanical reticle — precise, aimed. `Cpu` for Capabilities because it's a chip — canonical computation. `GitBranch` for Behavior because branching logic is literally how LLM behavioral rules work. `Database` for Knowledge because it's the storage cylinder every ML system has. `ShieldAlert` for Guardrails because it implies an active, not passive, boundary. `Lock` for Governance because policy enforcement is about constraint. `ScrollText` for Audit because it reads as a technical log. No emoji survived this session.
+
+**The `hasToolCalls` guard solved a subtle deception.** Before any tool calls, `inferActiveDomain` falls back to "identity" — the lowest-fill required domain. This caused every AI message during context collection to show `◎ PURPOSE`, as if the AI were perpetually thinking about the agent's purpose regardless of what it was actually saying. It looked broken — stuck, or confused. The fix is a single useMemo: suppress the domain tag entirely until at least one tool call has been made. After that, the tag is accurate. Before that, it was misleading.
+
+**The Vercel tracking fix removed an operational frustration.** Every push from this worktree since it was created had been going to Vercel's Preview environment, not Production. The worktree branch is `master`; Vercel's production environment watches `main`. Every deploy was technically correct (the preview worked) but invisible to the production URL. Three commits of polished UI were deployed to a Preview URL that nobody sees by default. Fixed with upstream configuration: the worktree now pushes directly to `origin/main`.
+
+**The honor-redirections instruction addresses a UX failure that appeared repeatedly in screenshots.** The AI was re-asking the data sensitivity question after the user had explicitly said to move on. The existing system prompt said "Do not ask multiple questions at once" — but it said nothing about what to do when the user redirects. The new instruction is explicit: accept whatever answer the user provided (even if incomplete), follow their lead immediately, do not re-ask. The filler word ban was also strengthened — "Do not use..." is too passive for a model that was ignoring it; "Never open a response with..." is directive enough to change behavior.
+
+**The product is now visually consistent with what it claims to be.** An enterprise AI governance platform should look like it understands computation. The intake interface — the primary demo surface — now does.
+
+---
+
+## Sessions 077–081 — 2026-03-31: Finishing the Sprint
+
+Sessions 077 through 081 completed the UI/UX optimization sprint and landed it all on master. The strategic arc is simple: Intellios had solid bones (89% of the full product vision shipped) but showed its prototype origins in small, compounding ways — native browser alerts, raw HTML tables, unstyled select dropdowns, div-based charts, broken modal animations. None of these were functional bugs. All of them eroded the first-impression credibility that design partner conversations require.
+
+**The Select migration was operationally tedious and strategically necessary.** Twenty raw `<select>` elements across eleven files, each individually styled by the developer who wrote it. The Radix Select implementation looks identical across the entire product — same chevron, same focus ring, same open animation, same portal behavior. The `_all_` / `_none_` sentinel fix (Radix forbids `value=""`) was the one genuine technical wrinkle; once solved, it applied consistently everywhere.
+
+**The Recharts integration closes a visible credibility gap.** A product that positions itself as a professional AI governance platform cannot have CSS div bars as its primary data visualization. The chart wrapper strategy — `lib/chart-tokens.ts` bridging Tailwind CSS variables to hex values — is the right architectural move. Recharts reads no CSS; it needs concrete color strings at render time. A single token file that owns this mapping means the rest of the app can stay in design-token vocabulary.
+
+**The landing page is a statement of intent.** The previous placeholder said "Enterprise AI Agent Platform" in gray text on a white background. The rebuilt page communicates framework badges (SR 11-7, EU AI Act, NIST AI RMF, ISO 42001), a credible pipeline metaphor, a 4-stat proof bar, role-specific benefit language, and a CTA. This is not decoration — it is the first thing a prospective design partner sees before they agree to a demo login. First impressions are formed in seconds.
+
+**Tailwind Plus Catalyst UI Kit was the right call for tables and toggles.** The 12 raw HTML table migrations removed 800+ lines of repetitive `<thead>/<tbody>/<tr>/<th>/<td>` boilerplate. The Catalyst Table handles stripes, density, grid lines, and row links through props rather than class stacks. The Switch component replaced DIY toggle patterns (absolute-positioned overlay, accent-violet-600 checkboxes, orange text-color checkboxes) with a single consistent, keyboard-accessible, animated control. These are the kinds of changes that are invisible to a casual user but immediately apparent to a developer reviewing the codebase — and to any design partner who tabs through the UI with a keyboard.
+
+**The merge closes the sprint.** All of sessions 075–080 — 272 files, 27 438 insertions — landed on master in a single merge commit. The product is now in the state it should be for design partner outreach: the intake conversation works and is transparent, the tables are polished, the toggles animate, the charts are real, the landing page is credible.
+
+What's next is gated on external events (3 enterprise design partners, H3-1/H3-2) or is a routine maintenance item (esbuild/drizzle-kit CVE upgrade, P3). The sprint is done.
+
+---
+
+## Session 076 — 2026-03-31: From Functional to Professional
+
+Sessions 074 and 075 made the intake trustworthy. Session 076 addresses a different kind of problem: Intellios works, but it doesn't yet *feel* professional. UX 7.5/10 and UI 7/10 are respectable scores for a product at this stage, but a design partner's first impression is formed by details: does the modal animate smoothly when it opens? Does the keyboard navigation in the search palette feel polished? Do error messages appear in place or as native browser alerts? These are the details that distinguish "this is a working prototype" from "this is a product I could demo."
+
+**The animation bug was embarrassing to discover but easy to fix.** `tw-animate-css` was referenced in two component files but not installed — meaning every Radix dialog and dropdown menu had been animating incorrectly (or not at all) since these components were written. The fix is one npm install and one CSS import. The lesson is that this kind of dependency gap is invisible during development because the components still render; only close inspection of the actual animation behavior reveals the problem. This is why verification passes matter.
+
+**The command palette replacement is the highest-leverage change.** The custom 465-line implementation was functionally correct but brittle — manual keyboard index tracking, manual scroll-into-view, custom fuzzy search. cmdk is a battle-tested library used by thousands of applications (including linear, shadcn/ui itself, and many others). It handles all of this correctly, including edge cases (vim bindings, list wrapping, IME input). The replacement is 260 lines with better behavior across the board. The architecture of the component (nav catalogue, role filtering, debounced agent search) is completely preserved — only the rendering and interaction layer was replaced.
+
+**The sonner migration removes a category of repetitive code.** Three admin pages had identical patterns: state variable, useCallback with setTimeout, inline JSX toast div. This is the kind of code that accumulates because it works, not because it's the right design. With a global `<Toaster>` in layout and `toast.success()` / `toast.error()` available anywhere, the pages get shorter and more readable, and the toast behavior is now consistent across the app rather than per-page.
+
+**The component library additions (Tabs, Select, Sheet, Skeleton, EmptyState) are infrastructure investments.** They don't change what the app does today, but they define the vocabulary for building it going forward. When a new page needs a skeleton loading state, it uses `<SkeletonList>`. When a new form needs a dropdown, it uses `<Select>`. The Recharts chart wrappers are particularly important because they create a bridge from Tailwind v4 design tokens (CSS variables, which Recharts can't read) to hex values that Recharts can consume directly. Future chart implementations don't need to rediscover this mapping.
+
+**This sprint is deliberately not trying to replace everything at once.** The Tabs component is applied to the simple registry tab toggle; the complex registry agent detail page (with its 8-tab navigation) is a Phase 1B follow-on. The Select component is created but not yet applied to all raw `<select>` elements. The chart wrappers are created but not yet applied to the quality dashboard and fleet governance pages. This is the right sequencing: build the infrastructure, apply it incrementally, verify at each step. The alternative — touching 30 files at once — would create a large diff with significant regression risk for minimal additional first-impression benefit.
+
+---
+
+## Session 075 — 2026-03-31: Hardening Before Showing
+
+Session 074 built the transparency layer. Session 075 is about making it robust.
+
+**P1 hardening is the boring half of shipping.** When you build something new — the all-conversation intake v2, the transparency panels, the tool result badges — there are always failure modes you didn't see from the happy path. A mobile user arrives and can't read the chat because the 288px sidebar is occupying 80% of their viewport. The classification API times out silently and a spinner runs forever. A database write fails during context submission and the error surfaces as an opaque stream exception instead of a recoverable message. These are not edge cases to deprioritize — they are exactly the failure modes that break a first impression, and first impressions with design partners are the next milestone.
+
+**The mobile sidebar fix is the highest visibility.** The sidebar was `w-72 shrink-0` — fixed width, no breakpoints, no awareness of viewport size. On a 375px iPhone, the chat gets 87px. This isn't even "poor UX" — it's broken. The fix is straightforward: `hidden lg:flex` plus a mobileOpen prop that lets the parent toggle a full-viewport overlay. The chat is now always full-width on mobile; the progress sidebar is accessible via a small "Progress" button in the header. This pattern — primary action always visible, secondary panel accessible on demand — is the right mobile default for this kind of interface.
+
+**The classification loading resilience is about trust.** If the spinner runs forever because a background API call failed, the user sees an application that looks frozen. They don't know if the classification is coming or if something is broken. The `classificationLoadingTicksRef` counter is a small mechanism with a clear contract: after 2 turns without classification, stop pretending it's coming. Let the UI fall to a neutral state. Don't lie to the user about system status.
+
+**The onContextSubmit try/catch is about debuggability.** When the context save fails, the error should be logged with the request ID, and the tool should surface a message that Claude can relay to the user. Before this fix, a DB write failure would propagate as an unhandled exception, show up as an error state in the chat, and leave no trace of what happened. After the fix, there's a console.error with a requestId, and Claude can tell the user "there was a problem saving — try again." Small change, meaningful difference when debugging in production.
+
+**The pattern for this sprint: fix what's broken before expanding what's possible.** The transparency work was a major capability addition. This session is the follow-up that makes the capability reliable. Design partners will see the reliable version.
+
+---
+
+## Session 074 — 2026-03-31: Making the Machine Legible
+
+This session started with an evaluation and ended with a working transparency layer. The evaluation was the important part.
+
+**The intake engine is sophisticated. The user can't tell.** The system computes risk tier from a 5-condition cascade, selects between Sonnet and Haiku per turn based on 5 trigger conditions, derives mandatory governance rules from context signals, generates topic-specific probing rules based on deployment type and agent classification, tracks readiness across 3 dimensions with different weights, and enforces a capture verification gate at finalization that ensures no discussed requirement was silently dropped. None of this was visible to the user. The conversation felt like an interview — answer questions, watch blue chips appear, see a percentage climb. The user was a passenger.
+
+**The fix is `messageMetadata`.** AI SDK v6's `toUIMessageStreamResponse` accepts a callback that attaches arbitrary JSON to each streamed message. On `finish`, the server computes a full transparency snapshot — classification signals, readiness breakdown, governance checklist, model selection reason, probing topics — and the client receives it alongside the response with zero additional latency. No polling, no new endpoints, no transport changes. The metadata is per-response, which is exactly the right granularity: after each AI turn, the sidebar updates with the latest state.
+
+**The sidebar panels are a forcing function for trust.** When the governance checklist shows "3/6 satisfied" with specific reasons for each pending item — "compliance policy: SOX/FINRA regulatory scope" — the user knows what's expected, why, and what they need to do. When the score decomposition shows 20/50 for sections and 14/35 for governance, the user can see exactly where the gap is and what actions would close it. When the model indicator says "Sonnet — governance content detected," the user understands why this turn's response felt different from the last one. These are not decorative — they are the difference between "the AI is asking me questions" and "the AI and I are building a blueprint together, and I can see its reasoning."
+
+**The tool call result badges close the feedback loop.** Previously, tool call chips showed what was sent (input args) but not what happened (success/failure). The user clicked the expand button and saw the raw JSON — but not whether it worked. Now "Captured" appears in green when the tool succeeds, "Failed" in red when it doesn't, and the result JSON (showing exactly what was stored) is visible on expand. This is the smallest change in the session and arguably the most impactful: it converts a write-only operation into a visible, verifiable action.
+
+**The `.env.local` resolution was a reminder that dev environment setup is part of the product.** The transparency overhaul was code-complete for a full session before it could be verified because a single file was missing. This worktree pattern — code in one worktree, secrets in another, npm modules in a third — creates unnecessary friction. The gap-check protocol (session 073) catches documentation drift; there should be a similar check for environment completeness.
+
+---
+
+## Session 073 — 2026-03-31: The Gap-Check, the Merge, and What Comes Next
+
+Session 073 is mostly about infrastructure, but the infrastructure matters.
+
+**The logging gap reveals something about the session protocol's failure mode.** Three sessions of work — security hardening, design system evolution, intake UX fixes — were committed without creating session logs. The code was correct; the audit trail was missing. The root cause is simple: documentation was the last step, and when sessions end under time pressure or mid-task, the last step is the first to be dropped. The fix is not discipline — discipline fails under load — it is structural: add a gap-check at the start of every session that compares `_index.md` against `git log`. Claude checks for the gap before doing anything else, and creates the missing logs before starting new work. This is the correct place to put the responsibility: the beginning of the next session, not the end of the current one.
+
+**The squash merge resolves a subtle version control problem.** The `keen-pascal` branch had 17 commits, but the branch's history was not clean — some of those commits duplicated work that had been separately committed to `main` during the same period (badge system, overview redesign). A 3-way merge would have preserved all 17 commits, including the duplicates, creating a noisy history where the same change appeared twice with different hashes. Squash merge solves this: flatten all 17 commits into 3 logical units, resolve conflicts once (there was only one: `mb-8` vs `mb-6`, took keen-pascal's version), and push to main as a fast-forward. The result is a clean, readable history. The individual commit granularity from keen-pascal is preserved in session 072's log, not in git.
+
+**The all-conversation intake is the right call at the right moment.** The three-phase architecture — form, conversation, review — was the right design in session 009 when the product was being built to spec. Twelve months of AI product evolution later, the form feels like a gate. Users don't expect to fill out a form before talking to an AI; they expect to talk to the AI and have it figure out what it needs. The `submit_intake_context` tool is the correct technical realization of this: Claude collects context conversationally, confirms it with the user, then calls the tool once to save it. From the product's perspective, the context is still there — stored in the database, used by governance probing, visible in Phase 3 review. The implementation surface changed (tool instead of form POST); the semantic surface did not.
+
+The cold start fix is smaller but high-impact. Every new user who started a session saw a blank chat window while the page loaded and the AI initialized. The fix — pre-populate the first message as a constant before the stream opens — costs nothing and eliminates the impression that the product is loading or broken.
+
+**The H3 gate stands.** The strategic review this session reaffirmed: Foundry (workflow composition) and Enterprise Memory are not engineering problems waiting to be solved. They're business problems waiting to be scoped. Building them without design partners is the fastest way to build the wrong thing. The gate — 3+ enterprise partners with validated execution orchestration needs — is not bureaucracy; it's a forcing function to make sure we understand what "workflow composition" actually means to the people who will use it before we implement it.
+
+---
+
+## Session 072 — 2026-03-31: Making the Product Feel Like an AI Product
+
+The all-conversation intake was the headline, but the session's character is better described as: removing the things that remind users they are using software.
+
+The Phase 1 form was the most obvious example. It worked. It collected the right fields. But it was a form — a grid of labeled inputs with a submit button — at the moment when the product's job was to demonstrate that talking to an AI was better than filling out a form. The contradiction was architectural: the product is a governed AI factory, and its first interaction was a web form. The all-conversation path removes this contradiction at the source.
+
+The font tokenization is less dramatic but follows the same logic. Eighty-some `text-[10px]` and `text-[11px]` scattered across 48 files are invisible to users. They are not invisible to designers. When the palette shifted from violet to indigo in session 070, the change propagated cleanly because the design tokens were centralized. If the small text sizes had needed to change — say, from 10px to 11px everywhere to improve readability at smaller viewports — there would have been no central place to change them. The tokenization is not a current fix; it is a future capability. The product can now be resized at the smallest typographic level with two lines in `globals.css`.
+
+Accessibility is in the same category. The ARIA improvements — `aria-current="page"`, `role="navigation"`, `aria-label` on interactive controls — are not visible to most users. They are visible to screen reader users, to automated accessibility audits (Lighthouse, axe), and to enterprise procurement teams who require WCAG 2.1 AA compliance before signing contracts. None of the changes were complex; all of them were necessary for the product to be taken seriously by enterprise buyers.
+
+The pipeline empty states are the simplest change with the clearest impact. An empty kanban column communicates nothing. It could mean: there are no agents in this stage; the data is still loading; something is wrong. "No agents in Draft" communicates one thing. It changes the product's behavior from ambiguous silence to clear signal — a small change that matters at the moment when a design partner is looking at a freshly seeded demo environment trying to understand what they're looking at.
+
+---
+
+## Session 071 — 2026-03-30: What Gets Fixed When the Product Is Used
+
+Session 071 is instructive not for what was built, but for what it reveals about how production software accumulates damage in the gaps between polished sessions.
+
+**The revision flow was entirely broken.** The "← Revise" links on the intake review page had been built, committed, and shipped in session 066b as part of a 13-item enhancement. They looked right. They tested right in isolation. But they silently didn't work: clicking them sent the user back to review — because the link was an `<a href>` pointing to the same URL, the page reloaded, and since the session status was `"completed"`, the page loaded back into review mode immediately. The fix required three coordinated changes: change the link to a button, PATCH the session status to `in_progress` on click, and switch the phase client-side without a full page reload. None of these were individually complex; their necessity was only visible when a real user tried to actually revise something after marking it complete.
+
+The chat history vanishing on Revise was a second-order bug from the same feature. Even after the status fix, the conversation appeared blank — because `initialMessages` was only loaded for sessions not yet `"completed"`. Once reset to `"in_progress"`, the messages never came back. Both bugs together meant revision was impossible from end to end — you'd click Revise, get sent back to an empty conversation, with no way out except starting a new session.
+
+**The landing redirect loop was a configuration error that made the product unreachable to new users.** `next.config.ts` had a redirect rule `/landing → /`. Middleware had a rule `/` → `/landing` for unauthenticated visitors. Together, these created an infinite loop: any new user trying to reach the product would get `ERR_TOO_MANY_REDIRECTS` before seeing a single pixel. This had likely been true since the landing page was added in session 048, but was only caught now — before that, all testing was done as authenticated users, who never hit the middleware redirect.
+
+**The Badge system consolidation reflects a maturity milestone.** The unified Badge component isn't a new feature; it's a forcing function that makes the existing design consistent. The 30+ ad-hoc inline className strings that it replaced weren't a problem in session 037 when the dark sidebar was introduced, or in session 046 when the first risk tier badges appeared. They became a problem when the design needed to evolve (sessions 069–070, color palette shift) and there was no single place to update. The Badge system is the design system catching up to the implementation's breadth.
+
+The overview redesign follows the same principle. Four separate KPI tiles were right for a product with four lifecycle stages and little else. They became wrong when governance health, quality index, and activity feed were added — the overview had grown into a collection of equally-weighted cards with no hierarchy. The compact stats strip and side-by-side layout restore the page to its intended function: an executive summary, not a feature directory.
+
+---
+
+## Session 070 — 2026-03-30: A Constraint Becomes a Prompt for a Better Decision
+
+The cron downgrade is a consequence of a deployment decision: Vercel Hobby plan. The fix — change `*/15` to `0 9 * * *` — took two lines. But the session was mostly about something else.
+
+**The color palette shift is a positioning decision, not a cosmetic one.** Violet-700 as the primary color was chosen in session 037 during the dark sidebar redesign. It was distinctive (not the blue of enterprise software) and warm (different from the cold gray of most AI tooling). Eight sessions later, with the product deployed and demonstrating to enterprise buyers, the character of that choice had shifted. Warm violet reads as creative, expressive, independent. Indigo-600 — cooler, bluer, more controlled — reads as trustworthy, stable, enterprise-grade.
+
+The shift is subtle enough that a user switching between screenshots would notice something feels different before identifying what changed. That's the right level of change for a palette shift at this stage: significant enough to move the product positioning needle, invisible enough not to disrupt existing users.
+
+The glass-morphism login page and gradient sidebar header are part of the same signal: this is a product that has visual craft, not just visual consistency. Enterprise buyers who evaluate software are pattern-matching against the products they know — Salesforce, Workday, ServiceNow. Those products are polished but flat. Intellios is targeting the tier of enterprise that has started buying AI-native tools: they have higher visual expectations and respond to products that demonstrate design investment.
+
+---
+
+## Session 069 — 2026-03-29: Why Security Audits Belong at Milestones
+
+Session 069 was a deliberate pause. The product reached production-ready status (55/55, 100%) in session 066b. Before expanding the user base or starting the next phase of feature work, the right question is: what can go wrong?
+
+**The audit found 7 issues. None were catastrophic. One (SEC-003) was a real attack vector.** The webhook SSRF vulnerability deserves the most attention: any admin could register a webhook pointing to an internal IP address (`192.168.x.x`, `10.x.x.x`, `172.16–31.x.x`) and use it to probe internal infrastructure. With each outbound webhook call triggered by a governance event, an attacker with admin access could map the internal network or trigger internal services. The fix — a private IP regex check in the webhook schema — is one of the patterns that should have been in the initial implementation but wasn't: SSRF is a known risk for any system that makes outbound HTTP requests to user-provided URLs.
+
+**The failed-closed cron (SEC-001) represents a class of security thinking that's easy to miss.** The original implementation assumed that if `CRON_SECRET` was set, the cron was secure. It didn't consider the case where the environment variable is absent — which happens legitimately (new deployment, missing env config) and should fail safe, not fail open. The fix returns 503 instead of 200 when the secret is unset. This is the "fail closed" principle: when a security mechanism is unavailable, refuse to proceed rather than proceeding without protection.
+
+**The npm audit vulnerabilities are the hidden cost of dependency management.** Five Next.js CVEs (null origin CSRF, request smuggling, unbounded buffering) had accumulates since the last audit. These aren't dramatic vulnerabilities — they require specific conditions to exploit — but they're known and patched, which means shipping code with them is indefensible once you know they exist. The automated `npm audit fix` path handled them without changes to the application code.
+
+The deferred esbuild/drizzle-kit CVEs are an example of a legitimate risk acceptance decision. The vulnerabilities are real but limited to the development toolchain (not the production runtime), and the fix requires a breaking upgrade that would need its own session. The right call is to acknowledge them explicitly, document them in the health log, and schedule the upgrade rather than either ignoring them or rushing a breaking change.
 
 ---
 

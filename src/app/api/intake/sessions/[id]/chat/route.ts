@@ -8,10 +8,12 @@ import { intakeSessions, intakeMessages, intakeContributions } from "@/lib/db/sc
 import { eq, asc } from "drizzle-orm";
 import { buildIntakeSystemPrompt } from "@/lib/intake/system-prompt";
 import { createIntakeTools } from "@/lib/intake/tools";
+import { classifyIntake } from "@/lib/intake/classify";
 import { IntakePayload, IntakeContext, ContributionDomain, StakeholderContribution, IntakeClassification, AgentType, IntakeRiskTier } from "@/lib/types/intake";
 import { loadPolicies } from "@/lib/governance/load-policies";
 import { selectIntakeModel, detectExpertiseLevel, ExpertiseLevel } from "@/lib/intake/model-selector";
 import { buildTopicProbingRules } from "@/lib/intake/probing";
+import { buildTransparencyMetadata } from "@/lib/intake/transparency";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
@@ -85,7 +87,7 @@ export async function POST(
     // Current payload state — serialized to prevent race conditions when
     // Claude calls multiple tools in the same step (parallel execution).
     let currentPayload = (session.intakePayload as IntakePayload) ?? {};
-    const currentContext = (session.intakeContext as IntakeContext | null) ?? null;
+    let currentContext = (session.intakeContext as IntakeContext | null) ?? null;
 
     // Build classification from session columns (null for unclassified sessions)
     const currentClassification: IntakeClassification | null =
@@ -156,7 +158,34 @@ export async function POST(
           .where(eq(intakeSessions.id, sessionId));
       },
       () => currentContext,
-      () => (currentClassification?.riskTier ?? null)
+      () => (currentClassification?.riskTier ?? null),
+      async (context: IntakeContext) => {
+        // Save context to DB and update in-memory reference.
+        // If this fails, propagate explicitly — the tool will surface a clean error to Claude.
+        try {
+          await db
+            .update(intakeSessions)
+            .set({ intakeContext: context, updatedAt: new Date() })
+            .where(eq(intakeSessions.id, sessionId));
+        } catch (err) {
+          console.error(`[${requestId}] Failed to persist intake context:`, err);
+          throw new Error("Failed to save context — please try again");
+        }
+        currentContext = context;
+        // Classify synchronously (~500ms, one-time) so the tool response can include it.
+        // Classification failure is non-fatal — context is already saved.
+        try {
+          const classification = await classifyIntake(context);
+          await db
+            .update(intakeSessions)
+            .set({ agentType: classification.agentType, riskTier: classification.riskTier, updatedAt: new Date() })
+            .where(eq(intakeSessions.id, sessionId));
+          return { agentType: classification.agentType as AgentType, riskTier: classification.riskTier as IntakeRiskTier };
+        } catch {
+          // Classification will be derived on the next turn; not a blocking error
+          return null;
+        }
+      }
     );
 
     // Convert UI messages to model messages for Claude
@@ -208,7 +237,35 @@ export async function POST(
       },
     });
 
-    return result.toUIMessageStreamResponse();
+    // Build model selection context for transparency (reuse the same inputs)
+    const modelSelectionCtx = {
+      messageCount: messages.length,
+      lastUserText: messages.length > 0 ? extractTextContent(messages[messages.length - 1]) : "",
+      context: currentContext,
+      payload: currentPayload,
+      expertiseLevel: currentExpertiseLevel,
+    };
+
+    // Collect tool call names for active domain inference
+    const collectedToolNames: string[] = [];
+    return result.toUIMessageStreamResponse({
+      messageMetadata: ({ part }) => {
+        // Track tool calls as they stream through
+        if ("toolName" in part && typeof part.toolName === "string") {
+          collectedToolNames.push(part.toolName);
+        }
+        if (part.type !== "finish") return undefined;
+        return buildTransparencyMetadata(
+          currentPayload,
+          currentContext,
+          currentClassification,
+          selectedModel,
+          currentExpertiseLevel,
+          modelSelectionCtx,
+          collectedToolNames,
+        );
+      },
+    });
   } catch (error) {
     console.error(`[${requestId}] Failed to process intake chat:`, error);
     return aiError(error, requestId);

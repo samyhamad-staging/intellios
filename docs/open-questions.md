@@ -12,16 +12,7 @@ _None. MVP is complete._
 
 ## Medium — Nice to Resolve Early
 
-### OQ-007 · ABP schema evolution strategy
-
-**Component:** Core artifact
-**Raised:** 2026-03-12 (Session 001, knowledge system audit)
-
-The ABP schema changelog notes no migration strategy for ABPs stored under an older schema version. For MVP this is not urgent (only one schema version exists), but it becomes a problem as soon as v1.1.0 is defined.
-
-**Questions to resolve:**
-1. Are old ABPs migrated on read (schema-forward compatibility), on write (forced migration), or stored forever at their original version?
-2. Who is responsible for migration: the Agent Registry, the application layer, or a separate migration job?
+_None._
 
 ---
 
@@ -39,6 +30,7 @@ The ABP schema changelog notes no migration strategy for ABPs stored under an ol
 | — | Frontend framework | Next.js App Router (ADR-004) | 2026-03-12 |
 | — | ORM | Drizzle (ADR-004) | 2026-03-12 |
 | — | AI SDK | Vercel AI SDK v5 (ADR-004) | 2026-03-12 |
+| OQ-007 | ABP schema evolution strategy | Migrate-on-read via `readABP()` + `migrateABP()` + `detectVersion()` (H1-3). Old ABPs transparently upgraded when read. No forced migration. Registry owns migration. | 2026-04-01 |
 | OQ-005 | Agent Registry: table relationship, version model, uniqueness | `agent_blueprints` is the registry. Separate rows per version. `agent_id` UUID is the logical agent key (uniqueness by UUID, not name). See agent-registry.md Implementation. | 2026-03-12 |
 | OQ-001 | Governance policy expression language | Structured `{ field, operator, value, severity, message }` rules. 11 operators. `condition` field dropped. Policy schema advances to v1.1.0. See ADR-005. | 2026-03-12 |
 | OQ-004 | Governance Validator trigger + lifecycle placement | Validation auto-runs after generation (stored in `validation_report`). Blueprint always stored. `draft → in_review` blocked on error violations. Manual re-validation via POST `/validate`. | 2026-03-12 |

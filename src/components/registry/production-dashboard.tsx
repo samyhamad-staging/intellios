@@ -12,6 +12,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface TelemetryRow {
   id: string;
@@ -207,27 +208,29 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-xs text-gray-500">Metric</label>
-              <select
-                value={form.metric}
-                onChange={(e) => setForm((f) => ({ ...f, metric: e.target.value }))}
-                className="mt-0.5 w-full rounded border border-gray-200 px-2 py-1.5 text-xs"
-              >
-                {Object.entries(METRIC_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
-              </select>
+              <Select value={form.metric} onValueChange={(v) => setForm((f) => ({ ...f, metric: v }))}>
+                <SelectTrigger className="mt-0.5 w-full text-xs h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(METRIC_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-xs text-gray-500">Operator</label>
-              <select
-                value={form.operator}
-                onChange={(e) => setForm((f) => ({ ...f, operator: e.target.value }))}
-                className="mt-0.5 w-full rounded border border-gray-200 px-2 py-1.5 text-xs"
-              >
-                <option value="gt">&gt; (greater than)</option>
-                <option value="lt">&lt; (less than)</option>
-                <option value="eq">= (equal)</option>
-              </select>
+              <Select value={form.operator} onValueChange={(v) => setForm((f) => ({ ...f, operator: v }))}>
+                <SelectTrigger className="mt-0.5 w-full text-xs h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gt">&gt; (greater than)</SelectItem>
+                  <SelectItem value="lt">&lt; (less than)</SelectItem>
+                  <SelectItem value="eq">= (equal)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-xs text-gray-500">Value</label>

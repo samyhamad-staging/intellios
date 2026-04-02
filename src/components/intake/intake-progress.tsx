@@ -1,131 +1,40 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { IntakeContext, IntakePayload, IntakeRiskTier, StakeholderContribution } from "@/lib/types/intake";
+import { useState } from "react";
+import { IntakeContext, IntakeRiskTier, StakeholderContribution } from "@/lib/types/intake";
+import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
 import { StakeholderContributionsPanel } from "./stakeholder-contributions-panel";
-import { computeReadinessScore, ReadinessResult } from "@/lib/intake/readiness";
+import { Divider } from "@/components/ui/divider";
+import {
+  Shield, Lightbulb, CheckCircle2, Circle, ChevronDown, Cpu, BrainCircuit, Users,
+} from "lucide-react";
 
-interface Section {
-  key: string;
-  label: string;
-  filled: boolean;
-  required: boolean;
-  detail?: string;
-}
+// ── Label maps ────────────────────────────────────────────────────────────────
 
-// Short nav-friendly labels for each domain
-const DOMAIN_SHORT_LABELS: Record<string, string> = {
-  identity:     "Purpose",
-  tools:        "Capabilities",
-  instructions: "Behavior",
-  knowledge:    "Knowledge",
-  constraints:  "Guardrails",
-  governance:   "Governance",
-  audit:        "Audit",
+const AGENT_TYPE_LABELS: Record<string, string> = {
+  automation:        "Automation",
+  "decision-support": "Decision Support",
+  autonomous:        "Autonomous",
+  "data-access":     "Data Access",
 };
 
-function truncateList(items: string[], max = 3): string {
-  if (items.length <= max) return items.join(", ");
-  return items.slice(0, max).join(", ") + ` +${items.length - max} more`;
-}
+// ── Constants ────────────────────────────────────────────────────────────────
 
-function getSections(payload: IntakePayload): Section[] {
-  const identity     = payload.identity;
-  const capabilities = payload.capabilities;
-  const constraints  = payload.constraints;
-  const governance   = payload.governance;
+const DEPTH_LABELS: Record<string, string> = {
+  streamlined: "Streamlined — minimal governance probing",
+  standard:    "Standard — context-derived governance required",
+  deep:        "Deep — all context-signal policies required",
+  exhaustive:  "Exhaustive — all 5 policy types mandatory",
+};
 
-  const tools    = capabilities?.tools ?? [];
-  const sources  = capabilities?.knowledge_sources ?? [];
-  const policies = governance?.policies ?? [];
-  const domains  = constraints?.allowed_domains ?? [];
-  const denied   = constraints?.denied_actions ?? [];
+const TIER_COLORS: Record<string, string> = {
+  low:      "bg-emerald-100 text-emerald-700",
+  medium:   "bg-amber-100   text-amber-700",
+  high:     "bg-orange-100  text-orange-700",
+  critical: "bg-red-100     text-red-700",
+};
 
-  return [
-    {
-      key: "identity",
-      label: "Purpose",
-      filled: !!(identity?.name && identity?.description),
-      required: true,
-      detail: identity?.name && identity?.description
-        ? `"${identity.name}" — ${identity.description.length > 55 ? identity.description.slice(0, 55) + "…" : identity.description}`
-        : undefined,
-    },
-    {
-      key: "tools",
-      label: "Capabilities",
-      filled: tools.length > 0,
-      required: true,
-      detail: tools.length > 0
-        ? `${tools.length} tool${tools.length > 1 ? "s" : ""}: ${truncateList(tools.map((t) => t.name))}`
-        : undefined,
-    },
-    {
-      key: "instructions",
-      label: "Behavior",
-      filled: !!capabilities?.instructions,
-      required: false,
-      detail: capabilities?.instructions ? "Configured" : undefined,
-    },
-    {
-      key: "knowledge",
-      label: "Knowledge",
-      filled: sources.length > 0,
-      required: false,
-      detail: sources.length > 0
-        ? `${sources.length} source${sources.length > 1 ? "s" : ""}: ${truncateList(sources.map((s) => s.name))}`
-        : undefined,
-    },
-    {
-      key: "constraints",
-      label: "Guardrails",
-      filled: domains.length > 0 || denied.length > 0,
-      required: false,
-      detail:
-        domains.length > 0 || denied.length > 0
-          ? [
-              domains.length > 0 && `${domains.length} domain${domains.length > 1 ? "s" : ""}`,
-              denied.length > 0 && `${denied.length} denied action${denied.length > 1 ? "s" : ""}`,
-            ]
-              .filter(Boolean)
-              .join(" · ")
-          : undefined,
-    },
-    {
-      key: "governance",
-      label: "Governance",
-      filled: policies.length > 0,
-      required: false,
-      detail: policies.length > 0
-        ? `${policies.length} polic${policies.length > 1 ? "ies" : "y"}: ${truncateList(policies.map((p) => p.name))}`
-        : undefined,
-    },
-    {
-      key: "audit",
-      label: "Audit",
-      filled: governance?.audit !== undefined,
-      required: false,
-      detail: governance?.audit
-        ? [
-            governance.audit.log_interactions !== undefined &&
-              `Logging ${governance.audit.log_interactions ? "on" : "off"}`,
-            governance.audit.retention_days !== undefined &&
-              `${governance.audit.retention_days}-day retention`,
-          ]
-            .filter(Boolean)
-            .join(" · ") || "Configured"
-        : undefined,
-    },
-  ];
-}
-
-export interface SectionSummary {
-  key: string;
-  label: string;
-  shortLabel: string;
-  filled: boolean;
-  required: boolean;
-}
+// ── Types ────────────────────────────────────────────────────────────────────
 
 interface IntakeProgressProps {
   sessionId: string;
@@ -134,241 +43,373 @@ interface IntakeProgressProps {
   onContributionAdded?: (contribution: StakeholderContribution) => void;
   context?: IntakeContext;
   riskTier?: IntakeRiskTier | null;
-  /** Called whenever payload data refreshes — used to sync domain nav in the page header */
-  onSectionsChange?: (sections: SectionSummary[], agentName: string | null) => void;
+  transparency?: IntakeTransparencyMetadata | null;
+  mobileOpen?: boolean;
 }
+
+// ── Collapsible section ───────────────────────────────────────────────────────
+
+function DisclosureSection({
+  title,
+  badge,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-lg border border-border bg-surface-raised">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between px-3 py-2 text-left"
+      >
+        <div className="flex items-center gap-2">
+          <ChevronDown
+            size={12}
+            className={`text-text-tertiary transition-transform duration-200 ${open ? "rotate-0" : "-rotate-90"}`}
+          />
+          <span className="text-2xs font-mono font-medium text-text-secondary uppercase tracking-wide">
+            {title}
+          </span>
+        </div>
+        {badge}
+      </button>
+      {open && <div className="px-3 pb-3 pt-0">{children}</div>}
+    </div>
+  );
+}
+
+// ── Progressive-disclosure Governance Checklist ───────────────────────────────
+
+const PENDING_PREVIEW = 3; // max pending items shown before "X more" expander
+
+function GovernanceChecklistSection({
+  checklist,
+  satisfied,
+  total,
+  pending,
+}: {
+  checklist: IntakeTransparencyMetadata["governanceChecklist"];
+  satisfied: number;
+  total: number;
+  pending: IntakeTransparencyMetadata["governanceChecklist"];
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const satisfiedItems = checklist.filter((g) => g.satisfied);
+  const visiblePending = expanded ? pending : pending.slice(0, PENDING_PREVIEW);
+  const hiddenCount = pending.length - PENDING_PREVIEW;
+
+  return (
+    <DisclosureSection
+      defaultOpen={true}
+      title="Required Governance"
+      badge={
+        <span className={`text-2xs font-mono font-medium tabular-nums ${
+          satisfied === total ? "text-emerald-600"
+          : satisfied > 0    ? "text-amber-600"
+          :                    "text-text-tertiary"
+        }`}>
+          {satisfied}/{total}
+        </span>
+      }
+    >
+      <ul className="flex flex-col gap-1.5 pt-1">
+        {/* Satisfied items first */}
+        {satisfiedItems.map((item, i) => (
+          <li key={`sat-${i}`} className="flex items-start gap-2">
+            <CheckCircle2 size={14} className="mt-0.5 text-emerald-500 shrink-0" />
+            <div className="min-w-0">
+              <span className="text-xs text-text-secondary">{item.type}</span>
+              <p className="text-2xs text-text-tertiary truncate" title={item.reason}>{item.reason}</p>
+            </div>
+          </li>
+        ))}
+        {/* Pending items — progressive disclosure */}
+        {visiblePending.map((item, i) => (
+          <li key={`pend-${i}`} className="flex items-start gap-2">
+            <Circle size={14} className="mt-0.5 text-border-strong shrink-0" />
+            <div className="min-w-0">
+              <span className="text-xs text-text">{item.type}</span>
+              <p className="text-2xs text-text-tertiary truncate" title={item.reason}>{item.reason}</p>
+            </div>
+          </li>
+        ))}
+        {/* Expand / collapse */}
+        {!expanded && hiddenCount > 0 && (
+          <li>
+            <button
+              onClick={() => setExpanded(true)}
+              className="text-2xs font-mono text-text-tertiary hover:text-text transition-colors"
+            >
+              +{hiddenCount} more pending
+            </button>
+          </li>
+        )}
+        {expanded && hiddenCount > 0 && (
+          <li>
+            <button
+              onClick={() => setExpanded(false)}
+              className="text-2xs font-mono text-text-tertiary hover:text-text transition-colors"
+            >
+              Show less
+            </button>
+          </li>
+        )}
+      </ul>
+    </DisclosureSection>
+  );
+}
+
+// ── Progressive-disclosure Coverage Analysis ──────────────────────────────────
+
+function CoverageAnalysisSection({
+  topics,
+  covered,
+  total,
+}: {
+  topics: IntakeTransparencyMetadata["probingTopics"];
+  covered: number;
+  total: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const coveredItems = topics.filter((t) => t.covered);
+  const openItems = topics.filter((t) => !t.covered);
+  const visibleOpen = expanded ? openItems : openItems.slice(0, PENDING_PREVIEW);
+  const hiddenCount = openItems.length - PENDING_PREVIEW;
+
+  return (
+    <DisclosureSection
+      defaultOpen={true}
+      title="Coverage Analysis"
+      badge={
+        <span className={`text-2xs font-mono font-medium tabular-nums ${covered === total ? "text-emerald-600" : "text-text-tertiary"}`}>
+          {covered}/{total}
+        </span>
+      }
+    >
+      <ul className="flex flex-col gap-1.5 pt-1">
+        {/* Covered topics first */}
+        {coveredItems.map((topic, i) => (
+          <li key={`cov-${i}`} className="flex items-start gap-2">
+            {topic.level === "mandatory"
+              ? <Shield size={13} className="mt-0.5 text-indigo-400 shrink-0" />
+              : <Lightbulb size={13} className="mt-0.5 text-amber-400 shrink-0" />
+            }
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-xs text-text-secondary">{topic.topic}</span>
+                <span className="text-2xs font-mono font-medium shrink-0 text-emerald-600">DONE</span>
+              </div>
+              <p className="text-2xs text-text-tertiary">{topic.reason}</p>
+            </div>
+          </li>
+        ))}
+        {/* Open topics — progressive disclosure */}
+        {visibleOpen.map((topic, i) => (
+          <li key={`open-${i}`} className="flex items-start gap-2">
+            {topic.level === "mandatory"
+              ? <Shield size={13} className="mt-0.5 text-indigo-400 shrink-0" />
+              : <Lightbulb size={13} className="mt-0.5 text-amber-400 shrink-0" />
+            }
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-xs text-text">{topic.topic}</span>
+                <span className="text-2xs font-mono font-medium shrink-0 text-amber-500">OPEN</span>
+              </div>
+              <p className="text-2xs text-text-tertiary">{topic.reason}</p>
+            </div>
+          </li>
+        ))}
+        {/* Expand / collapse */}
+        {!expanded && hiddenCount > 0 && (
+          <li>
+            <button
+              onClick={() => setExpanded(true)}
+              className="text-2xs font-mono text-text-tertiary hover:text-text transition-colors"
+            >
+              +{hiddenCount} more open
+            </button>
+          </li>
+        )}
+        {expanded && hiddenCount > 0 && (
+          <li>
+            <button
+              onClick={() => setExpanded(false)}
+              className="text-2xs font-mono text-text-tertiary hover:text-text transition-colors"
+            >
+              Show less
+            </button>
+          </li>
+        )}
+      </ul>
+    </DisclosureSection>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export function IntakeProgress({
   sessionId,
-  refreshTick,
   contributions = [],
   onContributionAdded,
   context,
   riskTier,
-  onSectionsChange,
+  transparency,
+  mobileOpen,
 }: IntakeProgressProps) {
-  const [sections, setSections] = useState<Section[]>(getSections({}));
-  const [agentName, setAgentName] = useState<string | null>(null);
-  const [readiness, setReadiness] = useState<ReadinessResult | null>(null);
-  // Track whether we've ever had data — used to animate the reveal
-  const [hasEverFetched, setHasEverFetched] = useState(false);
-
-  // Stable ref so the effect doesn't need onSectionsChange in its deps
-  const onSectionsChangeRef = useRef(onSectionsChange);
-  useEffect(() => { onSectionsChangeRef.current = onSectionsChange; });
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchPayload() {
-      try {
-        const res = await fetch(`/api/intake/sessions/${sessionId}/payload`);
-        if (!res.ok || cancelled) return;
-        const payload = (await res.json()) as IntakePayload;
-        if (!cancelled) {
-          const computed = getSections(payload);
-          const name = payload.identity?.name ?? null;
-          setSections(computed);
-          setAgentName(name);
-          setReadiness(computeReadinessScore(payload, riskTier ?? null));
-          setHasEverFetched(true);
-          onSectionsChangeRef.current?.(
-            computed.map((s) => ({
-              key: s.key,
-              label: s.label,
-              shortLabel: DOMAIN_SHORT_LABELS[s.key] ?? s.label,
-              filled: s.filled,
-              required: s.required,
-            })),
-            name
-          );
-        }
-      } catch {
-        if (!cancelled) setHasEverFetched(true);
-      }
-    }
-
-    fetchPayload();
-    return () => { cancelled = true; };
-  }, [sessionId, refreshTick, riskTier]);
-
-  const filled        = sections.filter((s) => s.filled).length;
-  const hasAnyFilled  = filled > 0;
-  const requiredFilled = sections.filter((s) => s.required && s.filled).length;
-  const requiredTotal  = sections.filter((s) => s.required).length;
-  const activeKey      = sections.find((s) => s.required && !s.filled)?.key ?? null;
-  const isReady        = requiredFilled === requiredTotal;
+  const isContextReady = !!context;
+  const modelName = transparency?.model?.name ?? "";
+  const isHaiku = modelName.includes("haiku");
 
   return (
-    <aside className="w-72 shrink-0 border-l border-border bg-surface flex flex-col overflow-hidden">
-      {/* ── Panel header ─────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 border-b border-border px-5 py-3.5">
-        {/* Sparkle / AI icon */}
-        <svg
-          className={`h-4 w-4 shrink-0 ${hasAnyFilled ? "text-primary" : "text-text-tertiary"} transition-colors duration-500`}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 2l2.4 7.2H22l-6.2 4.5 2.4 7.2L12 16.4l-6.2 4.5 2.4-7.2L2 9.2h7.6z" />
-        </svg>
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-text-secondary">
+    <aside
+      className={`w-72 shrink-0 border-l border-border bg-surface flex-col ${
+        mobileOpen
+          ? "flex absolute inset-0 z-10 lg:relative lg:inset-auto animate-in slide-in-from-right duration-300"
+          : "hidden lg:flex"
+      }`}
+    >
+      {/* ── Header — pinned, never scrolls ─────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-3 shrink-0">
+        <span className="text-2xs font-mono font-semibold text-text-tertiary tracking-widest uppercase">
           Design Intelligence
         </span>
+        <div className="flex items-center gap-2.5">
+          {/* Model telemetry — merged into header */}
+          {transparency && (
+            <div
+              className="flex items-center gap-1"
+              title={transparency.model.reason}
+            >
+              <Cpu size={11} className="text-text-tertiary shrink-0" />
+              <span className="text-2xs font-mono text-text-tertiary">
+                {isHaiku ? "haiku" : "sonnet"}
+                {transparency.expertiseLevel ? ` · ${transparency.expertiseLevel}` : ""}
+              </span>
+            </div>
+          )}
+          {/* Live indicator */}
+          {transparency && (
+            <div className="flex items-center gap-1">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-2xs font-mono text-text-tertiary">Live</span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* ── Scrollable body ───────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+      <Divider soft />
 
-        {/* ── State: analysing (nothing captured yet) ─────────────── */}
-        {!hasAnyFilled && (
-          <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
-            <div className={`flex gap-1 ${hasEverFetched ? "opacity-60" : "opacity-40"}`}>
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-tertiary" style={{ animationDelay: "0ms" }} />
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-tertiary" style={{ animationDelay: "120ms" }} />
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-tertiary" style={{ animationDelay: "240ms" }} />
+      {/* ── AI Intelligence zone — scrollable ──────────────────────────── */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex flex-col gap-2.5 px-4 py-3">
+
+          {/* Empty state — shown until the AI has produced classification metadata */}
+          {!transparency?.classification && (
+            <div className="rounded-lg border border-dashed border-border p-4 text-center">
+              <BrainCircuit size={20} className="mx-auto mb-2 text-text-tertiary" />
+              <p className="text-2xs font-mono text-text-tertiary">ANALYZING</p>
+              <p className="mt-1 text-xs text-text-tertiary">
+                Insights appear as your agent design takes shape.
+              </p>
             </div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-text-tertiary">
-              Analysing
-            </p>
-            <p className="text-xs text-text-tertiary leading-relaxed">
-              Insights appear as your agent design takes shape.
-            </p>
+          )}
 
-            {/* Ghost domain list — shows what will be captured */}
-            <ul className="mt-2 w-full flex flex-col gap-1.5">
-              {sections.map((s) => (
-                <li key={s.key} className="flex items-center gap-2 opacity-30">
-                  <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-border" />
-                  <span className="text-xs text-text-tertiary">{s.label}</span>
-                  {s.required && (
-                    <span className="ml-auto text-[10px] text-text-tertiary">required</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* ── State: live — at least one section captured ──────────── */}
-        {hasAnyFilled && (
-          <>
-            {/* Agent name */}
-            {agentName && (
-              <p className="text-sm font-semibold text-text truncate">{agentName}</p>
-            )}
-
-            {/* Overall progress bar */}
-            <div>
-              <div className="flex justify-between text-[11px] text-text-tertiary mb-1.5">
-                <span>{filled} of {sections.length} domains</span>
-                <span className={isReady ? "text-green-700 font-medium" : ""}>{Math.round((filled / sections.length) * 100)}%</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-surface-muted overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-700 ${
-                    isReady ? "bg-green-500" : "bg-primary"
-                  }`}
-                  style={{ width: `${Math.round((filled / sections.length) * 100)}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Section checklist */}
-            <ul className="flex flex-col gap-2">
-              {sections.map((section) => (
-                <li key={section.key} className="flex items-start gap-2.5">
-                  <span
-                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300 ${
-                      section.filled
-                        ? "bg-primary text-white"
-                        : section.key === activeKey
-                        ? "animate-pulse border-2 border-primary text-primary"
-                        : section.required
-                        ? "border-2 border-border-strong text-text-tertiary"
-                        : "border border-border text-border"
-                    }`}
-                  >
-                    {section.filled ? "✓" : ""}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1">
+          {/* Classification — closed by default (passive metadata, not action) */}
+          {transparency?.classification && (
+            <DisclosureSection
+              defaultOpen={false}
+              title="Classification"
+              badge={
+                <span className={`text-2xs font-mono font-medium rounded-full px-1.5 py-0.5 ${TIER_COLORS[transparency.classification.riskTier] ?? "bg-surface-muted text-text-secondary"}`}>
+                  {transparency.classification.riskTier.toUpperCase()}
+                </span>
+              }
+            >
+              <div className="flex flex-col gap-2.5 pt-1">
+                {/* Risk signals — compact chips instead of bullet list */}
+                <div>
+                  <p className="text-2xs font-mono text-text-tertiary uppercase tracking-wide mb-1.5">
+                    Risk signals
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {transparency.classification.signals.map((s, i) => (
                       <span
-                        className={`text-sm ${
-                          section.filled
-                            ? "text-text font-medium"
-                            : section.required
-                            ? "text-text-secondary"
-                            : "text-text-tertiary"
-                        }`}
+                        key={i}
+                        className="inline-block rounded px-1.5 py-0.5 text-2xs bg-surface-muted border border-border text-text-secondary leading-tight"
                       >
-                        {section.label}
+                        {s}
                       </span>
-                      {section.required && !section.filled && (
-                        <span className="text-[10px] text-red-400">required</span>
-                      )}
-                    </div>
-                    {section.detail && (
-                      <p className="text-xs text-text-tertiary truncate mt-0.5" title={section.detail}>
-                        {section.detail}
-                      </p>
+                    ))}
+                  </div>
+                </div>
+                {/* Agent type + depth — compact rows */}
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-2xs font-mono text-text-tertiary uppercase tracking-wide shrink-0">Type</span>
+                    <span className="text-xs font-medium text-text">
+                      {AGENT_TYPE_LABELS[transparency.classification.agentType] ?? transparency.classification.agentType}
+                    </span>
+                    {transparency.classification.rationale && (
+                      <span className="text-2xs text-text-tertiary truncate" title={transparency.classification.rationale}>
+                        — {transparency.classification.rationale}
+                      </span>
                     )}
                   </div>
-                </li>
-              ))}
-            </ul>
-
-            {/* Live readiness score */}
-            {readiness !== null && (
-              <div className="rounded-lg border border-border bg-surface-raised px-3 py-3">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-medium text-text-secondary">Intake Readiness</span>
-                  <span
-                    className={`text-sm font-bold tabular-nums ${
-                      readiness.score >= 80 ? "text-green-700"
-                      : readiness.score >= 50 ? "text-amber-700"
-                      : "text-text-tertiary"
-                    }`}
-                  >
-                    {readiness.score}%
-                  </span>
-                </div>
-                <div className="h-1.5 rounded-full bg-surface-muted overflow-hidden mb-2">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      readiness.score >= 80 ? "bg-green-500"
-                      : readiness.score >= 50 ? "bg-amber-400"
-                      : "bg-border-strong"
-                    }`}
-                    style={{ width: `${readiness.score}%` }}
-                  />
-                </div>
-                <div
-                  className={`text-[11px] text-center font-medium ${
-                    readiness.label === "ready" ? "text-green-700"
-                    : readiness.label === "near-complete" ? "text-amber-700"
-                    : "text-text-tertiary"
-                  }`}
-                >
-                  {readiness.label === "not-started"   && "Getting started"}
-                  {readiness.label === "building"      && (() => {
-                    const next = sections.find((s) => s.required && !s.filled);
-                    return next ? `Next: ${next.label}` : "Building requirements…";
-                  })()}
-                  {readiness.label === "near-complete" && "Nearly complete"}
-                  {readiness.label === "ready"         && "✓ Ready to finalize"}
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-2xs font-mono text-text-tertiary uppercase tracking-wide shrink-0">Depth</span>
+                    <span className="text-xs text-text-secondary">
+                      {DEPTH_LABELS[transparency.classification.conversationDepth] ?? transparency.classification.conversationDepth}
+                    </span>
+                  </div>
                 </div>
               </div>
-            )}
-          </>
-        )}
+            </DisclosureSection>
+          )}
 
-        {/* ── Stakeholder panel ────────────────────────────────────── */}
-        {onContributionAdded && (
-          isReady ? (
+          {/* Governance Checklist */}
+          {transparency && transparency.governanceChecklist.length > 0 &&
+            (() => {
+              const satisfied = transparency.governanceChecklist.filter((g) => g.satisfied).length;
+              const total = transparency.governanceChecklist.length;
+              const pending = transparency.governanceChecklist.filter((g) => !g.satisfied);
+              return (
+                <GovernanceChecklistSection
+                  checklist={transparency.governanceChecklist}
+                  satisfied={satisfied}
+                  total={total}
+                  pending={pending}
+                />
+              );
+            })()}
+
+          {/* Coverage Analysis */}
+          {transparency && transparency.probingTopics.length > 0 &&
+            (() => {
+              const covered = transparency.probingTopics.filter((t) => t.covered).length;
+              const total = transparency.probingTopics.length;
+              return (
+                <CoverageAnalysisSection
+                  topics={transparency.probingTopics}
+                  covered={covered}
+                  total={total}
+                />
+              );
+            })()}
+
+        </div>
+      </div>
+
+      <Divider soft />
+
+      {/* ── Stakeholder zone — pinned, always visible ───────────────────── */}
+      <div className="shrink-0 px-4 py-3">
+        {onContributionAdded ? (
+          isContextReady ? (
             <StakeholderContributionsPanel
               sessionId={sessionId}
               contributions={contributions}
@@ -377,35 +418,15 @@ export function IntakeProgress({
               riskTier={riskTier}
             />
           ) : (
-            <div className="rounded-lg border border-dashed border-border px-4 py-4">
-              <div className="flex items-center gap-2 mb-1.5">
-                {/* Lock icon */}
-                <svg className="h-3.5 w-3.5 shrink-0 text-text-tertiary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <p className="text-xs font-semibold text-text-secondary">Stakeholder Input</p>
-                <span className="ml-auto text-[10px] font-medium text-text-tertiary">7 domains</span>
-              </div>
-              <p className="text-xs text-text-tertiary leading-relaxed">
-                Invite domain experts once required sections are captured. Unlocks when{" "}
-                <span className="font-medium text-text-secondary">
-                  {requiredTotal - requiredFilled} required{" "}
-                  {requiredTotal - requiredFilled === 1 ? "section" : "sections"}
-                </span>{" "}
-                {requiredTotal - requiredFilled === 1 ? "is" : "are"} complete.
-              </p>
-              {/* Mini domain list preview */}
-              <div className="mt-3 flex flex-wrap gap-1">
-                {["Compliance", "Risk", "Legal", "Security", "IT", "Ops", "Business"].map((d) => (
-                  <span key={d} className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] text-text-tertiary">
-                    {d}
-                  </span>
-                ))}
-              </div>
+            /* ANALYZING state: compact summary row — stakeholder input not yet relevant */
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-raised px-3 py-2 opacity-50">
+              <Users size={12} className="text-text-tertiary shrink-0" />
+              <span className="text-2xs font-mono text-text-tertiary">
+                Stakeholder input — available after context is captured
+              </span>
             </div>
           )
-        )}
+        ) : null}
       </div>
     </aside>
   );
