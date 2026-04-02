@@ -62,6 +62,18 @@ function LoginForm() {
     await signIn("oidc", { callbackUrl });
   }
 
+  function handleQuickFill(fillEmail: string, fillPassword: string) {
+    setEmail(fillEmail);
+    setPassword(fillPassword);
+  }
+
+  const DEMO_ACCOUNTS = [
+    { email: "designer@intellios.dev",  password: "Designer1234!", role: "Architect",         badge: "text-blue-300 bg-blue-500/15 border-blue-500/25"    },
+    { email: "reviewer@intellios.dev",  password: "Reviewer1234!", role: "Reviewer",           badge: "text-amber-300 bg-amber-500/15 border-amber-500/25"  },
+    { email: "officer@intellios.dev",   password: "Officer1234!",  role: "Compliance Officer", badge: "text-emerald-300 bg-emerald-500/15 border-emerald-500/25" },
+    { email: "admin@intellios.dev",     password: "Admin1234!",    role: "Admin",              badge: "text-violet-300 bg-violet-500/15 border-violet-500/25" },
+  ] as const;
+
   return (
     <div
       className="relative flex min-h-screen items-center justify-center overflow-hidden"
@@ -193,63 +205,44 @@ function LoginForm() {
               </button>
             )}
 
-            <div className="space-y-2 text-center">
-              <div>
-                <a href="/auth/forgot-password" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
-                  Forgot your password?
-                </a>
-              </div>
-              <div>
-                <span className="text-xs text-gray-600">
-                  Don&apos;t have an account?{" "}
-                  <a href="/register" className="text-indigo-400 hover:text-indigo-300 transition-colors">
-                    Start free trial
-                  </a>
-                </span>
-              </div>
+            <div className="text-center">
+              <a href="/auth/forgot-password" className="text-xs text-white/25 hover:text-white/50 transition-colors">
+                Forgot your password?
+              </a>
             </div>
           </form>
         </div>
 
-        {/* ── Demo accounts — terminal aesthetic ────────────────────────── */}
-        <div className="mt-4 rounded-xl border border-white/8 bg-black/40 p-4 backdrop-blur-sm">
-          <div className="mb-3 flex items-center gap-2">
-            <div className="flex gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-red-500/60" />
-              <div className="h-2.5 w-2.5 rounded-full bg-amber-500/60" />
-              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/60" />
-            </div>
-            <span className="font-mono text-2xs uppercase tracking-widest text-gray-600">demo_accounts.env</span>
+        {/* ── Demo accounts ─────────────────────────────────────────────── */}
+        <div className="mt-4">
+          {/* Section divider */}
+          <div className="mb-3 flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/8" />
+            <span className="font-mono text-2xs uppercase tracking-widest text-white/20">Demo accounts</span>
+            <div className="h-px flex-1 bg-white/8" />
           </div>
-          <div className="space-y-2 font-mono text-xs">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-gray-300">designer@intellios.dev</span>
-                <span className="ml-2 text-gray-600">Designer1234!</span>
-              </div>
-              <span className="rounded bg-blue-500/20 px-1.5 py-0.5 text-2xs text-blue-300">Architect</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-gray-300">reviewer@intellios.dev</span>
-                <span className="ml-2 text-gray-600">Reviewer1234!</span>
-              </div>
-              <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-2xs text-amber-300">Reviewer</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-gray-300">officer@intellios.dev</span>
-                <span className="ml-2 text-gray-600">Officer1234!</span>
-              </div>
-              <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-2xs text-emerald-300">Compliance Officer</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-gray-300">admin@intellios.dev</span>
-                <span className="ml-2 text-gray-600">Admin1234!</span>
-              </div>
-              <span className="rounded bg-violet-500/20 px-1.5 py-0.5 text-2xs text-violet-300">Admin</span>
-            </div>
+          {/* Clickable rows — click to fill credentials */}
+          <div className="space-y-1">
+            {DEMO_ACCOUNTS.map((acc) => (
+              <button
+                key={acc.email}
+                type="button"
+                onClick={() => handleQuickFill(acc.email, acc.password)}
+                className="group flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-left transition-all hover:border-white/8 hover:bg-white/5"
+              >
+                <div className="min-w-0 flex-1">
+                  <span className="block truncate font-mono text-xs text-white/60 transition-colors group-hover:text-white/85">
+                    {acc.email}
+                  </span>
+                  <span className="block font-mono text-2xs text-white/20 transition-colors group-hover:text-white/40">
+                    {acc.password}
+                  </span>
+                </div>
+                <span className={`shrink-0 whitespace-nowrap rounded-md border px-2 py-0.5 font-mono text-2xs font-medium ${acc.badge}`}>
+                  {acc.role}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       </div>
