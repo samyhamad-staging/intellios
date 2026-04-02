@@ -136,7 +136,7 @@ export default function IntakeSessionPage({
       totalDomains: domains.length,
       nextDomain: next?.label ?? null,
       readinessScore: readiness.score,
-      lastActiveAt,
+      lastActiveAt: lastActivityAt,
     };
   }, [isReturningSession, currentPayload, intakeContext, classification, lastActivityAt]);
 
