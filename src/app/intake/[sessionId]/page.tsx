@@ -70,8 +70,6 @@ export default function IntakeSessionPage({
   const [intakeScoreLoading, setIntakeScoreLoading] = useState(false);
   const [scorePopoverOpen, setScorePopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const [discardConfirm, setDiscardConfirm] = useState(false);
-  const [discarding, setDiscarding] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   // Tracks consecutive ticks where classificationLoading is true but no classification arrived.
   // After 2 unanswered ticks we bail out to prevent an infinite spinner.
@@ -239,16 +237,6 @@ export default function IntakeSessionPage({
     }
   }
 
-  const handleDiscard = useCallback(async () => {
-    setDiscarding(true);
-    try {
-      await fetch(`/api/intake/sessions/${sessionId}`, { method: "DELETE" });
-    } catch {
-      // Non-critical — navigate away regardless
-    }
-    router.push("/intake");
-  }, [sessionId, router]);
-
   const handleRevise = useCallback(async () => {
     try {
       await fetch(`/api/intake/sessions/${sessionId}`, {
@@ -394,7 +382,6 @@ export default function IntakeSessionPage({
             <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
               Complete
             </span>
-            <div className="text-xs text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
           </div>
         </header>
         <IntakeReview
@@ -449,32 +436,12 @@ export default function IntakeSessionPage({
           >
             {mobileSidebarOpen ? "Hide" : "Details"}
           </button>
-          {discardConfirm ? (
-            <>
-              <span className="text-xs text-text-secondary">Discard?</span>
-              <button
-                onClick={handleDiscard}
-                disabled={discarding}
-                className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
-              >
-                {discarding ? "…" : "Yes"}
-              </button>
-              <button
-                onClick={() => setDiscardConfirm(false)}
-                className="text-xs text-text-tertiary hover:text-text-secondary transition-colors"
-              >
-                No
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setDiscardConfirm(true)}
-              className="text-xs text-text-tertiary hover:text-red-500 transition-colors"
-            >
-              Discard
-            </button>
-          )}
-          <div className="text-xs text-text-tertiary font-mono">{sessionId.slice(0, 8)}</div>
+          <button
+            onClick={() => router.push("/intake")}
+            className="text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+          >
+            ← Sessions
+          </button>
         </div>
       </header>
 

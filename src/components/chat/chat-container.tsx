@@ -121,6 +121,24 @@ export function ChatContainer({
     [messages]
   );
 
+  // Deduplicate domain tags: only show when the active domain CHANGES from the previous
+  // AI message. Consecutive messages in the same domain don't need the tag repeated —
+  // the header strip already communicates the current domain.
+  const domainTagByMessageId = useMemo(() => {
+    const map = new Map<string, string | null>();
+    if (!hasToolCalls) return map;
+    let lastShownDomain: string | null = null;
+    for (const msg of messages) {
+      if (msg.role !== "assistant" || !msg.metadata) continue;
+      const domain = ((msg.metadata as Record<string, unknown>).activeDomain as string | null) ?? null;
+      if (domain && domain !== lastShownDomain) {
+        map.set(msg.id, domain);
+        lastShownDomain = domain;
+      }
+    }
+    return map;
+  }, [messages, hasToolCalls]);
+
   const streamingLabel = lastToolCallName
     ? (STREAMING_LABELS[lastToolCallName] ?? "Thinking…")
     : "Thinking…";
@@ -175,7 +193,7 @@ export function ChatContainer({
                 <MessageBubble
                   role={msg.role as "user" | "assistant"}
                   content={text}
-                  activeDomain={msg.role === "assistant" && msg.metadata && hasToolCalls ? (msg.metadata as Record<string, unknown>).activeDomain as string | null : undefined}
+                  activeDomain={msg.role === "assistant" ? (domainTagByMessageId.get(msg.id) ?? undefined) : undefined}
                 />
               )}
             </div>

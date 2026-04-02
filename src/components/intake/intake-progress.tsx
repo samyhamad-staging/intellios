@@ -9,6 +9,15 @@ import {
   Shield, Lightbulb, CheckCircle2, Circle, ChevronDown, Cpu, BrainCircuit,
 } from "lucide-react";
 
+// ── Label maps ────────────────────────────────────────────────────────────────
+
+const AGENT_TYPE_LABELS: Record<string, string> = {
+  automation:        "Automation",
+  "decision-support": "Decision Support",
+  autonomous:        "Autonomous",
+  "data-access":     "Data Access",
+};
+
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const DEPTH_LABELS: Record<string, string> = {
@@ -130,6 +139,7 @@ export function IntakeProgress({
         {/* Classification */}
         {transparency?.classification && (
           <DisclosureSection
+            defaultOpen={false}
             title="Classification"
             badge={
               <span className={`text-2xs font-mono font-medium rounded-full px-1.5 py-0.5 ${TIER_COLORS[transparency.classification.riskTier] ?? "bg-surface-muted text-text-secondary"}`}>
@@ -152,7 +162,7 @@ export function IntakeProgress({
               <div>
                 <p className="text-2xs font-mono text-text-tertiary uppercase tracking-wide mb-0.5">Agent type</p>
                 <p className="text-xs text-text-secondary">
-                  <span className="font-medium text-text">{transparency.classification.agentType}</span>
+                  <span className="font-medium text-text">{AGENT_TYPE_LABELS[transparency.classification.agentType] ?? transparency.classification.agentType}</span>
                   {transparency.classification.rationale && (
                     <span className="text-text-tertiary"> — {transparency.classification.rationale}</span>
                   )}
@@ -175,9 +185,14 @@ export function IntakeProgress({
             const total = transparency.governanceChecklist.length;
             return (
               <DisclosureSection
+                defaultOpen={true}
                 title="Required Governance"
                 badge={
-                  <span className={`text-2xs font-mono font-medium tabular-nums ${satisfied === total ? "text-emerald-600" : "text-amber-600"}`}>
+                  <span className={`text-2xs font-mono font-medium tabular-nums ${
+                    satisfied === total ? "text-emerald-600"
+                    : satisfied > 0    ? "text-amber-600"
+                    :                    "text-text-tertiary"
+                  }`}>
                     {satisfied}/{total}
                   </span>
                 }
@@ -207,6 +222,7 @@ export function IntakeProgress({
             const total = transparency.probingTopics.length;
             return (
               <DisclosureSection
+                defaultOpen={true}
                 title="Probing Topics"
                 badge={
                   <span className={`text-2xs font-mono font-medium tabular-nums ${covered === total ? "text-emerald-600" : "text-text-tertiary"}`}>
