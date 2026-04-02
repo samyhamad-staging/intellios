@@ -2,7 +2,13 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-04-01 (Session 082 — DPR Roadmap Revision)
+**Last updated:** 2026-04-01 (Session 085 — Agent Design Studio UX Polish)
+
+---
+
+## ✓ Session 085 Complete (2026-04-01) — Agent Design Studio UX Polish
+
+Six polish items addressing first-impression friction in the intake session page. Progressive disclosure in Required Governance and Coverage Analysis sidebar panels (satisfied first, pending capped at 3 + expand). Removed red dots from domain chips (redundant with fill bars, read as errors). Replaced SVG score ring with `X/7 domains` monospace counter (progress, not grade). Stakeholder Input section collapses to a single muted row during ANALYZING state. Domain chip clicks produce a ghost pill message style (bg-primary/8, border, italic, Navigation icon) tracked via `useRef<Set<string>>` — distinguishes navigation from user speech. Added `pendingActiveDomain` optimistic override so chip clicks highlight immediately without waiting for AI response metadata. Round 1 completions also documented: payload fetch on revisit, chat max-w-4xl, interactive domain chips with tooltip, panel label renames (DESIGN INTELLIGENCE, ANALYZING, Coverage Analysis), page header and sidebar label updates. 0 new files, 5 modified.
 
 ---
 
@@ -134,7 +140,7 @@ This document is the **source of truth** for what has been built and what needs 
 | **Current Product (P+A+G+D)** | **55** | **55** | **100%** | Production-ready; all planned capabilities shipped |
 | **Full Vision (all horizons)** | **92** | **103** | **89%** | Core product 100%; H1+H2 100%; H3 7/14 (governance + ecosystem shipped; foundry deferred) |
 | **UI/UX Sprint (076–082)** | **7** | **7** | **100%** | Catalyst UI, landing page, domain progress strip, CVE fix, Recharts, Radix Select |
-| **DPR — Design Partner Readiness** | **0** | **10** | **0%** | New phase: hardening, polish, GTM (see below) |
+| **DPR — Design Partner Readiness** | **7** | **10** | **70%** | Tracks 1+2 complete (7/7 items); Track 3 GTM pending (Samy-led) |
 
 ---
 
@@ -148,18 +154,18 @@ This document is the **source of truth** for what has been built and what needs 
 
 | Item | Description | Status | Sessions |
 |------|-------------|--------|----------|
-| **DPR-1.1** | Test coverage for critical paths (intake, governance, lifecycle, domains) — target 80%+ on `src/lib/` | Pending | 2-3 |
-| **DPR-1.2** | Error handling audit — structured error responses, error boundaries, graceful degradation | Pending | 1 |
-| **DPR-1.3** | Performance baseline — Lighthouse, N+1 queries, streaming latency | Pending | 1 |
+| **DPR-1.1** | Test coverage for critical paths (intake, governance, lifecycle, domains) — target 80%+ on `src/lib/` | **Complete** (Session 082) | 2-3 |
+| **DPR-1.2** | Error handling audit — structured error responses, error boundaries, graceful degradation | **Complete** (Session 083) | 1 |
+| **DPR-1.3** | Performance baseline — Lighthouse, N+1 queries, streaming latency | **Complete** (Session 083) | 1 |
 
 ### Track 2: First Impression Polish
 
 | Item | Description | Status | Sessions |
 |------|-------------|--------|----------|
-| **DPR-2.1** | Chat UX fixes — bottom-anchor messages, softer user bubbles, contextual placeholder, one-question-per-turn | Pending | 1 |
-| **DPR-2.2** | Loading states pass — skeleton loading + empty states on every page | Pending | 1 |
-| **DPR-2.3** | Demo data refresh — Acme Financial seed updated for latest features | Pending | 1 |
-| **DPR-2.4** | Onboarding refinement — guided first-agent-blueprint experience | Pending | 1 |
+| **DPR-2.1** | Chat UX fixes — bottom-anchor messages, softer user bubbles, contextual placeholder, one-question-per-turn | **Complete** (Session 082) | 1 |
+| **DPR-2.2** | Loading states pass — skeleton loading + empty states on every page | **Complete** (Session 083) | 1 |
+| **DPR-2.3** | Demo data refresh — Acme Financial seed updated for latest features | **Complete** (Session 083) | 1 |
+| **DPR-2.4** | Onboarding refinement — guided first-agent-blueprint experience | **Complete** (Session 083) | 1 |
 
 ### Track 3: GTM Foundation (Samy-led, Claude assists)
 

@@ -177,11 +177,6 @@ function DomainChip({
         {domain.label}
       </span>
 
-      {/* Required indicator dot */}
-      {domain.required && domain.fillLevel === 0 && (
-        <span className="h-1 w-1 rounded-full bg-red-400 shrink-0" title="Required" />
-      )}
-
       {/* Fill bar — absolute at bottom edge */}
       {domain.fillLevel > 0 && (
         <div
@@ -307,8 +302,13 @@ export function DomainProgressStrip({
           <div className="h-4 w-16 animate-pulse rounded bg-surface-muted" />
         )}
 
-        {/* Readiness score ring */}
-        <ScoreRing score={score} />
+        {/* Coverage counter */}
+        <div className="flex flex-col items-center shrink-0" title={`${domains.filter(d => d.fillLevel > 0).length} of ${domains.length} domains captured`}>
+          <span className="text-xs font-bold font-mono tabular-nums text-text">
+            {domains.filter(d => d.fillLevel > 0).length}/{domains.length}
+          </span>
+          <span className="text-2xs font-mono text-text-tertiary leading-none">domains</span>
+        </div>
       </div>
 
       {/* Tooltip */}

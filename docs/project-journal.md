@@ -2,6 +2,24 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 085 — 2026-04-01: Reading the Interface Like a User
+
+Session 084 made the intake interface look like an enterprise AI product. Session 085 is the next step: reading it as a first-time user would, catching the signals that still felt wrong.
+
+**The score ring was the most instructive failure.** It looked like a grade. An SVG arc that was 60% full communicated "you scored 60 on a test" — not "you've covered 4 of 7 domains." The replacement — a monospace `4/7 domains` counter — is less visually dramatic and more semantically honest. The user is making progress through a checklist, not being evaluated. This distinction matters in a product that already has governance scoring elsewhere; adding a second score-shaped element at the top of the progress strip created ambiguity about what was being measured.
+
+**The red dots were anxiety without information.** Five red dots appearing simultaneously on domain chips signaled "five things are wrong" — the same visual pattern as error states, badge counts, and notification indicators across every UI the user has ever used. But the dots weren't errors; they were the default state before the conversation started. Removing them makes the un-filled chips feel like neutral starting points rather than failures to correct.
+
+**Progressive disclosure in the sidebar addressed a different kind of noise.** Governance and Coverage Analysis panels that showed every open item — including trivial ones — made it impossible to see which items actually needed attention. The pattern of showing satisfied items first (confirmation that work is being captured) and capping pending items at 3 with "+N more" mirrors how a human would organize a checklist for someone mid-task: show them what's done, then show them the next few things that need doing, not the whole list.
+
+**The navigation message differentiation solves a trust problem.** When a user clicks a domain chip to redirect the conversation, the chat should not look like they typed a question. A full dark user bubble next to "Tell me more about the Governance domain" creates a false record of what the user said. The ghost pill style — lighter background, italic text, navigation icon — signals "the interface did this on your behalf" without hiding that the redirection happened. The `useRef<Set<string>>` tracking ensures the visual treatment is applied consistently regardless of render order.
+
+**The pendingActiveDomain fix removes a specific confusion.** A user clicks "Behavior" in the domain strip. The Behavior chip does not highlight. They click again. Still nothing. They assume the chip is broken. In reality, the active domain is derived from AI response metadata — which hasn't arrived yet for the redirected message. The optimistic override applied at click time means the visual feedback is immediate, even if the AI's metadata later confirms a different domain. First impression: the interface responded. That's all that was needed.
+
+These six changes have no new files and no API surface changes. They are all presentation-layer adjustments. Individually, each one is small. Together, they address the most visible ways the interface could mislead or frustrate a first-time user — which is the audience that matters most for design partner conversations.
+
+---
+
 ## Session 084 — 2026-04-01: Making the Machine Look Like a Machine
 
 Sessions 082–083 built the transparency layer and hardened the intake pipeline. Session 084 addresses what screenshots made undeniable: Intellios works like an enterprise AI product, but it didn't yet *look* like one.

@@ -38,6 +38,32 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 085 — 2026-04-01
+
+**Agent Design Studio UX polish (Round 1 completions + Round 2 six-item polish pass)**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context resumption + gap check | Read _index, effort-log, project-journal, roadmap, intake-engine spec | ~60k in / ~1k out |
+| Documentation (all files) | Session log 085, _index, project-journal, roadmap, intake-engine spec, effort-log | ~15k in / ~8k out |
+| **Session total (est.)** | | **~75k in / ~9k out** |
+
+**Estimated session cost:** Sonnet ~75k in × $3/1M + ~9k out × $15/1M = **$0.23 + $0.14 = ~$0.37**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~1 (documentation task brief) |
+| Decisions made | 1 (D-Approve: documentation update for session 085 work) |
+| Engagement type | Documentation delegation |
+| Estimated time | ~5 min |
+
+---
+
 ## Session 084 — 2026-04-01
 
 **AI/futuristic UI redesign + UX refinements + Vercel tracking fix**

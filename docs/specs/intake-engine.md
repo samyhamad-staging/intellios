@@ -308,6 +308,33 @@ On mount, the page fetches the session to determine the initial phase. On `compl
 - Required vs optional distinction
 - Readiness indicator ("Ready to finalize" when required sections are filled)
 
+**Panel labels (Sessions 084–085):**
+- Header: "DESIGN INTELLIGENCE" (previously "SYSTEM ANALYSIS")
+- Empty/pre-conversation state: "ANALYZING" (previously "AWAITING SIGNAL")
+- Probing topics section: "Coverage Analysis" (previously "Probing Topics")
+
+**Progressive disclosure (Session 085):** Required Governance and Coverage Analysis sections apply progressive disclosure — satisfied/covered items shown first; pending/open items capped at 3, with a "+N more" expand button for the remainder. Reduces visual noise when most items are already satisfied.
+
+**Stakeholder Input collapse (Session 085):** During the ANALYZING state, the Stakeholder Input section collapses to a single muted row instead of displaying the full stakeholder list. Prevents the stakeholder list from visually contradicting the analyzing state.
+
+### Domain Progress Strip
+
+`DomainProgressStrip` renders 7 domain chips across the top of the conversation pane. Each chip has a fill bar along the bottom edge indicating richness on a 0–4 scale.
+
+**Interactive chips (Session 085):** Each chip accepts an `onDomainClick` prop. Clicking a chip fires a navigation message to redirect the conversation to that domain. Hover styles and a tooltip communicate interactivity.
+
+**No red dots (Session 085):** Red dot indicators were removed from chips. They were redundant with fill bars and read as error indicators when multiple appeared simultaneously before the conversation started.
+
+**Monospace domain counter (Session 085):** The SVG arc score ring was replaced with a `X/7 domains` monospace counter in the strip header. The ring was misread as a grade percentage; the counter communicates progress toward a discrete target.
+
+### Navigation Message Style
+
+**Ghost pill messages (Session 085):** When a domain chip click triggers a navigation message, that message renders as a ghost pill (bg-primary/8, border, italic text, Navigation icon) rather than a full dark user bubble. This visually distinguishes interface-initiated navigation from genuine user speech. The parent page tracks which message IDs were navigation-triggered via `useRef<Set<string>>` and passes that context to `MessageBubble`.
+
+### Active Domain Optimistic Override
+
+**pendingActiveDomain (Session 085):** The session page (`src/app/intake/[sessionId]/page.tsx`) maintains a `pendingActiveDomain` state that is set immediately on domain chip click. This value overrides the `activeDomain` derived from AI response metadata until the next metadata update arrives. Prevents the clicked domain from appearing un-highlighted during the round-trip to the AI and back.
+
 ### MRM Report Integration
 
 When a blueprint's MRM Compliance Report is assembled, `assembleMRMReport()` fetches the originating intake session and reads both `intake_context` and `intake_contributions`.

@@ -81,6 +81,10 @@ export default function IntakeSessionPage({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   // Domain navigation: clicking a chip sends a user message steering conversation
   const [domainNavMessage, setDomainNavMessage] = useState<{ text: string; key: number } | null>(null);
+  // Optimistic active-domain override — immediately reflect the clicked chip in the strip
+  // without waiting for the AI's next transparency metadata to arrive.
+  // Cleared when the AI responds (onTransparencyUpdate fires).
+  const [pendingActiveDomain, setPendingActiveDomain] = useState<string | null>(null);
   // Tracks consecutive ticks where classificationLoading is true but no classification arrived.
   // After 2 unanswered ticks we bail out to prevent an infinite spinner.
   const classificationLoadingTicksRef = useRef(0);
@@ -95,6 +99,7 @@ export default function IntakeSessionPage({
   function handleDomainClick(domainKey: string) {
     const label = DOMAIN_NAV_LABELS[domainKey] ?? domainKey;
     setDomainNavMessage({ text: `Let's focus on ${label}.`, key: Date.now() });
+    setPendingActiveDomain(domainKey); // Optimistically highlight the clicked chip immediately
   }
 
   // Load session status + message history + contributions on mount
@@ -444,7 +449,11 @@ export default function IntakeSessionPage({
         {/* Domain Progress Strip — replaces stepper + classification bar */}
         <div className="flex-1 min-w-0">
           <DomainProgressStrip
-            transparency={transparency}
+            transparency={
+              transparency && pendingActiveDomain
+                ? { ...transparency, activeDomain: pendingActiveDomain }
+                : transparency
+            }
             initialDomains={computedDomains}
             classification={classification}
             classificationLoading={classificationLoading}
@@ -525,7 +534,10 @@ export default function IntakeSessionPage({
           initialMessages={initialMessages}
           showSuggestedPrompts={false}
           onResponseComplete={handleResponseComplete}
-          onTransparencyUpdate={setTransparency}
+          onTransparencyUpdate={(meta) => {
+            setTransparency(meta);
+            setPendingActiveDomain(null); // AI responded — clear optimistic override
+          }}
           externalMessage={domainNavMessage}
         />
         <IntakeProgress

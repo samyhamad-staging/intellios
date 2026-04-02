@@ -6,7 +6,7 @@ import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency
 import { StakeholderContributionsPanel } from "./stakeholder-contributions-panel";
 import { Divider } from "@/components/ui/divider";
 import {
-  Shield, Lightbulb, CheckCircle2, Circle, ChevronDown, Cpu, BrainCircuit,
+  Shield, Lightbulb, CheckCircle2, Circle, ChevronDown, Cpu, BrainCircuit, Users,
 } from "lucide-react";
 
 // ── Label maps ────────────────────────────────────────────────────────────────
@@ -80,6 +80,173 @@ function DisclosureSection({
       </button>
       {open && <div className="px-3 pb-3 pt-0">{children}</div>}
     </div>
+  );
+}
+
+// ── Progressive-disclosure Governance Checklist ───────────────────────────────
+
+const PENDING_PREVIEW = 3; // max pending items shown before "X more" expander
+
+function GovernanceChecklistSection({
+  checklist,
+  satisfied,
+  total,
+  pending,
+}: {
+  checklist: IntakeTransparencyMetadata["governanceChecklist"];
+  satisfied: number;
+  total: number;
+  pending: IntakeTransparencyMetadata["governanceChecklist"];
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const satisfiedItems = checklist.filter((g) => g.satisfied);
+  const visiblePending = expanded ? pending : pending.slice(0, PENDING_PREVIEW);
+  const hiddenCount = pending.length - PENDING_PREVIEW;
+
+  return (
+    <DisclosureSection
+      defaultOpen={true}
+      title="Required Governance"
+      badge={
+        <span className={`text-2xs font-mono font-medium tabular-nums ${
+          satisfied === total ? "text-emerald-600"
+          : satisfied > 0    ? "text-amber-600"
+          :                    "text-text-tertiary"
+        }`}>
+          {satisfied}/{total}
+        </span>
+      }
+    >
+      <ul className="flex flex-col gap-1.5 pt-1">
+        {/* Satisfied items first */}
+        {satisfiedItems.map((item, i) => (
+          <li key={`sat-${i}`} className="flex items-start gap-2">
+            <CheckCircle2 size={14} className="mt-0.5 text-emerald-500 shrink-0" />
+            <div className="min-w-0">
+              <span className="text-xs text-text-secondary">{item.type}</span>
+              <p className="text-2xs text-text-tertiary truncate" title={item.reason}>{item.reason}</p>
+            </div>
+          </li>
+        ))}
+        {/* Pending items — progressive disclosure */}
+        {visiblePending.map((item, i) => (
+          <li key={`pend-${i}`} className="flex items-start gap-2">
+            <Circle size={14} className="mt-0.5 text-border-strong shrink-0" />
+            <div className="min-w-0">
+              <span className="text-xs text-text">{item.type}</span>
+              <p className="text-2xs text-text-tertiary truncate" title={item.reason}>{item.reason}</p>
+            </div>
+          </li>
+        ))}
+        {/* Expand / collapse */}
+        {!expanded && hiddenCount > 0 && (
+          <li>
+            <button
+              onClick={() => setExpanded(true)}
+              className="text-2xs font-mono text-text-tertiary hover:text-text transition-colors"
+            >
+              +{hiddenCount} more pending
+            </button>
+          </li>
+        )}
+        {expanded && hiddenCount > 0 && (
+          <li>
+            <button
+              onClick={() => setExpanded(false)}
+              className="text-2xs font-mono text-text-tertiary hover:text-text transition-colors"
+            >
+              Show less
+            </button>
+          </li>
+        )}
+      </ul>
+    </DisclosureSection>
+  );
+}
+
+// ── Progressive-disclosure Coverage Analysis ──────────────────────────────────
+
+function CoverageAnalysisSection({
+  topics,
+  covered,
+  total,
+}: {
+  topics: IntakeTransparencyMetadata["probingTopics"];
+  covered: number;
+  total: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const coveredItems = topics.filter((t) => t.covered);
+  const openItems = topics.filter((t) => !t.covered);
+  const visibleOpen = expanded ? openItems : openItems.slice(0, PENDING_PREVIEW);
+  const hiddenCount = openItems.length - PENDING_PREVIEW;
+
+  return (
+    <DisclosureSection
+      defaultOpen={true}
+      title="Coverage Analysis"
+      badge={
+        <span className={`text-2xs font-mono font-medium tabular-nums ${covered === total ? "text-emerald-600" : "text-text-tertiary"}`}>
+          {covered}/{total}
+        </span>
+      }
+    >
+      <ul className="flex flex-col gap-1.5 pt-1">
+        {/* Covered topics first */}
+        {coveredItems.map((topic, i) => (
+          <li key={`cov-${i}`} className="flex items-start gap-2">
+            {topic.level === "mandatory"
+              ? <Shield size={13} className="mt-0.5 text-indigo-400 shrink-0" />
+              : <Lightbulb size={13} className="mt-0.5 text-amber-400 shrink-0" />
+            }
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-xs text-text-secondary">{topic.topic}</span>
+                <span className="text-2xs font-mono font-medium shrink-0 text-emerald-600">DONE</span>
+              </div>
+              <p className="text-2xs text-text-tertiary">{topic.reason}</p>
+            </div>
+          </li>
+        ))}
+        {/* Open topics — progressive disclosure */}
+        {visibleOpen.map((topic, i) => (
+          <li key={`open-${i}`} className="flex items-start gap-2">
+            {topic.level === "mandatory"
+              ? <Shield size={13} className="mt-0.5 text-indigo-400 shrink-0" />
+              : <Lightbulb size={13} className="mt-0.5 text-amber-400 shrink-0" />
+            }
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-xs text-text">{topic.topic}</span>
+                <span className="text-2xs font-mono font-medium shrink-0 text-amber-500">OPEN</span>
+              </div>
+              <p className="text-2xs text-text-tertiary">{topic.reason}</p>
+            </div>
+          </li>
+        ))}
+        {/* Expand / collapse */}
+        {!expanded && hiddenCount > 0 && (
+          <li>
+            <button
+              onClick={() => setExpanded(true)}
+              className="text-2xs font-mono text-text-tertiary hover:text-text transition-colors"
+            >
+              +{hiddenCount} more open
+            </button>
+          </li>
+        )}
+        {expanded && hiddenCount > 0 && (
+          <li>
+            <button
+              onClick={() => setExpanded(false)}
+              className="text-2xs font-mono text-text-tertiary hover:text-text transition-colors"
+            >
+              Show less
+            </button>
+          </li>
+        )}
+      </ul>
+    </DisclosureSection>
   );
 }
 
@@ -183,35 +350,14 @@ export function IntakeProgress({
           (() => {
             const satisfied = transparency.governanceChecklist.filter((g) => g.satisfied).length;
             const total = transparency.governanceChecklist.length;
+            const pending = transparency.governanceChecklist.filter((g) => !g.satisfied);
             return (
-              <DisclosureSection
-                defaultOpen={true}
-                title="Required Governance"
-                badge={
-                  <span className={`text-2xs font-mono font-medium tabular-nums ${
-                    satisfied === total ? "text-emerald-600"
-                    : satisfied > 0    ? "text-amber-600"
-                    :                    "text-text-tertiary"
-                  }`}>
-                    {satisfied}/{total}
-                  </span>
-                }
-              >
-                <ul className="flex flex-col gap-1.5 pt-1">
-                  {transparency.governanceChecklist.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      {item.satisfied
-                        ? <CheckCircle2 size={14} className="mt-0.5 text-emerald-500 shrink-0" />
-                        : <Circle size={14} className="mt-0.5 text-border-strong shrink-0" />
-                      }
-                      <div className="min-w-0">
-                        <span className={`text-xs ${item.satisfied ? "text-text-secondary" : "text-text"}`}>{item.type}</span>
-                        <p className="text-2xs text-text-tertiary truncate" title={item.reason}>{item.reason}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </DisclosureSection>
+              <GovernanceChecklistSection
+                checklist={transparency.governanceChecklist}
+                satisfied={satisfied}
+                total={total}
+                pending={pending}
+              />
             );
           })()}
 
@@ -221,35 +367,11 @@ export function IntakeProgress({
             const covered = transparency.probingTopics.filter((t) => t.covered).length;
             const total = transparency.probingTopics.length;
             return (
-              <DisclosureSection
-                defaultOpen={true}
-                title="Coverage Analysis"
-                badge={
-                  <span className={`text-2xs font-mono font-medium tabular-nums ${covered === total ? "text-emerald-600" : "text-text-tertiary"}`}>
-                    {covered}/{total}
-                  </span>
-                }
-              >
-                <ul className="flex flex-col gap-1.5 pt-1">
-                  {transparency.probingTopics.map((topic, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      {topic.level === "mandatory"
-                        ? <Shield size={13} className="mt-0.5 text-indigo-400 shrink-0" />
-                        : <Lightbulb size={13} className="mt-0.5 text-amber-400 shrink-0" />
-                      }
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="text-xs text-text">{topic.topic}</span>
-                          <span className={`text-2xs font-mono font-medium shrink-0 ${topic.covered ? "text-emerald-600" : "text-amber-500"}`}>
-                            {topic.covered ? "DONE" : "OPEN"}
-                          </span>
-                        </div>
-                        <p className="text-2xs text-text-tertiary">{topic.reason}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </DisclosureSection>
+              <CoverageAnalysisSection
+                topics={transparency.probingTopics}
+                covered={covered}
+                total={total}
+              />
             );
           })()}
 
@@ -289,16 +411,12 @@ export function IntakeProgress({
               riskTier={riskTier}
             />
           ) : (
-            <div
-              className="rounded-lg border border-dashed border-border px-4 py-3 text-center"
-              title="Available after context is captured."
-            >
-              <p className="text-2xs font-mono font-medium text-text-tertiary uppercase tracking-wide">
-                Stakeholder Input
-              </p>
-              <p className="mt-1 text-xs text-text-tertiary">
-                Available after context is captured.
-              </p>
+            /* ANALYZING state: compact summary row — stakeholder input not yet relevant */
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-raised px-3 py-2 opacity-50">
+              <Users size={12} className="text-text-tertiary shrink-0" />
+              <span className="text-2xs font-mono text-text-tertiary">
+                Stakeholder input — available after context is captured
+              </span>
             </div>
           )
         ) : null}

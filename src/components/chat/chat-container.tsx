@@ -89,11 +89,16 @@ export function ChatContainer({
     });
   }, [messages]);
 
+  // Track auto-generated navigation messages (domain chip clicks) so they can be
+  // visually distinguished from user-typed messages in the chat history.
+  const navigationMessages = useRef<Set<string>>(new Set());
+
   // Handle externally injected messages (e.g. domain chip click → "Let's focus on…")
   const lastExternalKey = useRef<number>(0);
   useEffect(() => {
     if (externalMessage && externalMessage.key !== lastExternalKey.current) {
       lastExternalKey.current = externalMessage.key;
+      navigationMessages.current.add(externalMessage.text);
       sendMessage({ text: externalMessage.text });
     }
   }, [externalMessage, sendMessage]);
@@ -233,6 +238,7 @@ export function ChatContainer({
                   role={msg.role as "user" | "assistant"}
                   content={text}
                   activeDomain={msg.role === "assistant" ? (domainTagByMessageId.get(msg.id) ?? undefined) : undefined}
+                  isNavigation={msg.role === "user" && navigationMessages.current.has(text)}
                 />
               )}
             </div>
