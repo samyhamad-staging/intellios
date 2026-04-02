@@ -2,6 +2,26 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 084 — 2026-04-01: Making the Machine Look Like a Machine
+
+Sessions 082–083 built the transparency layer and hardened the intake pipeline. Session 084 addresses what screenshots made undeniable: Intellios works like an enterprise AI product, but it didn't yet *look* like one.
+
+**The aesthetic gap was the problem.** The domain strip was functional — seven chips that filled as the AI captured data — but it communicated nothing distinctly AI about the interface. Emoji icons. Rounded pill shapes. A consumer-grade bouncing-dot streaming indicator. A sidebar with hardcoded gray values that bypassed the design token system entirely. None of these were bugs. All of them undermined the credibility signal the product needs to project in design partner conversations.
+
+**The redesign has a clear visual thesis.** Every decision maps to one of three metaphors: circuit boards, data pipelines, or telemetry systems. These are the visual languages of the tools enterprise engineers trust — Datadog, Vercel, Linear, GitHub Actions. Rectangular chips instead of pill shapes (nodes, not tags). A fill bar along the chip's bottom edge that animates like a signal level meter. Connector traces between chips that glow emerald when data flows through them. A shimmer that sweeps horizontally across the active chip — a domain-scan effect. An SVG arc ring for the readiness score instead of a text circle (telemetry, not a badge). A 5-bar waveform for streaming instead of bouncing dots.
+
+**The icon choices are deliberate.** `Target` for Purpose because it's a mechanical reticle — precise, aimed. `Cpu` for Capabilities because it's a chip — canonical computation. `GitBranch` for Behavior because branching logic is literally how LLM behavioral rules work. `Database` for Knowledge because it's the storage cylinder every ML system has. `ShieldAlert` for Guardrails because it implies an active, not passive, boundary. `Lock` for Governance because policy enforcement is about constraint. `ScrollText` for Audit because it reads as a technical log. No emoji survived this session.
+
+**The `hasToolCalls` guard solved a subtle deception.** Before any tool calls, `inferActiveDomain` falls back to "identity" — the lowest-fill required domain. This caused every AI message during context collection to show `◎ PURPOSE`, as if the AI were perpetually thinking about the agent's purpose regardless of what it was actually saying. It looked broken — stuck, or confused. The fix is a single useMemo: suppress the domain tag entirely until at least one tool call has been made. After that, the tag is accurate. Before that, it was misleading.
+
+**The Vercel tracking fix removed an operational frustration.** Every push from this worktree since it was created had been going to Vercel's Preview environment, not Production. The worktree branch is `master`; Vercel's production environment watches `main`. Every deploy was technically correct (the preview worked) but invisible to the production URL. Three commits of polished UI were deployed to a Preview URL that nobody sees by default. Fixed with upstream configuration: the worktree now pushes directly to `origin/main`.
+
+**The honor-redirections instruction addresses a UX failure that appeared repeatedly in screenshots.** The AI was re-asking the data sensitivity question after the user had explicitly said to move on. The existing system prompt said "Do not ask multiple questions at once" — but it said nothing about what to do when the user redirects. The new instruction is explicit: accept whatever answer the user provided (even if incomplete), follow their lead immediately, do not re-ask. The filler word ban was also strengthened — "Do not use..." is too passive for a model that was ignoring it; "Never open a response with..." is directive enough to change behavior.
+
+**The product is now visually consistent with what it claims to be.** An enterprise AI governance platform should look like it understands computation. The intake interface — the primary demo surface — now does.
+
+---
+
 ## Sessions 077–081 — 2026-03-31: Finishing the Sprint
 
 Sessions 077 through 081 completed the UI/UX optimization sprint and landed it all on master. The strategic arc is simple: Intellios had solid bones (89% of the full product vision shipped) but showed its prototype origins in small, compounding ways — native browser alerts, raw HTML tables, unstyled select dropdowns, div-based charts, broken modal animations. None of these were functional bugs. All of them eroded the first-impression credibility that design partner conversations require.

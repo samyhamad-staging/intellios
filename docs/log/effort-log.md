@@ -38,6 +38,36 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 084 — 2026-04-01
+
+**AI/futuristic UI redesign + UX refinements + Vercel tracking fix**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Context resumption + gap check | Continued from session 083 overflow; summary read + 4 source file reads | ~80k in / ~1k out |
+| Planning mode (redesign) | Full intake UI/UX plan — 8 files, visual spec, icon mapping, CSS animations | ~40k in / ~15k out |
+| Implementation (8 files) | globals.css, domain-progress-strip, domains, message-bubble, chat-container, chat-input, intake-progress, system-prompt | ~60k in / ~25k out |
+| UX refinement fixes (3) | hasToolCalls guard, AWAITING SIGNAL condition, filler word ban | ~20k in / ~4k out |
+| Vercel git tracking fix | git push + upstream config | ~5k in / ~0.5k out |
+| Documentation | Session log 084, _index, effort log, project journal | ~12k in / ~5k out |
+| **Session total (est.)** | | **~217k in / ~50.5k out** |
+
+**Estimated session cost:** Sonnet ~217k in × $3/1M + ~50.5k out × $15/1M = **$0.65 + $0.76 = ~$1.41**
+
+### Samy Effort
+
+| Item | Count/Detail |
+|---|---|
+| Messages sent | ~12 |
+| Decisions made | 3 (D-Arch: horizontal strip orientation confirmed; D-Approve: redesign plan; D-Approve: three UX refinements) |
+| Engagement type | Strategic direction + plan approval + screenshot feedback |
+| Estimated time | ~25 min |
+
+---
+
 ## Session 081 — 2026-03-31
 
 **Sprint close: merge feat/intake-v2-hardening → master**
