@@ -2,7 +2,19 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-04-01 (Session 085 — Agent Design Studio UX Polish)
+**Last updated:** 2026-04-02 (Session 087 — Design Studio Session List UX/UI Overhaul)
+
+---
+
+## ✓ Session 087 Complete (2026-04-02) — Design Studio Session List UX/UI Overhaul
+
+Seven UX/UI changes to the `/intake` session list addressing ghost session pollution, navigation, search, and staleness. **Ghost prevention (P0):** `QuickStartModal` gates session creation behind a purpose description (min 10 chars) — session created only on submit, not on button click. `NewIntakeButton` now opens the modal. **Tab navigation (P1):** `IntakePageClient` client wrapper with "In Progress (N)" | "Complete (N)" tabs, defaulting to In Progress — eliminates the scroll-to-find-completed problem. **Session grouping:** real active sessions (hasContext || filledDomains > 0) vs. ghost sessions (empty, collapsed by default). **Ghost bulk cleanup (P2):** "Clean up N" in the ghost section header runs parallel DELETE calls + router.refresh(). **Client-side search (P2):** filters by agentName or agentPurpose, no server round-trip. **Staleness signal (P1):** sessions > 7 days show amber "Inactive Xd" badge and absolute date. **Domain strip improved (P1):** h-2 w-4 bars (was h-1.5 w-2.5), x/7 label on all rows. **Continue → affordance (P2):** visible on hover for sessions with real progress. 2 new files, 2 modified, 0 migrations, 0 new deps.
+
+---
+
+## ✓ Session 086 Complete (2026-04-02) — Design Studio Conversation Phase UX/UI Enhancement
+
+Nine UX/UI changes to the intake session view (conversation phase). Design Intelligence panel redesigned with two-state animation (ghost checklist → live data resolved on first tool call). Unified 2-row header replacing separate floating classification bar. Live domain nav (7 pills wired to payload state via stable useRef callback). Risk tier badge always visible in header. Agent name breadcrumb wired to liveAgentName state. Phase 1 context summary banner above chat (deployment, data sensitivity, regulatory chips, purpose quote). Context-adaptive input placeholder keyed on last tool call. Stakeholder locked-state UI with domain chip preview. 0 new files, 3 modified, 0 migrations, 0 new deps.
 
 ---
 
