@@ -2,6 +2,48 @@ import { z } from "zod";
 import { tool, zodSchema } from "ai";
 import { IntakePayload, IntakeContext, AgentType, IntakeRiskTier, CaptureVerificationItem, PolicyQualityItem } from "@/lib/types/intake";
 
+// ── Agent name validation ─────────────────────────────────────────────────────
+// Rejects names that are very likely a person's first name rather than a
+// functional agent name. Uses an exact-match (case-insensitive) blocklist of
+// the most common English first names. Only triggers on single-word names —
+// "Customer Support Agent" always passes regardless of first token.
+
+const COMMON_FIRST_NAMES = new Set([
+  // Top male names
+  "james","john","robert","michael","william","david","richard","joseph","thomas","charles",
+  "christopher","daniel","matthew","anthony","mark","donald","steven","steve","paul","andrew",
+  "joshua","kenneth","kevin","brian","george","timothy","ronald","edward","jason","jeffrey",
+  "ryan","jacob","gary","nicholas","eric","jonathan","stephen","larry","justin","scott",
+  "brandon","benjamin","samuel","raymond","gregory","frank","alexander","patrick","jack",
+  "dennis","jerry","peter","pete","bob","jim","tom","mike","joe","bill","dave","rob","tim",
+  "nick","dan","ben","phil","matt","adam","alan","carl","neil","sean","ian","fred","ed","ted",
+  // Top female names
+  "mary","patricia","jennifer","linda","barbara","elizabeth","susan","jessica","sarah","karen",
+  "lisa","nancy","betty","margaret","sandra","ashley","dorothy","kimberly","emily","donna",
+  "michelle","carol","amanda","melissa","deborah","stephanie","rebecca","sharon","laura",
+  "cynthia","kathleen","amy","angela","shirley","anna","brenda","pamela","emma","nicole",
+  "helen","samantha","katherine","christine","debra","rachel","carolyn","janet","catherine",
+  "maria","heather","diane","julie","joyce","victoria","kelly","christina","lauren","joan",
+  "evelyn","olivia","judith","megan","cheryl","alice","ann","jean","denise","frances",
+  "danielle","amber","kate","beth","sue","meg","kim","pat","liz","jan","sue","sara","lisa",
+  "rose","ruth","grace","claire","amy","eve","ella","maya","zoe","lucy","ruby","iris",
+]);
+
+/**
+ * Returns true if `name` looks like a human first name rather than a functional
+ * agent name. Only single-word names are tested — multi-word names always pass.
+ */
+function looksLikeHumanName(name: string): boolean {
+  const trimmed = name.trim();
+  // Multi-word names are functional by definition ("Customer Support Agent")
+  if (/\s/.test(trimmed)) return false;
+  // All-caps single words are likely acronyms (e.g. "SAM", "ARIA") — pass
+  if (trimmed === trimmed.toUpperCase() && trimmed.length > 1) return false;
+  return COMMON_FIRST_NAMES.has(trimmed.toLowerCase());
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
  * Derive which governance policies are required given the intake context.
  * Returns an array of { type, reason } for each required but missing policy.
@@ -190,11 +232,22 @@ export function createIntakeTools(
       description:
         "Set the agent's name, description, and optional persona. Call this when you understand what the agent is and what it does.",
       inputSchema: zodSchema(z.object({
-        name: z.string().describe("Display name of the agent"),
+        name: z.string().describe("Functional display name of the agent (e.g. 'Customer Support Agent', 'Billing Assistant') — not a person's first name"),
         description: z.string().describe("What the agent does, in one or two sentences"),
         persona: z.string().optional().describe("Personality and communication style"),
       })),
       execute: async ({ name, description, persona }) => {
+        // Guard: reject names that look like a human first name.
+        // Agent names should be functional ("Billing Assistant") not personal ("Steve").
+        if (looksLikeHumanName(name)) {
+          return {
+            success: false,
+            error:
+              `"${name}" appears to be a person's first name rather than a functional agent name. ` +
+              `Agent names should describe what the agent does (e.g. "Customer Support Agent", "Compliance Monitor", "BillingBot"). ` +
+              `Ask the user what they'd like to call the agent in terms of its role or function.`,
+          };
+        }
         await updatePayload((p) => ({
           ...p,
           identity: { ...p.identity, name, description, persona },
