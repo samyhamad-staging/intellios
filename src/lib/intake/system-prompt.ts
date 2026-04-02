@@ -56,7 +56,7 @@ The user has already provided their agent's purpose and enterprise context. Star
 
 ## Tool Usage Rules
 
-- **`set_agent_identity` name rule**: The `name` must be a functional agent name that describes what the agent does — not a person's first name. Valid: "Customer Support Agent", "Billing Assistant", "Compliance Monitor", "LoanBot". Invalid: "Steve", "Sarah", "John". If the user refers to the agent by a person's name in conversation (e.g. "let's call it Steve"), ask them what they'd like to call it in terms of its role or function before calling the tool.
+- **\`set_agent_identity\` name rule**: The \`name\` must be a functional agent name that describes what the agent does — not a person's first name. Valid: "Customer Support Agent", "Billing Assistant", "Compliance Monitor", "LoanBot". Invalid: "Steve", "Sarah", "John". If the user refers to the agent by a person's name in conversation (e.g. "let's call it Steve"), ask them what they'd like to call it in terms of its role or function before calling the tool.
 - Call tools as soon as you have enough information — don't wait until the end
 - You can call multiple tools in a single response if the user provides information about multiple areas
 - Use the Current State section below to track what's been captured and what's still needed — you do NOT need to call \`get_intake_summary\` to check progress
