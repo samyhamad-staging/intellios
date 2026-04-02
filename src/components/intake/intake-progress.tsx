@@ -267,140 +267,147 @@ export function IntakeProgress({
 
   return (
     <aside
-      className={`w-72 shrink-0 border-l border-border bg-surface flex-col overflow-y-auto ${
+      className={`w-72 shrink-0 border-l border-border bg-surface flex-col ${
         mobileOpen
           ? "flex absolute inset-0 z-10 lg:relative lg:inset-auto animate-in slide-in-from-right duration-300"
           : "hidden lg:flex"
       }`}
     >
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3">
+      {/* ── Header — pinned, never scrolls ─────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-3 shrink-0">
         <span className="text-2xs font-mono font-semibold text-text-tertiary tracking-widest uppercase">
           Design Intelligence
         </span>
-        {/* Live indicator — pulses when transparency is active */}
-        {transparency && (
-          <div className="flex items-center gap-1.5">
-            <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-2xs font-mono text-text-tertiary">Live</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2.5">
+          {/* Model telemetry — merged into header */}
+          {transparency && (
+            <div
+              className="flex items-center gap-1"
+              title={transparency.model.reason}
+            >
+              <Cpu size={11} className="text-text-tertiary shrink-0" />
+              <span className="text-2xs font-mono text-text-tertiary">
+                {isHaiku ? "haiku" : "sonnet"}
+                {transparency.expertiseLevel ? ` · ${transparency.expertiseLevel}` : ""}
+              </span>
+            </div>
+          )}
+          {/* Live indicator */}
+          {transparency && (
+            <div className="flex items-center gap-1">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-2xs font-mono text-text-tertiary">Live</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <Divider soft />
 
-      {/* ── Transparency panels ─────────────────────────────────────────── */}
-      <div className="flex flex-col gap-2.5 px-4 py-3">
+      {/* ── AI Intelligence zone — scrollable ──────────────────────────── */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex flex-col gap-2.5 px-4 py-3">
 
-        {/* Empty state — shown until the AI has produced classification metadata */}
-        {!transparency?.classification && (
-          <div className="rounded-lg border border-dashed border-border p-4 text-center">
-            <BrainCircuit size={20} className="mx-auto mb-2 text-text-tertiary" />
-            <p className="text-2xs font-mono text-text-tertiary">ANALYZING</p>
-            <p className="mt-1 text-xs text-text-tertiary">
-              Insights appear as your agent design takes shape.
-            </p>
-          </div>
-        )}
-
-        {/* Classification */}
-        {transparency?.classification && (
-          <DisclosureSection
-            defaultOpen={false}
-            title="Classification"
-            badge={
-              <span className={`text-2xs font-mono font-medium rounded-full px-1.5 py-0.5 ${TIER_COLORS[transparency.classification.riskTier] ?? "bg-surface-muted text-text-secondary"}`}>
-                {transparency.classification.riskTier.toUpperCase()}
-              </span>
-            }
-          >
-            <div className="flex flex-col gap-2 pt-1">
-              <div>
-                <p className="text-2xs font-mono text-text-tertiary uppercase tracking-wide mb-1">Risk signals</p>
-                <ul className="flex flex-col gap-0.5">
-                  {transparency.classification.signals.map((s, i) => (
-                    <li key={i} className="text-xs text-text-secondary flex items-start gap-1.5">
-                      <span className="mt-1.5 h-1 w-1 rounded-full bg-text-tertiary shrink-0" />
-                      {s}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <p className="text-2xs font-mono text-text-tertiary uppercase tracking-wide mb-0.5">Agent type</p>
-                <p className="text-xs text-text-secondary">
-                  <span className="font-medium text-text">{AGENT_TYPE_LABELS[transparency.classification.agentType] ?? transparency.classification.agentType}</span>
-                  {transparency.classification.rationale && (
-                    <span className="text-text-tertiary"> — {transparency.classification.rationale}</span>
-                  )}
-                </p>
-              </div>
-              <div>
-                <p className="text-2xs font-mono text-text-tertiary uppercase tracking-wide mb-0.5">Depth</p>
-                <p className="text-xs text-text-secondary">
-                  {DEPTH_LABELS[transparency.classification.conversationDepth] ?? transparency.classification.conversationDepth}
-                </p>
-              </div>
+          {/* Empty state — shown until the AI has produced classification metadata */}
+          {!transparency?.classification && (
+            <div className="rounded-lg border border-dashed border-border p-4 text-center">
+              <BrainCircuit size={20} className="mx-auto mb-2 text-text-tertiary" />
+              <p className="text-2xs font-mono text-text-tertiary">ANALYZING</p>
+              <p className="mt-1 text-xs text-text-tertiary">
+                Insights appear as your agent design takes shape.
+              </p>
             </div>
-          </DisclosureSection>
-        )}
+          )}
 
-        {/* Governance Checklist */}
-        {transparency && transparency.governanceChecklist.length > 0 &&
-          (() => {
-            const satisfied = transparency.governanceChecklist.filter((g) => g.satisfied).length;
-            const total = transparency.governanceChecklist.length;
-            const pending = transparency.governanceChecklist.filter((g) => !g.satisfied);
-            return (
-              <GovernanceChecklistSection
-                checklist={transparency.governanceChecklist}
-                satisfied={satisfied}
-                total={total}
-                pending={pending}
-              />
-            );
-          })()}
+          {/* Classification — closed by default (passive metadata, not action) */}
+          {transparency?.classification && (
+            <DisclosureSection
+              defaultOpen={false}
+              title="Classification"
+              badge={
+                <span className={`text-2xs font-mono font-medium rounded-full px-1.5 py-0.5 ${TIER_COLORS[transparency.classification.riskTier] ?? "bg-surface-muted text-text-secondary"}`}>
+                  {transparency.classification.riskTier.toUpperCase()}
+                </span>
+              }
+            >
+              <div className="flex flex-col gap-2.5 pt-1">
+                {/* Risk signals — compact chips instead of bullet list */}
+                <div>
+                  <p className="text-2xs font-mono text-text-tertiary uppercase tracking-wide mb-1.5">
+                    Risk signals
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {transparency.classification.signals.map((s, i) => (
+                      <span
+                        key={i}
+                        className="inline-block rounded px-1.5 py-0.5 text-2xs bg-surface-muted border border-border text-text-secondary leading-tight"
+                      >
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {/* Agent type + depth — compact rows */}
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-2xs font-mono text-text-tertiary uppercase tracking-wide shrink-0">Type</span>
+                    <span className="text-xs font-medium text-text">
+                      {AGENT_TYPE_LABELS[transparency.classification.agentType] ?? transparency.classification.agentType}
+                    </span>
+                    {transparency.classification.rationale && (
+                      <span className="text-2xs text-text-tertiary truncate" title={transparency.classification.rationale}>
+                        — {transparency.classification.rationale}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-2xs font-mono text-text-tertiary uppercase tracking-wide shrink-0">Depth</span>
+                    <span className="text-xs text-text-secondary">
+                      {DEPTH_LABELS[transparency.classification.conversationDepth] ?? transparency.classification.conversationDepth}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </DisclosureSection>
+          )}
 
-        {/* Coverage Analysis */}
-        {transparency && transparency.probingTopics.length > 0 &&
-          (() => {
-            const covered = transparency.probingTopics.filter((t) => t.covered).length;
-            const total = transparency.probingTopics.length;
-            return (
-              <CoverageAnalysisSection
-                topics={transparency.probingTopics}
-                covered={covered}
-                total={total}
-              />
-            );
-          })()}
+          {/* Governance Checklist */}
+          {transparency && transparency.governanceChecklist.length > 0 &&
+            (() => {
+              const satisfied = transparency.governanceChecklist.filter((g) => g.satisfied).length;
+              const total = transparency.governanceChecklist.length;
+              const pending = transparency.governanceChecklist.filter((g) => !g.satisfied);
+              return (
+                <GovernanceChecklistSection
+                  checklist={transparency.governanceChecklist}
+                  satisfied={satisfied}
+                  total={total}
+                  pending={pending}
+                />
+              );
+            })()}
 
-        {/* Model telemetry row */}
-        {transparency && (
-          <div className="flex items-center justify-between rounded-lg border border-border bg-surface-raised px-3 py-2">
-            <div className="flex items-center gap-1.5" title={transparency.model.reason}>
-              <Cpu size={13} className="text-text-tertiary shrink-0" />
-              <span className="text-2xs font-mono text-text-secondary">
-                {isHaiku ? "claude-haiku" : "claude-sonnet"}
-              </span>
-              <span
-                className={`h-1.5 w-1.5 rounded-full shrink-0 ${isHaiku ? "bg-amber-400" : "bg-indigo-400"}`}
-                title={isHaiku ? "Haiku — efficient" : "Sonnet — advanced"}
-              />
-            </div>
-            {transparency.expertiseLevel && (
-              <span className="text-2xs font-mono text-text-tertiary" title={`Detected expertise: ${transparency.expertiseLevel}`}>
-                {transparency.expertiseLevel} mode
-              </span>
-            )}
-          </div>
-        )}
+          {/* Coverage Analysis */}
+          {transparency && transparency.probingTopics.length > 0 &&
+            (() => {
+              const covered = transparency.probingTopics.filter((t) => t.covered).length;
+              const total = transparency.probingTopics.length;
+              return (
+                <CoverageAnalysisSection
+                  topics={transparency.probingTopics}
+                  covered={covered}
+                  total={total}
+                />
+              );
+            })()}
+
+        </div>
       </div>
 
       <Divider soft />
 
-      {/* ── Stakeholder contributions ───────────────────────────────────── */}
-      <div className="px-4 py-3">
+      {/* ── Stakeholder zone — pinned, always visible ───────────────────── */}
+      <div className="shrink-0 px-4 py-3">
         {onContributionAdded ? (
           isContextReady ? (
             <StakeholderContributionsPanel

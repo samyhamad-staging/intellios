@@ -11,6 +11,7 @@ import { DomainProgressStrip } from "@/components/intake/domain-progress-strip";
 import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
 import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
 import { computeDomainProgress } from "@/lib/intake/domains";
+import { ChevronRight, LayoutGrid } from "lucide-react";
 
 /** Domain navigation labels — used when clicking a chip to steer the conversation */
 const DOMAIN_NAV_LABELS: Record<string, string> = {
@@ -95,6 +96,12 @@ export default function IntakeSessionPage({
     () => computeDomainProgress(currentPayload, intakeContext, classification?.riskTier ?? null),
     [currentPayload, intakeContext, classification?.riskTier]
   );
+
+  // Derive agent display name from payload identity for the header breadcrumb.
+  const agentDisplayName = useMemo(() => {
+    const name = (currentPayload?.identity as Record<string, unknown> | undefined)?.name as string | undefined;
+    return name ?? null;
+  }, [currentPayload]);
 
   function handleDomainClick(domainKey: string) {
     const label = DOMAIN_NAV_LABELS[domainKey] ?? domainKey;
@@ -439,12 +446,24 @@ export default function IntakeSessionPage({
 
   return (
     <div className="flex h-screen flex-col">
-      {/* Header — Logo + Domain Progress Strip + Actions */}
+      {/* Header — Breadcrumb + Domain Progress Strip + Actions */}
       <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-2.5 gap-3">
-        <div className="shrink-0">
-          <h1 className="text-lg font-semibold leading-tight">Intellios</h1>
-          <p className="text-2xs text-text-secondary">Agent Design Studio</p>
-        </div>
+
+        {/* Breadcrumb — "Design Studio › Agent Name" */}
+        <button
+          onClick={() => router.push("/intake")}
+          className="group flex items-center gap-1.5 shrink-0 min-w-0 rounded-lg px-2 py-1 -ml-2 hover:bg-surface-muted transition-colors"
+          title="Back to Design Studio"
+        >
+          <LayoutGrid size={13} className="text-text-tertiary shrink-0 group-hover:text-text-secondary transition-colors" />
+          <span className="text-xs font-medium text-text-secondary group-hover:text-text transition-colors whitespace-nowrap">
+            Design Studio
+          </span>
+          <ChevronRight size={12} className="text-border-strong shrink-0" />
+          <span className="text-xs text-text truncate max-w-[140px]">
+            {agentDisplayName ?? "New session"}
+          </span>
+        </button>
 
         {/* Domain Progress Strip — replaces stepper + classification bar */}
         <div className="flex-1 min-w-0">
@@ -475,12 +494,6 @@ export default function IntakeSessionPage({
             className="lg:hidden rounded-lg border border-border px-2.5 py-1 text-xs text-text-secondary hover:border-border-strong transition-colors"
           >
             {mobileSidebarOpen ? "Hide" : "Details"}
-          </button>
-          <button
-            onClick={() => router.push("/intake")}
-            className="text-xs text-text-tertiary hover:text-text-secondary transition-colors"
-          >
-            ← Sessions
           </button>
         </div>
       </header>
@@ -536,7 +549,10 @@ export default function IntakeSessionPage({
           onResponseComplete={handleResponseComplete}
           onTransparencyUpdate={(meta) => {
             setTransparency(meta);
-            setPendingActiveDomain(null); // AI responded — clear optimistic override
+            // Do NOT clear pendingActiveDomain here. The AI's reported activeDomain
+            // reflects its internal probing state and lags behind (or ignores) user
+            // navigation intent. The pending override persists until the user clicks
+            // a different chip, ensuring explicit navigation choices are respected.
           }}
           externalMessage={domainNavMessage}
         />

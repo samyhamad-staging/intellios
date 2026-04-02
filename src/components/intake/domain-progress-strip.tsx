@@ -29,10 +29,10 @@ const AGENT_TYPE_LABELS: Record<AgentType, string> = {
 };
 
 const RISK_TIER_BORDER: Record<IntakeRiskTier, string> = {
-  low:      "border-l-emerald-500 text-emerald-700",
-  medium:   "border-l-amber-500  text-amber-700",
-  high:     "border-l-orange-500 text-orange-700",
-  critical: "border-l-red-500    text-red-700",
+  low:      "text-emerald-700",
+  medium:   "text-amber-700",
+  high:     "text-orange-700",
+  critical: "text-red-700",
 };
 
 // ── Fill bar color by level ────────────────────────────────────────────────────
@@ -145,21 +145,27 @@ function DomainChip({
       type="button"
       data-domain={domain.key}
       onClick={onClick}
+      title={isActive ? `Focusing on ${domain.label}` : `Click to focus conversation on ${domain.label}`}
       className={`
         relative flex h-9 items-center gap-1.5 rounded-lg px-2.5 shrink-0
         transition-all duration-300 cursor-pointer select-none overflow-hidden
         ${isActive
-          ? "bg-primary/8 border border-primary/50"
+          ? "bg-primary/12 border border-primary/50"
           : "bg-transparent border border-transparent hover:border-primary/30 hover:bg-primary/5"
         }
       `}
-      style={isActive ? { boxShadow: "0 0 0 1px rgba(99,102,241,0.2), 0 0 12px rgba(99,102,241,0.15)" } : undefined}
+      style={isActive ? { boxShadow: "0 0 0 1px rgba(99,102,241,0.25), 0 0 14px rgba(99,102,241,0.18)" } : undefined}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
       {/* Scan shimmer on active chip */}
       {isActive && (
         <div className="absolute inset-y-0 w-12 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none animate-[domain-scan_2.5s_linear_infinite]" />
+      )}
+
+      {/* Active focus indicator — small pulsing dot above icon */}
+      {isActive && (
+        <span className="absolute top-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-primary animate-pulse" />
       )}
 
       {/* Icon */}
@@ -171,7 +177,7 @@ function DomainChip({
       {/* Label */}
       <span
         className={`text-2xs whitespace-nowrap hidden sm:inline transition-colors duration-300 ${
-          isActive ? "font-semibold text-text" : "font-medium text-text-secondary"
+          isActive ? "font-semibold text-primary" : "font-medium text-text-secondary"
         }`}
       >
         {domain.label}
@@ -253,10 +259,20 @@ export function DomainProgressStrip({
   }
 
   return (
-    <div className="flex items-center gap-2.5 min-w-0">
+    <div className="flex items-center gap-2 min-w-0">
+
+      {/* "Navigate" label — frames chips as interactive navigation, not a stepper */}
+      <div className="hidden xl:flex items-center gap-1.5 shrink-0">
+        <span className="text-2xs font-mono text-text-tertiary uppercase tracking-widest">
+          Navigate
+        </span>
+        <div className="h-3 w-px bg-border" />
+      </div>
+
       {/* Domain chips — scrollable on narrow viewports */}
       <div
         ref={scrollRef}
+        title="Click any domain to focus the conversation there"
         className="flex items-center gap-0 overflow-x-auto scrollbar-none min-w-0"
       >
         {domains.map((domain, idx) => (
@@ -275,40 +291,52 @@ export function DomainProgressStrip({
         ))}
       </div>
 
-      {/* Separator */}
-      <div className="h-4 w-px bg-border shrink-0" />
+      {/* Separator — wider gap signals a section boundary */}
+      <div className="h-5 w-px bg-border-strong shrink-0 mx-1" />
 
-      {/* Classification badges + score */}
-      <div className="flex items-center gap-2 shrink-0">
+      {/* Classification block — clearly labelled to distinguish from domain chips */}
+      <div className="flex items-center gap-1.5 shrink-0">
         {classification && (
           <>
-            <span
-              className="border-l-2 border-l-border pl-1.5 pr-2 py-0.5 text-2xs font-mono text-text-secondary bg-transparent rounded-sm cursor-pointer hover:text-text transition-colors"
+            {/* Agent type */}
+            <div
+              className="flex items-center gap-1 cursor-pointer group"
               title={`Agent type: ${AGENT_TYPE_LABELS[classification.agentType]} (click to override)`}
               onClick={onOverrideClick}
             >
-              {AGENT_TYPE_LABELS[classification.agentType]}
-            </span>
-            <span
-              className={`border-l-2 pl-1.5 pr-2 py-0.5 text-2xs font-mono bg-transparent rounded-sm cursor-pointer hover:opacity-70 transition-opacity ${RISK_TIER_BORDER[classification.riskTier]}`}
+              <span className="text-2xs font-mono text-text-tertiary uppercase tracking-wide">type</span>
+              <span className="text-2xs font-mono text-text-secondary group-hover:text-text transition-colors">
+                {AGENT_TYPE_LABELS[classification.agentType]}
+              </span>
+            </div>
+            <div className="h-3 w-px bg-border shrink-0" />
+            {/* Risk tier */}
+            <div
+              className={`flex items-center gap-1 cursor-pointer group`}
               title={`Risk tier: ${classification.riskTier.toUpperCase()} (click to override)`}
               onClick={onOverrideClick}
             >
-              {classification.riskTier.toUpperCase()}
-            </span>
+              <span className="text-2xs font-mono text-text-tertiary uppercase tracking-wide">risk</span>
+              <span className={`text-2xs font-mono font-semibold ${RISK_TIER_BORDER[classification.riskTier]} border-0 pl-0`}>
+                {classification.riskTier.toUpperCase()}
+              </span>
+            </div>
           </>
         )}
         {classificationLoading && !classification && (
-          <div className="h-4 w-16 animate-pulse rounded bg-surface-muted" />
+          <div className="h-4 w-24 animate-pulse rounded bg-surface-muted" />
         )}
+      </div>
 
-        {/* Coverage counter */}
-        <div className="flex flex-col items-center shrink-0" title={`${domains.filter(d => d.fillLevel > 0).length} of ${domains.length} domains captured`}>
-          <span className="text-xs font-bold font-mono tabular-nums text-text">
-            {domains.filter(d => d.fillLevel > 0).length}/{domains.length}
-          </span>
-          <span className="text-2xs font-mono text-text-tertiary leading-none">domains</span>
-        </div>
+      {/* Separator */}
+      <div className="h-4 w-px bg-border shrink-0" />
+
+      {/* Coverage counter */}
+      <div className="flex flex-col items-center shrink-0" title={`${domains.filter(d => d.fillLevel > 0).length} of ${domains.length} domains captured`}>
+        <span className="text-xs font-bold font-mono tabular-nums text-text">
+          {domains.filter(d => d.fillLevel > 0).length}/{domains.length}
+        </span>
+        <span className="text-2xs font-mono text-text-tertiary leading-none">domains</span>
       </div>
 
       {/* Tooltip */}
