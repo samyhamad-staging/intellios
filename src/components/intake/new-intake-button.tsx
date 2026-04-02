@@ -1,41 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { QuickStartModal } from "./quick-start-modal";
 
 export function NewIntakeButton({ className }: { className?: string }) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleClick() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/intake/sessions", { method: "POST" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        const msg = (body as { message?: string }).message ?? `HTTP ${res.status}`;
-        throw new Error(msg);
-      }
-      const session = await res.json();
-      router.push(`/intake/${session.id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not start a session.");
-      setLoading(false);
-    }
-  }
+  const [modalOpen, setModalOpen] = useState(false);
 
   return (
-    <div>
+    <>
       <button
-        onClick={handleClick}
-        disabled={loading}
-        className={className ?? "rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"}
+        onClick={() => setModalOpen(true)}
+        className={className ?? "rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-700 transition-colors"}
       >
-        {loading ? "Creating session…" : "Design a New Agent"}
+        New Agent
       </button>
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
-    </div>
+
+      {modalOpen && (
+        <QuickStartModal onClose={() => setModalOpen(false)} />
+      )}
+    </>
   );
 }
