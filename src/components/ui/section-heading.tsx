@@ -1,6 +1,6 @@
 import { clsx } from "clsx";
 
-interface SectionHeadingProps {
+export interface SectionHeadingProps {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
