@@ -1221,4 +1221,7 @@ function ReportDocument({
             Risk classifications require validation against your enterprise model risk taxonomy.
           </p>
         </footer>
-     
+      </div>
+    </div>
+  )
+}
