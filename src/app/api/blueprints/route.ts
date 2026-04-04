@@ -59,7 +59,9 @@ const GenerateBody = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
+  // C-13: include "designer" (legacy role alias for architect) so existing
+  // accounts can generate blueprints without a DB migration.
+  const { session: authSession, error } = await requireAuth(["architect", "designer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 

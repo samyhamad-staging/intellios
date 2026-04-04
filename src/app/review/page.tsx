@@ -149,7 +149,11 @@ export default function ReviewQueuePage() {
             .then((d) => setSettings(d.settings ?? DEFAULT_ENTERPRISE_SETTINGS))
             .catch(() => {});
         }
-        const roleParam = role ? `?role=${encodeURIComponent(role)}` : "";
+        // W-02/W-11: Admin should see ALL in-review items regardless of which
+        // approval step they are at. Passing ?role=admin to the API would only
+        // return blueprints where the active step's role === "admin", causing
+        // the queue to appear empty when blueprints are at "reviewer" steps.
+        const roleParam = (role && role !== "admin") ? `?role=${encodeURIComponent(role)}` : "";
         return fetch(`/api/review${roleParam}`);
       })
       .then((r) => r?.json())

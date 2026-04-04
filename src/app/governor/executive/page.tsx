@@ -47,6 +47,7 @@ interface Notification {
 function fmtCost(n: number) {
   if (n >= 1000) return `$${(n / 1000).toFixed(1)}k`;
   if (n >= 1)    return `$${n.toFixed(2)}`;
+  if (n === 0)   return `$0.00`;
   return `$${n.toFixed(4)}`;
 }
 

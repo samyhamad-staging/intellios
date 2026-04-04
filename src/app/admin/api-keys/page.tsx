@@ -128,24 +128,27 @@ export default function ApiKeysPage() {
               className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </FormField>
-          <div>
-            <p className="text-xs font-medium text-text-secondary mb-2">Scopes</p>
-            <div className="flex flex-wrap gap-2">
-              {validScopes.map((scope) => (
-                <button
-                  key={scope}
-                  onClick={() => toggleScope(scope)}
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                    form.scopes.includes(scope)
-                      ? "bg-violet-100 text-violet-700 border border-violet-300"
-                      : "bg-surface-muted text-text-secondary border border-border hover:border-violet-300"
-                  }`}
-                >
-                  {scope}
-                </button>
-              ))}
+          {/* W-07: Only render the Scopes section if the API returned available scopes */}
+          {validScopes.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-text-secondary mb-2">Scopes</p>
+              <div className="flex flex-wrap gap-2">
+                {validScopes.map((scope) => (
+                  <button
+                    key={scope}
+                    onClick={() => toggleScope(scope)}
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                      form.scopes.includes(scope)
+                        ? "bg-violet-100 text-violet-700 border border-violet-300"
+                        : "bg-surface-muted text-text-secondary border border-border hover:border-violet-300"
+                    }`}
+                  >
+                    {scope}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
           <button
             onClick={handleCreate}
             disabled={creating || !form.name.trim()}

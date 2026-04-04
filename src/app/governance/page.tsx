@@ -418,7 +418,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
         </div>
         <Link
           href="/audit"
-          className="rounded-lg border border-border px-3 py-1.5 text-sm text-text-secondary hover:border-border-strong hover:text-text transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text-secondary hover:border-border-strong hover:text-text transition-colors"
         >
           Audit Trail →
         </Link>

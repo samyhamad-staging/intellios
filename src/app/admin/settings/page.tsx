@@ -13,10 +13,30 @@ import { FormField, FormSection } from "@/components/ui/form-field";
 import type { EnterpriseSettings, ApprovalChainStep } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 
+// ── Section jump nav ─────────────────────────────────────────────────────────
+// Defined outside the component so the reference is stable and can be used
+// both in the IntersectionObserver effect and in the render — without
+// violating Rules of Hooks by declaring useState after an early return.
+const SECTIONS = [
+  { id: "branding",           label: "Branding" },
+  { id: "periodic-review",    label: "Periodic Review" },
+  { id: "review-sla",         label: "Review SLA" },
+  { id: "governance-rules",   label: "Governance Rules" },
+  { id: "notifications",      label: "Notifications" },
+  { id: "approval-chain",     label: "Approval Chain" },
+  { id: "deployment-targets", label: "Deployment" },
+] as const;
+
+type SectionId = typeof SECTIONS[number]["id"];
+
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<EnterpriseSettings>(DEFAULT_ENTERPRISE_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // C-02: moved activeSection useState above the early return to satisfy Rules of Hooks.
+  // Previously declared after `if (loading) return ...` which caused React to throw.
+  const [activeSection, setActiveSection] = useState<SectionId>("branding");
+
   useEffect(() => {
     fetch("/api/admin/settings")
       .then((r) => r.json())
@@ -51,30 +71,9 @@ export default function AdminSettingsPage() {
     }
   }, [settings]);
 
-  if (loading) {
-    return (
-      <div className="px-6 py-6 space-y-6">
-        <SkeletonList rows={5} height="h-16" />
-      </div>
-    );
-  }
-
-  // ── Section jump nav ──────────────────────────────────────────────────────
-  const SECTIONS = [
-    { id: "branding",           label: "Branding" },
-    { id: "periodic-review",    label: "Periodic Review" },
-    { id: "review-sla",         label: "Review SLA" },
-    { id: "governance-rules",   label: "Governance Rules" },
-    { id: "notifications",      label: "Notifications" },
-    { id: "approval-chain",     label: "Approval Chain" },
-    { id: "deployment-targets", label: "Deployment" },
-  ] as const;
-
-  type SectionId = typeof SECTIONS[number]["id"];
-  const [activeSection, setActiveSection] = useState<SectionId>("branding");
-
   // IntersectionObserver to track which section is in view
   useEffect(() => {
+    if (loading) return;
     const observers: IntersectionObserver[] = [];
     SECTIONS.forEach(({ id }) => {
       const el = document.getElementById(id);
@@ -87,11 +86,18 @@ export default function AdminSettingsPage() {
       observers.push(obs);
     });
     return () => observers.forEach((o) => o.disconnect());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loading]);
 
   function jumpTo(id: string) {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  if (loading) {
+    return (
+      <div className="px-6 py-6 space-y-6">
+        <SkeletonList rows={5} height="h-16" />
+      </div>
+    );
   }
 
   return (

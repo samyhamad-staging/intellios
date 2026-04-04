@@ -90,7 +90,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "designer", "admin"]);
   if (error) return error;
 
   const { data: body, error: bodyError } = await parseBody(request, UpdateWorkflowBody);

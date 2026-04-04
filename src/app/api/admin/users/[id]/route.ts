@@ -8,7 +8,7 @@ import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
 
-const ROLES = ["architect", "reviewer", "compliance_officer", "admin", "viewer"] as const;
+const ROLES = ["architect", "designer", "reviewer", "compliance_officer", "admin", "viewer"] as const;
 
 const UpdateUserBody = z.object({
   name: z.string().min(1).max(200).optional(),

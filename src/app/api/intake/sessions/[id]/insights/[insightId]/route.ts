@@ -21,7 +21,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; insightId: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "designer", "admin"]);
   if (error) return error;
 
   const requestId = getRequestId(request);

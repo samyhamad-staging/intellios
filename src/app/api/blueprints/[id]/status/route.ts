@@ -57,7 +57,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   // Include compliance_officer — they may be part of a multi-step approval chain
-  const { session: authSession, error } = await requireAuth(["architect", "reviewer", "compliance_officer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "designer", "reviewer", "compliance_officer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 

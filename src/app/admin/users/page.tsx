@@ -24,19 +24,32 @@ interface Invitation {
   role: string;
   expiresAt: string;
   createdAt: string;
-  invitedBy: { email: string; name: string };
+  // W-14/C-11: invitedBy may be absent in API responses that don't join user records
+  invitedBy?: { email: string; name: string } | null;
 }
 
 const ROLES = [
   { value: "architect",          label: "Architect" },
+  { value: "designer",           label: "Designer" },   // W-14: legacy alias for Architect
   { value: "reviewer",          label: "Reviewer" },
   { value: "compliance_officer", label: "Compliance Officer" },
   { value: "admin",             label: "Admin" },
   { value: "viewer",            label: "Viewer" },
 ] as const;
 
+// W-03: "designer" is the legacy DB value for architect — map it to Architect label
+const ROLE_DISPLAY_LABELS: Record<string, string> = {
+  architect: "Architect",
+  designer:  "Architect",
+  reviewer:  "Reviewer",
+  compliance_officer: "Compliance Officer",
+  admin:     "Admin",
+  viewer:    "Viewer",
+};
+
 const ROLE_COLORS: Record<string, string> = {
   architect:         "bg-blue-50 text-blue-700 border-blue-200",
+  designer:          "bg-blue-50 text-blue-700 border-blue-200",
   reviewer:          "bg-amber-50 text-amber-700 border-amber-200",
   compliance_officer: "bg-green-50 text-green-700 border-green-200",
   admin:             "bg-purple-50 text-purple-700 border-purple-200",
@@ -45,6 +58,7 @@ const ROLE_COLORS: Record<string, string> = {
 
 const ROLE_ACCENT: Record<string, string> = {
   architect:         "border-blue-400",
+  designer:          "border-blue-400",
   reviewer:          "border-amber-400",
   compliance_officer: "border-green-400",
   admin:             "border-purple-400",
@@ -54,7 +68,7 @@ const ROLE_ACCENT: Record<string, string> = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function RoleBadge({ role }: { role: string }) {
-  const label = ROLES.find((r) => r.value === role)?.label ?? role;
+  const label = ROLE_DISPLAY_LABELS[role] ?? role;
   const color = ROLE_COLORS[role] ?? "bg-surface-raised text-text-secondary border-border";
   return (
     <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${color}`}>
@@ -227,6 +241,19 @@ function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // W-13: Explicit validation feedback before hitting the API
+    if (!email.trim()) {
+      setError("Email address is required.");
+      return;
+    }
+    if (!email.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (!role) {
+      setError("Please select a role for this user.");
+      return;
+    }
     setSending(true);
     setError(null);
 
@@ -244,7 +271,14 @@ function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
         return;
       }
 
-      onInvited(data.invitation!);
+      // C-11: Guard against missing invitation in response to prevent crash
+      if (!data.invitation) {
+        setError("Invitation may have been sent — please reload to confirm.");
+        setSending(false);
+        return;
+      }
+
+      onInvited(data.invitation);
     } catch {
       setError("Network error. Please try again.");
       setSending(false);
@@ -877,7 +911,7 @@ export default function AdminUsersPage() {
                     <span className="truncate text-sm text-text">{inv.email}</span>
                     <RoleBadge role={inv.role} />
                     <span className="truncate text-xs text-text-secondary">
-                      {inv.invitedBy.name || inv.invitedBy.email}
+                      {inv.invitedBy?.name || inv.invitedBy?.email || "You"}
                     </span>
                     <span className="text-right text-xs text-amber-600 font-medium">
                       {timeUntil(inv.expiresAt)}

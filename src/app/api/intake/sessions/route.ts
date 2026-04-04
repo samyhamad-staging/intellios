@@ -8,7 +8,7 @@ import { desc, eq, and, isNull } from "drizzle-orm";
 import { IntakeContext } from "@/lib/types/intake";
 
 export async function GET(request: NextRequest) {
-  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "designer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "designer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 

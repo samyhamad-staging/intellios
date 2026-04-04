@@ -115,7 +115,7 @@ const FromTemplateBody = z.object({
 // ── Handler ──────────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
-  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "designer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 

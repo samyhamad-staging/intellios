@@ -67,17 +67,19 @@ export function RegisterForm() {
     }
   }
 
-  /* ── P2-69: Progress indicator ────────────────────────────────────────── */
-  // Step 1 = Organization, Step 2 = Identity, Step 3 = Security
-  const signupStep = useMemo(() => {
-    const orgDone = form.companyName.trim().length > 0;
-    const identityDone = form.firstName.trim().length > 0 && form.lastName.trim().length > 0 && form.email.trim().length > 0;
-    const securityDone = form.password.length >= 8 && form.confirmPassword.length >= 8;
-    if (securityDone) return 3;
-    if (identityDone) return 2;
-    if (orgDone) return 1;
-    return 0;
-  }, [form]);
+  /* ── W-08/P2-69: Step wizard — only show current step's fields ────────── */
+  // Step 0 = Organization, Step 1 = Identity, Step 2 = Security
+  const [currentStep, setCurrentStep] = useState(0);
+  const TOTAL_STEPS = 3;
+
+  const stepValid = useMemo(() => [
+    form.companyName.trim().length > 0,
+    form.firstName.trim().length > 0 && form.lastName.trim().length > 0 && form.email.trim().length > 0,
+    form.password.length >= 8 && form.password === form.confirmPassword,
+  ], [form]);
+
+  // Legacy progress indicator alias (for the stepper dots)
+  const signupStep = currentStep + (stepValid[currentStep] ? 1 : 0);
 
   /* ── Shared input class (dark-themed, matches login page) ─────────────── */
   const inputCls =
@@ -139,92 +141,104 @@ export function RegisterForm() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Enterprise / company name */}
-        <FormField label="Enterprise name" htmlFor="companyName" required>
-          <input
-            id="companyName"
-            type="text"
-            required
-            maxLength={80}
-            value={form.companyName}
-            onChange={set("companyName")}
-            placeholder="Acme Financial"
-            className={inputCls}
-          />
-        </FormField>
-
-        {/* Name row */}
-        <div className="grid grid-cols-2 gap-3">
-          <FormField label="First name" htmlFor="firstName" required>
+      {/* M-01: [&_label]:text-white/80 overrides FormField label color on dark bg */}
+      <form onSubmit={handleSubmit} className="space-y-4 [&_label]:text-white/80">
+        {/* W-08: Step 0 — Organization */}
+        {currentStep === 0 && (
+          <FormField label="Enterprise name" htmlFor="companyName" required>
             <input
-              id="firstName"
+              id="companyName"
               type="text"
               required
-              maxLength={100}
-              value={form.firstName}
-              onChange={set("firstName")}
-              placeholder="Jane"
+              maxLength={80}
+              value={form.companyName}
+              onChange={set("companyName")}
+              placeholder="Acme Financial"
               className={inputCls}
+              autoFocus
             />
           </FormField>
-          <FormField label="Last name" htmlFor="lastName" required>
-            <input
-              id="lastName"
-              type="text"
-              required
-              maxLength={100}
-              value={form.lastName}
-              onChange={set("lastName")}
-              placeholder="Smith"
-              className={inputCls}
-            />
-          </FormField>
-        </div>
+        )}
 
-        {/* Work email */}
-        <FormField label="Work email" htmlFor="email" required>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            maxLength={300}
-            value={form.email}
-            onChange={set("email")}
-            placeholder="jane@acme.com"
-            className={inputCls}
-          />
-        </FormField>
+        {/* W-08: Step 1 — Identity */}
+        {currentStep === 1 && (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="First name" htmlFor="firstName" required>
+                <input
+                  id="firstName"
+                  type="text"
+                  required
+                  maxLength={100}
+                  value={form.firstName}
+                  onChange={set("firstName")}
+                  placeholder="Jane"
+                  className={inputCls}
+                  autoFocus
+                />
+              </FormField>
+              <FormField label="Last name" htmlFor="lastName" required>
+                <input
+                  id="lastName"
+                  type="text"
+                  required
+                  maxLength={100}
+                  value={form.lastName}
+                  onChange={set("lastName")}
+                  placeholder="Smith"
+                  className={inputCls}
+                />
+              </FormField>
+            </div>
 
-        {/* Password */}
-        <FormField label="Password" htmlFor="password" required>
-          <input
-            id="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={8}
-            maxLength={128}
-            value={form.password}
-            onChange={set("password")}
-            placeholder="At least 8 characters"
-            className={inputCls}
-          />
-        </FormField>
+            <FormField label="Work email" htmlFor="email" required>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                maxLength={300}
+                value={form.email}
+                onChange={set("email")}
+                placeholder="jane@acme.com"
+                className={inputCls}
+              />
+            </FormField>
+          </>
+        )}
 
-        {/* Confirm password */}
-        <FormField label="Confirm password" htmlFor="confirmPassword" required>
-          <input
-            id="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            required
-            value={form.confirmPassword}
-            onChange={set("confirmPassword")}
-            className={inputCls}
-          />
-        </FormField>
+        {/* W-08: Step 2 — Security */}
+        {currentStep === 2 && (
+          <>
+            <FormField label="Password" htmlFor="password" required>
+              <input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={8}
+                maxLength={128}
+                value={form.password}
+                onChange={set("password")}
+                placeholder="At least 8 characters"
+                className={inputCls}
+                autoFocus
+              />
+            </FormField>
+
+            <FormField label="Confirm password" htmlFor="confirmPassword" required>
+              <input
+                id="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={form.confirmPassword}
+                onChange={set("confirmPassword")}
+                className={inputCls}
+              />
+            </FormField>
+          </>
+        )}
 
         {error && (
           <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
@@ -232,17 +246,45 @@ export function RegisterForm() {
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition-all"
-          style={{
-            background: "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)",
-            boxShadow: loading ? "none" : "0 0 20px rgba(99,102,241,0.35)",
-          }}
-        >
-          {loading ? "Creating account…" : "Create account →"}
-        </button>
+        {/* Step navigation */}
+        <div className="flex items-center gap-3">
+          {currentStep > 0 && (
+            <button
+              type="button"
+              onClick={() => setCurrentStep((s) => s - 1)}
+              className="rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/60 hover:text-white/90 hover:border-white/25 transition-all"
+            >
+              ← Back
+            </button>
+          )}
+
+          {currentStep < TOTAL_STEPS - 1 ? (
+            <button
+              type="button"
+              disabled={!stepValid[currentStep]}
+              onClick={() => setCurrentStep((s) => s + 1)}
+              className="flex-1 rounded-lg py-2.5 text-sm font-semibold text-white disabled:opacity-40 transition-all"
+              style={{
+                background: "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)",
+                boxShadow: stepValid[currentStep] ? "0 0 20px rgba(99,102,241,0.35)" : "none",
+              }}
+            >
+              Continue →
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={loading || !stepValid[2]}
+              className="flex-1 rounded-lg py-2.5 text-sm font-semibold text-white disabled:opacity-40 transition-all"
+              style={{
+                background: "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)",
+                boxShadow: loading ? "none" : "0 0 20px rgba(99,102,241,0.35)",
+              }}
+            >
+              {loading ? "Creating account…" : "Create account →"}
+            </button>
+          )}
+        </div>
 
         {/* Divider */}
         <div className="flex items-center gap-3 py-1">

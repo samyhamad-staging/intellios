@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
  * Requires designer or admin role.
  */
 export async function POST(request: NextRequest) {
-  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "designer", "admin"]);
   if (error) return error;
 
   const { data: body, error: bodyError } = await parseBody(request, CreateWorkflowBody);

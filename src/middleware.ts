@@ -6,6 +6,28 @@ import { NextResponse } from "next/server";
 /** Injected by middleware on every request for server-side correlation. */
 const REQUEST_ID_HEADER = "x-request-id";
 
+// ── Role-based page access map ───────────────────────────────────────────────
+//
+// Maps each protected route prefix to the set of roles that may access it.
+// Routes not listed here are accessible to any authenticated user.
+// C-10: This is the server-side enforcement layer — the sidebar hides links
+// but this middleware ensures direct URL access is also blocked.
+//
+// Role hierarchy (most → least privileged): admin > compliance_officer > reviewer > architect/designer > viewer
+//
+const ROUTE_ACCESS: Array<{ prefix: string; allowed: string[] }> = [
+  // Design tools — architect, designer, admin only
+  { prefix: "/intake",      allowed: ["architect", "designer", "admin"] },
+  { prefix: "/blueprints",  allowed: ["architect", "designer", "admin"] },
+  // Review / governance — reviewer, compliance_officer, admin
+  { prefix: "/review",      allowed: ["reviewer", "compliance_officer", "admin"] },
+  { prefix: "/governor",    allowed: ["reviewer", "compliance_officer", "admin"] },
+  // Deploy — reviewer, admin (not viewer)
+  { prefix: "/deploy",      allowed: ["reviewer", "compliance_officer", "admin"] },
+  // Admin-only routes
+  { prefix: "/admin",       allowed: ["admin"] },
+];
+
 /**
  * Injected by middleware for every authenticated request.
  * Contains the enterprise_id from the user's JWT, or "__null__" if the user
@@ -84,6 +106,27 @@ export default auth((req) => {
   const isRegisterPage = pathname === "/register";
   const isTemplatesPage = pathname === "/templates";
 
+  // ── Permanent redirects ────────────────────────────────────────────────
+  // C-01: /analytics → /dashboard (analytics page doesn't exist)
+  // M-14: /overview → / (sidebar links to / but direct /overview 404s)
+  if (pathname === "/analytics") {
+    return withId(NextResponse.redirect(new URL("/dashboard", req.url)), requestId);
+  }
+  if (pathname === "/overview") {
+    return withId(NextResponse.redirect(new URL("/", req.url)), requestId);
+  }
+
+  // ── Public auth pages (accessible without login) ────────────────────────
+  // C-07: Forgot-password and reset-password must be public — they're the
+  //       recovery path for locked-out users.
+  if (
+    pathname.startsWith("/auth/forgot-password") ||
+    pathname.startsWith("/auth/reset-password") ||
+    pathname.startsWith("/auth/invite")
+  ) {
+    return withId(NextResponse.next({ request: { headers: requestHeaders } }), requestId);
+  }
+
   // Public-only pages — redirect logged-in users to the app
   if (isLandingPage || isRegisterPage) {
     if (isLoggedIn) {
@@ -114,6 +157,22 @@ export default auth((req) => {
 
   if (isLoggedIn && isLoginPage) {
     return withId(NextResponse.redirect(new URL("/", req.url)), requestId);
+  }
+
+  // ── Role-based route guards (C-10, W-15) ──────────────────────────────
+  // Server-side enforcement: redirect unauthorized roles to the Overview page.
+  // This closes the gap where sidebar-hiding is the only access control.
+  if (isLoggedIn && req.auth?.user) {
+    const role = req.auth.user.role ?? "viewer";
+    for (const rule of ROUTE_ACCESS) {
+      if (pathname.startsWith(rule.prefix) && !rule.allowed.includes(role)) {
+        // Redirect to home rather than showing a blank error page
+        return withId(
+          NextResponse.redirect(new URL("/?access_denied=1", req.url)),
+          requestId
+        );
+      }
+    }
   }
 
   return withId(NextResponse.next({ request: { headers: requestHeaders } }), requestId);

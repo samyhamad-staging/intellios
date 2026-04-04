@@ -13,6 +13,7 @@ import { FormField } from "@/components/ui/form-field";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
 import type { TestRun } from "@/lib/testing/types";
+import { STATUS_LABELS } from "@/lib/status-theme";
 
 interface BlueprintPageProps {
   params: Promise<{ id: string }>;
@@ -196,11 +197,22 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   }>({ businessUnit: "", ownerEmail: "", costCenter: "", deploymentEnvironment: "", dataClassification: "" });
   const [savingOwnership, setSavingOwnership] = useState(false);
 
+  // C-04: fetch moved into useEffect to prevent multiple calls in React concurrent
+  // mode (previously ran in render body — unsafe with React 19 strict mode).
+  // Also added r.ok check so API error responses don't silently set abp=undefined.
   // Always fetch from API on mount — blueprint content is never passed via URL.
-  if (loading && !abp) {
-    fetch(`/api/blueprints/${id}`)
-      .then((r) => r.json())
-      .then((data) => {
+  useEffect(() => {
+    let cancelled = false;
+    async function loadBlueprint() {
+      try {
+        const r = await fetch(`/api/blueprints/${id}`);
+        if (!r.ok) {
+          // API returns { message, code } — not { error }
+          const errData = await r.json().catch(() => ({}));
+          throw new Error(errData.message ?? "Failed to load blueprint");
+        }
+        const data = await r.json();
+        if (cancelled) return;
         const loadedAbp = data.abp as ABP;
         setAbp(loadedAbp);
         setRefinementCount(parseInt(data.refinementCount ?? "0", 10));
@@ -209,7 +221,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         if (data.status) setBlueprintStatus(data.status as string);
         setReviewComment((data.reviewComment as string | null) ?? null);
         // Pre-populate ownership draft from existing ABP
-        if (loadedAbp.ownership) {
+        if (loadedAbp?.ownership) {
           setOwnershipDraft({
             businessUnit: loadedAbp.ownership.businessUnit ?? "",
             ownerEmail: loadedAbp.ownership.ownerEmail ?? "",
@@ -227,12 +239,16 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         if (typeof data.currentApprovalStep === "number") setCurrentApprovalStep(data.currentApprovalStep);
         if (Array.isArray(data.approvalChain)) setApprovalChain(data.approvalChain);
         setLoading(false);
-      })
-      .catch(() => {
-        setError("Failed to load blueprint");
+      } catch (err) {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load blueprint");
         setLoading(false);
-      });
-  }
+      }
+    }
+    loadBlueprint();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   // P1-29: accepts an optional directPrompt (from CompanionChat "Apply Change")
   // so suggestions can be forwarded to the refinement API without copy-paste.
@@ -595,7 +611,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               ? "bg-blue-100 text-blue-700"
               : "bg-surface-muted text-text-secondary"
           }`}>
-            {blueprintStatus.replace("_", " ")}
+            {STATUS_LABELS[blueprintStatus as keyof typeof STATUS_LABELS] ?? blueprintStatus.replace("_", " ")}
           </span>
           <span className="text-xs text-text-tertiary font-mono">{id.slice(0, 8)}</span>
           {sessionId && (

@@ -266,7 +266,7 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
       {/* Trigger — "icon" variant: compact icon button for sidebar footer / tight spaces */}
       {variant === "icon" && (
         <button
-          onClick={() => setOpen(true)}
+          onClick={(e) => { e.stopPropagation(); setOpen(true); }}
           title="Ask Intellios"
           aria-label="Ask Intellios"
           className="rounded p-1 transition-colors hover:bg-white/10"
@@ -279,7 +279,7 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
       {/* Trigger — "row" variant: full-width labeled nav-style row */}
       {variant === "row" && (
         <button
-          onClick={() => setOpen(true)}
+          onClick={(e) => { e.stopPropagation(); setOpen(true); }}
           className="group flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors hover:bg-white/10"
           style={{ color: "var(--sidebar-text)" }}
         >
@@ -294,13 +294,14 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
 
       {open && (
         <>
-          {/* Backdrop */}
+          {/* W-10: Semi-transparent backdrop so users can see (but not interact with) main content.
+              W-12: Use onMouseDown so the backdrop close does not race with the trigger open. */}
           <div
-            className="fixed inset-0 z-40"
-            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-40 bg-black/20"
+            onMouseDown={() => setOpen(false)}
           />
 
-          {/* Panel */}
+          {/* Panel — W-10: fixed overlay that does not reflow the main content */}
           <div className="fixed right-0 top-0 z-50 h-full w-[400px] bg-surface border-l border-border shadow-xl flex flex-col">
             {/* Header */}
             <div className="border-b border-border-subtle">

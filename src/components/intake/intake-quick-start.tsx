@@ -137,7 +137,7 @@ export function IntakeQuickStart({
             <p className="text-xs text-text-tertiary">
               {purpose.trim().length < 10
                 ? `${10 - purpose.trim().length} more characters needed`
-                : "⌘ Enter to start"}
+                : "↵ Enter to start"  /* M-12: was Mac-only ⌘, use generic Enter symbol */}
             </p>
             {error && <p className="text-xs text-red-600">{error}</p>}
           </div>

@@ -13,7 +13,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { session: authSession, error } = await requireAuth([
-    "architect", "reviewer", "compliance_officer", "admin",
+    "architect", "designer", "reviewer", "compliance_officer", "admin",
   ]);
   if (error) return error;
 

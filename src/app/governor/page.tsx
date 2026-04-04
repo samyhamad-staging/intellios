@@ -14,19 +14,29 @@ interface QueueEntry {
   updatedAt: string;
 }
 
+// C-05: governance analytics API returns different fields than originally expected.
 interface GovernanceAnalytics {
-  totalPolicies: number;
-  activePolicies: number;
-  recentViolations: number;
-  stalePolicies: number;
+  // Fields the API actually returns
+  agentStatusCounts?: Record<string, number>;
+  validationPassRate?: number | null;
+  topViolatedPolicies?: Array<{ policyName: string; count: number }>;
+  // Legacy fields (may be added by updated API)
+  activePolicies?: number;
+  recentViolations?: number;
+  stalePolicies?: number;
 }
 
+// C-06: compliance posture API returns nested healthCounts + deployedCount.
 interface CompliancePosture {
-  totalDeployed: number;
-  clean: number;
-  critical: number;
-  unknown: number;
-  complianceRate: number;
+  // Actual API fields
+  deployedCount?: number;
+  healthCounts?: { clean: number; critical: number; unknown: number };
+  complianceRate?: number | null;
+  atRiskCount?: number;
+  // Legacy flat fields (kept for compatibility)
+  totalDeployed?: number;
+  clean?: number;
+  critical?: number;
 }
 
 interface PortfolioSnapshot {
@@ -46,6 +56,28 @@ interface AuditEntry {
   entityType: string;
   entityId: string;
   createdAt: string;
+}
+
+// W-04 / M-06: Convert raw audit event names to human-readable descriptions.
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  "blueprint.created":         "created a new blueprint",
+  "blueprint.submitted":       "submitted a blueprint for review",
+  "blueprint.refined":         "refined a blueprint",
+  "blueprint.approved":        "approved a blueprint",
+  "blueprint.rejected":        "rejected a blueprint",
+  "blueprint.deployed":        "deployed a blueprint",
+  "blueprint.deprecated":      "deprecated a blueprint",
+  "blueprint.agentcore deployed": "deployed blueprint to AgentCore",
+  "blueprint.status_changed":  "changed blueprint status",
+  "policy.created":            "created a governance policy",
+  "policy.updated":            "updated a governance policy",
+  "settings.updated":          "updated enterprise settings",
+  "user.invited":              "invited a user",
+  "user.created":              "created a user",
+};
+
+function humanizeAuditAction(action: string): string {
+  return AUDIT_ACTION_LABELS[action] ?? action.replace(/[._]/g, " ");
 }
 
 function timeAgo(dateStr: string): string {
@@ -181,18 +213,35 @@ export default function GovernorHomePage() {
             {analytics === null ? (
               <p className="text-sm text-text-tertiary">Policy data unavailable.</p>
             ) : (
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { label: "Active", value: analytics.activePolicies, color: "text-green-700" },
-                  { label: "Violated", value: analytics.recentViolations, color: analytics.recentViolations > 0 ? "text-red-600" : "text-text-secondary" },
-                  { label: "Stale", value: analytics.stalePolicies, color: analytics.stalePolicies > 0 ? "text-amber-600" : "text-text-secondary" },
-                ].map((kpi) => (
-                  <div key={kpi.label} className="text-center">
-                    <p className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</p>
-                    <p className="text-xs text-text-tertiary mt-0.5">{kpi.label}</p>
+              (() => {
+                // C-05: Map actual API fields to display values.
+                // activePolicies = count of agent statuses that are active (in_review + approved + deployed)
+                // recentViolations = total violated policy count from topViolatedPolicies
+                // stalePolicies = legacy field or fallback to 0
+                const activePolicies = analytics.activePolicies
+                  ?? (analytics.agentStatusCounts
+                    ? (analytics.agentStatusCounts["in_review"] ?? 0) +
+                      (analytics.agentStatusCounts["approved"] ?? 0) +
+                      (analytics.agentStatusCounts["deployed"] ?? 0)
+                    : 0);
+                const recentViolations = analytics.recentViolations
+                  ?? (analytics.topViolatedPolicies?.reduce((s, p) => s + p.count, 0) ?? 0);
+                const stalePolicies = analytics.stalePolicies ?? 0;
+                return (
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { label: "Active", value: activePolicies, color: "text-green-700" },
+                      { label: "Violated", value: recentViolations, color: recentViolations > 0 ? "text-red-600" : "text-text-secondary" },
+                      { label: "Stale", value: stalePolicies, color: stalePolicies > 0 ? "text-amber-600" : "text-text-secondary" },
+                    ].map((kpi) => (
+                      <div key={kpi.label} className="text-center">
+                        <p className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</p>
+                        <p className="text-xs text-text-tertiary mt-0.5">{kpi.label}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()
             )}
           </div>
 
@@ -205,22 +254,36 @@ export default function GovernorHomePage() {
             {posture === null ? (
               <p className="text-sm text-text-tertiary">Compliance data unavailable.</p>
             ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-text-secondary">Compliance rate</span>
-                  <span className={`text-sm font-semibold ${posture.complianceRate >= 80 ? "text-green-700" : posture.complianceRate >= 60 ? "text-amber-600" : "text-red-600"}`}>
-                    {posture.complianceRate.toFixed(0)}%
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-text-secondary">Clean agents</span>
-                  <span className="text-sm font-semibold text-text">{posture.clean} / {posture.totalDeployed}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-text-secondary">Critical</span>
-                  <span className={`text-sm font-semibold ${posture.critical > 0 ? "text-red-600" : "text-text-tertiary"}`}>{posture.critical}</span>
-                </div>
-              </div>
+              (() => {
+                // C-06: Map actual API shape (nested healthCounts + deployedCount) to display values.
+                const rate = posture.complianceRate ?? null;
+                const clean = posture.healthCounts?.clean ?? posture.clean ?? 0;
+                const critical = posture.healthCounts?.critical ?? posture.critical ?? 0;
+                const totalDeployed = posture.deployedCount ?? posture.totalDeployed ?? 0;
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-text-secondary">Compliance rate</span>
+                      <span className={`text-sm font-semibold ${
+                        rate === null ? "text-text-tertiary"
+                        : rate >= 80 ? "text-green-700"
+                        : rate >= 60 ? "text-amber-600"
+                        : "text-red-600"
+                      }`}>
+                        {rate !== null ? `${rate.toFixed(0)}%` : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-text-secondary">Clean agents</span>
+                      <span className="text-sm font-semibold text-text">{clean} / {totalDeployed}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-text-secondary">Critical</span>
+                      <span className={`text-sm font-semibold ${critical > 0 ? "text-red-600" : "text-text-tertiary"}`}>{critical}</span>
+                    </div>
+                  </div>
+                );
+              })()
             )}
           </div>
 
@@ -240,7 +303,7 @@ export default function GovernorHomePage() {
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-text truncate">
                         <span className="font-medium">{entry.actorEmail}</span>{" "}
-                        <span className="text-text-secondary">{entry.action.replace(/_/g, " ")}</span>
+                        <span className="text-text-secondary">{humanizeAuditAction(entry.action)}</span>
                       </p>
                       <p className="text-2xs text-text-tertiary">{timeAgo(entry.createdAt)}</p>
                     </div>

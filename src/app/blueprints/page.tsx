@@ -147,7 +147,7 @@ export default function BlueprintsPage() {
         </div>
         <Button href="/intake" color="indigo">
           <Plus size={15} />
-          New Blueprint
+          Start Intake {/* M-10: was "New Blueprint" — renamed to clarify this opens AI intake, not a blank form */}
         </Button>
       </div>
 

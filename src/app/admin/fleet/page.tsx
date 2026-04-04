@@ -127,11 +127,25 @@ export default function AdminFleetPage() {
 
   if (error) {
     if (error === "super-admin-only") {
+      // M-04: Add heading/structure to the error state so the page isn't just plain text
       return (
-        <div className="px-6 py-6">
-          <p className="text-sm text-text-secondary">
-            Platform fleet overview is only available to super-admins (admin accounts without an enterprise scope).
-          </p>
+        <div className="px-6 py-6 space-y-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Globe size={20} className="text-text-tertiary" />
+            <Heading level={1} className="text-text-secondary">Platform Fleet Overview</Heading>
+          </div>
+          <div className="rounded-xl border border-border bg-surface-muted p-6 max-w-lg">
+            <p className="text-sm font-medium text-text mb-1">Super-admin access required</p>
+            <p className="text-sm text-text-secondary">
+              Platform fleet overview is only available to super-admin accounts (admins without an enterprise scope).
+            </p>
+            <Link
+              href="/registry"
+              className="mt-4 inline-flex items-center text-sm text-violet-600 hover:text-violet-800 hover:underline"
+            >
+              View your enterprise agents →
+            </Link>
+          </div>
         </div>
       );
     }

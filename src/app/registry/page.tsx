@@ -253,7 +253,11 @@ export default function RegistryPage() {
         />
       </div>
 
-      {loading && <SkeletonList rows={4} />}
+      {/* Show skeleton during any loading state, including the initial
+          workflow load (before wflowsLoaded becomes true). */}
+      {(loading || (activeTab === "workflows" && !wflowsLoaded && !wflowsError)) && (
+        <SkeletonList rows={4} />
+      )}
 
       {/* Error */}
       {error && (
@@ -341,7 +345,10 @@ export default function RegistryPage() {
       )}
 
       {/* ── Workflow list ──────────────────────────────────────────────────── */}
-      {activeTab === "workflows" && !wflowsLoading && !wflowsError && (
+      {/* C-08: Show loading state while workflows are being fetched (prevents
+          the brief window where wflowsLoaded=false + wflowsLoading=false
+          causes the agent skeleton/list to bleed through). */}
+      {activeTab === "workflows" && !wflowsLoading && !wflowsError && wflowsLoaded && (
         <>
           {wflows.length === 0 && (
             <EmptyState

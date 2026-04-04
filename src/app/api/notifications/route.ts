@@ -16,9 +16,11 @@ import {
 export async function GET(request: NextRequest) {
   const { session: authSession, error } = await requireAuth([
     "architect",
+    "designer",  // M-13: include designer + viewer so all roles can see notifications
     "reviewer",
     "compliance_officer",
     "admin",
+    "viewer",
   ]);
   if (error) return error;
   const requestId = getRequestId(request);

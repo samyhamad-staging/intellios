@@ -18,6 +18,7 @@ const geistMono = localFont({
 });
 import { Toaster } from "sonner";
 import Sidebar from "@/components/nav/sidebar";
+import MobileLayout from "@/components/nav/mobile-layout";
 import Providers from "@/components/providers";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 
@@ -48,20 +49,22 @@ export default async function RootLayout({
         <Providers session={session}>
           <Toaster position="bottom-right" richColors />
           {session?.user ? (
-            <div className="flex h-screen overflow-hidden">
-              <Sidebar
-                user={{
-                  name: session.user.name,
-                  email: session.user.email,
-                  role: session.user.role,
-                }}
-                branding={branding}
-                signOutAction={handleSignOut}
-              />
-              <main className="flex-1 overflow-y-auto" style={{ backgroundColor: "var(--content-bg)" }}>
-                {children}
-              </main>
-            </div>
+            // C-12: MobileLayout handles responsive sidebar drawer on tablet/mobile
+            <MobileLayout
+              sidebar={
+                <Sidebar
+                  user={{
+                    name: session.user.name,
+                    email: session.user.email,
+                    role: session.user.role,
+                  }}
+                  branding={branding}
+                  signOutAction={handleSignOut}
+                />
+              }
+            >
+              {children}
+            </MobileLayout>
           ) : (
             <>{children}</>
           )}

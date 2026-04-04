@@ -31,13 +31,17 @@ interface CalendarData {
 export default function ComplianceCalendarPage() {
   const [data, setData] = useState<CalendarData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     fetch("/api/compliance/calendar")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load calendar");
+        return r.json();
+      })
       .then((d) => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(() => { setFetchError(true); setLoading(false); });
   }, []);
 
   async function handleDownload() {
@@ -97,7 +101,20 @@ export default function ComplianceCalendarPage() {
 
       {loading && <SkeletonList rows={4} height="h-16" />}
 
-      {!loading && data && (
+      {/* W-06: Show a clear empty/error state when the API is unavailable */}
+      {!loading && (fetchError || !data) && (
+        <div className="rounded-xl border border-border bg-surface-muted p-10 text-center">
+          <Calendar className="mx-auto h-10 w-10 text-text-tertiary mb-3" />
+          <p className="text-sm font-medium text-text-secondary">No compliance events available</p>
+          <p className="mt-1 text-xs text-text-tertiary">
+            {fetchError
+              ? "Unable to load calendar data. Please try again later."
+              : "No SR 11-7 review dates or policy reviews are currently scheduled."}
+          </p>
+        </div>
+      )}
+
+      {!loading && !fetchError && data && (
         <>
           {/* Agent Periodic Reviews */}
           <section>

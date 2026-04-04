@@ -246,7 +246,8 @@ export default function PipelinePage() {
       )}
 
       {/* ── Board ────────────────────────────────────────────────────────── */}
-      <div className="flex flex-1 gap-0 overflow-x-auto bg-surface-muted/30">
+      {/* C-12: data-kanban ensures the board scrolls horizontally on narrow viewports */}
+      <div data-kanban className="flex flex-1 gap-0 overflow-x-auto bg-surface-muted/30">
         {error && (
           <div className="m-6 w-full rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}

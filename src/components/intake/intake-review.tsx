@@ -161,8 +161,8 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
       if (tools.length === 0) return <span className="text-text-tertiary italic">No tools captured</span>;
       return (
         <ul className="space-y-1">
-          {tools.map((t) => (
-            <li key={t.name} className="flex items-start gap-2">
+          {tools.filter(Boolean).map((t) => (
+            <li key={t.name ?? t} className="flex items-start gap-2">
               <span className="mt-0.5 text-text-tertiary">⚙</span>
               <div>
                 <span className="font-medium">{t.name}</span>
@@ -184,8 +184,8 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
       if (sources.length === 0) return <span className="text-text-tertiary italic">None added</span>;
       return (
         <ul className="space-y-1">
-          {sources.map((s) => (
-            <li key={s.name} className="flex items-center gap-2">
+          {sources.filter(Boolean).map((s) => (
+            <li key={s.name ?? s} className="flex items-center gap-2">
               <span className="text-text-tertiary">🗄</span>
               <span className="font-medium">{s.name}</span>
               <span className="text-xs text-text-tertiary">({s.type})</span>
@@ -233,8 +233,8 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
       if (policies.length === 0) return <span className="text-text-tertiary italic">No policies attached</span>;
       return (
         <ul className="space-y-2">
-          {policies.map((p) => (
-            <li key={p.name}>
+          {policies.filter(Boolean).map((p) => (
+            <li key={p.name ?? p}>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-text-tertiary">🛡</span>
                 <span className="font-medium">{p.name}</span>
@@ -991,9 +991,9 @@ export function IntakeReview({
               {(payload.capabilities?.tools?.length ?? 0) === 0 && (
                 <p className="text-xs text-text-tertiary italic">No tools captured yet</p>
               )}
-              {(payload.capabilities?.tools ?? []).map((tool, i) => (
+              {(payload.capabilities?.tools ?? []).filter(Boolean).map((tool, i) => (
                 <div key={i} className="rounded-lg border border-border-subtle bg-surface-raised px-3 py-2 mb-1.5">
-                  <p className="text-xs font-medium text-text">{tool.name}</p>
+                  <p className="text-xs font-medium text-text">{tool?.name}</p>
                   {tool.description && <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{tool.description}</p>}
                   <span className="mt-1 inline-block rounded bg-surface-muted px-1.5 py-0.5 text-2xs text-text-secondary">{tool.type}</span>
                 </div>
@@ -1045,11 +1045,11 @@ export function IntakeReview({
               {(payload.governance?.policies?.length ?? 0) === 0 ? (
                 <p className="text-xs text-text-tertiary italic">Governance policies will be inferred from context and stakeholder input</p>
               ) : (
-                (payload.governance?.policies ?? []).map((pol, i) => (
+                (payload.governance?.policies ?? []).filter(Boolean).map((pol, i) => (
                   <div key={i} className="rounded-lg border border-border-subtle bg-surface-raised px-3 py-2 mb-1.5">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-medium text-text flex-1">{pol.name}</p>
-                      <span className="rounded bg-blue-100 px-1.5 py-0.5 text-2xs text-blue-700">{pol.type}</span>
+                      <p className="text-xs font-medium text-text flex-1">{pol?.name}</p>
+                      <span className="rounded bg-blue-100 px-1.5 py-0.5 text-2xs text-blue-700">{pol?.type}</span>
                     </div>
                     {pol.description && <p className="text-xs text-text-secondary mt-0.5">{pol.description}</p>}
                   </div>

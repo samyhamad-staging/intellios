@@ -22,7 +22,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   // Any authenticated enterprise user can contribute — no role restriction
-  const { session: authSession, error } = await requireAuth(["architect", "reviewer", "compliance_officer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "designer", "reviewer", "compliance_officer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
@@ -96,7 +96,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["architect", "reviewer", "compliance_officer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "designer", "reviewer", "compliance_officer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 

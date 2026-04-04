@@ -324,3 +324,70 @@ samp {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
+
+/* ── C-12: Responsive breakpoints ─────────────────────────────────────── */
+
+/* ── Status / KPI card grids — stack vertically below 768px ── */
+@media (max-width: 767px) {
+  /* Grid layouts used on dashboard, overview, governor, etc. */
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4,
+  [class*="sm:grid-cols-"],
+  [class*="md:grid-cols-"],
+  [class*="lg:grid-cols-"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Flex row stat cards — wrap and stack */
+  .stat-card-row {
+    flex-direction: column !important;
+  }
+
+  /* Pipeline Kanban — allow horizontal scroll instead of cropping */
+  .kanban-board {
+    overflow-x: auto !important;
+    padding-bottom: 1rem;
+  }
+
+  /* Prevent table overflow */
+  .overflow-x-auto,
+  table {
+    max-width: 100%;
+  }
+
+  /* Full-width cards on mobile */
+  .card-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Font size adjustments for readability */
+  .text-2xl { font-size: 1.25rem !important; }
+  .text-3xl { font-size: 1.5rem !important; }
+}
+
+/* ── Tablet (768–1023px) — sidebar drawer, content re-flows ── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Two-column grid → two columns is ok on tablet */
+  /* Three/four column grids → two columns */
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Kanban board — allow horizontal scroll */
+  .kanban-board {
+    overflow-x: auto !important;
+  }
+}
+
+/* ── Pipeline Kanban: always horizontally scrollable ── */
+/* Applied via data-kanban attribute in the Pipeline page */
+[data-kanban] {
+  overflow-x: auto;
+  min-width: 100%;
+}
+
+[data-kanban] > * {
+  min-width: min(calc(100vw - 2rem), 280px);
+}

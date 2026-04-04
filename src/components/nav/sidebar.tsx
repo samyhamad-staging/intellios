@@ -61,15 +61,21 @@ interface NavSection {
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   architect: { label: "Architect", color: "bg-blue-500/20 text-blue-300" },
+  // C-09 / W-03: "designer" is the legacy DB value for the Architect role.
+  // Display as "Architect" so the UI is consistent with the canonical name.
+  designer: { label: "Architect", color: "bg-blue-500/20 text-blue-300" },
   reviewer: { label: "Reviewer", color: "bg-amber-500/20 text-amber-300" },
-  compliance_officer: { label: "Compliance", color: "bg-green-500/20 text-green-300" },
+  // M-11: Show full "Compliance Officer" instead of truncated "Compliance"
+  compliance_officer: { label: "Compliance Officer", color: "bg-green-500/20 text-green-300" },
   admin: { label: "Admin", color: "bg-violet-500/20 text-violet-300" },
   viewer: { label: "Viewer", color: "bg-slate-500/20 text-slate-300" },
 };
 
 function getNavSections(role: string | null | undefined): NavSection[] {
   const r = role ?? "";
-  const isArchitect = r === "architect" || r === "admin";
+  // C-09: "designer" is the legacy role name for Architect. Include it so
+  // existing accounts with role="designer" can access Design Studio and Blueprints.
+  const isArchitect = r === "architect" || r === "designer" || r === "admin";
   const isReviewer = r === "reviewer" || r === "compliance_officer" || r === "admin";
   const isCompliance = r === "compliance_officer" || r === "admin";
   const isViewer = r === "viewer";

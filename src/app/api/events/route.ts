@@ -25,7 +25,7 @@ import { getRequestId } from "@/lib/request-id";
  */
 export async function GET(request: NextRequest) {
   const { session: authSession, error } = await requireAuth([
-    "architect", "reviewer", "compliance_officer", "admin", "viewer",
+    "architect", "designer", "reviewer", "compliance_officer", "admin", "viewer",
   ]);
   if (error) return error;
   const requestId = getRequestId(request);

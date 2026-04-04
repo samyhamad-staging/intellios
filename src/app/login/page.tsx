@@ -153,7 +153,8 @@ function LoginForm() {
             <Subheading level={2} className="text-white">Sign in to your account</Subheading>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* M-01: Use [&_label]:text-white to override FormField label color on dark bg */}
+          <form onSubmit={handleSubmit} className="space-y-4 [&_label]:text-white/80">
             <FormField label="Email address" htmlFor="email">
               <input
                 id="email"
@@ -162,7 +163,7 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-text-tertiary focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
                 placeholder="you@intellios.dev"
               />
             </FormField>
@@ -237,9 +238,13 @@ function LoginForm() {
               </button>
             )}
 
-            <div className="text-center">
-              <a href="/auth/forgot-password" className="text-xs text-white/25 hover:text-white/50 transition-colors">
+            {/* M-02: Add create account link + improve forgot-password contrast */}
+            <div className="flex items-center justify-between">
+              <a href="/auth/forgot-password" className="text-xs text-white/40 hover:text-white/70 transition-colors">
                 Forgot your password?
+              </a>
+              <a href="/register" className="text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors">
+                Create account →
               </a>
             </div>
           </form>

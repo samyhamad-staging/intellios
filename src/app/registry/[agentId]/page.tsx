@@ -168,8 +168,9 @@ export default function AgentDetailPage({
     try {
       const res = await fetch(`/api/registry/${agentId}`);
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Not found");
+        // C-03: API returns { message, code } — not { error }
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message ?? "Agent not found");
       }
       const data = await res.json();
       setLatest(data.agent);
@@ -629,13 +630,15 @@ export default function AgentDetailPage({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Primary lifecycle action + ⋯ overflow (Deprecate) */}
-          <LifecycleControls
-            blueprintId={latest.id}
-            agentId={latest.agentId}
-            currentStatus={latest.status}
-            onStatusChange={handleStatusChange}
-          />
+          {/* Primary lifecycle action — hidden for viewer role (W-15: viewer is read-only) */}
+          {currentUser?.role !== "viewer" && (
+            <LifecycleControls
+              blueprintId={latest.id}
+              agentId={latest.agentId}
+              currentStatus={latest.status}
+              onStatusChange={handleStatusChange}
+            />
+          )}
 
           {/* Actions menu — all secondary actions in one dropdown */}
           <DropdownMenu>
