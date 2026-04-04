@@ -3,7 +3,7 @@
 import { ABP } from "@/lib/types/abp";
 import { User, FileText, Wrench, Brain, Lock, Shield, Tag } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { getStatusTheme, STATUS_LABELS } from "@/lib/status-theme";
+import { getStatusTheme, STATUS_LABELS, type StatusLevel } from "@/lib/status-theme";
 
 interface BlueprintViewProps {
   abp: ABP;
@@ -254,7 +254,7 @@ function Chip({ label, value }: { label: string; value: string }) {
 
 function StatusBadge({ status }: { status: ABP["metadata"]["status"] }) {
   const theme = getStatusTheme(status);
-  const label = STATUS_LABELS[status as any] ?? status;
+  const label = STATUS_LABELS[status as StatusLevel] ?? status;
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${theme.bg} ${theme.text}`}>
       {label}
