@@ -2,10 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
+import { Heading } from "@/components/catalyst/heading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { SkeletonList } from "@/components/ui/skeleton";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { SectionHeading } from "@/components/ui/section-heading";
 import Link from "next/link";
+import { FormField, FormSection } from "@/components/ui/form-field";
 import type { EnterpriseSettings, ApprovalChainStep } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 
@@ -92,33 +96,41 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="px-6 py-6 space-y-6">
+      {/* Breadcrumb */}
+      <div className="mb-2">
+        <Breadcrumb items={[
+          { label: "Admin", href: "/admin" },
+          { label: "Settings" },
+        ]} />
+      </div>
+
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Enterprise Settings</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
+          <Heading level={1}>Enterprise Settings</Heading>
+          <p className="mt-0.5 text-sm text-text-secondary">
             Configure governance thresholds, SLA policies, and notification preferences.
           </p>
         </div>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+          className="rounded-lg bg-text px-4 py-2 text-sm font-medium text-white hover:bg-text-secondary disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save Settings"}
         </button>
       </div>
 
       {/* Sticky section jump navigation */}
-      <div className="sticky top-0 z-10 -mx-6 flex gap-0 overflow-x-auto border-b border-gray-200 bg-white/95 px-6 backdrop-blur">
+      <div className="sticky top-0 z-10 -mx-6 flex gap-0 overflow-x-auto border-b border-border bg-surface/95 px-6 backdrop-blur">
         {SECTIONS.map(({ id, label }) => (
           <button
             key={id}
             onClick={() => jumpTo(id)}
             className={`whitespace-nowrap border-b-2 px-3 py-2.5 text-xs font-medium transition-colors ${
               activeSection === id
-                ? "border-gray-900 text-gray-900"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-text text-text"
+                : "border-transparent text-text-secondary hover:text-text"
             }`}
           >
             {label}
@@ -129,16 +141,11 @@ export default function AdminSettingsPage() {
       <div className="space-y-6">
 
         {/* Branding */}
-        <section id="branding" className="rounded-xl border border-gray-200 bg-white p-6">
-          <h2 className="text-base font-semibold text-gray-900">Branding</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Customize how Intellios appears to your users.
-          </p>
-          <div className="mt-5 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Company Name</label>
-              <p className="text-xs text-gray-400 mt-0.5">Shown in the sidebar and compliance reports.</p>
+        <section id="branding" className="rounded-xl border border-border bg-surface p-6">
+          <FormSection title="Branding" description="Customize how Intellios appears to your users." isLast={false}>
+            <FormField label="Company Name" htmlFor="company-name" description="Shown in the sidebar and compliance reports.">
               <input
+                id="company-name"
                 type="text"
                 value={settings.branding?.companyName ?? "Intellios"}
                 onChange={(e) =>
@@ -148,15 +155,12 @@ export default function AdminSettingsPage() {
                   }))
                 }
                 placeholder="Intellios"
-                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-border-strong focus:outline-none"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Logo URL <span className="text-gray-400 font-normal">(optional)</span>
-              </label>
-              <p className="text-xs text-gray-400 mt-0.5">If set, displayed in the sidebar instead of the default icon.</p>
+            </FormField>
+            <FormField label="Logo URL" htmlFor="logo-url" optional description="If set, displayed in the sidebar instead of the default icon.">
               <input
+                id="logo-url"
                 type="url"
                 value={settings.branding?.logoUrl ?? ""}
                 onChange={(e) =>
@@ -166,14 +170,13 @@ export default function AdminSettingsPage() {
                   }))
                 }
                 placeholder="https://your-company.com/logo.png"
-                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-border-strong focus:outline-none"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Brand Color</label>
-              <p className="text-xs text-gray-400 mt-0.5">Used as the sidebar logo background color.</p>
-              <div className="mt-2 flex items-center gap-3">
+            </FormField>
+            <FormField label="Brand Color" htmlFor="brand-color" description="Used as the sidebar logo background color.">
+              <div className="flex items-center gap-3">
                 <input
+                  id="brand-color"
                   type="color"
                   value={settings.branding?.primaryColor ?? "#7c3aed"}
                   onChange={(e) =>
@@ -182,35 +185,30 @@ export default function AdminSettingsPage() {
                       branding: { ...s.branding, primaryColor: e.target.value },
                     }))
                   }
-                  className="h-9 w-12 cursor-pointer rounded border border-gray-200 p-0.5"
+                  className="h-9 w-12 cursor-pointer rounded border border-border p-0.5"
                 />
-                <code className="text-sm text-gray-600">{settings.branding?.primaryColor ?? "#7c3aed"}</code>
+                <code className="text-sm text-text-secondary">{settings.branding?.primaryColor ?? "#7c3aed"}</code>
               </div>
-            </div>
+            </FormField>
             {/* Live preview */}
-            <div className="mt-3 flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+            <div className="mt-3 flex items-center gap-3 rounded-lg border border-border-subtle bg-surface-raised px-4 py-3">
               <div
                 className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
                 style={{ backgroundColor: settings.branding?.primaryColor ?? "#7c3aed" }}
               >
                 {(settings.branding?.companyName ?? "Intellios").charAt(0).toUpperCase()}
               </div>
-              <span className="text-sm font-semibold text-gray-900">
+              <span className="text-sm font-semibold text-text">
                 {settings.branding?.companyName ?? "Intellios"}
               </span>
-              <span className="ml-auto text-xs text-gray-400">Preview</span>
+              <span className="ml-auto text-xs text-text-tertiary">Preview</span>
             </div>
-          </div>
+          </FormSection>
         </section>
 
         {/* Periodic Review */}
-        <section id="periodic-review" className="rounded-xl border border-gray-200 bg-white p-6">
-          <h2 className="text-base font-semibold text-gray-900">Periodic Model Review</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            SR 11-7 requires periodic model revalidation after initial deployment.
-            Agents are automatically scheduled for review when deployed.
-          </p>
-          <div className="mt-5 space-y-4">
+        <section id="periodic-review" className="rounded-xl border border-border bg-surface p-6">
+          <FormSection title="Periodic Model Review" description="SR 11-7 requires periodic model revalidation after initial deployment. Agents are automatically scheduled for review when deployed." isLast={false}>
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -221,116 +219,105 @@ export default function AdminSettingsPage() {
                     periodicReview: { ...s.periodicReview, enabled: e.target.checked },
                   }))
                 }
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                className="mt-0.5 h-4 w-4 rounded border-border text-text focus:ring-text"
               />
               <div>
-                <p className="text-sm font-medium text-gray-900">Enable periodic review scheduling</p>
-                <p className="text-xs text-gray-500">When enabled, a review due date is set when an agent is deployed.</p>
+                <p className="text-sm font-medium text-text">Enable periodic review scheduling</p>
+                <p className="text-xs text-text-secondary">When enabled, a review due date is set when an agent is deployed.</p>
               </div>
             </label>
             {(settings.periodicReview?.enabled ?? true) && (
-              <div className="grid grid-cols-2 gap-5 pl-7">
+              <div className="grid grid-cols-2 gap-5 pl-7 pt-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Default review cadence (months)
-                  </label>
-                  <p className="text-xs text-gray-400 mt-0.5">SR 11-7 typically requires annual (12) review for high-risk models.</p>
-                  <input
-                    type="number"
-                    min={1}
-                    max={60}
-                    value={settings.periodicReview?.defaultCadenceMonths ?? 12}
-                    onChange={(e) =>
-                      setSettings((s) => ({
-                        ...s,
-                        periodicReview: { ...s.periodicReview, defaultCadenceMonths: Number(e.target.value) },
-                      }))
-                    }
-                    className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
-                  />
+                  <FormField label="Default review cadence (months)" htmlFor="cadence-months" description="SR 11-7 typically requires annual (12) review for high-risk models.">
+                    <input
+                      id="cadence-months"
+                      type="number"
+                      min={1}
+                      max={60}
+                      value={settings.periodicReview?.defaultCadenceMonths ?? 12}
+                      onChange={(e) =>
+                        setSettings((s) => ({
+                          ...s,
+                          periodicReview: { ...s.periodicReview, defaultCadenceMonths: Number(e.target.value) },
+                        }))
+                      }
+                      className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-border-strong focus:outline-none"
+                    />
+                  </FormField>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Reminder (days before due)
-                  </label>
-                  <p className="text-xs text-gray-400 mt-0.5">Send a reminder notification this many days in advance.</p>
-                  <input
-                    type="number"
-                    min={1}
-                    max={180}
-                    value={settings.periodicReview?.reminderDaysBefore ?? 30}
-                    onChange={(e) =>
-                      setSettings((s) => ({
-                        ...s,
-                        periodicReview: { ...s.periodicReview, reminderDaysBefore: Number(e.target.value) },
-                      }))
-                    }
-                    className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
-                  />
+                  <FormField label="Reminder (days before due)" htmlFor="reminder-days" description="Send a reminder notification this many days in advance.">
+                    <input
+                      id="reminder-days"
+                      type="number"
+                      min={1}
+                      max={180}
+                      value={settings.periodicReview?.reminderDaysBefore ?? 30}
+                      onChange={(e) =>
+                        setSettings((s) => ({
+                          ...s,
+                          periodicReview: { ...s.periodicReview, reminderDaysBefore: Number(e.target.value) },
+                        }))
+                      }
+                      className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-border-strong focus:outline-none"
+                    />
+                  </FormField>
                 </div>
               </div>
             )}
-          </div>
+          </FormSection>
         </section>
 
         {/* Review SLA */}
-        <section id="review-sla" className="rounded-xl border border-gray-200 bg-white p-6">
-          <h2 className="text-base font-semibold text-gray-900">Review SLA</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Time thresholds for blueprints in the <code className="text-xs bg-gray-100 px-1 rounded">in_review</code> state.
-            Displayed as color indicators on the Pipeline Board.
-          </p>
-          <div className="mt-5 grid grid-cols-2 gap-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Warning threshold (hours)
-              </label>
-              <p className="text-xs text-gray-400 mt-0.5">Amber indicator after this many hours</p>
-              <input
-                type="number"
-                min={1}
-                max={720}
-                value={settings.sla.warnHours}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    sla: { ...s.sla, warnHours: Number(e.target.value) },
-                  }))
-                }
-                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
-              />
+        <section id="review-sla" className="rounded-xl border border-border bg-surface p-6">
+          <FormSection title="Review SLA" description="Time thresholds for blueprints in the in_review state. Displayed as color indicators on the Pipeline Board." isLast={false}>
+            <div className="grid grid-cols-2 gap-5">
+              <FormField label="Warning threshold (hours)" htmlFor="warn-hours" description="Amber indicator after this many hours">
+                <input
+                  id="warn-hours"
+                  type="number"
+                  min={1}
+                  max={720}
+                  value={settings.sla.warnHours}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      sla: { ...s.sla, warnHours: Number(e.target.value) },
+                    }))
+                  }
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-border-strong focus:outline-none"
+                />
+              </FormField>
+              <FormField label="Breach threshold (hours)" htmlFor="breach-hours" description="Red indicator after this many hours">
+                <input
+                  id="breach-hours"
+                  type="number"
+                  min={1}
+                  max={720}
+                  value={settings.sla.breachHours}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      sla: { ...s.sla, breachHours: Number(e.target.value) },
+                    }))
+                  }
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-border-strong focus:outline-none"
+                />
+              </FormField>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Breach threshold (hours)
-              </label>
-              <p className="text-xs text-gray-400 mt-0.5">Red indicator after this many hours</p>
-              <input
-                type="number"
-                min={1}
-                max={720}
-                value={settings.sla.breachHours}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    sla: { ...s.sla, breachHours: Number(e.target.value) },
-                  }))
-                }
-                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
-              />
-            </div>
-          </div>
-          {settings.sla.warnHours >= settings.sla.breachHours && (
-            <p className="mt-3 text-xs text-red-600">
-              Warning threshold must be less than breach threshold.
-            </p>
-          )}
+            {settings.sla.warnHours >= settings.sla.breachHours && (
+              <p className="mt-3 text-xs text-red-600">
+                Warning threshold must be less than breach threshold.
+              </p>
+            )}
+          </FormSection>
         </section>
 
         {/* Governance Rules */}
-        <section id="governance-rules" className="rounded-xl border border-gray-200 bg-white p-6">
-          <h2 className="text-base font-semibold text-gray-900">Governance Rules</h2>
-          <p className="mt-1 text-sm text-gray-500">
+        <section id="governance-rules" className="rounded-xl border border-border bg-surface p-6">
+          <Heading level={2} className="text-base">Governance Rules</Heading>
+          <p className="mt-1 text-sm text-text-secondary">
             Control which governance gates are enforced in the design and review workflow.
           </p>
           <div className="mt-5 space-y-4">
@@ -372,11 +359,11 @@ export default function AdminSettingsPage() {
                       governance: { ...s.governance, [key]: e.target.checked },
                     }))
                   }
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                  className="mt-0.5 h-4 w-4 rounded border-border text-text focus:ring-text"
                 />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{label}</p>
-                  <p className="text-xs text-gray-500">{description}</p>
+                  <p className="text-sm font-medium text-text">{label}</p>
+                  <p className="text-xs text-text-secondary">{description}</p>
                 </div>
               </label>
             ))}
@@ -384,24 +371,18 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Notifications */}
-        <section id="notifications" className="rounded-xl border border-gray-200 bg-white p-6">
-          <h2 className="text-base font-semibold text-gray-900">Notifications</h2>
-          <p className="mt-1 text-sm text-gray-500">
+        <section id="notifications" className="rounded-xl border border-border bg-surface p-6">
+          <Heading level={2} className="text-base">Notifications</Heading>
+          <p className="mt-1 text-sm text-text-secondary">
             Configure alert channels for governance events. At least one channel must be set to receive notifications.
           </p>
           <div className="mt-5 space-y-6">
 
             {/* ── Email channel ─────────────────────────────────────────────── */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Email</p>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Admin notification email
-                </label>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Leave blank to notify only users with the reviewer or compliance_officer role.
-                </p>
+              <FormField label="Admin notification email" htmlFor="admin-email" description="Leave blank to notify only users with the reviewer or compliance_officer role." optional>
                 <input
+                  id="admin-email"
                   type="email"
                   value={settings.notifications.adminEmail ?? ""}
                   onChange={(e) =>
@@ -414,9 +395,9 @@ export default function AdminSettingsPage() {
                     }))
                   }
                   placeholder="admin@yourcompany.com"
-                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-border-strong focus:outline-none"
                 />
-              </div>
+              </FormField>
               <div className="mt-4 space-y-3">
                 {(
                   [
@@ -442,11 +423,11 @@ export default function AdminSettingsPage() {
                           notifications: { ...s.notifications, [key]: e.target.checked },
                         }))
                       }
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                      className="mt-0.5 h-4 w-4 rounded border-border text-text focus:ring-text"
                     />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{label}</p>
-                      <p className="text-xs text-gray-500">{description}</p>
+                      <p className="text-sm font-medium text-text">{label}</p>
+                      <p className="text-xs text-text-secondary">{description}</p>
                     </div>
                   </label>
                 ))}
@@ -454,11 +435,11 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* ── P2-607: Event routing matrix ──────────────────────────────── */}
-            <div className="border-t border-gray-100 pt-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
+            <div className="border-t border-border-subtle pt-5">
+              <SectionHeading className="mb-1">
                 Event Routing
-              </p>
-              <p className="text-xs text-gray-400 mb-3">
+              </SectionHeading>
+              <p className="text-xs text-text-tertiary mb-3">
                 Choose which channels receive each event type. Channel must be configured above to receive alerts.
               </p>
               {(() => {
@@ -481,13 +462,13 @@ export default function AdminSettingsPage() {
                 const DEFAULT_ROUTE = { email: true, slack: false, pagerduty: false };
 
                 return (
-                  <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <div className="overflow-x-auto rounded-lg border border-border">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="border-b border-gray-100 bg-gray-50">
-                          <th className="py-2 pl-4 pr-3 text-left font-semibold text-gray-500 w-full">Event</th>
+                        <tr className="border-b border-border-subtle bg-surface-raised">
+                          <th className="py-2 pl-4 pr-3 text-left font-semibold text-text-secondary w-full">Event</th>
                           {CHANNELS.map((ch) => (
-                            <th key={ch.key} className="px-4 py-2 text-center font-semibold text-gray-500 whitespace-nowrap">
+                            <th key={ch.key} className="px-4 py-2 text-center font-semibold text-text-secondary whitespace-nowrap">
                               {ch.label}
                             </th>
                           ))}
@@ -497,8 +478,8 @@ export default function AdminSettingsPage() {
                         {(Object.keys(EVENT_LABELS) as EventKey[]).map((evt, idx) => {
                           const row = (routing as Record<EventKey, { email: boolean; slack: boolean; pagerduty: boolean }>)[evt] ?? DEFAULT_ROUTE;
                           return (
-                            <tr key={evt} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                              <td className="py-2 pl-4 pr-3 text-gray-700">{EVENT_LABELS[evt]}</td>
+                            <tr key={evt} className={idx % 2 === 0 ? "bg-surface" : "bg-surface-raised"}>
+                              <td className="py-2 pl-4 pr-3 text-text">{EVENT_LABELS[evt]}</td>
                               {CHANNELS.map((ch) => (
                                 <td key={ch.key} className="px-4 py-2 text-center">
                                   <input
@@ -519,7 +500,7 @@ export default function AdminSettingsPage() {
                                         },
                                       }))
                                     }
-                                    className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                                    className="h-4 w-4 rounded border-border text-text focus:ring-text"
                                   />
                                 </td>
                               ))}
@@ -534,10 +515,10 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* ── P2-607: Digest frequency ──────────────────────────────────── */}
-            <div className="border-t border-gray-100 pt-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
+            <div className="border-t border-border-subtle pt-5">
+              <SectionHeading className="mb-3">
                 Digest Frequency
-              </p>
+              </SectionHeading>
               <div className="flex items-center gap-3">
                 {(["immediate", "daily", "weekly"] as const).map((freq) => (
                   <label key={freq} className="flex items-center gap-2 cursor-pointer">
@@ -552,13 +533,13 @@ export default function AdminSettingsPage() {
                           notifications: { ...s.notifications, digestFrequency: freq },
                         }))
                       }
-                      className="h-4 w-4 border-gray-300 text-gray-900 focus:ring-gray-900"
+                      className="h-4 w-4 border-border text-text focus:ring-text"
                     />
-                    <span className="text-sm text-gray-700 capitalize">{freq}</span>
+                    <span className="text-sm text-text capitalize">{freq}</span>
                   </label>
                 ))}
               </div>
-              <p className="mt-1.5 text-xs text-gray-400">
+              <p className="mt-1.5 text-xs text-text-tertiary">
                 {(settings.notifications.digestFrequency ?? "immediate") === "immediate"
                   ? "Every alert is sent as it occurs."
                   : (settings.notifications.digestFrequency ?? "immediate") === "daily"
@@ -568,26 +549,10 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* ── Slack channel (P1-433) ─────────────────────────────────────── */}
-            <div className="border-t border-gray-100 pt-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Slack</p>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Incoming webhook URL
-                </label>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  SLA breach and governance alerts will be posted to the channel configured in this webhook.
-                  Create one at{" "}
-                  <a
-                    href="https://api.slack.com/messaging/webhooks"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-gray-600"
-                  >
-                    api.slack.com/messaging/webhooks
-                  </a>
-                  .
-                </p>
+            <div className="border-t border-border-subtle pt-5">
+              <FormField label="Incoming webhook URL" htmlFor="slack-webhook" optional description="SLA breach and governance alerts will be posted to the channel configured in this webhook. Create one at api.slack.com/messaging/webhooks.">
                 <input
+                  id="slack-webhook"
                   type="url"
                   value={settings.notifications.slackWebhookUrl ?? ""}
                   onChange={(e) =>
@@ -600,26 +565,19 @@ export default function AdminSettingsPage() {
                     }))
                   }
                   placeholder="Paste your Slack Incoming Webhook URL here"
-                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm font-mono focus:border-border-strong focus:outline-none"
                 />
-                {settings.notifications.slackWebhookUrl && (
-                  <p className="mt-1 text-xs text-emerald-600">✓ Slack notifications active</p>
-                )}
-              </div>
+              </FormField>
+              {settings.notifications.slackWebhookUrl && (
+                <p className="mt-1 text-xs text-emerald-600">✓ Slack notifications active</p>
+              )}
             </div>
 
             {/* ── PagerDuty channel (P1-433) ─────────────────────────────────── */}
-            <div className="border-t border-gray-100 pt-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">PagerDuty</p>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Events API v2 integration key
-                </label>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Critical alerts (SLA breach, anomaly detected) will trigger a PagerDuty incident.
-                  Find this key in PagerDuty under Services → Integrations → Events API v2.
-                </p>
+            <div className="border-t border-border-subtle pt-5">
+              <FormField label="Events API v2 integration key" htmlFor="pagerduty-key" optional description="Critical alerts (SLA breach, anomaly detected) will trigger a PagerDuty incident. Find this key in PagerDuty under Services → Integrations → Events API v2.">
                 <input
+                  id="pagerduty-key"
                   type="password"
                   autoComplete="new-password"
                   value={settings.notifications.pagerdutyKey ?? ""}
@@ -633,32 +591,32 @@ export default function AdminSettingsPage() {
                     }))
                   }
                   placeholder="Enter integration key (32 characters)"
-                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm font-mono focus:border-border-strong focus:outline-none"
                 />
-                {settings.notifications.pagerdutyKey && (
-                  <p className="mt-1 text-xs text-emerald-600">✓ PagerDuty alerting active</p>
-                )}
-              </div>
+              </FormField>
+              {settings.notifications.pagerdutyKey && (
+                <p className="mt-1 text-xs text-emerald-600">✓ PagerDuty alerting active</p>
+              )}
             </div>
 
           </div>
         </section>
 
         {/* Approval Chain */}
-        <section id="approval-chain" className="rounded-xl border border-gray-200 bg-white p-6">
-          <h2 className="text-base font-semibold text-gray-900">Approval Chain</h2>
-          <p className="mt-1 text-sm text-gray-500">
+        <section id="approval-chain" className="rounded-xl border border-border bg-surface p-6">
+          <Heading level={2} className="text-base">Approval Chain</Heading>
+          <p className="mt-1 text-sm text-text-secondary">
             Define a sequential multi-step approval workflow. Each step requires a reviewer with the specified role
             to approve before the blueprint advances. Steps are enforced in order (top to bottom).
           </p>
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-xs text-text-tertiary">
             Leave empty to use legacy single-step approval — any reviewer or admin can approve.
           </p>
 
           <div className="mt-5 space-y-3">
             {(settings.approvalChain ?? []).map((step, idx) => (
-              <div key={idx} className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
+              <div key={idx} className="flex items-center gap-3 rounded-lg border border-border-subtle bg-surface-raised px-4 py-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-muted text-xs font-medium text-text-secondary">
                   {idx + 1}
                 </span>
                 <Select
@@ -691,7 +649,7 @@ export default function AdminSettingsPage() {
                     })
                   }
                   placeholder="Step label (e.g. Technical Review)"
-                  className="flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-gray-400 focus:outline-none"
+                  className="flex-1 rounded-lg border border-border px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
                 />
                 <button
                   onClick={() =>
@@ -716,7 +674,7 @@ export default function AdminSettingsPage() {
                   return { ...s, approvalChain: chain };
                 })
               }
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800"
+              className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text"
             >
               <span className="text-lg leading-none">+</span> Add Step
             </button>
@@ -724,12 +682,12 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Deployment Targets */}
-        <section id="deployment-targets" className="rounded-xl border border-gray-200 bg-white p-6">
-          <h2 className="text-base font-semibold text-gray-900">Deployment Targets</h2>
-          <p className="mt-1 text-sm text-gray-500">
+        <section id="deployment-targets" className="rounded-xl border border-border bg-surface p-6">
+          <Heading level={2} className="text-base">Deployment Targets</Heading>
+          <p className="mt-1 text-sm text-text-secondary">
             Configure direct deployment targets. AWS credentials are read from server environment
-            variables (<code className="text-xs bg-gray-100 px-1 rounded">AWS_ACCESS_KEY_ID</code>,{" "}
-            <code className="text-xs bg-gray-100 px-1 rounded">AWS_SECRET_ACCESS_KEY</code>) or
+            variables (<code className="text-xs bg-surface-muted px-1 rounded">AWS_ACCESS_KEY_ID</code>,{" "}
+            <code className="text-xs bg-surface-muted px-1 rounded">AWS_SECRET_ACCESS_KEY</code>) or
             an instance profile — never stored in the database.
           </p>
 
@@ -741,12 +699,12 @@ export default function AdminSettingsPage() {
                   AC
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Amazon Bedrock AgentCore</p>
-                  <p className="text-xs text-gray-500">Deploy agents directly to AWS Bedrock runtime</p>
+                  <p className="text-sm font-semibold text-text">Amazon Bedrock AgentCore</p>
+                  <p className="text-xs text-text-secondary">Deploy agents directly to AWS Bedrock runtime</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-text-secondary">
                   {settings.deploymentTargets?.agentcore?.enabled ? "Enabled" : "Disabled"}
                 </span>
                 <Switch
@@ -776,11 +734,10 @@ export default function AdminSettingsPage() {
 
             {settings.deploymentTargets?.agentcore?.enabled && (
               <>
-              <div className="mt-5 grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">AWS Region</label>
-                  <p className="text-xs text-gray-400 mt-0.5">Region to deploy agents into</p>
+              <div className="mt-5 grid grid-cols-2 gap-4 space-y-4">
+                <FormField label="AWS Region" htmlFor="aws-region" description="Region to deploy agents into">
                   <input
+                    id="aws-region"
                     type="text"
                     value={settings.deploymentTargets.agentcore?.region ?? ""}
                     onChange={(e) =>
@@ -796,13 +753,12 @@ export default function AdminSettingsPage() {
                       }))
                     }
                     placeholder="us-east-1"
-                    className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-border-strong focus:outline-none"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Foundation Model</label>
-                  <p className="text-xs text-gray-400 mt-0.5">Bedrock model ID for agents</p>
+                </FormField>
+                <FormField label="Foundation Model" htmlFor="foundation-model" description="Bedrock model ID for agents">
                   <input
+                    id="foundation-model"
                     type="text"
                     value={settings.deploymentTargets.agentcore?.foundationModel ?? ""}
                     onChange={(e) =>
@@ -818,44 +774,35 @@ export default function AdminSettingsPage() {
                       }))
                     }
                     placeholder="anthropic.claude-3-5-sonnet-20241022-v2:0"
-                    className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-border-strong focus:outline-none"
                   />
-                </div>
+                </FormField>
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    IAM Role ARN
-                    <span className="ml-1.5 text-red-500">*</span>
-                  </label>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    ARN of the IAM service role with{" "}
-                    <code className="text-xs bg-gray-100 px-0.5 rounded">bedrock:InvokeModel</code>{" "}
-                    permission. Created by your AWS administrator.
-                  </p>
-                  <input
-                    type="text"
-                    value={settings.deploymentTargets.agentcore?.agentResourceRoleArn ?? ""}
-                    onChange={(e) =>
-                      setSettings((s) => ({
-                        ...s,
-                        deploymentTargets: {
-                          ...s.deploymentTargets,
-                          agentcore: {
-                            ...s.deploymentTargets!.agentcore!,
-                            agentResourceRoleArn: e.target.value,
+                  <FormField label="IAM Role ARN" htmlFor="iam-role-arn" required description="ARN of the IAM service role with bedrock:InvokeModel permission. Created by your AWS administrator.">
+                    <input
+                      id="iam-role-arn"
+                      type="text"
+                      value={settings.deploymentTargets.agentcore?.agentResourceRoleArn ?? ""}
+                      onChange={(e) =>
+                        setSettings((s) => ({
+                          ...s,
+                          deploymentTargets: {
+                            ...s.deploymentTargets,
+                            agentcore: {
+                              ...s.deploymentTargets!.agentcore!,
+                              agentResourceRoleArn: e.target.value,
+                            },
                           },
-                        },
-                      }))
-                    }
-                    placeholder="arn:aws:iam::123456789012:role/AmazonBedrockExecutionRoleForAgents"
-                    className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-mono focus:border-gray-400 focus:outline-none"
-                  />
+                        }))
+                      }
+                      placeholder="arn:aws:iam::123456789012:role/AmazonBedrockExecutionRoleForAgents"
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm font-mono focus:border-border-strong focus:outline-none"
+                    />
+                  </FormField>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Guardrail ID <span className="text-gray-400 font-normal">(optional)</span>
-                  </label>
-                  <p className="text-xs text-gray-400 mt-0.5">Bedrock Guardrail identifier</p>
+                <FormField label="Guardrail ID" htmlFor="guardrail-id" optional description="Bedrock Guardrail identifier">
                   <input
+                    id="guardrail-id"
                     type="text"
                     value={settings.deploymentTargets.agentcore?.guardrailId ?? ""}
                     onChange={(e) =>
@@ -871,15 +818,12 @@ export default function AdminSettingsPage() {
                       }))
                     }
                     placeholder="abc123def456"
-                    className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-border-strong focus:outline-none"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Guardrail Version <span className="text-gray-400 font-normal">(optional)</span>
-                  </label>
-                  <p className="text-xs text-gray-400 mt-0.5">Required when Guardrail ID is set</p>
+                </FormField>
+                <FormField label="Guardrail Version" htmlFor="guardrail-version" optional description="Required when Guardrail ID is set">
                   <input
+                    id="guardrail-version"
                     type="text"
                     value={settings.deploymentTargets.agentcore?.guardrailVersion ?? ""}
                     onChange={(e) =>
@@ -895,9 +839,9 @@ export default function AdminSettingsPage() {
                       }))
                     }
                     placeholder="DRAFT"
-                    className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-border-strong focus:outline-none"
                   />
-                </div>
+                </FormField>
               </div>
               {/* P2-502: Validate deployment target */}
               <ValidateDeploymentTargetButton
@@ -916,7 +860,7 @@ export default function AdminSettingsPage() {
           <button
             onClick={handleSave}
             disabled={saving || settings.sla.warnHours >= settings.sla.breachHours}
-            className="rounded-lg bg-gray-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+            className="rounded-lg bg-text px-6 py-2.5 text-sm font-medium text-white hover:bg-text-secondary disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save Settings"}
           </button>
@@ -962,25 +906,25 @@ function ValidateDeploymentTargetButton({ config }: {
       <button
         onClick={handleValidate}
         disabled={status === "running"}
-        className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 transition-colors"
+        className="rounded-lg border border-border bg-surface-raised px-4 py-2 text-sm font-medium text-text hover:bg-surface-muted disabled:opacity-50 transition-colors"
       >
         {status === "running" ? "Validating…" : "Validate Deployment Target"}
       </button>
       {checks.length > 0 && (
-        <div className="rounded-lg border border-gray-200 overflow-hidden">
+        <div className="rounded-lg border border-border overflow-hidden">
           {checks.map((c) => (
             <div
               key={c.label}
-              className={`flex items-start gap-3 px-4 py-3 border-b border-gray-100 last:border-b-0 ${
-                c.ok ? "bg-white" : "bg-red-50/40"
+              className={`flex items-start gap-3 px-4 py-3 border-b border-border-subtle last:border-b-0 ${
+                c.ok ? "bg-surface" : "bg-red-50/40"
               }`}
             >
               <span className={`mt-0.5 shrink-0 text-base leading-none ${c.ok ? "text-green-500" : "text-red-500"}`}>
                 {c.ok ? "✓" : "✗"}
               </span>
               <div className="min-w-0">
-                <p className={`text-xs font-semibold ${c.ok ? "text-gray-700" : "text-red-700"}`}>{c.label}</p>
-                <p className={`text-xs mt-0.5 ${c.ok ? "text-gray-500" : "text-red-600"}`}>{c.detail}</p>
+                <p className={`text-xs font-semibold ${c.ok ? "text-text" : "text-red-700"}`}>{c.label}</p>
+                <p className={`text-xs mt-0.5 ${c.ok ? "text-text-secondary" : "text-red-600"}`}>{c.detail}</p>
               </div>
             </div>
           ))}

@@ -11,7 +11,9 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-import { chartColors, chartFontSize, chartGridColor, chartTextColor } from "@/lib/chart-tokens";
+import { chartColors, chartFontSize, chartGridColor, chartTextColor, chartMargins } from "@/lib/chart-tokens";
+import { Skeleton, SkeletonList } from "@/components/ui/skeleton";
+import { SectionHeading } from "@/components/ui/section-heading";
 
 interface QualityScore {
   id: string;
@@ -170,15 +172,15 @@ function RubricTooltip({ rubric }: { rubric: string }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="text-gray-300 hover:text-gray-400 transition-colors"
+        className="text-text-tertiary hover:text-text-secondary transition-colors"
         aria-label="Show scoring rubric"
       >
         <HelpCircle className="h-3.5 w-3.5" />
       </button>
       {open && (
-        <div className="absolute bottom-5 left-0 z-20 w-64 rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
-          <p className="mb-1 text-2xs font-semibold uppercase tracking-wide text-gray-400">Scoring Rubric</p>
-          <p className="text-xs text-gray-600 leading-relaxed">{rubric}</p>
+        <div className="absolute bottom-5 left-0 z-20 w-64 rounded-lg border border-border bg-surface p-3 shadow-lg">
+          <p className="mb-1 text-2xs font-semibold uppercase tracking-wide text-text-tertiary">Scoring Rubric</p>
+          <p className="text-xs text-text-secondary leading-relaxed">{rubric}</p>
         </div>
       )}
     </div>
@@ -210,10 +212,10 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-24 animate-pulse rounded-xl bg-gray-100" />
+        <Skeleton height="h-24" variant="rectangular" />
         <div className="space-y-3">
           {DIMENSIONS.map((d) => (
-            <div key={d.key} className="h-10 animate-pulse rounded-lg bg-gray-100" />
+            <Skeleton key={d.key} height="h-10" variant="text" />
           ))}
         </div>
       </div>
@@ -222,9 +224,9 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
 
   if (!score) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-10 text-center">
-        <p className="text-sm font-medium text-gray-600">No quality score yet</p>
-        <p className="mt-1 text-xs text-gray-400">
+      <div className="rounded-xl border border-dashed border-border bg-surface-raised p-10 text-center">
+        <p className="text-sm font-medium text-text-secondary">No quality score yet</p>
+        <p className="mt-1 text-xs text-text-tertiary">
           Quality scores are evaluated automatically when a blueprint is submitted for review.
         </p>
       </div>
@@ -239,16 +241,16 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
   return (
     <div className="space-y-6">
       {/* Overall score headline */}
-      <div className="flex items-center gap-6 rounded-xl border border-gray-200 bg-white p-5">
+      <div className="flex items-center gap-6 rounded-xl border border-border bg-surface p-5">
         <div className="text-center">
           <p className={`text-5xl font-bold tabular-nums ${overallColor(overall)}`}>
             {Math.round(overall)}
           </p>
-          <p className="mt-1 text-xs text-gray-400">/ 100</p>
+          <p className="mt-1 text-xs text-text-secondary">/ 100</p>
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm font-semibold text-gray-900">Overall Quality Score</p>
+            <p className="text-sm font-semibold text-text">Overall Quality Score</p>
             {/* P2-264: Delta badge */}
             {overallDelta && (
               <span
@@ -259,23 +261,21 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
               </span>
             )}
           </div>
-          <p className="mt-0.5 text-xs text-gray-500">
+          <p className="mt-0.5 text-xs text-text-secondary">
             Average of 5 dimensions, scaled 0–100
           </p>
-          <p className="mt-2 text-2xs text-gray-400">
+          <p className="mt-2 text-2xs text-text-tertiary">
             Last evaluated {timeAgo(score.evaluatedAt)}
           </p>
         </div>
       </div>
 
       {/* Dimension bars */}
-      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-        <div className="border-b border-gray-100 bg-gray-50 px-4 py-2.5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-            Dimension Scores (1–5)
-          </p>
+      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+        <div className="border-b border-border-subtle bg-surface-raised px-4 py-2.5">
+          <SectionHeading>Dimension Scores (1–5)</SectionHeading>
         </div>
-        <div className="divide-y divide-gray-50 px-4 py-2">
+        <div className="divide-y divide-border px-4 py-2">
           {DIMENSIONS.map((dim) => {
             const rawVal = score[dim.key];
             const val = rawVal !== null ? parseFloat(rawVal) : null;
@@ -290,8 +290,8 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-start gap-1.5 min-w-0">
                     <div className="min-w-0">
-                      <span className="text-sm font-medium text-gray-800">{dim.label}</span>
-                      <p className="text-xs text-gray-400">{dim.description}</p>
+                      <span className="text-sm font-medium text-text">{dim.label}</span>
+                      <p className="text-xs text-text-tertiary">{dim.description}</p>
                     </div>
                     <RubricTooltip rubric={dim.rubric} />
                   </div>
@@ -301,14 +301,14 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
                         {dimDelta.label}
                       </span>
                     )}
-                    <span className={`text-sm font-bold tabular-nums ${val !== null ? scoreTextColor(val) : "text-gray-400"}`}>
+                    <span className={`text-sm font-bold tabular-nums ${val !== null ? scoreTextColor(val) : "text-text-tertiary"}`}>
                       {val !== null ? val.toFixed(1) : "—"}
                     </span>
                   </div>
                 </div>
-                <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+                <div className="h-1.5 w-full rounded-full bg-surface-muted overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${val !== null ? scoreColor(val) : "bg-gray-200"}`}
+                    className={`h-full rounded-full transition-all ${val !== null ? scoreColor(val) : "bg-border"}`}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -321,9 +321,9 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
       {/* Flags */}
       {score.flags && score.flags.length > 0 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">
-            Quality Flags
-          </p>
+          <div className="text-amber-700 mb-2">
+          <SectionHeading>Quality Flags</SectionHeading>
+        </div>
           <div className="space-y-1.5">
             {score.flags.map((flag, i) => (
               <div key={i} className="flex items-start gap-2 text-sm text-amber-800">
@@ -339,9 +339,9 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
       {showProduction && (
         <div className="rounded-xl border border-indigo-200 bg-indigo-50 overflow-hidden">
           <div className="border-b border-indigo-100 bg-indigo-100/60 px-4 py-2.5 flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-700">
-              Production Quality (Last {prodQuality?.windowDays ?? 30} Days)
-            </p>
+            <div className="text-indigo-700">
+              <SectionHeading>Production Quality (Last {prodQuality?.windowDays ?? 30} Days)</SectionHeading>
+            </div>
             {prodQuality && (
               <span className={`text-xs font-bold ${scoreGrade(prodQuality.productionScore).color}`}>
                 {scoreGrade(prodQuality.productionScore).label}
@@ -355,25 +355,25 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
               <span className="ml-2 text-xs text-indigo-500">Loading production metrics…</span>
             </div>
           ) : prodQuality === null ? (
-            <div className="px-4 py-6 text-center text-xs text-indigo-400">
+            <div className="px-4 py-6 text-center text-xs text-indigo-500">
               No production data available
             </div>
           ) : (
             <div className="p-4 space-y-4">
               {/* Composite score + design score side-by-side */}
               <div className="flex items-center gap-4">
-                <div className="text-center flex-1 rounded-lg bg-white border border-indigo-100 py-3">
+                <div className="text-center flex-1 rounded-lg bg-surface border border-indigo-100 py-3">
                   <p className={`text-3xl font-bold tabular-nums ${overallColor(parseFloat(score.overallScore ?? "0"))}`}>
                     {Math.round(parseFloat(score.overallScore ?? "0"))}
                   </p>
-                  <p className="mt-0.5 text-2xs text-gray-400">Design / 100</p>
+                  <p className="mt-0.5 text-2xs text-text-secondary">Design / 100</p>
                 </div>
                 <div className="text-lg font-light text-indigo-300 shrink-0">vs</div>
-                <div className="text-center flex-1 rounded-lg bg-white border border-indigo-100 py-3">
+                <div className="text-center flex-1 rounded-lg bg-surface border border-indigo-100 py-3">
                   <p className={`text-3xl font-bold tabular-nums ${overallColor(prodQuality.productionScore)}`}>
                     {prodQuality.productionScore}
                   </p>
-                  <p className="mt-0.5 text-2xs text-gray-400">Production / 100</p>
+                  <p className="mt-0.5 text-2xs text-text-secondary">Production / 100</p>
                 </div>
               </div>
 
@@ -401,8 +401,8 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
                 <div key={m.label}>
                   <div className="flex items-center justify-between mb-1">
                     <div>
-                      <span className="text-sm font-medium text-gray-800">{m.label}</span>
-                      <p className="text-xs text-gray-400">{m.description}</p>
+                      <span className="text-sm font-medium text-text">{m.label}</span>
+                      <p className="text-xs text-text-tertiary">{m.description}</p>
                     </div>
                     <span className={`ml-4 shrink-0 text-sm font-bold tabular-nums ${pctColor(m.value)}`}>
                       {m.display}
@@ -438,12 +438,10 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
 
       {/* H2-2.2: 12-week trend chart — shown when trend data is available */}
       {showProduction && trendData.length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-          <div className="border-b border-gray-100 bg-gray-50 px-4 py-2.5 flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Quality Trend — Last {trendData.length} Week{trendData.length !== 1 ? "s" : ""}
-            </p>
-            <div className="flex items-center gap-3 text-2xs text-gray-400">
+        <div className="rounded-xl border border-border bg-surface overflow-hidden">
+          <div className="border-b border-border-subtle bg-surface-raised px-4 py-2.5 flex items-center justify-between">
+            <SectionHeading>Quality Trend — Last {trendData.length} Week{trendData.length !== 1 ? "s" : ""}</SectionHeading>
+            <div className="flex items-center gap-3 text-2xs text-text-secondary">
               <span className="flex items-center gap-1">
                 <span className="inline-block w-3 h-0.5 rounded-full" style={{ backgroundColor: chartColors.primary }} />
                 Production
@@ -462,7 +460,7 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
                   design: row.designScore,
                   production: row.productionScore,
                 }))}
-                margin={{ top: 4, right: 8, left: -24, bottom: 0 }}
+                margin={chartMargins.compact}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
                 <XAxis

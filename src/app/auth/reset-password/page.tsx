@@ -2,6 +2,8 @@
 
 import { useState, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { FormField } from "@/components/ui/form-field";
+import { Heading, Subheading } from "@/components/catalyst/heading";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -63,16 +65,16 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-surface-raised">
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Intellios</h1>
-          <p className="mt-1 text-sm text-gray-500">Enterprise Agent Factory</p>
+          <Heading level={1} className="tracking-tight text-text">Intellios</Heading>
+          <p className="mt-1 text-sm text-text-secondary">Enterprise Agent Factory</p>
         </div>
 
         {/* Card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="rounded-xl border border-border bg-surface p-8 shadow-sm">
           {/* P2-101: Rich password reset confirmation */}
           {success ? (
             <div className="text-center">
@@ -90,8 +92,8 @@ function ResetPasswordForm() {
                 />
               </div>
 
-              <h2 className="mb-1 text-lg font-semibold text-gray-900">Password updated</h2>
-              <p className="mb-5 text-sm text-gray-500 leading-relaxed">
+              <Subheading level={2} className="mb-1 text-text">Password updated</Subheading>
+              <p className="mb-5 text-sm text-text-secondary leading-relaxed">
                 Your password has been changed successfully. Your previous password is no longer valid.
               </p>
 
@@ -115,29 +117,23 @@ function ResetPasswordForm() {
               {/* CTA + countdown */}
               <a
                 href="/login"
-                className="block w-full rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
+                className="block w-full rounded-lg bg-text py-2.5 text-sm font-medium text-white hover:bg-text-secondary transition-colors"
               >
                 Sign in now →
               </a>
-              <p className="mt-3 text-xs text-gray-400">
+              <p className="mt-3 text-xs text-text-tertiary">
                 Redirecting automatically in {countdown}s…
               </p>
             </div>
           ) : (
             <>
-              <h2 className="mb-2 text-lg font-semibold text-gray-900">Set a new password</h2>
-              <p className="mb-6 text-sm text-gray-500">
+              <Subheading level={2} className="mb-2 text-text">Set a new password</Subheading>
+              <p className="mb-6 text-sm text-text-secondary">
                 Choose a password with at least 8 characters.
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="mb-1 block text-sm font-medium text-gray-700"
-                  >
-                    New password
-                  </label>
+                <FormField label="New password" htmlFor="password">
                   <input
                     id="password"
                     type="password"
@@ -146,17 +142,11 @@ function ResetPasswordForm() {
                     minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-text focus:outline-none focus:ring-1 focus:ring-text"
                   />
-                </div>
+                </FormField>
 
-                <div>
-                  <label
-                    htmlFor="confirm"
-                    className="mb-1 block text-sm font-medium text-gray-700"
-                  >
-                    Confirm password
-                  </label>
+                <FormField label="Confirm password" htmlFor="confirm">
                   <input
                     id="confirm"
                     type="password"
@@ -164,9 +154,9 @@ function ResetPasswordForm() {
                     required
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-text focus:outline-none focus:ring-1 focus:ring-text"
                   />
-                </div>
+                </FormField>
 
                 {error && (
                   <div>
@@ -174,7 +164,7 @@ function ResetPasswordForm() {
                     {error.includes("expired") && (
                       <a
                         href="/auth/forgot-password"
-                        className="mt-1 block text-xs text-gray-500 hover:text-gray-700 underline-offset-2 hover:underline"
+                        className="mt-1 block text-xs text-text-secondary hover:text-text underline-offset-2 hover:underline"
                       >
                         Request a new reset link →
                       </a>
@@ -185,7 +175,7 @@ function ResetPasswordForm() {
                 <button
                   type="submit"
                   disabled={loading || !token}
-                  className="w-full rounded-lg bg-gray-900 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                  className="w-full rounded-lg bg-text py-2 text-sm font-medium text-white hover:bg-text-secondary disabled:opacity-50"
                 >
                   {loading ? "Updating..." : "Reset Password"}
                 </button>

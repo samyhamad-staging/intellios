@@ -18,7 +18,7 @@ function significanceBadge(sig: DiffSignificance) {
   const cfg: Record<DiffSignificance, { label: string; classes: string }> = {
     major: { label: "Major Change", classes: "bg-red-100 text-red-700" },
     minor: { label: "Minor Change", classes: "bg-amber-100 text-amber-700" },
-    patch: { label: "Patch Change", classes: "bg-gray-100 text-gray-600" },
+    patch: { label: "Patch Change", classes: "bg-surface-muted text-text-secondary" },
   };
   const { label, classes } = cfg[sig];
   return (
@@ -60,7 +60,7 @@ function ChangeRow({ change }: { change: FieldChange }) {
     <div className={`flex items-start gap-2 px-3 py-2 rounded ${changeBg(change.changeType)}`}>
       {changeIcon(change.changeType)}
       <div className="flex-1 min-w-0">
-        <span className="text-sm text-gray-800">{change.label}</span>
+        <span className="text-sm text-text">{change.label}</span>
         {isModified && (
           <div className="mt-1 space-y-0.5 text-xs">
             <div className="text-red-600 line-through opacity-75 truncate">{renderValue(change.from)}</div>
@@ -76,28 +76,28 @@ function SectionBlock({ section }: { section: SectionDiff }) {
   const [open, setOpen] = useState(true);
   if (section.changes.length === 0) {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-400 px-1">
+      <div className="flex items-center gap-2 text-sm text-text-tertiary px-1">
         <span>{section.label}</span>
         <span className="text-xs">(no changes)</span>
       </div>
     );
   }
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="border border-border rounded-lg overflow-hidden">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-4 py-2.5 bg-white hover:bg-gray-50 transition-colors text-left"
+        className="w-full flex items-center justify-between px-4 py-2.5 bg-surface hover:bg-surface-raised transition-colors text-left"
       >
-        <span className="text-sm font-medium text-gray-800">
+        <span className="text-sm font-medium text-text">
           {section.label}
-          <span className="ml-2 text-xs font-normal text-gray-500">
+          <span className="ml-2 text-xs font-normal text-text-secondary">
             ({section.changes.length} change{section.changes.length !== 1 ? "s" : ""})
           </span>
         </span>
-        <span className="text-gray-400 text-xs">{open ? "▲" : "▼"}</span>
+        <span className="text-text-secondary text-xs">{open ? "▲" : "▼"}</span>
       </button>
       {open && (
-        <div className="border-t border-gray-100 px-4 py-3 space-y-2">
+        <div className="border-t border-border-subtle px-4 py-3 space-y-2">
           {section.changes.map((change, i) => (
             <ChangeRow key={i} change={change} />
           ))}
@@ -130,8 +130,8 @@ export function VersionDiff({ blueprintId, compareWithId, diff: prefetched, defa
   if (loading) {
     return (
       <div className="space-y-2 animate-pulse">
-        <div className="h-10 bg-gray-100 rounded-lg" />
-        <div className="h-20 bg-gray-100 rounded-lg" />
+        <div className="h-10 bg-surface-muted rounded-lg" />
+        <div className="h-20 bg-surface-muted rounded-lg" />
       </div>
     );
   }
@@ -153,15 +153,15 @@ export function VersionDiff({ blueprintId, compareWithId, diff: prefetched, defa
         onClick={() => defaultCollapsed && setCollapsed((c) => !c)}
         className={`w-full flex items-center gap-3 ${defaultCollapsed ? "cursor-pointer" : "cursor-default"}`}
       >
-        <span className="text-sm font-semibold text-gray-800">
+        <span className="text-sm font-semibold text-text">
           Changes from v{diff.versionFrom} → v{diff.versionTo}
         </span>
         {significanceBadge(diff.significance)}
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-text-secondary">
           {hasChanges ? `${diff.totalChanges} change${diff.totalChanges !== 1 ? "s" : ""}` : "No changes"}
         </span>
         {defaultCollapsed && (
-          <span className="ml-auto text-gray-400 text-xs">{collapsed ? "▼" : "▲"}</span>
+          <span className="ml-auto text-text-tertiary text-xs">{collapsed ? "▼" : "▲"}</span>
         )}
       </button>
 
@@ -182,7 +182,7 @@ export function VersionDiff({ blueprintId, compareWithId, diff: prefetched, defa
             )}
           </div>
         ) : (
-          <div className="rounded border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500">
+          <div className="rounded border border-border bg-surface-raised px-4 py-3 text-sm text-text-secondary">
             No structural changes detected between these two versions.
           </div>
         )

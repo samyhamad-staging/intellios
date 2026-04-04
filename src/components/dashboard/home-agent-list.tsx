@@ -8,6 +8,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Bot, ChevronRight, Inbox, Search, X } from "lucide-react";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { SectionHeading } from "@/components/ui/section-heading";
 
 interface AgentItem {
   id: string;
@@ -59,9 +60,9 @@ export function HomeAgentList({ agents }: HomeAgentListProps) {
     <section>
       {/* Section header with search */}
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="shrink-0 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+        <SectionHeading className="shrink-0">
           Recent Agents
-        </h2>
+        </SectionHeading>
         <div className="relative min-w-0 flex-1 max-w-[220px]">
           <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
           <input
@@ -136,7 +137,7 @@ export function HomeAgentList({ agents }: HomeAgentListProps) {
             <Link
               key={agent.agentId}
               href={`/registry/${agent.agentId}`}
-              className={`flex items-center gap-3 px-5 py-3.5 hover:bg-surface-raised transition-colors ${i > 0 ? "border-t border-border" : ""}`}
+              className={`flex items-center gap-3 px-5 py-3.5 interactive-row ${i > 0 ? "border-t border-border" : ""}`}
             >
               <Bot size={15} className="shrink-0 text-text-tertiary" />
               <span className="flex-1 truncate text-sm font-medium text-text">{agent.name ?? "Unnamed Agent"}</span>

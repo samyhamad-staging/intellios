@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ContributionDomain, IntakeContext, IntakeRiskTier, StakeholderContribution } from "@/lib/types/intake";
 import { StakeholderAIChat } from "./stakeholder-ai-chat";
+import { SectionHeading } from "@/components/ui/section-heading";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ const RACI_COLORS: Record<string, string> = {
   accountable: "bg-violet-100 text-violet-700 border-violet-200",
   responsible: "bg-blue-50 text-blue-700 border-blue-200",
   consulted: "bg-green-50 text-green-700 border-green-200",
-  informed: "bg-gray-50 text-gray-500 border-gray-200",
+  informed: "bg-surface-raised text-text-secondary border-border",
 };
 
 const FIELD_LABELS: Record<string, string> = {
@@ -162,15 +163,15 @@ export function StakeholderContributionsPanel({
   const pendingInsights = insights.filter((i) => i.status === "pending");
 
   return (
-    <div className="border-t border-gray-100 pt-4 mt-4">
+    <div className="border-t border-border-subtle pt-4 mt-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+          <SectionHeading>
             Stakeholder Input
-          </span>
+          </SectionHeading>
           {contributions.length > 0 && (
-            <span className="text-xs bg-gray-100 text-gray-600 rounded-full px-1.5 py-0.5 font-medium">
+            <span className="text-xs bg-surface-muted text-text-secondary rounded-full px-1.5 py-0.5 font-medium">
               {contributions.length}
             </span>
           )}
@@ -221,10 +222,10 @@ export function StakeholderContributionsPanel({
 
       {/* AI Orchestrator Insights */}
       {pendingInsights.length > 0 && (
-        <div className="border-t border-gray-100 pt-3">
+        <div className="border-t border-border-subtle pt-3">
           <div className="flex items-center gap-1.5 mb-2">
             <span className="h-1.5 w-1.5 rounded-full bg-violet-500 animate-pulse" />
-            <span className="text-2xs font-semibold uppercase tracking-wider text-gray-400">
+            <span className="text-2xs font-semibold uppercase tracking-wider text-text-tertiary">
               AI Orchestrator
             </span>
           </div>
@@ -250,7 +251,7 @@ export function StakeholderContributionsPanel({
               />
             ))}
             {pendingInsights.length > 5 && (
-              <p className="text-2xs text-gray-400 pl-1">
+              <p className="text-2xs text-text-tertiary pl-1">
                 +{pendingInsights.length - 5} more
               </p>
             )}
@@ -300,9 +301,9 @@ function DomainRow({
 
   return (
     <div>
-      <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs hover:bg-gray-50 transition-colors">
+      <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs hover:bg-surface-raised transition-colors">
         {/* Domain name */}
-        <span className={`flex-1 font-medium truncate ${isCompleted ? "text-gray-500" : "text-gray-800"}`}>
+        <span className={`flex-1 font-medium truncate ${isCompleted ? "text-text-secondary" : "text-text"}`}>
           {DOMAIN_LABELS[domain]}
         </span>
 
@@ -315,7 +316,7 @@ function DomainRow({
 
         {/* Invitee name */}
         {invitation && (
-          <span className="text-2xs text-gray-400 shrink-0 max-w-[72px] truncate">
+          <span className="text-2xs text-text-tertiary shrink-0 max-w-[72px] truncate">
             {invitation.inviteeName ?? invitation.inviteeEmail.split("@")[0]}
           </span>
         )}
@@ -340,7 +341,7 @@ function DomainRow({
               <span className="text-2xs text-amber-600">↻</span>
               <button
                 onClick={onOpenInviteForm}
-                className="rounded bg-gray-50 px-1.5 py-0.5 text-2xs text-gray-500 hover:bg-gray-100 transition-colors"
+                className="rounded bg-surface-raised px-1.5 py-0.5 text-2xs text-text-secondary hover:bg-surface-muted transition-colors"
               >
                 Resend
               </button>
@@ -356,7 +357,7 @@ function DomainRow({
               </button>
               <button
                 onClick={onAIInterview}
-                className="rounded bg-gray-50 px-1.5 py-0.5 text-2xs text-gray-500 hover:bg-gray-100 transition-colors"
+                className="rounded bg-surface-raised px-1.5 py-0.5 text-2xs text-text-secondary hover:bg-surface-muted transition-colors"
               >
                 Interview
               </button>
@@ -367,17 +368,17 @@ function DomainRow({
 
       {/* Expanded contribution detail */}
       {isExpanded && nonEmptyFields.length > 0 && (
-        <div className="ml-2.5 mr-2 mb-1 rounded border border-gray-100 bg-gray-50/80 p-2">
+        <div className="ml-2.5 mr-2 mb-1 rounded border border-border-subtle bg-surface-raised/80 p-2">
           {nonEmptyFields.slice(0, 3).map(([key, value]) => (
             <div key={key} className="mb-1.5 last:mb-0">
-              <p className="text-2xs font-medium text-gray-500">
+              <p className="text-2xs font-medium text-text-secondary">
                 {FIELD_LABELS[key] ?? key.replace(/_/g, " ")}
               </p>
-              <p className="text-2xs text-gray-600 leading-relaxed line-clamp-2">{value}</p>
+              <p className="text-2xs text-text-secondary leading-relaxed line-clamp-2">{value}</p>
             </div>
           ))}
           {nonEmptyFields.length > 3 && (
-            <p className="text-2xs text-gray-400">+{nonEmptyFields.length - 3} more</p>
+            <p className="text-2xs text-text-tertiary">+{nonEmptyFields.length - 3} more</p>
           )}
         </div>
       )}
@@ -456,7 +457,7 @@ function InviteForm({ domain, sessionId, existingEmail, onCreated, onClose }: In
       onSubmit={handleSubmit}
       className="ml-2.5 mr-2 mb-2 rounded-lg border border-violet-100 bg-violet-50/40 p-3 space-y-2"
     >
-      <p className="text-2xs font-semibold uppercase tracking-wider text-gray-400">
+      <p className="text-2xs font-semibold uppercase tracking-wider text-text-tertiary">
         Invite for {DOMAIN_LABELS[domain]}
       </p>
 
@@ -466,7 +467,7 @@ function InviteForm({ domain, sessionId, existingEmail, onCreated, onClose }: In
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Email address *"
         required
-        className="w-full rounded border border-gray-200 bg-white px-2.5 py-1.5 text-xs placeholder-gray-300 focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-400"
+        className="w-full rounded border border-border bg-surface px-2.5 py-1.5 text-xs placeholder-text-tertiary focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-400"
       />
 
       <div className="grid grid-cols-2 gap-1.5">
@@ -475,14 +476,14 @@ function InviteForm({ domain, sessionId, existingEmail, onCreated, onClose }: In
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name (optional)"
-          className="rounded border border-gray-200 bg-white px-2.5 py-1.5 text-xs placeholder-gray-300 focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-400"
+          className="rounded border border-border bg-surface px-2.5 py-1.5 text-xs placeholder-text-tertiary focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-400"
         />
         <input
           type="text"
           value={roleTitle}
           onChange={(e) => setRoleTitle(e.target.value)}
           placeholder="Role title"
-          className="rounded border border-gray-200 bg-white px-2.5 py-1.5 text-xs placeholder-gray-300 focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-400"
+          className="rounded border border-border bg-surface px-2.5 py-1.5 text-xs placeholder-text-tertiary focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-400"
         />
       </div>
 
@@ -496,7 +497,7 @@ function InviteForm({ domain, sessionId, existingEmail, onCreated, onClose }: In
             className={`flex-1 rounded border py-1 text-2xs font-medium transition-colors ${
               raciRole === opt.value
                 ? RACI_COLORS[opt.value]
-                : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                : "border-border bg-surface text-text-secondary hover:bg-surface-raised"
             }`}
           >
             {opt.label}
@@ -510,7 +511,7 @@ function InviteForm({ domain, sessionId, existingEmail, onCreated, onClose }: In
         <button
           type="button"
           onClick={onClose}
-          className="text-2xs text-gray-400 hover:text-gray-600 transition-colors"
+          className="text-2xs text-text-tertiary hover:text-text-secondary transition-colors"
         >
           Cancel
         </button>
@@ -555,24 +556,24 @@ function InsightCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const icon = INSIGHT_ICONS[insight.type] ?? "◉";
-  const color = INSIGHT_COLORS[insight.type] ?? "text-gray-500";
+  const color = INSIGHT_COLORS[insight.type] ?? "text-text-secondary";
   const meta = insight.metadata as { action?: string } | null;
   const isSuggestInvite = insight.type === "suggestion" && meta?.action === "invite";
 
   return (
-    <div className="rounded-lg border border-gray-100 bg-white p-2.5">
+    <div className="rounded-lg border border-border-subtle bg-surface p-2.5">
       <div className="flex items-start gap-2">
         <span className={`text-xs shrink-0 mt-0.5 ${color}`}>{icon}</span>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-gray-700">{insight.title}</p>
+          <p className="text-xs font-medium text-text">{insight.title}</p>
           {expanded && (
-            <p className="mt-1 text-xs-tight text-gray-500 leading-relaxed">{insight.body}</p>
+            <p className="mt-1 text-xs-tight text-text-secondary leading-relaxed">{insight.body}</p>
           )}
         </div>
         <button
           onClick={() => setExpanded((v) => !v)}
           aria-label={expanded ? "Collapse insight" : "Expand insight"}
-          className="text-gray-300 hover:text-gray-500 shrink-0 text-2xs"
+          className="text-text-disabled hover:text-text-secondary shrink-0 text-2xs"
         >
           {expanded ? "▲" : "▼"}
         </button>
@@ -596,7 +597,7 @@ function InsightCard({
         ) : null}
         <button
           onClick={onDismiss}
-          className="text-2xs text-gray-400 hover:text-gray-600 transition-colors"
+          className="text-2xs text-text-tertiary hover:text-text-secondary transition-colors"
         >
           Dismiss
         </button>

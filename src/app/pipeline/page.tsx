@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { getSlaStatus } from "@/lib/sla/config";
 import { Search, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Heading, Subheading } from "@/components/catalyst/heading";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -34,12 +35,12 @@ const COLUMNS: {
   badgeCls: string;
   group: "active" | "terminal";
 }[] = [
-  { status: "draft",      label: "Draft",      colBg: "bg-gray-50 border-gray-200",     dotColor: "bg-gray-400",   badgeCls: "bg-gray-200 text-gray-600",     group: "active"   },
+  { status: "draft",      label: "Draft",      colBg: "bg-surface-raised border-border",     dotColor: "bg-text-tertiary",   badgeCls: "bg-surface-muted text-text-secondary",     group: "active"   },
   { status: "in_review",  label: "In Review",  colBg: "bg-blue-50 border-blue-200",     dotColor: "bg-blue-500",   badgeCls: "bg-blue-100 text-blue-700",     group: "active"   },
   { status: "approved",   label: "Approved",   colBg: "bg-green-50 border-green-200",   dotColor: "bg-green-500",  badgeCls: "bg-green-100 text-green-700",   group: "active"   },
   { status: "deployed",   label: "Deployed",   colBg: "bg-indigo-50 border-indigo-200", dotColor: "bg-indigo-500", badgeCls: "bg-indigo-100 text-indigo-700", group: "active"   },
   { status: "rejected",   label: "Rejected",   colBg: "bg-red-50 border-red-200",       dotColor: "bg-red-500",    badgeCls: "bg-red-100 text-red-700",       group: "terminal" },
-  { status: "deprecated", label: "Deprecated", colBg: "bg-gray-50/80 border-gray-200",  dotColor: "bg-gray-400",   badgeCls: "bg-gray-100 text-gray-500",     group: "terminal" },
+  { status: "deprecated", label: "Deprecated", colBg: "bg-surface-raised/80 border-border",  dotColor: "bg-text-tertiary",   badgeCls: "bg-surface-muted text-text-secondary",     group: "terminal" },
 ];
 
 // Next-action label shown on cards to guide the user to the right action
@@ -152,13 +153,11 @@ export default function PipelinePage() {
     <div className="flex h-[calc(100vh-0px)] flex-col overflow-hidden">
 
       {/* ── Header ───────────────────────────────────────────────────────── */}
-      <header className="shrink-0 border-b border-border bg-surface px-6 py-4">
+      <header className="shrink-0 border-b border-border bg-surface px-6 py-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-text">Pipeline Board</h1>
-            <p className="mt-0.5 text-sm text-text-secondary">
-              {loading ? "Loading…" : `${agents.length} agent${agents.length === 1 ? "" : "s"} across all stages`}
-            </p>
+            <Heading level={1}>Pipeline Board</Heading>
+            <p className="mt-0.5 text-sm text-text-secondary">Track agents through the lifecycle pipeline</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {/* Search */}

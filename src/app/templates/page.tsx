@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Package, Search, Star, TrendingUp, Zap, Shield, ArrowRight } from "lucide-react";
+import { Heading, Subheading } from "@/components/catalyst/heading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -79,13 +80,12 @@ export default function TemplateMarketplacePage() {
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-text flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <Package className="h-5 w-5 text-primary" />
-            Template Marketplace
+            <Heading level={1}>Template Marketplace</Heading>
+          </div>
           </h1>
-          <p className="text-sm text-text-secondary mt-1">
-            Browse and deploy agent templates. Click any template to customize and generate a blueprint.
-          </p>
+          <p className="mt-0.5 text-sm text-text-secondary">Pre-built agent templates for common use cases</p>
         </div>
       </div>
 
@@ -125,7 +125,7 @@ export default function TemplateMarketplacePage() {
       {/* Filters */}
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
           <input
             type="text"
             placeholder="Search templates…"
@@ -183,14 +183,15 @@ export default function TemplateMarketplacePage() {
                 }}
                 className={`group rounded-xl border border-border bg-surface p-5 transition-all space-y-3 ${
                   isBuiltIn
-                    ? "cursor-pointer hover:border-primary/30 hover:shadow-[var(--shadow-raised)]"
+                    ? "cursor-pointer interactive-row"
                     : ""
                 }`}
+                tabIndex={isBuiltIn ? 0 : undefined}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-medium text-text text-sm leading-tight group-hover:text-primary transition-colors">
+                  <Subheading level={3} className="text-text leading-tight group-hover:text-primary transition-colors">
                     {t.name}
-                  </h3>
+                  </Subheading>
                   <div className="flex items-center gap-1.5 shrink-0">
                     {isBuiltIn && (
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
@@ -199,7 +200,7 @@ export default function TemplateMarketplacePage() {
                       </span>
                     )}
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      t.source === "community" ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-600"
+                      t.source === "community" ? "bg-violet-100 text-violet-700" : "bg-surface-muted text-text-secondary"
                     }`}>
                       {sourceLabel[t.source] ?? t.source}
                     </span>

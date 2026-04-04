@@ -169,14 +169,14 @@ function statusColor(status: EvidenceStatus): string {
   if (status === "satisfied") return "text-green-700";
   if (status === "partial") return "text-amber-600";
   if (status === "missing") return "text-red-600";
-  return "text-gray-400";
+  return "text-text-tertiary";
 }
 
 function statusBg(status: EvidenceStatus): string {
   if (status === "satisfied") return "bg-green-50 border-green-100";
   if (status === "partial") return "bg-amber-50 border-amber-100";
   if (status === "missing") return "bg-red-50 border-red-100";
-  return "bg-gray-50 border-gray-100";
+  return "bg-surface-raised border-border-subtle";
 }
 
 function overallBadge(status: "compliant" | "partial" | "gaps_identified") {
@@ -221,12 +221,12 @@ function NISTStrengthDots({ requirements }: { requirements: FrameworkAssessment[
         const color = pct >= 1 ? "text-green-700" : pct >= 0.5 ? "text-amber-600" : "text-red-600";
         return (
           <div key={prefix} className="flex flex-col items-center gap-1">
-            <span className="text-xs font-semibold text-gray-500">{label}</span>
+            <span className="text-xs font-semibold text-text-secondary">{label}</span>
             <div className="flex gap-0.5">
               {Array.from({ length: total }, (_, i) => (
                 <span
                   key={i}
-                  className={`inline-block w-3 h-3 rounded-full ${i < satisfied ? "bg-green-500" : "bg-gray-200"}`}
+                  className={`inline-block w-3 h-3 rounded-full ${i < satisfied ? "bg-green-500" : "bg-surface-muted"}`}
                 />
               ))}
             </div>
@@ -283,15 +283,15 @@ function FrameworkSection({ framework }: { framework: FrameworkAssessment }) {
   const missingCount = applicable.filter((r) => r.evidenceStatus === "missing").length;
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="border border-border rounded-lg overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setExpanded((e) => !e)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-gray-50 transition-colors text-left"
+        className="w-full flex items-center justify-between px-4 py-3 bg-surface hover:bg-surface-raised transition-colors text-left"
       >
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="font-semibold text-gray-900 text-sm">{framework.frameworkName}</span>
-          <span className="text-xs text-gray-400">{framework.version}</span>
+          <span className="font-semibold text-text text-sm">{framework.frameworkName}</span>
+          <span className="text-xs text-text-tertiary">{framework.version}</span>
           {overallBadge(framework.overallStatus)}
           {framework.euAiActRiskTier && euAiActTierBadge(framework.euAiActRiskTier)}
           {missingCount > 0 && (
@@ -300,26 +300,26 @@ function FrameworkSection({ framework }: { framework: FrameworkAssessment }) {
             </span>
           )}
         </div>
-        <span className="text-gray-400 text-sm ml-2 shrink-0">{expanded ? "▲" : "▼"}</span>
+        <span className="text-text-secondary text-sm ml-2 shrink-0">{expanded ? "▲" : "▼"}</span>
       </button>
 
       {expanded && (
-        <div className="border-t border-gray-100">
+        <div className="border-t border-border-subtle">
           {/* Summary */}
-          <div className="px-4 py-3 bg-gray-50 text-sm text-gray-600 border-b border-gray-100">
+          <div className="px-4 py-3 bg-surface-raised text-sm text-text-secondary border-b border-border-subtle">
             {framework.summary}
           </div>
 
           {/* NIST function strength visualization */}
           {framework.frameworkId === "nist-rmf" && (
-            <div className="px-4 py-4 border-b border-gray-100">
+            <div className="px-4 py-4 border-b border-border-subtle">
               <NISTStrengthDots requirements={framework.requirements} />
             </div>
           )}
 
           {/* Requirements table */}
           {applicable.length > 0 && (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-border-subtle">
               {applicable.map((req) => (
                 <div key={req.id} className={`px-4 py-3 ${statusBg(req.evidenceStatus)}`}>
                   <div className="flex items-start gap-3">
@@ -328,10 +328,10 @@ function FrameworkSection({ framework }: { framework: FrameworkAssessment }) {
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-mono text-gray-500">{req.code}</span>
-                        <span className="text-sm font-medium text-gray-800">{req.title}</span>
+                        <span className="text-xs font-mono text-text-secondary">{req.code}</span>
+                        <span className="text-sm font-medium text-text">{req.title}</span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5">{req.description}</p>
+                      <p className="text-xs text-text-secondary mt-0.5">{req.description}</p>
                       {req.evidence && (
                         <p className={`text-xs mt-1 font-medium ${statusColor(req.evidenceStatus)}`}>
                           {req.evidence}
@@ -377,7 +377,7 @@ export function RegulatoryPanel({ blueprintId }: RegulatoryPanelProps) {
     return (
       <div className="space-y-3 animate-pulse">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 bg-gray-100 rounded-lg" />
+          <div key={i} className="h-16 bg-surface-muted rounded-lg" />
         ))}
       </div>
     );
@@ -400,8 +400,8 @@ export function RegulatoryPanel({ blueprintId }: RegulatoryPanelProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">Regulatory Framework Assessment</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h3 className="text-sm font-semibold text-text">Regulatory Framework Assessment</h3>
+          <p className="text-xs text-text-secondary mt-0.5">
             Deterministic assessment against EU AI Act, SR 11-7, and NIST AI RMF. Assessed {assessedAt}.
             {totalGaps > 0 && (
               <span className="ml-1 font-medium text-blue-700">
@@ -418,7 +418,7 @@ export function RegulatoryPanel({ blueprintId }: RegulatoryPanelProps) {
         ))}
       </div>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-text-tertiary">
         This assessment is derived from blueprint content, intake context, governance validation results,
         and deployment health data. It is informational and does not constitute legal advice. Consult
         qualified compliance counsel for regulatory determinations.

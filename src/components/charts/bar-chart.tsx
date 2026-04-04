@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { chartColors, chartFontSize, chartGridColor, chartTextColor } from "@/lib/chart-tokens";
+import { chartColors, chartFontSize, chartGridColor, chartTextColor, chartMargins } from "@/lib/chart-tokens";
 
 export interface BarChartDataItem {
   label: string;
@@ -54,7 +54,7 @@ export function BarChart({
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <RechartsBarChart data={chartData} margin={{ top: 4, right: 4, bottom: 4, left: -20 }}>
+      <RechartsBarChart data={chartData} margin={chartMargins.default}>
         {showGrid && (
           <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
         )}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/catalyst/button";
+import { Plus } from "lucide-react";
 import { QuickStartModal } from "./quick-start-modal";
 
 export function NewIntakeButton({ className }: { className?: string }) {
@@ -8,12 +10,14 @@ export function NewIntakeButton({ className }: { className?: string }) {
 
   return (
     <>
-      <button
+      <Button
         onClick={() => setModalOpen(true)}
-        className={className ?? "rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-700 transition-colors"}
+        color="indigo"
+        className={className}
       >
+        <Plus size={15} />
         New Agent
-      </button>
+      </Button>
 
       {modalOpen && (
         <QuickStartModal onClose={() => setModalOpen(false)} />

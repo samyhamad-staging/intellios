@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { Tooltip } from "@/components/ui/tooltip";
 
 interface Notification {
   id: string;
@@ -190,37 +191,39 @@ export default function NotificationBell() {
   return (
     <div className="relative" ref={panelRef}>
       {/* Bell button */}
-      <button
-        onClick={handleOpen}
-        className="relative p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
-      >
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.8}
-          stroke="currentColor"
+      <Tooltip content="Notifications">
+        <button
+          onClick={handleOpen}
+          className="relative p-1.5 rounded-md text-text-tertiary hover:text-text-secondary hover:bg-surface-raised transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
-          />
-        </svg>
-        {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[16px] h-4 px-0.5 rounded-full bg-red-500 text-white text-2xs font-bold leading-none">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </span>
-        )}
-      </button>
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.8}
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
+            />
+          </svg>
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[16px] h-4 px-0.5 rounded-full bg-red-500 text-white text-2xs font-bold leading-none">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </button>
+      </Tooltip>
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-80 bg-surface border border-border rounded-lg shadow-lg z-50 overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50">
-            <span className="text-sm font-semibold text-gray-700">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle bg-surface-raised">
+            <span className="text-sm font-semibold text-text">
               Notifications
               {unreadCount > 0 && (
                 <span className="ml-1.5 rounded-full bg-indigo-100 px-1.5 py-0.5 text-xs font-medium text-indigo-700">
@@ -229,7 +232,7 @@ export default function NotificationBell() {
               )}
             </span>
             {loading ? (
-              <span className="text-xs text-gray-400">Marking read…</span>
+              <span className="text-xs text-text-tertiary">Marking read…</span>
             ) : unreadCount > 0 ? (
               <button
                 onClick={handleMarkAllRead}
@@ -241,9 +244,9 @@ export default function NotificationBell() {
           </div>
 
           {/* List — P2-606: grouped digest rendering */}
-          <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
+          <div className="max-h-96 overflow-y-auto divide-y divide-border-subtle">
             {notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-400">
+              <div className="px-4 py-8 text-center text-sm text-text-tertiary">
                 No notifications yet
               </div>
             ) : (
@@ -254,7 +257,7 @@ export default function NotificationBell() {
                     <button
                       key={n.id}
                       onClick={() => handleNotificationClick(n)}
-                      className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
+                      className={`w-full text-left px-4 py-3 hover:bg-surface-raised transition-colors ${
                         !n.read ? "bg-indigo-50/50" : ""
                       }`}
                     >
@@ -262,10 +265,10 @@ export default function NotificationBell() {
                         <span className="text-base mt-0.5 shrink-0">{typeIcon(n.type)}</span>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs font-semibold text-gray-800 truncate">{n.title}</p>
-                            <span className="text-2xs text-gray-400 shrink-0">{formatRelative(n.createdAt)}</span>
+                            <p className="text-xs font-semibold text-text truncate">{n.title}</p>
+                            <span className="text-2xs text-text-tertiary shrink-0">{formatRelative(n.createdAt)}</span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
+                          <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{n.message}</p>
                         </div>
                         {!n.read && <span className="mt-1.5 shrink-0 w-2 h-2 rounded-full bg-indigo-500" />}
                       </div>
@@ -281,7 +284,7 @@ export default function NotificationBell() {
                       setOpen(false);
                       if (d.link) router.push(d.link);
                     }}
-                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
+                    className={`w-full text-left px-4 py-3 hover:bg-surface-raised transition-colors ${
                       d.hasUnread ? "bg-indigo-50/50" : ""
                     }`}
                   >
@@ -289,8 +292,8 @@ export default function NotificationBell() {
                       <span className="text-base mt-0.5 shrink-0">{typeIcon(d.type)}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-xs font-semibold text-gray-800 truncate">{d.label}</p>
-                          <span className="text-2xs text-gray-400 shrink-0">{formatRelative(d.latestAt)}</span>
+                          <p className="text-xs font-semibold text-text truncate">{d.label}</p>
+                          <span className="text-2xs text-text-tertiary shrink-0">{formatRelative(d.latestAt)}</span>
                         </div>
                         <p className="text-xs text-indigo-600 mt-0.5">View all {d.count} →</p>
                       </div>
@@ -304,8 +307,8 @@ export default function NotificationBell() {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 text-center">
-              <span className="text-xs text-gray-400">
+            <div className="px-4 py-2 border-t border-border-subtle bg-surface-raised text-center">
+              <span className="text-xs text-text-tertiary">
                 Showing last {notifications.length} notification
                 {notifications.length === 1 ? "" : "s"}
               </span>

@@ -3,6 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { TableToolbar, Pagination } from "@/components/ui/table-toolbar";
+import { Heading } from "@/components/catalyst/heading";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { Activity, RefreshCw, Cpu, CheckCircle2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
@@ -95,7 +98,7 @@ function HealthBadge({ status, errorCount }: { status: "clean" | "degraded" | "c
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
+    <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2.5 py-0.5 text-xs font-medium text-text-secondary">
       Not checked
     </span>
   );
@@ -132,6 +135,8 @@ export default function MonitorPage() {
   const [role, setRole] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [healthFilter, setHealthFilter] = useState<"all" | "clean" | "degraded" | "critical" | "unknown">("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   // P1-33: Per-agent alert acknowledgement — client-side, browser-local
   const ACK_KEY = "monitor-ack";
@@ -240,6 +245,14 @@ export default function MonitorPage() {
     });
   }, [agents, searchQuery, healthFilter]);
 
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, healthFilter]);
+
+  const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+
   const canCheck = role === "compliance_officer" || role === "admin";
 
   // Whether any agents are deployed to AgentCore (controls section visibility)
@@ -272,16 +285,14 @@ export default function MonitorPage() {
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <Activity size={20} className="text-violet-600" />
-            <h1 className="text-xl font-semibold text-gray-900">Deployment Monitor</h1>
+            <Heading level={1}>Deployment Monitor</Heading>
           </div>
-          <p className="text-sm text-gray-500 pl-7">
-            Governance posture of deployed agents against the current enterprise policy set.
-          </p>
+          <p className="mt-0.5 text-sm text-text-secondary">Real-time agent health and performance</p>
         </div>
         <div className="flex items-center gap-3">
           <Link
             href="/monitor/intelligence"
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+            className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary hover:border-border-strong hover:text-text transition-colors"
           >
             Intelligence →
           </Link>
@@ -289,7 +300,7 @@ export default function MonitorPage() {
             <button
               onClick={handleCheckAll}
               disabled={checkingAll || loading}
-              className="flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg bg-text px-4 py-2 text-sm font-medium text-surface hover:bg-text-secondary disabled:opacity-50"
             >
               {checkingAll ? (
                 <>
@@ -310,8 +321,8 @@ export default function MonitorPage() {
           label="Deployed"
           value={summary.total}
           sub="total in production"
-          color="bg-white border border-gray-200 text-gray-900"
-          subColor="text-gray-500"
+          color="bg-surface border border-border text-text"
+          subColor="text-text-secondary"
         />
         <KpiCard
           label="Clean"
@@ -324,92 +335,72 @@ export default function MonitorPage() {
           label="Degraded"
           value={summary.degraded}
           sub="production issues detected"
-          color={summary.degraded > 0 ? "bg-amber-50 border border-amber-200 text-amber-900" : "bg-white border border-gray-200 text-gray-900"}
-          subColor={summary.degraded > 0 ? "text-amber-600" : "text-gray-500"}
+          color={summary.degraded > 0 ? "bg-amber-50 border border-amber-200 text-amber-900" : "bg-surface border border-border text-text"}
+          subColor={summary.degraded > 0 ? "text-amber-600" : "text-text-secondary"}
         />
         <KpiCard
           label="Critical"
           value={summary.critical}
           sub="governance errors found"
-          color={summary.critical > 0 ? "bg-red-50 border border-red-200 text-red-900" : "bg-white border border-gray-200 text-gray-900"}
-          subColor={summary.critical > 0 ? "text-red-600" : "text-gray-500"}
+          color={summary.critical > 0 ? "bg-red-50 border border-red-200 text-red-900" : "bg-surface border border-border text-text"}
+          subColor={summary.critical > 0 ? "text-red-600" : "text-text-secondary"}
         />
         <KpiCard
           label="Not Checked"
           value={summary.unknown}
           sub="awaiting first health check"
-          color={summary.unknown > 0 ? "bg-gray-50 border border-gray-200 text-gray-700" : "bg-white border border-gray-200 text-gray-900"}
-          subColor={summary.unknown > 0 ? "text-gray-500" : "text-gray-400"}
+          color={summary.unknown > 0 ? "bg-surface-raised border border-border text-text" : "bg-surface border border-border text-text"}
+          subColor={summary.unknown > 0 ? "text-text-secondary" : "text-text-tertiary"}
         />
       </div>
 
-      {/* Filter bar */}
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4">
-        <div className="flex flex-1 min-w-48 flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">Search</label>
-          <input
-            type="text"
-            placeholder="Name or agent ID…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-          />
-        </div>
-        <div className="flex min-w-40 flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">Health</label>
-          <Select value={healthFilter} onValueChange={(v) => setHealthFilter(v as typeof healthFilter)}>
-            <SelectTrigger className="text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="clean">Clean</SelectItem>
-              <SelectItem value="degraded">Degraded</SelectItem>
-              <SelectItem value="critical">Critical</SelectItem>
-              <SelectItem value="unknown">Not Checked</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {(searchQuery || healthFilter !== "all") && (
-          <div className="flex items-end">
-            <button
-              onClick={() => { setSearchQuery(""); setHealthFilter("all"); }}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
-            >
-              Clear
-            </button>
-          </div>
-        )}
+      {/* Filter toolbar */}
+      <div className="mb-4">
+        <TableToolbar
+          searchPlaceholder="Name or agent ID…"
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          filters={[
+            { key: "all", label: "All", active: healthFilter === "all" },
+            { key: "clean", label: "Clean", active: healthFilter === "clean" },
+            { key: "degraded", label: "Degraded", active: healthFilter === "degraded" },
+            { key: "critical", label: "Critical", active: healthFilter === "critical" },
+            { key: "unknown", label: "Not Checked", active: healthFilter === "unknown" },
+          ]}
+          onFilterClick={(key) => setHealthFilter(key as typeof healthFilter)}
+          resultCount={filtered.length > 0 ? filtered.length : undefined}
+          resultLabel="agent"
+        />
       </div>
 
       {/* Table */}
       {loading ? (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="overflow-hidden rounded-xl border border-border bg-surface">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="flex items-center gap-4 border-b border-gray-100 px-5 py-4">
-              <div className="h-4 w-48 animate-pulse rounded bg-gray-100" />
-              <div className="h-4 w-16 animate-pulse rounded bg-gray-100" />
-              <div className="h-5 w-20 animate-pulse rounded-full bg-gray-100" />
+            <div key={i} className="flex items-center gap-4 border-b border-border-subtle px-5 py-4">
+              <div className="h-4 w-48 animate-pulse rounded bg-surface-muted" />
+              <div className="h-4 w-16 animate-pulse rounded bg-surface-muted" />
+              <div className="h-5 w-20 animate-pulse rounded-full bg-surface-muted" />
             </div>
           ))}
         </div>
       ) : agents.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
-          <p className="text-sm font-medium text-gray-500">No deployed agents yet.</p>
-          <p className="mt-1 text-xs text-gray-400">
+        <div className="rounded-xl border-2 border-dashed border-border bg-surface p-12 text-center">
+          <p className="text-sm font-medium text-text-secondary">No deployed agents yet.</p>
+          <p className="mt-1 text-xs text-text-tertiary">
             Deploy an approved agent to begin monitoring its governance health.
           </p>
           <Link
             href="/deploy"
-            className="mt-4 inline-block rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+            className="mt-4 inline-block rounded-lg bg-text px-4 py-2 text-sm font-medium text-surface hover:bg-text-secondary"
           >
             Go to Deployment Console →
           </Link>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-          <div className="border-b border-gray-100 px-5 py-2.5 flex items-center gap-3">
-            <span className="text-xs text-gray-400">
+        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+          <div className="border-b border-border-subtle px-5 py-2.5 flex items-center gap-3">
+            <span className="text-xs text-text-tertiary">
               {filtered.length} agent{filtered.length === 1 ? "" : "s"}
               {filtered.length !== agents.length && ` (filtered from ${agents.length})`}
             </span>
@@ -437,7 +428,7 @@ export default function MonitorPage() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="px-5 py-8 text-center text-sm text-gray-400">
+                  <TableCell colSpan={9} className="px-5 py-8 text-center text-sm text-text-tertiary">
                     No agents match your filters.{" "}
                     <button
                       onClick={() => { setSearchQuery(""); setHealthFilter("all"); }}
@@ -448,17 +439,17 @@ export default function MonitorPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((agent) => {
+                paged.map((agent) => {
                   const isChecking = checkingId === agent.agentId;
                   const isAcked = acknowledgedAgentIds.has(agent.agentId);
                   const isAlertable = agent.healthStatus === "degraded" || agent.healthStatus === "critical";
                   return (
-                    <TableRow key={agent.agentId} className={isAcked ? "opacity-60" : undefined}>
+                    <TableRow key={agent.agentId} className={`interactive-row${isAcked ? " opacity-60" : ""}`}>
                       <TableCell>
-                        <div className="font-medium text-gray-900 truncate max-w-48">
+                        <div className="font-medium text-text truncate max-w-48">
                           {agent.name ?? "Unnamed Agent"}
                         </div>
-                        <div className="mt-0.5 font-mono text-xs text-gray-400">
+                        <div className="mt-0.5 font-mono text-xs text-text-tertiary">
                           {agent.agentId.slice(0, 8)}
                         </div>
                         {agent.tags.length > 0 && (
@@ -466,18 +457,18 @@ export default function MonitorPage() {
                             {agent.tags.slice(0, 2).map((tag) => (
                               <span
                                 key={tag}
-                                className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500"
+                                className="rounded-full bg-surface-muted px-1.5 py-0.5 text-xs text-text-secondary"
                               >
                                 {tag}
                               </span>
                             ))}
                             {agent.tags.length > 2 && (
-                              <span className="text-xs text-gray-400">+{agent.tags.length - 2}</span>
+                              <span className="text-xs text-text-tertiary">+{agent.tags.length - 2}</span>
                             )}
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="text-gray-600">v{agent.version}</TableCell>
+                      <TableCell className="text-text-secondary">v{agent.version}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           <HealthBadge status={agent.healthStatus} errorCount={agent.errorCount} />
@@ -492,34 +483,34 @@ export default function MonitorPage() {
                         {agent.errorCount > 0 ? (
                           <span className="font-semibold text-red-600">{agent.errorCount}</span>
                         ) : (
-                          <span className="text-gray-400">—</span>
+                          <span className="text-text-tertiary">—</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
                         {agent.warningCount > 0 ? (
                           <span className="text-amber-600">{agent.warningCount}</span>
                         ) : (
-                          <span className="text-gray-400">—</span>
+                          <span className="text-text-tertiary">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-xs text-gray-500">
+                      <TableCell className="text-xs text-text-secondary">
                         {agent.lastTelemetryAt ? (
                           <div>
-                            <div className="text-gray-600">
+                            <div className="text-text-secondary">
                               {agent.productionErrorRate !== null
                                 ? `${(agent.productionErrorRate * 100).toFixed(1)}% err`
                                 : "—"}
                             </div>
-                            <div className="text-gray-400">seen {timeAgo(agent.lastTelemetryAt)}</div>
+                            <div className="text-text-tertiary">seen {timeAgo(agent.lastTelemetryAt)}</div>
                           </div>
                         ) : (
-                          <span className="text-gray-300">No data</span>
+                          <span className="text-text-disabled">No data</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-xs text-gray-500">
+                      <TableCell className="text-xs text-text-secondary">
                         {timeAgo(agent.deployedAt)}
                       </TableCell>
-                      <TableCell className="text-xs text-gray-500">
+                      <TableCell className="text-xs text-text-secondary">
                         {agent.lastCheckedAt ? timeAgo(agent.lastCheckedAt) : "—"}
                       </TableCell>
                       <TableCell>
@@ -530,8 +521,8 @@ export default function MonitorPage() {
                               onClick={() => toggleAckAgent(agent.agentId)}
                               className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors ${
                                 isAcked
-                                  ? "border-green-200 bg-white text-green-700 hover:border-red-200 hover:text-red-600"
-                                  : "border-gray-200 bg-white text-gray-500 hover:border-green-300 hover:text-green-700"
+                                  ? "border-green-200 bg-surface text-green-700 hover:border-red-200 hover:text-red-600"
+                                  : "border-border bg-surface text-text-secondary hover:border-green-300 hover:text-green-700"
                               }`}
                               title={isAcked ? "Un-acknowledge alert" : "Acknowledge — mark as known/accepted"}
                             >
@@ -557,7 +548,7 @@ export default function MonitorPage() {
                           )}
                           <Link
                             href={`/registry/${agent.agentId}`}
-                            className="text-xs text-gray-500 hover:text-gray-900"
+                            className="text-xs text-text-secondary hover:text-text"
                           >
                             View →
                           </Link>
@@ -569,6 +560,13 @@ export default function MonitorPage() {
               )}
             </TableBody>
           </Table>
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </div>
       )}
 
@@ -578,7 +576,7 @@ export default function MonitorPage() {
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Cpu size={18} className="text-violet-600" />
-              <h2 className="text-base font-semibold text-gray-900">AgentCore Live Status</h2>
+              <SectionHeading className="text-base">AgentCore Live Status</SectionHeading>
               <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
                 AWS Bedrock
               </span>
@@ -608,11 +606,11 @@ export default function MonitorPage() {
           )}
 
           {agcSummary === null ? (
-            <div className="rounded-xl border-2 border-dashed border-gray-200 bg-white px-6 py-8 text-center">
-              <p className="text-sm text-gray-500">
+            <div className="rounded-xl border-2 border-dashed border-border bg-surface px-6 py-8 text-center">
+              <p className="text-sm text-text-secondary">
                 Click <strong>Check Live AWS Status</strong> to query the live Bedrock agent status for each deployed agent.
               </p>
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-1 text-xs text-text-tertiary">
                 Requires AWS credentials configured in the server environment.
               </p>
             </div>
@@ -620,22 +618,22 @@ export default function MonitorPage() {
             <>
               {/* Summary strip */}
               <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="rounded-xl border border-gray-200 bg-white p-4">
-                  <div className="text-2xl font-bold text-gray-900">{agcSummary.total}</div>
-                  <div className="mt-0.5 text-xs text-gray-500">AgentCore agents</div>
+                <div className="rounded-xl border border-border bg-surface p-4">
+                  <div className="text-2xl font-bold text-text">{agcSummary.total}</div>
+                  <div className="mt-0.5 text-xs text-text-secondary">AgentCore agents</div>
                 </div>
-                <div className={`rounded-xl border p-4 ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "border-green-200 bg-green-50" : "border-gray-200 bg-white"}`}>
-                  <div className={`text-2xl font-bold ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "text-green-700" : "text-gray-900"}`}>{agcSummary.prepared}</div>
-                  <div className="mt-0.5 text-xs text-gray-500">PREPARED (callable)</div>
+                <div className={`rounded-xl border p-4 ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "border-green-200 bg-green-50" : "border-border bg-surface"}`}>
+                  <div className={`text-2xl font-bold ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "text-green-700" : "text-text"}`}>{agcSummary.prepared}</div>
+                  <div className="mt-0.5 text-xs text-text-secondary">PREPARED (callable)</div>
                 </div>
-                <div className={`rounded-xl border p-4 ${agcSummary.unreachable > 0 ? "border-red-200 bg-red-50" : "border-gray-200 bg-white"}`}>
-                  <div className={`text-2xl font-bold ${agcSummary.unreachable > 0 ? "text-red-700" : "text-gray-900"}`}>{agcSummary.unreachable}</div>
-                  <div className="mt-0.5 text-xs text-gray-500">Unreachable</div>
+                <div className={`rounded-xl border p-4 ${agcSummary.unreachable > 0 ? "border-red-200 bg-red-50" : "border-border bg-surface"}`}>
+                  <div className={`text-2xl font-bold ${agcSummary.unreachable > 0 ? "text-red-700" : "text-text"}`}>{agcSummary.unreachable}</div>
+                  <div className="mt-0.5 text-xs text-text-secondary">Unreachable</div>
                 </div>
               </div>
 
               {/* Per-agent table */}
-              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <div className="overflow-hidden rounded-xl border border-border bg-surface">
                 <Table striped>
                   <TableHead>
                     <TableRow>
@@ -648,20 +646,20 @@ export default function MonitorPage() {
                   </TableHead>
                   <TableBody>
                     {agcHealth.map((entry) => (
-                      <TableRow key={entry.blueprintId}>
-                        <TableCell className="font-medium text-gray-900">
+                      <TableRow key={entry.blueprintId} className="interactive-row">
+                        <TableCell className="font-medium text-text">
                           {entry.agentName ?? "Unnamed Agent"}
                         </TableCell>
-                        <TableCell className="font-mono text-xs text-gray-500">
+                        <TableCell className="font-mono text-xs text-text-secondary">
                           {entry.agentId}
                         </TableCell>
-                        <TableCell className="text-xs text-gray-600">
+                        <TableCell className="text-xs text-text-secondary">
                           {entry.region}
                         </TableCell>
                         <TableCell>
                           <BedrockStatusBadge status={entry.bedrockStatus} />
                         </TableCell>
-                        <TableCell className="text-xs text-gray-500">
+                        <TableCell className="text-xs text-text-secondary">
                           {timeAgo(entry.lastDeployedAt)}
                         </TableCell>
                       </TableRow>
@@ -700,7 +698,7 @@ function BedrockStatusBadge({ status }: { status: BedrockAgentStatus }) {
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
+    <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2.5 py-0.5 text-xs font-medium text-text-secondary">
       {status}
     </span>
   );

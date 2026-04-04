@@ -107,13 +107,13 @@ export function StakeholderAIChat({
     <div className="flex flex-col gap-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <p className="text-2xs font-semibold uppercase tracking-wider text-gray-400">
+        <p className="text-2xs font-semibold uppercase tracking-wider text-text-tertiary">
           AI Interview · {DOMAIN_LABELS[domain]}
         </p>
         {onCancel && (
           <button
             onClick={onCancel}
-            className="text-2xs text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-2xs text-text-tertiary hover:text-text-secondary transition-colors"
           >
             Cancel
           </button>
@@ -168,7 +168,7 @@ export function StakeholderAIChat({
                 className={`max-w-[86%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
                   isUser
                     ? "bg-violet-600 text-white"
-                    : "bg-gray-100 text-gray-700"
+                    : "bg-surface-muted text-text"
                 }`}
               >
                 {text}
@@ -180,17 +180,17 @@ export function StakeholderAIChat({
         {/* Thinking dots */}
         {isLoading && !isSaved && (
           <div className="flex justify-start">
-            <div className="flex items-center gap-1 rounded-xl bg-gray-100 px-3 py-2.5">
+            <div className="flex items-center gap-1 rounded-xl bg-surface-muted px-3 py-2.5">
               <span
-                className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400"
+                className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-tertiary"
                 style={{ animationDelay: "0ms" }}
               />
               <span
-                className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400"
+                className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-tertiary"
                 style={{ animationDelay: "100ms" }}
               />
               <span
-                className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400"
+                className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-tertiary"
                 style={{ animationDelay: "200ms" }}
               />
             </div>
@@ -208,7 +208,7 @@ export function StakeholderAIChat({
             onChange={(e) => setLocalInput(e.target.value)}
             placeholder="Type your response…"
             disabled={isLoading}
-            className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs placeholder-gray-300 focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-400 disabled:opacity-50"
+            className="flex-1 rounded-lg border border-border px-2.5 py-1.5 text-xs placeholder-text-tertiary focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-400 disabled:opacity-50"
           />
           <button
             type="submit"

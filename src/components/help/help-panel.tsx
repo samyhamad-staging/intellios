@@ -301,13 +301,13 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
           />
 
           {/* Panel */}
-          <div className="fixed right-0 top-0 z-50 h-full w-[400px] bg-white border-l border-gray-200 shadow-xl flex flex-col">
+          <div className="fixed right-0 top-0 z-50 h-full w-[400px] bg-surface border-l border-border shadow-xl flex flex-col">
             {/* Header */}
-            <div className="border-b border-gray-100">
+            <div className="border-b border-border-subtle">
               <div className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-2">
                   <HelpCircle size={15} className="text-violet-500" />
-                  <span className="text-sm font-semibold text-gray-800">
+                  <span className="text-sm font-semibold text-text">
                     Ask Intellios
                   </span>
                 </div>
@@ -317,7 +317,7 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
                       onClick={() => setMessages([])}
                       title="Clear conversation"
                       aria-label="Clear conversation"
-                      className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                      className="rounded p-1 text-text-tertiary hover:text-text-secondary hover:bg-surface-raised transition-colors"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -325,7 +325,7 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
                   <button
                     onClick={() => setOpen(false)}
                     aria-label="Close help panel"
-                    className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                    className="rounded p-1 text-text-tertiary hover:text-text-secondary hover:bg-surface-raised transition-colors"
                   >
                     <X size={14} />
                   </button>
@@ -341,7 +341,7 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
                     </span>
                   )}
                   {pageContext.blueprintStatus && (
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-2xs text-gray-600 font-medium">
+                    <span className="rounded-full bg-surface-muted px-2 py-0.5 text-2xs text-text-secondary font-medium">
                       {pageContext.blueprintStatus}
                     </span>
                   )}
@@ -358,14 +358,14 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
               {isEmpty ? (
                 <div className="flex flex-col gap-2">
-                  <p className="text-xs text-gray-400 mb-1">
+                  <p className="text-xs text-text-tertiary mb-1">
                     Suggested for this page
                   </p>
                   {suggestions.map((q) => (
                     <button
                       key={q}
                       onClick={() => handleSend(q)}
-                      className="text-left text-sm text-gray-700 bg-gray-50 hover:bg-violet-50 hover:text-violet-700 rounded-lg px-3 py-2.5 border border-gray-200 hover:border-violet-200 transition-colors"
+                      className="text-left text-sm text-text bg-surface-raised hover:bg-violet-50 hover:text-violet-700 rounded-lg px-3 py-2.5 border border-border hover:border-violet-200 transition-colors"
                     >
                       {q}
                     </button>
@@ -415,18 +415,18 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
                   })}
                   {isStreaming && (
                     <div className="flex justify-start">
-                      <div className="rounded-2xl bg-white border border-gray-200 px-4 py-3">
+                      <div className="rounded-2xl bg-surface border border-border px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           <span
-                            className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400"
+                            className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-tertiary"
                             style={{ animationDelay: "0ms" }}
                           />
                           <span
-                            className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400"
+                            className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-secondary"
                             style={{ animationDelay: "150ms" }}
                           />
                           <span
-                            className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400"
+                            className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-secondary"
                             style={{ animationDelay: "300ms" }}
                           />
                         </div>
@@ -438,7 +438,7 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
             </div>
 
             {/* Footer input */}
-            <div className="border-t border-gray-100 p-3">
+            <div className="border-t border-border-subtle p-3">
               <div className="flex gap-2">
                 <textarea
                   value={input}
@@ -447,7 +447,7 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
                   placeholder="Ask anything about Intellios…"
                   rows={2}
                   disabled={isStreaming}
-                  className="flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400 disabled:opacity-50"
+                  className="flex-1 resize-none rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400 disabled:opacity-50"
                 />
                 <button
                   onClick={() => handleSend(input)}

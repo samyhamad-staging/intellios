@@ -2,6 +2,8 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { FormField } from "@/components/ui/form-field";
+import { Heading, Subheading } from "@/components/catalyst/heading";
 
 type InviteStatus = "loading" | "valid" | "invalid" | "success" | "error";
 
@@ -78,18 +80,18 @@ function InvitePage() {
   const roleLabel = inviteRole.replace(/_/g, " ");
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-surface-raised">
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Intellios</h1>
-          <p className="mt-1 text-sm text-gray-500">Enterprise Agent Factory</p>
+          <Heading level={1} className="tracking-tight text-text">Intellios</Heading>
+          <p className="mt-1 text-sm text-text-secondary">Enterprise Agent Factory</p>
         </div>
 
         {/* Card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="rounded-xl border border-border bg-surface p-8 shadow-sm">
           {status === "loading" && (
-            <p className="text-center text-sm text-gray-500">Verifying invitation…</p>
+            <p className="text-center text-sm text-text-secondary">Verifying invitation…</p>
           )}
 
           {status === "invalid" && (
@@ -99,13 +101,13 @@ function InvitePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
-              <h2 className="mb-2 text-lg font-semibold text-gray-900">Invitation invalid</h2>
-              <p className="text-sm text-gray-500">
+              <Subheading level={2} className="mb-2 text-text">Invitation invalid</Subheading>
+              <p className="text-sm text-text-secondary">
                 This invitation has expired or has already been used. Please ask your administrator to send a new invitation.
               </p>
               <a
                 href="/login"
-                className="mt-6 inline-block text-sm text-gray-500 hover:text-gray-700 underline-offset-2 hover:underline"
+                className="mt-6 inline-block text-sm text-text-secondary hover:text-text underline-offset-2 hover:underline"
               >
                 ← Back to sign in
               </a>
@@ -119,13 +121,13 @@ function InvitePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="mb-2 text-lg font-semibold text-gray-900">Account created!</h2>
-              <p className="mb-6 text-sm text-gray-500">
+              <Subheading level={2} className="mb-2 text-text">Account created!</Subheading>
+              <p className="mb-6 text-sm text-text-secondary">
                 Your account has been set up. You can now sign in.
               </p>
               <a
                 href="/login"
-                className="inline-block w-full rounded-lg bg-gray-900 py-2 text-center text-sm font-medium text-white hover:bg-gray-800"
+                className="inline-block w-full rounded-lg bg-text py-2 text-center text-sm font-medium text-white hover:bg-text-secondary"
               >
                 Sign in →
               </a>
@@ -160,12 +162,12 @@ function InvitePage() {
                 </div>
               )}
               <div className="mb-6">
-                <h2 className="mb-1 text-lg font-semibold text-gray-900">You&apos;ve been invited</h2>
-                <p className="text-sm text-gray-500">
-                  Join Intellios as <span className="font-medium text-gray-700">{roleLabel}</span>
+                <Subheading level={2} className="mb-1 text-text">You&apos;ve been invited</Subheading>
+                <p className="text-sm text-text-secondary">
+                  Join Intellios as <span className="font-medium text-text">{roleLabel}</span>
                   {inviteEmail && (
                     <>
-                      {" "}using <span className="font-medium text-gray-700">{inviteEmail}</span>
+                      {" "}using <span className="font-medium text-text">{inviteEmail}</span>
                     </>
                   )}
                   . Set your name and password to get started.
@@ -173,23 +175,17 @@ function InvitePage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="email-display" className="mb-1 block text-sm font-medium text-gray-700">
-                    Email address
-                  </label>
+                <FormField label="Email address" htmlFor="email-display">
                   <input
                     id="email-display"
                     type="email"
                     value={inviteEmail}
                     readOnly
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500"
+                    className="w-full rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-secondary"
                   />
-                </div>
+                </FormField>
 
-                <div>
-                  <label htmlFor="name" className="mb-1 block text-sm font-medium text-gray-700">
-                    Full name
-                  </label>
+                <FormField label="Full name" htmlFor="name">
                   <input
                     id="name"
                     type="text"
@@ -197,15 +193,12 @@ function InvitePage() {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-text focus:outline-none focus:ring-1 focus:ring-text"
                     placeholder="Your name"
                   />
-                </div>
+                </FormField>
 
-                <div>
-                  <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700">
-                    Password
-                  </label>
+                <FormField label="Password" htmlFor="password">
                   <input
                     id="password"
                     type="password"
@@ -214,15 +207,12 @@ function InvitePage() {
                     minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-text focus:outline-none focus:ring-1 focus:ring-text"
                     placeholder="Minimum 8 characters"
                   />
-                </div>
+                </FormField>
 
-                <div>
-                  <label htmlFor="confirm-password" className="mb-1 block text-sm font-medium text-gray-700">
-                    Confirm password
-                  </label>
+                <FormField label="Confirm password" htmlFor="confirm-password">
                   <input
                     id="confirm-password"
                     type="password"
@@ -230,10 +220,10 @@ function InvitePage() {
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-text focus:outline-none focus:ring-1 focus:ring-text"
                     placeholder="Re-enter your password"
                   />
-                </div>
+                </FormField>
 
                 {formError && (
                   <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>
@@ -242,7 +232,7 @@ function InvitePage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full rounded-lg bg-gray-900 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                  className="w-full rounded-lg bg-text py-2 text-sm font-medium text-white hover:bg-text-secondary disabled:opacity-50"
                 >
                   {submitting ? "Creating account…" : "Create account"}
                 </button>
@@ -258,8 +248,8 @@ function InvitePage() {
 export default function InvitePageWrapper() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="text-sm text-gray-500">Loading…</p>
+      <div className="flex min-h-screen items-center justify-center bg-surface-raised">
+        <p className="text-sm text-text-secondary">Loading…</p>
       </div>
     }>
       <InvitePage />

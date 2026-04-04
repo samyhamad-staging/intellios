@@ -126,14 +126,14 @@ function SimulatePanelInner({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="shrink-0 border-b border-gray-100 bg-gray-50 px-5 py-3">
+      <div className="shrink-0 border-b border-border-subtle bg-surface-raised px-5 py-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-text">
               Simulating: <span className="text-violet-700">{displayName}</span>
-              <span className="ml-1.5 text-xs font-normal text-gray-400">v{version}</span>
+              <span className="ml-1.5 text-xs font-normal text-text-tertiary">v{version}</span>
             </p>
-            <p className="mt-0.5 text-xs text-gray-400">
+            <p className="mt-0.5 text-xs text-text-tertiary">
               Sandbox — agent cannot access real systems
             </p>
             <div className="mt-1.5 flex items-center gap-1 text-2xs text-emerald-600">
@@ -144,7 +144,7 @@ function SimulatePanelInner({
           {messages.length > 0 && (
             <button
               onClick={onClear}
-              className="text-xs text-gray-400 hover:text-gray-600"
+              className="text-xs text-text-tertiary hover:text-text-secondary"
             >
               Clear conversation
             </button>
@@ -153,11 +153,11 @@ function SimulatePanelInner({
       </div>
 
       {/* P1-32: Saved Scenario Library */}
-      <div className="shrink-0 border-b border-gray-100 bg-white px-5 py-2.5">
+      <div className="shrink-0 border-b border-border-subtle bg-surface px-5 py-2.5">
         {scenarios.length === 0 && !addingScenario ? (
           <button
             onClick={() => setAddingScenario(true)}
-            className="text-xs text-gray-400 hover:text-violet-600 transition-colors"
+            className="text-xs text-text-tertiary hover:text-violet-600 transition-colors"
           >
             + Save a test scenario
           </button>
@@ -187,7 +187,7 @@ function SimulatePanelInner({
             {!addingScenario && (
               <button
                 onClick={() => setAddingScenario(true)}
-                className="rounded-full border border-dashed border-gray-200 px-2.5 py-0.5 text-xs text-gray-400 hover:border-violet-300 hover:text-violet-600 transition-colors"
+                className="rounded-full border border-dashed border-border px-2.5 py-0.5 text-xs text-text-tertiary hover:border-violet-300 hover:text-violet-600 transition-colors"
               >
                 + Add
               </button>
@@ -204,14 +204,14 @@ function SimulatePanelInner({
               onChange={(e) => setNewScenarioLabel(e.target.value)}
               // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
-              className="rounded-md border border-gray-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400"
+              className="rounded-md border border-border px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400"
             />
             <textarea
               placeholder="Prompt text to send to the agent…"
               value={newScenarioText}
               onChange={(e) => setNewScenarioText(e.target.value)}
               rows={2}
-              className="resize-none rounded-md border border-gray-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400"
+              className="resize-none rounded-md border border-border px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400"
             />
             <div className="flex gap-2">
               <button
@@ -223,7 +223,7 @@ function SimulatePanelInner({
               </button>
               <button
                 onClick={() => { setAddingScenario(false); setNewScenarioLabel(""); setNewScenarioText(""); }}
-                className="rounded-md border border-gray-200 px-3 py-1 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
+                className="rounded-md border border-border px-3 py-1 text-xs text-text-secondary hover:bg-surface-raised transition-colors"
               >
                 Cancel
               </button>
@@ -243,8 +243,8 @@ function SimulatePanelInner({
                 />
               </svg>
             </div>
-            <p className="text-sm font-medium text-gray-700">Talk to {displayName}</p>
-            <p className="mt-1 text-xs text-gray-400 max-w-xs">
+            <p className="text-sm font-medium text-text">Talk to {displayName}</p>
+            <p className="mt-1 text-xs text-text-secondary max-w-xs">
               This is a sandboxed simulation. The agent will behave according to its blueprint — persona, instructions, constraints, and governance rules.
             </p>
           </div>
@@ -265,11 +265,11 @@ function SimulatePanelInner({
 
         {isLoading && messages[messages.length - 1]?.role === "user" && (
           <div className="flex justify-start">
-            <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3">
+            <div className="rounded-2xl border border-border bg-surface px-4 py-3">
               <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:0ms]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:150ms]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:300ms]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-text-tertiary animate-bounce [animation-delay:0ms]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-text-tertiary animate-bounce [animation-delay:150ms]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-text-tertiary animate-bounce [animation-delay:300ms]" />
               </div>
             </div>
           </div>
@@ -309,8 +309,8 @@ export function SimulatePanel(props: SimulatePanelProps) {
     <div className="flex flex-col h-full">
       {/* P2-423: Version selector — shown when multiple versions available */}
       {hasMultipleVersions && (
-        <div className="shrink-0 flex items-center gap-1.5 border-b border-gray-100 bg-white px-5 py-2 overflow-x-auto">
-          <span className="shrink-0 text-xs text-gray-400 mr-1">Simulating:</span>
+        <div className="shrink-0 flex items-center gap-1.5 border-b border-border-subtle bg-surface px-5 py-2 overflow-x-auto">
+          <span className="shrink-0 text-xs text-text-tertiary mr-1">Simulating:</span>
           {props.allVersions!.map((v) => (
             <button
               key={v.id}
@@ -318,7 +318,7 @@ export function SimulatePanel(props: SimulatePanelProps) {
               className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
                 v.id === activeVersionId
                   ? "bg-violet-100 text-violet-700 ring-1 ring-violet-300"
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50 border border-gray-200"
+                  : "text-text-secondary hover:text-text hover:bg-surface-raised border border-border"
               }`}
             >
               v{v.version}
@@ -328,13 +328,13 @@ export function SimulatePanel(props: SimulatePanelProps) {
       )}
 
       {/* Mode toggle */}
-      <div className="shrink-0 flex items-center gap-1 border-b border-gray-100 bg-white px-5 py-2">
+      <div className="shrink-0 flex items-center gap-1 border-b border-border-subtle bg-surface px-5 py-2">
         <button
           onClick={() => setMode("chat")}
           className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
             mode === "chat"
               ? "bg-violet-100 text-violet-700"
-              : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              : "text-text-secondary hover:text-text hover:bg-surface-raised"
           }`}
         >
           Chat
@@ -344,7 +344,7 @@ export function SimulatePanel(props: SimulatePanelProps) {
           className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
             mode === "red-team"
               ? "bg-orange-100 text-orange-700"
-              : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              : "text-text-secondary hover:text-text hover:bg-surface-raised"
           }`}
         >
           Red Team

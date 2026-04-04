@@ -39,7 +39,7 @@ const RACI_COLORS: Record<string, string> = {
   accountable: "bg-violet-100 text-violet-700 border-violet-200",
   responsible: "bg-blue-50 text-blue-700 border-blue-200",
   consulted: "bg-green-50 text-green-700 border-green-200",
-  informed: "bg-gray-50 text-gray-600 border-gray-200",
+  informed: "bg-surface-raised text-text-secondary border-border",
 };
 
 const DOMAIN_LABELS: Record<string, string> = {
@@ -55,7 +55,7 @@ const DOMAIN_LABELS: Record<string, string> = {
 const STATUS_DISPLAY: Record<string, { label: string; color: string; dot: string }> = {
   completed: { label: "Contributed", color: "text-green-600", dot: "bg-green-500" },
   pending: { label: "Pending", color: "text-amber-600", dot: "bg-amber-400" },
-  expired: { label: "Expired", color: "text-gray-400", dot: "bg-gray-300" },
+  expired: { label: "Expired", color: "text-text-tertiary", dot: "bg-text-disabled" },
 };
 
 export function StakeholderWorkspace({
@@ -95,35 +95,35 @@ export function StakeholderWorkspace({
   const domainLabel = DOMAIN_LABELS[domain] ?? domain;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-raised">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
+      <header className="border-b border-border bg-surface px-6 py-4">
         <div className="mx-auto max-w-5xl flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-gray-900">Intellios</span>
-            <span className="text-gray-300">|</span>
-            <span className="text-sm text-gray-600">{sessionContext.name}</span>
+            <span className="text-sm font-semibold text-text">Intellios</span>
+            <span className="text-text-disabled">|</span>
+            <span className="text-sm text-text-secondary">{sessionContext.name}</span>
           </div>
           <div className="flex items-center gap-2">
             {sessionContext.riskTier && (
-              <span className="text-xs text-gray-400 capitalize">{sessionContext.riskTier} risk</span>
+              <span className="text-xs text-text-tertiary capitalize">{sessionContext.riskTier} risk</span>
             )}
           </div>
         </div>
       </header>
 
       {/* Role badge */}
-      <div className="border-b border-gray-100 bg-white px-6 py-3">
+      <div className="border-b border-border-subtle bg-surface px-6 py-3">
         <div className="mx-auto max-w-5xl flex items-center gap-3">
           <span className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium ${raciColor}`}>
             {raciLabel}
           </span>
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-text">
             {roleTitle ?? domainLabel + " Stakeholder"}
-            {inviteeName && <span className="text-gray-400"> · {inviteeName}</span>}
+            {inviteeName && <span className="text-text-tertiary"> · {inviteeName}</span>}
           </span>
-          <span className="text-gray-300">·</span>
-          <span className="text-sm text-gray-500">Domain: {domainLabel}</span>
+          <span className="text-text-disabled">·</span>
+          <span className="text-sm text-text-secondary">Domain: {domainLabel}</span>
         </div>
       </div>
 
@@ -155,8 +155,8 @@ export function StakeholderWorkspace({
                   This interview takes approximately 10 minutes.
                 </p>
               </div>
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <h2 className="mb-4 text-sm font-semibold text-gray-700">
+              <div className="rounded-xl border border-border bg-surface p-5">
+                <h2 className="mb-4 text-sm font-semibold text-text">
                   AI Requirements Interview
                 </h2>
                 <StakeholderAIChat
@@ -172,8 +172,8 @@ export function StakeholderWorkspace({
             <div className="lg:col-span-2 space-y-4">
               {/* Contributors */}
               {collaborators.length > 0 && (
-                <div className="rounded-xl border border-gray-200 bg-white p-4">
-                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                <div className="rounded-xl border border-border bg-surface p-4">
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                     Collaboration Team
                   </h3>
                   <div className="space-y-2">
@@ -184,10 +184,10 @@ export function StakeholderWorkspace({
                         <div key={i} className="flex items-center gap-2.5">
                           <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${st.dot}`} />
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-medium text-gray-700 truncate">
+                            <p className="text-xs font-medium text-text truncate">
                               {c.roleTitle}
                             </p>
-                            <p className="text-2xs text-gray-400">{DOMAIN_LABELS[c.domain] ?? c.domain}</p>
+                            <p className="text-2xs text-text-tertiary">{DOMAIN_LABELS[c.domain] ?? c.domain}</p>
                           </div>
                           <span className={`text-2xs shrink-0 ${st.color}`}>{st.label}</span>
                         </div>
@@ -199,11 +199,11 @@ export function StakeholderWorkspace({
 
               {/* Synthesis */}
               {synthesis && (
-                <div className="rounded-xl border border-gray-200 bg-white p-4">
-                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                <div className="rounded-xl border border-border bg-surface p-4">
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                     What&apos;s Been Agreed
                   </h3>
-                  <div className="prose prose-xs max-w-none text-xs text-gray-600 leading-relaxed">
+                  <div className="prose prose-xs max-w-none text-xs text-text-secondary leading-relaxed">
                     {synthesis.split("\n").map((line, i) => (
                       <p key={i} className="mb-1.5 last:mb-0">{line}</p>
                     ))}
@@ -213,8 +213,8 @@ export function StakeholderWorkspace({
 
               {/* Empty state */}
               {collaborators.length === 0 && !synthesis && (
-                <div className="rounded-xl border border-dashed border-gray-200 bg-white p-4">
-                  <p className="text-xs text-gray-400 text-center">
+                <div className="rounded-xl border border-dashed border-border bg-surface p-4">
+                  <p className="text-xs text-text-tertiary text-center">
                     You&apos;re the first contributor. Other stakeholders will appear here as they join.
                   </p>
                 </div>
@@ -257,18 +257,18 @@ function SubmittedState({
           {/* Subtle pulse ring */}
           <div className="absolute inset-0 h-14 w-14 rounded-full border-2 border-green-300/50 animate-ping" />
         </div>
-        <h2 className="text-xl font-semibold text-gray-900">
+        <h2 className="text-xl font-semibold text-text">
           {inviteeName ? `Thanks, ${inviteeName}!` : "Contribution recorded"}
         </h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-text-secondary">
           Your <strong>{domainLabel}</strong> perspective has been captured for{" "}
           <strong>{sessionName}</strong>.
         </p>
       </div>
 
       {/* What happens next */}
-      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5">
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">What happens next</h3>
+      <div className="mb-6 rounded-xl border border-border bg-surface p-5">
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">What happens next</h3>
         <div className="space-y-3">
           {[
             {
@@ -292,8 +292,8 @@ function SubmittedState({
                 {step}
               </span>
               <div>
-                <p className="text-sm font-medium text-gray-800">{title}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{detail}</p>
+                <p className="text-sm font-medium text-text">{title}</p>
+                <p className="text-xs text-text-secondary mt-0.5">{detail}</p>
               </div>
             </div>
           ))}
@@ -302,11 +302,11 @@ function SubmittedState({
 
       {/* Collaboration summary */}
       {synthesis && (
-        <div className="mb-4 rounded-xl border border-gray-200 bg-white p-5">
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+        <div className="mb-4 rounded-xl border border-border bg-surface p-5">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
             Team Summary
           </h3>
-          <div className="text-sm text-gray-600 leading-relaxed">
+          <div className="text-sm text-text-secondary leading-relaxed">
             {synthesis.split("\n").filter(Boolean).map((line, i) => (
               <p key={i} className="mb-2 last:mb-0">{line}</p>
             ))}
@@ -316,16 +316,16 @@ function SubmittedState({
 
       {/* Team */}
       {collaborators.length > 0 && (
-        <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4">
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Team</h3>
+        <div className="mb-4 rounded-xl border border-border bg-surface p-4">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Team</h3>
           <div className="space-y-1.5">
             {collaborators.map((c, i) => {
               const st = STATUS_DISPLAY[c.status] ?? STATUS_DISPLAY.pending;
               return (
                 <div key={i} className="flex items-center gap-2">
                   <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${st.dot}`} />
-                  <span className="text-xs text-gray-700">{c.roleTitle}</span>
-                  <span className="text-xs text-gray-400">· {DOMAIN_LABELS[c.domain] ?? c.domain}</span>
+                  <span className="text-xs text-text">{c.roleTitle}</span>
+                  <span className="text-xs text-text-tertiary">· {DOMAIN_LABELS[c.domain] ?? c.domain}</span>
                   <span className={`ml-auto text-2xs font-medium ${st.color}`}>{st.label}</span>
                 </div>
               );
@@ -335,7 +335,7 @@ function SubmittedState({
       )}
 
       {/* Close guidance */}
-      <p className="text-center text-xs text-gray-400 mt-6">
+      <p className="text-center text-xs text-text-tertiary mt-6">
         You&apos;re all done — you can close this tab.
       </p>
     </div>

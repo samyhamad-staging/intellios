@@ -3,9 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { Heading, Subheading } from "@/components/catalyst/heading";
 import { Rocket } from "lucide-react";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
+import { TableToolbar, Pagination } from "@/components/ui/table-toolbar";
 import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/ui/description-list";
+import { FormField } from "@/components/ui/form-field";
 
 /**
  * Map raw AWS SDK / server error strings to actionable operator messages.
@@ -134,18 +137,16 @@ function DeployConfirmModal({
         if (e.target === e.currentTarget) onCancel();
       }}
     >
-      <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white shadow-2xl">
+      <div className="w-full max-w-lg rounded-2xl border border-border bg-surface shadow-2xl">
         {/* Modal header */}
-        <div className="border-b border-gray-100 px-6 py-4">
+        <div className="border-b border-border-subtle px-6 py-4">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
               <Rocket size={16} />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-gray-900">
-                Deploy to Production
-              </h2>
-              <p className="text-xs text-gray-500">
+              <Subheading level={2} className="text-text">Deploy to Production</Subheading>
+              <p className="text-xs text-text-secondary">
                 {modal.agent.name ?? `Agent ${modal.agent.agentId.slice(0, 8)}`} — v{modal.agent.version}
               </p>
             </div>
@@ -187,51 +188,41 @@ function DeployConfirmModal({
         {/* Fields */}
         <div className="space-y-5 px-6 py-5">
           {/* Change reference — required */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-              Change Reference Number
-              <span className="ml-1 text-red-500">*</span>
-            </label>
+          <FormField label="Change Reference Number" htmlFor="change-ref" required description="Enter the change management ticket associated with this deployment. This will be stored permanently in the audit log.">
             <input
+              id="change-ref"
               ref={changeRefRef}
               type="text"
               value={modal.changeRef}
               onChange={(e) => onChange({ changeRef: e.target.value })}
               placeholder="e.g. CHG0012345"
               maxLength={100}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
             />
-            <p className="mt-1 text-xs text-gray-400">
-              Enter the change management ticket associated with this deployment.
-              This will be stored permanently in the audit log.
-            </p>
-          </div>
+          </FormField>
 
           {/* Deployment notes — optional */}
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-              Deployment Notes
-              <span className="ml-1 text-gray-400 font-normal">(optional)</span>
-            </label>
+          <FormField label="Deployment Notes" htmlFor="deploy-notes" optional>
             <textarea
+              id="deploy-notes"
               value={modal.deploymentNotes}
               onChange={(e) => onChange({ deploymentNotes: e.target.value })}
               placeholder="Environment, rollout plan, stakeholder sign-offs, or other relevant context…"
               maxLength={1000}
               rows={3}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 resize-none"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 resize-none"
             />
-          </div>
+          </FormField>
 
           {/* Authorization checkbox */}
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-surface-raised p-4">
             <input
               type="checkbox"
               checked={modal.authorized}
               onChange={(e) => onChange({ authorized: e.target.checked })}
-              className="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              className="mt-0.5 h-4 w-4 cursor-pointer rounded border-border text-indigo-600 focus:ring-indigo-500"
             />
-            <span className="text-xs text-gray-700 leading-relaxed">
+            <span className="text-xs text-text leading-relaxed">
               I confirm that this deployment is authorized, the change reference
               above is valid, and all required approvals have been obtained in
               accordance with the organization&apos;s change management policy.
@@ -246,11 +237,11 @@ function DeployConfirmModal({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+        <div className="flex items-center justify-end gap-3 border-t border-border-subtle px-6 py-4">
           <button
             onClick={onCancel}
             disabled={modal.submitting}
-            className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 disabled:opacity-50 transition-colors"
+            className="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary hover:border-border-strong hover:text-text disabled:opacity-50 transition-colors"
           >
             Cancel
           </button>
@@ -288,7 +279,7 @@ function AgentCoreDeployModal({
         if (e.target === e.currentTarget && agcModal.phase !== "deploying") onClose();
       }}
     >
-      <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white shadow-2xl">
+      <div className="w-full max-w-lg rounded-2xl border border-border bg-surface shadow-2xl">
         {/* Header */}
         <div className="border-b border-orange-100 px-6 py-4">
           <div className="flex items-center gap-2">
@@ -296,8 +287,8 @@ function AgentCoreDeployModal({
               AC
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-gray-900">Deploy to AgentCore</h2>
-              <p className="text-xs text-gray-500">
+              <Subheading level={2} className="text-text">Deploy to AgentCore</Subheading>
+              <p className="text-xs text-text-secondary">
                 {agcModal.agent.name ?? `Agent ${agcModal.agent.agentId.slice(0, 8)}`} — v{agcModal.agent.version}
               </p>
             </div>
@@ -340,18 +331,18 @@ function AgentCoreDeployModal({
           {/* Confirm phase */}
           {agcModal.phase === "confirm" && (
             <div className="space-y-4">
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-text">
                 This will call the Amazon Bedrock Agent API to create and prepare this agent
                 directly in your AWS account. No credentials are stored in Intellios.
               </p>
-              <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 space-y-2 text-xs">
-                <p className="text-gray-400 font-medium uppercase tracking-wider text-2xs">
+              <div className="rounded-lg border border-border-subtle bg-surface-raised p-4 space-y-2 text-xs">
+                <p className="text-text-tertiary font-medium uppercase tracking-wider text-2xs">
                   Deployment configuration
                 </p>
-                <p className="text-gray-500">
+                <p className="text-text-secondary">
                   AWS credentials and deployment configuration (region, IAM role, model) are
                   read from{" "}
-                  <a href="/admin/settings" className="underline hover:text-gray-700">
+                  <a href="/admin/settings" className="underline hover:text-text">
                     Admin → Settings → Deployment Targets
                   </a>
                   .
@@ -368,8 +359,8 @@ function AgentCoreDeployModal({
           {agcModal.phase === "deploying" && (
             <div className="flex flex-col items-center py-6 gap-4">
               <div className="h-10 w-10 animate-spin rounded-full border-4 border-orange-200 border-t-orange-500" />
-              <p className="text-sm font-medium text-gray-700">{agcModal.progressLabel}</p>
-              <p className="text-xs text-gray-400">Communicating with Amazon Bedrock…</p>
+              <p className="text-sm font-medium text-text">{agcModal.progressLabel}</p>
+              <p className="text-xs text-text-tertiary">Communicating with Amazon Bedrock…</p>
             </div>
           )}
 
@@ -382,14 +373,14 @@ function AgentCoreDeployModal({
               </div>
               <div className="rounded-lg border border-green-100 bg-green-50 p-4 text-xs font-mono">
                 <DescriptionList>
-                  <DescriptionTerm className="text-gray-400 font-mono text-xs">Agent ID</DescriptionTerm>
-                  <DescriptionDetails className="text-gray-700 font-mono text-xs">{agcModal.deploymentRecord.agentId}</DescriptionDetails>
-                  <DescriptionTerm className="text-gray-400 font-mono text-xs">Region</DescriptionTerm>
-                  <DescriptionDetails className="text-gray-700 font-mono text-xs">{agcModal.deploymentRecord.region}</DescriptionDetails>
-                  <DescriptionTerm className="text-gray-400 font-mono text-xs">Model</DescriptionTerm>
-                  <DescriptionDetails className="text-gray-700 font-mono text-xs">{agcModal.deploymentRecord.foundationModel}</DescriptionDetails>
-                  <DescriptionTerm className="text-gray-400 font-mono text-xs">ARN</DescriptionTerm>
-                  <DescriptionDetails className="text-gray-700 font-mono text-xs break-all">{agcModal.deploymentRecord.agentArn}</DescriptionDetails>
+                  <DescriptionTerm className="text-text-tertiary font-mono text-xs">Agent ID</DescriptionTerm>
+                  <DescriptionDetails className="text-text font-mono text-xs">{agcModal.deploymentRecord.agentId}</DescriptionDetails>
+                  <DescriptionTerm className="text-text-tertiary font-mono text-xs">Region</DescriptionTerm>
+                  <DescriptionDetails className="text-text font-mono text-xs">{agcModal.deploymentRecord.region}</DescriptionDetails>
+                  <DescriptionTerm className="text-text-tertiary font-mono text-xs">Model</DescriptionTerm>
+                  <DescriptionDetails className="text-text font-mono text-xs">{agcModal.deploymentRecord.foundationModel}</DescriptionDetails>
+                  <DescriptionTerm className="text-text-tertiary font-mono text-xs">ARN</DescriptionTerm>
+                  <DescriptionDetails className="text-text font-mono text-xs break-all">{agcModal.deploymentRecord.agentArn}</DescriptionDetails>
                 </DescriptionList>
               </div>
               <a
@@ -413,12 +404,12 @@ function AgentCoreDeployModal({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+        <div className="flex items-center justify-end gap-3 border-t border-border-subtle px-6 py-4">
           {agcModal.phase === "confirm" && (
             <>
               <button
                 onClick={onClose}
-                className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+                className="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary hover:border-border-strong hover:text-text transition-colors"
               >
                 Cancel
               </button>
@@ -443,14 +434,14 @@ function AgentCoreDeployModal({
               {agcModal.phase === "error" && (
                 <Link
                   href={`/registry/${agcModal.agent.agentId}`}
-                  className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+                  className="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary hover:border-border-strong hover:text-text transition-colors"
                 >
                   ← Try previous version
                 </Link>
               )}
               <button
                 onClick={onClose}
-                className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+                className="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary hover:border-border-strong hover:text-text transition-colors"
               >
                 Done
               </button>
@@ -468,6 +459,8 @@ export default function DeploymentConsolePage() {
   const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<DeployModalState | null>(null);
   const [agcModal, setAgcModal] = useState<AgentCoreModalState | null>(null);
+  const [searchValue, setSearchValue] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetch("/api/registry")
@@ -484,6 +477,17 @@ export default function DeploymentConsolePage() {
 
   const deployed = agents.filter((a) => a.status === "deployed");
   const readyToDeploy = agents.filter((a) => a.status === "approved");
+
+  // Filter deployed agents by search
+  const filteredDeployed = deployed.filter((agent) =>
+    (agent.name ?? agent.agentId).toLowerCase().includes(searchValue.toLowerCase()) ||
+    agent.agentId.toLowerCase().includes(searchValue.toLowerCase())
+  );
+
+  const ITEMS_PER_PAGE = 10;
+  const totalPages = Math.ceil(filteredDeployed.length / ITEMS_PER_PAGE);
+  const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedDeployed = filteredDeployed.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
   function openModal(agent: Agent) {
     setModal({
@@ -614,8 +618,8 @@ export default function DeploymentConsolePage() {
 
       {/* Page header */}
       <div>
-        <h1 className="text-xl font-semibold text-gray-900">Deployment Console</h1>
-        <p className="mt-0.5 text-sm text-gray-500">Promote approved agents to production</p>
+        <Heading level={1}>Deployment Console</Heading>
+        <p className="mt-0.5 text-sm text-text-secondary">Deployment controls and release management</p>
       </div>
 
       <div className="space-y-6">
@@ -641,8 +645,8 @@ export default function DeploymentConsolePage() {
               sub: readyToDeploy.length > 0 ? "approved, awaiting deployment" : "none pending",
               color: readyToDeploy.length > 0
                 ? "bg-green-50 border-green-200 text-green-900"
-                : "bg-white border-gray-200 text-gray-900",
-              subColor: readyToDeploy.length > 0 ? "text-green-600" : "text-gray-400",
+                : "bg-surface border-border text-text",
+              subColor: readyToDeploy.length > 0 ? "text-green-600" : "text-text-tertiary",
             },
           ].map(({ label, value, sub, color, subColor }) => (
             <div key={label} className={`rounded-card border p-5 ${color}`}>
@@ -655,16 +659,16 @@ export default function DeploymentConsolePage() {
 
         {/* ── Ready to deploy ─────────────────────────────────────────────── */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
+          <Subheading level={2} className="mb-4 uppercase tracking-wider text-text-secondary">
             Ready to Deploy ({loading ? "…" : readyToDeploy.length})
-          </h2>
+          </Subheading>
 
           {!loading && readyToDeploy.length === 0 && (
-            <div className="rounded-card border border-dashed border-gray-300 bg-white p-10 text-center">
-              <p className="text-sm text-gray-400">No agents are currently approved and awaiting deployment.</p>
-              <p className="mt-1 text-xs text-gray-400">
+            <div className="rounded-card border border-dashed border-border bg-surface p-10 text-center">
+              <p className="text-sm text-text-tertiary">No agents are currently approved and awaiting deployment.</p>
+              <p className="mt-1 text-xs text-text-tertiary">
                 Agents must pass review before they can be deployed.{" "}
-                <Link href="/registry" className="underline hover:text-gray-600">View registry →</Link>
+                <Link href="/registry" className="underline hover:text-text-secondary">View registry →</Link>
               </p>
             </div>
           )}
@@ -674,25 +678,25 @@ export default function DeploymentConsolePage() {
               {readyToDeploy.map((agent) => (
                 <div
                   key={agent.agentId}
-                  className="flex flex-wrap items-center gap-y-3 rounded-xl border border-green-200 bg-white px-5 py-4"
+                  className="flex flex-wrap items-center gap-y-3 rounded-xl border border-green-200 bg-surface px-5 py-4"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/registry/${agent.agentId}`}
-                        className="font-medium text-gray-900 hover:underline"
+                        className="font-medium text-text hover:underline"
                       >
                         {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
                       </Link>
                       <StatusBadge status={agent.status} />
                     </div>
-                    <div className="mt-0.5 flex items-center gap-3 text-xs text-gray-400">
+                    <div className="mt-0.5 flex items-center gap-3 text-xs text-text-tertiary">
                       <span className="font-mono">v{agent.version}</span>
                       <span>approved {timeAgo(agent.updatedAt)}</span>
                       {agent.tags?.length > 0 && (
                         <div className="flex gap-1">
                           {agent.tags.slice(0, 3).map((tag) => (
-                            <span key={tag} className="rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-500">
+                            <span key={tag} className="rounded-full bg-surface-muted px-1.5 py-0.5 text-text-secondary">
                               {tag}
                             </span>
                           ))}
@@ -709,7 +713,7 @@ export default function DeploymentConsolePage() {
                     <a
                       href={`/api/blueprints/${agent.id}/export/agentcore`}
                       download
-                      className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+                      className="rounded-lg border border-border px-3 py-2 text-sm text-text-secondary hover:border-border-strong hover:text-text transition-colors"
                       title="Download Amazon Bedrock AgentCore deployment manifest"
                     >
                       Export for AgentCore ↓
@@ -736,54 +740,65 @@ export default function DeploymentConsolePage() {
 
         {/* ── Live deployments ────────────────────────────────────────────── */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
+          <Subheading level={2} className="mb-4 uppercase tracking-wider text-text-secondary">
             Live in Production ({loading ? "…" : deployed.length})
-          </h2>
+          </Subheading>
 
           {loading && (
             <div className="space-y-2">
               {[1, 2].map((i) => (
-                <div key={i} className="h-16 animate-pulse rounded-card bg-gray-100" />
+                <div key={i} className="h-16 animate-pulse rounded-card bg-surface-muted" />
               ))}
             </div>
           )}
 
           {!loading && deployed.length === 0 && (
-            <div className="rounded-card border border-dashed border-gray-300 bg-white p-10 text-center">
-              <p className="text-sm text-gray-400">No agents are currently deployed.</p>
+            <div className="rounded-card border border-dashed border-border bg-surface p-10 text-center">
+              <p className="text-sm text-text-tertiary">No agents are currently deployed.</p>
             </div>
           )}
 
           {!loading && deployed.length > 0 && (
-            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-              <Table striped>
-                <TableHead>
-                  <TableRow>
-                    <TableHeader>Agent</TableHeader>
-                    <TableHeader>Version</TableHeader>
-                    <TableHeader>Tags</TableHeader>
-                    <TableHeader>Deployed</TableHeader>
-                    <TableHeader>Governance</TableHeader>
-                    <TableHeader></TableHeader>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {deployed.map((agent) => (
-                    <TableRow key={agent.agentId}>
+            <div className="space-y-4">
+              <TableToolbar
+                searchPlaceholder="Search deployed agents…"
+                searchValue={searchValue}
+                onSearchChange={(val) => {
+                  setSearchValue(val);
+                  setCurrentPage(1);
+                }}
+                resultCount={filteredDeployed.length}
+                resultLabel="agent"
+              />
+              <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+                <Table striped>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Agent</TableHeader>
+                      <TableHeader>Version</TableHeader>
+                      <TableHeader>Tags</TableHeader>
+                      <TableHeader>Deployed</TableHeader>
+                      <TableHeader>Governance</TableHeader>
+                      <TableHeader></TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {paginatedDeployed.map((agent) => (
+                    <TableRow key={agent.agentId} className="interactive-row">
                       <TableCell>
-                        <span className="font-medium text-gray-900">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</span>
+                        <span className="font-medium text-text">{agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}</span>
                       </TableCell>
-                      <TableCell className="font-mono text-gray-500 text-xs">v{agent.version}</TableCell>
+                      <TableCell className="font-mono text-text-secondary text-xs">v{agent.version}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {(agent.tags ?? []).slice(0, 2).map((tag) => (
-                            <span key={tag} className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
+                            <span key={tag} className="rounded-full bg-surface-muted px-1.5 py-0.5 text-xs text-text-secondary">
                               {tag}
                             </span>
                           ))}
                         </div>
                       </TableCell>
-                      <TableCell className="text-gray-400 text-xs">{timeAgo(agent.updatedAt)}</TableCell>
+                      <TableCell className="text-text-tertiary text-xs">{timeAgo(agent.updatedAt)}</TableCell>
                       <TableCell>
                         {agent.violationCount === 0 && (
                           <span className="text-xs font-medium text-green-600">✓ Clean</span>
@@ -794,7 +809,7 @@ export default function DeploymentConsolePage() {
                           </span>
                         )}
                         {agent.violationCount === null && (
-                          <span className="text-xs text-gray-400">Not validated</span>
+                          <span className="text-xs text-text-tertiary">Not validated</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -802,14 +817,14 @@ export default function DeploymentConsolePage() {
                           <a
                             href={`/api/blueprints/${agent.id}/export/agentcore`}
                             download
-                            className="text-xs text-gray-400 hover:text-gray-700 underline"
+                            className="text-xs text-text-tertiary hover:text-text underline"
                             title="Export AgentCore manifest"
                           >
                             AgentCore ↓
                           </a>
                           <Link
                             href={`/registry/${agent.agentId}`}
-                            className="text-xs text-gray-400 hover:text-gray-700 underline"
+                            className="text-xs text-text-tertiary hover:text-text underline"
                           >
                             View →
                           </Link>
@@ -817,8 +832,16 @@ export default function DeploymentConsolePage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                </TableBody>
-              </Table>
+                  </TableBody>
+                </Table>
+              </div>
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              )}
             </div>
           )}
         </section>

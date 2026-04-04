@@ -8,6 +8,8 @@ import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { assembleMRMReport } from "@/lib/mrm/report";
 import { writeAuditLog } from "@/lib/audit/log";
 import { MRMReport } from "@/lib/mrm/types";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { SectionHeading } from "@/components/ui/section-heading";
 import PrintButton from "@/components/mrm/print-button";
 import DownloadEvidenceButton from "@/components/mrm/download-evidence-button";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
@@ -19,6 +21,7 @@ import type { ValidationReport } from "@/lib/governance/types";
 import type { ApprovalStepRecord } from "@/lib/settings/types";
 import type { TestRun } from "@/lib/testing/types";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
+import { Heading, Subheading } from "@/components/catalyst/heading";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -37,11 +40,11 @@ function fmtDate(iso: string | null | undefined): string {
 
 function SectionHeader({ number, title }: { number: number; title: string }) {
   return (
-    <div className="mb-4 border-b-2 border-gray-900 pb-2 print:break-before-page">
-      <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+    <div className="mb-4 border-b-2 border-text pb-2 print:break-before-page">
+      <SectionHeading className="mb-0">
         Section {number}
-      </p>
-      <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+      </SectionHeading>
+      <Heading level={2} className="text-text">{title}</Heading>
     </div>
   );
 }
@@ -49,8 +52,8 @@ function SectionHeader({ number, title }: { number: number; title: string }) {
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="py-2">
-      <dt className="text-xs font-semibold uppercase tracking-wider text-gray-400">{label}</dt>
-      <dd className="mt-0.5 text-sm text-gray-900">{value || <span className="text-gray-400">—</span>}</dd>
+      <dt><SectionHeading>{label}</SectionHeading></dt>
+      <dd className="mt-0.5 text-sm text-text">{value || <span className="text-text-tertiary">—</span>}</dd>
     </div>
   );
 }
@@ -222,24 +225,24 @@ function ReportDocument({
       ? "bg-red-100 text-red-800 border-red-200"
       : r.reviewDecision.outcome === "changes_requested"
       ? "bg-amber-100 text-amber-800 border-amber-200"
-      : "bg-gray-100 text-gray-600 border-gray-200";
+      : "bg-surface-muted text-text-secondary border-border";
 
   return (
-    <div className="min-h-screen bg-gray-50 print:bg-white">
+    <div className="min-h-screen bg-surface-raised print:bg-surface">
       {/* Toolbar — hidden on print */}
-      <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-3 print:hidden">
+      <div className="sticky top-0 z-10 border-b border-border bg-surface px-6 py-3 print:hidden">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href={`/registry/${agentId}`} className="text-sm text-gray-400 hover:text-gray-700">
+            <Link href={`/registry/${agentId}`} className="text-sm text-text-tertiary hover:text-text">
               ← Registry
             </Link>
-            <span className="text-sm font-semibold text-gray-900">MRM Compliance Report</span>
-            <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-mono text-gray-500">
+            <span className="text-sm font-semibold text-text">MRM Compliance Report</span>
+            <span className="rounded bg-surface-muted px-2 py-0.5 text-xs font-mono text-text-secondary">
               v{r.cover.currentVersion}
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400">Generated {fmt(r.generatedAt)}</span>
+            <span className="text-xs text-text-tertiary">Generated {fmt(r.generatedAt)}</span>
             <DownloadEvidenceButton
               blueprintId={blueprintId}
               enabled={r.cover.currentStatus === "approved" || r.cover.currentStatus === "deployed"}
@@ -249,21 +252,32 @@ function ReportDocument({
         </div>
       </div>
 
+      {/* Breadcrumb — hidden on print */}
+      <div className="border-b border-border bg-surface px-6 py-3 print:hidden">
+        <div className="mx-auto max-w-4xl">
+          <Breadcrumb items={[
+            { label: "Blueprints", href: "/blueprints" },
+            { label: r.cover.agentName, href: `/blueprints/${blueprintId}` },
+            { label: "Report" },
+          ]} />
+        </div>
+      </div>
+
       {/* Report body */}
       <div className="mx-auto max-w-4xl px-6 py-10 print:py-0 print:px-0 print:max-w-none">
 
         {/* ── Cover ────────────────────────────────────────────────────────── */}
         <div className="mb-12 print:mb-6">
-          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+          <SectionHeading>
             SR 11-7 Model Risk Management — Compliance Report
-          </p>
-          <h1 className="mt-2 text-4xl font-bold text-gray-900 print:text-3xl">
+          </SectionHeading>
+          <Heading level={1} className="mt-2 text-text print:text-3xl">
             {r.cover.agentName}
-          </h1>
+          </Heading>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <Chip
               label={r.cover.currentStatus.toUpperCase()}
-              color="bg-gray-100 text-gray-700 border border-gray-200"
+              color="bg-surface-muted text-text border border-border"
             />
             <Chip
               label={`Version ${r.cover.currentVersion}`}
@@ -276,7 +290,7 @@ function ReportDocument({
               />
             )}
           </div>
-          <dl className="mt-6 grid grid-cols-2 gap-x-8 gap-y-1 border-t border-gray-200 pt-4 text-sm sm:grid-cols-4">
+          <dl className="mt-6 grid grid-cols-2 gap-x-8 gap-y-1 border-t border-border pt-4 text-sm sm:grid-cols-4">
             <Field label="Generated At" value={fmt(r.generatedAt)} />
             <Field label="Generated By" value={r.generatedBy} />
             <Field label="Blueprint ID" value={<span className="font-mono text-xs">{r.blueprintId.slice(0, 8)}…</span>} />
@@ -287,20 +301,20 @@ function ReportDocument({
         {/* ── Section 2: Risk Classification ───────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={2} title="Risk Classification" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
+          <div className="rounded-xl border border-border bg-surface p-6">
             <div className="flex items-start gap-6">
               <div className="shrink-0">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Risk Tier</p>
+                <SectionHeading className="text-xs">Risk Tier</SectionHeading>
                 <span className={`mt-1 inline-block rounded-lg border px-4 py-2 text-xl font-bold ${riskColor}`}>
                   {r.riskClassification.riskTier}
                 </span>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Basis</p>
-                <p className="mt-1 text-sm text-gray-700 leading-relaxed">{r.riskClassification.riskTierBasis}</p>
+                <SectionHeading className="text-xs">Basis</SectionHeading>
+                <p className="mt-1 text-sm text-text leading-relaxed">{r.riskClassification.riskTierBasis}</p>
               </div>
             </div>
-            <dl className="mt-5 grid grid-cols-2 gap-x-8 gap-y-0 border-t border-gray-100 pt-4 sm:grid-cols-3">
+            <dl className="mt-5 grid grid-cols-2 gap-x-8 gap-y-0 border-t border-border-subtle pt-4 sm:grid-cols-3">
               <Field label="Intended Use" value={r.riskClassification.intendedUse} />
               <Field label="Business Owner" value={r.riskClassification.businessOwner} />
               <Field label="Model Owner" value={r.riskClassification.modelOwner} />
@@ -329,7 +343,7 @@ function ReportDocument({
         {/* ── Section 3: Agent Identity ─────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={3} title="Agent Identity" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
+          <div className="rounded-xl border border-border bg-surface p-6">
             <dl className="grid grid-cols-1 gap-y-0">
               <Field label="Name" value={r.identity.name} />
               <Field label="Description" value={r.identity.description} />
@@ -340,7 +354,7 @@ function ReportDocument({
                   r.identity.tags.length > 0 ? (
                     <div className="flex flex-wrap gap-1 mt-0.5">
                       {r.identity.tags.map((tag) => (
-                        <Chip key={tag} label={tag} color="bg-gray-100 text-gray-600" />
+                        <Chip key={tag} label={tag} color="bg-surface-muted text-text-secondary" />
                       ))}
                     </div>
                   ) : null
@@ -353,27 +367,27 @@ function ReportDocument({
         {/* ── Section 4: Capabilities ───────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={4} title="Capabilities" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+          <div className="rounded-xl border border-border bg-surface p-6 space-y-5">
             <div className="flex gap-6">
               <div className="text-center">
-                <p className="text-3xl font-bold text-gray-900">{r.capabilities.toolCount}</p>
-                <p className="text-xs text-gray-500">Tools</p>
+                <p className="text-3xl font-bold text-text">{r.capabilities.toolCount}</p>
+                <p className="text-xs text-text-secondary">Tools</p>
               </div>
               <div className="text-center">
-                <p className="text-3xl font-bold text-gray-900">{r.capabilities.knowledgeSourceCount}</p>
-                <p className="text-xs text-gray-500">Knowledge Sources</p>
+                <p className="text-3xl font-bold text-text">{r.capabilities.knowledgeSourceCount}</p>
+                <p className="text-xs text-text-secondary">Knowledge Sources</p>
               </div>
               <div className="text-center">
-                <p className={`text-3xl font-bold ${r.capabilities.instructionsConfigured ? "text-green-700" : "text-gray-400"}`}>
+                <p className={`text-3xl font-bold ${r.capabilities.instructionsConfigured ? "text-green-700" : "text-text-tertiary"}`}>
                   {r.capabilities.instructionsConfigured ? "✓" : "✗"}
                 </p>
-                <p className="text-xs text-gray-500">Instructions</p>
+                <p className="text-xs text-text-secondary">Instructions</p>
               </div>
             </div>
 
             {r.capabilities.tools.length > 0 && (
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Tools</p>
+                <SectionHeading className="mb-2">Tools</SectionHeading>
                 <Table dense>
                   <TableHead>
                     <TableRow>
@@ -384,10 +398,10 @@ function ReportDocument({
                   </TableHead>
                   <TableBody>
                     {r.capabilities.tools.map((t, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium text-gray-900">{t.name}</TableCell>
-                        <TableCell className="text-gray-500">{t.type}</TableCell>
-                        <TableCell className="text-gray-600">{t.description ?? "—"}</TableCell>
+                      <TableRow className="interactive-row" key={i}>
+                        <TableCell className="font-medium text-text">{t.name}</TableCell>
+                        <TableCell className="text-text-secondary">{t.type}</TableCell>
+                        <TableCell className="text-text-secondary">{t.description ?? "—"}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -397,7 +411,7 @@ function ReportDocument({
 
             {r.capabilities.knowledgeSources.length > 0 && (
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Knowledge Sources</p>
+                <SectionHeading className="mb-2">Knowledge Sources</SectionHeading>
                 <Table dense>
                   <TableHead>
                     <TableRow>
@@ -407,9 +421,9 @@ function ReportDocument({
                   </TableHead>
                   <TableBody>
                     {r.capabilities.knowledgeSources.map((k, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium text-gray-900">{k.name}</TableCell>
-                        <TableCell className="text-gray-500">{k.type}</TableCell>
+                      <TableRow className="interactive-row" key={i}>
+                        <TableCell className="font-medium text-text">{k.name}</TableCell>
+                        <TableCell className="text-text-secondary">{k.type}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -422,7 +436,7 @@ function ReportDocument({
         {/* ── Section 5: Governance Validation ─────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={5} title="Governance Validation" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+          <div className="rounded-xl border border-border bg-surface p-6 space-y-5">
             {!r.governanceValidation.validated ? (
               <p className="text-sm text-amber-700">No validation has been run for this blueprint version.</p>
             ) : (
@@ -432,32 +446,32 @@ function ReportDocument({
                     <p className={`text-3xl font-bold ${r.governanceValidation.valid ? "text-green-700" : "text-red-700"}`}>
                       {r.governanceValidation.valid ? "✓" : "✗"}
                     </p>
-                    <p className="text-xs text-gray-500">{r.governanceValidation.valid ? "Valid" : "Invalid"}</p>
+                    <p className="text-xs text-text-secondary">{r.governanceValidation.valid ? "Valid" : "Invalid"}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-gray-900">{r.governanceValidation.policyCount}</p>
-                    <p className="text-xs text-gray-500">Policies Evaluated</p>
+                    <p className="text-3xl font-bold text-text">{r.governanceValidation.policyCount}</p>
+                    <p className="text-xs text-text-secondary">Policies Evaluated</p>
                   </div>
                   <div className="text-center">
-                    <p className={`text-3xl font-bold ${r.governanceValidation.errorCount > 0 ? "text-red-700" : "text-gray-900"}`}>
+                    <p className={`text-3xl font-bold ${r.governanceValidation.errorCount > 0 ? "text-red-700" : "text-text"}`}>
                       {r.governanceValidation.errorCount}
                     </p>
-                    <p className="text-xs text-gray-500">Errors</p>
+                    <p className="text-xs text-text-secondary">Errors</p>
                   </div>
                   <div className="text-center">
-                    <p className={`text-3xl font-bold ${r.governanceValidation.warningCount > 0 ? "text-amber-600" : "text-gray-900"}`}>
+                    <p className={`text-3xl font-bold ${r.governanceValidation.warningCount > 0 ? "text-amber-600" : "text-text"}`}>
                       {r.governanceValidation.warningCount}
                     </p>
-                    <p className="text-xs text-gray-500">Warnings</p>
+                    <p className="text-xs text-text-secondary">Warnings</p>
                   </div>
                 </div>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-text-tertiary">
                   Validation run at: {fmt(r.governanceValidation.generatedAt)}
                 </p>
 
                 {r.governanceValidation.violations.length > 0 && (
                   <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Violations</p>
+                    <SectionHeading className="mb-2">Violations</SectionHeading>
                     <div className="space-y-2">
                       {r.governanceValidation.violations.map((v, i) => (
                         <div
@@ -479,10 +493,10 @@ function ReportDocument({
                               {v.severity.toUpperCase()}
                             </span>
                             <div>
-                              <p className="font-semibold text-gray-900">{v.policyName}</p>
-                              <p className="mt-0.5 text-gray-700">{v.message}</p>
+                              <p className="font-semibold text-text">{v.policyName}</p>
+                              <p className="mt-0.5 text-text">{v.message}</p>
                               {v.suggestion && (
-                                <p className="mt-0.5 text-gray-500 italic">{v.suggestion}</p>
+                                <p className="mt-0.5 text-text-secondary italic">{v.suggestion}</p>
                               )}
                             </div>
                           </div>
@@ -498,11 +512,11 @@ function ReportDocument({
 
                 {/* Policy Version Evidence (Phase 22) */}
                 {policyVersionRows.length > 0 && (
-                  <div className="border-t border-gray-100 pt-4">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  <div className="border-t border-border-subtle pt-4">
+                    <SectionHeading className="mb-2">
                       5.1  Policy Version Evidence
-                    </p>
-                    <p className="mb-3 text-xs text-gray-500">
+                    </SectionHeading>
+                    <p className="mb-3 text-xs text-text-secondary">
                       Policies evaluated at validation time ({validationGeneratedAt ? fmt(validationGeneratedAt) : "—"}). Superseded indicators show whether a policy has been revised since this blueprint was validated.
                     </p>
                     <Table dense>
@@ -515,9 +529,9 @@ function ReportDocument({
                       </TableHead>
                       <TableBody>
                         {policyVersionRows.map((p) => (
-                          <TableRow key={p.id}>
-                            <TableCell className="text-gray-700 font-medium">{p.name}</TableCell>
-                            <TableCell className="text-gray-500 font-mono">v{p.policyVersion}</TableCell>
+                          <TableRow className="interactive-row" key={p.id}>
+                            <TableCell className="text-text font-medium">{p.name}</TableCell>
+                            <TableCell className="text-text-secondary font-mono">v{p.policyVersion}</TableCell>
                             <TableCell>
                               {p.supersededAt ? (
                                 <span className="inline-flex items-center gap-1 text-amber-700">
@@ -542,7 +556,7 @@ function ReportDocument({
         {/* ── Section 6: Review Decision ────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={6} title="Review Decision" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+          <div className="rounded-xl border border-border bg-surface p-6 space-y-5">
             <div className="flex items-start gap-4">
               <span
                 className={`inline-block rounded-lg border px-3 py-1.5 text-sm font-semibold ${outcomeColor}`}
@@ -556,9 +570,9 @@ function ReportDocument({
             {/* Multi-step approval chain evidence (Phase 22) */}
             {approvalProgress.length > 0 ? (
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                <SectionHeading className="mb-2">
                   6.1  Approval Chain Evidence
-                </p>
+                </SectionHeading>
                 <Table dense>
                   <TableHead>
                     <TableRow>
@@ -572,20 +586,20 @@ function ReportDocument({
                   </TableHead>
                   <TableBody>
                     {approvalProgress.map((step) => (
-                      <TableRow key={step.step}>
-                        <TableCell className="text-gray-500">{step.step + 1}</TableCell>
-                        <TableCell className="text-gray-600 capitalize">{step.role.replace("_", " ")}</TableCell>
-                        <TableCell className="text-gray-700 font-medium">{step.label}</TableCell>
-                        <TableCell className="text-gray-700">{step.approvedBy}</TableCell>
+                      <TableRow className="interactive-row" key={step.step}>
+                        <TableCell className="text-text-secondary">{step.step + 1}</TableCell>
+                        <TableCell className="text-text-secondary capitalize">{step.role.replace("_", " ")}</TableCell>
+                        <TableCell className="text-text font-medium">{step.label}</TableCell>
+                        <TableCell className="text-text">{step.approvedBy}</TableCell>
                         <TableCell className={`font-semibold ${step.decision === "approved" ? "text-green-700" : "text-red-700"}`}>
                           {step.decision === "approved" ? "✓ Approved" : "✗ Rejected"}
                         </TableCell>
-                        <TableCell className="text-gray-500 whitespace-nowrap">{fmt(step.approvedAt)}</TableCell>
+                        <TableCell className="text-text-secondary whitespace-nowrap">{fmt(step.approvedAt)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-                <p className="mt-2 text-xs text-gray-500">
+                <p className="mt-2 text-xs text-text-secondary">
                   Final Status: {r.reviewDecision.outcome?.toUpperCase() ?? "PENDING"} — {approvalProgress.length} approval step{approvalProgress.length === 1 ? "" : "s"} recorded
                   {approvalProgress.every((s) => s.decision === "approved")
                     ? ` — all ${approvalProgress.length} step${approvalProgress.length === 1 ? "" : "s"} approved`
@@ -605,7 +619,7 @@ function ReportDocument({
         {/* ── Section 7: SOD Evidence ───────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={7} title="Separation of Duties Evidence" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
+          <div className="rounded-xl border border-border bg-surface p-6">
             <div className="mb-4 flex items-center gap-2">
               <span
                 className={`text-sm font-semibold ${
@@ -628,13 +642,13 @@ function ReportDocument({
         {/* ── Section 8: Deployment Record ─────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={8} title="Deployment Change Record" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+          <div className="rounded-xl border border-border bg-surface p-6 space-y-5">
             <div className="flex items-center gap-3">
               <span
                 className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
                   r.deploymentRecord.deployed
                     ? "bg-green-100 text-green-700"
-                    : "bg-gray-100 text-gray-500"
+                    : "bg-surface-muted text-text-secondary"
                 }`}
               >
                 {r.deploymentRecord.deployed ? "Deployed to Production" : "Not Deployed"}
@@ -656,33 +670,33 @@ function ReportDocument({
             {/* AgentCore deployment details */}
             {r.deploymentRecord.agentcoreRecord && (
               <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-orange-700">
+                <SectionHeading style={{ color: "#92400e" }} className="mb-3">
                   Amazon Bedrock AgentCore — AWS Resource Details
-                </p>
+                </SectionHeading>
                 <dl className="grid grid-cols-1 gap-y-0 sm:grid-cols-2">
                   <div className="py-1.5">
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-orange-600">Agent ID</dt>
-                    <dd className="mt-0.5 font-mono text-xs text-gray-900">{r.deploymentRecord.agentcoreRecord.agentId}</dd>
+                    <dt><SectionHeading style={{ color: "#c2410c" }}>Agent ID</SectionHeading></dt>
+                    <dd className="mt-0.5 font-mono text-xs text-text">{r.deploymentRecord.agentcoreRecord.agentId}</dd>
                   </div>
                   <div className="py-1.5">
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-orange-600">Region</dt>
-                    <dd className="mt-0.5 text-sm text-gray-900">{r.deploymentRecord.agentcoreRecord.region}</dd>
+                    <dt><SectionHeading style={{ color: "#c2410c" }}>Region</SectionHeading></dt>
+                    <dd className="mt-0.5 text-sm text-text">{r.deploymentRecord.agentcoreRecord.region}</dd>
                   </div>
                   <div className="py-1.5 sm:col-span-2">
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-orange-600">Agent ARN</dt>
-                    <dd className="mt-0.5 break-all font-mono text-xs text-gray-900">{r.deploymentRecord.agentcoreRecord.agentArn}</dd>
+                    <dt><SectionHeading style={{ color: "#c2410c" }}>Agent ARN</SectionHeading></dt>
+                    <dd className="mt-0.5 break-all font-mono text-xs text-text">{r.deploymentRecord.agentcoreRecord.agentArn}</dd>
                   </div>
                   <div className="py-1.5">
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-orange-600">Foundation Model</dt>
-                    <dd className="mt-0.5 text-sm text-gray-900">{r.deploymentRecord.agentcoreRecord.foundationModel}</dd>
+                    <dt><SectionHeading style={{ color: "#c2410c" }}>Foundation Model</SectionHeading></dt>
+                    <dd className="mt-0.5 text-sm text-text">{r.deploymentRecord.agentcoreRecord.foundationModel}</dd>
                   </div>
                   <div className="py-1.5">
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-orange-600">AgentCore Deployed By</dt>
-                    <dd className="mt-0.5 text-sm text-gray-900">{r.deploymentRecord.agentcoreRecord.deployedBy}</dd>
+                    <dt><SectionHeading style={{ color: "#c2410c" }}>AgentCore Deployed By</SectionHeading></dt>
+                    <dd className="mt-0.5 text-sm text-text">{r.deploymentRecord.agentcoreRecord.deployedBy}</dd>
                   </div>
                   <div className="py-1.5">
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-orange-600">AgentCore Deployed At</dt>
-                    <dd className="mt-0.5 text-sm text-gray-900">{fmt(r.deploymentRecord.agentcoreRecord.deployedAt)}</dd>
+                    <dt><SectionHeading style={{ color: "#c2410c" }}>AgentCore Deployed At</SectionHeading></dt>
+                    <dd className="mt-0.5 text-sm text-text">{fmt(r.deploymentRecord.agentcoreRecord.deployedAt)}</dd>
                   </div>
                   <div className="py-1.5 flex items-end">
                     <a
@@ -703,11 +717,11 @@ function ReportDocument({
         {/* ── Section 9: Model Lineage ──────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={9} title="Model Lineage" />
-          <div className="space-y-5 rounded-xl border border-gray-200 bg-white p-6">
+          <div className="space-y-5 rounded-xl border border-border bg-surface p-6">
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <SectionHeading className="mb-2">
                 Version History ({r.modelLineage.versionHistory.length})
-              </p>
+              </SectionHeading>
               <Table dense>
                 <TableHead>
                   <TableRow>
@@ -720,12 +734,12 @@ function ReportDocument({
                 </TableHead>
                 <TableBody>
                   {r.modelLineage.versionHistory.map((v, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-mono font-medium text-gray-900">v{v.version}</TableCell>
-                      <TableCell className="text-gray-500 uppercase text-xs">{v.status}</TableCell>
-                      <TableCell className="text-gray-500">{v.refinementCount}</TableCell>
-                      <TableCell className="text-gray-500">{v.createdBy ?? "—"}</TableCell>
-                      <TableCell className="text-gray-500">{fmtDate(v.createdAt)}</TableCell>
+                    <TableRow className="interactive-row" key={i}>
+                      <TableCell className="font-mono font-medium text-text">v{v.version}</TableCell>
+                      <TableCell className="text-text-secondary uppercase text-xs">{v.status}</TableCell>
+                      <TableCell className="text-text-secondary">{v.refinementCount}</TableCell>
+                      <TableCell className="text-text-secondary">{v.createdBy ?? "—"}</TableCell>
+                      <TableCell className="text-text-secondary">{fmtDate(v.createdAt)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -733,11 +747,11 @@ function ReportDocument({
             </div>
 
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <SectionHeading className="mb-2">
                 Deployment Lineage ({r.modelLineage.deploymentLineage.length})
-              </p>
+              </SectionHeading>
               {r.modelLineage.deploymentLineage.length === 0 ? (
-                <p className="text-sm text-gray-400">No production deployments recorded.</p>
+                <p className="text-sm text-text-tertiary">No production deployments recorded.</p>
               ) : (
                 <Table dense>
                   <TableHead>
@@ -750,11 +764,11 @@ function ReportDocument({
                   </TableHead>
                   <TableBody>
                     {r.modelLineage.deploymentLineage.map((d, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-mono text-gray-900">v{d.version}</TableCell>
-                        <TableCell className="text-gray-500">{fmt(d.deployedAt)}</TableCell>
-                        <TableCell className="text-gray-500">{d.deployedBy}</TableCell>
-                        <TableCell className="font-mono text-xs text-gray-500">{d.changeRef ?? "—"}</TableCell>
+                      <TableRow className="interactive-row" key={i}>
+                        <TableCell className="font-mono text-text">v{d.version}</TableCell>
+                        <TableCell className="text-text-secondary">{fmt(d.deployedAt)}</TableCell>
+                        <TableCell className="text-text-secondary">{d.deployedBy}</TableCell>
+                        <TableCell className="font-mono text-xs text-text-secondary">{d.changeRef ?? "—"}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -767,9 +781,9 @@ function ReportDocument({
         {/* ── Section 10: Audit Chain ───────────────────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={10} title="Audit Chain" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
+          <div className="rounded-xl border border-border bg-surface p-6">
             {r.auditChain.length === 0 ? (
-              <p className="text-sm text-gray-400">No audit events recorded for this version.</p>
+              <p className="text-sm text-text-tertiary">No audit events recorded for this version.</p>
             ) : (
               <Table dense>
                 <TableHead>
@@ -783,14 +797,14 @@ function ReportDocument({
                 </TableHead>
                 <TableBody>
                   {r.auditChain.map((e, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-mono text-gray-500 whitespace-nowrap">
+                    <TableRow className="interactive-row" key={i}>
+                      <TableCell className="font-mono text-text-secondary whitespace-nowrap">
                         {fmt(e.timestamp)}
                       </TableCell>
-                      <TableCell className="font-mono text-gray-700">{e.action}</TableCell>
-                      <TableCell className="text-gray-700">{e.actor}</TableCell>
-                      <TableCell className="text-gray-500">{e.actorRole}</TableCell>
-                      <TableCell className="text-gray-500">
+                      <TableCell className="font-mono text-text">{e.action}</TableCell>
+                      <TableCell className="text-text">{e.actor}</TableCell>
+                      <TableCell className="text-text-secondary">{e.actorRole}</TableCell>
+                      <TableCell className="text-text-secondary">
                         {e.fromStatus && e.toStatus
                           ? `${e.fromStatus} → ${e.toStatus}`
                           : e.toStatus ?? "—"}
@@ -806,7 +820,7 @@ function ReportDocument({
         {/* ── Section 11: Stakeholder Contributions ────────────────────────── */}
         <section className="mb-10">
           <SectionHeader number={11} title="Stakeholder Contributions" />
-          <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
+          <div className="rounded-xl border border-border bg-surface p-6 space-y-4">
 
             {/* Coverage gaps callout */}
             {r.stakeholderCoverageGaps && r.stakeholderCoverageGaps.length > 0 && (
@@ -821,7 +835,7 @@ function ReportDocument({
             )}
 
             {r.stakeholderContributions.length === 0 ? (
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-text-tertiary">
                 No stakeholder contributions recorded. This blueprint was generated before the
                 Stakeholder Requirement Lanes feature was introduced, or no contributions were
                 submitted during intake.
@@ -829,22 +843,22 @@ function ReportDocument({
             ) : (
               <div className="space-y-3">
                 {r.stakeholderContributions.map((c, i) => (
-                  <div key={i} className="rounded-lg border border-gray-200 p-4">
+                  <div key={i} className="rounded-lg border border-border p-4">
                     <div className="mb-3 flex items-center gap-3">
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-gray-600">
+                      <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-text-secondary">
                         {c.domain}
                       </span>
-                      <span className="text-sm font-medium text-gray-900">{c.contributorEmail}</span>
-                      <span className="text-xs text-gray-400">({c.contributorRole})</span>
-                      <span className="ml-auto text-xs text-gray-400">{fmt(c.submittedAt)}</span>
+                      <span className="text-sm font-medium text-text">{c.contributorEmail}</span>
+                      <span className="text-xs text-text-tertiary">({c.contributorRole})</span>
+                      <span className="ml-auto text-xs text-text-tertiary">{fmt(c.submittedAt)}</span>
                     </div>
                     <dl className="grid grid-cols-1 gap-y-1 sm:grid-cols-2">
                       {Object.entries(c.fields).map(([key, value]) => (
                         <div key={key} className="py-0.5">
-                          <dt className="text-xs font-medium text-gray-400 capitalize">
+                          <dt className="text-xs font-medium text-text-tertiary capitalize">
                             {key.replace(/_/g, " ")}
                           </dt>
-                          <dd className="mt-0.5 text-xs text-gray-700">{value}</dd>
+                          <dd className="mt-0.5 text-xs text-text">{value}</dd>
                         </div>
                       ))}
                     </dl>
@@ -859,7 +873,7 @@ function ReportDocument({
         <section className="mb-10">
           <SectionHeader number={12} title="Regulatory Framework Assessment" />
           {!regulatoryAssessment ? (
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
+            <div className="rounded-xl border border-border bg-surface p-6">
               <p className="text-sm text-amber-700">
                 Not available — this report was generated before Phase 20 (Regulatory Intelligence)
                 was introduced. Re-generate the report to include the regulatory framework assessment.
@@ -867,7 +881,7 @@ function ReportDocument({
             </div>
           ) : (
             <div className="space-y-6">
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-text-tertiary">
                 Assessed at: {fmt(regulatoryAssessment.assessedAt)}
               </p>
               {regulatoryAssessment.frameworks.map((fw, fwIdx) => {
@@ -921,21 +935,21 @@ function ReportDocument({
                 return (
                   <div
                     key={fw.frameworkId}
-                    className="rounded-xl border border-gray-200 bg-white p-6"
+                    className="rounded-xl border border-border bg-surface p-6"
                   >
                     {/* Framework header */}
-                    <div className="mb-4 flex flex-wrap items-start gap-3 border-b border-gray-100 pb-4">
+                    <div className="mb-4 flex flex-wrap items-start gap-3 border-b border-border-subtle pb-4">
                       <div className="flex-1">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                        <SectionHeading className="text-xs">
                           12.{fwIdx + 1}
                         </p>
-                        <h3 className="text-base font-bold text-gray-900">
+                        <Subheading level={3} className="text-text">
                           {fw.frameworkName}{" "}
-                          <span className="font-normal text-gray-500 text-sm">
+                          <span className="font-normal text-text-secondary text-sm">
                             ({fw.version})
                           </span>
-                        </h3>
-                        <p className="mt-1 text-xs text-gray-600 leading-relaxed">
+                        </Subheading>
+                        <p className="mt-1 text-xs text-text-secondary leading-relaxed">
                           {fw.summary}
                         </p>
                       </div>
@@ -950,7 +964,7 @@ function ReportDocument({
                             color={`border ${tierColor}`}
                           />
                         )}
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-text-secondary">
                           {satisfied}/{applicable.length} requirements satisfied
                         </span>
                       </div>
@@ -960,8 +974,8 @@ function ReportDocument({
                     {isNist && (
                       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                         {nistFunctions.map(({ fn, reqs, satisfiedCount, strength, strengthColor }) => (
-                          <div key={fn} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                          <div key={fn} className="rounded-lg border border-border-subtle bg-surface-raised p-3">
+                            <SectionHeading className="text-xs">
                               {fn}
                             </p>
                             <p className={`text-sm font-bold mt-0.5 ${strengthColor}`}>
@@ -978,12 +992,12 @@ function ReportDocument({
                                       ? "bg-amber-400"
                                       : req.evidenceStatus === "missing"
                                       ? "bg-red-400"
-                                      : "bg-gray-200"
+                                      : "bg-surface-muted"
                                   }`}
                                 />
                               ))}
                             </div>
-                            <p className="mt-1 text-xs text-gray-400">
+                            <p className="mt-1 text-xs text-text-tertiary">
                               {satisfiedCount}/{reqs.length} met
                             </p>
                           </div>
@@ -1018,7 +1032,7 @@ function ReportDocument({
                               ? "text-amber-600"
                               : req.evidenceStatus === "missing"
                               ? "text-red-700"
-                              : "text-gray-400";
+                              : "text-text-tertiary";
                           return (
                             <TableRow
                               key={ri}
@@ -1028,12 +1042,12 @@ function ReportDocument({
                                   : ""
                               }
                             >
-                              <TableCell className="font-mono font-medium text-gray-700 align-top">
+                              <TableCell className="font-mono font-medium text-text align-top">
                                 {req.code}
                               </TableCell>
-                              <TableCell className="text-gray-700 align-top">
+                              <TableCell className="text-text align-top">
                                 <span className="font-medium">{req.title}</span>
-                                <span className="block text-gray-400 mt-0.5 text-xs leading-relaxed">
+                                <span className="block text-text-tertiary mt-0.5 text-xs leading-relaxed">
                                   {req.description}
                                 </span>
                               </TableCell>
@@ -1044,7 +1058,7 @@ function ReportDocument({
                                   : req.evidenceStatus.charAt(0).toUpperCase() +
                                     req.evidenceStatus.slice(1)}
                               </TableCell>
-                              <TableCell className="text-gray-500 align-top">
+                              <TableCell className="text-text-secondary align-top">
                                 {req.evidence ?? "—"}
                               </TableCell>
                             </TableRow>
@@ -1065,7 +1079,7 @@ function ReportDocument({
           {latestTestRun ? (
             <div className="space-y-4">
               {/* Run summary */}
-              <dl className="grid grid-cols-2 gap-x-8 divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white px-5 py-3 text-sm sm:grid-cols-4">
+              <dl className="grid grid-cols-2 gap-x-8 divide-y divide-border-subtle rounded-lg border border-border bg-surface px-5 py-3 text-sm sm:grid-cols-4">
                 <Field label="Executed By" value={latestTestRun.runBy} />
                 <Field label="Run Date" value={fmt(latestTestRun.startedAt)} />
                 <Field label="Test Cases" value={String(latestTestRun.totalCases)} />
@@ -1093,7 +1107,7 @@ function ReportDocument({
 
               {/* Per-case results table */}
               {latestTestRun.testResults.length > 0 && (
-                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+                <div className="overflow-hidden rounded-lg border border-border bg-surface">
                   <Table dense>
                     <TableHead>
                       <TableRow>
@@ -1105,9 +1119,9 @@ function ReportDocument({
                     </TableHead>
                     <TableBody>
                       {latestTestRun.testResults.map((result, i) => (
-                        <TableRow key={result.testCaseId} className="align-top">
-                          <TableCell className="text-gray-400">{i + 1}</TableCell>
-                          <TableCell className="font-medium text-gray-900">{result.name}</TableCell>
+                        <TableRow className="align-top interactive-row" key={result.testCaseId}>
+                          <TableCell className="text-text-tertiary">{i + 1}</TableCell>
+                          <TableCell className="font-medium text-text">{result.name}</TableCell>
                           <TableCell
                             className={`font-semibold ${
                               result.status === "passed"
@@ -1119,7 +1133,7 @@ function ReportDocument({
                           >
                             {result.status === "passed" ? "✓ Passed" : result.status === "failed" ? "✗ Failed" : "⚠ Error"}
                           </TableCell>
-                          <TableCell className="text-gray-600 leading-relaxed">
+                          <TableCell className="text-text-secondary leading-relaxed">
                             {result.evaluationRationale || "—"}
                           </TableCell>
                         </TableRow>
@@ -1130,11 +1144,11 @@ function ReportDocument({
               )}
             </div>
           ) : (
-            <div className="rounded-lg border border-gray-200 bg-white px-5 py-6 text-center">
-              <p className="text-sm text-gray-500">
+            <div className="rounded-lg border border-border bg-surface px-5 py-6 text-center">
+              <p className="text-sm text-text-secondary">
                 No behavioral tests have been executed for this blueprint version.
               </p>
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-1 text-xs text-text-tertiary">
                 SR 11-7 recommends performance testing evidence. Add test cases from the Registry detail page and run them before approval.
               </p>
             </div>
@@ -1144,8 +1158,8 @@ function ReportDocument({
         {/* Section 14: Periodic Review Schedule */}
         <section className="space-y-4">
           <SectionHeader number={14} title="Periodic Review Schedule" />
-          <div className="rounded-lg border border-gray-200 bg-white">
-            <dl className="divide-y divide-gray-100 px-5">
+          <div className="rounded-lg border border-border bg-surface">
+            <dl className="divide-y divide-border-subtle px-5">
               <Field
                 label="Periodic Review"
                 value={r.periodicReviewSchedule.enabled ? "Enabled" : "Disabled"}
@@ -1160,7 +1174,7 @@ function ReportDocument({
                     label="Next Review Due"
                     value={
                       r.periodicReviewSchedule.nextReviewDueAt ? (
-                        <span className={`inline-flex items-center gap-2 ${r.periodicReviewSchedule.isOverdue ? "text-red-700" : "text-gray-900"}`}>
+                        <span className={`inline-flex items-center gap-2 ${r.periodicReviewSchedule.isOverdue ? "text-red-700" : "text-text"}`}>
                           {fmtDate(r.periodicReviewSchedule.nextReviewDueAt)}
                           {r.periodicReviewSchedule.isOverdue && (
                             <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">OVERDUE</span>
@@ -1183,7 +1197,7 @@ function ReportDocument({
                       ) : r.periodicReviewSchedule.nextReviewDueAt ? (
                         <Chip label="On Schedule" color="bg-green-100 text-green-800 border border-green-200" />
                       ) : (
-                        <Chip label="Not Deployed" color="bg-gray-100 text-gray-600 border border-gray-200" />
+                        <Chip label="Not Deployed" color="bg-surface-muted text-text-secondary border border-border" />
                       )
                     }
                   />
@@ -1191,14 +1205,14 @@ function ReportDocument({
               )}
             </dl>
           </div>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-text-tertiary">
             SR 11-7 requires periodic model performance revalidation after initial deployment.
             Review cadence is configured in Enterprise Settings. Overdue reviews require immediate remediation.
           </p>
         </section>
 
         {/* Footer */}
-        <footer className="border-t border-gray-200 py-8 text-center text-xs text-gray-400 print:pt-4">
+        <footer className="border-t border-border py-8 text-center text-xs text-text-tertiary print:pt-4">
           <p>
             {companyName} MRM Compliance Report · Generated {fmt(r.generatedAt)} by {r.generatedBy}
           </p>

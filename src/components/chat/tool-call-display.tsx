@@ -124,7 +124,7 @@ export function ToolCallDisplay({ toolName, args, state, output, errorText }: To
           {/* Result status badge */}
           {isSuccess && <span className="ml-1.5 text-2xs font-medium text-green-600 bg-green-50 rounded-full px-1.5 py-0.5">Captured</span>}
           {isError && <span className="ml-1.5 text-2xs font-medium text-red-600 bg-red-50 rounded-full px-1.5 py-0.5">Failed</span>}
-          {isPending && <span className="ml-1.5 text-2xs font-medium text-gray-400 bg-gray-50 rounded-full px-1.5 py-0.5">…</span>}
+          {isPending && <span className="ml-1.5 text-2xs font-medium text-text-tertiary bg-surface-raised rounded-full px-1.5 py-0.5">…</span>}
           {summary && (
             <span className="text-blue-500 ml-1">— {summary}</span>
           )}

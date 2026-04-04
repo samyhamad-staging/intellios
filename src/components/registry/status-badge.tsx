@@ -1,39 +1,21 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import type { BadgeVariant } from "@/components/ui/badge";
-
-type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed" | "suspended";
-
-const STATUS_VARIANT: Record<Status, BadgeVariant> = {
-  draft:      "neutral",
-  in_review:  "info",
-  approved:   "success",
-  deployed:   "accent",
-  rejected:   "danger",
-  deprecated: "muted",
-  suspended:  "danger",
-};
-
-const STATUS_LABELS: Record<Status, string> = {
-  draft:      "Draft",
-  in_review:  "In Review",
-  approved:   "Approved",
-  deployed:   "Deployed",
-  rejected:   "Rejected",
-  deprecated: "Deprecated",
-  suspended:  "Suspended",
-};
+import { getStatusTheme, STATUS_LABELS, type StatusLevel } from "@/lib/status-theme";
 
 export function StatusBadge({ status }: { status: string }) {
-  const s = status as Status;
+  const s = status as StatusLevel;
+  const theme = getStatusTheme(s);
+  const label = STATUS_LABELS[s] ?? status;
+  const shouldPulse = s === "suspended";
+
   return (
     <Badge
-      variant={STATUS_VARIANT[s] ?? "neutral"}
+      variant={theme.badge ?? "neutral"}
       dot
-      pulse={s === "suspended"}
+      pulse={shouldPulse}
     >
-      {STATUS_LABELS[s] ?? status}
+      {label}
     </Badge>
   );
 }

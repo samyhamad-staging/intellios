@@ -3,8 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Heading, Subheading } from "@/components/catalyst/heading";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 import { SkeletonList } from "@/components/ui/skeleton";
+import { FormField, FormSection } from "@/components/ui/form-field";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -104,23 +108,23 @@ function DeliveryRow({ d }: { d: DeliveryRecord }) {
     );
 
   const httpColor =
-    d.responseStatus === null ? "text-gray-400"
+    d.responseStatus === null ? "text-text-tertiary"
     : d.responseStatus >= 200 && d.responseStatus < 300 ? "text-green-700 font-medium"
     : d.responseStatus >= 400 ? "text-red-600 font-medium"
-    : "text-gray-500";
+    : "text-text-secondary";
 
   return (
     <TableRow className={d.status === "failed" ? "bg-red-50/30" : undefined}>
-      <TableCell className="text-gray-500 whitespace-nowrap" title={formatDate(d.createdAt)}>
+      <TableCell className="text-text-secondary whitespace-nowrap" title={formatDate(d.createdAt)}>
         {formatRelative(d.createdAt)}
       </TableCell>
-      <TableCell className="font-mono text-xs text-gray-700">{d.eventType}</TableCell>
+      <TableCell className="font-mono text-xs text-text">{d.eventType}</TableCell>
       <TableCell>{statusBadge}</TableCell>
       <TableCell className={httpColor}>
         {d.responseStatus ?? "—"}
       </TableCell>
-      <TableCell className="text-gray-500">{d.attempts}</TableCell>
-      <TableCell className="text-gray-400 text-xs whitespace-nowrap">
+      <TableCell className="text-text-secondary">{d.attempts}</TableCell>
+      <TableCell className="text-text-tertiary text-xs whitespace-nowrap">
         {d.lastAttemptedAt ? (
           <span title={`Last attempt: ${formatDate(d.lastAttemptedAt)}`}>
             {formatRelative(d.lastAttemptedAt)}
@@ -168,14 +172,14 @@ function DeliveryLogHeader({ deliveries, onRefresh, loading }: {
   return (
     <div className="mb-2 flex items-center justify-between">
       <div className="flex items-center gap-3 text-xs">
-        <span className="text-gray-500">{deliveries.length} deliveries</span>
+        <span className="text-text-secondary">{deliveries.length} deliveries</span>
         {success > 0 && <span className="text-green-700 font-medium">✓ {success} success</span>}
         {failed > 0 && <span className="text-red-600 font-medium">✗ {failed} failed</span>}
         {pending > 0 && <span className="text-amber-600">{pending} pending</span>}
       </div>
       <div className="flex items-center gap-2">
         {deliveries.length > 0 && (
-          <button onClick={exportCsv} className="text-xs text-gray-400 hover:text-gray-600 underline">
+          <button onClick={exportCsv} className="text-xs text-text-tertiary hover:text-text-secondary underline">
             Export CSV
           </button>
         )}
@@ -232,16 +236,16 @@ function WebhookCard({
   }, [expanded, fetchDeliveries]);
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+    <div className="rounded-lg border border-border bg-surface overflow-hidden">
       {/* Card header */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-start gap-3 min-w-0">
           <div
-            className={`mt-1 h-2 w-2 flex-shrink-0 rounded-full ${wh.active ? "bg-green-500" : "bg-gray-300"}`}
+            className={`mt-1 h-2 w-2 flex-shrink-0 rounded-full ${wh.active ? "bg-green-500" : "bg-text-tertiary"}`}
           />
           <div className="min-w-0">
-            <div className="font-medium text-sm text-gray-900">{wh.name}</div>
-            <div className="text-xs text-gray-400 font-mono truncate max-w-xs mt-0.5">{wh.url}</div>
+            <div className="font-medium text-sm text-text">{wh.name}</div>
+            <div className="text-xs text-text-tertiary font-mono truncate max-w-xs mt-0.5">{wh.url}</div>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -251,7 +255,7 @@ function WebhookCard({
             className={`text-xs px-2 py-1 rounded ${
               wh.active
                 ? "bg-green-50 text-green-700 hover:bg-green-100"
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                : "bg-surface-muted text-text-secondary hover:bg-surface-muted"
             }`}
           >
             {wh.active ? "Active" : "Paused"}
@@ -264,7 +268,7 @@ function WebhookCard({
           </button>
           <button
             onClick={handleExpandDeliveries}
-            className="text-xs px-2 py-1 rounded bg-gray-50 text-gray-600 hover:bg-gray-100"
+            className="text-xs px-2 py-1 rounded bg-surface-raised text-text-secondary hover:bg-surface-muted"
           >
             {expanded ? "Hide log" : "Delivery log"}
           </button>
@@ -285,7 +289,7 @@ function WebhookCard({
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="text-xs px-2 py-1 rounded text-gray-500 hover:bg-gray-100"
+                className="text-xs px-2 py-1 rounded text-text-secondary hover:bg-surface-muted"
               >
                 Cancel
               </button>
@@ -295,8 +299,8 @@ function WebhookCard({
       </div>
 
       {/* Event subscriptions */}
-      <div className="border-t border-gray-100 px-4 py-2 flex flex-wrap gap-1 items-center">
-        <span className="text-xs text-gray-400 mr-1">Events:</span>
+      <div className="border-t border-border-subtle px-4 py-2 flex flex-wrap gap-1 items-center">
+        <span className="text-xs text-text-tertiary mr-1">Events:</span>
         {wh.events.length === 0 ? (
           <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">
             All events
@@ -305,7 +309,7 @@ function WebhookCard({
           wh.events.map((evt) => (
             <span
               key={evt}
-              className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-mono"
+              className="text-xs bg-surface-muted text-text-secondary px-2 py-0.5 rounded-full font-mono"
             >
               {evt}
             </span>
@@ -321,9 +325,9 @@ function WebhookCard({
 
       {/* P2-552: Delivery log — enhanced with summary header, CSV export, refresh */}
       {expanded && (
-        <div className="border-t border-gray-100 px-4 py-3">
+        <div className="border-t border-border-subtle px-4 py-3">
           {loadingDeliveries ? (
-            <p className="text-xs text-gray-400">Loading deliveries…</p>
+            <p className="text-xs text-text-tertiary">Loading deliveries…</p>
           ) : (
             <>
               <DeliveryLogHeader
@@ -332,7 +336,7 @@ function WebhookCard({
                 loading={loadingDeliveries}
               />
               {deliveries.length === 0 ? (
-                <p className="text-xs text-gray-400">No deliveries yet.</p>
+                <p className="text-xs text-text-tertiary">No deliveries yet.</p>
               ) : (
                 <Table dense>
                   <TableHead>
@@ -519,17 +523,25 @@ export default function AdminWebhooksPage() {
 
   return (
     <div className="px-6 py-6 space-y-6">
+      {/* Breadcrumb */}
+      <div className="mb-2">
+        <Breadcrumb items={[
+          { label: "Admin", href: "/admin" },
+          { label: "Webhooks" },
+        ]} />
+      </div>
+
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Webhook Integrations</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <Heading level={1}>Webhook Integrations</Heading>
+          <p className="mt-1 text-sm text-text-secondary">
             Register HTTPS endpoints to receive signed lifecycle events from Intellios.
           </p>
         </div>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+          className="rounded-lg bg-text px-4 py-2 text-sm font-medium text-white hover:bg-text-secondary"
         >
           {showForm ? "Cancel" : "Add Webhook"}
         </button>
@@ -588,8 +600,8 @@ export default function AdminWebhooksPage() {
 
         {/* Add Webhook Form */}
         {showForm && (
-          <div className="mb-6 rounded-lg border border-gray-200 bg-white px-6 py-5">
-            <h2 className="mb-4 text-sm font-medium text-gray-900">Register New Webhook</h2>
+          <div className="mb-6 rounded-lg border border-border bg-surface px-6 py-5">
+            <Heading level={2} className="mb-4 text-sm">Register New Webhook</Heading>
 
             {formError && (
               <div className="mb-3 rounded bg-red-50 px-3 py-2 text-xs text-red-700">
@@ -598,32 +610,30 @@ export default function AdminWebhooksPage() {
             )}
 
             <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">Name</label>
+              <FormField label="Name" htmlFor="webhook-name">
                 <input
+                  id="webhook-name"
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="e.g. CI/CD Pipeline, Slack Bot, SIEM"
-                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
+                  className="w-full rounded border border-border px-3 py-2 text-sm focus:border-border-strong focus:outline-none"
                 />
-              </div>
+              </FormField>
 
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">
-                  URL <span className="text-gray-400">(must be https://)</span>
-                </label>
+              <FormField label="URL" htmlFor="webhook-url" description="must be https://">
                 <input
+                  id="webhook-url"
                   type="url"
                   value={formUrl}
                   onChange={(e) => setFormUrl(e.target.value)}
                   placeholder="https://example.com/webhook"
-                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
+                  className="w-full rounded border border-border px-3 py-2 text-sm focus:border-border-strong focus:outline-none"
                 />
-              </div>
+              </FormField>
 
               <div>
-                <label className="mb-2 block text-xs font-medium text-gray-700">
+                <label className="mb-2 block text-xs font-medium text-text">
                   Event Subscriptions
                 </label>
                 <label className="mb-2 flex items-center gap-2 text-sm">
@@ -632,16 +642,16 @@ export default function AdminWebhooksPage() {
                     checked={formAllEvents}
                     onChange={(e) => setFormAllEvents(e.target.checked)}
                   />
-                  <span className="text-gray-700">Subscribe to all events</span>
+                  <span className="text-text">Subscribe to all events</span>
                 </label>
 
                 {!formAllEvents && (
-                  <div className="mt-2 space-y-3 rounded border border-gray-200 p-3">
+                  <div className="mt-2 space-y-3 rounded border border-border p-3">
                     {EVENT_GROUPS.map((group) => (
                       <div key={group.label}>
-                        <div className="mb-1.5 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        <SectionHeading className="mb-1.5 text-xs">
                           {group.label}
-                        </div>
+                        </SectionHeading>
                         <div className="flex flex-wrap gap-2">
                           {group.events.map((evt) => (
                             <label key={evt} className="flex items-center gap-1.5 text-xs">
@@ -650,7 +660,7 @@ export default function AdminWebhooksPage() {
                                 checked={formEvents.includes(evt)}
                                 onChange={() => toggleEvent(evt)}
                               />
-                              <span className="font-mono text-gray-700">{evt}</span>
+                              <span className="font-mono text-text">{evt}</span>
                             </label>
                           ))}
                         </div>
@@ -665,13 +675,13 @@ export default function AdminWebhooksPage() {
               <button
                 onClick={() => void handleRegister()}
                 disabled={registering}
-                className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                className="rounded-lg bg-text px-4 py-2 text-sm font-medium text-white hover:bg-text-secondary disabled:opacity-50"
               >
                 {registering ? "Registering…" : "Register Webhook"}
               </button>
               <button
                 onClick={() => { setShowForm(false); setFormError(null); }}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-sm text-text-secondary hover:text-text"
               >
                 Cancel
               </button>
@@ -681,15 +691,15 @@ export default function AdminWebhooksPage() {
 
         {/* Webhook list */}
         {webhookList.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-300 bg-white py-16 text-center">
+          <div className="rounded-lg border border-dashed border-border bg-surface py-16 text-center">
             <div className="text-3xl">🔗</div>
-            <h3 className="mt-3 text-sm font-medium text-gray-900">No webhooks registered</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <Heading level={3} className="mt-3 text-sm">No webhooks registered</Heading>
+            <p className="mt-1 text-sm text-text-secondary">
               Register a webhook to start receiving lifecycle events.
             </p>
             <button
               onClick={() => setShowForm(true)}
-              className="mt-4 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+              className="mt-4 rounded-lg bg-text px-4 py-2 text-sm font-medium text-white hover:bg-text-secondary"
             >
               Add Webhook
             </button>
@@ -711,17 +721,17 @@ export default function AdminWebhooksPage() {
         )}
 
         {/* Documentation block */}
-        <div className="mt-8 rounded-lg border border-gray-200 bg-white px-6 py-5">
-          <h2 className="mb-3 text-sm font-medium text-gray-900">Verifying Webhook Signatures</h2>
-          <p className="text-sm text-gray-600 mb-3">
+        <div className="mt-8 rounded-lg border border-border bg-surface px-6 py-5">
+          <Heading level={2} className="mb-3 text-sm">Verifying Webhook Signatures</Heading>
+          <p className="text-sm text-text-secondary mb-3">
             Every request includes a{" "}
-            <code className="font-mono text-xs bg-gray-100 px-1 rounded">X-Intellios-Signature</code>{" "}
-            header. Compute <code className="font-mono text-xs bg-gray-100 px-1 rounded">HMAC-SHA256(secret, rawBody)</code>{" "}
+            <code className="font-mono text-xs bg-surface-muted px-1 rounded">X-Intellios-Signature</code>{" "}
+            header. Compute <code className="font-mono text-xs bg-surface-muted px-1 rounded">HMAC-SHA256(secret, rawBody)</code>{" "}
             and compare with the header value (after stripping the{" "}
-            <code className="font-mono text-xs bg-gray-100 px-1 rounded">sha256=</code> prefix) to
+            <code className="font-mono text-xs bg-surface-muted px-1 rounded">sha256=</code> prefix) to
             verify authenticity.
           </p>
-          <div className="rounded bg-gray-50 border border-gray-200 px-4 py-3 font-mono text-xs text-gray-700 whitespace-pre">
+          <div className="rounded bg-surface-raised border border-border px-4 py-3 font-mono text-xs text-text whitespace-pre">
 {`// Node.js verification example
 const crypto = require('crypto');
 
@@ -737,10 +747,10 @@ function verifySignature(secret, body, header) {
   );
 }`}
           </div>
-          <p className="mt-3 text-xs text-gray-500">
+          <p className="mt-3 text-xs text-text-secondary">
             Additional headers:{" "}
-            <code className="font-mono bg-gray-100 px-1 rounded">X-Intellios-Event</code> (event type),{" "}
-            <code className="font-mono bg-gray-100 px-1 rounded">X-Intellios-Delivery</code> (delivery UUID).
+            <code className="font-mono bg-surface-muted px-1 rounded">X-Intellios-Event</code> (event type),{" "}
+            <code className="font-mono bg-surface-muted px-1 rounded">X-Intellios-Delivery</code> (delivery UUID).
           </p>
         </div>
       </div>

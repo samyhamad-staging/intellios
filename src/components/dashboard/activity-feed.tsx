@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Activity } from "lucide-react";
+import { Skeleton, SkeletonList } from "@/components/ui/skeleton";
 
 interface ActivityItem {
   id: string;
@@ -104,11 +105,11 @@ export function ActivityFeed({ compact }: { compact?: boolean }) {
     return (
       <div className="space-y-3">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="flex items-center gap-3 animate-pulse">
-            <div className="h-8 w-8 rounded-full bg-surface-muted shrink-0" />
+          <div key={i} className="flex items-center gap-3">
+            <Skeleton height="h-8" variant="circular" width="w-8" className="shrink-0" />
             <div className="flex-1 space-y-1.5">
-              <div className="h-3 w-2/3 rounded bg-surface-muted" />
-              <div className="h-2.5 w-1/4 rounded bg-surface-raised" />
+              <Skeleton height="h-3" width="w-2/3" />
+              <Skeleton height="h-2.5" width="w-1/4" />
             </div>
           </div>
         ))}
@@ -163,7 +164,7 @@ export function ActivityFeed({ compact }: { compact?: boolean }) {
             </>
           );
           return entityHref ? (
-            <Link key={item.id} href={entityHref} className={rowCls}>
+            <Link key={item.id} href={entityHref} className={`${rowCls} interactive-row`}>
               {inner}
             </Link>
           ) : (

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { ShieldAlert, ShieldCheck, AlertTriangle, Play, RefreshCw, Download } from "lucide-react";
 import type { RedTeamReport, Attack } from "@/lib/types/red-team";
 import { ATTACK_CATEGORY_LABELS } from "@/lib/types/red-team";
+import { SectionHeading } from "@/components/ui/section-heading";
 
 // ─── Risk tier badge ──────────────────────────────────────────────────────────
 
@@ -29,10 +30,10 @@ function AttackRow({ attack }: { attack: Attack }) {
   const passed = attack.verdict === "PASS";
 
   return (
-    <div className="border border-gray-100 rounded-lg overflow-hidden">
+    <div className="border border-border-subtle rounded-lg overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-raised transition-colors"
       >
         {passed ? (
           <ShieldCheck className="h-4 w-4 shrink-0 text-green-500" />
@@ -41,27 +42,27 @@ function AttackRow({ attack }: { attack: Attack }) {
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-gray-400">
+            <span className="text-xs font-medium text-text-tertiary">
               {ATTACK_CATEGORY_LABELS[attack.category]}
             </span>
             <span className={`text-xs font-semibold ${passed ? "text-green-600" : "text-red-600"}`}>
               {attack.verdict}
             </span>
           </div>
-          <p className="mt-0.5 text-sm text-gray-700 truncate">{attack.prompt}</p>
+          <p className="mt-0.5 text-sm text-text truncate">{attack.prompt}</p>
         </div>
-        <span className="text-gray-300 text-xs">{open ? "▲" : "▼"}</span>
+        <span className="text-text-disabled text-xs">{open ? "▲" : "▼"}</span>
       </button>
 
       {open && (
-        <div className="px-4 pb-4 pt-1 bg-gray-50 border-t border-gray-100 space-y-2">
+        <div className="px-4 pb-4 pt-1 bg-surface-raised border-t border-border-subtle space-y-2">
           <div>
-            <p className="text-xs font-medium text-gray-500 mb-1">Attack prompt</p>
-            <p className="text-sm text-gray-700 leading-relaxed">{attack.prompt}</p>
+            <p className="text-xs font-medium text-text-secondary mb-1">Attack prompt</p>
+            <p className="text-sm text-text leading-relaxed">{attack.prompt}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 mb-1">Evaluator verdict</p>
-            <p className="text-sm text-gray-600 leading-relaxed">{attack.explanation}</p>
+            <p className="text-xs font-medium text-text-secondary mb-1">Evaluator verdict</p>
+            <p className="text-sm text-text-secondary leading-relaxed">{attack.explanation}</p>
           </div>
         </div>
       )}
@@ -82,7 +83,7 @@ function ScoreRing({ score, total = 10 }: { score: number; total?: number }) {
   return (
     <div className="relative flex items-center justify-center w-20 h-20">
       <svg width="80" height="80" className="-rotate-90">
-        <circle cx="40" cy="40" r={r} fill="none" stroke="#f3f4f6" strokeWidth="6" />
+        <circle cx="40" cy="40" r={r} fill="none" stroke="#d1d5db" strokeWidth="6" />
         <circle
           cx="40" cy="40" r={r}
           fill="none"
@@ -93,8 +94,8 @@ function ScoreRing({ score, total = 10 }: { score: number; total?: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-xl font-bold text-gray-900">{score}</span>
-        <span className="text-xs text-gray-400">/{total}</span>
+        <span className="text-xl font-bold text-text">{score}</span>
+        <span className="text-xs text-text-tertiary">/{total}</span>
       </div>
     </div>
   );
@@ -156,30 +157,30 @@ function ComparisonStrip({ current, previous }: ComparisonStripProps) {
   const tierSame = current.riskTier === previous.riskTier;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+    <div className="rounded-lg border border-border bg-surface-raised px-4 py-3">
+      <SectionHeading className="mb-2">
         Version Comparison
-      </p>
+      </SectionHeading>
       <div className="flex items-center gap-3 flex-wrap">
         {/* Previous */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-gray-500">v{previous.version}</span>
+          <span className="text-xs font-medium text-text-secondary">v{previous.version}</span>
           <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${TIER_STYLES[previous.riskTier]}`}>
             {previous.riskTier}
           </span>
-          <span className="text-xs text-gray-600">{previous.score}/{previous.total}</span>
+          <span className="text-xs text-text-secondary">{previous.score}/{previous.total}</span>
         </div>
 
         {/* Arrow */}
-        <span className="text-gray-300 text-sm">→</span>
+        <span className="text-text-disabled text-sm">→</span>
 
         {/* Current */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-semibold text-gray-800">v{current.version}</span>
+          <span className="text-xs font-semibold text-text">v{current.version}</span>
           <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${TIER_STYLES[current.riskTier]}`}>
             {current.riskTier}
           </span>
-          <span className="text-xs font-medium text-gray-700">{current.score}/{current.total}</span>
+          <span className="text-xs font-medium text-text-secondary">{current.score}/{current.total}</span>
         </div>
 
         {/* Delta */}
@@ -194,7 +195,7 @@ function ComparisonStrip({ current, previous }: ComparisonStripProps) {
           </span>
         )}
         {same && tierSame && (
-          <span className="text-xs text-gray-400">· no change</span>
+          <span className="text-xs text-text-tertiary">· no change</span>
         )}
       </div>
     </div>
@@ -289,10 +290,10 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
       <div className="space-y-5">
         {/* P2-240: Run history strip — shown when prior runs exist */}
         {history.length > 0 && (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+          <div className="rounded-lg border border-border bg-surface-raised px-4 py-3">
+            <SectionHeading className="mb-2">
               Run history
-            </p>
+            </SectionHeading>
             <div className="flex items-center gap-2 flex-wrap">
               {history.map((h) => (
                 <div
@@ -315,12 +316,12 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
             <ShieldAlert className="h-7 w-7 text-orange-500" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">Adversarial Red-Team</h3>
-            <p className="mt-1 text-sm text-gray-500 max-w-xs">
+            <h3 className="text-sm font-semibold text-text">Adversarial Red-Team</h3>
+            <p className="mt-1 text-sm text-text-secondary max-w-xs">
               Generate 10 tailored attack prompts and evaluate how well{" "}
               <span className="font-medium">{agentName}</span> resists them.
             </p>
-            <p className="mt-1 text-xs text-gray-400">Takes ~20–30 seconds.</p>
+            <p className="mt-1 text-xs text-text-tertiary">Takes ~20–30 seconds.</p>
           </div>
           <button
             onClick={runTest}
@@ -350,11 +351,11 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
           <RefreshCw className="h-7 w-7 text-orange-500 animate-spin" />
         </div>
         <div className="w-full max-w-xs">
-          <h3 className="text-sm font-semibold text-gray-900">Running red-team evaluation…</h3>
+          <h3 className="text-sm font-semibold text-text">Running red-team evaluation…</h3>
           {/* Live progress label */}
           <p className="mt-2 text-sm font-medium text-orange-600 tabular-nums">
             Running attack {displayAttack} of {TOTAL_ATTACKS}
-            <span className="text-gray-400 font-normal"> · ~{remainingSec}s remaining</span>
+            <span className="text-text-tertiary font-normal"> · ~{remainingSec}s remaining</span>
           </p>
           {/* Progress bar */}
           <div className="mt-3 h-1.5 w-full rounded-full bg-orange-100 overflow-hidden">
@@ -373,12 +374,12 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
                     ? "bg-orange-400"
                     : i === runProgress
                     ? "bg-orange-500 scale-125"
-                    : "bg-gray-200"
+                    : "bg-text-disabled"
                 }`}
               />
             ))}
           </div>
-          <p className="mt-3 text-xs text-gray-400">
+          <p className="mt-3 text-xs text-text-tertiary">
             Attacks run in parallel — evaluating responses with Claude
           </p>
         </div>
@@ -394,16 +395,16 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
   return (
     <div className="space-y-6">
       {/* Summary header */}
-      <div className="flex items-center gap-5 rounded-xl border border-gray-200 bg-white p-5">
+      <div className="flex items-center gap-5 rounded-xl border border-border bg-surface p-5">
         <ScoreRing score={report.score} />
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-sm font-semibold text-gray-900">
+            <h3 className="text-sm font-semibold text-text">
               {agentName} v{version}
             </h3>
             <RiskBadge tier={report.riskTier} />
           </div>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-text-secondary">
             Resisted {passed} of {report.attacks.length} attacks
             {failed > 0 && (
               <span className="ml-1 text-red-500 font-medium">
@@ -411,14 +412,14 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
               </span>
             )}
           </p>
-          <p className="mt-0.5 text-xs text-gray-400">
+          <p className="mt-0.5 text-xs text-text-tertiary">
             Run at {new Date(report.runAt).toLocaleString()}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleExport}
-            className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-surface-raised transition-colors"
             title="Download red team report as JSON"
           >
             <Download className="h-3.5 w-3.5" />
@@ -426,7 +427,7 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
           </button>
           <button
             onClick={runTest}
-            className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-surface-raised transition-colors"
           >
             <RefreshCw className="h-3.5 w-3.5" />
             Re-run
@@ -457,9 +458,9 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
 
       {/* Attack list */}
       <div className="space-y-2">
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+        <SectionHeading>
           Attack Results
-        </h4>
+        </SectionHeading>
         {report.attacks.map((attack) => (
           <AttackRow key={attack.id} attack={attack} />
         ))}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FormField, FormSection } from "@/components/ui/form-field";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -187,16 +188,16 @@ function RuleRow({
   const showValue = operatorHasValue(rule.operator);
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 space-y-3">
+    <div className="rounded-lg border border-border bg-surface-muted px-4 py-3 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+        <span className="text-xs font-medium text-text-tertiary uppercase tracking-wider">
           Rule {index + 1}
         </span>
         {!readOnly && (
           <button
             type="button"
             onClick={onRemove}
-            className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+            className="text-xs text-text-tertiary hover:text-red-500 transition-colors"
           >
             Remove
           </button>
@@ -205,21 +206,28 @@ function RuleRow({
 
       <div className="grid grid-cols-2 gap-3">
         {/* Field */}
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">ABP field path</label>
+        <FormField
+          label="ABP field path"
+          htmlFor={`rule-${index}-field`}
+          error={undefined}
+        >
           <input
+            id={`rule-${index}-field`}
             type="text"
             value={rule.field}
             onChange={(e) => onChange({ ...rule, field: e.target.value })}
             placeholder="e.g. identity.name"
             disabled={readOnly}
-            className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 placeholder-gray-300 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
+            className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
           />
-        </div>
+        </FormField>
 
         {/* Operator */}
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Operator</label>
+        <FormField
+          label="Operator"
+          htmlFor={`rule-${index}-operator`}
+          error={undefined}
+        >
           <Select
             value={rule.operator}
             onValueChange={(v) => onChange({ ...rule, operator: v as Operator, value: "" })}
@@ -234,26 +242,33 @@ function RuleRow({
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </FormField>
 
         {/* Value */}
         {showValue && (
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Value</label>
+          <FormField
+            label="Value"
+            htmlFor={`rule-${index}-value`}
+            error={undefined}
+          >
             <input
+              id={`rule-${index}-value`}
               type="text"
               value={rule.value ?? ""}
               onChange={(e) => onChange({ ...rule, value: e.target.value })}
               placeholder="Comparison value"
               disabled={readOnly}
-              className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 placeholder-gray-300 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
+              className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
             />
-          </div>
+          </FormField>
         )}
 
         {/* Severity */}
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Severity</label>
+        <FormField
+          label="Severity"
+          htmlFor={`rule-${index}-severity`}
+          error={undefined}
+        >
           <Select
             value={rule.severity}
             onValueChange={(v) => onChange({ ...rule, severity: v as "error" | "warning" })}
@@ -267,21 +282,25 @@ function RuleRow({
               <SelectItem value="warning">warning — informational</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </FormField>
       </div>
 
       {/* Violation message */}
-      <div>
-        <label className="block text-xs text-gray-500 mb-1">Violation message</label>
+      <FormField
+        label="Violation message"
+        htmlFor={`rule-${index}-message`}
+        error={undefined}
+      >
         <input
+          id={`rule-${index}-message`}
           type="text"
           value={rule.message}
           onChange={(e) => onChange({ ...rule, message: e.target.value })}
           placeholder="Shown when this rule is violated"
           disabled={readOnly}
-          className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 placeholder-gray-300 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
+          className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
         />
-      </div>
+      </FormField>
     </div>
   );
 }
@@ -313,7 +332,7 @@ function RuntimeRuleRow({
           <button
             type="button"
             onClick={onRemove}
-            className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+            className="text-xs text-text-tertiary hover:text-red-500 transition-colors"
           >
             Remove
           </button>
@@ -322,8 +341,13 @@ function RuntimeRuleRow({
 
       <div className="grid grid-cols-2 gap-3">
         {/* Operator */}
-        <div className="col-span-2">
-          <label className="block text-xs text-gray-500 mb-1">Operator</label>
+        <FormField
+          label="Operator"
+          htmlFor={`runtime-rule-${index}-operator`}
+          description={opDef?.description}
+          error={undefined}
+          className="col-span-2"
+        >
           <Select
             value={rule.operator}
             onValueChange={(v) => onChange({ ...rule, operator: v as RuntimeOperator, value: "" })}
@@ -338,15 +362,15 @@ function RuntimeRuleRow({
               ))}
             </SelectContent>
           </Select>
-          {opDef && (
-            <p className="mt-1 text-xs text-gray-400">{opDef.description}</p>
-          )}
-        </div>
+        </FormField>
 
         {/* Value — varies by operator */}
         {opDef?.valueType === "pii_action" ? (
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">PII Action</label>
+          <FormField
+            label="PII Action"
+            htmlFor={`runtime-rule-${index}-pii-action`}
+            error={undefined}
+          >
             <Select
               value={String(rule.value ?? "block")}
               onValueChange={(v) => onChange({ ...rule, value: v })}
@@ -361,25 +385,32 @@ function RuntimeRuleRow({
                 <SelectItem value="log">log — allow but audit</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </FormField>
         ) : (
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Value</label>
+          <FormField
+            label="Value"
+            htmlFor={`runtime-rule-${index}-value`}
+            error={undefined}
+          >
             <input
+              id={`runtime-rule-${index}-value`}
               type={opDef?.valueType === "number" ? "number" : "text"}
               step={opDef?.valueType === "number" ? "any" : undefined}
               value={String(rule.value ?? "")}
               onChange={(e) => onChange({ ...rule, value: e.target.value })}
               placeholder={opDef?.placeholder ?? ""}
               disabled={readOnly}
-              className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 placeholder-gray-300 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
+              className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
             />
-          </div>
+          </FormField>
         )}
 
         {/* Severity */}
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Severity</label>
+        <FormField
+          label="Severity"
+          htmlFor={`runtime-rule-${index}-severity`}
+          error={undefined}
+        >
           <Select
             value={rule.severity}
             onValueChange={(v) => onChange({ ...rule, severity: v as "error" | "warning" })}
@@ -393,21 +424,25 @@ function RuntimeRuleRow({
               <SelectItem value="warning">warning — alert only</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </FormField>
       </div>
 
       {/* Alert message */}
-      <div>
-        <label className="block text-xs text-gray-500 mb-1">Alert message</label>
+      <FormField
+        label="Alert message"
+        htmlFor={`runtime-rule-${index}-message`}
+        error={undefined}
+      >
         <input
+          id={`runtime-rule-${index}-message`}
           type="text"
           value={rule.message}
           onChange={(e) => onChange({ ...rule, message: e.target.value })}
           placeholder="Shown when this threshold is breached"
           disabled={readOnly}
-          className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-900 placeholder-gray-300 focus:border-blue-400 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
+          className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
         />
-      </div>
+      </FormField>
     </div>
   );
 }
@@ -624,29 +659,30 @@ export default function PolicyForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* ── Name ──────────────────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-gray-200 bg-white px-6 py-5 space-y-4">
-        <h2 className="text-sm font-semibold text-gray-900">Policy Details</h2>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Policy name <span className="text-red-500">*</span>
-          </label>
+      {/* ── Policy Details Section ────────────────────────────────────────────── */}
+      <FormSection title="Policy Details" description="Define the policy identity and scope">
+        <FormField
+          label="Policy name"
+          htmlFor="policy-name"
+          required
+          error={errors.name}
+        >
           <input
+            id="policy-name"
             type="text"
             value={name}
             onChange={(e) => { setName(e.target.value); setSimDirty(true); }}
             placeholder="e.g. PII Data Handling Policy"
             disabled={readOnly}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:border-blue-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none disabled:bg-surface-raised disabled:text-text-tertiary"
           />
-          {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
-        </div>
+        </FormField>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Type <span className="text-red-500">*</span>
-          </label>
+        <FormField
+          label="Type"
+          htmlFor="policy-type"
+          required
+        >
           <Select
             value={type}
             onValueChange={(v) => {
@@ -666,35 +702,36 @@ export default function PolicyForm({
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </FormField>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Description
-            <span className="ml-1 text-xs font-normal text-gray-400">(optional)</span>
-          </label>
+        <FormField
+          label="Description"
+          htmlFor="policy-description"
+          optional
+        >
           <textarea
+            id="policy-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Describe what this policy enforces and why it exists"
             rows={3}
             disabled={readOnly}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:border-blue-400 focus:outline-none resize-none disabled:bg-gray-50 disabled:text-gray-400"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none resize-none disabled:bg-surface-raised disabled:text-text-tertiary"
           />
-        </div>
-      </div>
+        </FormField>
+      </FormSection>
 
       {/* ── Rules ─────────────────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-gray-200 bg-white px-6 py-5">
+      <div className="rounded-xl border border-border bg-surface px-6 py-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">
+            <h2 className="text-sm font-semibold text-text">
               Rules
-              <span className="ml-2 text-xs font-normal text-gray-400">
+              <span className="ml-2 text-xs font-normal text-text-tertiary">
                 ({rules.length} rule{rules.length === 1 ? "" : "s"})
               </span>
             </h2>
-            <p className="mt-0.5 text-xs text-gray-400">
+            <p className="mt-0.5 text-xs text-text-tertiary">
               {isRuntime
                 ? "Each rule defines a telemetry threshold. Breaches fire alerts and may auto-suspend the agent (H2-1.4)."
                 : "Each rule asserts a condition against an ABP field. Violations block deployment when severity is error."}
@@ -712,8 +749,8 @@ export default function PolicyForm({
         </div>
 
         {rules.length === 0 && (
-          <div className="rounded-lg border border-dashed border-gray-200 py-8 text-center">
-            <p className="text-sm text-gray-400">
+          <div className="rounded-lg border border-dashed border-border py-8 text-center">
+            <p className="text-sm text-text-tertiary">
               {readOnly
                 ? "No rules defined."
                 : "No rules yet — click \"+ Add Rule\" to define the first assertion."}
@@ -776,11 +813,11 @@ export default function PolicyForm({
 
       {/* ── Impact Simulation ─────────────────────────────────────────────────── */}
       {!readOnly && !isRuntime && (
-        <div className="rounded-xl border border-gray-200 bg-white px-6 py-5">
+        <div className="rounded-xl border border-border bg-surface px-6 py-5">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-sm font-semibold text-gray-900">Impact Preview</h2>
-              <p className="mt-0.5 text-xs text-gray-400">
+              <h2 className="text-sm font-semibold text-text">Impact Preview</h2>
+              <p className="mt-0.5 text-xs text-text-tertiary">
                 See how this policy would affect approved and deployed blueprints before saving.
               </p>
             </div>
@@ -814,7 +851,7 @@ export default function PolicyForm({
                   {
                     label: "Total checked",
                     value: simResult.summary.total,
-                    color: "bg-gray-50 border-gray-200 text-gray-700",
+                    color: "bg-surface-raised border-border text-text-secondary",
                   },
                   {
                     label: "New violations",
@@ -822,7 +859,7 @@ export default function PolicyForm({
                     color:
                       simResult.summary.newViolations > 0
                         ? "bg-red-50 border-red-200 text-red-700"
-                        : "bg-gray-50 border-gray-200 text-gray-700",
+                        : "bg-surface-raised border-border text-text-secondary",
                   },
                   {
                     label: "Resolved",
@@ -830,12 +867,12 @@ export default function PolicyForm({
                     color:
                       simResult.summary.resolvedViolations > 0
                         ? "bg-green-50 border-green-200 text-green-700"
-                        : "bg-gray-50 border-gray-200 text-gray-700",
+                        : "bg-surface-raised border-border text-text-secondary",
                   },
                   {
                     label: "Unaffected",
                     value: simResult.summary.noChange,
-                    color: "bg-gray-50 border-gray-200 text-gray-700",
+                    color: "bg-surface-raised border-border text-text-secondary",
                   },
                 ].map(({ label, value, color }) => (
                   <div
@@ -866,7 +903,7 @@ export default function PolicyForm({
                       >
                         <Link
                           href={`/registry/${bp.agentId}`}
-                          className="font-medium text-gray-900 hover:underline truncate"
+                          className="font-medium text-text hover:underline truncate"
                         >
                           {bp.agentName}
                         </Link>
@@ -888,7 +925,7 @@ export default function PolicyForm({
 
               {simResult.summary.newViolations === 0 &&
                 simResult.summary.resolvedViolations === 0 && (
-                  <p className="text-xs text-gray-500 text-center py-2">
+                  <p className="text-xs text-text-secondary text-center py-2">
                     ✓ No deployed blueprints would be affected by this policy.
                   </p>
                 )}
@@ -896,7 +933,7 @@ export default function PolicyForm({
           )}
 
           {!simResult && !simError && !simulating && (
-            <p className="text-xs text-gray-400 py-2">
+            <p className="text-xs text-text-tertiary py-2">
               Click &quot;Preview Impact&quot; to check how this policy would affect your{" "}
               approved and deployed blueprints.
             </p>
@@ -908,12 +945,12 @@ export default function PolicyForm({
       {!readOnly && (
         <div className="flex items-center justify-end gap-3">
           {draftKey && draftSavedAt && (
-            <span className="mr-auto text-xs text-gray-400">{draftSavedLabel()}</span>
+            <span className="mr-auto text-xs text-text-tertiary">{draftSavedLabel()}</span>
           )}
           <button
             type="button"
             onClick={() => window.history.back()}
-            className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            className="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised transition-colors"
           >
             Cancel
           </button>

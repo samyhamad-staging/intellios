@@ -13,6 +13,8 @@
 
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FormField } from "@/components/ui/form-field";
+import { SectionHeading } from "@/components/ui/section-heading";
 
 interface TelemetryRow {
   id: string;
@@ -62,7 +64,7 @@ function computeHealth(data: TelemetryRow[]): {
   bg: string;
 } {
   if (data.length === 0)
-    return { label: "Unknown", color: "text-gray-500", bg: "bg-gray-100" };
+    return { label: "Unknown", color: "text-text-secondary", bg: "bg-surface-muted" };
 
   const now = Date.now();
   const last24h = data.filter(
@@ -79,7 +81,7 @@ function computeHealth(data: TelemetryRow[]): {
   const hasRecentData = last6h.some((r) => r.invocations > 0);
 
   if (!hasRecentData && last6h.length > 0)
-    return { label: "Offline", color: "text-gray-600", bg: "bg-gray-100" };
+    return { label: "Offline", color: "text-text-secondary", bg: "bg-surface-muted" };
   if (errorRate > 0.2)
     return { label: "Degraded", color: "text-amber-700", bg: "bg-amber-100" };
   if (errorRate > 0.05)
@@ -221,15 +223,15 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
   }
 
   if (tLoading) {
-    return <div className="h-16 rounded-xl bg-gray-100 animate-pulse" />;
+    return <div className="h-16 rounded-xl bg-surface-muted animate-pulse" />;
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+    <div className="rounded-xl border border-border bg-surface p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+        <SectionHeading>
           Alert Thresholds
-        </p>
+        </SectionHeading>
         {canManage && !adding && (
           <button
             onClick={() => setAdding(true)}
@@ -241,23 +243,23 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
       </div>
 
       {thresholds.length === 0 && !adding && (
-        <p className="text-xs text-gray-400">No thresholds configured.</p>
+        <p className="text-xs text-text-tertiary">No thresholds configured.</p>
       )}
 
       {thresholds.map((t) => (
         <div key={t.id} className="flex items-center gap-3 text-xs">
-          <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${t.enabled ? "bg-green-500" : "bg-gray-300"}`} />
-          <span className="font-medium text-gray-700">{METRIC_LABELS[t.metric] ?? t.metric}</span>
-          <span className="text-gray-400">{OPERATOR_LABELS[t.operator] ?? t.operator} {t.value}</span>
-          <span className="text-gray-400">/ {t.windowMinutes}m window</span>
+          <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${t.enabled ? "bg-green-500" : "bg-text-disabled"}`} />
+          <span className="font-medium text-text">{METRIC_LABELS[t.metric] ?? t.metric}</span>
+          <span className="text-text-tertiary">{OPERATOR_LABELS[t.operator] ?? t.operator} {t.value}</span>
+          <span className="text-text-tertiary">/ {t.windowMinutes}m window</span>
         </div>
       ))}
 
       {/* P1-37: Notification channel config */}
-      <div className="border-t border-gray-100 pt-3">
+      <div className="border-t border-border-subtle pt-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <p className="text-xs font-medium text-gray-600">Notify when triggered</p>
+            <p className="text-xs font-medium text-text-secondary">Notify when triggered</p>
             {hasNotifyConfig && !editingNotify && (
               <span className="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-xs text-green-700">
                 ● Active
@@ -277,19 +279,19 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
         {!editingNotify && hasNotifyConfig && (
           <div className="mt-2 space-y-1">
             {notifyChannel.email && (
-              <div className="flex items-center gap-2 text-xs text-gray-600">
-                <span className="text-gray-400">Email:</span>
+              <div className="flex items-center gap-2 text-xs text-text-secondary">
+                <span className="text-text-tertiary">Email:</span>
                 <span className="font-mono truncate max-w-48">{notifyChannel.email}</span>
               </div>
             )}
             {notifyChannel.slackWebhook && (
-              <div className="flex items-center gap-2 text-xs text-gray-600">
-                <span className="text-gray-400">Slack webhook:</span>
+              <div className="flex items-center gap-2 text-xs text-text-secondary">
+                <span className="text-text-tertiary">Slack webhook:</span>
                 <span className="font-mono truncate max-w-48">{notifyChannel.slackWebhook.slice(0, 36)}…</span>
               </div>
             )}
             {notifySavedAt && (
-              <p className="text-2xs text-gray-400">
+              <p className="text-2xs text-text-tertiary">
                 Saved {notifySavedAt.toLocaleTimeString()}
               </p>
             )}
@@ -297,33 +299,33 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
         )}
 
         {!editingNotify && !hasNotifyConfig && canManage && (
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-xs text-text-tertiary">
             No notification channel configured — threshold breaches are silent.
           </p>
         )}
 
         {editingNotify && (
           <div className="mt-2 space-y-2">
-            <div>
-              <label className="text-xs text-gray-500">Email address</label>
+            <FormField label="Email address" htmlFor="notify-email">
               <input
+                id="notify-email"
                 type="email"
                 placeholder="ops@company.com"
                 value={notifyDraft.email}
                 onChange={(e) => setNotifyDraft((d) => ({ ...d, email: e.target.value }))}
-                className="mt-0.5 w-full rounded border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+                className="w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500">Slack webhook URL</label>
+            </FormField>
+            <FormField label="Slack webhook URL" htmlFor="notify-slack">
               <input
+                id="notify-slack"
                 type="url"
                 placeholder="https://hooks.slack.com/services/…"
                 value={notifyDraft.slackWebhook}
                 onChange={(e) => setNotifyDraft((d) => ({ ...d, slackWebhook: e.target.value }))}
-                className="mt-0.5 w-full rounded border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+                className="w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
-            </div>
+            </FormField>
             <div className="flex gap-2">
               <button
                 onClick={saveNotifyChannel}
@@ -334,7 +336,7 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
               </button>
               <button
                 onClick={() => setEditingNotify(false)}
-                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50"
+                className="rounded-md border border-border px-3 py-1.5 text-xs text-text-secondary hover:bg-surface-raised"
               >
                 Cancel
               </button>
@@ -344,12 +346,11 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
       </div>
 
       {adding && (
-        <form onSubmit={handleCreate} className="space-y-3 border-t border-gray-100 pt-3">
+        <form onSubmit={handleCreate} className="space-y-3 border-t border-border-subtle pt-3">
           <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-xs text-gray-500">Metric</label>
+            <FormField label="Metric" htmlFor="threshold-metric">
               <Select value={form.metric} onValueChange={(v) => setForm((f) => ({ ...f, metric: v }))}>
-                <SelectTrigger className="mt-0.5 w-full text-xs h-8">
+                <SelectTrigger id="threshold-metric" className="w-full text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -358,11 +359,10 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <label className="text-xs text-gray-500">Operator</label>
+            </FormField>
+            <FormField label="Operator" htmlFor="threshold-operator">
               <Select value={form.operator} onValueChange={(v) => setForm((f) => ({ ...f, operator: v }))}>
-                <SelectTrigger className="mt-0.5 w-full text-xs h-8">
+                <SelectTrigger id="threshold-operator" className="w-full text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -371,30 +371,30 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
                   <SelectItem value="eq">= (equal)</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <label className="text-xs text-gray-500">Value</label>
+            </FormField>
+            <FormField label="Value" htmlFor="threshold-value">
               <input
+                id="threshold-value"
                 type="number"
                 step="any"
                 required
                 value={form.value}
                 onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))}
-                className="mt-0.5 w-full rounded border border-gray-200 px-2 py-1.5 text-xs"
+                className="w-full rounded border border-border px-2 py-1.5 text-xs"
                 placeholder="e.g. 0.05"
               />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500">Window (minutes)</label>
+            </FormField>
+            <FormField label="Window (minutes)" htmlFor="threshold-window">
               <input
+                id="threshold-window"
                 type="number"
                 min={1}
                 required
                 value={form.windowMinutes}
                 onChange={(e) => setForm((f) => ({ ...f, windowMinutes: e.target.value }))}
-                className="mt-0.5 w-full rounded border border-gray-200 px-2 py-1.5 text-xs"
+                className="w-full rounded border border-border px-2 py-1.5 text-xs"
               />
-            </div>
+            </FormField>
           </div>
           <div className="flex gap-2">
             <button
@@ -407,7 +407,7 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
             <button
               type="button"
               onClick={() => setAdding(false)}
-              className="rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50"
+              className="rounded-md border border-border px-3 py-1.5 text-xs text-text-secondary hover:bg-surface-raised"
             >
               Cancel
             </button>
@@ -435,21 +435,21 @@ function TelemetrySnippetPanel({ snippetPython, snippetCurl }: { snippetPython: 
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+    <div className="rounded-xl border border-border bg-surface overflow-hidden">
       {/* Header row */}
-      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2.5">
-        <span className="text-xs font-medium text-gray-600">Send your first event</span>
+      <div className="flex items-center justify-between border-b border-border-subtle px-4 py-2.5">
+        <span className="text-xs font-medium text-text-secondary">Send your first event</span>
         <div className="flex items-center gap-2">
           {/* Language tabs */}
-          <div className="flex rounded-md border border-gray-200 overflow-hidden text-xs">
+          <div className="flex rounded-md border border-border overflow-hidden text-xs">
             {(["python", "curl"] as const).map((l) => (
               <button
                 key={l}
                 onClick={() => setLang(l)}
                 className={`px-2.5 py-1 font-mono transition-colors ${
                   lang === l
-                    ? "bg-gray-800 text-white"
-                    : "bg-white text-gray-500 hover:bg-gray-50"
+                    ? "bg-text text-white"
+                    : "bg-surface text-text-secondary hover:bg-surface-raised"
                 }`}
               >
                 {l}
@@ -460,7 +460,7 @@ function TelemetrySnippetPanel({ snippetPython, snippetCurl }: { snippetPython: 
           <button
             onClick={handleCopy}
             title="Copy to clipboard"
-            className="flex items-center gap-1 rounded border border-gray-200 px-2.5 py-1 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1 rounded border border-border px-2.5 py-1 text-xs text-text-secondary hover:bg-surface-raised transition-colors"
           >
             {copied ? (
               <>
@@ -477,12 +477,12 @@ function TelemetrySnippetPanel({ snippetPython, snippetCurl }: { snippetPython: 
         </div>
       </div>
       {/* Code block */}
-      <pre className="overflow-x-auto bg-gray-900 px-4 py-4 text-xs leading-relaxed text-gray-100">
+      <pre className="overflow-x-auto bg-text px-4 py-4 text-xs leading-relaxed text-surface">
         <code>{snippet}</code>
       </pre>
       {/* Footer hint */}
-      <div className="border-t border-gray-100 bg-gray-50 px-4 py-2 text-xs text-gray-400">
-        Replace <span className="font-mono text-gray-600">YOUR_TELEMETRY_API_KEY</span> with the key from Admin → Settings → API Keys.
+      <div className="border-t border-border-subtle bg-surface-raised px-4 py-2 text-xs text-text-tertiary">
+        Replace <span className="font-mono text-text-secondary">YOUR_TELEMETRY_API_KEY</span> with the key from Admin → Settings → API Keys.
         Batch multiple events per request for efficiency.
       </div>
     </div>
@@ -496,7 +496,7 @@ export function ProductionDashboard({ agentId, data, loading, canManageAlerts = 
     return (
       <div className="p-6 space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-20 rounded-xl bg-gray-100 animate-pulse" />
+          <div key={i} className="h-20 rounded-xl bg-surface-muted animate-pulse" />
         ))}
       </div>
     );
@@ -537,16 +537,16 @@ requests.post(
     return (
       <div className="p-6 max-w-2xl space-y-6">
         {/* Hero empty state */}
-        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-6 py-8 text-center">
-          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gray-200">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500">
+        <div className="rounded-xl border border-dashed border-border bg-surface-raised px-6 py-8 text-center">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-text-secondary">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.5a9 9 0 1 1 18 0M12 9v4" />
             </svg>
           </div>
-          <p className="text-sm font-medium text-gray-700">No production telemetry yet</p>
-          <p className="mt-1 text-xs text-gray-500 max-w-sm mx-auto">
+          <p className="text-sm font-medium text-text">No production telemetry yet</p>
+          <p className="mt-1 text-xs text-text-secondary max-w-sm mx-auto">
             Push metrics from your deployed agent to{" "}
-            <code className="rounded bg-gray-200 px-1 py-0.5 font-mono text-xs">
+            <code className="rounded bg-surface-muted px-1 py-0.5 font-mono text-xs">
               POST /api/telemetry/ingest
             </code>
             . Data appears here within minutes.
@@ -611,13 +611,13 @@ requests.post(
         >
           <span
             className={`h-1.5 w-1.5 rounded-full ${
-              health.label === "Healthy" ? "bg-green-500" : health.label === "Degraded" ? "bg-amber-500" : "bg-gray-400"
+              health.label === "Healthy" ? "bg-green-500" : health.label === "Degraded" ? "bg-amber-500" : "bg-text-tertiary"
             }`}
           />
           {health.label}
         </span>
         {lastSeen && (
-          <span className="text-xs text-gray-400">Last seen {timeAgo(lastSeen)}</span>
+          <span className="text-xs text-text-tertiary">Last seen {timeAgo(lastSeen)}</span>
         )}
       </div>
 
@@ -658,12 +658,12 @@ requests.post(
         ].map((kpi) => (
           <div
             key={kpi.label}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-4"
+            className="rounded-xl border border-border bg-surface px-4 py-4"
           >
-            <p className="text-xs text-gray-500">{kpi.label}</p>
+            <p className="text-xs text-text-secondary">{kpi.label}</p>
             <p
               className={`mt-1 text-lg font-semibold ${
-                kpi.highlight ? "text-amber-600" : "text-gray-900"
+                kpi.highlight ? "text-amber-600" : "text-text"
               }`}
             >
               {kpi.value}
@@ -677,17 +677,17 @@ requests.post(
 
       {/* Daily bar chart */}
       {dailyData.length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <SectionHeading className="mb-4">
             Daily invocations (last 7 days)
-          </p>
+          </SectionHeading>
           <div className="space-y-2">
             {dailyData.map((day) => (
               <div key={day.day} className="flex items-center gap-3 text-xs">
-                <span className="w-20 shrink-0 text-gray-400">
+                <span className="w-20 shrink-0 text-text-tertiary">
                   {new Date(day.day).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                 </span>
-                <div className="relative flex-1 h-5 rounded bg-gray-100 overflow-hidden">
+                <div className="relative flex-1 h-5 rounded bg-surface-muted overflow-hidden">
                   <div
                     className="absolute inset-y-0 left-0 rounded bg-blue-500"
                     style={{ width: `${Math.round((day.invocations / maxInv) * 100)}%` }}
@@ -701,7 +701,7 @@ requests.post(
                     />
                   )}
                 </div>
-                <span className="w-14 text-right text-gray-600">
+                <span className="w-14 text-right text-text-secondary">
                   {day.invocations.toLocaleString()}
                 </span>
                 {day.errors > 0 && (
@@ -712,7 +712,7 @@ requests.post(
               </div>
             ))}
           </div>
-          <div className="mt-3 flex items-center gap-4 text-xs text-gray-400">
+          <div className="mt-3 flex items-center gap-4 text-xs text-text-tertiary">
             <span className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-sm bg-blue-500" /> Invocations
             </span>

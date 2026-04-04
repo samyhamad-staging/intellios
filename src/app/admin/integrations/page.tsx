@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { Plug, Save, CheckCircle } from "lucide-react";
+import { Heading } from "@/components/catalyst/heading";
 import { Switch } from "@/components/ui/switch";
 import { SkeletonList } from "@/components/ui/skeleton";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { FormField } from "@/components/ui/form-field";
 
 interface IntegrationsData {
   servicenow?: { enabled: boolean; instanceUrl?: string; username?: string; assignmentGroup?: string };
@@ -48,13 +51,20 @@ export default function IntegrationsPage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
+      {/* Breadcrumb */}
+      <div className="mb-2">
+        <Breadcrumb items={[
+          { label: "Admin", href: "/admin" },
+          { label: "Integrations" },
+        ]} />
+      </div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-2">
+          <Heading level={1} className="flex items-center gap-2">
             <Plug className="h-6 w-6 text-violet-600" />
             Enterprise Integrations
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          </Heading>
+          <p className="text-sm text-text-secondary mt-1">
             Connect Intellios to your enterprise tools
           </p>
         </div>
@@ -73,11 +83,11 @@ export default function IntegrationsPage() {
       {!loading && (
         <div className="space-y-6">
           {/* ServiceNow */}
-          <section className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <section className="rounded-xl border border-border bg-surface p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-medium text-slate-900">ServiceNow</h2>
+              <Heading level={2} className="font-medium">ServiceNow</Heading>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-600">Enabled</span>
+                <span className="text-sm text-text-secondary">Enabled</span>
                 <Switch
                   checked={data.servicenow?.enabled ?? false}
                   onChange={(v) => update("servicenow", "enabled", v)}
@@ -99,11 +109,11 @@ export default function IntegrationsPage() {
           </section>
 
           {/* Jira */}
-          <section className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <section className="rounded-xl border border-border bg-surface p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-medium text-slate-900">Jira</h2>
+              <Heading level={2} className="font-medium">Jira</Heading>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-600">Enabled</span>
+                <span className="text-sm text-text-secondary">Enabled</span>
                 <Switch
                   checked={data.jira?.enabled ?? false}
                   onChange={(v) => update("jira", "enabled", v)}
@@ -126,11 +136,11 @@ export default function IntegrationsPage() {
           </section>
 
           {/* Slack */}
-          <section className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <section className="rounded-xl border border-border bg-surface p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-medium text-slate-900">Slack</h2>
+              <Heading level={2} className="font-medium">Slack</Heading>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-600">Enabled</span>
+                <span className="text-sm text-text-secondary">Enabled</span>
                 <Switch
                   checked={data.slack?.enabled ?? false}
                   onChange={(v) => update("slack", "enabled", v)}
@@ -150,11 +160,11 @@ export default function IntegrationsPage() {
           </section>
 
           {/* Teams */}
-          <section className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <section className="rounded-xl border border-border bg-surface p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-medium text-slate-900">Microsoft Teams</h2>
+              <Heading level={2} className="font-medium">Microsoft Teams</Heading>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-600">Enabled</span>
+                <span className="text-sm text-text-secondary">Enabled</span>
                 <Switch
                   checked={data.teams?.enabled ?? false}
                   onChange={(v) => update("teams", "enabled", v)}
@@ -180,17 +190,18 @@ export default function IntegrationsPage() {
 function InputField({ label, value, onChange, placeholder, type = "text" }: {
   label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
 }) {
+  const id = `input-${label.toLowerCase().replace(/\s+/g, '-')}`;
   return (
-    <div className="space-y-1">
-      <label className="text-xs font-medium text-slate-600">{label}</label>
+    <FormField label={label} htmlFor={id}>
       <input
+        id={id}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+        className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
       />
-    </div>
+    </FormField>
   );
 }
 
@@ -235,7 +246,7 @@ function TestConnectionButton({ adapter, config }: {
         className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
           status === "ok" ? "bg-green-50 text-green-700 border border-green-200"
           : status === "fail" ? "bg-red-50 text-red-600 border border-red-200"
-          : "bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100"
+          : "bg-surface-muted text-text-secondary border border-border hover:bg-surface-raised"
         }`}
       >
         {status === "testing" ? "Testing…"

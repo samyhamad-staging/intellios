@@ -8,6 +8,7 @@ import { MessageBubble } from "@/components/chat/message-bubble";
 import { ChatInput } from "@/components/chat/chat-input";
 import { Sparkles, ArrowRight, Copy, Check, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Tooltip } from "@/components/ui/tooltip";
 
 // ── Suggested prompts for empty state ─────────────────────────────────────────
 
@@ -89,7 +90,7 @@ function SuggestChangeCard({
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <Sparkles size={12} className="text-violet-500 shrink-0 mt-0.5" />
-          <span className="font-medium text-gray-900">{change.summary}</span>
+          <span className="font-medium text-text">{change.summary}</span>
         </div>
         <span
           className={`text-2xs font-semibold uppercase ${priorityLabel} shrink-0`}
@@ -97,7 +98,7 @@ function SuggestChangeCard({
           {change.priority}
         </span>
       </div>
-      <p className="mt-1.5 text-xs text-gray-600 ml-5">{change.rationale}</p>
+      <p className="mt-1.5 text-xs text-text-secondary ml-5">{change.rationale}</p>
       <div className="mt-2 ml-5 flex items-center gap-2">
         <button
           onClick={() => onApply(change.refinementPrompt)}
@@ -108,7 +109,7 @@ function SuggestChangeCard({
         </button>
         <button
           onClick={handleCopy}
-          className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-600 hover:bg-gray-50 transition-colors"
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-text-secondary hover:bg-surface-raised transition-colors"
         >
           {copied ? <Check size={11} /> : <Copy size={11} />}
           {copied ? "Copied" : "Copy"}
@@ -201,20 +202,22 @@ export function CompanionChat({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
         <Sparkles size={14} className="text-violet-500" />
-        <span className="text-xs font-semibold text-gray-700">
+        <span className="text-xs font-semibold text-text">
           Blueprint Companion
         </span>
-        <span className="text-2xs text-gray-400">AI Design Partner</span>
+        <span className="text-2xs text-text-secondary">AI Design Partner</span>
         {messages.length > 0 && (
-          <button
-            onClick={handleClearHistory}
-            title="Clear conversation history"
-            className="ml-auto text-gray-300 hover:text-gray-500 transition-colors"
-          >
-            <Trash2 size={12} />
-          </button>
+          <Tooltip content="Clear history">
+            <button
+              onClick={handleClearHistory}
+              title="Clear conversation history"
+              className="ml-auto text-text-disabled hover:text-text-tertiary transition-colors"
+            >
+              <Trash2 size={12} />
+            </button>
+          </Tooltip>
         )}
       </div>
 
@@ -226,10 +229,10 @@ export function CompanionChat({
               <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-violet-100">
                 <Sparkles size={14} className="text-violet-600" />
               </div>
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-sm font-medium text-text">
                 Ask me about this blueprint
               </p>
-              <p className="mt-0.5 text-xs text-gray-400">
+              <p className="mt-0.5 text-xs text-text-secondary">
                 I know its content, governance, and original requirements.
               </p>
             </div>
@@ -248,12 +251,12 @@ export function CompanionChat({
                 <button
                   key={prompt}
                   onClick={() => handleSend(prompt)}
-                  className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-xs text-gray-600 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 transition-colors"
+                  className="flex w-full items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-left text-xs text-text-secondary hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 transition-colors"
                 >
                   <span>{prompt}</span>
                   <ArrowRight
                     size={11}
-                    className="shrink-0 text-gray-300"
+                    className="shrink-0 text-text-tertiary"
                   />
                 </button>
               ))}
@@ -299,7 +302,7 @@ export function CompanionChat({
 
         {isStreaming && (
           <div className="flex justify-start">
-            <div className="rounded-2xl border border-gray-200 bg-white px-3 py-2.5">
+            <div className="rounded-2xl border border-border bg-surface px-3 py-2.5">
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
                   <span
@@ -315,7 +318,7 @@ export function CompanionChat({
                     style={{ animationDelay: "300ms" }}
                   />
                 </div>
-                <span className="text-xs text-gray-400">Analyzing…</span>
+                <span className="text-xs text-text-secondary">Analyzing…</span>
               </div>
             </div>
           </div>
@@ -364,7 +367,7 @@ function CompanionInput({
   }
 
   return (
-    <div className="flex items-end gap-1.5 border-t border-gray-200 bg-white px-3 py-2.5">
+    <div className="flex items-end gap-1.5 border-t border-border bg-surface px-3 py-2.5">
       <textarea
         ref={textareaRef}
         value={value}
@@ -374,7 +377,7 @@ function CompanionInput({
         placeholder="Ask about this blueprint…"
         disabled={disabled}
         rows={1}
-        className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-xs outline-none focus:border-violet-400 disabled:opacity-50"
+        className="flex-1 resize-none rounded-lg border border-border px-3 py-2 text-xs outline-none focus:border-violet-400 disabled:opacity-50"
       />
       <button
         onClick={handleSend}

@@ -23,6 +23,7 @@ import {
   Shield,
 } from "lucide-react";
 import type { ABP } from "@/lib/types/abp";
+import { Tooltip } from "@/components/ui/tooltip";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -462,16 +463,18 @@ export function ExpressLaneEditor({
                           placeholder="What this tool does…"
                         />
                       </div>
-                      <button
-                        onClick={() => {
-                          const updated = capabilities.tools.filter((_, j) => j !== i);
-                          setCapabilities({ ...capabilities, tools: updated });
-                        }}
-                        className="shrink-0 rounded-lg p-1.5 text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition-all"
-                        aria-label="Remove tool"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      <Tooltip content="Remove tool">
+                        <button
+                          onClick={() => {
+                            const updated = capabilities.tools.filter((_, j) => j !== i);
+                            setCapabilities({ ...capabilities, tools: updated });
+                          }}
+                          className="shrink-0 rounded-lg p-1.5 text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition-all"
+                          aria-label="Remove tool"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </Tooltip>
                     </div>
                   ))}
                 </div>
@@ -622,16 +625,18 @@ export function ExpressLaneEditor({
                             placeholder="Policy description"
                           />
                         </div>
-                        <button
-                          onClick={() => {
-                            const updated = governance.policies.filter((_, j) => j !== i);
-                            setGovernance({ ...governance, policies: updated });
-                          }}
-                          className="shrink-0 rounded-lg p-1.5 text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition-all"
-                          aria-label="Remove policy"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        <Tooltip content="Remove policy">
+                          <button
+                            onClick={() => {
+                              const updated = governance.policies.filter((_, j) => j !== i);
+                              setGovernance({ ...governance, policies: updated });
+                            }}
+                            className="shrink-0 rounded-lg p-1.5 text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition-all"
+                            aria-label="Remove policy"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </Tooltip>
                       </div>
                       {/* Policy rules */}
                       <div className="pl-1 space-y-1">
@@ -651,17 +656,19 @@ export function ExpressLaneEditor({
                               className="input-field-sm flex-1 text-xs"
                               placeholder="Rule…"
                             />
-                            <button
-                              onClick={() => {
-                                const updatedPolicies = [...governance.policies];
-                                const updatedRules = (policy.rules ?? []).filter((_, j) => j !== ri);
-                                updatedPolicies[i] = { ...policy, rules: updatedRules };
-                                setGovernance({ ...governance, policies: updatedPolicies });
-                              }}
-                              className="rounded p-0.5 text-text-tertiary hover:text-red-500 transition-colors"
-                            >
-                              <X size={11} />
-                            </button>
+                            <Tooltip content="Remove rule">
+                              <button
+                                onClick={() => {
+                                  const updatedPolicies = [...governance.policies];
+                                  const updatedRules = (policy.rules ?? []).filter((_, j) => j !== ri);
+                                  updatedPolicies[i] = { ...policy, rules: updatedRules };
+                                  setGovernance({ ...governance, policies: updatedPolicies });
+                                }}
+                                className="rounded p-0.5 text-text-tertiary hover:text-red-500 transition-colors"
+                              >
+                                <X size={11} />
+                              </button>
+                            </Tooltip>
                           </div>
                         ))}
                         <button
@@ -871,12 +878,14 @@ function EditableList({
               className="input-field-sm flex-1"
               placeholder={placeholder}
             />
-            <button
-              onClick={() => onChange(items.filter((_, j) => j !== i))}
-              className="rounded-lg p-1 text-text-tertiary hover:bg-red-50 hover:text-red-500 transition-colors"
-            >
-              <X size={13} />
-            </button>
+            <Tooltip content="Remove">
+              <button
+                onClick={() => onChange(items.filter((_, j) => j !== i))}
+                className="rounded-lg p-1 text-text-tertiary hover:bg-red-50 hover:text-red-500 transition-colors"
+              >
+                <X size={13} />
+              </button>
+            </Tooltip>
           </div>
         ))}
         {items.length === 0 && (

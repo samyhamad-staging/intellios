@@ -18,3 +18,13 @@ export const chartColors = {
 export const chartFontSize = 11;
 export const chartGridColor = "#e1e5ef"; // matches --color-border
 export const chartTextColor = "#64748b"; // matches --color-text-secondary
+
+/** Standard chart margins — use these instead of per-chart custom margins */
+export const chartMargins = {
+  /** Default: minimal margins for inline charts */
+  default: { top: 4, right: 8, bottom: 4, left: -20 },
+  /** Compact: tighter margins for small/sparkline charts */
+  compact: { top: 0, right: 4, bottom: 0, left: -24 },
+  /** With labels: extra left margin for Y-axis labels */
+  withLabels: { top: 8, right: 12, bottom: 8, left: 8 },
+} as const;

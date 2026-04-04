@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Mail, PenLine } from "lucide-react";
+import { Heading, Subheading } from "@/components/catalyst/heading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip } from "@/components/ui/tooltip";
+import { FormField, FormSection } from "@/components/ui/form-field";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,7 +40,7 @@ const ROLE_COLORS: Record<string, string> = {
   reviewer:          "bg-amber-50 text-amber-700 border-amber-200",
   compliance_officer: "bg-green-50 text-green-700 border-green-200",
   admin:             "bg-purple-50 text-purple-700 border-purple-200",
-  viewer:            "bg-slate-50 text-slate-600 border-slate-200",
+  viewer:            "bg-surface-muted text-text-secondary border-border",
 };
 
 const ROLE_ACCENT: Record<string, string> = {
@@ -45,14 +48,14 @@ const ROLE_ACCENT: Record<string, string> = {
   reviewer:          "border-amber-400",
   compliance_officer: "border-green-400",
   admin:             "border-purple-400",
-  viewer:            "border-slate-400",
+  viewer:            "border-border-strong",
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function RoleBadge({ role }: { role: string }) {
   const label = ROLES.find((r) => r.value === role)?.label ?? role;
-  const color = ROLE_COLORS[role] ?? "bg-gray-50 text-gray-600 border-gray-200";
+  const color = ROLE_COLORS[role] ?? "bg-surface-raised text-text-secondary border-border";
   return (
     <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${color}`}>
       {label}
@@ -113,7 +116,7 @@ function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="rounded-xl border border-blue-200 bg-blue-50 px-6 py-5 space-y-4">
-      <h3 className="text-sm font-semibold text-gray-900">New User</h3>
+      <Heading level={3} className="text-sm">New User</Heading>
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
@@ -121,32 +124,44 @@ function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Full name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Jane Smith"
+      <FormSection title="User Details">
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            label="Full name"
+            htmlFor="create-user-name"
             required
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Email address</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="jane@example.com"
+          >
+            <input
+              id="create-user-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Jane Smith"
+              required
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
+            />
+          </FormField>
+          <FormField
+            label="Email address"
+            htmlFor="create-user-email"
             required
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
-          <Select value={role} onValueChange={setRole}>
+          >
+            <input
+              id="create-user-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="jane@example.com"
+              required
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
+            />
+          </FormField>
+          <FormField
+            label="Role"
+            htmlFor="create-user-role"
+            required
+          >
+            <Select value={role} onValueChange={setRole}>
             <SelectTrigger className="w-full text-sm">
               <SelectValue />
             </SelectTrigger>
@@ -155,24 +170,27 @@ function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
                 <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
               ))}
             </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Temporary password
-            <span className="ml-1 font-normal text-gray-400">(min 8 chars)</span>
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
+            </Select>
+          </FormField>
+          <FormField
+            label="Temporary password"
+            htmlFor="create-user-password"
             required
-            minLength={8}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
-          />
+            description="Minimum 8 characters"
+          >
+            <input
+              id="create-user-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={8}
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
+            />
+          </FormField>
         </div>
-      </div>
+      </FormSection>
 
       <div className="flex items-center gap-3 pt-1">
         <button
@@ -185,7 +203,7 @@ function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+          className="rounded-lg border border-border bg-surface px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised transition-colors"
         >
           Cancel
         </button>
@@ -236,8 +254,8 @@ function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
   return (
     <form onSubmit={handleSubmit} className="rounded-xl border border-violet-200 bg-violet-50 px-6 py-5 space-y-4">
       <div>
-        <h3 className="text-sm font-semibold text-gray-900">Invite User</h3>
-        <p className="mt-0.5 text-xs text-gray-500">
+        <Heading level={3} className="text-sm">Invite User</Heading>
+        <p className="mt-0.5 text-xs text-text-secondary">
           The invitee will receive an email to create their own account. Invitation expires in 72 hours.
         </p>
       </div>
@@ -248,21 +266,29 @@ function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Email address</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="jane@example.com"
+      <FormSection title="Invite Details">
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            label="Email address"
+            htmlFor="invite-user-email"
             required
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
-          <Select value={role} onValueChange={setRole}>
+          >
+            <input
+              id="invite-user-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="jane@example.com"
+              required
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
+            />
+          </FormField>
+          <FormField
+            label="Role"
+            htmlFor="invite-user-role"
+            required
+          >
+            <Select value={role} onValueChange={setRole}>
             <SelectTrigger className="w-full text-sm">
               <SelectValue />
             </SelectTrigger>
@@ -271,9 +297,10 @@ function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
                 <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
               ))}
             </SelectContent>
-          </Select>
+            </Select>
+          </FormField>
         </div>
-      </div>
+      </FormSection>
 
       <div className="flex items-center gap-3 pt-1">
         <button
@@ -286,7 +313,7 @@ function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+          className="rounded-lg border border-border bg-surface px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised transition-colors"
         >
           Cancel
         </button>
@@ -379,10 +406,10 @@ function BulkInviteForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
   return (
     <div className="rounded-xl border border-violet-200 bg-violet-50 px-6 py-5 space-y-4">
       <div>
-        <h3 className="text-sm font-semibold text-gray-900">Bulk Invite via CSV</h3>
-        <p className="mt-0.5 text-xs text-gray-500">
-          Upload a CSV with columns: <code className="font-mono bg-white px-1 rounded">email,role</code>.
-          Valid roles: {ROLES.map((r) => r.value).join(", ")}. Defaults to <code className="font-mono bg-white px-1 rounded">architect</code> if omitted.
+        <Heading level={3} className="text-sm">Bulk Invite via CSV</Heading>
+        <p className="mt-0.5 text-xs text-text-secondary">
+          Upload a CSV with columns: <code className="font-mono bg-surface px-1 rounded">email,role</code>.
+          Valid roles: {ROLES.map((r) => r.value).join(", ")}. Defaults to <code className="font-mono bg-surface px-1 rounded">architect</code> if omitted.
         </p>
       </div>
 
@@ -397,28 +424,28 @@ function BulkInviteForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
             type="file"
             accept=".csv,text/csv"
             onChange={handleFile}
-            className="block text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-violet-700 hover:file:bg-violet-200"
+            className="block text-sm text-text-secondary file:mr-3 file:rounded-lg file:border-0 file:bg-violet-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-violet-700 hover:file:bg-violet-200"
           />
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="py-2 pl-3 pr-2 text-left font-semibold text-gray-500">Email</th>
-                <th className="px-2 py-2 text-left font-semibold text-gray-500">Role</th>
-                <th className="px-3 py-2 text-left font-semibold text-gray-500">Status</th>
+              <tr className="border-b border-border-subtle bg-surface-raised">
+                <th className="py-2 pl-3 pr-2 text-left font-semibold text-text-secondary">Email</th>
+                <th className="px-2 py-2 text-left font-semibold text-text-secondary">Role</th>
+                <th className="px-3 py-2 text-left font-semibold text-text-secondary">Status</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row, i) => (
-                <tr key={i} className="border-b border-gray-100 last:border-0">
-                  <td className="py-1.5 pl-3 pr-2 text-gray-700">{row.email}</td>
+                <tr key={i} className="border-b border-border-subtle last:border-0">
+                  <td className="py-1.5 pl-3 pr-2 text-text">{row.email}</td>
                   <td className="px-2 py-1.5">
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-gray-600">{row.role}</span>
+                    <span className="rounded-full bg-surface-muted px-2 py-0.5 text-text-secondary">{row.role}</span>
                   </td>
                   <td className="px-3 py-1.5">
-                    {row.status === "pending" && <span className="text-gray-400">Pending</span>}
+                    {row.status === "pending" && <span className="text-text-tertiary">Pending</span>}
                     {row.status === "sending" && <span className="text-violet-600 animate-pulse">Sending…</span>}
                     {row.status === "ok" && <span className="text-green-700 font-semibold">✓ Sent</span>}
                     {row.status === "error" && <span className="text-red-600">✗ {row.message}</span>}
@@ -431,7 +458,7 @@ function BulkInviteForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
       )}
 
       {allDone && (
-        <p className="text-xs font-medium text-gray-700">
+        <p className="text-xs font-medium text-text">
           Done: {successCount} sent, {errorCount} failed.
         </p>
       )}
@@ -449,7 +476,7 @@ function BulkInviteForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
         {rows.length > 0 && !running && !done && (
           <button
             onClick={() => { setRows([]); if (fileRef.current) fileRef.current.value = ""; }}
-            className="text-xs text-gray-500 hover:text-gray-700 underline"
+            className="text-xs text-text-secondary hover:text-text underline"
           >
             Change file
           </button>
@@ -465,7 +492,7 @@ function BulkInviteForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            className="rounded-lg border border-border bg-surface px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised transition-colors"
           >
             Cancel
           </button>
@@ -519,17 +546,19 @@ function InlineRoleEditor({ user, currentUserId, onUpdated }: RoleEditorProps) {
       <div className="group flex items-center gap-2">
         <RoleBadge role={role} />
         {!isSelf && (
-          <button
-            onClick={() => setEditing(true)}
-            className="opacity-0 group-hover:opacity-100 rounded p-0.5 text-gray-400 hover:text-gray-600 transition-all"
-            title="Edit role"
-            aria-label="Edit role"
-          >
-            <PenLine size={12} />
-          </button>
+          <Tooltip content="Edit role">
+            <button
+              onClick={() => setEditing(true)}
+              className="opacity-0 group-hover:opacity-100 rounded p-0.5 text-text-tertiary hover:text-text-secondary transition-all"
+              title="Edit role"
+              aria-label="Edit role"
+            >
+              <PenLine size={12} />
+            </button>
+          </Tooltip>
         )}
         {isSelf && (
-          <span className="text-xs text-gray-300">you</span>
+          <span className="text-xs text-text-disabled">you</span>
         )}
       </div>
     );
@@ -556,7 +585,7 @@ function InlineRoleEditor({ user, currentUserId, onUpdated }: RoleEditorProps) {
       </button>
       <button
         onClick={() => { setRole(user.role); setEditing(false); }}
-        className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+        className="text-xs text-text-tertiary hover:text-text-secondary transition-colors"
       >
         Cancel
       </button>
@@ -648,15 +677,15 @@ export default function AdminUsersPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">User Management</h1>
-          <p className="mt-0.5 text-sm text-gray-500">Manage enterprise users, roles, and access</p>
+          <Heading level={1}>User Management</Heading>
+          <p className="mt-0.5 text-sm text-text-secondary">Manage enterprise users, roles, and access</p>
         </div>
         {!showingForm && (
           <div className="flex items-center gap-2">
             {/* P2-512: Bulk CSV invite */}
             <button
               onClick={() => setShowBulkInvite(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-raised transition-colors"
               title="Bulk invite via CSV"
             >
               <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -666,7 +695,7 @@ export default function AdminUsersPage() {
             </button>
             <button
               onClick={() => setShowInvite(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-white px-4 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-50 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-surface px-4 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-50 transition-colors"
             >
               <Mail size={13} />
               Invite User
@@ -694,10 +723,10 @@ export default function AdminUsersPage() {
             {ROLES.map((r) => (
               <div
                 key={r.value}
-                className={`rounded-lg border border-gray-200 border-l-2 ${ROLE_ACCENT[r.value]} bg-white px-4 py-3`}
+                className={`rounded-lg border border-border border-l-2 ${ROLE_ACCENT[r.value]} bg-surface px-4 py-3`}
               >
-                <div className="text-2xl font-bold text-gray-900">{roleCounts[r.value] ?? 0}</div>
-                <div className="mt-0.5 text-xs text-gray-500">{r.label}</div>
+                <div className="text-2xl font-bold text-text">{roleCounts[r.value] ?? 0}</div>
+                <div className="mt-0.5 text-xs text-text-secondary">{r.label}</div>
               </div>
             ))}
           </div>
@@ -728,15 +757,15 @@ export default function AdminUsersPage() {
         )}
 
         {/* User table */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="overflow-hidden rounded-xl border border-border bg-surface">
           {loading && (
-            <div className="space-y-0 divide-y divide-gray-100">
+            <div className="space-y-0 divide-y divide-border-subtle">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center gap-4 px-6 py-4">
-                  <div className="h-8 w-8 animate-pulse rounded-full bg-gray-100" />
+                  <div className="h-8 w-8 animate-pulse rounded-full bg-surface-muted" />
                   <div className="flex-1 space-y-1.5">
-                    <div className="h-3 w-32 animate-pulse rounded bg-gray-100" />
-                    <div className="h-3 w-48 animate-pulse rounded bg-gray-100" />
+                    <div className="h-3 w-32 animate-pulse rounded bg-surface-muted" />
+                    <div className="h-3 w-48 animate-pulse rounded bg-surface-muted" />
                   </div>
                 </div>
               ))}
@@ -745,7 +774,7 @@ export default function AdminUsersPage() {
 
           {!loading && userList.length === 0 && (
             <div className="px-6 py-12 text-center">
-              <p className="text-sm text-gray-400">No users yet.</p>
+              <p className="text-sm text-text-tertiary">No users yet.</p>
               {!showingForm && (
                 <div className="mt-3 flex justify-center gap-4">
                   <button
@@ -767,29 +796,29 @@ export default function AdminUsersPage() {
 
           {!loading && userList.length > 0 && (
             <>
-              <div className="border-b border-gray-100 bg-gray-50 px-6 py-2.5">
-                <div className="grid grid-cols-[3fr_2fr_1fr] gap-4 text-xs font-medium uppercase tracking-wider text-gray-400">
+              <div className="border-b border-border-subtle bg-surface-raised px-6 py-2.5">
+                <div className="grid grid-cols-[3fr_2fr_1fr] gap-4 text-xs font-medium uppercase tracking-wider text-text-tertiary">
                   <span>User</span>
                   <span>Role</span>
                   <span className="text-right">Joined</span>
                 </div>
               </div>
 
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-border-subtle">
                 {userList.map((user) => {
                   const isSelf = user.id === currentUserId;
                   return (
                     <div
                       key={user.id}
-                      className={`grid grid-cols-[3fr_2fr_1fr] gap-4 items-center px-6 py-3.5 transition-colors ${isSelf ? "bg-violet-50/40 hover:bg-violet-50" : "hover:bg-gray-50"}`}
+                      className={`grid grid-cols-[3fr_2fr_1fr] gap-4 items-center px-6 py-3.5 transition-colors ${isSelf ? "bg-violet-50/40 hover:bg-violet-50" : "hover:bg-surface-raised"}`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-muted text-xs font-medium text-text-secondary">
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-gray-900">{user.name}</p>
-                          <p className="truncate text-xs text-gray-400">{user.email}</p>
+                          <p className="truncate text-sm font-medium text-text">{user.name}</p>
+                          <p className="truncate text-xs text-text-tertiary">{user.email}</p>
                         </div>
                       </div>
                       <InlineRoleEditor
@@ -797,7 +826,7 @@ export default function AdminUsersPage() {
                         currentUserId={currentUserId}
                         onUpdated={handleUpdated}
                       />
-                      <span className="text-right text-xs text-gray-400 whitespace-nowrap">
+                      <span className="text-right text-xs text-text-tertiary whitespace-nowrap">
                         {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </span>
                     </div>
@@ -810,44 +839,44 @@ export default function AdminUsersPage() {
 
         {/* Pending Invitations */}
         <div>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Pending Invitations</h2>
+          <Heading level={2} className="mb-3 text-xs uppercase">Pending Invitations</Heading>
 
           {invitationsLoading && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-xl border border-border bg-surface">
               {[1, 2].map((i) => (
-                <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-gray-100 last:border-0">
-                  <div className="h-3 w-48 animate-pulse rounded bg-gray-100" />
-                  <div className="h-3 w-24 animate-pulse rounded bg-gray-100 ml-auto" />
+                <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-border-subtle last:border-0">
+                  <div className="h-3 w-48 animate-pulse rounded bg-surface-muted" />
+                  <div className="h-3 w-24 animate-pulse rounded bg-surface-muted ml-auto" />
                 </div>
               ))}
             </div>
           )}
 
           {!invitationsLoading && invitations.length === 0 && (
-            <div className="rounded-xl border border-gray-200 bg-white px-6 py-8 text-center">
-              <p className="text-sm text-gray-400">No pending invitations.</p>
+            <div className="rounded-xl border border-border bg-surface px-6 py-8 text-center">
+              <p className="text-sm text-text-tertiary">No pending invitations.</p>
             </div>
           )}
 
           {!invitationsLoading && invitations.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-              <div className="border-b border-gray-100 bg-gray-50 px-6 py-2.5">
-                <div className="grid grid-cols-[2fr_1.5fr_2fr_1fr] gap-4 text-xs font-medium uppercase tracking-wider text-gray-400">
+            <div className="overflow-hidden rounded-xl border border-border bg-surface">
+              <div className="border-b border-border-subtle bg-surface-raised px-6 py-2.5">
+                <div className="grid grid-cols-[2fr_1.5fr_2fr_1fr] gap-4 text-xs font-medium uppercase tracking-wider text-text-tertiary">
                   <span>Email</span>
                   <span>Role</span>
                   <span>Invited by</span>
                   <span className="text-right">Expires in</span>
                 </div>
               </div>
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-border-subtle">
                 {invitations.map((inv) => (
                   <div
                     key={inv.id}
                     className="grid grid-cols-[2fr_1.5fr_2fr_1fr] gap-4 items-center px-6 py-3"
                   >
-                    <span className="truncate text-sm text-gray-700">{inv.email}</span>
+                    <span className="truncate text-sm text-text">{inv.email}</span>
                     <RoleBadge role={inv.role} />
-                    <span className="truncate text-xs text-gray-500">
+                    <span className="truncate text-xs text-text-secondary">
                       {inv.invitedBy.name || inv.invitedBy.email}
                     </span>
                     <span className="text-right text-xs text-amber-600 font-medium">

@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { Heading, Subheading } from "@/components/catalyst/heading";
+import { SectionHeading } from "@/components/ui/section-heading";
 import {
   ArrowRight,
   Zap,
@@ -195,10 +197,10 @@ export default function WelcomePage() {
     <div className="mx-auto max-w-2xl px-6 py-12">
       {/* ── Role-aware hero ────────────────────────────────────────────── */}
       <div className="mb-8 overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-600 to-violet-800 p-8 text-center shadow-lg">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-300">
+        <SectionHeading style={{ color: "#ddd6fe" }} className="mb-2">
           {hero.eyebrow}
-        </p>
-        <h1 className="text-2xl font-bold text-white">{hero.headline}</h1>
+        </SectionHeading>
+        <Heading level={1} className="text-white">{hero.headline}</Heading>
         <p className="mt-3 text-sm leading-relaxed text-violet-200">{hero.body}</p>
 
         <div className="mt-8 flex flex-col items-center gap-3">
@@ -225,16 +227,16 @@ export default function WelcomePage() {
       {/* ── Role-aware setup steps ────────────────────────────────────── */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+          <SectionHeading>
             Setup checklist
-          </p>
-          <p className="mt-0.5 text-sm text-gray-500">
+          </SectionHeading>
+          <p className="mt-0.5 text-sm text-text-secondary">
             Recommended first steps for your role. You can revisit these any time.
           </p>
         </div>
         {/* P1-80: Progress indicator */}
         {completedCount > 0 && (
-          <span className={`shrink-0 ml-4 text-xs font-medium ${allDone ? "text-emerald-600" : "text-gray-400"}`}>
+          <span className={`shrink-0 ml-4 text-xs font-medium ${allDone ? "text-emerald-600" : "text-text-tertiary"}`}>
             {allDone ? "✓ All done" : `${completedCount}/${steps.length} visited`}
           </span>
         )}
@@ -250,21 +252,21 @@ export default function WelcomePage() {
               className={`flex items-center gap-4 rounded-xl border px-5 py-4 transition-colors ${
                 visited
                   ? "border-emerald-100 bg-emerald-50/50"
-                  : "border-gray-100 bg-white"
+                  : "border-border bg-surface"
               }`}
             >
-              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${visited ? "bg-emerald-100" : "bg-gray-50"}`}>
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${visited ? "bg-emerald-100" : "bg-surface-muted"}`}>
                 {visited ? (
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 ) : (
-                  <Icon className="h-4 w-4 text-gray-400" />
+                  <Icon className="h-4 w-4 text-text-tertiary" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className={`text-sm font-medium ${visited ? "text-emerald-800" : "text-gray-800"}`}>
+                <Subheading level={3} className={visited ? "text-emerald-700" : "text-text"}>
                   {step.title}
-                </h3>
-                <p className="mt-0.5 text-xs text-gray-500">{step.description}</p>
+                </Subheading>
+                <p className="mt-0.5 text-xs text-text-secondary">{step.description}</p>
               </div>
               <button
                 onClick={() => markVisited(step.href)}
@@ -282,7 +284,7 @@ export default function WelcomePage() {
       </div>
 
       {/* ── Skip ─────────────────────────────────────────────────────── */}
-      <p className="mt-8 text-center text-sm text-gray-400">
+      <p className="mt-8 text-center text-sm text-text-tertiary">
         Already set up?{" "}
         <Link
           href="/"

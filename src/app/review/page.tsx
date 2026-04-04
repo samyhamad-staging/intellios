@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ValidationReport } from "@/lib/governance/types";
 import type { ApprovalStepRecord, ApprovalChainStep, EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
+import { Heading, Subheading } from "@/components/catalyst/heading";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   ClipboardList,
   CheckCircle,
@@ -35,21 +37,23 @@ interface QueueEntry {
 //  MEDIUM   — ≥1 violation with severity "warning" (but no errors)
 //  LOW      — report is valid or not yet validated
 
-type RiskTier = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+import { getRiskTheme, RISK_LABELS, type RiskTier } from "@/lib/status-theme";
 
-const RISK_ORDER: Record<RiskTier, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+type ReviewRiskTier = Uppercase<RiskTier>;
+
+const RISK_ORDER: Record<ReviewRiskTier, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
 
 // SLA hours per risk tier — time allowed from entering review until decision required
-const SLA_HOURS: Record<RiskTier, number> = { CRITICAL: 24, HIGH: 48, MEDIUM: 72, LOW: 96 };
+const SLA_HOURS: Record<ReviewRiskTier, number> = { CRITICAL: 24, HIGH: 48, MEDIUM: 72, LOW: 96 };
 
-const RISK_STYLE: Record<RiskTier, { bg: string; text: string; border: string; icon: React.FC<{ size?: number; className?: string }> }> = {
-  CRITICAL: { bg: "bg-red-50",    text: "text-red-700",    border: "border-red-400",    icon: Flame },
-  HIGH:     { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", icon: AlertTriangle },
-  MEDIUM:   { bg: "bg-amber-50",  text: "text-amber-700",  border: "border-amber-400",  icon: AlertCircle },
-  LOW:      { bg: "bg-sky-50",    text: "text-sky-700",    border: "border-sky-300",    icon: Clock },
+const RISK_ICONS: Record<ReviewRiskTier, React.FC<{ size?: number; className?: string }>> = {
+  CRITICAL: Flame,
+  HIGH: AlertTriangle,
+  MEDIUM: AlertCircle,
+  LOW: Clock,
 };
 
-function deriveRiskTier(report: ValidationReport | null): RiskTier {
+function deriveRiskTier(report: ValidationReport | null): ReviewRiskTier {
   if (!report) return "LOW";
   const violations = report.violations ?? [];
   if (violations.some((v) => v.severity === "error")) return "CRITICAL";
@@ -164,12 +168,12 @@ export default function ReviewQueuePage() {
   });
 
   return (
-    <div className="px-6 py-6">
+    <div className="max-w-screen-2xl mx-auto w-full px-6 py-6">
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="mb-6 flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl font-semibold text-text">Review Queue</h1>
+            <Heading level={1}>Review Queue</Heading>
             {!loading && blueprints.length > 0 && (
               <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
                 {blueprints.length}
@@ -188,11 +192,19 @@ export default function ReviewQueuePage() {
         {/* Legend */}
         {!loading && sorted.length > 0 && (
           <div className="hidden items-center gap-3 sm:flex">
-            {(["CRITICAL", "HIGH", "MEDIUM", "LOW"] as RiskTier[]).map((tier) => {
-              const s = RISK_STYLE[tier];
+            {(["CRITICAL", "HIGH", "MEDIUM", "LOW"] as ReviewRiskTier[]).map((tier) => {
+              const tierLower = tier.toLowerCase() as RiskTier;
+              const theme = getRiskTheme(tierLower);
+              // Extract color from bg class for dot (e.g., "bg-red-50" → red-400)
+              const colorMap: Record<ReviewRiskTier, string> = {
+                CRITICAL: "bg-red-400",
+                HIGH: "bg-orange-400",
+                MEDIUM: "bg-amber-400",
+                LOW: "bg-sky-400",
+              };
               return (
                 <span key={tier} className="flex items-center gap-1 text-xs text-text-tertiary">
-                  <span className={`h-2 w-2 rounded-full ${s.bg.replace("bg-", "bg-").replace("-50", "-400")}`} />
+                  <span className={`h-2 w-2 rounded-full ${colorMap[tier]}`} />
                   {tier}
                 </span>
               );
@@ -217,25 +229,27 @@ export default function ReviewQueuePage() {
 
       {/* ── Empty ────────────────────────────────────────────────────────── */}
       {!loading && !error && blueprints.length === 0 && (
-        <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface px-8 py-10 text-center shadow-[var(--shadow-card)]">
-          <CheckCircle size={28} className="mb-3 text-emerald-400" />
-          <p className="mb-1 text-sm font-medium text-text">Review queue is clear</p>
-          <p className="text-xs text-text-secondary">
-            {userRole === "admin"
+        <EmptyState
+          icon={CheckCircle}
+          heading="Review queue is clear"
+          subtext={
+            userRole === "admin"
               ? "No blueprints are currently in review across the enterprise."
-              : "No blueprints are currently awaiting your review."}
-          </p>
-          <div className="mt-4 flex flex-col items-center gap-2">
-            {userRole === "admin" && (
-              <Link href="/pipeline" className="text-xs text-primary hover:text-primary-hover transition-colors">
-                View Pipeline Board → (draft agents are visible there)
+              : "No blueprints are currently awaiting your review."
+          }
+          action={
+            <div className="flex flex-col items-center gap-2">
+              {userRole === "admin" && (
+                <Link href="/pipeline" className="text-xs text-primary hover:text-primary-hover transition-colors">
+                  View Pipeline Board → (draft agents are visible there)
+                </Link>
+              )}
+              <Link href="/registry" className="text-xs text-primary hover:text-primary-hover transition-colors">
+                View Agent Registry →
               </Link>
-            )}
-            <Link href="/registry" className="text-xs text-primary hover:text-primary-hover transition-colors">
-              View Agent Registry →
-            </Link>
-          </div>
-        </div>
+            </div>
+          }
+        />
       )}
 
       {/* P1-299: Assignment filter chip */}
@@ -265,8 +279,9 @@ export default function ReviewQueuePage() {
             return aAssigned - bAssigned;
           }).map((bp, i) => {
             const tier = deriveRiskTier(bp.validationReport);
-            const risk = RISK_STYLE[tier];
-            const RiskIcon = risk.icon;
+            const tierLower = tier.toLowerCase() as RiskTier;
+            const theme = getRiskTheme(tierLower);
+            const RiskIcon = RISK_ICONS[tier];
             const sla = computeSla(bp.updatedAt, tier);
             const gov = govBadge(bp.validationReport);
             const GovIcon = gov.icon;
@@ -277,11 +292,11 @@ export default function ReviewQueuePage() {
               <Link
                 key={bp.id}
                 href={`/registry/${bp.agentId}?tab=review`}
-                className={`block px-5 py-4 hover:bg-surface-raised transition-colors border-l-2 ${risk.border} ${i > 0 ? "border-t border-border" : ""}`}
+                className={`block px-5 py-4 interactive-row border-l-2 ${theme.border} ${i > 0 ? "border-t border-border" : ""}`}
               >
                 <div className="flex items-start gap-4">
                   {/* Risk icon */}
-                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${risk.bg} ${risk.text}`}>
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${theme.bg} ${theme.text}`}>
                     <RiskIcon size={15} />
                   </div>
 
@@ -314,7 +329,7 @@ export default function ReviewQueuePage() {
                         {sla.label}
                       </span>
                       {/* Risk tier label */}
-                      <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${risk.bg} ${risk.text}`}>
+                      <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${theme.bg} ${theme.text}`}>
                         {tier}
                       </span>
                     </div>

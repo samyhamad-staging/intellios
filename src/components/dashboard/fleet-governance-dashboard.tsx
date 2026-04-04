@@ -7,6 +7,10 @@ import type { ABP } from "@/lib/types/abp";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Inbox } from "lucide-react";
+import { getRiskTheme, RISK_LABELS, type RiskTier } from "@/lib/status-theme";
+import { SectionHeading } from "@/components/ui/section-heading";
 
 /**
  * FleetGovernanceDashboard — Phase 51.
@@ -74,25 +78,20 @@ function deriveGovernanceHealth(
   return { health: "pass", errorCount: 0, warningCount: 0 };
 }
 
-const TIER_LABEL: Record<RiskTier, string> = {
-  critical: "Critical",
-  high:     "High",
-  medium:   "Medium",
-  low:      "Low",
-};
-
+// Use RISK_LABELS from status-theme instead of local TIER_LABEL
+// Build TIER_VARIANT and TIER_TEXT_COLOR from getRiskTheme
 const TIER_VARIANT: Record<RiskTier, BadgeVariant> = {
   critical: "danger",
-  high:     "danger",
-  medium:   "warning",
-  low:      "success",
+  high: "danger",
+  medium: "warning",
+  low: "success",
 };
 
 const TIER_TEXT_COLOR: Record<RiskTier, string> = {
   critical: "text-red-700",
-  high:     "text-red-700",
-  medium:   "text-amber-700",
-  low:      "text-emerald-700",
+  high: "text-red-700",
+  medium: "text-amber-700",
+  low: "text-emerald-700",
 };
 
 const TIERS: RiskTier[] = ["critical", "high", "medium", "low"];
@@ -177,9 +176,11 @@ export async function FleetGovernanceDashboard({
 
   if (agents.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-surface px-6 py-10 text-center text-sm text-text-tertiary">
-        No approved or deployed agents yet. Fleet governance posture will appear here once agents are approved.
-      </div>
+      <EmptyState
+        icon={Inbox}
+        heading="No approved or deployed agents"
+        subtext="Fleet governance posture will appear here once agents are approved."
+      />
     );
   }
 
@@ -192,14 +193,14 @@ export async function FleetGovernanceDashboard({
         <div className="flex flex-wrap items-center justify-between gap-3">
           {/* Risk distribution */}
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-2xs font-mono font-semibold uppercase tracking-wider text-text-tertiary">Risk</span>
+            <SectionHeading className="text-2xs font-mono">Risk</SectionHeading>
             {TIERS.map((tier) => {
               const count = tierCounts[tier];
               if (count === 0) return null;
               return (
                 <span key={tier} className="flex items-center gap-1">
                   <span className={`text-sm font-bold tabular-nums ${TIER_TEXT_COLOR[tier]}`}>{count}</span>
-                  <span className={`text-2xs ${TIER_TEXT_COLOR[tier]} opacity-70`}>{TIER_LABEL[tier]}</span>
+                  <span className={`text-2xs ${TIER_TEXT_COLOR[tier]} opacity-70`}>{RISK_LABELS[tier]}</span>
                 </span>
               );
             })}
@@ -239,13 +240,13 @@ export async function FleetGovernanceDashboard({
       {/* Risk distribution + governance alerts — compact summary bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
         <div className="flex items-center gap-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Risk</span>
+          <SectionHeading>Risk</SectionHeading>
           {TIERS.map((tier) => {
             const count = tierCounts[tier];
             return (
               <span key={tier} className="flex items-center gap-1.5">
                 <span className={`text-sm font-bold ${TIER_TEXT_COLOR[tier]}`}>{count}</span>
-                <span className={`text-xs ${TIER_TEXT_COLOR[tier]} opacity-70`}>{TIER_LABEL[tier]}</span>
+                <span className={`text-xs ${TIER_TEXT_COLOR[tier]} opacity-70`}>{RISK_LABELS[tier]}</span>
               </span>
             );
           })}
@@ -280,7 +281,7 @@ export async function FleetGovernanceDashboard({
           <TableBody>
             {agents.map((agent) => {
               return (
-                <TableRow key={agent.id}>
+                <TableRow key={agent.id} className="interactive-row">
                   {/* Agent name + version + status */}
                   <TableCell>
                     <Link

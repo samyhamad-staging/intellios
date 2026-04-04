@@ -98,6 +98,7 @@ function formatRetentionDays(days: number): string {
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
+import { SectionHeading } from "@/components/ui/section-heading";
 
 const DATA_SENSITIVITY_VARIANT: Record<string, BadgeVariant> = {
   public:       "success",
@@ -146,27 +147,27 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
   switch (section) {
     case "identity": {
       const id = payload.identity;
-      if (!id?.name) return <span className="text-gray-400 italic">Not captured</span>;
+      if (!id?.name) return <span className="text-text-tertiary italic">Not captured</span>;
       return (
         <div className="space-y-1">
           <div><span className="font-medium">{id.name}</span></div>
-          {id.description && <div className="text-gray-600">{id.description}</div>}
-          {id.persona && <div className="text-gray-500 text-xs">Persona: {id.persona}</div>}
+          {id.description && <div className="text-text-secondary">{id.description}</div>}
+          {id.persona && <div className="text-text-secondary text-xs">Persona: {id.persona}</div>}
         </div>
       );
     }
     case "capabilities": {
       const tools = payload.capabilities?.tools ?? [];
-      if (tools.length === 0) return <span className="text-gray-400 italic">No tools captured</span>;
+      if (tools.length === 0) return <span className="text-text-tertiary italic">No tools captured</span>;
       return (
         <ul className="space-y-1">
           {tools.map((t) => (
             <li key={t.name} className="flex items-start gap-2">
-              <span className="mt-0.5 text-gray-400">⚙</span>
+              <span className="mt-0.5 text-text-tertiary">⚙</span>
               <div>
                 <span className="font-medium">{t.name}</span>
-                <span className="ml-1 text-xs text-gray-400">({t.type})</span>
-                {t.description && <div className="text-xs text-gray-500">{t.description}</div>}
+                <span className="ml-1 text-xs text-text-tertiary">({t.type})</span>
+                {t.description && <div className="text-xs text-text-secondary">{t.description}</div>}
               </div>
             </li>
           ))}
@@ -175,19 +176,19 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
     }
     case "instructions": {
       const instr = payload.capabilities?.instructions;
-      if (!instr) return <span className="text-gray-400 italic">Not configured</span>;
-      return <div className="text-gray-600 whitespace-pre-wrap text-sm leading-relaxed">{instr}</div>;
+      if (!instr) return <span className="text-text-tertiary italic">Not configured</span>;
+      return <div className="text-text-secondary whitespace-pre-wrap text-sm leading-relaxed">{instr}</div>;
     }
     case "knowledge": {
       const sources = payload.capabilities?.knowledge_sources ?? [];
-      if (sources.length === 0) return <span className="text-gray-400 italic">None added</span>;
+      if (sources.length === 0) return <span className="text-text-tertiary italic">None added</span>;
       return (
         <ul className="space-y-1">
           {sources.map((s) => (
             <li key={s.name} className="flex items-center gap-2">
-              <span className="text-gray-400">🗄</span>
+              <span className="text-text-tertiary">🗄</span>
               <span className="font-medium">{s.name}</span>
-              <span className="text-xs text-gray-400">({s.type})</span>
+              <span className="text-xs text-text-tertiary">({s.type})</span>
             </li>
           ))}
         </ul>
@@ -196,13 +197,13 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
     case "constraints": {
       const c = payload.constraints;
       if (!c?.allowed_domains?.length && !c?.denied_actions?.length) {
-        return <span className="text-gray-400 italic">None set</span>;
+        return <span className="text-text-tertiary italic">None set</span>;
       }
       return (
         <div className="space-y-2">
           {c.allowed_domains && c.allowed_domains.length > 0 && (
             <div>
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Allowed domains</div>
+              <div className="text-xs font-medium text-text-secondary uppercase tracking-wider mb-1">Allowed domains</div>
               <div className="flex flex-wrap gap-1">
                 {c.allowed_domains.map((d) => (
                   <span key={d} className="rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-xs text-green-700">{d}</span>
@@ -213,7 +214,7 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
           {/* RV-013: Improved denied actions — enterprise-styled blocked list */}
           {c.denied_actions && c.denied_actions.length > 0 && (
             <div>
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Denied actions</div>
+              <div className="text-xs font-medium text-text-secondary uppercase tracking-wider mb-1.5">Denied actions</div>
               <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 space-y-1">
                 {c.denied_actions.map((a) => (
                   <div key={a} className="flex items-center gap-2 text-xs">
@@ -229,20 +230,20 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
     }
     case "governance": {
       const policies = payload.governance?.policies ?? [];
-      if (policies.length === 0) return <span className="text-gray-400 italic">No policies attached</span>;
+      if (policies.length === 0) return <span className="text-text-tertiary italic">No policies attached</span>;
       return (
         <ul className="space-y-2">
           {policies.map((p) => (
             <li key={p.name}>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-gray-400">🛡</span>
+                <span className="text-text-tertiary">🛡</span>
                 <span className="font-medium">{p.name}</span>
                 {/* RV-009: Colored policy type chip */}
                 <Badge variant="neutral">
                   {p.type.replace(/_/g, " ")}
                 </Badge>
               </div>
-              {p.description && <div className="ml-5 text-xs text-gray-500 mt-0.5">{p.description}</div>}
+              {p.description && <div className="ml-5 text-xs text-text-secondary mt-0.5">{p.description}</div>}
             </li>
           ))}
         </ul>
@@ -250,20 +251,20 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
     }
     case "audit": {
       const a = payload.governance?.audit;
-      if (!a) return <span className="text-gray-400 italic">Not configured</span>;
+      if (!a) return <span className="text-text-tertiary italic">Not configured</span>;
       return (
         <div className="flex flex-wrap gap-3 text-sm">
           {a.log_interactions !== undefined && (
-            <span className={`flex items-center gap-1 ${a.log_interactions ? "text-green-700" : "text-gray-500"}`}>
+            <span className={`flex items-center gap-1 ${a.log_interactions ? "text-green-700" : "text-text-secondary"}`}>
               {a.log_interactions ? "✓" : "✗"} Interaction logging
             </span>
           )}
           {/* RV-004: Human-readable retention duration */}
           {a.retention_days !== undefined && (
-            <span className="text-gray-600">{formatRetentionDays(a.retention_days)}</span>
+            <span className="text-text-secondary">{formatRetentionDays(a.retention_days)}</span>
           )}
           {a.pii_redaction !== undefined && (
-            <span className={`flex items-center gap-1 ${a.pii_redaction ? "text-green-700" : "text-gray-500"}`}>
+            <span className={`flex items-center gap-1 ${a.pii_redaction ? "text-green-700" : "text-text-secondary"}`}>
               {a.pii_redaction ? "✓" : "✗"} PII redaction
             </span>
           )}
@@ -357,7 +358,7 @@ export function IntakeReview({
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-    <div className="flex-1 overflow-auto bg-gray-50">
+    <div className="flex-1 overflow-auto bg-surface-raised">
       <div className="mx-auto w-full max-w-3xl px-6 py-10">
         {/* Header */}
         <div className="mb-8">
@@ -365,12 +366,12 @@ export function IntakeReview({
           <div className="flex items-center mb-5">
             <div className="flex items-center gap-1.5">
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">✓</div>
-              <span className="text-sm text-gray-400">Context</span>
+              <span className="text-sm text-text-tertiary">Context</span>
             </div>
             <div className="mx-2.5 h-px w-8 bg-blue-300 shrink-0" />
             <div className="flex items-center gap-1.5">
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">✓</div>
-              <span className="text-sm text-gray-400">Intake</span>
+              <span className="text-sm text-text-tertiary">Intake</span>
             </div>
             <div className="mx-2.5 h-px w-8 bg-blue-400 shrink-0" />
             <div className="flex items-center gap-1.5">
@@ -378,8 +379,8 @@ export function IntakeReview({
               <span className="text-sm font-semibold text-blue-700">Review</span>
             </div>
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900">Review captured requirements</h2>
-          <p className="mt-2 text-sm text-gray-500">
+          <h2 className="text-2xl font-semibold text-text">Review captured requirements</h2>
+          <p className="mt-2 text-sm text-text-secondary">
             Review each section below. Check the box to confirm the content is correct before generating the blueprint.
           </p>
 
@@ -404,14 +405,14 @@ export function IntakeReview({
                           ? "border-green-300 bg-green-50 text-green-700"
                           : filled
                           ? "border-blue-200 bg-blue-50 text-blue-700"
-                          : "border-gray-200 bg-gray-50 text-gray-400"
+                          : "border-border bg-surface-raised text-text-tertiary"
                       }`}
                     >
                       {acked ? "✓" : filled ? "·" : "○"} {label}
                     </span>
                   );
                 })}
-                <span className="text-xs text-gray-400 ml-1">
+                <span className="text-xs text-text-tertiary ml-1">
                   {coverageSections.filter(({ key }) => isSectionFilled(key, payload)).length}/4 sections captured
                 </span>
               </div>
@@ -421,9 +422,9 @@ export function IntakeReview({
 
         {/* Context summary strip — RV-012: risk-colored badges */}
         {context && (
-          <div className="mb-6 rounded-card border border-gray-200 bg-white px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-card border border-border bg-surface px-5 py-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Enterprise Context</div>
+              <SectionHeading>Enterprise Context</SectionHeading>
               {riskTier && (
                 <Badge variant={RISK_TIER_VARIANT[riskTier] ?? "neutral"}>
                   {riskTier.toUpperCase()} RISK
@@ -432,34 +433,34 @@ export function IntakeReview({
             </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
               <div>
-                <div className="text-xs text-gray-400 mb-1">Deployment</div>
-                <div className="text-gray-800 font-medium capitalize">{context.deploymentType.replace(/-/g, " ")}</div>
+                <div className="text-xs text-text-tertiary mb-1">Deployment</div>
+                <div className="text-text font-medium capitalize">{context.deploymentType.replace(/-/g, " ")}</div>
               </div>
               <div>
-                <div className="text-xs text-gray-400 mb-1">Data sensitivity</div>
+                <div className="text-xs text-text-tertiary mb-1">Data sensitivity</div>
                 <Badge variant={DATA_SENSITIVITY_VARIANT[context.dataSensitivity] ?? "neutral"}>
                   {context.dataSensitivity.toUpperCase()}
                 </Badge>
               </div>
               <div>
-                <div className="text-xs text-gray-400 mb-1">Regulatory scope</div>
+                <div className="text-xs text-text-tertiary mb-1">Regulatory scope</div>
                 {(context.regulatoryScope ?? []).filter((s) => s !== "none").length > 0 ? (
                   <div className="flex flex-wrap gap-1">
                     {(context.regulatoryScope ?? []).filter((s) => s !== "none").map((s) => (
-                      <span key={s} className="inline-flex rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-xs-tight font-medium text-slate-700">{s.toUpperCase()}</span>
+                      <span key={s} className="inline-flex rounded border border-border bg-surface-muted px-1.5 py-0.5 text-xs-tight font-medium text-text-secondary">{s.toUpperCase()}</span>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-gray-500">None</div>
+                  <div className="text-text-secondary">None</div>
                 )}
               </div>
               <div>
-                <div className="text-xs text-gray-400 mb-1">Integrations</div>
-                <div className="text-gray-800 font-medium">{(context.integrationTypes ?? []).join(", ") || "None"}</div>
+                <div className="text-xs text-text-tertiary mb-1">Integrations</div>
+                <div className="text-text font-medium">{(context.integrationTypes ?? []).join(", ") || "None"}</div>
               </div>
               <div>
-                <div className="text-xs text-gray-400 mb-1">Stakeholders consulted</div>
-                <div className="text-gray-800 font-medium">{(context.stakeholdersConsulted ?? []).join(", ") || "None"}</div>
+                <div className="text-xs text-text-tertiary mb-1">Stakeholders consulted</div>
+                <div className="text-text font-medium">{(context.stakeholdersConsulted ?? []).join(", ") || "None"}</div>
               </div>
             </div>
           </div>
@@ -502,38 +503,38 @@ export function IntakeReview({
                       className={`rounded-lg border px-4 py-3 transition-colors ${
                         addressed
                           ? "border-green-200 bg-green-50"
-                          : "border-amber-200 bg-white"
+                          : "border-amber-200 bg-surface"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-medium text-gray-500">{f.field}</span>
+                            <span className="text-xs font-medium text-text-secondary">{f.field}</span>
                             {/* P2-146: Impact badge */}
                             {flagImpact(f.field) === "high" ? (
                               <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-2xs font-semibold text-red-700 uppercase tracking-wide">
                                 High impact
                               </span>
                             ) : (
-                              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-2xs font-medium text-slate-500 uppercase tracking-wide">
+                              <span className="rounded-full bg-surface-muted px-1.5 py-0.5 text-2xs font-medium text-text-secondary uppercase tracking-wide">
                                 Low impact
                               </span>
                             )}
                           </div>
-                          <div className="text-sm text-gray-800">{f.description}</div>
-                          <div className="mt-1 text-xs text-gray-400 italic">"{f.userStatement}"</div>
+                          <div className="text-sm text-text">{f.description}</div>
+                          <div className="mt-1 text-xs text-text-tertiary italic">"{f.userStatement}"</div>
                           {/* P1-35: saved clarification */}
                           {clarification && (
-                            <div className="mt-2 flex items-start gap-1.5 rounded-md bg-white border border-green-200 px-2.5 py-1.5">
+                            <div className="mt-2 flex items-start gap-1.5 rounded-md bg-surface border border-green-200 px-2.5 py-1.5">
                               <span className="mt-0.5 text-green-500 shrink-0 text-xs">✓</span>
-                              <span className="text-xs text-gray-700">{clarification}</span>
+                              <span className="text-xs text-text">{clarification}</span>
                               <button
                                 onClick={() => {
                                   setFlagClarifications((prev) => { const n = { ...prev }; delete n[f.id]; return n; });
                                   setFlagClarificationDraft((prev) => ({ ...prev, [f.id]: clarification }));
                                   setFlagAddressingId(f.id);
                                 }}
-                                className="ml-auto shrink-0 text-xs text-gray-400 hover:text-gray-600"
+                                className="ml-auto shrink-0 text-xs text-text-tertiary hover:text-text-secondary"
                               >
                                 Edit
                               </button>
@@ -563,7 +564,7 @@ export function IntakeReview({
                                 </button>
                                 <button
                                   onClick={() => setFlagAddressingId(null)}
-                                  className="rounded-md border border-gray-200 px-2.5 py-1 text-xs text-gray-500 hover:bg-gray-50"
+                                  className="rounded-md border border-border px-2.5 py-1 text-xs text-text-secondary hover:bg-surface-raised"
                                 >
                                   Cancel
                                 </button>
@@ -597,13 +598,13 @@ export function IntakeReview({
 
         {/* Stakeholder contributions */}
         {(contributions.length > 0 || (context && getMissingContributionDomains(context, contributions, riskTier).length > 0)) && (
-          <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-xl border border-border bg-surface px-5 py-4 shadow-sm">
             <div className="flex items-baseline gap-2 mb-3">
-              <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <SectionHeading>
                 Stakeholder Input
-              </div>
+              </SectionHeading>
               {contributions.length > 0 && (
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-text-secondary">
                   {contributions.length} contribution{contributions.length > 1 ? "s" : ""} from{" "}
                   {new Set(contributions.map((c) => c.contributorEmail)).size} contributor{new Set(contributions.map((c) => c.contributorEmail)).size > 1 ? "s" : ""}
                 </div>
@@ -615,25 +616,25 @@ export function IntakeReview({
                   const domain = c.domain as ContributionDomain;
                   const nonEmptyEntries = Object.entries(c.fields).filter(([, v]) => v.trim().length > 0);
                   return (
-                    <div key={c.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                    <div key={c.id} className="rounded-lg border border-border-subtle bg-surface-raised p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant="neutral">
                           {DOMAIN_LABELS[domain] ?? domain}
                         </Badge>
-                        <span className="text-xs text-gray-600">{c.contributorEmail}</span>
+                        <span className="text-xs text-text-secondary">{c.contributorEmail}</span>
                         {c.contributorRole && (
-                          <span className="text-xs text-gray-400">· {c.contributorRole}</span>
+                          <span className="text-xs text-text-tertiary">· {c.contributorRole}</span>
                         )}
-                        <span className="ml-auto text-xs text-gray-400">{formatDate(c.createdAt)}</span>
+                        <span className="ml-auto text-xs text-text-tertiary">{formatDate(c.createdAt)}</span>
                       </div>
                       {nonEmptyEntries.length > 0 && (
                         <dl className="space-y-1.5">
                           {nonEmptyEntries.map(([key, value]) => (
                             <div key={key}>
-                              <dt className="text-xs font-medium text-gray-500">
+                              <dt className="text-xs font-medium text-text-secondary">
                                 {CONTRIBUTION_FIELD_LABELS[key] ?? key}
                               </dt>
-                              <dd className="text-sm text-gray-700 leading-relaxed">{value}</dd>
+                              <dd className="text-sm text-text leading-relaxed">{value}</dd>
                             </div>
                           ))}
                         </dl>
@@ -676,24 +677,24 @@ export function IntakeReview({
 
         {/* Capture verification — only shown when assessments are present */}
         {captureVerification.length > 0 && (
-          <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-xl border border-border bg-surface px-5 py-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                <SectionHeading>
                   Capture Verification
-                </div>
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                </SectionHeading>
+                <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-secondary">
                   {captureVerification.length} requirement{captureVerification.length !== 1 ? "s" : ""}
                 </span>
               </div>
               <button
                 onClick={() => setExpandedCapture((v) => !v)}
-                className="text-xs text-gray-500 hover:text-gray-700 underline"
+                className="text-xs text-text-secondary hover:text-text underline"
               >
                 {expandedCapture ? "Hide" : "Show details"}
               </button>
             </div>
-            <p className="text-xs text-gray-500 mb-3">
+            <p className="text-xs text-text-secondary mb-3">
               Claude confirmed every requirement discussed in the conversation was captured in a structured field before finalizing.
             </p>
             {expandedCapture && (
@@ -708,9 +709,9 @@ export function IntakeReview({
                   </TableHead>
                   <TableBody>
                     {captureVerification.map((item, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium text-gray-600">{item.area}</TableCell>
-                        <TableCell className="text-gray-600">{item.mentioned}</TableCell>
+                      <TableRow key={i} className="interactive-row">
+                        <TableCell className="font-medium text-text-secondary">{item.area}</TableCell>
+                        <TableCell className="text-text-secondary">{item.mentioned}</TableCell>
                         <TableCell>
                           {item.capturedAs ? (
                             <span className="font-mono text-green-700">{item.capturedAs}</span>
@@ -732,8 +733,10 @@ export function IntakeReview({
           <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-amber-600">⚠</span>
-              <div className="text-xs font-semibold uppercase tracking-wider text-amber-700">
-                Policy Quality Warnings
+              <div className="text-amber-700">
+                <SectionHeading>
+                  Policy Quality Warnings
+                </SectionHeading>
               </div>
               <span className="rounded-full bg-amber-100 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">
                 {inadequatePolicies.length} polic{inadequatePolicies.length !== 1 ? "ies" : "y"}
@@ -744,12 +747,12 @@ export function IntakeReview({
             </p>
             <ul className="space-y-2">
               {inadequatePolicies.map((item, i) => (
-                <li key={i} className="rounded-lg border border-amber-200 bg-white px-4 py-3">
+                <li key={i} className="rounded-lg border border-amber-200 bg-surface px-4 py-3">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-red-400">✗</span>
-                    <span className="text-sm font-medium text-gray-800">{item.policyName}</span>
+                    <span className="text-sm font-medium text-text">{item.policyName}</span>
                   </div>
-                  <p className="text-xs text-gray-500 ml-5">{item.reason}</p>
+                  <p className="text-xs text-text-secondary ml-5">{item.reason}</p>
                 </li>
               ))}
             </ul>
@@ -770,12 +773,12 @@ export function IntakeReview({
               <div
                 key={key}
                 id={`rv-section-${key}`}
-                className={`rounded-card border bg-white shadow-sm transition-colors scroll-mt-4 ${
+                className={`rounded-card border bg-surface shadow-sm transition-colors scroll-mt-4 ${
                   !filled
                     ? "border-red-200 bg-red-50/30"
                     : isAcknowledged
                     ? "border-blue-300 bg-blue-50/30"
-                    : "border-gray-200"
+                    : "border-border"
                 }`}
               >
                 <div className="flex items-start gap-4 p-5">
@@ -788,7 +791,7 @@ export function IntakeReview({
                         className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-colors ${
                           isAcknowledged
                             ? "border-blue-500 bg-blue-500"
-                            : "border-gray-300 hover:border-blue-400"
+                            : "border-border hover:border-blue-400"
                         }`}
                         title={isAcknowledged ? "Unmark as reviewed" : "Mark as reviewed"}
                       >
@@ -806,18 +809,18 @@ export function IntakeReview({
                   {/* Content */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-sm font-semibold text-gray-900">{SECTION_LABELS[key]}</h3>
+                      <h3 className="text-sm font-semibold text-text">{SECTION_LABELS[key]}</h3>
                       {isRequired && !filled && (
                         <span className="rounded-full bg-red-100 px-2 py-0.5 text-2xs font-medium text-red-600">required</span>
                       )}
                       {!filled && (
-                        <span className="text-xs text-gray-400">Not captured</span>
+                        <span className="text-xs text-text-tertiary">Not captured</span>
                       )}
                       {/* RV-003: Revise affordance */}
                       {onRevise && (
                         <button
                           onClick={onRevise}
-                          className="ml-auto text-xs text-gray-400 hover:text-primary transition-colors shrink-0"
+                          className="ml-auto text-xs text-text-tertiary hover:text-primary transition-colors shrink-0"
                           title={`Return to intake conversation to revise ${SECTION_LABELS[key]}`}
                         >
                           ← Revise
@@ -838,11 +841,11 @@ export function IntakeReview({
             const emptyOptionals = SECTION_KEYS.filter((k) => !isSectionFilled(k, payload) && !requiredSections.includes(k));
             if (emptyOptionals.length === 0) return null;
             return (
-              <div className="rounded-card border border-dashed border-gray-200 bg-gray-50/50 px-5 py-4">
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
+              <div className="rounded-card border border-dashed border-border bg-surface-raised/50 px-5 py-4">
+                <SectionHeading className="mb-1">
                   {emptyOptionals.length} optional section{emptyOptionals.length > 1 ? "s" : ""} not captured
-                </p>
-                <p className="text-xs text-gray-400">
+                </SectionHeading>
+                <p className="text-xs text-text-tertiary">
                   {emptyOptionals.map((k) => SECTION_LABELS[k]).join(" · ")}
                 </p>
               </div>
@@ -856,7 +859,7 @@ export function IntakeReview({
     </div>
 
     {/* RV-005: Sticky footer — confirmation counter + generate button */}
-    <div className="shrink-0 border-t border-gray-200 bg-white px-6 py-4 z-10">
+    <div className="shrink-0 border-t border-border bg-surface px-6 py-4 z-10">
       <div className="mx-auto flex w-full max-w-3xl items-center gap-4">
         {/* RV-006: Confirmation counter */}
         <div className="flex-1 min-w-0">
@@ -868,10 +871,10 @@ export function IntakeReview({
           )}
           {allRequiredFilled && !allFilled && (
             <div>
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-sm font-medium text-text">
                 {acknowledged.size} of {filledSections.length} section{filledSections.length !== 1 ? "s" : ""} confirmed
               </p>
-              <div className="mt-1 h-1 rounded-full bg-gray-100 overflow-hidden w-40">
+              <div className="mt-1 h-1 rounded-full bg-surface-muted overflow-hidden w-40">
                 <div
                   className="h-full bg-blue-500 rounded-full transition-all duration-300"
                   style={{ width: `${filledSections.length > 0 ? Math.round((acknowledged.size / filledSections.length) * 100) : 0}%` }}
@@ -900,7 +903,7 @@ export function IntakeReview({
         <button
           onClick={() => setPreviewOpen(true)}
           disabled={generating || generateSuccess}
-          className="shrink-0 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition-colors"
+          className="shrink-0 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-text hover:bg-surface-raised disabled:opacity-40 transition-colors"
         >
           Preview ABP
         </button>
@@ -911,7 +914,7 @@ export function IntakeReview({
           className={`shrink-0 rounded-lg px-6 py-2.5 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed ${
             generateSuccess
               ? "bg-green-600 disabled:opacity-100"
-              : "bg-gray-900 hover:bg-gray-800 disabled:opacity-40"
+              : "bg-text hover:bg-text-secondary disabled:opacity-40"
           }`}
         >
           {generateSuccess
@@ -932,16 +935,16 @@ export function IntakeReview({
         {/* Semi-transparent backdrop */}
         <div className="flex-1 bg-black/30" onClick={() => setPreviewOpen(false)} />
         {/* Slide-in panel */}
-        <div className="w-full max-w-md bg-white shadow-2xl flex flex-col overflow-hidden">
+        <div className="w-full max-w-md bg-surface shadow-2xl flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 bg-gray-50">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4 bg-surface-raised">
             <div>
-              <p className="text-sm font-semibold text-gray-900">ABP Preview</p>
-              <p className="text-xs text-gray-500 mt-0.5">Read-only view of what will be generated</p>
+              <p className="text-sm font-semibold text-text">ABP Preview</p>
+              <p className="text-xs text-text-secondary mt-0.5">Read-only view of what will be generated</p>
             </div>
             <button
               onClick={() => setPreviewOpen(false)}
-              className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+              className="rounded-lg p-1.5 text-text-tertiary hover:bg-surface-muted hover:text-text-secondary transition-colors"
               aria-label="Close preview"
             >
               <X size={16} />
@@ -952,24 +955,24 @@ export function IntakeReview({
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5 text-sm">
             {/* Identity */}
             <section>
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Identity</p>
-              <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 space-y-2">
+              <SectionHeading className="mb-2">Identity</SectionHeading>
+              <div className="rounded-lg border border-border-subtle bg-surface-raised px-4 py-3 space-y-2">
                 <div>
-                  <span className="text-xs text-gray-400">Name</span>
-                  <p className="text-sm font-medium text-gray-800 mt-0.5">
-                    {payload.identity?.name ?? context?.agentPurpose ? `${context?.agentPurpose?.slice(0, 40)}…` : <span className="text-gray-400 italic">not set</span>}
+                  <span className="text-xs text-text-tertiary">Name</span>
+                  <p className="text-sm font-medium text-text mt-0.5">
+                    {payload.identity?.name ?? context?.agentPurpose ? `${context?.agentPurpose?.slice(0, 40)}…` : <span className="text-text-tertiary italic">not set</span>}
                   </p>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-400">Description</span>
-                  <p className="text-sm text-gray-700 mt-0.5">
-                    {payload.identity?.description ?? <span className="text-gray-400 italic">will be generated</span>}
+                  <span className="text-xs text-text-tertiary">Description</span>
+                  <p className="text-sm text-text mt-0.5">
+                    {payload.identity?.description ?? <span className="text-text-tertiary italic">will be generated</span>}
                   </p>
                 </div>
                 {payload.identity?.persona && (
                   <div>
-                    <span className="text-xs text-gray-400">Persona</span>
-                    <p className="text-sm text-gray-700 mt-0.5 line-clamp-3">{payload.identity.persona}</p>
+                    <span className="text-xs text-text-tertiary">Persona</span>
+                    <p className="text-sm text-text mt-0.5 line-clamp-3">{payload.identity.persona}</p>
                   </div>
                 )}
               </div>
@@ -977,53 +980,53 @@ export function IntakeReview({
 
             {/* Capabilities */}
             <section>
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              <SectionHeading className="mb-2">
                 Capabilities
                 {(payload.capabilities?.tools?.length ?? 0) > 0 && (
-                  <span className="ml-1.5 normal-case font-normal text-gray-400">
+                  <span className="ml-1.5 normal-case font-normal text-text-tertiary">
                     ({payload.capabilities?.tools?.length} tool{payload.capabilities?.tools?.length !== 1 ? "s" : ""})
                   </span>
                 )}
-              </p>
+              </SectionHeading>
               {(payload.capabilities?.tools?.length ?? 0) === 0 && (
-                <p className="text-xs text-gray-400 italic">No tools captured yet</p>
+                <p className="text-xs text-text-tertiary italic">No tools captured yet</p>
               )}
               {(payload.capabilities?.tools ?? []).map((tool, i) => (
-                <div key={i} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 mb-1.5">
-                  <p className="text-xs font-medium text-gray-800">{tool.name}</p>
-                  {tool.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{tool.description}</p>}
-                  <span className="mt-1 inline-block rounded bg-gray-200 px-1.5 py-0.5 text-2xs text-gray-600">{tool.type}</span>
+                <div key={i} className="rounded-lg border border-border-subtle bg-surface-raised px-3 py-2 mb-1.5">
+                  <p className="text-xs font-medium text-text">{tool.name}</p>
+                  {tool.description && <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{tool.description}</p>}
+                  <span className="mt-1 inline-block rounded bg-surface-muted px-1.5 py-0.5 text-2xs text-text-secondary">{tool.type}</span>
                 </div>
               ))}
               {payload.capabilities?.instructions && (
                 <div className="mt-2">
-                  <span className="text-xs text-gray-400">Instructions</span>
-                  <p className="text-xs text-gray-700 mt-0.5 line-clamp-4 whitespace-pre-wrap">{payload.capabilities.instructions}</p>
+                  <span className="text-xs text-text-tertiary">Instructions</span>
+                  <p className="text-xs text-text mt-0.5 line-clamp-4 whitespace-pre-wrap">{payload.capabilities.instructions}</p>
                 </div>
               )}
             </section>
 
             {/* Constraints */}
             <section>
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Constraints</p>
-              <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 space-y-2">
+              <SectionHeading className="mb-2">Constraints</SectionHeading>
+              <div className="rounded-lg border border-border-subtle bg-surface-raised px-4 py-3 space-y-2">
                 {(payload.constraints?.denied_actions?.length ?? 0) > 0 ? (
                   <div>
-                    <span className="text-xs text-gray-400">Denied actions ({payload.constraints?.denied_actions?.length})</span>
+                    <span className="text-xs text-text-tertiary">Denied actions ({payload.constraints?.denied_actions?.length})</span>
                     <ul className="mt-1 space-y-0.5">
                       {(payload.constraints?.denied_actions ?? []).slice(0, 4).map((a, i) => (
-                        <li key={i} className="text-xs text-gray-700 flex gap-1.5"><span className="text-red-400 shrink-0">✗</span>{a}</li>
+                        <li key={i} className="text-xs text-text flex gap-1.5"><span className="text-red-400 shrink-0">✗</span>{a}</li>
                       ))}
                       {(payload.constraints?.denied_actions?.length ?? 0) > 4 && (
-                        <li className="text-xs text-gray-400">+{(payload.constraints?.denied_actions?.length ?? 0) - 4} more</li>
+                        <li className="text-xs text-text-tertiary">+{(payload.constraints?.denied_actions?.length ?? 0) - 4} more</li>
                       )}
                     </ul>
                   </div>
-                ) : <p className="text-xs text-gray-400 italic">No constraints captured yet</p>}
+                ) : <p className="text-xs text-text-tertiary italic">No constraints captured yet</p>}
                 {(payload.constraints?.allowed_domains?.length ?? 0) > 0 && (
                   <div>
-                    <span className="text-xs text-gray-400">Allowed domains</span>
-                    <p className="text-xs text-gray-700 mt-0.5">{payload.constraints?.allowed_domains?.join(", ")}</p>
+                    <span className="text-xs text-text-tertiary">Allowed domains</span>
+                    <p className="text-xs text-text mt-0.5">{payload.constraints?.allowed_domains?.join(", ")}</p>
                   </div>
                 )}
               </div>
@@ -1031,24 +1034,24 @@ export function IntakeReview({
 
             {/* Governance */}
             <section>
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              <SectionHeading className="mb-2">
                 Governance
                 {(payload.governance?.policies?.length ?? 0) > 0 && (
-                  <span className="ml-1.5 normal-case font-normal text-gray-400">
+                  <span className="ml-1.5 normal-case font-normal text-text-tertiary">
                     ({payload.governance?.policies?.length} polic{payload.governance?.policies?.length !== 1 ? "ies" : "y"})
                   </span>
                 )}
-              </p>
+              </SectionHeading>
               {(payload.governance?.policies?.length ?? 0) === 0 ? (
-                <p className="text-xs text-gray-400 italic">Governance policies will be inferred from context and stakeholder input</p>
+                <p className="text-xs text-text-tertiary italic">Governance policies will be inferred from context and stakeholder input</p>
               ) : (
                 (payload.governance?.policies ?? []).map((pol, i) => (
-                  <div key={i} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 mb-1.5">
+                  <div key={i} className="rounded-lg border border-border-subtle bg-surface-raised px-3 py-2 mb-1.5">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-medium text-gray-800 flex-1">{pol.name}</p>
+                      <p className="text-xs font-medium text-text flex-1">{pol.name}</p>
                       <span className="rounded bg-blue-100 px-1.5 py-0.5 text-2xs text-blue-700">{pol.type}</span>
                     </div>
-                    {pol.description && <p className="text-xs text-gray-500 mt-0.5">{pol.description}</p>}
+                    {pol.description && <p className="text-xs text-text-secondary mt-0.5">{pol.description}</p>}
                   </div>
                 ))
               )}
@@ -1057,29 +1060,29 @@ export function IntakeReview({
             {/* Context summary */}
             {context && (
               <section>
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Context signals</p>
-                <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 space-y-1.5 text-xs text-gray-600">
-                  <p><span className="text-gray-400">Deployment:</span> {context.deploymentType.replace(/-/g, " ")}</p>
-                  <p><span className="text-gray-400">Data sensitivity:</span> {context.dataSensitivity}</p>
+                <SectionHeading className="mb-2">Context signals</SectionHeading>
+                <div className="rounded-lg border border-border-subtle bg-surface-raised px-4 py-3 space-y-1.5 text-xs text-text-secondary">
+                  <p><span className="text-text-tertiary">Deployment:</span> {context.deploymentType.replace(/-/g, " ")}</p>
+                  <p><span className="text-text-tertiary">Data sensitivity:</span> {context.dataSensitivity}</p>
                   {context.regulatoryScope.filter(r => r !== "none").length > 0 && (
-                    <p><span className="text-gray-400">Regulatory:</span> {context.regulatoryScope.filter(r => r !== "none").join(", ")}</p>
+                    <p><span className="text-text-tertiary">Regulatory:</span> {context.regulatoryScope.filter(r => r !== "none").join(", ")}</p>
                   )}
                 </div>
               </section>
             )}
 
-            <p className="text-xs text-gray-400 text-center pb-2">
+            <p className="text-xs text-text-tertiary text-center pb-2">
               The final blueprint will be generated by AI and may expand on the above.
             </p>
           </div>
 
           {/* Footer CTA */}
-          <div className="border-t border-gray-200 px-5 py-4 flex gap-3">
+          <div className="border-t border-border px-5 py-4 flex gap-3">
             <button
               onClick={() => {
                 setPreviewOpen(false);
               }}
-              className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium text-text hover:bg-surface-raised transition-colors"
             >
               Continue reviewing
             </button>
@@ -1089,7 +1092,7 @@ export function IntakeReview({
                 onGenerate();
               }}
               disabled={!canGenerate || generating || generateSuccess}
-              className="flex-1 rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-40 transition-colors"
+              className="flex-1 rounded-lg bg-text py-2.5 text-sm font-medium text-white hover:bg-text-secondary disabled:opacity-40 transition-colors"
             >
               Generate Blueprint →
             </button>

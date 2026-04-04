@@ -9,6 +9,9 @@ import {
   DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Heading, Subheading } from "@/components/catalyst/heading";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
 import { BlueprintSummary } from "@/components/blueprint/blueprint-summary";
@@ -29,6 +32,7 @@ import { SimulatePanel } from "@/components/registry/simulate-panel";
 import { QualityDashboard } from "@/components/blueprint/quality-dashboard";
 import DownloadEvidenceButton from "@/components/mrm/download-evidence-button";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
+import { FormField } from "@/components/ui/form-field";
 
 interface CurrentUser {
   email: string;
@@ -553,9 +557,9 @@ export default function AgentDetailPage({
           <span className="text-border">/</span>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold text-text truncate">
+              <Heading level={1} className="text-lg truncate">
                 {latest.name ?? `Agent ${latest.agentId.slice(0, 8)}`}
-              </h1>
+              </Heading>
               <StatusBadge status={latest.status} />
               {/* P2-401: health pulse badge — shown once health data has loaded */}
               {healthData && healthData.healthStatus !== "unknown" && (
@@ -701,6 +705,14 @@ export default function AgentDetailPage({
         </div>
       </header>
 
+      {/* Breadcrumb */}
+      <div className="shrink-0 border-b border-border bg-surface px-6 py-3">
+        <Breadcrumb items={[
+          { label: "Registry", href: "/registry" },
+          { label: latest.name ?? `Agent ${latest.agentId.slice(0, 8)}` },
+        ]} />
+      </div>
+
       {/* AgentCore Deployment Details Strip */}
       {latest.deploymentTarget === "agentcore" && latest.deploymentMetadata && (
         <div className="border-b border-orange-100 bg-orange-50 px-6 py-2.5">
@@ -742,15 +754,15 @@ export default function AgentDetailPage({
       {cloneModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-xl">
-            <h2 className="text-base font-semibold text-text">Clone Agent</h2>
+            <Subheading level={2} className="text-base text-text">Clone Agent</Subheading>
             <p className="mt-1 text-sm text-text-secondary">
               Creates a new draft agent pre-populated with this blueprint&apos;s content. The clone
               starts its own independent governance lifecycle.
             </p>
             <div className="mt-4">
-              <label className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+              <SectionHeading>
                 Clone Name <span className="font-normal normal-case">(optional)</span>
-              </label>
+              </SectionHeading>
               <input
                 type="text"
                 value={cloneName}
@@ -802,7 +814,7 @@ export default function AgentDetailPage({
                   <button
                     onClick={handleCheckHealth}
                     disabled={checkingHealth}
-                    className="ml-4 shrink-0 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                    className="ml-4 shrink-0 rounded-lg border border-red-300 bg-surface px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
                   >
                     {checkingHealth ? "Checking…" : "↻ Check Now"}
                   </button>
@@ -824,7 +836,7 @@ export default function AgentDetailPage({
                   <button
                     onClick={handleCheckHealth}
                     disabled={checkingHealth}
-                    className="ml-4 shrink-0 rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50 disabled:opacity-50"
+                    className="ml-4 shrink-0 rounded-lg border border-green-300 bg-surface px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50 disabled:opacity-50"
                   >
                     {checkingHealth ? "Checking…" : "↻ Re-check"}
                   </button>
@@ -844,7 +856,7 @@ export default function AgentDetailPage({
                 <button
                   onClick={handleCheckHealth}
                   disabled={checkingHealth}
-                  className="ml-4 shrink-0 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                  className="ml-4 shrink-0 rounded-lg border border-amber-300 bg-surface px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50"
                 >
                   {checkingHealth ? "Checking…" : "↻ Run First Check"}
                 </button>
@@ -927,7 +939,7 @@ export default function AgentDetailPage({
             onClick: () => handleContextBarTransition("new-version"),
           },
           deprecated: {
-            bg: "bg-gray-50", border: "border-gray-200",
+            bg: "bg-surface-raised", border: "border-border",
             icon: "○",
             message: "This agent is deprecated and no longer active. Clone it to start a new generation.",
             action: "Clone as New Agent",
@@ -939,14 +951,14 @@ export default function AgentDetailPage({
         return (
           <div className={`shrink-0 border-b ${bar.border} ${bar.bg} px-6 py-2.5`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-text">
                 <span className="mr-1.5">{bar.icon}</span>
                 {bar.message}
               </p>
               {bar.href ? (
                 <Link
                   href={bar.href}
-                  className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
+                  className="shrink-0 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text shadow-sm hover:bg-surface-raised transition-colors"
                 >
                   {bar.action} →
                 </Link>
@@ -954,7 +966,7 @@ export default function AgentDetailPage({
                 <button
                   onClick={bar.onClick}
                   disabled={contextBarLoading}
-                  className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                  className="shrink-0 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text shadow-sm hover:bg-surface-raised disabled:opacity-50 transition-colors"
                 >
                   {contextBarLoading ? "…" : `${bar.action} →`}
                 </button>
@@ -1118,10 +1130,10 @@ export default function AgentDetailPage({
           <div className="p-6 max-w-3xl">
             {/* P2-287: Export Regulatory Evidence button — shown for approved/deployed blueprints */}
             {(latest.status === "approved" || latest.status === "deployed") && (
-              <div className="mb-4 flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <div className="mb-4 flex items-center justify-between rounded-lg border border-border-subtle bg-surface-raised px-4 py-3">
                 <div>
-                  <p className="text-xs font-semibold text-gray-700">Export Evidence Package</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs font-semibold text-text">Export Evidence Package</p>
+                  <p className="text-xs text-text-tertiary mt-0.5">
                     Download a structured JSON bundle for audit, regulatory submission, or internal review.
                   </p>
                 </div>
@@ -1150,9 +1162,9 @@ export default function AgentDetailPage({
               {chain.length > 0 && priorApprovals.length > 0 && (
                 <div className="rounded-lg border border-border bg-surface overflow-hidden">
                   <div className="border-b border-border bg-surface-raised px-4 py-2.5">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                    <SectionHeading>
                       Prior Approvals
-                    </p>
+                    </SectionHeading>
                   </div>
                   <Table dense>
                     <TableHead>
@@ -1166,7 +1178,7 @@ export default function AgentDetailPage({
                     </TableHead>
                     <TableBody>
                       {priorApprovals.map((step, i) => (
-                        <TableRow key={i}>
+                        <TableRow key={i} className="interactive-row">
                           <TableCell>{step.step + 1}</TableCell>
                           <TableCell>{step.label}</TableCell>
                           <TableCell className="font-medium">{step.approvedBy}</TableCell>
@@ -1334,60 +1346,68 @@ export default function AgentDetailPage({
                 {/* Add Test Case form */}
                 {showTestForm && (
                   <div className="border-b border-border px-5 py-4 space-y-3 bg-blue-50">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">New Test Case</p>
+                    <SectionHeading style={{ color: "#1d4ed8" }}>New Test Case</SectionHeading>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-text mb-1">Name *</label>
-                        <input
-                          type="text"
-                          value={testFormName}
-                          onChange={(e) => setTestFormName(e.target.value)}
-                          placeholder="e.g. Happy path: basic domain query"
-                          className="w-full rounded-lg border border-border px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
-                        />
+                        <FormField label="Name" htmlFor="test-name" required>
+                          <input
+                            id="test-name"
+                            type="text"
+                            value={testFormName}
+                            onChange={(e) => setTestFormName(e.target.value)}
+                            placeholder="e.g. Happy path: basic domain query"
+                            className="w-full rounded-lg border border-border px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
+                          />
+                        </FormField>
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-text mb-1">Description (optional)</label>
-                        <input
-                          type="text"
-                          value={testFormDescription}
-                          onChange={(e) => setTestFormDescription(e.target.value)}
-                          placeholder="Brief description of what this test verifies"
-                          className="w-full rounded-lg border border-border px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
-                        />
+                        <FormField label="Description" htmlFor="test-description" optional>
+                          <input
+                            id="test-description"
+                            type="text"
+                            value={testFormDescription}
+                            onChange={(e) => setTestFormDescription(e.target.value)}
+                            placeholder="Brief description of what this test verifies"
+                            className="w-full rounded-lg border border-border px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
+                          />
+                        </FormField>
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-text mb-1">Input prompt *</label>
-                        <textarea
-                          value={testFormInput}
-                          onChange={(e) => setTestFormInput(e.target.value)}
-                          rows={3}
-                          placeholder="The message to send to the agent"
-                          className="w-full rounded-lg border border-border px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
-                        />
+                        <FormField label="Input prompt" htmlFor="test-input" required>
+                          <textarea
+                            id="test-input"
+                            value={testFormInput}
+                            onChange={(e) => setTestFormInput(e.target.value)}
+                            rows={3}
+                            placeholder="The message to send to the agent"
+                            className="w-full rounded-lg border border-border px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
+                          />
+                        </FormField>
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-text mb-1">Expected behavior *</label>
-                        <textarea
-                          value={testFormExpected}
-                          onChange={(e) => setTestFormExpected(e.target.value)}
-                          rows={3}
-                          placeholder="Describe what the agent should do in response"
-                          className="w-full rounded-lg border border-border px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
-                        />
+                        <FormField label="Expected behavior" htmlFor="test-expected" required>
+                          <textarea
+                            id="test-expected"
+                            value={testFormExpected}
+                            onChange={(e) => setTestFormExpected(e.target.value)}
+                            rows={3}
+                            placeholder="Describe what the agent should do in response"
+                            className="w-full rounded-lg border border-border px-3 py-1.5 text-sm focus:border-border-strong focus:outline-none"
+                          />
+                        </FormField>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-text mb-1">Severity</label>
-                        <Select value={testFormSeverity} onValueChange={(v) => setTestFormSeverity(v as "required" | "informational")}>
-                          <SelectTrigger className="w-full text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="required">required</SelectItem>
-                            <SelectItem value="informational">informational</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-text-tertiary mt-0.5">Required failures block the overall pass verdict</p>
+                        <FormField label="Severity" htmlFor="test-severity" description="Required failures block the overall pass verdict">
+                          <Select value={testFormSeverity} onValueChange={(v) => setTestFormSeverity(v as "required" | "informational")}>
+                            <SelectTrigger id="test-severity" className="w-full text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="required">required</SelectItem>
+                              <SelectItem value="informational">informational</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormField>
                       </div>
                     </div>
                     <div className="flex justify-end">
@@ -1542,16 +1562,16 @@ export default function AgentDetailPage({
                         {expandedResult === result.testCaseId && (
                           <div className="mt-3 space-y-2">
                             <div>
-                              <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Input</p>
+                              <SectionHeading>Input</SectionHeading>
                               <p className="mt-0.5 text-xs text-text rounded bg-surface-raised px-3 py-2">{result.inputPrompt}</p>
                             </div>
                             <div>
-                              <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Expected behavior</p>
+                              <SectionHeading>Expected behavior</SectionHeading>
                               <p className="mt-0.5 text-xs text-text rounded bg-surface-raised px-3 py-2">{result.expectedBehavior}</p>
                             </div>
                             {result.actualOutput && (
                               <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Actual output</p>
+                                <SectionHeading>Actual output</SectionHeading>
                                 <p className="mt-0.5 text-xs text-text rounded bg-surface-raised px-3 py-2 whitespace-pre-wrap">{result.actualOutput}</p>
                               </div>
                             )}
@@ -1569,7 +1589,7 @@ export default function AgentDetailPage({
                   </div>
                 ) : testRuns.length > 1 && (
                   <div className="border-t border-border px-5 py-3">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Prior Runs</p>
+                    <SectionHeading className="mb-2">Prior Runs</SectionHeading>
                     <div className="space-y-1">
                       {testRuns.slice(1).map((run) => (
                         <div key={run.id} className="flex items-center gap-2 text-xs text-text-secondary">
@@ -1613,9 +1633,9 @@ export default function AgentDetailPage({
               return (
                 <div className="rounded-xl border border-border bg-surface overflow-hidden">
                   <div className="border-b border-border bg-surface-raised px-5 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+                    <SectionHeading>
                       Deployment History
-                    </p>
+                    </SectionHeading>
                     <p className="text-xs text-text-tertiary mt-0.5">
                       Each version promoted to production in chronological order.
                     </p>
@@ -1639,10 +1659,10 @@ export default function AgentDetailPage({
                                 <div className={`h-3 w-3 shrink-0 rounded-full border-2 ${
                                   isLatest
                                     ? "border-green-500 bg-green-100"
-                                    : "border-gray-300 bg-white"
+                                    : "border-border bg-surface"
                                 }`} />
                                 {!isLatest && (
-                                  <div className="flex-1 h-px bg-gray-300 min-w-[40px]" />
+                                  <div className="flex-1 h-px bg-text-disabled min-w-[40px]" />
                                 )}
                               </div>
                               {/* Version label */}
@@ -1696,7 +1716,7 @@ export default function AgentDetailPage({
               </TableHead>
               <TableBody>
                 {versions.map((v) => (
-                  <TableRow key={v.id}>
+                  <TableRow key={v.id} className="interactive-row">
                     <TableCell className="font-mono text-text">v{v.version}</TableCell>
                     <TableCell>
                       <StatusBadge status={v.status} />
@@ -1753,9 +1773,9 @@ export default function AgentDetailPage({
             {versions.some((v) => v.governanceDiff != null) && (
               <div className="rounded-xl border border-border bg-surface overflow-hidden">
                 <div className="border-b border-border bg-surface-raised px-5 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+                  <SectionHeading>
                     Version Lineage
-                  </p>
+                  </SectionHeading>
                   <p className="text-xs text-text-tertiary mt-0.5">
                     Governance changes computed at version-creation time — required for regulatory change management documentation.
                   </p>
@@ -1864,9 +1884,9 @@ export default function AgentDetailPage({
               if (approvalSteps.length === 0) return null;
               return (
                 <div className="border border-border rounded-lg p-5">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-text-tertiary mb-3">
+                  <SectionHeading className="mb-3">
                     Approval History
-                  </h3>
+                  </SectionHeading>
                   <ol className="space-y-1.5">
                     {approvalSteps.map((step, i) => (
                       <li key={i} className="flex items-center gap-2 text-xs text-text-secondary">
@@ -1932,7 +1952,7 @@ export default function AgentDetailPage({
       {reviewCompleteOpen && latest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-xl">
-            <h3 className="mb-1 text-base font-semibold text-text">Mark periodic review complete</h3>
+            <Subheading level={3} className="mb-1 text-text">Mark periodic review complete</Subheading>
             <p className="mb-4 text-sm text-text-secondary">
               This will record completion for{" "}
               <span className="font-medium text-text">{latest.name ?? "this agent"}</span>{" "}
@@ -1940,17 +1960,17 @@ export default function AgentDetailPage({
             </p>
 
             <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium text-text">
-                Review notes <span className="text-text-tertiary">(optional)</span>
-              </label>
-              <textarea
-                value={reviewCompleteNotes}
-                onChange={(e) => setReviewCompleteNotes(e.target.value)}
-                rows={3}
-                maxLength={1000}
-                placeholder="Findings, actions taken, or conclusions from the review…"
-                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-border-strong focus:outline-none focus:ring-1 focus:ring-border-strong resize-none"
-              />
+              <FormField label="Review notes" htmlFor="review-notes" optional>
+                <textarea
+                  id="review-notes"
+                  value={reviewCompleteNotes}
+                  onChange={(e) => setReviewCompleteNotes(e.target.value)}
+                  rows={3}
+                  maxLength={1000}
+                  placeholder="Findings, actions taken, or conclusions from the review…"
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-border-strong focus:outline-none focus:ring-1 focus:ring-border-strong resize-none"
+                />
+              </FormField>
             </div>
 
             {reviewCompleteError && (

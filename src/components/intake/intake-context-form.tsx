@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { IntakeContext } from "@/lib/types/intake";
+import { FormField, FormSection } from "@/components/ui/form-field";
 
 interface IntakeContextFormProps {
   sessionId: string;
@@ -112,200 +113,214 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
   }
 
   return (
-    <div className="flex flex-1 overflow-auto bg-gray-50">
+    <div className="flex flex-1 overflow-auto bg-surface-raised">
       <div className="mx-auto w-full max-w-2xl px-6 py-10">
         {/* Header */}
         <div className="mb-8">
           <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
             Step 1 of 3 — Context
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900">Tell us about the agent you need</h2>
-          <p className="mt-2 text-sm text-gray-500">
+          <h2 className="text-2xl font-semibold text-text">Tell us about the agent you need</h2>
+          <p className="mt-2 text-sm text-text-secondary">
             This context enables the intake conversation to ask the right governance and compliance questions for your enterprise environment.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Agent purpose */}
-          <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
-            <label className="block text-sm font-medium text-gray-900 mb-1">
-              What should this agent do? <span className="text-red-500">*</span>
-            </label>
-            <p className="text-xs text-gray-500 mb-3">
-              One or two sentences describing the agent's purpose and the problem it solves.
-            </p>
-            <textarea
-              value={agentPurpose}
-              onChange={(e) => setAgentPurpose(e.target.value)}
-              rows={3}
-              placeholder="e.g. Answer customer questions about account balances and recent transactions using data from our core banking API…"
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
-            />
-            {agentPurpose.trim().length > 0 && agentPurpose.trim().length < 10 && (
-              <p className="mt-1 text-xs text-red-500">Please provide at least 10 characters.</p>
-            )}
-          </div>
+          <FormSection
+            title="Agent Purpose"
+            description="One or two sentences describing the agent's purpose and the problem it solves."
+          >
+            <FormField
+              label="What should this agent do?"
+              htmlFor="agent-purpose"
+              required
+              error={agentPurpose.trim().length > 0 && agentPurpose.trim().length < 10
+                ? "Please provide at least 10 characters."
+                : undefined}
+            >
+              <textarea
+                id="agent-purpose"
+                value={agentPurpose}
+                onChange={(e) => setAgentPurpose(e.target.value)}
+                rows={3}
+                placeholder="e.g. Answer customer questions about account balances and recent transactions using data from our core banking API…"
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+              />
+            </FormField>
+          </FormSection>
 
           {/* Deployment type */}
-          <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
-            <label className="block text-sm font-medium text-gray-900 mb-1">
-              Who will interact with this agent? <span className="text-red-500">*</span>
-            </label>
-            <p className="text-xs text-gray-500 mb-3">
-              Determines the scope of safety and access-control requirements.
-            </p>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {DEPLOYMENT_TYPE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setDeploymentType(opt.value)}
-                  className={`rounded-lg border p-3 text-left transition-colors ${
-                    deploymentType === opt.value
-                      ? "border-blue-500 bg-blue-50 text-blue-900"
-                      : "border-gray-200 bg-white hover:border-gray-300 text-gray-700"
-                  }`}
-                >
-                  <div className="text-sm font-medium">{opt.label}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{opt.description}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Data sensitivity */}
-          <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
-            <label className="block text-sm font-medium text-gray-900 mb-1">
-              What is the highest data sensitivity level this agent will handle? <span className="text-red-500">*</span>
-            </label>
-            <p className="text-xs text-gray-500 mb-3">
-              Drives mandatory data handling and PII governance policies.
-            </p>
-            <div className="flex flex-col gap-2">
-              {DATA_SENSITIVITY_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setDataSensitivity(opt.value)}
-                  className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
-                    dataSensitivity === opt.value
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 bg-white hover:border-gray-300"
-                  }`}
-                >
-                  <div
-                    className={`h-3 w-3 shrink-0 rounded-full border-2 ${
-                      dataSensitivity === opt.value
-                        ? "border-blue-500 bg-blue-500"
-                        : "border-gray-300 bg-white"
-                    }`}
-                  />
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{opt.label}</div>
-                    <div className="text-xs text-gray-500">{opt.description}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Regulatory scope */}
-          <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
-            <label className="block text-sm font-medium text-gray-900 mb-1">
-              Which regulatory frameworks apply? <span className="text-red-500">*</span>
-            </label>
-            <p className="text-xs text-gray-500 mb-3">
-              Select all that apply. Compliance policies will be required for each selected framework.
-            </p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {REGULATORY_SCOPE_OPTIONS.map((opt) => {
-                const selected = regulatoryScope.includes(opt.value);
-                return (
+          <FormSection
+            title="Who will interact with this agent?"
+            description="Determines the scope of safety and access-control requirements."
+          >
+            <FormField
+              label="Deployment Type"
+              required
+            >
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {DEPLOYMENT_TYPE_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setRegulatoryScope((prev) => toggleArrayItem(prev, opt.value))}
-                    className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                      selected
+                    onClick={() => setDeploymentType(opt.value)}
+                    className={`rounded-lg border p-3 text-left transition-colors ${
+                      deploymentType === opt.value
                         ? "border-blue-500 bg-blue-50 text-blue-900"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                        : "border-border bg-surface hover:border-border text-text-secondary"
                     }`}
                   >
-                    {opt.label}
+                    <div className="text-sm font-medium">{opt.label}</div>
+                    <div className="text-xs text-text-secondary mt-0.5">{opt.description}</div>
                   </button>
-                );
-              })}
-            </div>
-          </div>
+                ))}
+              </div>
+            </FormField>
+          </FormSection>
 
-          {/* Integration types */}
-          <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
-            <label className="block text-sm font-medium text-gray-900 mb-1">
-              What systems will this agent integrate with? <span className="text-red-500">*</span>
-            </label>
-            <p className="text-xs text-gray-500 mb-3">
-              Select all that apply. External API integrations require access-control policies.
-            </p>
-            <div className="flex flex-col gap-2">
-              {INTEGRATION_TYPE_OPTIONS.map((opt) => {
-                const selected = integrationTypes.includes(opt.value);
-                return (
+          {/* Data sensitivity */}
+          <FormSection
+            title="What is the highest data sensitivity level this agent will handle?"
+            description="Drives mandatory data handling and PII governance policies."
+          >
+            <FormField
+              label="Data Sensitivity"
+              required
+            >
+              <div className="flex flex-col gap-2">
+                {DATA_SENSITIVITY_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setIntegrationTypes((prev) => toggleArrayItem(prev, opt.value))}
+                    onClick={() => setDataSensitivity(opt.value)}
                     className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
-                      selected
+                      dataSensitivity === opt.value
                         ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 bg-white hover:border-gray-300"
+                        : "border-border bg-surface hover:border-border"
                     }`}
                   >
                     <div
-                      className={`h-4 w-4 shrink-0 rounded border-2 flex items-center justify-center ${
-                        selected ? "border-blue-500 bg-blue-500" : "border-gray-300 bg-white"
+                      className={`h-3 w-3 shrink-0 rounded-full border-2 ${
+                        dataSensitivity === opt.value
+                          ? "border-blue-500 bg-blue-500"
+                          : "border-border bg-surface"
+                      }`}
+                    />
+                    <div>
+                      <div className="text-sm font-medium text-text">{opt.label}</div>
+                      <div className="text-xs text-text-secondary">{opt.description}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </FormField>
+          </FormSection>
+
+          {/* Regulatory scope */}
+          <FormSection
+            title="Which regulatory frameworks apply?"
+            description="Select all that apply. Compliance policies will be required for each selected framework."
+          >
+            <FormField
+              label="Regulatory Frameworks"
+              required
+            >
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {REGULATORY_SCOPE_OPTIONS.map((opt) => {
+                  const selected = regulatoryScope.includes(opt.value);
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setRegulatoryScope((prev) => toggleArrayItem(prev, opt.value))}
+                      className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                        selected
+                          ? "border-blue-500 bg-blue-50 text-blue-900"
+                          : "border-border bg-surface text-text-secondary hover:border-border"
                       }`}
                     >
-                      {selected && (
-                        <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 10 10">
-                          <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </div>
-                    <span className="text-sm text-gray-900">{opt.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </FormField>
+          </FormSection>
+
+          {/* Integration types */}
+          <FormSection
+            title="What systems will this agent integrate with?"
+            description="Select all that apply. External API integrations require access-control policies."
+          >
+            <FormField
+              label="Integration Types"
+              required
+            >
+              <div className="flex flex-col gap-2">
+                {INTEGRATION_TYPE_OPTIONS.map((opt) => {
+                  const selected = integrationTypes.includes(opt.value);
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setIntegrationTypes((prev) => toggleArrayItem(prev, opt.value))}
+                      className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                        selected
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-border bg-surface hover:border-border"
+                      }`}
+                    >
+                      <div
+                        className={`h-4 w-4 shrink-0 rounded border-2 flex items-center justify-center ${
+                          selected ? "border-blue-500 bg-blue-500" : "border-border bg-surface"
+                        }`}
+                      >
+                        {selected && (
+                          <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 10 10">
+                            <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-sm text-text">{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </FormField>
+          </FormSection>
 
           {/* Stakeholders consulted */}
-          <div className="rounded-card border border-gray-200 bg-white p-5 shadow-sm">
-            <label className="block text-sm font-medium text-gray-900 mb-1">
-              Which stakeholders have been consulted? <span className="text-red-500">*</span>
-            </label>
-            <p className="text-xs text-gray-500 mb-3">
-              This information is recorded in the MRM compliance report for audit purposes.
-            </p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {STAKEHOLDER_OPTIONS.map((opt) => {
-                const selected = stakeholdersConsulted.includes(opt.value);
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setStakeholdersConsulted((prev) => toggleArrayItem(prev, opt.value))}
-                    className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                      selected
-                        ? "border-blue-500 bg-blue-50 text-blue-900"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <FormSection
+            title="Which stakeholders have been consulted?"
+            description="This information is recorded in the MRM compliance report for audit purposes."
+          >
+            <FormField
+              label="Stakeholders"
+              required
+            >
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {STAKEHOLDER_OPTIONS.map((opt) => {
+                  const selected = stakeholdersConsulted.includes(opt.value);
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setStakeholdersConsulted((prev) => toggleArrayItem(prev, opt.value))}
+                      className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                        selected
+                          ? "border-blue-500 bg-blue-50 text-blue-900"
+                          : "border-border bg-surface text-text-secondary hover:border-border"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </FormField>
+          </FormSection>
 
           {/* Error */}
           {error && (

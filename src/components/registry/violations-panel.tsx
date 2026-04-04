@@ -92,19 +92,19 @@ function ViolationsSparkline({ violations, days }: { violations: ViolationRow[];
   const maxCount = Math.max(...buckets, 1);
 
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+    <div className="rounded-xl border border-border-subtle bg-surface-raised p-4">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-xs font-semibold text-gray-500">
+        <p className="text-xs font-semibold text-text-secondary">
           Violations — last {days} days
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-text-tertiary">
           {violations.length} total
         </p>
       </div>
       <div className="flex items-end gap-px h-8">
         {buckets.map((count, i) => {
           const heightPct = count === 0 ? 0 : Math.max(8, Math.round((count / maxCount) * 100));
-          const color = count === 0 ? "bg-gray-200" : count === maxCount && count > 0 ? "bg-red-400" : "bg-orange-300";
+          const color = count === 0 ? "bg-text-disabled" : count === maxCount && count > 0 ? "bg-red-400" : "bg-orange-300";
           const dateLabel = new Date(Date.now() - (days - 1 - i) * 86_400_000).toLocaleDateString(undefined, { month: "short", day: "numeric" });
           return (
             <div
@@ -117,7 +117,7 @@ function ViolationsSparkline({ violations, days }: { violations: ViolationRow[];
         })}
       </div>
       {maxCount > 0 && (
-        <div className="mt-1.5 flex justify-between text-2xs text-gray-400">
+        <div className="mt-1.5 flex justify-between text-2xs text-text-tertiary">
           <span>{new Date(Date.now() - (days - 1) * 86_400_000).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
           <span>Today</span>
         </div>
@@ -198,8 +198,8 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Runtime Violations</h2>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h2 className="text-base font-semibold text-text">Runtime Violations</h2>
+          <p className="text-xs text-text-secondary mt-0.5">
             Policy breaches detected from live telemetry
           </p>
         </div>
@@ -232,15 +232,15 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Severity filter */}
-        <div className="flex rounded-md border border-gray-200 overflow-hidden text-xs">
+        <div className="flex rounded-md border border-border overflow-hidden text-xs">
           {(["all", "error", "warning"] as SeverityFilter[]).map((s) => (
             <button
               key={s}
               onClick={() => setSeverityFilter(s)}
               className={`px-3 py-1.5 font-medium capitalize transition-colors ${
                 severityFilter === s
-                  ? "bg-gray-900 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-50"
+                  ? "bg-text text-white"
+                  : "bg-surface text-text-secondary hover:bg-surface-raised"
               }`}
             >
               {s === "all" ? "All" : s === "error" ? "Errors" : "Warnings"}
@@ -265,7 +265,7 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
           <button
             onClick={exportCsv}
             title={`Export ${violations.length} violation${violations.length !== 1 ? "s" : ""} as CSV`}
-            className="ml-auto flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+            className="ml-auto flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary hover:border-border hover:text-text transition-colors"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -288,14 +288,14 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
-          <span className="ml-3 text-sm text-gray-500">Loading violations…</span>
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-border border-t-text" />
+          <span className="ml-3 text-sm text-text-secondary">Loading violations…</span>
         </div>
       ) : violations.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 py-14 text-center">
+        <div className="rounded-xl border border-dashed border-border bg-surface-raised py-14 text-center">
           <div className="text-3xl mb-3">✅</div>
-          <p className="text-sm font-medium text-gray-700">No violations detected</p>
-          <p className="mt-1 text-xs text-gray-500 max-w-xs mx-auto">
+          <p className="text-sm font-medium text-text">No violations detected</p>
+          <p className="mt-1 text-xs text-text-secondary max-w-xs mx-auto">
             {severityFilter !== "all"
               ? `No ${severityFilter} violations in the selected time range.`
               : "No runtime policy violations in the selected time range. Runtime policies are evaluated automatically on each telemetry push."}
@@ -341,36 +341,36 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
                         {v.severity}
                       </span>
                     )}
-                    <span className={`text-xs font-semibold truncate ${isAcked ? "text-gray-500" : "text-gray-800"}`}>
+                    <span className={`text-xs font-semibold truncate ${isAcked ? "text-text-secondary" : "text-text"}`}>
                       {v.policyName}
                     </span>
                   </div>
 
                   {/* Row 2: violation message */}
-                  <p className={`mt-1 text-sm ${isAcked ? "text-gray-500 line-through" : "text-gray-700"}`}>{v.message}</p>
+                  <p className={`mt-1 text-sm ${isAcked ? "text-text-secondary line-through" : "text-text"}`}>{v.message}</p>
 
                   {/* Row 3: metric detail */}
-                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-text-secondary">
                     <span>
-                      <span className="font-medium text-gray-700">Metric:</span>{" "}
+                      <span className="font-medium text-text">Metric:</span>{" "}
                       {formatMetricName(v.metric)}
                     </span>
                     <span>
-                      <span className="font-medium text-gray-700">Observed:</span>{" "}
+                      <span className="font-medium text-text">Observed:</span>{" "}
                       <span
                         className={
-                          isAcked ? "text-gray-500" : v.severity === "error" ? "text-red-700 font-semibold" : "text-amber-700 font-semibold"
+                          isAcked ? "text-text-secondary" : v.severity === "error" ? "text-red-700 font-semibold" : "text-amber-700 font-semibold"
                         }
                       >
                         {formatObservedValue(v.metric, v.observedValue)}
                       </span>
                     </span>
                     <span>
-                      <span className="font-medium text-gray-700">Threshold:</span>{" "}
+                      <span className="font-medium text-text">Threshold:</span>{" "}
                       {formatThreshold(v.metric, v.threshold)}
                     </span>
                     <span>
-                      <span className="font-medium text-gray-700">Rule:</span>{" "}
+                      <span className="font-medium text-text">Rule:</span>{" "}
                       <code className="font-mono">{v.ruleId}</code>
                     </span>
                   </div>
@@ -379,8 +379,8 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
                 {/* Timestamp + Acknowledge button */}
                 <div className="text-right shrink-0 flex flex-col items-end gap-2">
                   <div>
-                    <p className="text-2xs text-gray-400">{timeAgo(v.detectedAt)}</p>
-                    <p className="text-2xs text-gray-400 mt-0.5">
+                    <p className="text-2xs text-text-tertiary">{timeAgo(v.detectedAt)}</p>
+                    <p className="text-2xs text-text-tertiary mt-0.5">
                       {new Date(v.detectedAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -388,8 +388,8 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
                     onClick={() => toggleAck(v.id)}
                     className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-2xs font-medium transition-colors ${
                       isAcked
-                        ? "border-green-200 bg-white text-green-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
-                        : "border-gray-200 bg-white text-gray-500 hover:border-green-300 hover:text-green-700"
+                        ? "border-green-200 bg-surface text-green-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                        : "border-border bg-surface text-text-secondary hover:border-green-300 hover:text-green-700"
                     }`}
                     title={isAcked ? "Un-acknowledge" : "Acknowledge — mark as known/accepted"}
                   >

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Calendar, Download, Clock, Shield, ChevronRight } from "lucide-react";
+import { Heading } from "@/components/catalyst/heading";
 import { SkeletonList } from "@/components/ui/skeleton";
 
 interface ReviewEvent {
@@ -61,7 +62,7 @@ export default function ComplianceCalendarPage() {
     overdue: "bg-red-100 text-red-700 border-red-200",
     urgent:  "bg-amber-100 text-amber-700 border-amber-200",
     upcoming:"bg-yellow-50 text-yellow-700 border-yellow-200",
-    future:  "bg-slate-50 text-slate-600 border-slate-200",
+    future:  "bg-surface-muted text-text-secondary border-border",
   };
 
   const urgencyLabel: Record<string, string> = {
@@ -76,11 +77,11 @@ export default function ComplianceCalendarPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-2">
+          <Heading level={1} className="text-text flex items-center gap-2">
             <Calendar className="h-6 w-6 text-violet-600" />
             Compliance Calendar
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          </Heading>
+          <p className="text-sm text-text-secondary mt-1">
             SR 11-7 periodic reviews and annual policy review deadlines
           </p>
         </div>
@@ -100,25 +101,25 @@ export default function ComplianceCalendarPage() {
         <>
           {/* Agent Periodic Reviews */}
           <section>
-            <h2 className="text-base font-semibold text-slate-800 mb-3 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-slate-500" />
+            <Heading level={2} className="text-text mb-3 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-text-secondary" />
               Agent Periodic Reviews (SR 11-7)
-              <span className="ml-auto text-xs font-normal text-slate-500">
+              <span className="ml-auto text-xs font-normal text-text-secondary">
                 {data.agentReviews.length} scheduled
               </span>
-            </h2>
+            </Heading>
 
             {data.agentReviews.length === 0 ? (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+              <div className="rounded-lg border border-border bg-surface-muted p-6 text-center text-sm text-text-secondary">
                 No periodic reviews scheduled. Deploy agents and set review dates in the Registry.
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 overflow-hidden">
+              <div className="divide-y divide-border-subtle rounded-xl border border-border overflow-hidden">
                 {data.agentReviews.map((ev) => (
-                  <div key={ev.id} className="flex items-center gap-4 px-5 py-3.5 bg-white hover:bg-slate-50 transition-colors">
+                  <div key={ev.id} className="flex items-center gap-4 px-5 py-3.5 bg-surface hover:bg-surface-muted transition-colors">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{ev.agentName}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-sm font-medium text-text truncate">{ev.agentName}</p>
+                      <p className="text-xs text-text-secondary">
                         Due {new Date(ev.nextReviewDue).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                       </p>
                     </div>
@@ -141,25 +142,25 @@ export default function ComplianceCalendarPage() {
 
           {/* Policy Annual Reviews */}
           <section>
-            <h2 className="text-base font-semibold text-slate-800 mb-3 flex items-center gap-2">
-              <Shield className="h-4 w-4 text-slate-500" />
+            <Heading level={2} className="text-text mb-3 flex items-center gap-2">
+              <Shield className="h-4 w-4 text-text-secondary" />
               Annual Policy Reviews
-              <span className="ml-auto text-xs font-normal text-slate-500">
+              <span className="ml-auto text-xs font-normal text-text-secondary">
                 {data.policyReviews.length} upcoming
               </span>
-            </h2>
+            </Heading>
 
             {data.policyReviews.length === 0 ? (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+              <div className="rounded-lg border border-border bg-surface-muted p-6 text-center text-sm text-text-secondary">
                 No policy reviews due in the next 12 months.
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 overflow-hidden">
+              <div className="divide-y divide-border-subtle rounded-xl border border-border overflow-hidden">
                 {data.policyReviews.map((ev) => (
-                  <div key={ev.id} className="flex items-center gap-4 px-5 py-3.5 bg-white hover:bg-slate-50 transition-colors">
+                  <div key={ev.id} className="flex items-center gap-4 px-5 py-3.5 bg-surface hover:bg-surface-muted transition-colors">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{ev.name}</p>
-                      <p className="text-xs text-slate-500 capitalize">
+                      <p className="text-sm font-medium text-text truncate">{ev.name}</p>
+                      <p className="text-xs text-text-secondary capitalize">
                         {ev.type} · Annual review due {new Date(ev.annualReviewDue).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                       </p>
                     </div>

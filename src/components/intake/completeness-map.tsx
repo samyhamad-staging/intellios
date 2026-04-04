@@ -21,6 +21,7 @@
 import { IntakePayload, IntakeContext, IntakeRiskTier, StakeholderContribution, ContributionDomain } from "@/lib/types/intake";
 import { getExpectedContributionDomains } from "@/lib/intake/coverage";
 import { Badge } from "@/components/ui/badge";
+import { SectionHeading } from "@/components/ui/section-heading";
 
 interface DomainStatus {
   key: string;
@@ -206,7 +207,7 @@ function statusColors(status: DomainStatus["status"]): string {
     case "required-empty":    return "border-red-200 bg-red-50";
     case "optional-filled":   return "border-blue-200 bg-blue-50";
     case "optional-sparse":   return "border-amber-200 bg-amber-50";
-    case "optional-empty":    return "border-gray-100 bg-gray-50 opacity-75";
+    case "optional-empty":    return "border-border-subtle bg-surface-raised opacity-75";
   }
 }
 
@@ -226,7 +227,7 @@ function statusIconColors(status: DomainStatus["status"]): string {
     case "required-empty":   return "bg-red-500 text-white";
     case "optional-filled":  return "bg-blue-500 text-white";
     case "optional-sparse":  return "bg-amber-400 text-white";
-    case "optional-empty":   return "bg-gray-200 text-gray-400";
+    case "optional-empty":   return "bg-text-disabled text-text-tertiary";
   }
 }
 
@@ -297,13 +298,13 @@ export function CompletenessMap({
   const sparseCount = domains.filter((d) => d.status === "optional-sparse").length;
 
   return (
-    <div className="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+    <div className="mb-6 rounded-xl border border-border bg-surface px-5 py-4 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+          <SectionHeading>
             Completeness Map
-          </div>
+          </SectionHeading>
           <Badge variant="neutral">
             {filledCount} of {domains.length} sections captured
           </Badge>
@@ -366,7 +367,7 @@ export function CompletenessMap({
                 >
                   {statusIcon(domain.status)}
                 </span>
-                <span className="text-xs font-medium text-gray-800 leading-tight">
+                <span className="text-xs font-medium text-text leading-tight">
                   {domain.label}
                 </span>
                 {/* Stakeholder badge */}
@@ -387,14 +388,14 @@ export function CompletenessMap({
                     : domain.status === "optional-sparse"
                     ? "text-amber-700"
                     : domain.status === "optional-empty"
-                    ? "text-gray-400"
-                    : "text-gray-500"
+                    ? "text-text-tertiary"
+                    : "text-text-secondary"
                 }`}
               >
                 {statusLabel(domain.status, domain.itemCount)}
               </div>
               {domain.triggerReason && (
-                <div className="mt-1 text-2xs text-gray-400 leading-tight italic">
+                <div className="mt-1 text-2xs text-text-tertiary leading-tight italic">
                   {domain.triggerReason}
                 </div>
               )}
@@ -405,7 +406,7 @@ export function CompletenessMap({
 
       {/* Stakeholder domain coverage footnote — shown for non-high/critical or when all domains covered */}
       {expectedDomains.size > 0 && !(tier === "high" || tier === "critical") && (
-        <div className="mt-3 text-xs text-gray-400 border-t border-gray-100 pt-2">
+        <div className="mt-3 text-xs text-text-tertiary border-t border-border-subtle pt-2">
           <span className="text-violet-600">★</span>{" "}
           Stakeholder input received for a domain.{" "}
           {Array.from(expectedDomains).filter((d) => !contributionDomains.has(d)).length > 0 && (

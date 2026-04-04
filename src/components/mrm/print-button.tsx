@@ -8,7 +8,7 @@ export default function PrintButton() {
   return (
     <button
       onClick={() => window.print()}
-      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors print:hidden"
+      className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-raised transition-colors print:hidden"
     >
       Print / Save as PDF
     </button>

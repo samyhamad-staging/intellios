@@ -4,7 +4,9 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { ValidationReport } from "@/lib/governance/types";
 import { VersionDiff } from "@/components/registry/version-diff";
+import { FormField } from "@/components/ui/form-field";
 import { Sparkles, ThumbsUp, ThumbsDown, CheckCircle, Clock } from "lucide-react";
+import { SectionHeading } from "@/components/ui/section-heading";
 
 // ── SLA helpers ───────────────────────────────────────────────────────────────
 
@@ -44,7 +46,7 @@ function ReviewSlaBadge({ submittedAt }: { submittedAt: string }) {
     <div className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs ${
       isUrgent
         ? "border-amber-200 bg-amber-50 text-amber-700"
-        : "border-gray-100 bg-gray-50 text-gray-500"
+        : "border-border-subtle bg-surface-raised text-text-secondary"
     }`}>
       <Clock className="h-3 w-3 shrink-0" />
       <span>
@@ -215,13 +217,16 @@ export function ReviewPanel({
     }
   }
 
+  // Risk level configuration for AI brief display
   const riskLevelConfig = {
-    low: { badge: "bg-green-100 text-green-700", label: "Low Risk" },
+    low: { badge: "bg-emerald-100 text-emerald-700", label: "Low Risk" },
     medium: { badge: "bg-amber-100 text-amber-700", label: "Medium Risk" },
     high: { badge: "bg-red-100 text-red-700", label: "High Risk" },
   };
+
+  // Recommendation configuration
   const recConfig = {
-    approve: { badge: "bg-green-100 text-green-700", label: "Approve" },
+    approve: { badge: "bg-emerald-100 text-emerald-700", label: "Approve" },
     request_changes: { badge: "bg-amber-100 text-amber-700", label: "Request Changes" },
     reject: { badge: "bg-red-100 text-red-700", label: "Reject" },
   };
@@ -286,12 +291,12 @@ export function ReviewPanel({
               <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${riskLevelConfig[aiBrief.riskLevel].badge}`}>
                 {riskLevelConfig[aiBrief.riskLevel].label}
               </span>
-              <p className="text-sm text-gray-700">{aiBrief.summary}</p>
+              <p className="text-sm text-text">{aiBrief.summary}</p>
             </div>
             {aiBrief.keyPoints.length > 0 && (
               <ul className="space-y-1">
                 {aiBrief.keyPoints.map((pt, i) => (
-                  <li key={i} className="flex items-start gap-1.5 text-sm text-gray-600">
+                  <li key={i} className="flex items-start gap-1.5 text-sm text-text-secondary">
                     <span className="mt-1 shrink-0 text-indigo-400">•</span>
                     {pt}
                   </li>
@@ -299,11 +304,11 @@ export function ReviewPanel({
               </ul>
             )}
             <div className="flex items-center gap-2 rounded-md border border-indigo-100 bg-white px-3 py-2">
-              <span className="text-xs text-gray-500">Suggested action:</span>
+              <span className="text-xs text-text-secondary">Suggested action:</span>
               <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${recConfig[aiBrief.recommendation].badge}`}>
                 {recConfig[aiBrief.recommendation].label}
               </span>
-              <span className="text-xs text-gray-500">— {aiBrief.recommendationReason}</span>
+              <span className="text-xs text-text-secondary">— {aiBrief.recommendationReason}</span>
             </div>
             {/* P2-252: AI Assessment Feedback */}
             <div className="flex items-center gap-2 pt-1">
@@ -345,18 +350,18 @@ export function ReviewPanel({
 
       {/* Version diff — shown when this is a re-review (prior version exists) */}
       {previousBlueprintId && (
-        <div ref={diffSectionRef} className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+        <div ref={diffSectionRef} className="rounded-lg border border-border bg-surface overflow-hidden">
           <button
             onClick={() => setDiffExpanded((e) => !e)}
-            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-surface-raised transition-colors"
           >
-            <span className="text-sm font-medium text-gray-800">
+            <span className="text-sm font-medium text-text">
               Changes from v{previousVersion} → v{version}
             </span>
-            <span className="text-gray-400 text-xs">{diffExpanded ? "▲" : "▼"}</span>
+            <span className="text-text-secondary text-xs">{diffExpanded ? "▲" : "▼"}</span>
           </button>
           {diffExpanded && (
-            <div className="border-t border-gray-100 px-4 py-4">
+            <div className="border-t border-border-subtle px-4 py-4">
               <VersionDiff
                 blueprintId={blueprintId}
                 compareWithId={previousBlueprintId}
@@ -368,12 +373,12 @@ export function ReviewPanel({
       )}
 
       {/* Agent summary header */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
+      <div className="rounded-lg border border-border bg-surface-raised px-4 py-3 text-sm">
         <div className="flex items-baseline justify-between">
-          <span className="font-medium text-gray-900">
+          <span className="font-medium text-text">
             {agentName ?? "Unnamed Agent"} — v{version}
           </span>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-text-tertiary">
             Submitted {new Date(submittedAt).toLocaleString()}
           </span>
         </div>
@@ -395,11 +400,11 @@ export function ReviewPanel({
 
       {/* Governance report summary */}
       <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+        <SectionHeading className="mb-2">
           Governance Status
-        </p>
+        </SectionHeading>
         {!validationReport ? (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-400">
+          <div className="rounded-lg border border-border bg-surface-raised px-4 py-3 text-xs text-text-tertiary">
             Not yet validated. Run validation in the Blueprint Workbench or Governance tab before approving.
           </div>
         ) : validationReport.valid ? (
@@ -449,9 +454,9 @@ export function ReviewPanel({
 
       {/* Decision — radio buttons */}
       <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+        <SectionHeading className="mb-2">
           Decision
-        </p>
+        </SectionHeading>
         <div className="space-y-2">
           {ACTIONS.map((action) => (
             <label
@@ -459,7 +464,7 @@ export function ReviewPanel({
               className={`flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 transition-colors ${
                 selectedAction === action.id
                   ? action.buttonStyle + " ring-2 ring-offset-1 ring-current"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  : "border-border bg-surface hover:border-border"
               }`}
             >
               <input
@@ -471,11 +476,11 @@ export function ReviewPanel({
                   setSelectedAction(action.id);
                   setError(null);
                 }}
-                className="mt-0.5 shrink-0 accent-gray-900"
+                className="mt-0.5 shrink-0 accent-text"
               />
               <div>
-                <p className="text-sm font-medium text-gray-900">{action.label}</p>
-                <p className="text-xs text-gray-500">{action.description}</p>
+                <p className="text-sm font-medium text-text">{action.label}</p>
+                <p className="text-xs text-text-secondary">{action.description}</p>
               </div>
             </label>
           ))}
@@ -483,13 +488,14 @@ export function ReviewPanel({
       </div>
 
       {/* Rationale — required for all decisions */}
-      <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-          Rationale{" "}
-          <span className="text-red-500">*</span>
-          <span className="ml-1 normal-case font-normal text-gray-400">required</span>
-        </label>
+      <FormField
+        label="Rationale"
+        htmlFor="review-rationale"
+        required
+        description="This rationale is stored in the audit log and visible to the designer."
+      >
         <textarea
+          id="review-rationale"
           value={rationale}
           onChange={(e) => setRationale(e.target.value)}
           placeholder={
@@ -501,12 +507,9 @@ export function ReviewPanel({
           }
           disabled={submitting}
           rows={4}
-          className="w-full resize-none rounded-lg border border-gray-200 p-3 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50"
+          className="w-full resize-none rounded-lg border border-border p-3 text-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
         />
-        <p className="mt-1 text-xs text-gray-400">
-          This rationale is stored in the audit log and visible to the designer.
-        </p>
-      </div>
+      </FormField>
 
       {/* Step advancement toast */}
       {stepToast && (
@@ -534,7 +537,7 @@ export function ReviewPanel({
             ? "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-600"
             : selectedAction === "request_changes"
             ? "bg-amber-600 text-white hover:bg-amber-700 disabled:bg-amber-600"
-            : "bg-gray-900 text-white hover:bg-gray-800"
+            : "bg-text text-white hover:bg-text-secondary"
         }`}
       >
         {selectedAction === "approve" && <ThumbsUp size={14} />}
@@ -546,7 +549,7 @@ export function ReviewPanel({
           : "Select a decision above"}
       </button>
 
-      <p className="text-center text-xs text-gray-400">
+      <p className="text-center text-xs text-text-tertiary">
         Approve → Published · Request Changes → Returns to designer · Reject → Closed
       </p>
     </div>

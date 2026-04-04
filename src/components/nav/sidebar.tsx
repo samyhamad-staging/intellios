@@ -31,6 +31,7 @@ import {
 import NotificationBell from "@/components/nav/notification-bell";
 import { HelpPanel } from "@/components/help/help-panel";
 import { CommandPalette } from "@/components/nav/command-palette";
+import { Tooltip } from "@/components/ui/tooltip";
 
 interface SidebarProps {
   user: {
@@ -76,6 +77,7 @@ function getNavSections(role: string | null | undefined): NavSection[] {
 
   const sections: NavSection[] = [
     {
+      label: "Workspace",
       items: [
         { label: "Overview", href: "/", icon: LayoutDashboard },
         ...(isArchitect ? [{ label: "Design Studio", href: "/intake", icon: MessageSquare }] : []),
@@ -287,15 +289,17 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
           <div className="flex items-center gap-0.5">
             {/* HelpPanel icon removed — "Ask Intellios" row above is the primary affordance */}
             <form action={signOutAction}>
-              <button
-                type="submit"
-                title="Sign out"
-                aria-label="Sign out"
-                className="rounded p-1 transition-colors hover:bg-white/10"
-                style={{ color: "var(--sidebar-text)" }}
-              >
-                <LogOut size={13} />
-              </button>
+              <Tooltip content="Sign out">
+                <button
+                  type="submit"
+                  title="Sign out"
+                  aria-label="Sign out"
+                  className="rounded p-1 transition-colors hover:bg-white/10"
+                  style={{ color: "var(--sidebar-text)" }}
+                >
+                  <LogOut size={13} />
+                </button>
+              </Tooltip>
             </form>
           </div>
         </div>

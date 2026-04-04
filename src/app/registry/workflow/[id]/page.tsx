@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Heading, Subheading } from "@/components/catalyst/heading";
 import { ArrowLeft, GitBranch, Users, ArrowRight, Database, AlertTriangle } from "lucide-react";
 import type { WorkflowDefinition } from "@/lib/types/workflow";
 
@@ -69,7 +71,7 @@ function WorkflowFlowDiagram({ definition }: { definition: WorkflowDefinition })
 
   return (
     <section className="mb-6">
-      <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
+      <Subheading level={2} className="mb-3 flex items-center gap-2 text-text">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="4" cy="12" r="2" /><circle cx="20" cy="12" r="2" />
           <circle cx="12" cy="5" r="2" /><circle cx="12" cy="19" r="2" />
@@ -77,7 +79,7 @@ function WorkflowFlowDiagram({ definition }: { definition: WorkflowDefinition })
           <line x1="12" y1="7" x2="12" y2="10" /><line x1="12" y1="14" x2="12" y2="17" />
         </svg>
         Flow
-      </h2>
+      </Subheading>
       <div className="overflow-x-auto">
         <div className="flex items-start gap-0 min-w-max">
           {levels.map((level, li) => (
@@ -97,7 +99,7 @@ function WorkflowFlowDiagram({ definition }: { definition: WorkflowDefinition })
                         title={outgoing.map((e) => `→ ${e.to}: ${e.condition}`).join("\n")}
                         className={`flex flex-col items-center justify-center rounded-lg border px-3 py-2 text-center min-w-[90px] max-w-[120px] ${
                           isSentinel
-                            ? "border-gray-300 bg-gray-100 text-gray-500"
+                            ? "border-border bg-surface-muted text-text-secondary"
                             : isAgent
                             ? "border-violet-200 bg-violet-50 text-violet-800"
                             : "border-blue-200 bg-blue-50 text-blue-700"
@@ -106,7 +108,7 @@ function WorkflowFlowDiagram({ definition }: { definition: WorkflowDefinition })
                         <span className={`text-xs font-semibold leading-tight ${isSentinel ? "uppercase tracking-wide text-[10px]" : ""}`}>
                           {label}
                         </span>
-                        {sub && <span className="mt-0.5 font-mono text-[9px] text-gray-400 leading-none">{sub}</span>}
+                        {sub && <span className="mt-0.5 font-mono text-[9px] text-text-tertiary leading-none">{sub}</span>}
                         {!allConditionsTrue && outgoing.length > 1 && (
                           <span className="mt-1 rounded-full bg-amber-100 px-1.5 text-[9px] text-amber-700 font-medium">
                             {outgoing.length} branches
@@ -135,7 +137,7 @@ function WorkflowFlowDiagram({ definition }: { definition: WorkflowDefinition })
       </div>
       {/* Condition legend — shown when non-trivial conditions exist */}
       {edges.some((e) => e.condition !== "true" && e.condition !== "always") && (
-        <p className="mt-2 text-xs text-gray-400">
+        <p className="mt-2 text-xs text-text-tertiary">
           Hover a node to see its outgoing transition conditions.
         </p>
       )}
@@ -212,8 +214,8 @@ export default function WorkflowDetailPage() {
   if (loading) {
     return (
       <div className="px-6 py-6 space-y-4">
-        <div className="h-6 w-48 animate-pulse rounded bg-gray-100" />
-        <div className="h-40 animate-pulse rounded-xl bg-gray-100" />
+        <div className="h-6 w-48 animate-pulse rounded bg-surface-muted" />
+        <div className="h-40 animate-pulse rounded-xl bg-surface-muted" />
       </div>
     );
   }
@@ -235,14 +237,12 @@ export default function WorkflowDetailPage() {
   return (
     <div className="px-6 py-6 max-w-4xl">
       {/* Breadcrumb */}
-      <div className="mb-6 flex items-center gap-2 text-sm text-gray-400">
-        <Link href="/registry" className="hover:text-gray-600 flex items-center gap-1">
-          <ArrowLeft size={13} /> Registry
-        </Link>
-        <span>/</span>
-        <span className="text-gray-400">Workflows</span>
-        <span>/</span>
-        <span className="text-gray-700 font-medium">{workflow.name}</span>
+      <div className="mb-6">
+        <Breadcrumb items={[
+          { label: "Registry", href: "/registry" },
+          { label: "Workflows", href: "/registry" },
+          { label: workflow.name },
+        ]} />
       </div>
 
       {/* Header */}
@@ -253,10 +253,10 @@ export default function WorkflowDetailPage() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold text-gray-900">{workflow.name}</h1>
+              <Heading level={1} className="text-text">{workflow.name}</Heading>
               <StatusBadge status={workflow.status} />
             </div>
-            <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-400">
+            <div className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">
               <span>v{workflow.version}</span>
               <span>·</span>
               <span className="font-mono">{workflow.id.slice(0, 8)}</span>
@@ -266,7 +266,7 @@ export default function WorkflowDetailPage() {
               <span>by {workflow.createdBy}</span>
             </div>
             {workflow.description && (
-              <p className="mt-1.5 text-sm text-gray-500">{workflow.description}</p>
+              <p className="mt-1.5 text-sm text-text-secondary">{workflow.description}</p>
             )}
           </div>
         </div>
@@ -303,7 +303,7 @@ export default function WorkflowDetailPage() {
               <button
                 onClick={() => transition("draft")}
                 disabled={transitioning}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-raised disabled:opacity-50 transition-colors"
               >
                 Return to Draft
               </button>
@@ -313,7 +313,7 @@ export default function WorkflowDetailPage() {
             <button
               onClick={() => transition("draft")}
               disabled={transitioning}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-raised disabled:opacity-50 transition-colors"
             >
               {transitioning ? "Updating…" : "Reset to Draft"}
             </button>
@@ -335,18 +335,18 @@ export default function WorkflowDetailPage() {
 
       {/* Participating Agents */}
       <section className="mb-6">
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
+        <Subheading level={2} className="mb-3 flex items-center gap-2 text-text">
           <Users size={14} /> Agents ({def.agents?.length ?? 0})
-        </h2>
+        </Subheading>
         {(!def.agents || def.agents.length === 0) ? (
-          <p className="text-sm text-gray-400">No agents defined.</p>
+          <p className="text-sm text-text-tertiary">No agents defined.</p>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
             {def.agents.map((agent, i) => (
-              <div key={agent.agentId} className={`flex items-center justify-between gap-4 px-5 py-3 ${i > 0 ? "border-t border-gray-100" : ""}`}>
+              <div key={agent.agentId} className={`flex items-center justify-between gap-4 px-5 py-3 ${i > 0 ? "border-t border-border-subtle" : ""}`}>
                 <div>
-                  <span className="text-sm font-medium text-gray-900">{agent.role}</span>
-                  <span className="ml-2 font-mono text-xs text-gray-400">{agent.agentId.slice(0, 8)}</span>
+                  <span className="text-sm font-medium text-text">{agent.role}</span>
+                  <span className="ml-2 font-mono text-xs text-text-tertiary">{agent.agentId.slice(0, 8)}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {agent.required && (
@@ -367,25 +367,25 @@ export default function WorkflowDetailPage() {
 
       {/* Handoff Rules */}
       <section className="mb-6">
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
+        <Subheading level={2} className="mb-3 flex items-center gap-2 text-text">
           <ArrowRight size={14} /> Handoff Rules ({def.handoffRules?.length ?? 0})
-        </h2>
+        </Subheading>
         {(!def.handoffRules || def.handoffRules.length === 0) ? (
-          <p className="text-sm text-gray-400">No handoff rules defined.</p>
+          <p className="text-sm text-text-tertiary">No handoff rules defined.</p>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm divide-y divide-gray-100">
+          <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm divide-y divide-border-subtle">
             {def.handoffRules
               .slice()
               .sort((a, b) => a.priority - b.priority)
               .map((rule, i) => (
                 <div key={i} className="px-5 py-3">
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="font-mono text-xs bg-gray-100 rounded px-1.5 py-0.5 text-gray-600">{rule.from}</span>
-                    <ArrowRight size={12} className="text-gray-400" />
-                    <span className="font-mono text-xs bg-gray-100 rounded px-1.5 py-0.5 text-gray-600">{rule.to}</span>
-                    <span className="ml-auto text-xs text-gray-400">priority {rule.priority}</span>
+                    <span className="font-mono text-xs bg-surface-muted rounded px-1.5 py-0.5 text-text-secondary">{rule.from}</span>
+                    <ArrowRight size={12} className="text-text-tertiary" />
+                    <span className="font-mono text-xs bg-surface-muted rounded px-1.5 py-0.5 text-text-secondary">{rule.to}</span>
+                    <span className="ml-auto text-xs text-text-tertiary">priority {rule.priority}</span>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500 font-mono">{rule.condition}</p>
+                  <p className="mt-1 text-xs text-text-secondary font-mono">{rule.condition}</p>
                 </div>
               ))}
           </div>
@@ -394,18 +394,18 @@ export default function WorkflowDetailPage() {
 
       {/* Shared Context */}
       <section>
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
+        <Subheading level={2} className="mb-3 flex items-center gap-2 text-text">
           <Database size={14} /> Shared Context Fields ({def.sharedContext?.length ?? 0})
-        </h2>
+        </Subheading>
         {(!def.sharedContext || def.sharedContext.length === 0) ? (
-          <p className="text-sm text-gray-400">No shared context fields.</p>
+          <p className="text-sm text-text-tertiary">No shared context fields.</p>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm divide-y divide-gray-100">
+          <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm divide-y divide-border-subtle">
             {def.sharedContext.map((field, i) => (
               <div key={i} className="flex items-center gap-4 px-5 py-3">
-                <span className="font-mono text-xs text-gray-700">{field.field}</span>
-                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs-tight text-gray-500">{field.type}</span>
-                <span className="text-xs text-gray-400 flex-1">{field.description}</span>
+                <span className="font-mono text-xs text-text">{field.field}</span>
+                <span className="rounded bg-surface-muted px-1.5 py-0.5 text-xs-tight text-text-secondary">{field.type}</span>
+                <span className="text-xs text-text-tertiary flex-1">{field.description}</span>
               </div>
             ))}
           </div>

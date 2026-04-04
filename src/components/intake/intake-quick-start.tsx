@@ -111,10 +111,10 @@ export function IntakeQuickStart({
           <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-violet-100">
             <Sparkles size={18} className="text-violet-600" />
           </div>
-          <h1 className="text-xl font-semibold text-gray-900">
+          <h1 className="text-xl font-semibold text-text">
             What agent do you want to build?
           </h1>
-          <p className="mt-1.5 text-sm text-gray-500">
+          <p className="mt-1.5 text-sm text-text-secondary">
             Describe your idea and Intellios will set up the right design
             context automatically.
           </p>
@@ -131,10 +131,10 @@ export function IntakeQuickStart({
             placeholder="e.g. A customer support agent that handles billing inquiries, processes refunds, and escalates complex issues. It will access our CRM and billing systems, and needs to comply with GDPR since it handles EU customer data."
             disabled={inferring}
             rows={3}
-            className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm leading-relaxed placeholder-gray-400 outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100 disabled:opacity-50"
+            className="w-full resize-none rounded-xl border border-border px-4 py-3 text-sm leading-relaxed placeholder-text-tertiary outline-none transition-colors focus:border-violet-400 focus:ring-2 focus:ring-violet-100 disabled:opacity-50"
           />
           <div className="mt-1.5 flex items-center justify-between">
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-text-tertiary">
               {purpose.trim().length < 10
                 ? `${10 - purpose.trim().length} more characters needed`
                 : "⌘ Enter to start"}
@@ -162,7 +162,7 @@ export function IntakeQuickStart({
         {/* Starter ideas */}
         {!purpose && (
           <div>
-            <p className="mb-2 text-center text-xs font-medium uppercase tracking-wider text-gray-400">
+            <p className="mb-2 text-center text-xs font-medium uppercase tracking-wider text-text-tertiary">
               Or start with a template idea
             </p>
             <div className="grid grid-cols-2 gap-2">
@@ -170,7 +170,7 @@ export function IntakeQuickStart({
                 <button
                   key={idea.label}
                   onClick={() => handleStarterClick(idea.purpose)}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-left text-xs text-gray-600 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700"
+                  className="rounded-lg border border-border bg-surface px-3 py-2.5 text-left text-xs text-text-secondary transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700"
                 >
                   {idea.label}
                 </button>
@@ -183,7 +183,7 @@ export function IntakeQuickStart({
         <p className="text-center">
           <button
             onClick={onSwitchToForm}
-            className="text-xs text-gray-400 underline hover:text-gray-600 transition-colors"
+            className="text-xs text-text-tertiary underline hover:text-text-secondary transition-colors"
           >
             Set context manually instead →
           </button>

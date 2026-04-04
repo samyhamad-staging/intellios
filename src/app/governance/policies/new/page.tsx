@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Heading } from "@/components/catalyst/heading";
 import PolicyForm, { PolicyFormValues } from "@/components/governance/policy-form";
 
 export default function NewPolicyPage() {
@@ -40,22 +42,18 @@ export default function NewPolicyPage() {
   return (
     <div className="px-6 py-6">
       {/* Breadcrumb */}
-      <nav className="mb-3 flex items-center gap-1.5 text-xs text-gray-400" aria-label="Breadcrumb">
-        <Link href="/governance" className="hover:text-gray-700 transition-colors">
-          Governance
-        </Link>
-        <span className="text-gray-300">/</span>
-        <Link href="/governance" className="hover:text-gray-700 transition-colors">
-          Policies
-        </Link>
-        <span className="text-gray-300">/</span>
-        <span className="text-gray-600 font-medium">New Policy</span>
-      </nav>
+      <div className="mb-4">
+        <Breadcrumb items={[
+          { label: "Governance", href: "/governance" },
+          { label: "Policies", href: "/governance" },
+          { label: "New Policy" },
+        ]} />
+      </div>
 
       {/* Page header */}
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">New Policy</h1>
-        <p className="mt-0.5 text-sm text-gray-500">
+        <Heading level={1} className="text-text">New Policy</Heading>
+        <p className="mt-0.5 text-sm text-text-secondary">
           Define a governance policy with rules that apply to agent blueprints
         </p>
       </div>

@@ -4,6 +4,7 @@ import { intakeSessions } from "@/lib/db/schema";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { NewIntakeButton } from "@/components/intake/new-intake-button";
+import { Heading, Subheading } from "@/components/catalyst/heading";
 import { computeDomainProgress } from "@/lib/intake/domains";
 import type { IntakePayload, IntakeContext } from "@/lib/types/intake";
 import { Inbox } from "lucide-react";
@@ -71,30 +72,30 @@ export default async function IntakeSessionsPage() {
     <div className="flex flex-col">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <header className="shrink-0 border-b border-border bg-surface px-6 py-4">
+      <header className="shrink-0 border-b border-border bg-surface px-6 py-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-text">Design Studio</h1>
+            <Heading level={1}>Design Studio</Heading>
             <p className="mt-0.5 text-sm text-text-secondary">
               {sessions.length === 0
                 ? "Start a session to begin designing an agent."
                 : `${realActiveCount} in progress · ${completedCount} complete`}
             </p>
           </div>
-          <NewIntakeButton className="btn-primary inline-flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50" />
+          <NewIntakeButton className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium" />
         </div>
       </header>
 
       {/* ── Content ─────────────────────────────────────────────────────── */}
       {sessions.length === 0 ? (
-        <div className="px-6 py-6">
+        <div className="max-w-screen-2xl mx-auto w-full px-6 py-6">
           <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface py-16 text-center">
             <Inbox size={28} className="mb-3 text-text-tertiary" />
-            <h2 className="mb-1 text-sm font-medium text-text">No intake sessions yet</h2>
+            <Subheading level={2} className="mb-1 text-text">No intake sessions yet</Subheading>
             <p className="mb-6 max-w-xs text-xs text-text-secondary">
               Each agent starts with an intake conversation where you define its purpose, capabilities, and governance requirements.
             </p>
-            <NewIntakeButton className="btn-primary inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium" />
+            <NewIntakeButton className="inline-flex items-center gap-1.5 text-sm font-medium" />
           </div>
         </div>
       ) : (

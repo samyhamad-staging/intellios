@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { Heading, Subheading } from "@/components/catalyst/heading";
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 interface AgentSummary {
@@ -61,8 +63,8 @@ function AiBriefingWidget() {
   if (loading) {
     return (
       <section>
-        <h2 className="mb-3 text-xs font-semibold text-gray-400">AI Briefing</h2>
-        <div className="h-16 animate-pulse rounded-xl bg-gray-100" />
+        <Subheading level={2} className="mb-3 text-text-tertiary">AI Briefing</Subheading>
+        <div className="h-16 animate-pulse rounded-xl bg-surface-muted" />
       </section>
     );
   }
@@ -73,13 +75,13 @@ function AiBriefingWidget() {
     healthy:  "bg-green-50  border-green-200  text-green-800",
     degraded: "bg-amber-50  border-amber-200  text-amber-800",
     critical: "bg-red-50    border-red-200    text-red-800",
-    unknown:  "bg-gray-50   border-gray-200   text-gray-700",
+    unknown:  "bg-surface-raised   border-border   text-text",
   };
   const healthDot: Record<HealthStatus, string> = {
     healthy:  "bg-green-500",
     degraded: "bg-amber-500",
     critical: "bg-red-500",
-    unknown:  "bg-gray-400",
+    unknown:  "bg-text-tertiary",
   };
   const status = (briefing.healthStatus ?? "unknown") as HealthStatus;
   // Show first ~200 chars of content as the preview
@@ -90,8 +92,8 @@ function AiBriefingWidget() {
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-xs font-semibold text-gray-400">AI Briefing</h2>
-        <Link href="/monitor/intelligence" className="text-xs text-gray-400 hover:text-gray-700">
+        <Subheading level={2} className="text-text-tertiary">AI Briefing</Subheading>
+        <Link href="/monitor/intelligence" className="text-xs text-text-tertiary hover:text-text">
           View full briefing →
         </Link>
       </div>
@@ -163,11 +165,11 @@ export default function ExecutiveDashboardPage() {
   const funnelMax = Math.max(...funnelStages.map((s) => s.count), 1);
 
   return (
-    <div className="px-6 py-6 space-y-6">
+    <div className="max-w-screen-2xl mx-auto w-full px-6 py-6 space-y-6">
       {/* Page header */}
       <div>
-        <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-        <p className="mt-0.5 text-sm text-gray-500">Platform health and governance posture</p>
+        <Heading level={1}>Dashboard</Heading>
+        <p className="mt-0.5 text-sm text-text-secondary">Platform analytics and performance metrics</p>
       </div>
 
       <div className="space-y-6">
@@ -216,7 +218,7 @@ export default function ExecutiveDashboardPage() {
 
           return (
             <section>
-              <h2 className="mb-3 text-xs font-semibold text-gray-400">Your Next Actions</h2>
+              <SectionHeading className="mb-3">Your Next Actions</SectionHeading>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {actions.map((action) => (
                   <Link
@@ -225,18 +227,18 @@ export default function ExecutiveDashboardPage() {
                     className={`flex items-center justify-between rounded-xl border px-4 py-3.5 transition-colors hover:shadow-sm ${
                       action.urgent
                         ? "border-amber-200 bg-amber-50 hover:bg-amber-100"
-                        : "border-gray-200 bg-white hover:bg-gray-50"
+                        : "border-border bg-surface hover:bg-surface-raised"
                     }`}
                   >
                     <div className="min-w-0">
-                      <p className={`text-sm font-semibold truncate ${action.urgent ? "text-amber-900" : "text-gray-800"}`}>
+                      <p className={`text-sm font-semibold truncate ${action.urgent ? "text-amber-900" : "text-text"}`}>
                         {action.label}
                       </p>
-                      <p className={`mt-0.5 text-xs truncate ${action.urgent ? "text-amber-700" : "text-gray-500"}`}>
+                      <p className={`mt-0.5 text-xs truncate ${action.urgent ? "text-amber-700" : "text-text-secondary"}`}>
                         {action.sub}
                       </p>
                     </div>
-                    <ArrowRight className={`ml-3 h-4 w-4 shrink-0 ${action.urgent ? "text-amber-500" : "text-gray-300"}`} />
+                    <ArrowRight className={`ml-3 h-4 w-4 shrink-0 ${action.urgent ? "text-amber-500" : "text-text-disabled"}`} />
                   </Link>
                 ))}
               </div>
@@ -246,7 +248,7 @@ export default function ExecutiveDashboardPage() {
 
         {/* ── Top-line KPIs ─────────────────────────────────────────────── */}
         <section>
-          <h2 className="mb-4 text-xs font-semibold text-gray-400">Platform Overview</h2>
+          <SectionHeading className="mb-4">Platform Overview</SectionHeading>
           <div className="grid grid-cols-4 gap-4">
             <KpiCard
               label="Compliance Rate"
@@ -264,7 +266,7 @@ export default function ExecutiveDashboardPage() {
                   ? "text-[color:var(--gov-pass-icon)]"
                   : complianceRate !== null && complianceRate >= 50
                   ? "text-[color:var(--gov-warn-icon)]"
-                  : "text-gray-400"
+                  : "text-text-tertiary"
               }
               href="/governance"
             />
@@ -281,7 +283,7 @@ export default function ExecutiveDashboardPage() {
               value={loading ? "–" : inReview}
               sub={inReview > 0 ? "awaiting decision" : "queue clear"}
               color={inReview > 0 ? "kpi-review" : "kpi-neutral"}
-              subColor={inReview > 0 ? "text-[color:var(--status-review-badge-dot)]" : "text-gray-400"}
+              subColor={inReview > 0 ? "text-[color:var(--status-review-badge-dot)]" : "text-text-tertiary"}
               href="/review"
             />
             <KpiCard
@@ -289,7 +291,7 @@ export default function ExecutiveDashboardPage() {
               value={loading ? "–" : deploymentRate !== null ? `${deploymentRate}%` : "—"}
               sub="of non-draft agents"
               color="kpi-neutral"
-              subColor="text-gray-400"
+              subColor="text-text-tertiary"
             />
           </div>
         </section>
@@ -297,17 +299,17 @@ export default function ExecutiveDashboardPage() {
         <div className="grid grid-cols-2 gap-8">
           {/* ── Pipeline funnel ────────────────────────────────────────── */}
           <section>
-            <h2 className="mb-4 text-xs font-semibold text-gray-400">Pipeline Funnel</h2>
-            <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+            <SectionHeading className="mb-4">Pipeline Funnel</SectionHeading>
+            <div className="rounded-xl border border-border bg-surface p-5 space-y-4">
               {funnelStages.map((stage) => (
                 <div key={stage.label}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-700">{stage.label}</span>
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-sm text-text">{stage.label}</span>
+                    <span className="text-sm font-semibold text-text">
                       {loading ? "–" : stage.count}
                     </span>
                   </div>
-                  <div className="h-2.5 w-full rounded-full bg-gray-100">
+                  <div className="h-2.5 w-full rounded-full bg-surface-muted">
                     {!loading && (
                       <div
                         className={`h-2.5 rounded-full ${stage.color} transition-all`}
@@ -319,13 +321,13 @@ export default function ExecutiveDashboardPage() {
               ))}
 
               {/* Terminal states */}
-              <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3 text-center">
+              <div className="border-t border-border-subtle pt-3 grid grid-cols-2 gap-3 text-center">
                 <div>
-                  <div className="text-xs text-gray-400">Rejected</div>
+                  <div className="text-xs text-text-tertiary">Rejected</div>
                   <div className="text-lg font-semibold text-[color:var(--status-rejected-text)]">{loading ? "–" : rejected}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-400">Deprecated</div>
+                  <div className="text-xs text-text-tertiary">Deprecated</div>
                   <div className="text-lg font-semibold text-[color:var(--status-deprecated-badge-text)]">{loading ? "–" : deprecated}</div>
                 </div>
               </div>
@@ -334,8 +336,8 @@ export default function ExecutiveDashboardPage() {
 
           {/* ── Governance health ──────────────────────────────────────── */}
           <section>
-            <h2 className="mb-4 text-xs font-semibold text-gray-400">Governance Health</h2>
-            <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+            <SectionHeading className="mb-4">Governance Health</SectionHeading>
+            <div className="rounded-xl border border-border bg-surface p-5 space-y-4">
               {/* Donut-style summary */}
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="rounded-lg badge-gov-pass p-3">
@@ -346,24 +348,24 @@ export default function ExecutiveDashboardPage() {
                   <div className="text-2xl font-bold">{loading ? "–" : withErrors}</div>
                   <div className="text-xs mt-0.5">With Errors</div>
                 </div>
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-2xl font-bold text-gray-700">{loading ? "–" : notValidated}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">Unvalidated</div>
+                <div className="rounded-lg bg-surface-raised p-3">
+                  <div className="text-2xl font-bold text-text">{loading ? "–" : notValidated}</div>
+                  <div className="text-xs text-text-secondary mt-0.5">Unvalidated</div>
                 </div>
               </div>
 
               {/* Top violations */}
               {!loading && needingAttention.length > 0 && (
                 <div>
-                  <p className="text-xs font-medium text-gray-500 mb-2">Top issues to resolve</p>
+                  <p className="text-xs font-medium text-text-secondary mb-2">Top issues to resolve</p>
                   <div className="space-y-1.5">
                     {needingAttention.map((agent) => (
                       <Link
                         key={agent.agentId}
                         href={`/registry/${agent.agentId}?tab=governance`}
-                        className="flex items-center justify-between rounded-lg border border-[color:var(--gov-error-border)] bg-white px-3 py-2 hover:border-[color:var(--gov-error-icon)] transition-colors"
+                        className="flex items-center justify-between rounded-lg border border-[color:var(--gov-error-border)] bg-surface px-3 py-2 hover:border-[color:var(--gov-error-icon)] transition-colors"
                       >
-                        <span className="text-sm text-gray-800 truncate">
+                        <span className="text-sm text-text truncate">
                           {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
                         </span>
                         <span className="shrink-0 ml-2 text-xs font-medium text-[color:var(--gov-error-text)]">
@@ -388,8 +390,8 @@ export default function ExecutiveDashboardPage() {
         {/* ── Recent deployments ──────────────────────────────────────────── */}
         <section>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xs font-semibold text-gray-400">Recent Deployments</h2>
-            <Link href="/deploy" className="text-xs text-gray-400 hover:text-gray-700">
+            <Subheading level={2} className="text-text-tertiary">Recent Deployments</Subheading>
+            <Link href="/deploy" className="text-xs text-text-tertiary hover:text-text">
               View all →
             </Link>
           </div>
@@ -397,18 +399,18 @@ export default function ExecutiveDashboardPage() {
           {loading && (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-12 animate-pulse rounded-lg bg-gray-100" />
+                <div key={i} className="h-12 animate-pulse rounded-lg bg-surface-muted" />
               ))}
             </div>
           )}
 
           {!loading && recentDeployed.length === 0 && (
-            <div className="rounded-card border border-dashed border-gray-300 bg-white p-8 text-center">
-              <p className="text-sm text-gray-400">No agents deployed yet.</p>
+            <div className="rounded-card border border-dashed border-border bg-surface p-8 text-center">
+              <p className="text-sm text-text-tertiary">No agents deployed yet.</p>
               {approved > 0 && (
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-text-tertiary">
                   {approved} approved agent{approved !== 1 ? "s" : ""} ready to deploy.{" "}
-                  <Link href="/deploy" className="underline hover:text-gray-600">
+                  <Link href="/deploy" className="underline hover:text-text-secondary">
                     Go to Deployment Console →
                   </Link>
                 </p>
@@ -417,7 +419,7 @@ export default function ExecutiveDashboardPage() {
           )}
 
           {!loading && recentDeployed.length > 0 && (
-            <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-card border border-border bg-surface">
               <Table striped>
                 <TableHead>
                   <TableRow>
@@ -430,25 +432,25 @@ export default function ExecutiveDashboardPage() {
                 </TableHead>
                 <TableBody>
                   {recentDeployed.map((agent) => (
-                    <TableRow key={agent.agentId}>
-                      <TableCell className="font-medium text-gray-900">
+                    <TableRow key={agent.agentId} className="interactive-row">
+                      <TableCell className="font-medium text-text">
                         {agent.name ?? `Agent ${agent.agentId.slice(0, 8)}`}
                       </TableCell>
-                      <TableCell className="font-mono text-xs text-gray-500">v{agent.version}</TableCell>
+                      <TableCell className="font-mono text-xs text-text-secondary">v{agent.version}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
                           {(agent.tags ?? []).slice(0, 2).map((tag) => (
-                            <span key={tag} className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
+                            <span key={tag} className="rounded-full bg-surface-muted px-1.5 py-0.5 text-xs text-text-secondary">
                               {tag}
                             </span>
                           ))}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-gray-400">{timeAgo(agent.updatedAt)}</TableCell>
+                      <TableCell className="text-xs text-text-tertiary">{timeAgo(agent.updatedAt)}</TableCell>
                       <TableCell className="text-right">
                         <Link
                           href={`/registry/${agent.agentId}`}
-                          className="text-xs text-gray-400 hover:text-gray-700 underline"
+                          className="text-xs text-text-tertiary hover:text-text underline"
                         >
                           View →
                         </Link>

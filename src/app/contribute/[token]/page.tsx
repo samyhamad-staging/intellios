@@ -3,6 +3,8 @@ import { intakeInvitations, intakeSessions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getLatestSynthesis } from "@/lib/intake/orchestrator";
 import { StakeholderWorkspace } from "@/components/intake/stakeholder-workspace";
+import { Heading } from "@/components/catalyst/heading";
+import { SectionHeading } from "@/components/ui/section-heading";
 import type { IntakeContext, IntakePayload, ContributionDomain } from "@/lib/types/intake";
 
 interface PageProps {
@@ -36,32 +38,32 @@ export default async function ContributePage({ params }: PageProps) {
       `Hi,\n\nMy invitation link for "${sessionName}" has expired. Could you please send me a new invitation?\n\nInvitation reference: ${token.slice(0, 12)}…\n\nThank you.`
     );
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
+      <div className="flex min-h-screen items-center justify-center bg-surface-raised px-6">
         <div className="max-w-sm text-center">
           <div className="mb-4 text-4xl">⏱️</div>
-          <h1 className="mb-2 text-lg font-semibold text-gray-900">Invitation link expired</h1>
-          <p className="text-sm text-gray-500">
+          <Heading level={1} className="mb-2 text-text">Invitation link expired</Heading>
+          <p className="text-sm text-text-secondary">
             Your invitation to contribute to{" "}
-            <span className="font-medium text-gray-800">{sessionName}</span> has expired.
+            <span className="font-medium text-text">{sessionName}</span> has expired.
             Invitation links are valid for a limited time.
           </p>
           <div className="mt-6 space-y-3">
-            <p className="text-xs font-medium text-gray-700">Request a new link</p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs font-medium text-text">Request a new link</p>
+            <p className="text-xs text-text-secondary">
               Contact the person who sent you this invitation and ask them to resend it.
               You can use the button below to draft a request email.
             </p>
             <a
               href={`mailto:?subject=${mailtoSubject}&body=${mailtoBody}`}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-text px-4 py-2 text-sm font-medium text-white hover:bg-text-secondary transition-colors"
             >
               ✉ Draft request email
             </a>
             {invitation.inviteeName && (
-              <p className="text-xs text-gray-400">Invitation was for: {invitation.inviteeName}</p>
+              <p className="text-xs text-text-tertiary">Invitation was for: {invitation.inviteeName}</p>
             )}
           </div>
-          <p className="mt-8 text-xs text-gray-400">Intellios — Enterprise Agent Factory</p>
+          <p className="mt-8 text-xs text-text-tertiary">Intellios — Enterprise Agent Factory</p>
         </div>
       </div>
     );
@@ -128,12 +130,12 @@ export default async function ContributePage({ params }: PageProps) {
 
 function ErrorPage({ title, message }: { title: string; message: string }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
+    <div className="flex min-h-screen items-center justify-center bg-surface-raised px-6">
       <div className="max-w-sm text-center">
         <div className="mb-4 text-4xl">⚠️</div>
-        <h1 className="mb-2 text-lg font-semibold text-gray-900">{title}</h1>
-        <p className="text-sm text-gray-500">{message}</p>
-        <p className="mt-6 text-xs text-gray-400">Intellios — Enterprise Agent Factory</p>
+        <Heading level={1} className="mb-2 text-text">{title}</Heading>
+        <p className="text-sm text-text-secondary">{message}</p>
+        <p className="mt-6 text-xs text-text-tertiary">Intellios — Enterprise Agent Factory</p>
       </div>
     </div>
   );
@@ -155,21 +157,21 @@ function CompletedPage({
     it: "IT / Infrastructure", operations: "Operations", business: "Business",
   };
   const STATUS_DOT: Record<string, string> = {
-    completed: "bg-green-500", pending: "bg-amber-400", expired: "bg-gray-300",
+    completed: "bg-green-500", pending: "bg-amber-400", expired: "bg-text-tertiary",
   };
   const STATUS_LABEL: Record<string, { label: string; color: string }> = {
     completed: { label: "Contributed", color: "text-green-600" },
     pending: { label: "Pending", color: "text-amber-600" },
-    expired: { label: "Expired", color: "text-gray-400" },
+    expired: { label: "Expired", color: "text-text-tertiary" },
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
+    <div className="flex min-h-screen flex-col bg-surface-raised">
+      <header className="border-b border-border bg-surface px-6 py-4">
         <div className="mx-auto max-w-2xl flex items-center gap-3">
-          <span className="text-sm font-semibold text-gray-900">Intellios</span>
-          <span className="text-gray-300">|</span>
-          <span className="text-sm text-gray-600">{sessionName}</span>
+          <span className="text-sm font-semibold text-text">Intellios</span>
+          <span className="text-text-disabled">|</span>
+          <span className="text-sm text-text-secondary">{sessionName}</span>
         </div>
       </header>
 
@@ -177,20 +179,20 @@ function CompletedPage({
         <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl">
           ✓
         </div>
-        <h1 className="mb-2 text-xl font-semibold text-gray-900">
+        <Heading level={1} className="mb-2 text-text">
           {inviteeName ? `Thanks, ${inviteeName}!` : "Contribution received"}
-        </h1>
-        <p className="mb-6 text-sm text-gray-500">
+        </Heading>
+        <p className="mb-6 text-sm text-text-secondary">
           Your requirements have been recorded and will be incorporated into the agent design for{" "}
           <strong>{sessionName}</strong>.
         </p>
 
         {synthesis && (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 text-left mb-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+          <div className="rounded-xl border border-border bg-surface p-6 text-left mb-4">
+            <SectionHeading className="mb-3">
               Team Summary
-            </h3>
-            <div className="text-sm text-gray-600 leading-relaxed">
+            </SectionHeading>
+            <div className="text-sm text-text-secondary leading-relaxed">
               {synthesis.split("\n").map((line, i) => (
                 <p key={i} className="mb-2 last:mb-0">{line}</p>
               ))}
@@ -199,8 +201,8 @@ function CompletedPage({
         )}
 
         {collaborators.length > 0 && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 text-left">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Team</h3>
+          <div className="rounded-xl border border-border bg-surface p-4 text-left">
+            <SectionHeading className="mb-3">Team</SectionHeading>
             <div className="space-y-2">
               {collaborators.map((c, i) => {
                 const st = STATUS_LABEL[c.status] ?? STATUS_LABEL.pending;
@@ -208,8 +210,8 @@ function CompletedPage({
                 return (
                   <div key={i} className="flex items-center gap-2">
                     <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${dot}`} />
-                    <span className="text-xs text-gray-700">{c.roleTitle}</span>
-                    <span className="text-xs text-gray-400">· {DOMAIN_LABELS[c.domain] ?? c.domain}</span>
+                    <span className="text-xs text-text">{c.roleTitle}</span>
+                    <span className="text-xs text-text-tertiary">· {DOMAIN_LABELS[c.domain] ?? c.domain}</span>
                     <span className={`ml-auto text-2xs ${st.color}`}>{st.label}</span>
                   </div>
                 );
@@ -218,7 +220,7 @@ function CompletedPage({
           </div>
         )}
 
-        <p className="mt-8 text-xs text-gray-400">Intellios — Enterprise Agent Factory</p>
+        <p className="mt-8 text-xs text-text-tertiary">Intellios — Enterprise Agent Factory</p>
       </div>
     </div>
   );

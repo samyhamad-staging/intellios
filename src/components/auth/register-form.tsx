@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { FormField } from "@/components/ui/form-field";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -140,10 +141,7 @@ export function RegisterForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Enterprise / company name */}
-        <div>
-          <label htmlFor="companyName" className="mb-1.5 block text-xs font-medium text-white/60 uppercase tracking-wide">
-            Enterprise name
-          </label>
+        <FormField label="Enterprise name" htmlFor="companyName" required>
           <input
             id="companyName"
             type="text"
@@ -154,14 +152,11 @@ export function RegisterForm() {
             placeholder="Acme Financial"
             className={inputCls}
           />
-        </div>
+        </FormField>
 
         {/* Name row */}
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="firstName" className="mb-1.5 block text-xs font-medium text-white/60 uppercase tracking-wide">
-              First name
-            </label>
+          <FormField label="First name" htmlFor="firstName" required>
             <input
               id="firstName"
               type="text"
@@ -172,11 +167,8 @@ export function RegisterForm() {
               placeholder="Jane"
               className={inputCls}
             />
-          </div>
-          <div>
-            <label htmlFor="lastName" className="mb-1.5 block text-xs font-medium text-white/60 uppercase tracking-wide">
-              Last name
-            </label>
+          </FormField>
+          <FormField label="Last name" htmlFor="lastName" required>
             <input
               id="lastName"
               type="text"
@@ -187,14 +179,11 @@ export function RegisterForm() {
               placeholder="Smith"
               className={inputCls}
             />
-          </div>
+          </FormField>
         </div>
 
         {/* Work email */}
-        <div>
-          <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-white/60 uppercase tracking-wide">
-            Work email
-          </label>
+        <FormField label="Work email" htmlFor="email" required>
           <input
             id="email"
             type="email"
@@ -206,13 +195,10 @@ export function RegisterForm() {
             placeholder="jane@acme.com"
             className={inputCls}
           />
-        </div>
+        </FormField>
 
         {/* Password */}
-        <div>
-          <label htmlFor="password" className="mb-1.5 block text-xs font-medium text-white/60 uppercase tracking-wide">
-            Password
-          </label>
+        <FormField label="Password" htmlFor="password" required>
           <input
             id="password"
             type="password"
@@ -225,13 +211,10 @@ export function RegisterForm() {
             placeholder="At least 8 characters"
             className={inputCls}
           />
-        </div>
+        </FormField>
 
         {/* Confirm password */}
-        <div>
-          <label htmlFor="confirmPassword" className="mb-1.5 block text-xs font-medium text-white/60 uppercase tracking-wide">
-            Confirm password
-          </label>
+        <FormField label="Confirm password" htmlFor="confirmPassword" required>
           <input
             id="confirmPassword"
             type="password"
@@ -241,7 +224,7 @@ export function RegisterForm() {
             onChange={set("confirmPassword")}
             className={inputCls}
           />
-        </div>
+        </FormField>
 
         {error && (
           <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">

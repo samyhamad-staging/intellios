@@ -218,6 +218,32 @@ samp {
   box-shadow: none;
 }
 
+/* ── Focus-visible utilities for keyboard navigation ────────────────── */
+.focus-card {
+  outline: none;
+  transition: box-shadow 150ms ease;
+}
+.focus-card:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary), 0 0 0 4px rgba(79, 70, 229, 0.2);
+  border-radius: var(--radius-card);
+}
+
+/* Clickable card/list item pattern */
+.interactive-row {
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+  outline: none;
+}
+.interactive-row:hover {
+  background-color: var(--color-surface-raised);
+}
+.interactive-row:active {
+  background-color: var(--color-surface-muted);
+}
+.interactive-row:focus-visible {
+  box-shadow: inset 2px 0 0 var(--color-primary);
+  background-color: var(--color-surface-raised);
+}
+
 /* ── Intake strip animations ─────────────────────────────────────────── */
 @keyframes domain-scan {
   0%   { transform: translateX(-100%); opacity: 0; }

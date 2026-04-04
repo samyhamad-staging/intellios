@@ -4,8 +4,12 @@ import { use, useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
 import { CompanionChat } from "@/components/blueprint/companion-chat";
+import { Heading, Subheading } from "@/components/catalyst/heading";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ValidationReportView } from "@/components/governance/validation-report";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { FormField } from "@/components/ui/form-field";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
 import type { TestRun } from "@/lib/testing/types";
@@ -570,9 +574,9 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             ← Pipeline
           </Link>
           <span className="text-text-tertiary">/</span>
-          <h1 className="truncate text-base font-semibold text-text">
+          <Heading level={1} className="truncate text-base">
             {abp?.identity.name ?? "Agent Blueprint"}
-          </h1>
+          </Heading>
           {refinementCount > 0 && (
             <span className="shrink-0 text-xs text-text-tertiary">
               {refinementCount} refinement{refinementCount === 1 ? "" : "s"}
@@ -613,6 +617,14 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         </div>
       </header>
 
+      {/* Breadcrumb */}
+      <div className="shrink-0 border-b border-border bg-surface px-6 py-3">
+        <Breadcrumb items={[
+          { label: "Blueprints", href: "/blueprints" },
+          { label: abp?.identity.name ?? "Blueprint" },
+        ]} />
+      </div>
+
       {/* Rejection / feedback banner */}
       {reviewComment && (
         <div className={`shrink-0 border-b px-6 py-3 flex items-start gap-3 ${
@@ -637,9 +649,9 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       {blueprintStatus === "in_review" && approvalChain.length > 1 && (
         <div className="shrink-0 border-b border-border bg-surface-raised px-6 py-3">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider mr-2">
+            <SectionHeading className="mr-2">
               Review progress
-            </span>
+            </SectionHeading>
             {approvalChain.map((chainStep, i) => {
               const completed = approvalProgress.find((p) => p.step === i);
               const isCurrent = !completed && i === currentApprovalStep;
@@ -679,9 +691,9 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         {/* Left rail: Section stepper */}
         <aside className="w-48 shrink-0 border-r border-border bg-surface overflow-y-auto">
           <div className="px-4 pt-5 pb-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+            <SectionHeading>
               Sections
-            </p>
+            </SectionHeading>
             {!loading && abp && (
               <p className="mt-0.5 text-xs text-text-tertiary">
                 {filledCount}/{sections.length} filled
@@ -819,7 +831,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           {/* Submit for Review */}
           {agentIdState && (
             <div className="border-b border-border px-5 py-4">
-              <h2 className="text-sm font-semibold">Submit for Review</h2>
+              <Subheading level={2} className="text-sm">Submit for Review</Subheading>
 
               {submitted ? (
                 <div className="mt-3 rounded-lg bg-green-50 border border-green-200 px-4 py-3">
@@ -966,7 +978,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           {validationReport && validationReport.violations.length > 0 && (
             <div className="border-b border-border px-5 py-4">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-text">Violations</h2>
+                <Subheading level={2} className="text-sm text-text">Violations</Subheading>
                 {warningViolations.length > 0 && (
                   <span className="text-xs text-text-tertiary">
                     {acknowledgedCount}/{warningViolations.length} acknowledged
@@ -1038,7 +1050,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           {/* Governance section (shown only when truly zero violations — no errors, no warnings) */}
           {validationReport?.valid && validationReport.violations.length === 0 && (
             <div className="border-b border-border px-5 py-4">
-              <h2 className="text-sm font-semibold">Governance</h2>
+              <Subheading level={2} className="text-sm">Governance</Subheading>
               <div className="mt-3">
                 <ValidationReportView
                   report={validationReport}
@@ -1052,7 +1064,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           {/* Validate button if no report yet and no agentId CTA above */}
           {!agentIdState && !validationReport && (
             <div className="border-b border-border px-5 py-4">
-              <h2 className="text-sm font-semibold">Governance</h2>
+              <Subheading level={2} className="text-sm">Governance</Subheading>
               <div className="mt-3 flex items-center justify-between">
                 <p className="text-xs text-text-tertiary">
                   {loading ? "Running validation…" : "Not yet validated"}
@@ -1073,7 +1085,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           {agentIdState && (
             <div className="border-b border-border px-5 py-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold">Test Suite</h2>
+                <Subheading level={2} className="text-sm">Test Suite</Subheading>
                 {testCaseCount > 0 && (
                   <button
                     onClick={handleRunWorkbenchTests}
@@ -1143,7 +1155,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               className="flex w-full items-center justify-between px-5 py-4 text-left"
             >
               <div>
-                <h2 className="text-sm font-semibold">Ownership &amp; Classification</h2>
+                <Subheading level={2} className="text-sm">Ownership &amp; Classification</Subheading>
                 <p className="text-xs text-text-tertiary">
                   {abp?.ownership?.businessUnit
                     ? `${abp.ownership.businessUnit}${abp.ownership.ownerEmail ? ` · ${abp.ownership.ownerEmail}` : ""}`
@@ -1161,24 +1173,23 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                     { key: "costCenter", label: "Cost Center", type: "text", placeholder: "e.g. CC-1234" },
                   ] as { key: keyof typeof ownershipDraft; label: string; type: string; placeholder: string }[]
                 ).map(({ key, label, type, placeholder }) => (
-                  <div key={key}>
-                    <label className="text-xs font-medium text-text-secondary">{label}</label>
+                  <FormField key={key} label={label} htmlFor={`ownership-${key}`}>
                     <input
+                      id={`ownership-${key}`}
                       type={type}
                       value={ownershipDraft[key]}
                       onChange={(e) => setOwnershipDraft((d) => ({ ...d, [key]: e.target.value }))}
                       placeholder={placeholder}
-                      className="mt-1 w-full rounded-lg border border-border px-3 py-1.5 text-xs focus:border-border-strong focus:outline-none"
+                      className="w-full rounded-lg border border-border px-3 py-1.5 text-xs focus:border-border-strong focus:outline-none"
                     />
-                  </div>
+                  </FormField>
                 ))}
-                <div>
-                  <label className="text-xs font-medium text-text-secondary">Deployment Environment</label>
+                <FormField label="Deployment Environment" htmlFor="ownership-env">
                   <Select
                     value={ownershipDraft.deploymentEnvironment || "_none_"}
                     onValueChange={(v) => setOwnershipDraft((d) => ({ ...d, deploymentEnvironment: v === "_none_" ? "" : v }))}
                   >
-                    <SelectTrigger className="mt-1 w-full text-xs h-8">
+                    <SelectTrigger id="ownership-env" className="w-full text-xs h-8">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1189,14 +1200,13 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                       <SelectItem value="internal">Internal</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-text-secondary">Data Classification</label>
+                </FormField>
+                <FormField label="Data Classification" htmlFor="ownership-classification">
                   <Select
                     value={ownershipDraft.dataClassification || "_none_"}
                     onValueChange={(v) => setOwnershipDraft((d) => ({ ...d, dataClassification: v === "_none_" ? "" : v }))}
                   >
-                    <SelectTrigger className="mt-1 w-full text-xs h-8">
+                    <SelectTrigger id="ownership-classification" className="w-full text-xs h-8">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1207,7 +1217,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                       <SelectItem value="regulated">Regulated</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </FormField>
                 <button
                   onClick={handleSaveOwnership}
                   disabled={savingOwnership}
@@ -1223,7 +1233,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           {(blueprintStatus === "approved" || blueprintStatus === "deployed") && (
             <div className="border-b border-border px-5 py-4">
               <div className="flex items-center gap-2 mb-2">
-                <h2 className="text-sm font-semibold">Audit Evidence</h2>
+                <Subheading level={2} className="text-sm">Audit Evidence</Subheading>
                 <span className="rounded-full bg-green-100 px-2 py-0.5 text-2xs font-semibold text-green-700 uppercase tracking-wide">
                   Exam-Ready
                 </span>

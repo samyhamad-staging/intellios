@@ -2,8 +2,12 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { ScrollText, Download } from "lucide-react";
+import { ScrollText, Download, FileText, AlertCircle } from "lucide-react";
+import { Heading } from "@/components/catalyst/heading";
+import { TableToolbar, Pagination } from "@/components/ui/table-toolbar";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FormField } from "@/components/ui/form-field";
 
 interface AuditEntry {
   id: string;
@@ -55,13 +59,13 @@ const ACTION_COLORS: Record<string, string> = {
   "blueprint.test_run_completed":  "bg-violet-50 text-violet-700",
   "blueprint.agentcore_exported":  "bg-orange-50 text-orange-600",
   "blueprint.agentcore_deployed":  "bg-orange-100 text-orange-800",
-  "intake.finalized":              "bg-gray-100 text-gray-600",
+  "intake.finalized":              "bg-surface-muted text-text-secondary",
   "intake.contribution_submitted": "bg-sky-50 text-sky-700",
   "policy.created":                "bg-red-50 text-red-700",
   "policy.updated":                "bg-orange-50 text-orange-700",
   "policy.deleted":                "bg-rose-100 text-rose-800",
   "policy.simulated":              "bg-yellow-50 text-yellow-700",
-  "settings.updated":              "bg-slate-100 text-slate-600",
+  "settings.updated":              "bg-surface-muted text-text-secondary",
   "blueprint.periodic_review_scheduled": "bg-teal-50 text-teal-700",
   "blueprint.periodic_review_completed": "bg-teal-100 text-teal-800",
 };
@@ -139,6 +143,7 @@ export default function AuditTrailPage() {
   const [total, setTotal] = useState(0);
 
   // Filter state
+  const [searchQuery, setSearchQuery] = useState("");
   const [entityType, setEntityType] = useState("");
   const [actorEmail, setActorEmail] = useState("");
   const [from, setFrom] = useState("");
@@ -181,16 +186,14 @@ export default function AuditTrailPage() {
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <ScrollText size={20} className="text-violet-600" />
-            <h1 className="text-xl font-semibold text-gray-900">Audit Trail</h1>
+            <Heading level={1}>Audit Trail</Heading>
           </div>
-          <p className="text-sm text-gray-500 pl-7">
-            Immutable record of all platform actions. Records cannot be edited or deleted.
-          </p>
+          <p className="mt-0.5 text-sm text-text-secondary">Complete audit trail of platform activity</p>
         </div>
         {entries.length > 0 && (
           <button
             onClick={() => exportCsv(entries)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-text-secondary hover:border-border-strong hover:text-text transition-colors"
           >
             <Download size={13} />Export CSV ({entries.length})
           </button>
@@ -198,62 +201,80 @@ export default function AuditTrailPage() {
       </div>
 
       <div className="space-y-4">
+        {/* Quick search toolbar */}
+        <div className="mb-2">
+          <TableToolbar
+            searchPlaceholder="Quick search action or entity ID…"
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            resultCount={loaded && entries.length > 0 ? entries.length : undefined}
+            resultLabel="event"
+          />
+        </div>
+
         {/* Filter bar */}
-        <div className="flex flex-wrap gap-3 rounded-card border border-gray-200 bg-white px-5 py-4">
+        <div className="flex flex-wrap gap-3 rounded-card border border-border bg-surface px-5 py-4">
           <div className="flex flex-1 min-w-40 flex-col gap-1">
-            <label className="text-xs font-medium text-gray-500">Entity Type</label>
-            <Select
-              value={entityType || "_all_"}
-              onValueChange={(v) => setEntityType(v === "_all_" ? "" : v)}
-            >
-              <SelectTrigger className="text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="_all_">All types</SelectItem>
-                {ENTITY_TYPES.filter(Boolean).map((t) => (
-                  <SelectItem key={t} value={t}>{t.replace("_", " ")}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FormField label="Entity Type" htmlFor="entity-type">
+              <Select
+                value={entityType || "_all_"}
+                onValueChange={(v) => setEntityType(v === "_all_" ? "" : v)}
+              >
+                <SelectTrigger id="entity-type" className="text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_all_">All types</SelectItem>
+                  {ENTITY_TYPES.filter(Boolean).map((t) => (
+                    <SelectItem key={t} value={t}>{t.replace("_", " ")}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
           </div>
 
           <div className="flex flex-1 min-w-48 flex-col gap-1">
-            <label className="text-xs font-medium text-gray-500">Actor Email</label>
-            <input
-              type="text"
-              value={actorEmail}
-              onChange={(e) => setActorEmail(e.target.value)}
-              placeholder="user@example.com"
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900"
-            />
+            <FormField label="Actor Email" htmlFor="actor-email">
+              <input
+                id="actor-email"
+                type="text"
+                value={actorEmail}
+                onChange={(e) => setActorEmail(e.target.value)}
+                placeholder="user@example.com"
+                className="rounded-lg border border-border px-3 py-1.5 text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-text"
+              />
+            </FormField>
           </div>
 
           <div className="flex flex-1 min-w-36 flex-col gap-1">
-            <label className="text-xs font-medium text-gray-500">From</label>
-            <input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900"
-            />
+            <FormField label="From" htmlFor="date-from">
+              <input
+                id="date-from"
+                type="date"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                className="rounded-lg border border-border px-3 py-1.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-text"
+              />
+            </FormField>
           </div>
 
           <div className="flex flex-1 min-w-36 flex-col gap-1">
-            <label className="text-xs font-medium text-gray-500">To</label>
-            <input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900"
-            />
+            <FormField label="To" htmlFor="date-to">
+              <input
+                id="date-to"
+                type="date"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                className="rounded-lg border border-border px-3 py-1.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-text"
+              />
+            </FormField>
           </div>
 
           <div className="flex items-end">
             <button
               onClick={() => { setPage(0); fetchEntries(0); }}
               disabled={loading}
-              className="rounded-lg bg-gray-900 px-5 py-1.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
+              className="rounded-lg bg-text px-5 py-1.5 text-sm font-medium text-white hover:bg-text-secondary disabled:opacity-50 transition-colors"
             >
               {loading ? "Loading…" : loaded ? "Refresh" : "Load Log"}
             </button>
@@ -269,36 +290,40 @@ export default function AuditTrailPage() {
 
         {/* Empty state before first load */}
         {!loaded && !loading && !error && (
-          <div className="rounded-card border border-dashed border-gray-300 bg-white p-12 text-center">
-            <p className="text-sm text-gray-400">Apply filters and click Load Log to view audit events.</p>
-          </div>
+          <EmptyState
+            icon={FileText}
+            heading="No filters applied"
+            subtext="Apply filters and click Load Log to view audit events."
+          />
         )}
 
         {/* Results */}
         {loaded && entries.length === 0 && (
-          <div className="rounded-card border border-gray-200 bg-white p-10 text-center">
-            <p className="text-sm text-gray-400">No audit events match your filters.</p>
-          </div>
+          <EmptyState
+            icon={AlertCircle}
+            heading="No audit events found"
+            subtext="No audit events match your filters."
+          />
         )}
 
         {loaded && entries.length > 0 && (
-          <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
+          <div className="overflow-hidden rounded-card border border-border bg-surface">
             {/* Result count */}
-            <div className="border-b border-gray-100 px-5 py-2.5 text-xs text-gray-400">
+            <div className="border-b border-border-subtle px-5 py-2.5 text-xs text-text-tertiary">
               Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total} event{total === 1 ? "" : "s"} — sorted newest first
             </div>
 
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-border-subtle">
               {entries.map((entry) => {
                 const isExpanded = expanded === entry.id;
                 const actionLabel = ACTION_LABELS[entry.action] ?? entry.action;
-                const actionColor = ACTION_COLORS[entry.action] ?? "bg-gray-100 text-gray-600";
+                const actionColor = ACTION_COLORS[entry.action] ?? "bg-surface-muted text-text-secondary";
 
                 return (
                   <div key={entry.id} className="px-5 py-3">
                     <div className="flex items-start gap-4">
                       {/* Timestamp */}
-                      <span className="shrink-0 w-32 text-xs text-gray-400 pt-0.5">
+                      <span className="shrink-0 w-32 text-xs text-text-tertiary pt-0.5">
                         {formatDate(entry.createdAt)}
                       </span>
 
@@ -312,31 +337,31 @@ export default function AuditTrailPage() {
                       {/* Entity */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs text-gray-500 capitalize">
+                          <span className="text-xs text-text-secondary capitalize">
                             {entry.entityType.replace("_", " ")}
                           </span>
-                          <span className="font-mono text-xs text-gray-400">
+                          <span className="font-mono text-xs text-text-tertiary">
                             {entry.entityId.slice(0, 8)}
                           </span>
                         </div>
-                        <div className="mt-0.5 text-xs text-gray-600">
+                        <div className="mt-0.5 text-xs text-text-secondary">
                           <span className="font-medium">{entry.actorEmail}</span>
                           {" "}
-                          <span className="text-gray-400">({entry.actorRole})</span>
+                          <span className="text-text-tertiary">({entry.actorRole})</span>
                         </div>
                       </div>
 
                       {/* State change */}
                       {(!!entry.fromState || !!entry.toState) ? (
-                        <div className="shrink-0 flex items-center gap-2 text-xs text-gray-400">
+                        <div className="shrink-0 flex items-center gap-2 text-xs text-text-tertiary">
                           {!!entry.fromState && (
-                            <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono">
+                            <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono">
                               {JSON.stringify(entry.fromState).slice(0, 30)}
                             </span>
                           )}
                           {!!entry.fromState && !!entry.toState && <span>→</span>}
                           {!!entry.toState && (
-                            <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono">
+                            <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono">
                               {JSON.stringify(entry.toState).slice(0, 30)}
                             </span>
                           )}
@@ -347,7 +372,7 @@ export default function AuditTrailPage() {
                       {!!entry.metadata && (
                         <button
                           onClick={() => setExpanded(isExpanded ? null : entry.id)}
-                          className="shrink-0 text-xs text-gray-400 hover:text-gray-700"
+                          className="shrink-0 text-xs text-text-tertiary hover:text-text"
                         >
                           {isExpanded ? "▲" : "▼"}
                         </button>
@@ -361,9 +386,9 @@ export default function AuditTrailPage() {
 
                     {/* Expanded metadata */}
                     {isExpanded && !!entry.metadata && (
-                      <div className="mt-3 rounded-lg bg-gray-50 border border-gray-200 p-3">
-                        <p className="mb-1 text-xs font-medium text-gray-500">Metadata</p>
-                        <pre className="text-xs text-gray-700 whitespace-pre-wrap">
+                      <div className="mt-3 rounded-lg bg-surface-raised border border-border p-3">
+                        <p className="mb-1 text-xs font-medium text-text-secondary">Metadata</p>
+                        <pre className="text-xs text-text whitespace-pre-wrap">
                           {JSON.stringify(entry.metadata, null, 2)}
                         </pre>
                       </div>
@@ -374,8 +399,8 @@ export default function AuditTrailPage() {
             </div>
             {/* Pagination controls */}
             {total > PAGE_SIZE && (
-              <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3">
-                <span className="text-xs text-gray-400">
+              <div className="flex items-center justify-between border-t border-border-subtle px-5 py-3">
+                <span className="text-xs text-text-tertiary">
                   Page {page + 1} of {Math.ceil(total / PAGE_SIZE)}
                 </span>
                 <div className="flex items-center gap-2">
@@ -386,7 +411,7 @@ export default function AuditTrailPage() {
                       setPage(prev);
                       fetchEntries(prev);
                     }}
-                    className="rounded-lg border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-gray-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="rounded-lg border border-border px-3 py-1 text-xs text-text-secondary hover:border-border-strong disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     ← Previous
                   </button>
@@ -397,7 +422,7 @@ export default function AuditTrailPage() {
                       setPage(next);
                       fetchEntries(next);
                     }}
-                    className="rounded-lg border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-gray-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="rounded-lg border border-border px-3 py-1 text-xs text-text-secondary hover:border-border-strong disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     Next →
                   </button>

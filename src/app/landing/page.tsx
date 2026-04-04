@@ -9,25 +9,22 @@
 import Link from "next/link";
 import { RequestAccessModal } from "@/components/landing/request-access-modal";
 import {
-  ShieldCheckIcon,
-  CpuChipIcon,
-  RocketLaunchIcon,
-  DocumentTextIcon,
-  ClipboardDocumentCheckIcon,
-  ChartBarIcon,
-  BuildingOfficeIcon,
-  LockClosedIcon,
-  CheckCircleIcon,
-  ArrowRightIcon,
-  BoltIcon,
-  UsersIcon,
-  EyeIcon,
-  Cog6ToothIcon,
-} from "@heroicons/react/24/outline";
-import {
-  CheckCircleIcon as CheckCircleSolid,
-  ChevronRightIcon,
-} from "@heroicons/react/20/solid";
+  ShieldCheck,
+  Cpu,
+  Rocket,
+  FileText,
+  CheckSquare,
+  BarChart3,
+  Building2,
+  Lock,
+  CheckCircle,
+  ArrowRight,
+  Zap,
+  Users,
+  Eye,
+  Settings,
+  ChevronRight,
+} from "lucide-react";
 
 /* ─────────────────────────────────────────────────────────────────────── */
 /*  Data                                                                    */
@@ -46,35 +43,35 @@ const PIPELINE_STEPS = [
     name: "Intake",
     description:
       "Structured requirements capture with stakeholder contribution lanes and adaptive governance depth.",
-    icon: ClipboardDocumentCheckIcon,
+    icon: CheckSquare,
   },
   {
     number: "02",
     name: "Generate",
     description:
       "Claude produces a complete Agent Blueprint Package from requirements — pre-adapted to your governance policies.",
-    icon: CpuChipIcon,
+    icon: Cpu,
   },
   {
     number: "03",
     name: "Govern",
     description:
       "Automated validation against SR 11-7, EU AI Act, and NIST RMF on every blueprint.",
-    icon: ShieldCheckIcon,
+    icon: ShieldCheck,
   },
   {
     number: "04",
     name: "Review",
     description:
       "Multi-step human approval chain with separation-of-duties enforcement and full audit evidence.",
-    icon: DocumentTextIcon,
+    icon: FileText,
   },
   {
     number: "05",
     name: "Deploy",
     description:
       "Lifecycle-managed deployment with continuous governance health monitoring.",
-    icon: RocketLaunchIcon,
+    icon: Rocket,
   },
 ];
 
@@ -83,21 +80,21 @@ const PRIMARY_FEATURES = [
     name: "Compliance-First by Design",
     description:
       "Every agent blueprint is automatically assessed against SR 11-7, EU AI Act, and NIST AI RMF at generation time — not as an afterthought. Risk tiers are assigned at intake, not post-deployment.",
-    icon: ShieldCheckIcon,
+    icon: ShieldCheck,
     color: "bg-indigo-50 text-indigo-600",
   },
   {
     name: "AI-Powered Blueprint Generation",
     description:
       "Claude generates complete Agent Blueprint Packages from structured requirements — including behavioral specs, governance metadata, test cases, and deployment configurations.",
-    icon: CpuChipIcon,
+    icon: Cpu,
     color: "bg-violet-50 text-violet-600",
   },
   {
     name: "End-to-End Lifecycle Management",
     description:
       "From intake through deployment, every state transition is gated, audited, and role-enforced. Full evidence chain for regulatory review — one click away.",
-    icon: RocketLaunchIcon,
+    icon: Rocket,
     color: "bg-emerald-50 text-emerald-600",
   },
 ];
@@ -113,42 +110,42 @@ const SECONDARY_FEATURES = [
   {
     name: "Separation-of-duties enforcement",
     description: "Approval chains with configurable multi-role sign-off.",
-    icon: LockClosedIcon,
+    icon: Lock,
   },
   {
     name: "Policy library management",
     description: "Reusable governance policies with version control.",
-    icon: ShieldCheckIcon,
+    icon: ShieldCheck,
   },
   {
     name: "Continuous posture monitoring",
     description: "Real-time governance health dashboard across your fleet.",
-    icon: ChartBarIcon,
+    icon: BarChart3,
   },
   {
     name: "White-label enterprise branding",
     description: "Deploy Intellios under your brand and compliance posture.",
-    icon: BuildingOfficeIcon,
+    icon: Building2,
   },
   {
     name: "MRM-ready evidence exports",
     description: "One-click compliance report generation for auditors.",
-    icon: DocumentTextIcon,
+    icon: FileText,
   },
   {
     name: "SSO & RBAC",
     description: "SAML/OIDC federation with fine-grained role-based access.",
-    icon: UsersIcon,
+    icon: Users,
   },
   {
     name: "Blueprint version history",
     description: "Full diff and audit trail for every blueprint revision.",
-    icon: ClipboardDocumentCheckIcon,
+    icon: CheckSquare,
   },
   {
     name: "Behavioral test evidence",
     description: "Auto-generated test cases tied to governance dimensions.",
-    icon: BoltIcon,
+    icon: Zap,
   },
 ];
 
@@ -157,7 +154,7 @@ const ROLES = [
     name: "Architect",
     description:
       "Capture requirements through a structured, governance-aware intake conversation. Refine blueprints with AI assistance.",
-    icon: CpuChipIcon,
+    icon: Cpu,
     bg: "bg-indigo-50",
     iconColor: "text-indigo-600",
   },
@@ -165,7 +162,7 @@ const ROLES = [
     name: "Reviewer",
     description:
       "Inspect blueprints, validate governance posture, and approve agents for production with full audit evidence.",
-    icon: EyeIcon,
+    icon: Eye,
     bg: "bg-violet-50",
     iconColor: "text-violet-600",
   },
@@ -173,7 +170,7 @@ const ROLES = [
     name: "Compliance Officer",
     description:
       "Monitor enterprise-wide posture, manage policy libraries, and export MRM compliance reports on demand.",
-    icon: ShieldCheckIcon,
+    icon: ShieldCheck,
     bg: "bg-emerald-50",
     iconColor: "text-emerald-600",
   },
@@ -181,7 +178,7 @@ const ROLES = [
     name: "Admin",
     description:
       "Configure branding, approval chains, governance policies, SSO, and manage your enterprise roster.",
-    icon: Cog6ToothIcon,
+    icon: Settings,
     bg: "bg-gray-50",
     iconColor: "text-gray-600",
   },
@@ -209,7 +206,7 @@ export default function LandingPage() {
           <div className="flex lg:flex-1">
             <Link href="/landing" className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
-                <BoltIcon className="h-4 w-4 text-white" />
+                <Zap size={16} className="text-white" />
               </div>
               <span className="text-base font-semibold tracking-tight text-gray-900">
                 Intellios
@@ -269,7 +266,7 @@ export default function LandingPage() {
           <div className="mb-6 flex justify-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-600/20">
               Enterprise AI Governance Platform
-              <ChevronRightIcon className="h-3.5 w-3.5 text-indigo-500" />
+              <ChevronRight size={14} className="text-indigo-500" />
             </div>
           </div>
 
@@ -297,7 +294,7 @@ export default function LandingPage() {
                   className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors flex items-center gap-2"
                 >
                   Request early access
-                  <ArrowRightIcon className="h-4 w-4" />
+                  <ArrowRight size={16} />
                 </button>
               )}
             </RequestAccessModal>
@@ -374,7 +371,7 @@ export default function LandingPage() {
                 <div key={step.number} className="flex flex-col items-center text-center">
                   {/* Icon circle */}
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 ring-4 ring-white border border-indigo-100 mb-5 shadow-sm">
-                    <step.icon className="h-7 w-7 text-indigo-600" />
+                    <step.icon size={28} className="text-indigo-600" />
                   </div>
                   <div className="text-xs font-mono font-bold text-indigo-400 mb-1.5">
                     {step.number}
@@ -411,7 +408,7 @@ export default function LandingPage() {
                 className="relative rounded-2xl border border-gray-200 bg-white p-8 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${feature.color} mb-5`}>
-                  <feature.icon className="h-6 w-6" />
+                  <feature.icon size={24} />
                 </div>
                 <h3 className="text-base font-semibold text-gray-900 mb-3">{feature.name}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{feature.description}</p>
@@ -453,7 +450,7 @@ export default function LandingPage() {
             {SECONDARY_FEATURES.map((feature) => (
               <div key={feature.name} className="flex flex-col">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600 mb-4">
-                  <feature.icon className="h-5 w-5 text-white" />
+                  <feature.icon size={20} className="text-white" />
                 </div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-1.5">{feature.name}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{feature.description}</p>
@@ -486,7 +483,7 @@ export default function LandingPage() {
                 className="rounded-2xl border border-gray-200 bg-white p-6 hover:shadow-md transition-shadow"
               >
                 <div className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${role.bg} mb-4`}>
-                  <role.icon className={`h-5 w-5 ${role.iconColor}`} />
+                  <role.icon size={20} className={role.iconColor} />
                 </div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-2">{role.name}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{role.description}</p>
@@ -520,7 +517,7 @@ export default function LandingPage() {
               "White-label enterprise branding",
             ].map((item) => (
               <div key={item} className="flex items-start gap-3">
-                <CheckCircleSolid className="h-5 w-5 shrink-0 text-indigo-600 mt-0.5" />
+                <CheckCircle size={20} className="shrink-0 text-indigo-600 mt-0.5" />
                 <span className="text-sm text-gray-700 leading-relaxed">{item}</span>
               </div>
             ))}
@@ -560,7 +557,7 @@ export default function LandingPage() {
                   className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50 transition-colors flex items-center gap-2"
                 >
                   Request early access
-                  <ArrowRightIcon className="h-4 w-4" />
+                  <ArrowRight size={16} />
                 </button>
               )}
             </RequestAccessModal>
@@ -582,7 +579,7 @@ export default function LandingPage() {
             <div className="flex-shrink-0">
               <Link href="/landing" className="flex items-center gap-2.5">
                 <div className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-600">
-                  <BoltIcon className="h-3.5 w-3.5 text-white" />
+                  <Zap size={14} className="text-white" />
                 </div>
                 <span className="text-sm font-semibold text-white">Intellios</span>
               </Link>

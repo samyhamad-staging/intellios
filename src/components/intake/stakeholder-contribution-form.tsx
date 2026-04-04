@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FormField } from "@/components/ui/form-field";
 import { ContributionDomain, StakeholderContribution } from "@/lib/types/intake";
 
 // ── Domain config ─────────────────────────────────────────────────────────────
@@ -215,7 +216,7 @@ export function StakeholderContributionForm({ sessionId, onSubmitted, onCancel }
     <div className="space-y-4">
       {/* Domain selector */}
       <div>
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+        <p className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-2">
           Select your domain
         </p>
         <div className="grid grid-cols-2 gap-1.5">
@@ -228,7 +229,7 @@ export function StakeholderContributionForm({ sessionId, onSubmitted, onCancel }
                 className={`px-2.5 py-1.5 rounded text-xs font-medium border transition-colors text-left ${
                   selectedDomain === domain
                     ? "bg-violet-600 text-white border-violet-600"
-                    : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+                    : "bg-surface text-text border-border hover:bg-surface-raised hover:border-border"
                 }`}
               >
                 {dc.label}
@@ -241,22 +242,20 @@ export function StakeholderContributionForm({ sessionId, onSubmitted, onCancel }
       {/* Domain fields */}
       {config && selectedDomain && (
         <div className="space-y-3">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-text-secondary">
             All fields are optional. Fill in the requirements that apply.
           </p>
           {config.fields.map((field) => (
-            <div key={field.key}>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                {field.label}
-              </label>
+            <FormField key={field.key} label={field.label} htmlFor={`field-${field.key}`}>
               <textarea
+                id={`field-${field.key}`}
                 value={fields[field.key] ?? ""}
                 onChange={(e) => handleFieldChange(field.key, e.target.value)}
                 placeholder={field.placeholder}
                 rows={2}
-                className="w-full text-xs border border-gray-200 rounded px-2.5 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-violet-400 focus:border-violet-300 placeholder:text-gray-300"
+                className="w-full text-xs border border-border rounded px-2.5 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-violet-400 focus:border-violet-300 placeholder:text-text-disabled"
               />
-            </div>
+            </FormField>
           ))}
 
           {error && (
@@ -274,7 +273,7 @@ export function StakeholderContributionForm({ sessionId, onSubmitted, onCancel }
             {onCancel && (
               <button
                 onClick={onCancel}
-                className="text-xs text-gray-400 hover:text-gray-700 transition-colors px-1"
+                className="text-xs text-text-tertiary hover:text-text transition-colors px-1"
               >
                 Cancel
               </button>

@@ -66,7 +66,7 @@ export function RefinementChat({ blueprintId, onBlueprintUpdated }: Props) {
       >
         {!hasMessages && (
           <div className="flex items-center justify-center h-full">
-            <p className="text-sm text-gray-400 text-center">
+            <p className="text-sm text-text-secondary text-center">
               Describe a change and Claude will refine the blueprint.
               <br />
               <span className="text-xs">e.g. &ldquo;Add a rate limit of 50 requests per minute&rdquo;</span>
@@ -94,8 +94,8 @@ export function RefinementChat({ blueprintId, onBlueprintUpdated }: Props) {
         {/* Streaming indicator */}
         {isStreaming && (
           <div className="flex justify-start">
-            <div className="flex items-center gap-1.5 rounded-2xl border border-gray-200 bg-white px-4 py-3">
-              <span className="text-xs text-gray-400">Refining</span>
+            <div className="flex items-center gap-1.5 rounded-2xl border border-border bg-surface px-4 py-3">
+              <span className="text-xs text-text-secondary">Refining</span>
               <span className="flex gap-0.5">
                 {[0, 1, 2].map((i) => (
                   <span

@@ -4,6 +4,8 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { Cpu } from "lucide-react";
+import { FormField } from "@/components/ui/form-field";
+import { Heading, Subheading } from "@/components/catalyst";
 
 function LoginForm() {
   const router = useRouter();
@@ -127,7 +129,7 @@ function LoginForm() {
             />
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-white">Intellios</h1>
+            <Heading level={1} className="tracking-tight text-white">Intellios</Heading>
             <p className="mt-0.5 font-mono text-2xs tracking-widest text-indigo-400/60 uppercase">
               Enterprise Agent Factory
             </p>
@@ -148,14 +150,11 @@ function LoginForm() {
         >
           <div className="mb-6">
             <p className="mb-1 font-mono text-2xs uppercase tracking-widest text-indigo-400/50">Authentication</p>
-            <h2 className="text-lg font-semibold text-white">Sign in to your account</h2>
+            <Subheading level={2} className="text-white">Sign in to your account</Subheading>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="mb-1.5 block font-mono text-2xs uppercase tracking-wide text-gray-500">
-                Email address
-              </label>
+            <FormField label="Email address" htmlFor="email">
               <input
                 id="email"
                 type="email"
@@ -163,10 +162,10 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-text-tertiary focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
                 placeholder="you@intellios.dev"
               />
-            </div>
+            </FormField>
 
             {/* SSO detection */}
             {ssoEnabled && (
@@ -186,10 +185,7 @@ function LoginForm() {
             )}
 
             {!ssoEnabled && (
-              <div>
-                <label htmlFor="password" className="mb-1.5 block font-mono text-2xs uppercase tracking-wide text-gray-500">
-                  Password
-                </label>
+              <FormField label="Password" htmlFor="password">
                 <input
                   id="password"
                   type="password"
@@ -197,9 +193,9 @@ function LoginForm() {
                   required={!ssoEnabled}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-text-tertiary focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
                 />
-              </div>
+              </FormField>
             )}
 
             {/* P2-57: Remember this device */}

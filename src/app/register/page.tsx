@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Cpu } from "lucide-react";
 import { RegisterForm } from "@/components/auth/register-form";
+import { Heading } from "@/components/catalyst";
 
 export const metadata = { title: "Create Account — Intellios" };
 
@@ -45,7 +46,7 @@ export default function RegisterPage() {
             />
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-white">Intellios</h1>
+            <Heading level={1} className="tracking-tight text-white">Intellios</Heading>
             <p className="mt-0.5 font-mono text-2xs tracking-widest text-indigo-400/60 uppercase">
               Enterprise Agent Factory
             </p>

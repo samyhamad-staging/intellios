@@ -9,7 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { chartColors, chartFontSize, chartGridColor, chartTextColor } from "@/lib/chart-tokens";
+import { chartColors, chartFontSize, chartGridColor, chartTextColor, chartMargins } from "@/lib/chart-tokens";
 
 export interface LineChartDataItem {
   x: string;
@@ -35,7 +35,7 @@ export function LineChart({
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <RechartsLineChart data={chartData} margin={{ top: 4, right: 4, bottom: 4, left: -20 }}>
+      <RechartsLineChart data={chartData} margin={chartMargins.default}>
         {showGrid && (
           <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
         )}

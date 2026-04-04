@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { ArrowRight, X, CheckCircle } from "lucide-react";
+import { FormField } from "@/components/ui/form-field";
 
 const ROLE_OPTIONS = [
   { value: "architect",        label: "AI / ML Engineer" },
@@ -86,14 +86,14 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
               className="absolute right-4 top-4 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
               aria-label="Close"
             >
-              <XMarkIcon className="h-4 w-4" />
+              <X size={16} />
             </button>
 
             {submitted ? (
               /* ── Success state ── */
               <div className="flex flex-col items-center gap-4 py-6 text-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100">
-                  <CheckCircleIcon className="h-8 w-8 text-indigo-600" />
+                  <CheckCircle size={32} className="text-indigo-600" />
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">You&apos;re on the list</h2>
@@ -122,10 +122,7 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Email */}
-                  <div>
-                    <label htmlFor="ra-email" className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                      Work email <span className="text-red-500">*</span>
-                    </label>
+                  <FormField label="Work email" htmlFor="ra-email" required>
                     <input
                       id="ra-email"
                       type="email"
@@ -135,13 +132,10 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
                       placeholder="you@company.com"
                       className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-colors"
                     />
-                  </div>
+                  </FormField>
 
                   {/* Company */}
-                  <div>
-                    <label htmlFor="ra-company" className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                      Company <span className="text-red-500">*</span>
-                    </label>
+                  <FormField label="Company" htmlFor="ra-company" required>
                     <input
                       id="ra-company"
                       type="text"
@@ -151,13 +145,10 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
                       placeholder="Acme Corp"
                       className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-colors"
                     />
-                  </div>
+                  </FormField>
 
                   {/* Role */}
-                  <div>
-                    <label htmlFor="ra-role" className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                      Your role
-                    </label>
+                  <FormField label="Your role" htmlFor="ra-role">
                     <select
                       id="ra-role"
                       value={role}
@@ -169,13 +160,10 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
                         <option key={o.value} value={o.value}>{o.label}</option>
                       ))}
                     </select>
-                  </div>
+                  </FormField>
 
                   {/* Message */}
-                  <div>
-                    <label htmlFor="ra-message" className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                      What are you looking to build?
-                    </label>
+                  <FormField label="What are you looking to build?" htmlFor="ra-message">
                     <textarea
                       id="ra-message"
                       value={message}
@@ -184,7 +172,7 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
                       placeholder="e.g. Automated underwriting agents with SR 11-7 compliance…"
                       className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-colors"
                     />
-                  </div>
+                  </FormField>
 
                   {error && (
                     <p className="text-xs text-red-600">{error}</p>
@@ -198,7 +186,7 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
                     {submitting ? "Submitting…" : (
                       <>
                         Request access
-                        <ArrowRightIcon className="h-4 w-4" />
+                        <ArrowRight size={16} />
                       </>
                     )}
                   </button>

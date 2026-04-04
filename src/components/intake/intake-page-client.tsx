@@ -111,7 +111,7 @@ function DuplicateSessionButton({ sessionId }: { sessionId: string }) {
       onClick={handleDuplicate}
       title="Duplicate session"
       disabled={state === "loading"}
-      className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 hover:border-violet-300 hover:text-violet-600 disabled:opacity-50 transition-colors shadow-sm"
+      className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-surface text-text-tertiary hover:border-violet-300 hover:text-violet-600 disabled:opacity-50 transition-colors shadow-sm"
     >
       {state === "loading" ? (
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
@@ -371,7 +371,7 @@ export function IntakePageClient({ sessions }: IntakePageClientProps) {
   const currentList = activeTab === "active" ? filteredActive : filteredCompleted;
 
   return (
-    <div className="px-6 py-6">
+    <div className="max-w-screen-2xl mx-auto w-full px-6 py-6">
 
       {/* Tab bar + search row */}
       <div className="mb-4 flex items-center justify-between gap-4">

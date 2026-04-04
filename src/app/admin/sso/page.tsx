@@ -13,9 +13,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Heading, Subheading } from "@/components/catalyst/heading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { SkeletonList } from "@/components/ui/skeleton";
+import { Tooltip } from "@/components/ui/tooltip";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { FormField, FormSection } from "@/components/ui/form-field";
 import type { EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 
@@ -25,35 +29,18 @@ const ROLES = ["architect", "reviewer", "compliance_officer", "admin", "viewer"]
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-      <div className="border-b border-gray-100 bg-gray-50 px-5 py-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{title}</p>
+    <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="border-b border-border-subtle bg-surface-raised px-5 py-3">
+        <SectionHeading>{title}</SectionHeading>
       </div>
       <div className="p-5 space-y-4">{children}</div>
     </div>
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      {hint && <p className="text-xs text-gray-400 mb-1.5">{hint}</p>}
-      {children}
-    </div>
-  );
-}
 
 const inputCls =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 font-mono";
+  "w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 font-mono";
 
 export default function AdminSsoPage() {
   const [sso, setSso] = useState<SsoSettings>(DEFAULT_ENTERPRISE_SETTINGS.sso);
@@ -110,26 +97,26 @@ export default function AdminSsoPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-surface-raised p-6">
         <div className="max-w-2xl mx-auto"><SkeletonList rows={4} height="h-16" /></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-surface-raised p-6">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Single Sign-On (SSO)</h1>
-            <p className="mt-0.5 text-sm text-gray-500">
+            <Heading level={1}>Single Sign-On (SSO)</Heading>
+            <p className="mt-0.5 text-sm text-text-secondary">
               Configure OIDC federation for your enterprise identity provider.
             </p>
           </div>
           <Link
             href="/admin/settings"
-            className="text-xs text-gray-500 hover:text-gray-700 underline underline-offset-2"
+            className="text-xs text-text-secondary hover:text-text underline underline-offset-2"
           >
             ← Settings
           </Link>
@@ -161,10 +148,10 @@ export default function AdminSsoPage() {
         <Section title="SSO Status">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-800">
+              <p className="text-sm font-medium text-text">
                 {sso.enabled ? "SSO enabled" : "SSO disabled"}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-text-tertiary mt-0.5">
                 When enabled, users with a matching email domain will see the SSO login option.
               </p>
             </div>
@@ -177,8 +164,8 @@ export default function AdminSsoPage() {
         </Section>
 
         {/* IdP configuration */}
-        <Section title="Identity Provider">
-          <Field label="Protocol">
+        <FormSection title="Identity Provider">
+          <FormField label="Protocol" htmlFor="protocol">
             <Select
               value={sso.protocol}
               onValueChange={(v) => setSso((s) => ({ ...s, protocol: v as "oidc" | "saml" }))}
@@ -191,41 +178,46 @@ export default function AdminSsoPage() {
                 <SelectItem value="saml">SAML 2.0 — requires additional server setup</SelectItem>
               </SelectContent>
             </Select>
-          </Field>
+          </FormField>
 
-          <Field
+          <FormField
             label="Issuer / Discovery URL"
-            hint={
+            htmlFor="issuer"
+            description={
               sso.protocol === "oidc"
                 ? "OIDC discovery base URL, e.g. https://login.microsoftonline.com/{tenant}/v2.0"
                 : "SAML metadata URL, e.g. https://idp.example.com/saml/metadata"
             }
           >
             <input
+              id="issuer"
               type="url"
               value={sso.issuer}
               onChange={(e) => setSso((s) => ({ ...s, issuer: e.target.value }))}
               placeholder="https://login.microsoftonline.com/..."
               className={inputCls}
             />
-          </Field>
+          </FormField>
 
           {sso.protocol === "oidc" && (
             <>
-              <Field label="Client ID" hint="Application (client) ID registered with your IdP">
+              <FormField label="Client ID" htmlFor="clientId" description="Application (client) ID registered with your IdP">
                 <input
+                  id="clientId"
                   type="text"
                   value={sso.clientId}
                   onChange={(e) => setSso((s) => ({ ...s, clientId: e.target.value }))}
                   className={inputCls}
                 />
-              </Field>
+              </FormField>
 
-              <Field
+              <FormField
                 label="Client Secret"
-                hint='Stored encrypted. Shows "••••••••" when set — leave as-is to keep existing secret.'
+                htmlFor="clientSecret"
+                description='Stored encrypted. Shows "••••••••" when set — leave as-is to keep existing secret.'
               >
                 <input
+                  id="clientSecret"
                   type="password"
                   value={sso.clientSecret}
                   onChange={(e) => setSso((s) => ({ ...s, clientSecret: e.target.value }))}
@@ -233,29 +225,28 @@ export default function AdminSsoPage() {
                   autoComplete="new-password"
                   className={inputCls}
                 />
-              </Field>
+              </FormField>
             </>
           )}
 
-          <Field
+          <FormField
             label="Email Domain"
-            hint='Users with this domain see the SSO button on login. e.g. "acme.com"'
+            htmlFor="emailDomain"
+            description='Users with this domain see the SSO button on login. e.g. "acme.com"'
           >
             <input
+              id="emailDomain"
               type="text"
               value={sso.emailDomain}
               onChange={(e) => setSso((s) => ({ ...s, emailDomain: e.target.value.toLowerCase() }))}
               placeholder="acme.com"
               className={inputCls}
             />
-          </Field>
-        </Section>
+          </FormField>
+        </FormSection>
 
         {/* Claim mapping */}
-        <Section title="Attribute Mapping">
-          <p className="text-xs text-gray-400">
-            Override the default OIDC claim names if your IdP uses non-standard attributes.
-          </p>
+        <FormSection title="Attribute Mapping" description="Override the default OIDC claim names if your IdP uses non-standard attributes.">
           {(
             [
               { key: "email", label: "Email claim" },
@@ -263,8 +254,9 @@ export default function AdminSsoPage() {
               { key: "groups", label: "Groups claim" },
             ] as const
           ).map(({ key, label }) => (
-            <Field key={key} label={label}>
+            <FormField key={key} label={label} htmlFor={`mapping-${key}`}>
               <input
+                id={`mapping-${key}`}
                 type="text"
                 value={sso.attributeMapping[key]}
                 onChange={(e) =>
@@ -275,13 +267,13 @@ export default function AdminSsoPage() {
                 }
                 className={inputCls}
               />
-            </Field>
+            </FormField>
           ))}
-        </Section>
+        </FormSection>
 
         {/* Group → role mapping (H2-3.2) */}
         <Section title="Group → Role Mapping">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-text-tertiary">
             Map IdP group names to Intellios roles. Users not in any listed group receive the
             default role below.
           </p>
@@ -298,7 +290,7 @@ export default function AdminSsoPage() {
                     )
                   }
                   placeholder="IdP group name"
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-mono focus:border-violet-500 focus:outline-none"
+                  className="flex-1 rounded-lg border border-border px-3 py-1.5 text-sm font-mono focus:border-violet-500 focus:outline-none"
                 />
                 <Select
                   value={row.role}
@@ -313,14 +305,16 @@ export default function AdminSsoPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <button
-                  onClick={() => setGroupRows((rows) => rows.filter((_, j) => j !== i))}
-                  className="text-gray-400 hover:text-red-500 text-lg leading-none px-1"
-                  title="Remove"
-                  aria-label="Remove group mapping"
-                >
-                  ×
-                </button>
+                <Tooltip content="Remove mapping">
+                  <button
+                    onClick={() => setGroupRows((rows) => rows.filter((_, j) => j !== i))}
+                    className="text-text-tertiary hover:text-red-500 text-lg leading-none px-1"
+                    title="Remove"
+                    aria-label="Remove group mapping"
+                  >
+                    ×
+                  </button>
+                </Tooltip>
               </div>
             ))}
           </div>
@@ -332,7 +326,7 @@ export default function AdminSsoPage() {
             + Add mapping
           </button>
 
-          <Field label="Default role" hint="Assigned to users not matched by any group mapping above">
+          <FormField label="Default role" htmlFor="defaultRole" description="Assigned to users not matched by any group mapping above">
             <Select
               value={sso.defaultRole}
               onValueChange={(v) => setSso((s) => ({ ...s, defaultRole: v }))}
@@ -346,7 +340,7 @@ export default function AdminSsoPage() {
                 ))}
               </SelectContent>
             </Select>
-          </Field>
+          </FormField>
         </Section>
 
         {/* Save / Test */}
@@ -362,7 +356,7 @@ export default function AdminSsoPage() {
           <div className="flex gap-3">
             <Link
               href="/admin/settings"
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              className="rounded-lg border border-border px-4 py-2 text-sm text-text hover:bg-surface-raised"
             >
               Cancel
             </Link>
@@ -383,40 +377,42 @@ export default function AdminSsoPage() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           onClick={(e) => { if (e.target === e.currentTarget) setTestModalOpen(false); }}
         >
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-2xl">
             {/* Header */}
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Test SSO Configuration</h2>
-                <p className="mt-0.5 text-xs text-gray-500">
+                <Heading level={2} className="text-base">Test SSO Configuration</Heading>
+                <p className="mt-0.5 text-xs text-text-secondary">
                   Opens your IdP login in a new window. Results are reported here.
                 </p>
               </div>
-              <button
-                onClick={() => setTestModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-                aria-label="Close"
-              >
-                ×
-              </button>
+              <Tooltip content="Close">
+                <button
+                  onClick={() => setTestModalOpen(false)}
+                  className="text-text-tertiary hover:text-text-secondary text-xl leading-none"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </Tooltip>
             </div>
 
             {/* Config preview */}
-            <div className="mb-5 rounded-lg border border-gray-100 bg-gray-50 p-4 space-y-2 text-xs">
+            <div className="mb-5 rounded-lg border border-border-subtle bg-surface-raised p-4 space-y-2 text-xs">
               <div className="flex justify-between gap-2">
-                <span className="font-medium text-gray-500 uppercase tracking-wide">Protocol</span>
-                <span className="font-mono text-gray-800 uppercase">{sso.protocol}</span>
+                <SectionHeading className="text-xs">Protocol</SectionHeading>
+                <span className="font-mono text-text uppercase">{sso.protocol}</span>
               </div>
               <div className="flex justify-between gap-2">
-                <span className="font-medium text-gray-500 uppercase tracking-wide">Issuer</span>
-                <span className="font-mono text-gray-800 truncate max-w-[200px]" title={sso.issuer}>{sso.issuer || "—"}</span>
+                <SectionHeading className="text-xs">Issuer</SectionHeading>
+                <span className="font-mono text-text truncate max-w-[200px]" title={sso.issuer}>{sso.issuer || "—"}</span>
               </div>
               <div className="flex justify-between gap-2">
-                <span className="font-medium text-gray-500 uppercase tracking-wide">Domain</span>
-                <span className="font-mono text-gray-800">{sso.emailDomain || "—"}</span>
+                <SectionHeading className="text-xs">Domain</SectionHeading>
+                <span className="font-mono text-text">{sso.emailDomain || "—"}</span>
               </div>
               <div className="flex justify-between gap-2">
-                <span className="font-medium text-gray-500 uppercase tracking-wide">Status</span>
+                <SectionHeading className="text-xs">Status</SectionHeading>
                 <span className={`font-medium ${sso.enabled ? "text-green-600" : "text-amber-600"}`}>
                   {sso.enabled ? "Enabled" : "Disabled (save settings first)"}
                 </span>
@@ -453,7 +449,7 @@ export default function AdminSsoPage() {
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setTestModalOpen(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                className="rounded-lg border border-border px-4 py-2 text-sm text-text hover:bg-surface-raised"
               >
                 {testStatus === "success" || testStatus === "error" ? "Done" : "Cancel"}
               </button>

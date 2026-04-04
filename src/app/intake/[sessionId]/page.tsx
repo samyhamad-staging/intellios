@@ -12,6 +12,8 @@ import { IntakeContext, IntakePayload, StakeholderContribution, AgentType, Intak
 import type { IntakeTransparencyMetadata } from "@/lib/types/intake-transparency";
 import { computeDomainProgress } from "@/lib/intake/domains";
 import { computeReadinessScore } from "@/lib/intake/readiness";
+import { Heading } from "@/components/catalyst/heading";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { ChevronRight, LayoutGrid } from "lucide-react";
 
 /** Format a relative time string from an ISO date */
@@ -397,12 +399,21 @@ export default function IntakeSessionPage({
 
     return (
       <div className="flex h-screen flex-col">
-        <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-3">
-          <div>
-            <h1 className="text-lg font-semibold">Intellios</h1>
-            <p className="text-xs text-text-secondary">Agent Design Studio</p>
+        <header className="border-b border-border bg-surface">
+          <div className="px-6 py-2">
+            <Breadcrumb
+              items={[
+                { label: "Intake Sessions", href: "/intake" },
+                { label: agentDisplayName || sessionId },
+              ]}
+            />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between px-6 py-3">
+            <div>
+              <Heading level={1}>Intellios</Heading>
+              <p className="text-xs text-text-secondary">Agent Design Studio</p>
+            </div>
+            <div className="flex items-center gap-3">
             {/* Intake quality score chip: loading pulse → real chip with popover */}
             {intakeScoreLoading && !intakeScore ? (
               <div className="flex animate-pulse items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1">
@@ -477,6 +488,7 @@ export default function IntakeSessionPage({
             <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
               Complete
             </span>
+            </div>
           </div>
         </header>
         <IntakeReview
@@ -499,25 +511,18 @@ export default function IntakeSessionPage({
 
   return (
     <div className="flex h-screen flex-col">
-      {/* Header — Breadcrumb + Domain Progress Strip + Actions */}
+      {/* Header — Breadcrumb */}
+      <header className="border-b border-border bg-surface px-4 py-2">
+        <Breadcrumb
+          items={[
+            { label: "Intake Sessions", href: "/intake" },
+            { label: agentDisplayName || "New session" },
+          ]}
+        />
+      </header>
+
+      {/* Subheader — Domain Progress Strip + Actions */}
       <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-2.5 gap-3">
-
-        {/* Breadcrumb — "Design Studio › Agent Name" */}
-        <button
-          onClick={() => router.push("/intake")}
-          className="group flex items-center gap-1.5 shrink-0 min-w-0 rounded-lg px-2 py-1 -ml-2 hover:bg-surface-muted transition-colors"
-          title="Back to Design Studio"
-        >
-          <LayoutGrid size={13} className="text-text-tertiary shrink-0 group-hover:text-text-secondary transition-colors" />
-          <span className="text-xs font-medium text-text-secondary group-hover:text-text transition-colors whitespace-nowrap">
-            Design Studio
-          </span>
-          <ChevronRight size={12} className="text-border-strong shrink-0" />
-          <span className="text-xs text-text truncate max-w-[140px]">
-            {agentDisplayName ?? "New session"}
-          </span>
-        </button>
-
         {/* Domain Progress Strip — replaces stepper + classification bar */}
         <div className="flex-1 min-w-0">
           <DomainProgressStrip

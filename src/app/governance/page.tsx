@@ -4,7 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Shield, Plus, Download } from "lucide-react";
+import { Heading, Subheading } from "@/components/catalyst/heading";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
+import { TableToolbar, Pagination } from "@/components/ui/table-toolbar";
 import {
   ResponsiveContainer,
   BarChart,
@@ -85,7 +88,7 @@ const FRAMEWORK_COLORS: Record<string, string> = {
   "SR 11-7":       "bg-blue-50 text-blue-700 border-blue-200",
   "EU AI Act":     "bg-purple-50 text-purple-700 border-purple-200",
   "GDPR":          "bg-green-50 text-green-700 border-green-200",
-  "Best Practices":"bg-gray-50 text-gray-700 border-gray-200",
+  "Best Practices":"bg-surface-raised text-text border-border",
 };
 
 const POLICY_TYPE_COLORS: Record<string, string> = {
@@ -122,6 +125,8 @@ export default function GovernanceHubPage() {
   const [historyLoading, setHistoryLoading] = useState<Record<string, boolean>>({});
   const [simulatingId, setSimulatingId] = useState<string | null>(null);
   const [simResults, setSimResults] = useState<Record<string, SimResult>>({});
+  const [violationsSearchValue, setViolationsSearchValue] = useState("");
+  const [violationsCurrentPage, setViolationsCurrentPage] = useState(1);
 
   const loadPolicies = () =>
     fetch("/api/governance/policies")
@@ -266,6 +271,17 @@ export default function GovernanceHubPage() {
     .filter((a) => a.violationCount !== null && a.violationCount > 0)
     .sort((a, b) => (b.violationCount ?? 0) - (a.violationCount ?? 0));
 
+  // Filter violations list by search
+  const filteredViolations = agentsWithViolations.filter((agent) =>
+    (agent.name ?? agent.agentId).toLowerCase().includes(violationsSearchValue.toLowerCase()) ||
+    agent.agentId.toLowerCase().includes(violationsSearchValue.toLowerCase())
+  );
+
+  const VIOLATIONS_PER_PAGE = 10;
+  const totalViolationPages = Math.ceil(filteredViolations.length / VIOLATIONS_PER_PAGE);
+  const startViolationIdx = (violationsCurrentPage - 1) * VIOLATIONS_PER_PAGE;
+  const paginatedViolations = filteredViolations.slice(startViolationIdx, startViolationIdx + VIOLATIONS_PER_PAGE);
+
   // ── Export Compliance Report (P1-334) ────────────────────────────────────────
   // Generates a print-optimised HTML window from in-memory analytics data.
   // No new dependencies — the browser's native print dialog handles PDF export.
@@ -396,13 +412,13 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <Shield size={20} className="text-violet-600" />
-            <h1 className="text-xl font-semibold text-gray-900">Governance Hub</h1>
+            <Heading level={1}>Governance Hub</Heading>
           </div>
-          <p className="text-sm text-gray-500 pl-7">Policy coverage, violations, and compliance posture</p>
+          <p className="mt-0.5 text-sm text-text-secondary">Define and manage governance policies</p>
         </div>
         <Link
           href="/audit"
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+          className="rounded-lg border border-border px-3 py-1.5 text-sm text-text-secondary hover:border-border-strong hover:text-text transition-colors"
         >
           Audit Trail →
         </Link>
@@ -428,7 +444,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
               onClick={() =>
                 document.getElementById("template-packs")?.scrollIntoView({ behavior: "smooth", block: "start" })
               }
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text-secondary hover:border-border-strong hover:text-text transition-colors"
             >
               <Download size={13} />
               Import Pack
@@ -450,7 +466,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
           {!canViewAnalytics && (
             <Link
               href="/audit"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text-secondary hover:border-border-strong hover:text-text transition-colors"
             >
               Audit Trail →
             </Link>
@@ -498,12 +514,12 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
               onClick={() => setAnalyticsExpanded((v) => !v)}
               className="mb-4 flex w-full items-center justify-between group"
             >
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 group-hover:text-gray-700 transition-colors">
+              <Subheading level={2} className="text-sm uppercase tracking-wider text-text-secondary group-hover:text-text transition-colors">
                 Analytics
-              </h2>
+              </Subheading>
               <div className="flex items-center gap-3">
                 {!analyticsExpanded && !analyticsLoading && analytics && (
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-text-tertiary">
                     {analytics.validationPassRate != null ? `Pass rate: ${analytics.validationPassRate}%` : ""}
                     {analytics.validationPassRate != null && " · "}
                     {(() => {
@@ -514,11 +530,11 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                   </span>
                 )}
                 {analyticsExpanded && analyticsLoadedAt && (
-                  <span className="text-xs text-gray-400" title={analyticsLoadedAt.toLocaleString()}>
+                  <span className="text-xs text-text-tertiary" title={analyticsLoadedAt.toLocaleString()}>
                     Refreshed {analyticsLoadedAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 )}
-                <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors">
+                <span className="text-xs text-text-tertiary group-hover:text-text-secondary transition-colors">
                   {analyticsExpanded ? "▲ Collapse" : "▼ Expand"}
                 </span>
               </div>
@@ -528,7 +544,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
               <>
             {/* P2-344: Date range selector */}
             <div className="mb-4 flex items-center gap-2">
-              <span className="text-xs text-gray-400 font-medium">Period:</span>
+              <span className="text-xs text-text-tertiary font-medium">Period:</span>
               {([30, 90, 365] as const).map((d) => (
                 <button
                   key={d}
@@ -536,7 +552,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                   className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                     analyticsDays === d
                       ? "bg-indigo-600 text-white"
-                      : "border border-gray-200 bg-white text-gray-600 hover:border-indigo-300 hover:text-indigo-700"
+                      : "border border-border bg-surface text-text-secondary hover:border-indigo-300 hover:text-indigo-700"
                   }`}
                 >
                   {d === 365 ? "Last 365 days" : `Last ${d} days`}
@@ -587,7 +603,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                       ? "bg-amber-50 border-amber-200 text-amber-900"
                       : analytics?.validationPassRate != null
                       ? "bg-red-50 border-red-200 text-red-900"
-                      : "bg-white border-gray-200 text-gray-900",
+                      : "bg-surface border-border text-text",
                   subColor:
                     analytics?.validationPassRate != null && analytics.validationPassRate >= 80
                       ? "text-green-600"
@@ -595,7 +611,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                       ? "text-amber-600"
                       : analytics?.validationPassRate != null
                       ? "text-red-600"
-                      : "text-gray-400",
+                      : "text-text-tertiary",
                 },
                 {
                   label: "Avg Time to Approval",
@@ -607,8 +623,8 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                       : `${Math.round(analytics.avgTimeToApprovalHours / 24)}d`
                     : "N/A",
                   sub: "from review submission",
-                  color: "bg-white border-gray-200 text-gray-900",
-                  subColor: "text-gray-400",
+                  color: "bg-surface border-border text-text",
+                  subColor: "text-text-tertiary",
                 },
                 {
                   label: "Active Violations",
@@ -623,13 +639,13 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                     analytics &&
                     analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0) > 0
                       ? "bg-red-50 border-red-200 text-red-900"
-                      : "bg-white border-gray-200 text-gray-900",
+                      : "bg-surface border-border text-text",
                   subColor:
                     !analyticsLoading &&
                     analytics &&
                     analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0) > 0
                       ? "text-red-600"
-                      : "text-gray-400",
+                      : "text-text-tertiary",
                 },
               ].map(({ label, value, sub, color, subColor }) => (
                 <div key={label} className={`rounded-xl border p-5 ${color}`}>
@@ -643,12 +659,12 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
             {!analyticsLoading && analytics && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Monthly Submissions vs Approvals bar chart */}
-                <div className="rounded-xl border border-gray-200 bg-white p-5">
-                  <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <div className="rounded-xl border border-border bg-surface p-5">
+                  <SectionHeading className="mb-4">
                     Monthly Activity (last 6 months)
-                  </h3>
+                  </SectionHeading>
                   {analytics.monthlySubmissions.every((m) => m.count === 0) ? (
-                    <p className="text-center text-xs text-gray-400 py-8">
+                    <p className="text-center text-xs text-text-tertiary py-8">
                       No submission activity in the last 6 months
                     </p>
                   ) : (
@@ -680,12 +696,12 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                 {/* Right column: Top Violated Policies + Agent Status Distribution */}
                 <div className="space-y-6">
                   {/* Top Violated Policies */}
-                  <div className="rounded-xl border border-gray-200 bg-white p-5">
-                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  <div className="rounded-xl border border-border bg-surface p-5">
+                    <SectionHeading className="mb-3">
                       Top Violated Policies
-                    </h3>
+                    </SectionHeading>
                     {analytics.topViolatedPolicies.length === 0 ? (
-                      <p className="text-xs text-gray-400 py-2">
+                      <p className="text-xs text-text-tertiary py-2">
                         No active violations — all validated agents are clean
                       </p>
                     ) : (
@@ -695,7 +711,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                             key={p.policyName}
                             className="flex items-center justify-between text-sm"
                           >
-                            <span className="truncate text-gray-700 text-xs">{p.policyName}</span>
+                            <span className="truncate text-text text-xs">{p.policyName}</span>
                             <span className="ml-3 shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
                               {p.count} error{p.count === 1 ? "" : "s"}
                             </span>
@@ -707,11 +723,11 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
 
                   {/* Rule Violation Detail — which specific rules fail most, with affected blueprints */}
                   {analytics.topViolatedRules && analytics.topViolatedRules.length > 0 && (
-                    <div className="col-span-2 rounded-xl border border-gray-200 bg-white p-5">
-                      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    <div className="col-span-2 rounded-xl border border-border bg-surface p-5">
+                      <SectionHeading className="mb-3">
                         Violation Hotspots
-                      </h3>
-                      <p className="mb-3 text-xs text-gray-400">
+                      </SectionHeading>
+                      <p className="mb-3 text-xs text-text-tertiary">
                         Most frequently violated rules across active blueprints
                       </p>
                       <div className="space-y-2">
@@ -719,8 +735,8 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                           <div key={idx} className="rounded-lg border border-red-100 bg-red-50/50 p-3">
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0 flex-1">
-                                <p className="text-xs font-medium text-gray-800">{rule.policyName}</p>
-                                <p className="mt-0.5 text-xs text-gray-500 font-mono">{rule.field}</p>
+                                <p className="text-xs font-medium text-text">{rule.policyName}</p>
+                                <p className="mt-0.5 text-xs text-text-secondary font-mono">{rule.field}</p>
                               </div>
                               <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
                                 {rule.affectedCount} agent{rule.affectedCount === 1 ? "" : "s"}
@@ -728,12 +744,12 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                             </div>
                             <div className="mt-1.5 flex flex-wrap gap-1">
                               {rule.affectedBlueprints.map((name) => (
-                                <span key={name} className="rounded bg-white px-1.5 py-0.5 text-xs-tight text-gray-600 border border-gray-200">
+                                <span key={name} className="rounded bg-surface px-1.5 py-0.5 text-xs-tight text-text-secondary border border-border">
                                   {name}
                                 </span>
                               ))}
                               {rule.affectedCount > rule.affectedBlueprints.length && (
-                                <span className="text-xs-tight text-gray-400">
+                                <span className="text-xs-tight text-text-tertiary">
                                   +{rule.affectedCount - rule.affectedBlueprints.length} more
                                 </span>
                               )}
@@ -745,12 +761,12 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                   )}
 
                   {/* Agent Status Distribution */}
-                  <div className="rounded-xl border border-gray-200 bg-white p-5">
-                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  <div className="rounded-xl border border-border bg-surface p-5">
+                    <SectionHeading className="mb-3">
                       Agent Status Distribution
-                    </h3>
+                    </SectionHeading>
                     {Object.keys(analytics.agentStatusCounts).length === 0 ? (
-                      <p className="text-xs text-gray-400 py-2">No agents in registry</p>
+                      <p className="text-xs text-text-tertiary py-2">No agents in registry</p>
                     ) : (() => {
                           const STATUS_HEX: Record<string, string> = {
                             draft:      chartColors.gray,
@@ -789,7 +805,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                               </ResponsiveContainer>
                               <div className="flex flex-wrap justify-center gap-x-3 gap-y-1">
                                 {pieData.map((entry) => (
-                                  <span key={entry.status} className="flex items-center gap-1 text-xs text-gray-500 capitalize">
+                                  <span key={entry.status} className="flex items-center gap-1 text-xs text-text-secondary capitalize">
                                     <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: STATUS_HEX[entry.status] ?? chartColors.gray }} />
                                     {entry.name} ({entry.value})
                                   </span>
@@ -806,10 +822,10 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
 
             {analyticsLoading && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="h-64 animate-pulse rounded-xl bg-gray-100" />
+                <div className="h-64 animate-pulse rounded-xl bg-surface-muted" />
                 <div className="space-y-4">
-                  <div className="h-28 animate-pulse rounded-xl bg-gray-100" />
-                  <div className="h-32 animate-pulse rounded-xl bg-gray-100" />
+                  <div className="h-28 animate-pulse rounded-xl bg-surface-muted" />
+                  <div className="h-32 animate-pulse rounded-xl bg-surface-muted" />
                 </div>
               </div>
             )}
@@ -820,17 +836,17 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
 
         {/* ── Coverage Stats ──────────────────────────────────────────────── */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
+          <Subheading level={2} className="mb-4 text-sm uppercase tracking-wider text-text-secondary">
             Coverage Overview
-          </h2>
+          </Subheading>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               {
                 label: "Total Agents",
                 value: loading ? "–" : total,
                 sub: "in registry",
-                color: "bg-white border-gray-200 text-gray-900",
-                subColor: "text-gray-400",
+                color: "bg-surface border-border text-text",
+                subColor: "text-text-tertiary",
               },
               {
                 label: "Passing Governance",
@@ -845,8 +861,8 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                 sub: withErrors > 0 ? "need remediation" : "none",
                 color: withErrors > 0
                   ? "bg-red-50 border-red-200 text-red-900"
-                  : "bg-white border-gray-200 text-gray-900",
-                subColor: withErrors > 0 ? "text-red-600" : "text-gray-400",
+                  : "bg-surface border-border text-text",
+                subColor: withErrors > 0 ? "text-red-600" : "text-text-tertiary",
               },
               {
                 label: "Not Validated",
@@ -854,8 +870,8 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                 sub: notValidated > 0 ? "validate in Workbench" : "all validated",
                 color: notValidated > 0
                   ? "bg-amber-50 border-amber-200 text-amber-900"
-                  : "bg-white border-gray-200 text-gray-900",
-                subColor: notValidated > 0 ? "text-amber-600" : "text-gray-400",
+                  : "bg-surface border-border text-text",
+                subColor: notValidated > 0 ? "text-amber-600" : "text-text-tertiary",
               },
             ].map(({ label, value, sub, color, subColor }) => (
               <div key={label} className={`rounded-card border p-5 ${color}`}>
@@ -870,21 +886,32 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
         {/* ── Agents with violations ──────────────────────────────────────── */}
         {!loading && agentsWithViolations.length > 0 && (
           <section id="violations">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
+            <Subheading level={2} className="mb-4 text-sm uppercase tracking-wider text-text-secondary">
               Agents Requiring Attention ({agentsWithViolations.length})
-            </h2>
-            <div className="space-y-2">
-              {agentsWithViolations.map((agent) => (
+            </Subheading>
+            <div className="space-y-4">
+              <TableToolbar
+                searchPlaceholder="Search agents by name or ID…"
+                searchValue={violationsSearchValue}
+                onSearchChange={(val) => {
+                  setViolationsSearchValue(val);
+                  setViolationsCurrentPage(1);
+                }}
+                resultCount={filteredViolations.length}
+                resultLabel="agent"
+              />
+              <div className="space-y-2">
+                {paginatedViolations.map((agent) => (
                 <Link
                   key={agent.agentId}
                   href={`/registry/${agent.agentId}?tab=governance`}
-                  className="flex items-center justify-between rounded-lg border border-red-200 bg-white px-5 py-3 hover:border-red-400 transition-colors"
+                  className="flex items-center justify-between rounded-lg border border-red-200 bg-surface px-5 py-3 hover:border-red-400 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="truncate font-medium text-sm text-gray-900">
+                    <span className="truncate font-medium text-sm text-text">
                       {agent.name ?? "Unnamed Agent"}
                     </span>
-                    <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 capitalize">
+                    <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-secondary capitalize">
                       {agent.status.replace("_", " ")}
                     </span>
                   </div>
@@ -892,10 +919,18 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                     <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
                       {agent.violationCount} error{agent.violationCount === 1 ? "" : "s"}
                     </span>
-                    <span className="text-xs text-gray-400">View →</span>
+                    <span className="text-xs text-text-tertiary">View →</span>
                   </div>
                 </Link>
               ))}
+              </div>
+              {totalViolationPages > 1 && (
+                <Pagination
+                  currentPage={violationsCurrentPage}
+                  totalPages={totalViolationPages}
+                  onPageChange={setViolationsCurrentPage}
+                />
+              )}
             </div>
           </section>
         )}
@@ -914,9 +949,9 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
         {/* ── Policy library ──────────────────────────────────────────────── */}
         <section>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+            <Subheading level={2} className="text-sm uppercase tracking-wider text-text-secondary">
               Policy Library ({loading ? "…" : policies.length})
-            </h2>
+            </Subheading>
             {canManagePolicies && (
               <Link
                 href="/governance/policies/new"
@@ -930,14 +965,14 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
           {loading && (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 animate-pulse rounded-lg bg-gray-100" />
+                <div key={i} className="h-16 animate-pulse rounded-lg bg-surface-muted" />
               ))}
             </div>
           )}
 
           {!loading && policies.length === 0 && (
-            <div className="rounded-card border border-dashed border-gray-300 bg-white p-10 text-center">
-              <p className="text-sm text-gray-400">No governance policies defined.</p>
+            <div className="rounded-card border border-dashed border-border bg-surface p-10 text-center">
+              <p className="text-sm text-text-tertiary">No governance policies defined.</p>
               {canManagePolicies ? (
                 <Link
                   href="/governance/policies/new"
@@ -946,7 +981,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                   Create first policy
                 </Link>
               ) : (
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-text-tertiary">
                   Contact your administrator to define governance policies.
                 </p>
               )}
@@ -956,15 +991,15 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
           {!loading && policies.length > 0 && (
             <div className="space-y-2">
               {policies.map((policy) => (
-                <div key={policy.id} className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                <div key={policy.id} className="rounded-lg border border-border bg-surface overflow-hidden">
                   {/* Policy card row */}
                   <div className="flex items-start justify-between px-5 py-4">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm text-gray-900">{policy.name}</span>
+                        <span className="font-medium text-sm text-text">{policy.name}</span>
                         <span
                           className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${
-                            POLICY_TYPE_COLORS[policy.type] ?? "bg-gray-50 text-gray-600 border-gray-200"
+                            POLICY_TYPE_COLORS[policy.type] ?? "bg-surface-raised text-text-secondary border-border"
                           }`}
                         >
                           {policy.type.replace("_", " ")}
@@ -981,14 +1016,14 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                         )}
                       </div>
                       {policy.description && (
-                        <p className="mt-1 text-xs text-gray-500 line-clamp-2">{policy.description}</p>
+                        <p className="mt-1 text-xs text-text-secondary line-clamp-2">{policy.description}</p>
                       )}
                     </div>
                     <div className="shrink-0 ml-4 text-right space-y-1">
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-text-tertiary">
                         {Array.isArray(policy.rules) ? policy.rules.length : 0} rule{(Array.isArray(policy.rules) ? policy.rules.length : 0) === 1 ? "" : "s"}
                       </div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-text-tertiary">
                         {new Date(policy.createdAt).toLocaleDateString()}
                       </div>
                       <div className="flex items-center justify-end gap-3">
@@ -996,7 +1031,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                           <button
                             onClick={() => handlePreviewImpact(policy)}
                             disabled={simulatingId === policy.id}
-                            className="text-xs text-violet-600 hover:text-violet-800 disabled:text-gray-400 transition-colors"
+                            className="text-xs text-violet-600 hover:text-violet-800 disabled:text-text-tertiary transition-colors"
                             title="Simulate impact on approved/deployed agents"
                           >
                             {simulatingId === policy.id
@@ -1009,7 +1044,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                         {canManagePolicies && policy.policyVersion > 1 && (
                           <button
                             onClick={() => toggleHistory(policy.id)}
-                            className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                            className="text-xs text-text-secondary hover:text-text transition-colors"
                           >
                             {expandedHistoryId === policy.id ? "Hide history" : "History"}
                           </button>
@@ -1032,26 +1067,26 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                     const affected = sim.blueprints.filter((b) => b.status !== "no_change");
                     return (
                       <div className="border-t border-violet-100 bg-violet-50 px-5 py-4">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-violet-700 mb-3">
+                        <SectionHeading className="mb-3" style={{ color: "#6d28d9" }}>
                           Impact Preview — {sim.summary.total} agent{sim.summary.total !== 1 ? "s" : ""} checked
-                        </p>
+                        </SectionHeading>
                         {/* Summary stats */}
                         <div className="flex items-center gap-3 mb-3">
                           <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
                             sim.summary.newViolations > 0
                               ? "bg-red-50 border-red-200 text-red-700"
-                              : "bg-gray-50 border-gray-200 text-gray-500"
+                              : "bg-surface-raised border-border text-text-secondary"
                           }`}>
                             {sim.summary.newViolations} new violation{sim.summary.newViolations !== 1 ? "s" : ""}
                           </span>
                           <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
                             sim.summary.resolvedViolations > 0
                               ? "bg-green-50 border-green-200 text-green-700"
-                              : "bg-gray-50 border-gray-200 text-gray-500"
+                              : "bg-surface-raised border-border text-text-secondary"
                           }`}>
                             {sim.summary.resolvedViolations} resolved
                           </span>
-                          <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs font-medium text-gray-500">
+                          <span className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-xs font-medium text-text-secondary">
                             {sim.summary.noChange} no change
                           </span>
                         </div>
@@ -1071,14 +1106,14 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                                 </span>
                                 <Link
                                   href={`/registry/${b.agentId}`}
-                                  className="text-xs text-gray-700 hover:underline truncate"
+                                  className="text-xs text-text hover:underline truncate"
                                 >
                                   {b.agentName}
                                 </Link>
                               </div>
                             ))}
                             {affected.length > 5 && (
-                              <p className="text-xs text-gray-400 pt-1">+{affected.length - 5} more affected agents</p>
+                              <p className="text-xs text-text-tertiary pt-1">+{affected.length - 5} more affected agents</p>
                             )}
                           </div>
                         )}
@@ -1088,14 +1123,14 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
 
                   {/* Expandable version history */}
                   {expandedHistoryId === policy.id && (
-                    <div className="border-t border-gray-100 bg-gray-50 px-5 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                    <div className="border-t border-border-subtle bg-surface-raised px-5 py-3">
+                      <SectionHeading className="mb-2">
                         Version History
-                      </p>
+                      </SectionHeading>
                       {historyLoading[policy.id] ? (
-                        <div className="text-xs text-gray-400 py-2">Loading…</div>
+                        <div className="text-xs text-text-tertiary py-2">Loading…</div>
                       ) : (policyHistories[policy.id] ?? []).length === 0 ? (
-                        <div className="text-xs text-gray-400 py-2">No history available.</div>
+                        <div className="text-xs text-text-tertiary py-2">No history available.</div>
                       ) : (
                         <Table dense>
                           <TableHead>
@@ -1107,9 +1142,9 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                           </TableHead>
                           <TableBody>
                             {(policyHistories[policy.id] ?? []).map((entry) => (
-                              <TableRow key={entry.id}>
-                                <TableCell className="font-medium text-gray-600">v{entry.policyVersion}</TableCell>
-                                <TableCell className="text-gray-600">
+                              <TableRow key={entry.id} className="interactive-row">
+                                <TableCell className="font-medium text-text-secondary">v{entry.policyVersion}</TableCell>
+                                <TableCell className="text-text-secondary">
                                   {new Date(entry.createdAt).toLocaleDateString(undefined, {
                                     year: "numeric",
                                     month: "short",
@@ -1122,7 +1157,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                                       Active
                                     </span>
                                   ) : (
-                                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-gray-500">
+                                    <span className="rounded-full bg-surface-muted px-2 py-0.5 text-text-secondary">
                                       Superseded
                                     </span>
                                   )}
@@ -1145,10 +1180,10 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
           <section id="template-packs">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+                <Subheading level={2} className="text-sm uppercase tracking-wider text-text-secondary">
                   Compliance Starter Packs
-                </h2>
-                <p className="mt-0.5 text-xs text-gray-400">
+                </Subheading>
+                <p className="mt-0.5 text-xs text-text-tertiary">
                   Pre-built policy packs for common regulatory frameworks. Policies are created in your enterprise and can be edited after import.
                 </p>
               </div>
@@ -1158,32 +1193,32 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
               {templatePacks.map((pack) => (
                 <div
                   key={pack.id}
-                  className="rounded-xl border border-gray-200 bg-white p-5 flex flex-col gap-3"
+                  className="rounded-xl border border-border bg-surface p-5 flex flex-col gap-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm text-gray-900">{pack.name}</span>
+                        <span className="font-semibold text-sm text-text">{pack.name}</span>
                         <span
                           className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${
-                            FRAMEWORK_COLORS[pack.framework] ?? "bg-gray-50 text-gray-600 border-gray-200"
+                            FRAMEWORK_COLORS[pack.framework] ?? "bg-surface-raised text-text-secondary border-border"
                           }`}
                         >
                           {pack.framework}
                         </span>
                       </div>
-                      <p className="mt-1 text-xs text-gray-500 line-clamp-3">{pack.description}</p>
+                      <p className="mt-1 text-xs text-text-secondary line-clamp-3">{pack.description}</p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="text-2xl font-bold text-gray-900">{pack.policyCount}</div>
-                      <div className="text-xs text-gray-400">polic{pack.policyCount === 1 ? "y" : "ies"}</div>
+                      <div className="text-2xl font-bold text-text">{pack.policyCount}</div>
+                      <div className="text-xs text-text-tertiary">polic{pack.policyCount === 1 ? "y" : "ies"}</div>
                     </div>
                   </div>
                   {canManagePolicies && (
                     <button
                       onClick={() => applyPack(pack.id)}
                       disabled={importingPack === pack.id}
-                      className="mt-auto w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors disabled:opacity-50"
+                      className="mt-auto w-full rounded-lg border border-border px-3 py-2 text-sm font-medium text-text hover:border-border-strong hover:text-text transition-colors disabled:opacity-50"
                     >
                       {importingPack === pack.id ? "Importing…" : "Import Pack →"}
                     </button>
@@ -1239,10 +1274,10 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
         {/* ── Status breakdown ────────────────────────────────────────────── */}
         {!loading && Object.keys(statusGroups).length > 0 && (
           <section>
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
+            <Subheading level={2} className="mb-4 text-sm uppercase tracking-wider text-text-secondary">
               Compliance by Stage
-            </h2>
-            <div className="overflow-hidden rounded-card border border-gray-200 bg-white">
+            </Subheading>
+            <div className="overflow-hidden rounded-card border border-border bg-surface">
               <Table striped>
                 <TableHead>
                   <TableRow>
@@ -1254,20 +1289,20 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                 </TableHead>
                 <TableBody>
                   {Object.entries(statusGroups).map(([status, { count, withErrors: we }]) => (
-                    <TableRow key={status}>
-                      <TableCell className="font-medium text-gray-900 capitalize">
+                    <TableRow key={status} className="interactive-row">
+                      <TableCell className="font-medium text-text capitalize">
                         {status.replace("_", " ")}
                       </TableCell>
-                      <TableCell className="text-right text-gray-600">{count}</TableCell>
+                      <TableCell className="text-right text-text-secondary">{count}</TableCell>
                       <TableCell className="text-right">
                         {we > 0 ? (
                           <span className="font-medium text-red-600">{we}</span>
                         ) : (
-                          <span className="text-gray-400">—</span>
+                          <span className="text-text-tertiary">—</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <span className={count - we > 0 ? "text-green-600 font-medium" : "text-gray-400"}>
+                        <span className={count - we > 0 ? "text-green-600 font-medium" : "text-text-tertiary"}>
                           {count - we}
                         </span>
                       </TableCell>

@@ -173,12 +173,12 @@ interface AgentResult {
 }
 
 const STATUS_DOTS: Record<string, string> = {
-  draft: "bg-gray-400",
+  draft: "bg-text-tertiary",
   in_review: "bg-amber-400",
   approved: "bg-green-400",
   deployed: "bg-violet-400",
   rejected: "bg-red-400",
-  deprecated: "bg-gray-300",
+  deprecated: "bg-text-disabled",
 };
 
 // P2-584: Policy result shape
@@ -297,34 +297,34 @@ export function CommandPalette({ role, onClose }: Props) {
       />
 
       {/* Palette */}
-      <div className="fixed left-1/2 top-[20vh] z-50 w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl shadow-black/10 animate-in fade-in-0 zoom-in-95 duration-150">
+      <div className="fixed left-1/2 top-[20vh] z-50 w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl shadow-black/10 animate-in fade-in-0 zoom-in-95 duration-150">
         <Command
           label="Command palette"
           onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
           shouldFilter
         >
           {/* Search input */}
-          <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-3.5">
-            <Search size={15} className="shrink-0 text-gray-400" />
+          <div className="flex items-center gap-3 border-b border-border-subtle px-4 py-3.5">
+            <Search size={15} className="shrink-0 text-text-tertiary" />
             <Command.Input
               value={query}
               onValueChange={setQuery}
               placeholder="Search pages, agents, and policies…"
-              className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
+              className="flex-1 bg-transparent text-sm text-text placeholder-text-tertiary focus:outline-none"
             />
-            <kbd className="shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-2xs font-medium text-gray-400">
+            <kbd className="shrink-0 rounded border border-border bg-surface-raised px-1.5 py-0.5 text-2xs font-medium text-text-tertiary">
               ESC
             </kbd>
           </div>
 
           {/* Results */}
           <Command.List className="max-h-80 overflow-y-auto py-2">
-            <Command.Empty className="px-4 py-6 text-center text-sm text-gray-400">
+            <Command.Empty className="px-4 py-6 text-center text-sm text-text-tertiary">
               No results for &ldquo;{query}&rdquo;
             </Command.Empty>
 
             {Array.from(grouped.entries()).map(([section, items]) => (
-              <Command.Group key={section} heading={section} className="mb-1 [&_[cmdk-group-heading]]:mb-1 [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:pt-1 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-gray-400">
+              <Command.Group key={section} heading={section} className="mb-1 [&_[cmdk-group-heading]]:mb-1 [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:pt-1 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-text-tertiary">
                 {items.map((entry) => {
                   const Icon = entry.icon;
                   const searchValue = [entry.label, entry.description, ...entry.keywords].join(" ");
@@ -333,16 +333,16 @@ export function CommandPalette({ role, onClose }: Props) {
                       key={entry.href}
                       value={searchValue}
                       onSelect={() => navigate(entry.href)}
-                      className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 hover:bg-gray-50"
+                      className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 hover:bg-surface-raised"
                     >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-500 group-aria-selected:border-violet-200 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-raised text-text-secondary group-aria-selected:border-violet-200 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600">
                         <Icon size={14} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-800 group-aria-selected:text-violet-700">
+                        <p className="text-sm font-medium text-text group-aria-selected:text-violet-700">
                           {entry.label}
                         </p>
-                        <p className="truncate text-xs text-gray-400">{entry.description}</p>
+                        <p className="truncate text-xs text-text-tertiary">{entry.description}</p>
                       </div>
                     </Command.Item>
                   );
@@ -351,23 +351,23 @@ export function CommandPalette({ role, onClose }: Props) {
             ))}
 
             {agentResults.length > 0 && (
-              <Command.Group heading="Agents" className="mb-1 [&_[cmdk-group-heading]]:mb-1 [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:pt-1 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-gray-400">
+              <Command.Group heading="Agents" className="mb-1 [&_[cmdk-group-heading]]:mb-1 [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:pt-1 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-text-tertiary">
                 {agentResults.map((agent) => (
                   <Command.Item
                     key={agent.agentId}
                     value={[agent.name ?? "", agent.agentId, ...(agent.tags ?? [])].join(" ")}
                     onSelect={() => navigate(`/registry/${agent.agentId}`)}
-                    className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 hover:bg-gray-50"
+                    className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 hover:bg-surface-raised"
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-500 group-aria-selected:border-violet-200 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-raised text-text-secondary group-aria-selected:border-violet-200 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600">
                       <Bot size={14} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-800">
+                      <p className="text-sm font-medium text-text">
                         {agent.name ?? "Unnamed Agent"}
                       </p>
-                      <p className="truncate text-xs text-gray-400">
-                        <span className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOTS[agent.status] ?? "bg-gray-300"}`} />
+                      <p className="truncate text-xs text-text-tertiary">
+                        <span className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOTS[agent.status] ?? "bg-text-disabled"}`} />
                         {agent.status.replace("_", " ")} · v{agent.version}
                         {agent.tags?.length > 0 && ` · ${agent.tags.slice(0, 2).join(", ")}`}
                       </p>
@@ -379,22 +379,22 @@ export function CommandPalette({ role, onClose }: Props) {
 
             {/* P2-584: Policy search results */}
             {policyResults.length > 0 && (
-              <Command.Group heading="Policies" className="mb-1 [&_[cmdk-group-heading]]:mb-1 [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:pt-1 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-gray-400">
+              <Command.Group heading="Policies" className="mb-1 [&_[cmdk-group-heading]]:mb-1 [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:pt-1 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-text-tertiary">
                 {policyResults.map((policy) => (
                   <Command.Item
                     key={policy.id}
                     value={[policy.name, policy.type, policy.description ?? ""].join(" ")}
                     onSelect={() => navigate(`/governance?policy=${policy.id}`)}
-                    className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 hover:bg-gray-50"
+                    className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 hover:bg-surface-raised"
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-500 group-aria-selected:border-violet-200 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-raised text-text-secondary group-aria-selected:border-violet-200 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600">
                       <ShieldCheck size={14} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-800 group-aria-selected:text-violet-700">
+                      <p className="text-sm font-medium text-text group-aria-selected:text-violet-700">
                         {policy.name}
                       </p>
-                      <p className="truncate text-xs text-gray-400">
+                      <p className="truncate text-xs text-text-tertiary">
                         {POLICY_TYPE_LABELS[policy.type] ?? policy.type}
                         {policy.description && ` · ${policy.description.slice(0, 60)}`}
                       </p>
@@ -406,17 +406,17 @@ export function CommandPalette({ role, onClose }: Props) {
           </Command.List>
 
           {/* Footer hint */}
-          <div className="flex items-center gap-3 border-t border-gray-100 px-4 py-2">
-            <div className="flex items-center gap-1 text-2xs text-gray-400">
-              <kbd className="rounded border border-gray-200 bg-gray-50 px-1 py-0.5 font-medium">↑↓</kbd>
+          <div className="flex items-center gap-3 border-t border-border-subtle px-4 py-2">
+            <div className="flex items-center gap-1 text-2xs text-text-tertiary">
+              <kbd className="rounded border border-border bg-surface-raised px-1 py-0.5 font-medium">↑↓</kbd>
               <span>navigate</span>
             </div>
-            <div className="flex items-center gap-1 text-2xs text-gray-400">
-              <kbd className="rounded border border-gray-200 bg-gray-50 px-1 py-0.5 font-medium">↵</kbd>
+            <div className="flex items-center gap-1 text-2xs text-text-tertiary">
+              <kbd className="rounded border border-border bg-surface-raised px-1 py-0.5 font-medium">↵</kbd>
               <span>open</span>
             </div>
-            <div className="ml-auto flex items-center gap-1 text-2xs text-gray-400">
-              <kbd className="rounded border border-gray-200 bg-gray-50 px-1 py-0.5 font-medium">⌘K</kbd>
+            <div className="ml-auto flex items-center gap-1 text-2xs text-text-tertiary">
+              <kbd className="rounded border border-border bg-surface-raised px-1 py-0.5 font-medium">⌘K</kbd>
               <span>close</span>
             </div>
           </div>

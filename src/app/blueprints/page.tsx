@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { Button } from "@/components/catalyst/button";
+import { Heading } from "@/components/catalyst/heading";
+import { TableToolbar } from "@/components/ui/table-toolbar";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   FileText,
-  Search,
   Plus,
   ShieldCheck,
   ShieldAlert,
@@ -133,65 +136,37 @@ export default function BlueprintsPage() {
   }, [blueprints]);
 
   return (
-    <div className="px-6 py-6">
+    <div className="max-w-screen-2xl mx-auto w-full px-6 py-6">
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-text">Blueprint Studio</h1>
+          <Heading level={1}>Blueprint Studio</Heading>
           <p className="mt-0.5 text-sm text-text-secondary">
             All Agent Blueprint Packages across your enterprise
           </p>
         </div>
-        <Link
-          href="/intake"
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
-        >
+        <Button href="/intake" color="indigo">
           <Plus size={15} />
           New Blueprint
-        </Link>
+        </Button>
       </div>
 
-      {/* ── Search ──────────────────────────────────────────────────────── */}
-      <div className="relative mb-4">
-        <Search
-          size={15}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary"
+      {/* ── Toolbar with Search and Filter Chips ───────────────────── */}
+      <div className="mb-5">
+        <TableToolbar
+          searchPlaceholder="Search by name, tag, or ID…"
+          searchValue={search}
+          onSearchChange={setSearch}
+          filters={STATUS_TABS.map((tab) => ({
+            key: tab,
+            label: STATUS_LABELS[tab],
+            active: activeTab === tab,
+            count: counts[tab],
+          }))}
+          onFilterClick={(key) => setActiveTab(key as StatusTab)}
+          resultCount={filtered.length}
+          resultLabel="blueprint"
         />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, tag, or ID…"
-          className="w-full rounded-xl border border-border bg-surface py-2.5 pl-9 pr-4 text-sm text-text placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/20"
-        />
-      </div>
-
-      {/* ── Status tabs ─────────────────────────────────────────────────── */}
-      <div className="mb-5 flex gap-1 overflow-x-auto">
-        {STATUS_TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              activeTab === tab
-                ? "bg-primary/10 text-primary"
-                : "text-text-secondary hover:bg-surface-raised hover:text-text"
-            }`}
-          >
-            {STATUS_LABELS[tab]}
-            {counts[tab] > 0 && (
-              <span
-                className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                  activeTab === tab
-                    ? "bg-primary/15 text-primary"
-                    : "bg-surface-raised text-text-tertiary"
-                }`}
-              >
-                {counts[tab]}
-              </span>
-            )}
-          </button>
-        ))}
       </div>
 
       {/* ── Loading ──────────────────────────────────────────────────────── */}
@@ -212,34 +187,25 @@ export default function BlueprintsPage() {
 
       {/* ── Empty ────────────────────────────────────────────────────────── */}
       {!loading && !error && filtered.length === 0 && (
-        <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface px-8 py-12 text-center shadow-[var(--shadow-card)]">
-          {blueprints.length === 0 ? (
-            <>
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-surface-raised">
-                <FileText size={24} className="text-text-tertiary" />
-              </div>
-              <p className="mb-1 text-sm font-medium text-text">No blueprints yet</p>
-              <p className="mb-6 text-xs text-text-secondary">
-                Run an intake session to generate your first Agent Blueprint Package.
-              </p>
-              <Link
-                href="/intake"
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
-              >
+        blueprints.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            heading="No blueprints yet"
+            subtext="Run an intake session to generate your first Agent Blueprint Package."
+            action={
+              <Button href="/intake" color="indigo">
                 <Plus size={14} />
                 Create First Blueprint
-              </Link>
-            </>
-          ) : (
-            <>
-              <CheckCircle2 size={24} className="mb-3 text-text-tertiary" />
-              <p className="text-sm font-medium text-text">No results</p>
-              <p className="mt-1 text-xs text-text-secondary">
-                Try a different search term or status filter.
-              </p>
-            </>
-          )}
-        </div>
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={CheckCircle2}
+            heading="No results"
+            subtext="Try a different search term or status filter."
+          />
+        )
       )}
 
       {/* ── Blueprint list ────────────────────────────────────────────────── */}
@@ -254,7 +220,7 @@ export default function BlueprintsPage() {
               <Link
                 key={bp.id}
                 href={`/blueprints/${bp.id}`}
-                className={`block px-5 py-4 hover:bg-surface-raised transition-colors ${
+                className={`block px-5 py-4 interactive-row ${
                   i > 0 ? "border-t border-border" : ""
                 }`}
               >

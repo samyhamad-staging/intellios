@@ -5,6 +5,7 @@ import {
   Target, Cpu, GitBranch, Database, ShieldAlert, Lock, ScrollText,
   UserPlus, X, Check, Loader2,
 } from "lucide-react";
+import { FormField } from "@/components/ui/form-field";
 import type { IntakeTransparencyMetadata, DomainProgress } from "@/lib/types/intake-transparency";
 import type { AgentType, IntakeRiskTier } from "@/lib/types/intake";
 
@@ -386,19 +387,19 @@ function DomainTooltip({
 
   return (
     <div
-      className="fixed z-50 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 shadow-lg text-xs max-w-52 pointer-events-none"
+      className="fixed z-50 rounded-lg border border-border-strong bg-surface px-3 py-2.5 shadow-lg text-xs max-w-52 pointer-events-none"
       style={{ left: position.left, top: position.top, transform: "translateX(-50%)" }}
     >
       <div className="flex items-center gap-1.5 mb-1.5">
-        <Icon size={12} className="text-slate-400 shrink-0" />
-        <span className="font-semibold text-slate-100">{domain.label}</span>
+        <Icon size={12} className="text-text-tertiary shrink-0" />
+        <span className="font-semibold text-text">{domain.label}</span>
         {domain.required && (
           <span className="text-2xs text-red-400 font-mono">REQ</span>
         )}
       </div>
-      <p className="text-slate-400 font-mono text-2xs">{STATUS_LABELS[domain.status]}</p>
+      <p className="text-text-tertiary font-mono text-2xs">{STATUS_LABELS[domain.status]}</p>
       {domain.itemCount > 0 && (
-        <p className="text-slate-500 font-mono text-2xs mt-0.5">
+        <p className="text-text-secondary font-mono text-2xs mt-0.5">
           {domain.itemCount} {domain.itemCount === 1 ? "item" : "items"} captured
         </p>
       )}
@@ -407,7 +408,7 @@ function DomainTooltip({
           ▸ AI focusing here
         </p>
       ) : (
-        <p className="text-slate-500 font-mono text-2xs mt-1">
+        <p className="text-text-secondary font-mono text-2xs mt-1">
           Click to focus here
         </p>
       )}
@@ -511,45 +512,45 @@ function InviteStakeholderChip({ sessionId }: { sessionId: string }) {
               </p>
 
               {/* Email */}
-              <div>
-                <label className="mb-1 block text-2xs font-medium text-text-secondary uppercase tracking-wide">Email *</label>
+              <FormField label="Email" htmlFor="invite-email" required>
                 <input
+                  id="invite-email"
                   type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
                   placeholder="stakeholder@company.com"
                   className="w-full rounded-lg border border-border bg-surface-muted px-3 py-1.5 text-xs text-text placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
                 />
-              </div>
+              </FormField>
 
               {/* Name */}
-              <div>
-                <label className="mb-1 block text-2xs font-medium text-text-secondary uppercase tracking-wide">Name (optional)</label>
+              <FormField label="Name" htmlFor="invite-name" optional>
                 <input
+                  id="invite-name"
                   type="text" value={name} onChange={(e) => setName(e.target.value)}
                   placeholder="Jane Smith"
                   className="w-full rounded-lg border border-border bg-surface-muted px-3 py-1.5 text-xs text-text placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
                 />
-              </div>
+              </FormField>
 
               {/* Domain + RACI row */}
               <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="mb-1 block text-2xs font-medium text-text-secondary uppercase tracking-wide">Domain *</label>
+                <FormField label="Domain" htmlFor="invite-domain" required>
                   <select
+                    id="invite-domain"
                     value={domain} onChange={(e) => setDomain(e.target.value as typeof INVITE_DOMAINS[number])}
                     className="w-full rounded-lg border border-border bg-surface-muted px-2 py-1.5 text-xs text-text focus:border-primary focus:outline-none capitalize"
                   >
                     {INVITE_DOMAINS.map((d) => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
                   </select>
-                </div>
-                <div>
-                  <label className="mb-1 block text-2xs font-medium text-text-secondary uppercase tracking-wide">RACI Role</label>
+                </FormField>
+                <FormField label="RACI Role" htmlFor="invite-raci">
                   <select
+                    id="invite-raci"
                     value={raciRole} onChange={(e) => setRaciRole(e.target.value as typeof RACI_ROLES[number])}
                     className="w-full rounded-lg border border-border bg-surface-muted px-2 py-1.5 text-xs text-text focus:border-primary focus:outline-none capitalize"
                   >
                     {RACI_ROLES.map((r) => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
                   </select>
-                </div>
+                </FormField>
               </div>
 
               {errorMsg && <p className="text-2xs text-red-600">{errorMsg}</p>}

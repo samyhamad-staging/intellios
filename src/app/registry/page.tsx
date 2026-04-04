@@ -4,10 +4,13 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { Heading } from "@/components/catalyst/heading";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Search, Bot, ChevronRight, Copy, X, Inbox, GitBranch } from "lucide-react";
+import { Tooltip } from "@/components/ui/tooltip";
+import { TableToolbar } from "@/components/ui/table-toolbar";
+import { Bot, ChevronRight, Copy, Inbox, GitBranch } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -68,7 +71,7 @@ const HEALTH_CLASSES: Record<HealthColor, string> = {
   green: "bg-emerald-500",
   amber: "bg-amber-400",
   red:   "bg-red-500",
-  gray:  "bg-gray-300",
+  gray:  "bg-text-tertiary",
 };
 
 function HealthPulse({ violationCount, warningCount }: { violationCount: number | null; warningCount: number | null }) {
@@ -213,14 +216,12 @@ export default function RegistryPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="px-6 py-6">
+    <div className="max-w-screen-2xl mx-auto w-full px-6 py-6">
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-text">Registry</h1>
-          <p className="mt-0.5 text-sm text-text-secondary">
-            {loading ? "Loading…" : `${total} ${activeTab === "agents" ? `agent${total !== 1 ? "s" : ""}` : `workflow${total !== 1 ? "s" : ""}`} total`}
-          </p>
+          <Heading level={1}>Registry</Heading>
+          <p className="mt-0.5 text-sm text-text-secondary">Manage deployed agents and workflows</p>
         </div>
       </div>
 
@@ -232,47 +233,24 @@ export default function RegistryPage() {
         </TabsList>
       </Tabs>
 
-      {/* Search + filter bar */}
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="relative max-w-sm flex-1">
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={`Search ${activeTab}…`}
-            className="w-full rounded-lg border border-border bg-surface py-2 pl-8 pr-8 text-sm placeholder:text-text-tertiary shadow-sm focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/10"
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery("")} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-              <X size={13} />
-            </button>
-          )}
-        </div>
-
-        {/* Status pills */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <button
-            onClick={() => setStatusFilter("")}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${!statusFilter ? "bg-violet-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
-          >
-            All
-          </button>
-          {statuses.map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(statusFilter === s ? "" : s)}
-              title={STATUS_DESCRIPTIONS[s]}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${statusFilter === s ? "bg-violet-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
-            >
-              {STATUS_LABELS[s]}
-            </button>
-          ))}
-        </div>
-
-        {hasFilters && !loading && (
-          <span className="text-xs text-gray-400">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</span>
-        )}
+      {/* Search + filter toolbar */}
+      <div className="mb-6">
+        <TableToolbar
+          searchPlaceholder={`Search ${activeTab}…`}
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          filters={[
+            { key: "_all_", label: "All", active: !statusFilter },
+            ...statuses.map((s) => ({
+              key: s,
+              label: STATUS_LABELS[s],
+              active: statusFilter === s,
+            })),
+          ]}
+          onFilterClick={(key) => setStatusFilter(key === "_all_" ? "" : key)}
+          resultCount={!loading && filtered.length > 0 ? filtered.length : undefined}
+          resultLabel={activeTab === "agents" ? "agent" : "workflow"}
+        />
       </div>
 
       {loading && <SkeletonList rows={4} />}
@@ -314,7 +292,7 @@ export default function RegistryPage() {
             <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
               {filteredAgents.map((agent, i) => (
                 <div key={agent.agentId} className={`${i > 0 ? "border-t border-border" : ""}`}>
-                  <Link href={`/registry/${agent.agentId}`} className="flex items-center gap-4 px-5 py-4 hover:bg-surface-raised transition-colors">
+                  <Link href={`/registry/${agent.agentId}`} className="flex items-center gap-4 px-5 py-4 interactive-row">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-text-tertiary">
                       <Bot size={15} />
                     </div>
@@ -340,8 +318,8 @@ export default function RegistryPage() {
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       {agent.monthlyCostUsd !== null && agent.monthlyCostUsd > 0 && (
-                        <span className="text-xs text-gray-500 hidden sm:block">
-                          ${agent.monthlyCostUsd.toFixed(4)}<span className="text-gray-400">/mo</span>
+                        <span className="text-xs text-text-secondary hidden sm:block">
+                          ${agent.monthlyCostUsd.toFixed(4)}<span className="text-text-tertiary">/mo</span>
                         </span>
                       )}
                       <button
@@ -386,19 +364,19 @@ export default function RegistryPage() {
           )}
 
           {filteredWflows.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
               {filteredWflows.map((wf, i) => (
-                <div key={wf.id} className={`${i > 0 ? "border-t border-gray-100" : ""}`}>
-                  <Link href={`/registry/workflow/${wf.id}`} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
+                <div key={wf.id} className={`${i > 0 ? "border-t border-border-subtle" : ""}`}>
+                  <Link href={`/registry/workflow/${wf.id}`} className="flex items-center gap-4 px-5 py-4 interactive-row">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-500">
                       <GitBranch size={15} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="truncate text-sm font-medium text-gray-900">{wf.name}</span>
+                        <span className="truncate text-sm font-medium text-text">{wf.name}</span>
                         <StatusBadge status={wf.status} />
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <div className="flex items-center gap-2 text-xs text-text-tertiary">
                         <span>v{wf.version}</span>
                         <span>·</span>
                         <span className="font-mono">{wf.id.slice(0, 8)}</span>
@@ -406,10 +384,10 @@ export default function RegistryPage() {
                         <span>{new Date(wf.createdAt).toLocaleDateString()}</span>
                       </div>
                       {wf.description && (
-                        <p className="mt-0.5 text-xs text-gray-400 truncate">{wf.description}</p>
+                        <p className="mt-0.5 text-xs text-text-tertiary truncate">{wf.description}</p>
                       )}
                     </div>
-                    <ChevronRight size={14} className="text-gray-300 shrink-0" />
+                    <ChevronRight size={14} className="text-text-disabled shrink-0" />
                   </Link>
                 </div>
               ))}

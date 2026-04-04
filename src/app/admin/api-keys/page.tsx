@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Key, Plus, Trash2, Copy, Check, AlertTriangle } from "lucide-react";
+import { Heading } from "@/components/catalyst/heading";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Tooltip } from "@/components/ui/tooltip";
+import { FormField } from "@/components/ui/form-field";
 
 interface ApiKey {
   id: string;
@@ -71,12 +75,20 @@ export default function ApiKeysPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
+      {/* Breadcrumb */}
+      <div className="mb-2">
+        <Breadcrumb items={[
+          { label: "Admin", href: "/admin" },
+          { label: "API Keys" },
+        ]} />
+      </div>
+
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-2">
+        <Heading level={1} className="flex items-center gap-2">
           <Key className="h-6 w-6 text-violet-600" />
           API Keys
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
+        </Heading>
+        <p className="text-sm text-text-secondary mt-1">
           Manage API keys for programmatic access to Intellios
         </p>
       </div>
@@ -88,11 +100,13 @@ export default function ApiKeysPage() {
             <AlertTriangle className="h-4 w-4" />
             Copy your new API key — it will not be shown again
           </div>
-          <div className="flex items-center gap-2 font-mono text-sm bg-white border border-amber-200 rounded-lg px-3 py-2">
-            <span className="flex-1 text-slate-800 truncate">{newKey.key}</span>
-            <button onClick={handleCopy} className="text-amber-600 hover:text-amber-800 transition-colors">
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            </button>
+          <div className="flex items-center gap-2 font-mono text-sm bg-surface border border-amber-200 rounded-lg px-3 py-2">
+            <span className="flex-1 text-text truncate">{newKey.key}</span>
+            <Tooltip content={copied ? "Copied" : "Copy to clipboard"}>
+              <button onClick={handleCopy} className="text-amber-600 hover:text-amber-800 transition-colors">
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </button>
+            </Tooltip>
           </div>
           <button onClick={() => setNewKey(null)} className="text-sm text-amber-700 underline">
             {"I've copied my key"}
@@ -101,18 +115,21 @@ export default function ApiKeysPage() {
       )}
 
       {/* Create form */}
-      <section className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
-        <h2 className="font-medium text-slate-900">Create New Key</h2>
+      <section className="rounded-xl border border-border bg-surface p-6 space-y-4">
+        <Heading level={2} className="font-medium">Create New Key</Heading>
         <div className="space-y-3">
-          <input
-            type="text"
-            placeholder="Key name (e.g. CI/CD Pipeline)"
-            value={form.name}
-            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-          />
+          <FormField label="Key name" htmlFor="api-key-name">
+            <input
+              id="api-key-name"
+              type="text"
+              placeholder="e.g. CI/CD Pipeline"
+              value={form.name}
+              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            />
+          </FormField>
           <div>
-            <p className="text-xs font-medium text-slate-600 mb-2">Scopes</p>
+            <p className="text-xs font-medium text-text-secondary mb-2">Scopes</p>
             <div className="flex flex-wrap gap-2">
               {validScopes.map((scope) => (
                 <button
@@ -121,7 +138,7 @@ export default function ApiKeysPage() {
                   className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                     form.scopes.includes(scope)
                       ? "bg-violet-100 text-violet-700 border border-violet-300"
-                      : "bg-slate-100 text-slate-600 border border-slate-200 hover:border-violet-300"
+                      : "bg-surface-muted text-text-secondary border border-border hover:border-violet-300"
                   }`}
                 >
                   {scope}
@@ -142,43 +159,45 @@ export default function ApiKeysPage() {
 
       {/* Key list */}
       <section className="space-y-2">
-        <h2 className="font-medium text-slate-800">Active Keys</h2>
+        <Heading level={2} className="font-medium">Active Keys</Heading>
         {loading && <SkeletonList rows={3} height="h-14" />}
         {!loading && keys.length === 0 && (
           <EmptyState icon={Key} heading="No API keys yet" subtext="Create one above to start using the Intellios API." />
         )}
         {keys.map((k) => (
-          <div key={k.id} className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white px-5 py-3.5">
+          <div key={k.id} className="flex items-center gap-4 rounded-xl border border-border bg-surface px-5 py-3.5">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900">{k.name}</p>
-              <p className="text-xs text-slate-500 font-mono">{k.keyPrefix}••••••••••••••••••••</p>
+              <p className="text-sm font-medium text-text">{k.name}</p>
+              <p className="text-xs text-text-secondary font-mono">{k.keyPrefix}••••••••••••••••••••</p>
             </div>
             <div className="flex flex-wrap gap-1">
               {(k.scopes as string[]).map((s) => (
-                <span key={s} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{s}</span>
+                <span key={s} className="rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-secondary">{s}</span>
               ))}
             </div>
             <div className="flex flex-col items-end gap-0.5 shrink-0">
-              <p className="text-xs text-slate-400 whitespace-nowrap">
+              <p className="text-xs text-text-tertiary whitespace-nowrap">
                 {k.lastUsedAt
                   ? `Last used ${new Date(k.lastUsedAt).toLocaleDateString()}`
                   : "Never used"}
               </p>
-              <p className="text-xs font-mono text-slate-400 whitespace-nowrap"
+              <p className="text-xs font-mono text-text-tertiary whitespace-nowrap"
                 title={`${k.usageCount.toLocaleString()} total request${k.usageCount !== 1 ? "s" : ""}`}>
                 {k.usageCount > 0
                   ? `${k.usageCount >= 1000 ? `${(k.usageCount / 1000).toFixed(1)}k` : k.usageCount} req`
                   : "0 req"}
               </p>
             </div>
-            <button
-              onClick={() => handleRevoke(k.id)}
-              className="text-slate-400 hover:text-red-500 transition-colors"
-              title="Revoke key"
-              aria-label="Revoke key"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <Tooltip content="Revoke key">
+              <button
+                onClick={() => handleRevoke(k.id)}
+                className="text-text-tertiary hover:text-red-500 transition-colors"
+                title="Revoke key"
+                aria-label="Revoke key"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </Tooltip>
           </div>
         ))}
       </section>

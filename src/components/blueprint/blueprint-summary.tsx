@@ -2,6 +2,7 @@
 
 import { ABP } from "@/lib/types/abp";
 import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/ui/description-list";
+import { SectionHeading } from "@/components/ui/section-heading";
 
 interface BlueprintSummaryProps {
   abp: ABP;
@@ -19,8 +20,10 @@ const STATUS_PROSE: Record<string, string> = {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-card border border-gray-200 bg-white p-5">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">{title}</h3>
+    <div className="rounded-card border border-border bg-surface p-5">
+      <div className="mb-3">
+        <SectionHeading>{title}</SectionHeading>
+      </div>
       {children}
     </div>
   );
@@ -28,7 +31,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Pill({ children, color = "gray" }: { children: React.ReactNode; color?: string }) {
   const styles: Record<string, string> = {
-    gray:   "bg-gray-100 text-gray-600",
+    gray:   "bg-surface-muted text-text-secondary",
     blue:   "bg-blue-50 text-blue-700",
     purple: "bg-purple-50 text-purple-700",
     red:    "bg-red-50 text-red-700",
@@ -54,16 +57,16 @@ export function BlueprintSummary({ abp, status }: BlueprintSummaryProps) {
   return (
     <div className="space-y-4">
       {/* Status callout */}
-      <div className="rounded-card border border-gray-200 bg-gray-50 px-5 py-3">
-        <p className="text-sm text-gray-600">{STATUS_PROSE[status] ?? `Status: ${status}`}</p>
+      <div className="rounded-card border border-border bg-surface-raised px-5 py-3">
+        <p className="text-sm text-text-secondary">{STATUS_PROSE[status] ?? `Status: ${status}`}</p>
       </div>
 
       {/* Identity */}
       <Section title="What this agent does">
-        <h2 className="text-lg font-semibold text-gray-900">{identity.name}</h2>
-        <p className="mt-1 text-sm text-gray-600 leading-relaxed">{identity.description}</p>
+        <h2 className="text-lg font-semibold text-text">{identity.name}</h2>
+        <p className="mt-1 text-sm text-text-secondary leading-relaxed">{identity.description}</p>
         {identity.persona && (
-          <p className="mt-3 text-xs text-gray-500 italic border-l-2 border-gray-200 pl-3">
+          <p className="mt-3 text-xs text-text-secondary italic border-l-2 border-border pl-3">
             {identity.persona}
           </p>
         )}
@@ -73,8 +76,8 @@ export function BlueprintSummary({ abp, status }: BlueprintSummaryProps) {
       <Section title="Capabilities">
         {capabilities.instructions && (
           <div className="mb-4">
-            <p className="text-xs font-medium text-gray-500 mb-1">Behavioral instructions</p>
-            <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">
+            <p className="text-xs font-medium text-text-secondary mb-1">Behavioral instructions</p>
+            <p className="text-sm text-text leading-relaxed line-clamp-4">
               {capabilities.instructions}
             </p>
           </div>
@@ -82,18 +85,18 @@ export function BlueprintSummary({ abp, status }: BlueprintSummaryProps) {
 
         {tools.length > 0 && (
           <div className="mb-4">
-            <p className="text-xs font-medium text-gray-500 mb-2">
+            <p className="text-xs font-medium text-text-secondary mb-2">
               Tools & integrations ({tools.length})
             </p>
             <div className="space-y-2">
               {tools.map((tool, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0 text-gray-400">⚙</span>
+                  <span className="mt-0.5 shrink-0 text-text-tertiary">⚙</span>
                   <div>
-                    <span className="text-sm font-medium text-gray-800">{tool.name}</span>
-                    <span className="ml-2 text-xs text-gray-400">({tool.type})</span>
+                    <span className="text-sm font-medium text-text">{tool.name}</span>
+                    <span className="ml-2 text-xs text-text-tertiary">({tool.type})</span>
                     {tool.description && (
-                      <p className="text-xs text-gray-500 mt-0.5">{tool.description}</p>
+                      <p className="text-xs text-text-secondary mt-0.5">{tool.description}</p>
                     )}
                   </div>
                 </div>
@@ -104,7 +107,7 @@ export function BlueprintSummary({ abp, status }: BlueprintSummaryProps) {
 
         {knowledgeSources.length > 0 && (
           <div>
-            <p className="text-xs font-medium text-gray-500 mb-2">
+            <p className="text-xs font-medium text-text-secondary mb-2">
               Knowledge sources ({knowledgeSources.length})
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -116,7 +119,7 @@ export function BlueprintSummary({ abp, status }: BlueprintSummaryProps) {
         )}
 
         {tools.length === 0 && knowledgeSources.length === 0 && !capabilities.instructions && (
-          <p className="text-sm text-gray-400">No capabilities defined.</p>
+          <p className="text-sm text-text-disabled">No capabilities defined.</p>
         )}
       </Section>
 
@@ -124,12 +127,12 @@ export function BlueprintSummary({ abp, status }: BlueprintSummaryProps) {
       <Section title="Constraints & boundaries">
         {allowedDomains.length === 0 && deniedActions.length === 0 &&
           !constraints?.max_tokens_per_response && (
-          <p className="text-sm text-gray-400">No constraints defined.</p>
+          <p className="text-sm text-text-disabled">No constraints defined.</p>
         )}
 
         {allowedDomains.length > 0 && (
           <div className="mb-3">
-            <p className="text-xs font-medium text-gray-500 mb-1.5">Allowed domains</p>
+            <p className="text-xs font-medium text-text-secondary mb-1.5">Allowed domains</p>
             <div className="flex flex-wrap gap-1.5">
               {allowedDomains.map((d, i) => (
                 <Pill key={i} color="green">{d}</Pill>
@@ -140,7 +143,7 @@ export function BlueprintSummary({ abp, status }: BlueprintSummaryProps) {
 
         {deniedActions.length > 0 && (
           <div className="mb-3">
-            <p className="text-xs font-medium text-gray-500 mb-1.5">
+            <p className="text-xs font-medium text-text-secondary mb-1.5">
               Prohibited actions ({deniedActions.length})
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -152,20 +155,20 @@ export function BlueprintSummary({ abp, status }: BlueprintSummaryProps) {
         )}
 
         {constraints?.max_tokens_per_response && (
-          <p className="text-xs text-gray-500">
-            Max response length: <span className="font-medium text-gray-700">{constraints.max_tokens_per_response.toLocaleString()} tokens</span>
+          <p className="text-xs text-text-secondary">
+            Max response length: <span className="font-medium text-text">{constraints.max_tokens_per_response.toLocaleString()} tokens</span>
           </p>
         )}
 
         {(constraints?.rate_limits?.requests_per_minute || constraints?.rate_limits?.requests_per_day) && (
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-text-secondary">
             Rate limits:{" "}
             {constraints.rate_limits?.requests_per_minute && (
-              <span className="font-medium text-gray-700">{constraints.rate_limits.requests_per_minute}/min</span>
+              <span className="font-medium text-text">{constraints.rate_limits.requests_per_minute}/min</span>
             )}
             {constraints.rate_limits?.requests_per_minute && constraints.rate_limits?.requests_per_day && " · "}
             {constraints.rate_limits?.requests_per_day && (
-              <span className="font-medium text-gray-700">{constraints.rate_limits.requests_per_day}/day</span>
+              <span className="font-medium text-text">{constraints.rate_limits.requests_per_day}/day</span>
             )}
           </p>
         )}
@@ -174,25 +177,25 @@ export function BlueprintSummary({ abp, status }: BlueprintSummaryProps) {
       {/* Governance */}
       <Section title="Governance & compliance">
         {policies.length === 0 && !audit && (
-          <p className="text-sm text-gray-400">No governance configuration defined.</p>
+          <p className="text-sm text-text-disabled">No governance configuration defined.</p>
         )}
 
         {policies.length > 0 && (
           <div className="mb-3">
-            <p className="text-xs font-medium text-gray-500 mb-2">
+            <p className="text-xs font-medium text-text-secondary mb-2">
               Applied policies ({policies.length})
             </p>
             <div className="space-y-2">
               {policies.map((p, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0 text-gray-400">🛡</span>
+                  <span className="mt-0.5 shrink-0 text-text-tertiary">🛡</span>
                   <div>
-                    <span className="text-sm font-medium text-gray-800">{p.name}</span>
-                    <span className="ml-2 text-xs text-gray-400">
+                    <span className="text-sm font-medium text-text">{p.name}</span>
+                    <span className="ml-2 text-xs text-text-tertiary">
                       {p.type.replace("_", " ")}
                     </span>
                     {p.description && (
-                      <p className="text-xs text-gray-500 mt-0.5">{p.description}</p>
+                      <p className="text-xs text-text-secondary mt-0.5">{p.description}</p>
                     )}
                   </div>
                 </div>

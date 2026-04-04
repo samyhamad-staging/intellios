@@ -460,7 +460,7 @@ export function IntakeProgress({
                       className={`h-full rounded-full transition-all duration-500 ${
                         fallbackReadiness.score >= 80 ? "bg-emerald-500"
                         : fallbackReadiness.score >= 50 ? "bg-amber-400"
-                        : "bg-slate-400"
+                        : "bg-border-strong"
                       }`}
                       style={{ width: `${fallbackReadiness.score}%` }}
                     />
