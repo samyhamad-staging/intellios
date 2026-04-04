@@ -109,6 +109,7 @@ export default function GovernorHomePage() {
           ))}
         </div>
       ) : (
+        <>
         {/* Quick-action: Review next critical */}
         {queue.length > 0 && (
           <div className="mb-1">
@@ -248,7 +249,7 @@ export default function GovernorHomePage() {
           </div>
 
         </div>
-
+        </>
       )}
 
       {/* Portfolio Trends — H2-5.1 */}

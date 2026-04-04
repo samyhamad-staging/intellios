@@ -775,6 +775,7 @@ export default function AdminSettingsPage() {
             </div>
 
             {settings.deploymentTargets?.agentcore?.enabled && (
+              <>
               <div className="mt-5 grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">AWS Region</label>
@@ -906,6 +907,7 @@ export default function AdminSettingsPage() {
                   foundationModel: settings.deploymentTargets?.agentcore?.foundationModel ?? "",
                 }}
               />
+              </>
             )}
           </div>
         </section>
