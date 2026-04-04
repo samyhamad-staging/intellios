@@ -157,7 +157,7 @@ export function CompanionChat({
   const { messages, sendMessage, status } = useChat({
     transport,
     id: `companion-${blueprintId}`,
-    initialMessages: initialMsgs,
+    messages: initialMsgs,
   });
 
   // P1-30: Persist conversation to localStorage on every message change
