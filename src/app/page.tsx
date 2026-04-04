@@ -282,7 +282,7 @@ export default async function Home() {
     // Derive the highest-risk pending item for the urgency callout
     const criticalItems = inReviewAgents.filter((a) => {
       const report = a.validationReport as ValidationReport | null;
-      return report?.violations?.some((v) => v.severity === "critical" || v.severity === "error");
+      return report?.violations?.some((v) => v.severity === "error");
     });
     const urgentItem = criticalItems[0] ?? null;
 
