@@ -31,8 +31,7 @@ interface QueueEntry {
 // Risk tier is derived from the governance validation report rather than stored
 // separately. This means the queue always reflects the current validation state.
 //
-//  CRITICAL — ≥1 violation with severity "critical"
-//  HIGH     — ≥1 violation with severity "error" (but no critical)
+//  CRITICAL — ≥1 violation with severity "error"
 //  MEDIUM   — ≥1 violation with severity "warning" (but no errors)
 //  LOW      — report is valid or not yet validated
 
@@ -53,8 +52,7 @@ const RISK_STYLE: Record<RiskTier, { bg: string; text: string; border: string; i
 function deriveRiskTier(report: ValidationReport | null): RiskTier {
   if (!report) return "LOW";
   const violations = report.violations ?? [];
-  if (violations.some((v) => v.severity === "critical")) return "CRITICAL";
-  if (violations.some((v) => v.severity === "error")) return "HIGH";
+  if (violations.some((v) => v.severity === "error")) return "CRITICAL";
   if (violations.some((v) => v.severity === "warning")) return "MEDIUM";
   return "LOW";
 }
