@@ -393,14 +393,14 @@ export default async function Home() {
               {[...inReviewAgents]
                 .sort((a, b) => {
                   // Sort: governance errors first, then oldest first
-                  const aHasError = (a.validationReport as ValidationReport | null)?.violations?.some((v) => v.severity === "critical" || v.severity === "error") ? 0 : 1;
-                  const bHasError = (b.validationReport as ValidationReport | null)?.violations?.some((v) => v.severity === "critical" || v.severity === "error") ? 0 : 1;
+                  const aHasError = (a.validationReport as ValidationReport | null)?.violations?.some((v) => v.severity === "error") ? 0 : 1;
+                  const bHasError = (b.validationReport as ValidationReport | null)?.violations?.some((v) => v.severity === "error") ? 0 : 1;
                   if (aHasError !== bHasError) return aHasError - bHasError;
                   return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
                 })
                 .slice(0, 8)
                 .map((agent, i) => {
-                  const hasErrors = (agent.validationReport as ValidationReport | null)?.violations?.some((v) => v.severity === "critical" || v.severity === "error");
+                  const hasErrors = (agent.validationReport as ValidationReport | null)?.violations?.some((v) => v.severity === "error");
                   return (
                     <Link
                       key={agent.agentId}
