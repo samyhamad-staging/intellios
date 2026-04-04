@@ -311,7 +311,7 @@ function BulkInviteForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
   const [done, setDone] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const VALID_ROLES = new Set(ROLES.map((r) => r.value));
+  const VALID_ROLES = new Set<string>(ROLES.map((r) => r.value));
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
