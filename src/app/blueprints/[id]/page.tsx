@@ -768,7 +768,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                   {
                     label: "Refine",
                     title: "Refine with AI",
-                    onClick: () => setTab("refine"),
+                    onClick: () => setRightRailTab("refine"),
                     icon: "✦",
                   },
                   {
