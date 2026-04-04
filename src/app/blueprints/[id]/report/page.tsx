@@ -942,7 +942,7 @@ function ReportDocument({
                       <div className="flex-1">
                         <SectionHeading className="text-xs">
                           12.{fwIdx + 1}
-                        </p>
+                        </SectionHeading>
                         <Subheading level={3} className="text-text">
                           {fw.frameworkName}{" "}
                           <span className="font-normal text-text-secondary text-sm">

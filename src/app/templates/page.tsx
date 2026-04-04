@@ -84,7 +84,6 @@ export default function TemplateMarketplacePage() {
             <Package className="h-5 w-5 text-primary" />
             <Heading level={1}>Template Marketplace</Heading>
           </div>
-          </h1>
           <p className="mt-0.5 text-sm text-text-secondary">Pre-built agent templates for common use cases</p>
         </div>
       </div>
