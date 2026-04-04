@@ -18,7 +18,7 @@ import { publishEvent } from "@/lib/events/publish";
  * Creates a new logical agent (new agentId) — not a new version of the source.
  * Preserves ABP content; resets lifecycle state (status=draft, no review data).
  *
- * Access: designer and admin only.
+ * Access: architect and admin only.
  */
 
 const CloneBody = z.object({
@@ -29,7 +29,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session: authSession, error } = await requireAuth(["architect", "designer", "admin"]);
+  const { session: authSession, error } = await requireAuth(["architect", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
 
