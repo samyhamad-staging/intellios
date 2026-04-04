@@ -30,7 +30,6 @@ import { SectionHeading } from "@/components/ui/section-heading";
  * Server component — queries directly without an intermediate API route.
  */
 
-type RiskTier = "low" | "medium" | "high" | "critical";
 type GovernanceHealth = "pass" | "warning" | "error" | "unvalidated";
 
 interface FleetAgent {
