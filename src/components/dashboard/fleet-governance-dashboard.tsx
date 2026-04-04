@@ -303,7 +303,7 @@ export async function FleetGovernanceDashboard({
                   {/* Risk tier badge */}
                   <TableCell>
                     <Badge variant={TIER_VARIANT[agent.riskTier]}>
-                      {TIER_LABEL[agent.riskTier]}
+                      {RISK_LABELS[agent.riskTier]}
                     </Badge>
                   </TableCell>
 
