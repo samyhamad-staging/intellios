@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { apiError, ErrorCode } from "@/lib/errors";
 import type { Session } from "next-auth";
 
-export type Role = "architect" | "reviewer" | "compliance_officer" | "admin" | "viewer";
+export type Role = "architect" | "designer" | "reviewer" | "compliance_officer" | "admin" | "viewer";
 
 type AuthSuccess = { session: Session; error: null };
 type AuthFailure = { session: null; error: ReturnType<typeof apiError> };
