@@ -1417,7 +1417,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                   rows={2}
                 />
                 <button
-                  onClick={handleRefine}
+                  onClick={() => handleRefine()}
                   disabled={!change.trim() || refining || loading}
                   className="shrink-0 self-end rounded-lg bg-primary px-4 py-2 text-sm text-primary-fg hover:bg-primary-hover disabled:opacity-40"
                 >
