@@ -63,7 +63,7 @@ function deriveRiskTier(report: ValidationReport | null): ReviewRiskTier {
 
 // ── SLA countdown ─────────────────────────────────────────────────────────────
 
-function computeSla(enteredReviewAt: string, tier: RiskTier): { label: string; urgent: boolean; overdue: boolean } {
+function computeSla(enteredReviewAt: string, tier: ReviewRiskTier): { label: string; urgent: boolean; overdue: boolean } {
   const entered = new Date(enteredReviewAt).getTime();
   const dueMs = entered + SLA_HOURS[tier] * 60 * 60 * 1000;
   const remainMs = dueMs - Date.now();
