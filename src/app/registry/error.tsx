@@ -23,7 +23,7 @@ export default function RegistryError({
         <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-500">
           <AlertTriangle className="h-6 w-6" />
         </div>
-        <Heading level={2} className="mb-2 text-text">Registry error</Heading>
+        <Heading level={2} className="mb-2">Registry error</Heading>
         <p className="mb-1 text-sm text-text-secondary">
           Something went wrong loading the agent registry. Your data is safe.
         </p>

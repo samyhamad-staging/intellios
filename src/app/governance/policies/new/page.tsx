@@ -52,7 +52,7 @@ export default function NewPolicyPage() {
 
       {/* Page header */}
       <div className="mb-6">
-        <Heading level={1} className="text-text">New Policy</Heading>
+        <Heading level={1}>New Policy</Heading>
         <p className="mt-0.5 text-sm text-text-secondary">
           Define a governance policy with rules that apply to agent blueprints
         </p>

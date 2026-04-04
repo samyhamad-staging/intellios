@@ -41,7 +41,7 @@ export default async function ContributePage({ params }: PageProps) {
       <div className="flex min-h-screen items-center justify-center bg-surface-raised px-6">
         <div className="max-w-sm text-center">
           <div className="mb-4 text-4xl">⏱️</div>
-          <Heading level={1} className="mb-2 text-text">Invitation link expired</Heading>
+          <Heading level={1} className="mb-2">Invitation link expired</Heading>
           <p className="text-sm text-text-secondary">
             Your invitation to contribute to{" "}
             <span className="font-medium text-text">{sessionName}</span> has expired.
@@ -133,7 +133,7 @@ function ErrorPage({ title, message }: { title: string; message: string }) {
     <div className="flex min-h-screen items-center justify-center bg-surface-raised px-6">
       <div className="max-w-sm text-center">
         <div className="mb-4 text-4xl">⚠️</div>
-        <Heading level={1} className="mb-2 text-text">{title}</Heading>
+        <Heading level={1} className="mb-2">{title}</Heading>
         <p className="text-sm text-text-secondary">{message}</p>
         <p className="mt-6 text-xs text-text-tertiary">Intellios — Enterprise Agent Factory</p>
       </div>
@@ -179,7 +179,7 @@ function CompletedPage({
         <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl">
           ✓
         </div>
-        <Heading level={1} className="mb-2 text-text">
+        <Heading level={1} className="mb-2">
           {inviteeName ? `Thanks, ${inviteeName}!` : "Contribution received"}
         </Heading>
         <p className="mb-6 text-sm text-text-secondary">

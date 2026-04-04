@@ -140,7 +140,7 @@ export default function EditPolicyPage({
 
       {/* Page header */}
       <div className="mb-6">
-        <Heading level={1} className="text-text">Edit Policy</Heading>
+        <Heading level={1}>Edit Policy</Heading>
         <p className="mt-0.5 text-sm text-text-secondary">{policy.name}</p>
       </div>
 

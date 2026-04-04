@@ -31,7 +31,7 @@ export default function GlobalError({ error, reset }: ErrorPageProps) {
           Error
         </p>
 
-        <Heading level={1} className="mb-3 text-text">
+        <Heading level={1} className="mb-3">
           Something went wrong
         </Heading>
 

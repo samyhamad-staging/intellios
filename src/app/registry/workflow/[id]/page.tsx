@@ -71,7 +71,7 @@ function WorkflowFlowDiagram({ definition }: { definition: WorkflowDefinition })
 
   return (
     <section className="mb-6">
-      <Subheading level={2} className="mb-3 flex items-center gap-2 text-text">
+      <Subheading level={2} className="mb-3 flex items-center gap-2">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="4" cy="12" r="2" /><circle cx="20" cy="12" r="2" />
           <circle cx="12" cy="5" r="2" /><circle cx="12" cy="19" r="2" />
@@ -253,7 +253,7 @@ export default function WorkflowDetailPage() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <Heading level={1} className="text-text">{workflow.name}</Heading>
+              <Heading level={1}>{workflow.name}</Heading>
               <StatusBadge status={workflow.status} />
             </div>
             <div className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">
@@ -335,7 +335,7 @@ export default function WorkflowDetailPage() {
 
       {/* Participating Agents */}
       <section className="mb-6">
-        <Subheading level={2} className="mb-3 flex items-center gap-2 text-text">
+        <Subheading level={2} className="mb-3 flex items-center gap-2">
           <Users size={14} /> Agents ({def.agents?.length ?? 0})
         </Subheading>
         {(!def.agents || def.agents.length === 0) ? (
@@ -367,7 +367,7 @@ export default function WorkflowDetailPage() {
 
       {/* Handoff Rules */}
       <section className="mb-6">
-        <Subheading level={2} className="mb-3 flex items-center gap-2 text-text">
+        <Subheading level={2} className="mb-3 flex items-center gap-2">
           <ArrowRight size={14} /> Handoff Rules ({def.handoffRules?.length ?? 0})
         </Subheading>
         {(!def.handoffRules || def.handoffRules.length === 0) ? (
@@ -394,7 +394,7 @@ export default function WorkflowDetailPage() {
 
       {/* Shared Context */}
       <section>
-        <Subheading level={2} className="mb-3 flex items-center gap-2 text-text">
+        <Subheading level={2} className="mb-3 flex items-center gap-2">
           <Database size={14} /> Shared Context Fields ({def.sharedContext?.length ?? 0})
         </Subheading>
         {(!def.sharedContext || def.sharedContext.length === 0) ? (

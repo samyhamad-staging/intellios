@@ -42,17 +42,17 @@ const styles = {
   ],
   outline: [
     // Base
-    'border-zinc-950/10 text-zinc-950 data-active:bg-zinc-950/2.5 data-hover:bg-zinc-950/2.5',
+    'border-zinc-950/10 text-text data-active:bg-zinc-950/2.5 data-hover:bg-zinc-950/2.5',
     // Dark mode
-    'dark:border-white/15 dark:text-white dark:[--btn-bg:transparent] dark:data-active:bg-white/5 dark:data-hover:bg-white/5',
+    'dark:border-white/15 dark:[--btn-bg:transparent] dark:data-active:bg-white/5 dark:data-hover:bg-white/5',
     // Icon
     '[--btn-icon:var(--color-zinc-500)] data-active:[--btn-icon:var(--color-zinc-700)] data-hover:[--btn-icon:var(--color-zinc-700)] dark:data-active:[--btn-icon:var(--color-zinc-400)] dark:data-hover:[--btn-icon:var(--color-zinc-400)]',
   ],
   plain: [
     // Base
-    'border-transparent text-zinc-950 data-active:bg-zinc-950/5 data-hover:bg-zinc-950/5',
+    'border-transparent text-text data-active:bg-zinc-950/5 data-hover:bg-zinc-950/5',
     // Dark mode
-    'dark:text-white dark:data-active:bg-white/10 dark:data-hover:bg-white/10',
+    'dark:data-active:bg-white/10 dark:data-hover:bg-white/10',
     // Icon
     '[--btn-icon:var(--color-zinc-500)] data-active:[--btn-icon:var(--color-zinc-700)] data-hover:[--btn-icon:var(--color-zinc-700)] dark:[--btn-icon:var(--color-zinc-500)] dark:data-active:[--btn-icon:var(--color-zinc-400)] dark:data-hover:[--btn-icon:var(--color-zinc-400)]',
   ],
@@ -83,7 +83,7 @@ const styles = {
       '[--btn-icon:var(--color-zinc-400)] data-active:[--btn-icon:var(--color-zinc-500)] data-hover:[--btn-icon:var(--color-zinc-500)]',
     ],
     zinc: [
-      'text-white [--btn-hover-overlay:var(--color-white)]/10 [--btn-bg:var(--color-zinc-600)] [--btn-border:var(--color-zinc-700)]/90',
+      'text-text [--btn-hover-overlay:var(--color-white)]/10 [--btn-bg:var(--color-zinc-600)] [--btn-border:var(--color-zinc-700)]/90',
       'dark:[--btn-hover-overlay:var(--color-white)]/5',
       '[--btn-icon:var(--color-zinc-400)] data-active:[--btn-icon:var(--color-zinc-300)] data-hover:[--btn-icon:var(--color-zinc-300)]',
     ],

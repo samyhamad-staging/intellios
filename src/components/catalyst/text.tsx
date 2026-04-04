@@ -17,14 +17,14 @@ export function TextLink({ className, ...props }: React.ComponentPropsWithoutRef
       {...props}
       className={clsx(
         className,
-        'text-zinc-950 underline decoration-zinc-950/50 data-hover:decoration-zinc-950 dark:text-white dark:decoration-white/50 dark:data-hover:decoration-white'
+        'text-text underline decoration-text/50 data-hover:decoration-text'
       )}
     />
   )
 }
 
 export function Strong({ className, ...props }: React.ComponentPropsWithoutRef<'strong'>) {
-  return <strong {...props} className={clsx(className, 'font-medium text-zinc-950 dark:text-white')} />
+  return <strong {...props} className={clsx(className, 'font-medium text-text')} />
 }
 
 export function Code({ className, ...props }: React.ComponentPropsWithoutRef<'code'>) {
@@ -33,7 +33,7 @@ export function Code({ className, ...props }: React.ComponentPropsWithoutRef<'co
       {...props}
       className={clsx(
         className,
-        'rounded-sm border border-zinc-950/10 bg-zinc-950/2.5 px-0.5 text-sm font-medium text-zinc-950 sm:text-[0.8125rem] dark:border-white/20 dark:bg-white/5 dark:text-white'
+        'rounded-sm border border-zinc-950/10 bg-zinc-950/2.5 px-0.5 text-sm font-medium text-text sm:text-[0.8125rem] dark:border-white/20 dark:bg-white/5'
       )}
     />
   )

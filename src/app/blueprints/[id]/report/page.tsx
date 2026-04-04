@@ -44,7 +44,7 @@ function SectionHeader({ number, title }: { number: number; title: string }) {
       <SectionHeading className="mb-0">
         Section {number}
       </SectionHeading>
-      <Heading level={2} className="text-text">{title}</Heading>
+      <Heading level={2}>{title}</Heading>
     </div>
   );
 }
@@ -271,7 +271,7 @@ function ReportDocument({
           <SectionHeading>
             SR 11-7 Model Risk Management — Compliance Report
           </SectionHeading>
-          <Heading level={1} className="mt-2 text-text print:text-3xl">
+          <Heading level={1} className="mt-2 print:text-3xl">
             {r.cover.agentName}
           </Heading>
           <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -943,7 +943,7 @@ function ReportDocument({
                         <SectionHeading className="text-xs">
                           12.{fwIdx + 1}
                         </SectionHeading>
-                        <Subheading level={3} className="text-text">
+                        <Subheading level={3}>
                           {fw.frameworkName}{" "}
                           <span className="font-normal text-text-secondary text-sm">
                             ({fw.version})
@@ -1221,7 +1221,4 @@ function ReportDocument({
             Risk classifications require validation against your enterprise model risk taxonomy.
           </p>
         </footer>
-      </div>
-    </div>
-  );
-}
+     

@@ -69,7 +69,7 @@ function ResetPasswordForm() {
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="mb-6 text-center">
-          <Heading level={1} className="tracking-tight text-text">Intellios</Heading>
+          <Heading level={1} className="tracking-tight">Intellios</Heading>
           <p className="mt-1 text-sm text-text-secondary">Enterprise Agent Factory</p>
         </div>
 
@@ -92,7 +92,7 @@ function ResetPasswordForm() {
                 />
               </div>
 
-              <Subheading level={2} className="mb-1 text-text">Password updated</Subheading>
+              <Subheading level={2} className="mb-1">Password updated</Subheading>
               <p className="mb-5 text-sm text-text-secondary leading-relaxed">
                 Your password has been changed successfully. Your previous password is no longer valid.
               </p>
@@ -127,7 +127,7 @@ function ResetPasswordForm() {
             </div>
           ) : (
             <>
-              <Subheading level={2} className="mb-2 text-text">Set a new password</Subheading>
+              <Subheading level={2} className="mb-2">Set a new password</Subheading>
               <p className="mb-6 text-sm text-text-secondary">
                 Choose a password with at least 8 characters.
               </p>

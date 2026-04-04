@@ -7,6 +7,7 @@ import { Button } from "@/components/catalyst/button";
 import { Heading, Subheading } from "@/components/catalyst/heading";
 import { NewIntakeButton } from "@/components/intake/new-intake-button";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { SectionHeading } from "@/components/ui/section-heading";
 import {
   Plus,
   Kanban,
@@ -159,7 +160,7 @@ export default async function Home() {
               </svg>
             </div>
           </div>
-          <Heading level={1} className="mb-1 text-text">Intellios</Heading>
+          <Heading level={1} className="mb-1">Intellios</Heading>
           <p className="mb-6 text-sm text-text-secondary">Enterprise Agent Factory</p>
           <Link href="/login" className="rounded-lg bg-text px-5 py-2.5 text-sm font-medium text-surface hover:opacity-90 transition-opacity">
             Sign in
@@ -258,7 +259,7 @@ export default async function Home() {
 
           return (
             <div className="mb-6 space-y-2">
-              <Subheading level={2} className="text-xs uppercase tracking-wider text-text-tertiary">Action Queue</Subheading>
+              <SectionHeading>Action Queue</SectionHeading>
               {actions.slice(0, 4).map((action, i) => (
                 <Link key={i} href={action.href} className={`group flex items-center gap-3 rounded-lg border px-4 py-3 transition-all hover:shadow-sm ${action.bgColor}`}>
                   <action.icon size={16} className={`shrink-0 ${action.color}`} />
@@ -354,7 +355,7 @@ export default async function Home() {
         </div>
 
         <section>
-          <Subheading level={2} className="mb-3 text-xs uppercase tracking-wider text-text-tertiary">Pending Reviews</Subheading>
+          <SectionHeading className="mb-3">Pending Reviews</SectionHeading>
           {inReviewAgents.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border bg-surface px-6 py-10 text-center">
               <CheckCircle size={28} className="mx-auto mb-3 text-green-400" />
@@ -520,7 +521,7 @@ export default async function Home() {
       {/* Viewer Explore — contextual nav for read-only users */}
       {role === "viewer" && (
         <div className="mb-6">
-          <Subheading level={2} className="mb-3 text-xs uppercase tracking-wider text-text-tertiary">Explore</Subheading>
+          <SectionHeading className="mb-3">Explore</SectionHeading>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { href: "/registry",   icon: Search,    label: "Agent Registry",   sub: "Browse deployed agents",   color: "text-blue-600"   },
@@ -594,7 +595,7 @@ export default async function Home() {
 
         return (
           <div className="mb-6 space-y-2">
-            <Subheading level={2} className="text-xs uppercase tracking-wider text-text-tertiary">Action Queue</Subheading>
+            <SectionHeading>Action Queue</SectionHeading>
             {actions.slice(0, 4).map((action, i) => (
               <Link
                 key={i}
@@ -616,14 +617,12 @@ export default async function Home() {
       {/* Governance + Activity — two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3">
-          <Subheading level={2} className="mb-3 text-xs uppercase tracking-wider text-text-tertiary">
-            Governance Health
-          </Subheading>
+          <SectionHeading className="mb-3">Governance Health</SectionHeading>
           <FleetGovernanceDashboard enterpriseId={user.enterpriseId} userRole={role} compact />
         </div>
         <section className="lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
-            <Subheading level={2} className="text-xs uppercase tracking-wider text-text-tertiary">Activity</Subheading>
+            <SectionHeading>Activity</SectionHeading>
             <Link href="/audit" className="text-xs text-primary hover:text-primary-hover">
               Audit trail →
             </Link>

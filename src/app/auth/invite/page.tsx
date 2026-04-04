@@ -84,7 +84,7 @@ function InvitePage() {
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="mb-6 text-center">
-          <Heading level={1} className="tracking-tight text-text">Intellios</Heading>
+          <Heading level={1} className="tracking-tight">Intellios</Heading>
           <p className="mt-1 text-sm text-text-secondary">Enterprise Agent Factory</p>
         </div>
 
@@ -101,7 +101,7 @@ function InvitePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
-              <Subheading level={2} className="mb-2 text-text">Invitation invalid</Subheading>
+              <Subheading level={2} className="mb-2">Invitation invalid</Subheading>
               <p className="text-sm text-text-secondary">
                 This invitation has expired or has already been used. Please ask your administrator to send a new invitation.
               </p>
@@ -121,7 +121,7 @@ function InvitePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <Subheading level={2} className="mb-2 text-text">Account created!</Subheading>
+              <Subheading level={2} className="mb-2">Account created!</Subheading>
               <p className="mb-6 text-sm text-text-secondary">
                 Your account has been set up. You can now sign in.
               </p>
@@ -162,7 +162,7 @@ function InvitePage() {
                 </div>
               )}
               <div className="mb-6">
-                <Subheading level={2} className="mb-1 text-text">You&apos;ve been invited</Subheading>
+                <Subheading level={2} className="mb-1">You&apos;ve been invited</Subheading>
                 <p className="text-sm text-text-secondary">
                   Join Intellios as <span className="font-medium text-text">{roleLabel}</span>
                   {inviteEmail && (

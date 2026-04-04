@@ -18,7 +18,7 @@ export default function NotFound() {
           404
         </p>
 
-        <Heading level={1} className="mb-3 text-text">
+        <Heading level={1} className="mb-3">
           Page not found
         </Heading>
 

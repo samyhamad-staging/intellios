@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Heading, Subheading } from "@/components/catalyst/heading";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { Rocket } from "lucide-react";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 import { TableToolbar, Pagination } from "@/components/ui/table-toolbar";
@@ -659,9 +660,9 @@ export default function DeploymentConsolePage() {
 
         {/* ── Ready to deploy ─────────────────────────────────────────────── */}
         <section>
-          <Subheading level={2} className="mb-4 uppercase tracking-wider text-text-secondary">
+          <SectionHeading className="mb-4">
             Ready to Deploy ({loading ? "…" : readyToDeploy.length})
-          </Subheading>
+          </SectionHeading>
 
           {!loading && readyToDeploy.length === 0 && (
             <div className="rounded-card border border-dashed border-border bg-surface p-10 text-center">
@@ -740,9 +741,9 @@ export default function DeploymentConsolePage() {
 
         {/* ── Live deployments ────────────────────────────────────────────── */}
         <section>
-          <Subheading level={2} className="mb-4 uppercase tracking-wider text-text-secondary">
+          <SectionHeading className="mb-4">
             Live in Production ({loading ? "…" : deployed.length})
-          </Subheading>
+          </SectionHeading>
 
           {loading && (
             <div className="space-y-2">

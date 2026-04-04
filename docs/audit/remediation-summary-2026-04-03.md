@@ -2,7 +2,7 @@
 
 **Date:** April 3–4, 2026
 **Scope:** Complete P0 + P1 + P2 remediation + Tier 1 + Tier 2 full integration rollout
-**Files modified:** ~130+ | **New components:** 5 | **New utilities:** 3 | **Design docs:** 3
+**Files modified:** ~150+ | **New components:** 5 | **New utilities:** 3 | **Design docs:** 3
 
 ---
 
@@ -262,6 +262,21 @@ Subheading also gains level-awareness: Level 2 = `text-base/7`, Level 3+ = `text
 
 ---
 
+### 24. Catalyst Dark Mode Fix — Critical Bug (Screenshot Review, April 4)
+
+**Problem:** All 16 Catalyst components used `text-zinc-950 dark:text-white` for text color. Tailwind v4 defaults to `@media (prefers-color-scheme: dark)` for the `dark:` variant. When the OS is in dark mode, all component text renders white — but the app uses a light content background (`#f8f9fc`). This made page titles, table text, dialog text, button labels, form labels, and other component text invisible or severely degraded.
+
+**Root cause discovered via:** Visual screenshot review of Compliance, Deploy, and Monitor pages showing H1 titles rendered in white on light backgrounds.
+
+**Fix:** Replaced `text-zinc-950 dark:text-white` with `text-text` (CSS custom property) across all 16 Catalyst components: heading, table, text, textarea, fieldset, dropdown, dialog, description-list, select, combobox, pagination, input, alert, listbox, button, sidebar, navbar. The `text-text` token resolves correctly regardless of OS color scheme preference.
+
+**Also fixed:**
+- Removed 24 redundant `text-text` className overrides on Heading/Subheading across 19 page files (now that the component defaults to `text-text`)
+- Replaced 12 Subheading-as-SectionHeading misuses in `page.tsx` and `governance/page.tsx`
+- Replaced 2 Subheading section labels on Deploy page with SectionHeading component
+
+---
+
 ## Remaining Items — Final Validation, April 4, 2026
 
 All actionable items are resolved. Only intentional exclusions and component internals remain:
@@ -273,6 +288,7 @@ All actionable items are resolved. Only intentional exclusions and component int
 | Raw `<h[1-3]>` in components | 32 across 17 files | Internal panel headings (chat, intake workspace, blueprint views) — semantically correct |
 | Hardcoded `gray-*` | 70 | Landing page (62), status-theme.ts (6 — semantic values), 2 comments |
 | Hardcoded `slate-*` | 4 | Sidebar theming (3, excluded), 1 hex comment |
-| `slate-*` in app pages | **0** | Fully clean |
+| `text-zinc-950` | 3 | In `button.tsx` — intentional dark-on-white button face text |
+| `dark:text-white` in app code | **0** | Fully clean |
 | Tables without TableToolbar | 3 | Intentional: embedded summary/review tables |
 | Enterprise flat-fill button variant | — | Product/brand decision |

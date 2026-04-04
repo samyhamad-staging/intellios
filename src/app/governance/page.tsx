@@ -514,9 +514,9 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
               onClick={() => setAnalyticsExpanded((v) => !v)}
               className="mb-4 flex w-full items-center justify-between group"
             >
-              <Subheading level={2} className="text-sm uppercase tracking-wider text-text-secondary group-hover:text-text transition-colors">
+              <SectionHeading className="text-sm group-hover:text-text transition-colors">
                 Analytics
-              </Subheading>
+              </SectionHeading>
               <div className="flex items-center gap-3">
                 {!analyticsExpanded && !analyticsLoading && analytics && (
                   <span className="text-xs text-text-tertiary">
@@ -836,9 +836,9 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
 
         {/* ── Coverage Stats ──────────────────────────────────────────────── */}
         <section>
-          <Subheading level={2} className="mb-4 text-sm uppercase tracking-wider text-text-secondary">
+          <SectionHeading className="mb-4 text-sm">
             Coverage Overview
-          </Subheading>
+          </SectionHeading>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               {
@@ -886,9 +886,9 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
         {/* ── Agents with violations ──────────────────────────────────────── */}
         {!loading && agentsWithViolations.length > 0 && (
           <section id="violations">
-            <Subheading level={2} className="mb-4 text-sm uppercase tracking-wider text-text-secondary">
+            <SectionHeading className="mb-4 text-sm">
               Agents Requiring Attention ({agentsWithViolations.length})
-            </Subheading>
+            </SectionHeading>
             <div className="space-y-4">
               <TableToolbar
                 searchPlaceholder="Search agents by name or ID…"
@@ -949,9 +949,9 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
         {/* ── Policy library ──────────────────────────────────────────────── */}
         <section>
           <div className="mb-4 flex items-center justify-between">
-            <Subheading level={2} className="text-sm uppercase tracking-wider text-text-secondary">
+            <SectionHeading className="text-sm">
               Policy Library ({loading ? "…" : policies.length})
-            </Subheading>
+            </SectionHeading>
             {canManagePolicies && (
               <Link
                 href="/governance/policies/new"
@@ -1180,9 +1180,9 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
           <section id="template-packs">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <Subheading level={2} className="text-sm uppercase tracking-wider text-text-secondary">
+                <SectionHeading className="text-sm">
                   Compliance Starter Packs
-                </Subheading>
+                </SectionHeading>
                 <p className="mt-0.5 text-xs text-text-tertiary">
                   Pre-built policy packs for common regulatory frameworks. Policies are created in your enterprise and can be edited after import.
                 </p>
@@ -1274,9 +1274,9 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
         {/* ── Status breakdown ────────────────────────────────────────────── */}
         {!loading && Object.keys(statusGroups).length > 0 && (
           <section>
-            <Subheading level={2} className="mb-4 text-sm uppercase tracking-wider text-text-secondary">
+            <SectionHeading className="mb-4 text-sm">
               Compliance by Stage
-            </Subheading>
+            </SectionHeading>
             <div className="overflow-hidden rounded-card border border-border bg-surface">
               <Table striped>
                 <TableHead>

@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="mb-6 text-center">
-          <Heading level={1} className="tracking-tight text-text">Intellios</Heading>
+          <Heading level={1} className="tracking-tight">Intellios</Heading>
           <p className="mt-1 text-sm text-text-secondary">Enterprise Agent Factory</p>
         </div>
 
@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <Subheading level={2} className="mb-2 text-text">Check your inbox</Subheading>
+              <Subheading level={2} className="mb-2">Check your inbox</Subheading>
               <p className="text-sm text-text-secondary">
                 If an account with that email exists, a reset link has been sent. Check your inbox and spam folder.
               </p>
@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
             </div>
           ) : (
             <>
-              <Subheading level={2} className="mb-2 text-text">Reset your password</Subheading>
+              <Subheading level={2} className="mb-2">Reset your password</Subheading>
               <p className="mb-6 text-sm text-text-secondary">
                 Enter your email and we&apos;ll send you a reset link.
               </p>

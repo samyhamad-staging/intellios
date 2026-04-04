@@ -313,7 +313,7 @@ export default function IntelligencePage() {
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <Heading level={1} className="text-text">Intelligence</Heading>
+          <Heading level={1}>Intelligence</Heading>
           <p className="mt-0.5 text-sm text-text-secondary">
             Platform quality, generation trends, and daily briefings.
           </p>
@@ -482,7 +482,7 @@ export default function IntelligencePage() {
             {/* Briefing header */}
             <div className="flex items-center justify-between border-b border-border-subtle px-5 py-3">
               <div className="flex items-center gap-3">
-                <Subheading level={2} className="text-text">
+                <Subheading level={2}>
                   {selectedBriefing
                     ? `Daily Brief — ${selectedBriefing.briefingDate}`
                     : "Daily Brief"}
@@ -571,7 +571,7 @@ export default function IntelligencePage() {
           {snapshots.length >= 2 && (
             <div>
               <div className="mb-3 flex items-center justify-between">
-                <Subheading level={2} className="text-text">30-Day Trends</Subheading>
+                <Subheading level={2}>30-Day Trends</Subheading>
                 <span className="text-xs text-text-tertiary">
                   {snapshots.length} snapshots · dashed lines = thresholds
                 </span>
@@ -615,7 +615,7 @@ export default function IntelligencePage() {
           {/* Recent Blueprint Quality Scores */}
           <div className="rounded-xl border border-border bg-surface">
             <div className="flex items-center justify-between border-b border-border-subtle px-5 py-3">
-              <Subheading level={2} className="text-text">Recent Blueprint Quality Scores</Subheading>
+              <Subheading level={2}>Recent Blueprint Quality Scores</Subheading>
               {scores.length === 0 && isAdmin && (
                 <button
                   onClick={handleBackfill}
@@ -768,7 +768,7 @@ export default function IntelligencePage() {
           {/* Recent Intake Quality Scores */}
           <div className="rounded-xl border border-border bg-surface">
             <div className="flex items-center justify-between border-b border-border-subtle px-5 py-3">
-              <Subheading level={2} className="text-text">Recent Intake Quality Scores</Subheading>
+              <Subheading level={2}>Recent Intake Quality Scores</Subheading>
               <Link href="/intake" className="text-xs text-text-tertiary hover:text-text">
                 View sessions →
               </Link>

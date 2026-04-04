@@ -77,7 +77,7 @@ export default function ComplianceCalendarPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <Heading level={1} className="text-text flex items-center gap-2">
+          <Heading level={1} className="flex items-center gap-2">
             <Calendar className="h-6 w-6 text-violet-600" />
             Compliance Calendar
           </Heading>
@@ -101,7 +101,7 @@ export default function ComplianceCalendarPage() {
         <>
           {/* Agent Periodic Reviews */}
           <section>
-            <Heading level={2} className="text-text mb-3 flex items-center gap-2">
+            <Heading level={2} className="mb-3 flex items-center gap-2">
               <Clock className="h-4 w-4 text-text-secondary" />
               Agent Periodic Reviews (SR 11-7)
               <span className="ml-auto text-xs font-normal text-text-secondary">
@@ -142,7 +142,7 @@ export default function ComplianceCalendarPage() {
 
           {/* Policy Annual Reviews */}
           <section>
-            <Heading level={2} className="text-text mb-3 flex items-center gap-2">
+            <Heading level={2} className="mb-3 flex items-center gap-2">
               <Shield className="h-4 w-4 text-text-secondary" />
               Annual Policy Reviews
               <span className="ml-auto text-xs font-normal text-text-secondary">

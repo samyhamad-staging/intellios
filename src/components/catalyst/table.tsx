@@ -26,7 +26,7 @@ export function Table({
       <div className="flow-root">
         <div {...props} className={clsx(className, '-mx-(--gutter) overflow-x-auto whitespace-nowrap')}>
           <div className={clsx('inline-block min-w-full align-middle', !bleed && 'sm:px-(--gutter)')}>
-            <table className="min-w-full text-left text-sm/6 text-zinc-950 dark:text-white">{children}</table>
+            <table className="min-w-full text-left text-sm/6 text-text">{children}</table>
           </div>
         </div>
       </div>

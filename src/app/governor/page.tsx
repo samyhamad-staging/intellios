@@ -100,7 +100,7 @@ export default function GovernorHomePage() {
   return (
     <div className="p-6 space-y-6 max-w-5xl">
       <div>
-        <Heading level={1} className="text-text">Governor</Heading>
+        <Heading level={1}>Governor</Heading>
         <p className="mt-0.5 text-sm text-text-secondary">Governance control center</p>
       </div>
 

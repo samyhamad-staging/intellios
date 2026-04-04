@@ -98,7 +98,7 @@ export default function ExecutiveDashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <Heading level={1} className="text-text">Executive Dashboard</Heading>
+          <Heading level={1}>Executive Dashboard</Heading>
           <p className="text-sm text-text-secondary mt-0.5">Fleet governance at a glance · {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}</p>
         </div>
         <button
