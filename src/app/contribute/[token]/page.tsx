@@ -21,6 +21,11 @@ export default async function ContributePage({ params }: PageProps) {
     return <ErrorPage title="Invitation not found" message="This invitation link is invalid or has been removed." />;
   }
 
+  // Load session context (needed for expiry message)
+  const session = await db.query.intakeSessions.findFirst({
+    where: eq(intakeSessions.id, invitation.sessionId),
+  });
+
   if (new Date(invitation.expiresAt) < new Date() && invitation.status !== "completed") {
     // P1-41: Richer expired-invite page with actionable next steps
     const sessionName =
@@ -62,10 +67,6 @@ export default async function ContributePage({ params }: PageProps) {
     );
   }
 
-  // Load session context
-  const session = await db.query.intakeSessions.findFirst({
-    where: eq(intakeSessions.id, invitation.sessionId),
-  });
 
   if (!session) {
     return <ErrorPage title="Session not found" message="The associated design session could not be found." />;
