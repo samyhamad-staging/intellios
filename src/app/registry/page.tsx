@@ -10,7 +10,7 @@ import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tooltip } from "@/components/ui/tooltip";
 import { TableToolbar } from "@/components/ui/table-toolbar";
-import { Bot, ChevronRight, Copy, Inbox, GitBranch } from "lucide-react";
+import { Bot, ChevronRight, Copy, Inbox, GitBranch, Search } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
