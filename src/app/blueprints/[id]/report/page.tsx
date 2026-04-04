@@ -977,7 +977,7 @@ function ReportDocument({
                           <div key={fn} className="rounded-lg border border-border-subtle bg-surface-raised p-3">
                             <SectionHeading className="text-xs">
                               {fn}
-                            </p>
+                            </SectionHeading>
                             <p className={`text-sm font-bold mt-0.5 ${strengthColor}`}>
                               {strength}
                             </p>
