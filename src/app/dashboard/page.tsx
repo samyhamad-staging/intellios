@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
@@ -30,6 +31,88 @@ interface DashboardSummary {
   needingAttention: AttentionItem[];
 }
 
+// ── AI Briefing Widget ────────────────────────────────────────────────────────
+
+type HealthStatus = "healthy" | "degraded" | "critical" | "unknown";
+
+interface BriefingSummary {
+  id: string;
+  briefingDate: string;
+  content: string;
+  healthStatus: HealthStatus;
+  generatedAt: string;
+}
+
+function AiBriefingWidget() {
+  const [briefing, setBriefing] = useState<BriefingSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/monitor/intelligence/briefing")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        const latest = (data?.briefings as BriefingSummary[] | undefined)?.[0] ?? null;
+        setBriefing(latest);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <section>
+        <h2 className="mb-3 text-xs font-semibold text-gray-400">AI Briefing</h2>
+        <div className="h-16 animate-pulse rounded-xl bg-gray-100" />
+      </section>
+    );
+  }
+
+  if (!briefing) return null;
+
+  const healthColors: Record<HealthStatus, string> = {
+    healthy:  "bg-green-50  border-green-200  text-green-800",
+    degraded: "bg-amber-50  border-amber-200  text-amber-800",
+    critical: "bg-red-50    border-red-200    text-red-800",
+    unknown:  "bg-gray-50   border-gray-200   text-gray-700",
+  };
+  const healthDot: Record<HealthStatus, string> = {
+    healthy:  "bg-green-500",
+    degraded: "bg-amber-500",
+    critical: "bg-red-500",
+    unknown:  "bg-gray-400",
+  };
+  const status = (briefing.healthStatus ?? "unknown") as HealthStatus;
+  // Show first ~200 chars of content as the preview
+  const preview = briefing.content.length > 200
+    ? briefing.content.slice(0, 200).replace(/\s+\S*$/, "") + "…"
+    : briefing.content;
+
+  return (
+    <section>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-xs font-semibold text-gray-400">AI Briefing</h2>
+        <Link href="/monitor/intelligence" className="text-xs text-gray-400 hover:text-gray-700">
+          View full briefing →
+        </Link>
+      </div>
+      <div className={`rounded-xl border px-4 py-3.5 ${healthColors[status]}`}>
+        <div className="flex items-start gap-3">
+          <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${healthDot[status]}`} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <span className="text-xs font-semibold capitalize">{status} · {briefing.briefingDate}</span>
+              <span className="text-xs opacity-60">
+                {new Date(briefing.generatedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            </div>
+            <p className="text-xs leading-relaxed opacity-80">{preview}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function timeAgo(dateStr: string): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -46,18 +129,18 @@ export default function ExecutiveDashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/dashboard/summary")
-      .then((r) => r.json())
-      .then((data: DashboardSummary) => {
-        setSummary(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Failed to load dashboard data");
-        setLoading(false);
-      });
+    Promise.all([
+      fetch("/api/dashboard/summary").then((r) => r.json()).catch(() => null),
+      fetch("/api/me").then((r) => r.json()).catch(() => null),
+    ]).then(([dashData, meData]) => {
+      if (dashData) setSummary(dashData as DashboardSummary);
+      else setError("Failed to load dashboard data");
+      if (meData?.user?.role) setUserRole(meData.user.role as string);
+      setLoading(false);
+    });
   }, []);
 
   const { total, deployed, approved, inReview, draft, rejected, deprecated } = summary?.counts ?? { total: 0, deployed: 0, approved: 0, inReview: 0, draft: 0, rejected: 0, deprecated: 0 };
@@ -93,6 +176,73 @@ export default function ExecutiveDashboardPage() {
             {error}
           </div>
         )}
+
+        {/* ── Role-aware Next Actions ────────────────────────────────────── */}
+        {!loading && userRole && (() => {
+          type Action = { label: string; sub: string; href: string; urgent?: boolean };
+          const actions: Action[] = [];
+
+          if (userRole === "architect") {
+            actions.push(
+              { label: "Continue your sessions", sub: `${draft} draft blueprint${draft !== 1 ? "s" : ""} in progress`, href: "/intake" },
+              { label: "Review quality scores", sub: "Check AI feedback on your blueprints", href: "/blueprints" },
+              { label: "Prepare for deployment", sub: `${approved} blueprint${approved !== 1 ? "s" : ""} approved and ready`, href: "/deploy" },
+            );
+          } else if (userRole === "reviewer" || userRole === "compliance_officer") {
+            actions.push(
+              {
+                label: inReview > 0 ? `${inReview} blueprint${inReview !== 1 ? "s" : ""} awaiting review` : "Review queue is clear",
+                sub: inReview > 0 ? "Check SLA deadlines before items become overdue" : "No blueprints currently in review",
+                href: "/review",
+                urgent: inReview > 0,
+              },
+              { label: "Governance compliance", sub: `${complianceRate !== null ? `${complianceRate}% compliance rate` : "Check fleet compliance posture"}`, href: "/governance" },
+              { label: "Audit log", sub: "Review recent governance actions", href: "/audit" },
+            );
+          } else if (userRole === "governor" || userRole === "admin") {
+            actions.push(
+              {
+                label: inReview > 0 ? `${inReview} pending approval${inReview !== 1 ? "s" : ""}` : "Approval queue clear",
+                sub: inReview > 0 ? "Fleet-wide review queue" : "No blueprints awaiting approval",
+                href: "/governor/approvals",
+                urgent: inReview > 0,
+              },
+              { label: "Fleet health", sub: `${deployed} deployed · ${clean} clean · ${withErrors} with errors`, href: "/governor/fleet" },
+              { label: "Governance policies", sub: `${policyCount} polic${policyCount === 1 ? "y" : "ies"} active`, href: "/governor/policies" },
+            );
+          }
+
+          if (actions.length === 0) return null;
+
+          return (
+            <section>
+              <h2 className="mb-3 text-xs font-semibold text-gray-400">Your Next Actions</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {actions.map((action) => (
+                  <Link
+                    key={action.href + action.label}
+                    href={action.href}
+                    className={`flex items-center justify-between rounded-xl border px-4 py-3.5 transition-colors hover:shadow-sm ${
+                      action.urgent
+                        ? "border-amber-200 bg-amber-50 hover:bg-amber-100"
+                        : "border-gray-200 bg-white hover:bg-gray-50"
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold truncate ${action.urgent ? "text-amber-900" : "text-gray-800"}`}>
+                        {action.label}
+                      </p>
+                      <p className={`mt-0.5 text-xs truncate ${action.urgent ? "text-amber-700" : "text-gray-500"}`}>
+                        {action.sub}
+                      </p>
+                    </div>
+                    <ArrowRight className={`ml-3 h-4 w-4 shrink-0 ${action.urgent ? "text-amber-500" : "text-gray-300"}`} />
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
 
         {/* ── Top-line KPIs ─────────────────────────────────────────────── */}
         <section>
@@ -310,6 +460,9 @@ export default function ExecutiveDashboardPage() {
             </div>
           )}
         </section>
+
+        {/* ── AI Briefing Widget (P2-467) ─────────────────────────────────── */}
+        <AiBriefingWidget />
 
       </div>
     </div>

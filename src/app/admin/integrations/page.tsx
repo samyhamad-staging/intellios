@@ -86,11 +86,14 @@ export default function IntegrationsPage() {
               </div>
             </div>
             {data.servicenow?.enabled && (
-              <div className="grid grid-cols-2 gap-3">
-                <InputField label="Instance URL" value={data.servicenow?.instanceUrl ?? ""} onChange={(v) => update("servicenow", "instanceUrl", v)} placeholder="https://your-instance.service-now.com" />
-                <InputField label="Username" value={data.servicenow?.username ?? ""} onChange={(v) => update("servicenow", "username", v)} />
-                <InputField label="Password" value="" onChange={(v) => update("servicenow", "password", v)} type="password" placeholder="(unchanged)" />
-                <InputField label="Assignment Group (optional)" value={data.servicenow?.assignmentGroup ?? ""} onChange={(v) => update("servicenow", "assignmentGroup", v)} />
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <InputField label="Instance URL" value={data.servicenow?.instanceUrl ?? ""} onChange={(v) => update("servicenow", "instanceUrl", v)} placeholder="https://your-instance.service-now.com" />
+                  <InputField label="Username" value={data.servicenow?.username ?? ""} onChange={(v) => update("servicenow", "username", v)} />
+                  <InputField label="Password" value="" onChange={(v) => update("servicenow", "password", v)} type="password" placeholder="(unchanged)" />
+                  <InputField label="Assignment Group (optional)" value={data.servicenow?.assignmentGroup ?? ""} onChange={(v) => update("servicenow", "assignmentGroup", v)} />
+                </div>
+                <TestConnectionButton adapter="servicenow" config={{ instanceUrl: data.servicenow?.instanceUrl ?? "", username: data.servicenow?.username ?? "" }} />
               </div>
             )}
           </section>
@@ -109,12 +112,15 @@ export default function IntegrationsPage() {
               </div>
             </div>
             {data.jira?.enabled && (
-              <div className="grid grid-cols-2 gap-3">
-                <InputField label="Base URL" value={data.jira?.baseUrl ?? ""} onChange={(v) => update("jira", "baseUrl", v)} placeholder="https://your-org.atlassian.net" />
-                <InputField label="Email" value={data.jira?.email ?? ""} onChange={(v) => update("jira", "email", v)} />
-                <InputField label="API Token" value="" onChange={(v) => update("jira", "apiToken", v)} type="password" placeholder="(unchanged)" />
-                <InputField label="Project Key" value={data.jira?.projectKey ?? ""} onChange={(v) => update("jira", "projectKey", v)} placeholder="e.g. GOV" />
-                <InputField label="Issue Type (optional)" value={data.jira?.approvalIssueType ?? ""} onChange={(v) => update("jira", "approvalIssueType", v)} placeholder="Task" />
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <InputField label="Base URL" value={data.jira?.baseUrl ?? ""} onChange={(v) => update("jira", "baseUrl", v)} placeholder="https://your-org.atlassian.net" />
+                  <InputField label="Email" value={data.jira?.email ?? ""} onChange={(v) => update("jira", "email", v)} />
+                  <InputField label="API Token" value="" onChange={(v) => update("jira", "apiToken", v)} type="password" placeholder="(unchanged)" />
+                  <InputField label="Project Key" value={data.jira?.projectKey ?? ""} onChange={(v) => update("jira", "projectKey", v)} placeholder="e.g. GOV" />
+                  <InputField label="Issue Type (optional)" value={data.jira?.approvalIssueType ?? ""} onChange={(v) => update("jira", "approvalIssueType", v)} placeholder="Task" />
+                </div>
+                <TestConnectionButton adapter="jira" config={{ baseUrl: data.jira?.baseUrl ?? "", email: data.jira?.email ?? "" }} />
               </div>
             )}
           </section>
@@ -133,9 +139,12 @@ export default function IntegrationsPage() {
               </div>
             </div>
             {data.slack?.enabled && (
-              <div className="grid grid-cols-2 gap-3">
-                <InputField label="Webhook URL" value={data.slack?.webhookUrl ?? ""} onChange={(v) => update("slack", "webhookUrl", v)} placeholder="https://hooks.slack.com/..." />
-                <InputField label="Channel (optional)" value={data.slack?.channel ?? ""} onChange={(v) => update("slack", "channel", v)} placeholder="#governance-alerts" />
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <InputField label="Webhook URL" value={data.slack?.webhookUrl ?? ""} onChange={(v) => update("slack", "webhookUrl", v)} placeholder="https://hooks.slack.com/..." />
+                  <InputField label="Channel (optional)" value={data.slack?.channel ?? ""} onChange={(v) => update("slack", "channel", v)} placeholder="#governance-alerts" />
+                </div>
+                <TestConnectionButton adapter="slack" config={{ webhookUrl: data.slack?.webhookUrl ?? "" }} />
               </div>
             )}
           </section>
@@ -154,8 +163,11 @@ export default function IntegrationsPage() {
               </div>
             </div>
             {data.teams?.enabled && (
-              <div className="grid grid-cols-1 gap-3">
-                <InputField label="Webhook URL" value={data.teams?.webhookUrl ?? ""} onChange={(v) => update("teams", "webhookUrl", v)} placeholder="https://your-org.webhook.office.com/..." />
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-3">
+                  <InputField label="Webhook URL" value={data.teams?.webhookUrl ?? ""} onChange={(v) => update("teams", "webhookUrl", v)} placeholder="https://your-org.webhook.office.com/..." />
+                </div>
+                <TestConnectionButton adapter="teams" config={{ webhookUrl: data.teams?.webhookUrl ?? "" }} />
               </div>
             )}
           </section>
@@ -178,6 +190,64 @@ function InputField({ label, value, onChange, placeholder, type = "text" }: {
         placeholder={placeholder}
         className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
       />
+    </div>
+  );
+}
+
+// P2-532: Test Connection button — posts to /api/admin/integrations/test
+function TestConnectionButton({ adapter, config }: {
+  adapter: string;
+  config: Record<string, string>;
+}) {
+  const [status, setStatus] = useState<"idle" | "testing" | "ok" | "fail">("idle");
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handleTest() {
+    setStatus("testing");
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/integrations/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adapter, config }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setStatus("ok");
+        setMessage(data.message);
+      } else {
+        setStatus("fail");
+        setMessage(data.error ?? "Connection failed.");
+      }
+    } catch {
+      setStatus("fail");
+      setMessage("Network error — could not reach test endpoint.");
+    }
+    // Auto-reset after 8 seconds
+    setTimeout(() => { setStatus("idle"); setMessage(null); }, 8000);
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={handleTest}
+        disabled={status === "testing"}
+        className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
+          status === "ok" ? "bg-green-50 text-green-700 border border-green-200"
+          : status === "fail" ? "bg-red-50 text-red-600 border border-red-200"
+          : "bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100"
+        }`}
+      >
+        {status === "testing" ? "Testing…"
+         : status === "ok" ? "✓ Connected"
+         : status === "fail" ? "✗ Failed — retry"
+         : "Test Connection"}
+      </button>
+      {message && (
+        <p className={`text-xs ${status === "ok" ? "text-green-700" : "text-red-600"}`}>
+          {message}
+        </p>
+      )}
     </div>
   );
 }

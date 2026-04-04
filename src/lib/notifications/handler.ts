@@ -31,6 +31,8 @@ interface Meta {
   agentName?: string | null;
   agentId?: string | null;
   reviewAction?: string | null;
+  /** Alias used by blueprint.reviewed events (payload field is 'decision') */
+  decision?: string | null;
   comment?: string | null;
   // Health check fields (blueprint.health_checked events)
   healthStatus?: string | null;
@@ -212,9 +214,11 @@ async function handleLifecycleEvent(event: LifecycleEvent): Promise<void> {
   }
 
   // ── blueprint.reviewed ───────────────────────────────────────────────────
+  // P1-251: Notify blueprint creator on approval / rejection / change request.
+  // The event payload uses 'decision' but older code used 'reviewAction' — accept both.
   if (event.type === "blueprint.reviewed") {
     const createdBy = meta.createdBy;
-    const reviewAction = meta.reviewAction as string | undefined;
+    const reviewAction = (meta.reviewAction ?? meta.decision) as string | undefined;
     const comment = meta.comment;
 
     if (!createdBy || createdBy === event.actorEmail) return;

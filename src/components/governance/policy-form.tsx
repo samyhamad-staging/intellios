@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -140,6 +140,12 @@ interface PolicyFormProps {
   readOnly?: boolean;
   /** When provided, the "Preview Impact" button is shown and this ID is sent as existingPolicyId */
   existingPolicyId?: string;
+  /**
+   * When provided, form state is auto-saved to localStorage under this key every 30 seconds.
+   * On mount, a saved draft is restored if no initialValues are present.
+   * The caller is responsible for clearing the draft (localStorage.removeItem) after a successful submit.
+   */
+  draftKey?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -415,6 +421,7 @@ export default function PolicyForm({
   saving = false,
   readOnly = false,
   existingPolicyId,
+  draftKey,
 }: PolicyFormProps) {
   const [name, setName] = useState(initialValues?.name ?? "");
   const [type, setType] = useState<PolicyType>(initialValues?.type ?? "compliance");
@@ -422,6 +429,62 @@ export default function PolicyForm({
   const [rules, setRules] = useState<PolicyRule[] | RuntimePolicyRule[]>(initialValues?.rules ?? []);
   const isRuntime = type === "runtime";
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // ── Draft auto-save ────────────────────────────────────────────────────────
+  const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
+  const [tickNow, setTickNow] = useState(() => Date.now());
+
+  // Restore draft from localStorage on mount (only when no initialValues are provided)
+  useEffect(() => {
+    if (!draftKey || initialValues) return;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        name?: string;
+        type?: PolicyType;
+        description?: string;
+        rules?: PolicyRule[] | RuntimePolicyRule[];
+        savedAt?: string;
+      };
+      if (parsed.name !== undefined) setName(parsed.name);
+      if (parsed.type !== undefined) setType(parsed.type);
+      if (parsed.description !== undefined) setDescription(parsed.description);
+      if (parsed.rules !== undefined) setRules(parsed.rules);
+      if (parsed.savedAt) setDraftSavedAt(new Date(parsed.savedAt));
+    } catch { /* malformed draft — ignore */ }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-save to localStorage every 30 seconds
+  useEffect(() => {
+    if (!draftKey || readOnly) return;
+    const id = setInterval(() => {
+      try {
+        const now = new Date();
+        localStorage.setItem(
+          draftKey,
+          JSON.stringify({ name, type, description, rules, savedAt: now.toISOString() })
+        );
+        setDraftSavedAt(now);
+      } catch { /* storage quota or private browsing — ignore */ }
+    }, 30_000);
+    return () => clearInterval(id);
+  }, [draftKey, readOnly, name, type, description, rules]);
+
+  // Tick every 60 s so "saved X min ago" label stays current
+  useEffect(() => {
+    if (!draftSavedAt) return;
+    const id = setInterval(() => setTickNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, [draftSavedAt]);
+
+  function draftSavedLabel(): string {
+    if (!draftSavedAt) return "";
+    const mins = Math.floor((tickNow - draftSavedAt.getTime()) / 60_000);
+    if (mins < 1) return "Draft saved just now";
+    if (mins === 1) return "Draft saved 1 min ago";
+    return `Draft saved ${mins} min ago`;
+  }
 
   // ── Impact simulation state ────────────────────────────────────────────────
   const [simulating, setSimulating] = useState(false);
@@ -844,6 +907,9 @@ export default function PolicyForm({
       {/* ── Submit ────────────────────────────────────────────────────────────── */}
       {!readOnly && (
         <div className="flex items-center justify-end gap-3">
+          {draftKey && draftSavedAt && (
+            <span className="mr-auto text-xs text-gray-400">{draftSavedLabel()}</span>
+          )}
           <button
             type="button"
             onClick={() => window.history.back()}

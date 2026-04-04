@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { SkeletonList } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { Globe, Users, CheckSquare, Activity } from "lucide-react";
+import { Globe, Users, CheckSquare, Activity, DollarSign, Layers } from "lucide-react";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -25,12 +25,39 @@ interface FleetTotals {
   avgComplianceRate: number | null;
 }
 
+interface AgentTypeRow {
+  agentType: string;
+  total: number;
+  deployed: number;
+}
+
 interface FleetData {
   enterprises: EnterpriseRow[];
   totals: FleetTotals;
+  byAgentType: AgentTypeRow[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+// P2-562: Agent-type → department label + estimated monthly cost per deployed agent
+const AGENT_TYPE_META: Record<string, { label: string; dept: string; costPerAgent: number; color: string }> = {
+  automation:       { label: "Automation",       dept: "IT / Operations",  costPerAgent: 120, color: "bg-blue-50 text-blue-700 border-blue-100"     },
+  "decision-support": { label: "Decision Support", dept: "Risk / Compliance", costPerAgent: 180, color: "bg-violet-50 text-violet-700 border-violet-100" },
+  autonomous:       { label: "Autonomous",       dept: "Advanced Ops",     costPerAgent: 250, color: "bg-amber-50 text-amber-700 border-amber-100"   },
+  "data-access":    { label: "Data Access",      dept: "Analytics / BI",   costPerAgent: 140, color: "bg-emerald-50 text-emerald-700 border-emerald-100" },
+  unclassified:     { label: "Unclassified",     dept: "—",                costPerAgent: 150, color: "bg-gray-50 text-gray-600 border-gray-100"     },
+};
+
+function defaultMeta(agentType: string) {
+  return AGENT_TYPE_META[agentType] ?? { label: agentType, dept: "Other", costPerAgent: 150, color: "bg-gray-50 text-gray-600 border-gray-100" };
+}
+
+const COST_PER_DEPLOYED = 150; // blended monthly average in USD
+
+function formatCost(n: number) {
+  if (n >= 1000) return `$${(n / 1000).toFixed(1)}k`;
+  return `$${n}`;
+}
 
 function ComplianceBadge({ rate }: { rate: number | null }) {
   if (rate === null) return <span className="text-xs text-gray-400">—</span>;
@@ -187,6 +214,23 @@ export default function AdminFleetPage() {
         ))}
       </div>
 
+      {/* P2-562: Platform cost summary card */}
+      <div className="rounded-xl border border-violet-100 bg-violet-50 p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <DollarSign size={16} className="text-violet-600" />
+          <span className="text-sm font-semibold text-violet-800">Estimated Platform Cost</span>
+          <span className="ml-auto text-2xs text-violet-400 font-mono">blended avg $150/deployed agent/mo</span>
+        </div>
+        <p className="text-3xl font-bold text-violet-700">
+          {formatCost(totals.deployedAgents * COST_PER_DEPLOYED)}
+          <span className="text-lg font-normal text-violet-400 ml-1">/month</span>
+        </p>
+        <p className="mt-1 text-xs text-violet-500">
+          Based on {totals.deployedAgents} deployed agent{totals.deployedAgents !== 1 ? "s" : ""} across {totals.enterpriseCount} enterprise{totals.enterpriseCount !== 1 ? "s" : ""}.
+          {" "}Actual costs vary by agent type and usage.
+        </p>
+      </div>
+
       {/* Enterprise Table */}
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
@@ -204,6 +248,7 @@ export default function AdminFleetPage() {
                 <TableHeader>In Review</TableHeader>
                 <TableHeader>Draft</TableHeader>
                 <TableHeader>Compliance</TableHeader>
+                <TableHeader>Est. Monthly Cost</TableHeader>
                 <TableHeader>Actions</TableHeader>
               </TableRow>
             </TableHead>
@@ -229,6 +274,10 @@ export default function AdminFleetPage() {
                   </TableCell>
                   <TableCell className="text-center">
                     <ComplianceBadge rate={e.complianceRate} />
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-xs text-gray-700">
+                    {formatCost(e.deployedAgents * COST_PER_DEPLOYED)}
+                    <span className="ml-0.5 text-gray-400">/mo</span>
                   </TableCell>
                   <TableCell className="text-right">
                     <Link
@@ -258,12 +307,61 @@ export default function AdminFleetPage() {
                 <td className="px-4 py-3 text-center">
                   <ComplianceBadge rate={totals.avgComplianceRate} />
                 </td>
+                <td className="px-4 py-3 text-right font-mono text-xs text-gray-700">
+                  {formatCost(totals.deployedAgents * COST_PER_DEPLOYED)}<span className="text-gray-400">/mo</span>
+                </td>
                 <td />
               </tr>
             </tfoot>
           </Table>
         </div>
       </div>
+      {/* P2-562: By Agent Category (department proxy) */}
+      {data.byAgentType.length > 0 && (
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+            <Layers size={16} className="text-violet-500" />
+            <h2 className="text-sm font-semibold text-gray-700">By Agent Category</h2>
+            <span className="ml-auto text-xs text-gray-400">Maps to business department</span>
+          </div>
+          <div className="grid gap-px bg-gray-100" style={{ gridTemplateColumns: `repeat(${Math.min(data.byAgentType.length, 4)}, 1fr)` }}>
+            {data.byAgentType.map((row) => {
+              const meta = defaultMeta(row.agentType);
+              const estCost = row.deployed * meta.costPerAgent;
+              const deployPct = row.total > 0 ? Math.round((row.deployed / row.total) * 100) : 0;
+              return (
+                <div key={row.agentType} className="bg-white p-5">
+                  <div className={`inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-semibold mb-3 ${meta.color}`}>
+                    {meta.label}
+                  </div>
+                  <p className="text-xs text-gray-500 mb-3">{meta.dept}</p>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">Total agents</span>
+                      <span className="text-sm font-bold text-gray-900">{row.total}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">Deployed</span>
+                      <span className="text-sm font-semibold text-green-700">{row.deployed}</span>
+                    </div>
+                    {/* Deploy rate bar */}
+                    <div className="h-1.5 rounded-full bg-gray-100 mt-2">
+                      <div
+                        className="h-full rounded-full bg-green-400 transition-all"
+                        style={{ width: `${deployPct}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+                      <span className="text-xs text-gray-400">Est. monthly cost</span>
+                      <span className="text-xs font-mono font-semibold text-gray-700">{formatCost(estCost)}/mo</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

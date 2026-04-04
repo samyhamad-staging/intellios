@@ -5,6 +5,7 @@ import { or, isNull, eq, and } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
+import { getEnterpriseId, enterpriseScope } from "@/lib/auth/enterprise-scope";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
 import { publishEvent } from "@/lib/events/publish";
@@ -54,17 +55,18 @@ export async function GET(request: NextRequest) {
   const { session: authSession, error: authError } = await requireAuth();
   if (authError) return authError;
   const requestId = getRequestId(request);
+  const ctx = getEnterpriseId(request);
 
   try {
     // Phase 22: only return active (non-superseded) policy versions
     const activeOnly = isNull(governancePolicies.supersededAt);
 
-    const enterpriseFilter =
-      authSession.user.role === "admin"
-        ? undefined
-        : authSession.user.enterpriseId
-        ? or(isNull(governancePolicies.enterpriseId), eq(governancePolicies.enterpriseId, authSession.user.enterpriseId))
-        : isNull(governancePolicies.enterpriseId);
+    // Policies are special: non-admins see global policies (null enterprise) + their own.
+    // enterpriseScope returns the caller's filter; combine with global inclusion.
+    const scope = enterpriseScope(governancePolicies.enterpriseId, ctx);
+    const enterpriseFilter = scope && ctx.enterpriseId
+      ? or(isNull(governancePolicies.enterpriseId), scope)
+      : scope;
 
     const filter = enterpriseFilter ? and(activeOnly, enterpriseFilter) : activeOnly;
 

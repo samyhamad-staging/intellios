@@ -3,6 +3,7 @@
 import { use, useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
+import { CompanionChat } from "@/components/blueprint/companion-chat";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ValidationReportView } from "@/components/governance/validation-report";
 import { ABP } from "@/lib/types/abp";
@@ -72,6 +73,28 @@ function getSections(abp: ABP | null): StepperSection[] {
   ];
 }
 
+// ─── P2-228: Detect which section changed after refinement ───────────────────
+// Returns the section id of the first section that differs between two ABPs,
+// or null when nothing meaningful changed. Sections are checked in UX priority
+// order so the most impactful change is highlighted first.
+function detectChangedSection(prev: ABP | null, next: ABP): string | null {
+  if (!prev) return null;
+  const checks: Array<{ id: string; extract: (a: ABP) => unknown }> = [
+    { id: "identity",     extract: (a) => a.identity },
+    { id: "instructions", extract: (a) => a.capabilities?.instructions },
+    { id: "tools",        extract: (a) => a.capabilities?.tools },
+    { id: "knowledge",    extract: (a) => a.capabilities?.knowledge_sources },
+    { id: "constraints",  extract: (a) => a.constraints },
+    { id: "governance",   extract: (a) => a.governance?.policies },
+    { id: "audit",        extract: (a) => a.governance?.audit },
+    { id: "ownership",    extract: (a) => a.ownership },
+  ];
+  for (const { id, extract } of checks) {
+    if (JSON.stringify(extract(prev)) !== JSON.stringify(extract(next))) return id;
+  }
+  return null;
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function BlueprintPage({ params, searchParams }: BlueprintPageProps) {
@@ -98,6 +121,8 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   const [refinementCount, setRefinementCount] = useState(0);
   // Multi-turn refinement history
   const [refinementHistory, setRefinementHistory] = useState<Array<{ role: "user" | "assistant"; content: string; timestamp: string }>>([]);
+  // P1-226: Pending companion AI suggestion — shown for confirmation before refinement runs
+  const [pendingApplyPrompt, setPendingApplyPrompt] = useState<string | null>(null);
   const refinementEndRef = useRef<HTMLDivElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -113,6 +138,36 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   const [testRunExpanded, setTestRunExpanded] = useState(false);
   const [generationStep, setGenerationStep] = useState(0);
 
+  // P1-29: tab controlling which right-rail chat is shown
+  const [rightRailTab, setRightRailTab] = useState<"refine" | "companion">("refine");
+
+  // P1-40: version checkpoint before refining
+  const [checkpointSaving, setCheckpointSaving] = useState(false);
+  const [checkpointResult, setCheckpointResult] = useState<{ name: string; id: string } | null>(null);
+  const [checkpointError, setCheckpointError] = useState<string | null>(null);
+
+  async function handleSaveCheckpoint() {
+    setCheckpointSaving(true);
+    setCheckpointError(null);
+    try {
+      const res = await fetch(`/api/blueprints/${id}/clone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: `${abp?.identity?.name ?? "Agent"} — Checkpoint` }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCheckpointResult({ name: data.abp?.identity?.name ?? "Checkpoint", id: data.id ?? "" });
+      } else {
+        setCheckpointError("Could not save checkpoint — try again.");
+      }
+    } catch {
+      setCheckpointError("Network error saving checkpoint.");
+    } finally {
+      setCheckpointSaving(false);
+    }
+  }
+
   const [blueprintStatus, setBlueprintStatus] = useState<string>("draft");
   const [reviewComment, setReviewComment] = useState<string | null>(null);
   const [exportingEvidence, setExportingEvidence] = useState(false);
@@ -121,6 +176,11 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   }>>([]);
   const [currentApprovalStep, setCurrentApprovalStep] = useState<number>(0);
   const [approvalChain, setApprovalChain] = useState<Array<{ step: number; role: string; label: string }>>([]);
+
+  // Quality gate — advisory warning when overall score < threshold
+  const QUALITY_GATE_THRESHOLD = 3.0; // out of 5.0
+  const [qualityScore, setQualityScore] = useState<number | null>(null);
+  const [qualityGateLoaded, setQualityGateLoaded] = useState(false);
 
   const [ownershipOpen, setOwnershipOpen] = useState(false);
   const [ownershipDraft, setOwnershipDraft] = useState<{
@@ -170,14 +230,18 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       });
   }
 
-  const handleRefine = useCallback(async () => {
-    if (!change.trim() || refining) return;
-    const userMsg = change.trim();
+  // P1-29: accepts an optional directPrompt (from CompanionChat "Apply Change")
+  // so suggestions can be forwarded to the refinement API without copy-paste.
+  const handleRefine = useCallback(async (directPrompt?: string) => {
+    const userMsg = (directPrompt ?? change).trim();
+    if (!userMsg || refining) return;
     setRefining(true);
     setError(null);
+    // P2-228: Capture the pre-refinement ABP so we can diff sections afterward
+    const preRefinementAbp = abp;
     // Add user message to history immediately
     setRefinementHistory((prev) => [...prev, { role: "user", content: userMsg, timestamp: new Date().toISOString() }]);
-    setChange("");
+    if (!directPrompt) setChange(""); // only clear textarea for manual input
     try {
       const res = await fetch(`/api/blueprints/${id}/refine`, {
         method: "POST",
@@ -189,8 +253,18 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         throw new Error(data.error ?? "Refinement failed");
       }
       const data = await res.json();
-      setAbp(data.abp as ABP);
+      const newAbp = data.abp as ABP;
+      setAbp(newAbp);
       setRefinementCount(parseInt(data.refinementCount ?? "0", 10));
+      // P2-228: Auto-highlight the first changed section after refinement
+      const changedSection = detectChangedSection(preRefinementAbp, newAbp);
+      if (changedSection) {
+        setActiveSection(changedSection);
+        // Short delay lets React re-render with updated content before scrolling
+        setTimeout(() => {
+          document.getElementById(`section-${changedSection}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 150);
+      }
       // Add assistant response to history
       setRefinementHistory((prev) => [...prev, {
         role: "assistant",
@@ -220,7 +294,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
     } finally {
       setRefining(false);
     }
-  }, [id, change, refining]);
+  }, [id, change, refining, abp]);
 
   const handleValidate = useCallback(async () => {
     setValidating(true);
@@ -368,6 +442,37 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       .catch(() => {}); // non-critical
   }, [agentIdState, id, testDataLoaded]);
 
+  // P2-595: Dispatch live page context to the Help Panel copilot
+  useEffect(() => {
+    if (!abp) return;
+    const blockerCount = validationReport?.violations.filter(
+      (v) => v.severity === "error"
+    ).length ?? undefined;
+    window.dispatchEvent(
+      new CustomEvent("intellios:help-context", {
+        detail: {
+          agentName: abp.identity?.name ?? undefined,
+          blueprintStatus: blueprintStatus ?? undefined,
+          violationCount: blockerCount,
+        },
+      })
+    );
+  }, [abp, blueprintStatus, validationReport]);
+
+  // Quality gate — fetch latest quality score once blueprint is loaded
+  useEffect(() => {
+    if (!id || qualityGateLoaded) return;
+    setQualityGateLoaded(true);
+    fetch(`/api/blueprints/${id}/quality`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.score?.overallScore != null) {
+          setQualityScore(parseFloat(data.score.overallScore));
+        }
+      })
+      .catch(() => {}); // non-critical — advisory only
+  }, [id, qualityGateLoaded]);
+
   // Auto-scroll refinement chat to bottom when new messages arrive
   useEffect(() => {
     refinementEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -408,6 +513,16 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
     }
   }, [id, agentIdState, submitting]);
 
+  // ── Violation acknowledgement ─────────────────────────────────────────────
+  // Warnings are advisory and do not block submission, but architects must
+  // explicitly acknowledge each one so there's a clear record that they were
+  // reviewed. Acknowledgements are session-scoped (reset on page reload).
+  const [acknowledgedRuleIds, setAcknowledgedRuleIds] = useState<Set<string>>(new Set());
+
+  const handleAcknowledge = useCallback((ruleId: string) => {
+    setAcknowledgedRuleIds((prev) => new Set([...prev, ruleId]));
+  }, []);
+
   // ── Derived state ──────────────────────────────────────────────────────────
   const sections = getSections(abp);
   const filledCount = sections.filter((s) => s.filled).length;
@@ -416,12 +531,20 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
     ? validationReport.violations.filter((v) => v.severity === "error").length
     : null;
 
+  const warningViolations = validationReport
+    ? validationReport.violations.filter((v) => v.severity === "warning")
+    : [];
+  const acknowledgedCount = warningViolations.filter((v) => acknowledgedRuleIds.has(v.ruleId)).length;
+  const allWarningsAcknowledged = warningViolations.length === 0 || acknowledgedCount === warningViolations.length;
+  const unacknowledgedCount = warningViolations.length - acknowledgedCount;
+
   const canSubmit =
     !submitted &&
     !!agentIdState &&
     !submitting &&
     !!validationReport &&
-    blockerCount === 0;
+    blockerCount === 0 &&
+    allWarningsAcknowledged;
 
   const submitLabel = submitted
     ? "✓ Submitted for Review"
@@ -431,6 +554,8 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
     ? `${blockerCount} blocker${blockerCount === 1 ? "" : "s"} — resolve to submit`
     : !validationReport
     ? "Validate before submitting"
+    : !allWarningsAcknowledged
+    ? `Acknowledge ${unacknowledgedCount} warning${unacknowledgedCount === 1 ? "" : "s"} below`
     : "Submit for Review";
 
   return (
@@ -635,6 +760,62 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         {/* Right rail: Submit + Governance + Refinement */}
         <aside className="w-80 shrink-0 border-l border-border bg-surface flex flex-col overflow-y-auto">
 
+          {/* P1-204: Persistent Action Tray — 4 core actions always visible at top of rail */}
+          {agentIdState && (
+            <div className="border-b border-border bg-surface-raised px-3 py-2.5">
+              <div className="grid grid-cols-4 gap-1">
+                {[
+                  {
+                    label: "Refine",
+                    title: "Refine with AI",
+                    onClick: () => setTab("refine"),
+                    icon: "✦",
+                  },
+                  {
+                    label: "Simulate",
+                    title: "Run a simulation",
+                    href: `/registry/${agentIdState}?tab=simulate`,
+                    icon: "▷",
+                  },
+                  {
+                    label: "Export",
+                    title: "Export blueprint package",
+                    href: `/registry/${agentIdState}?tab=export`,
+                    icon: "↓",
+                  },
+                  {
+                    label: "Deploy",
+                    title: "Deploy this agent",
+                    href: `/deploy`,
+                    icon: "⚡",
+                  },
+                ].map((action) =>
+                  action.href ? (
+                    <Link
+                      key={action.label}
+                      href={action.href}
+                      title={action.title}
+                      className="flex flex-col items-center gap-0.5 rounded-lg px-1 py-2 text-center transition-colors hover:bg-surface text-text-secondary hover:text-text"
+                    >
+                      <span className="text-sm leading-none">{action.icon}</span>
+                      <span className="text-2xs font-medium">{action.label}</span>
+                    </Link>
+                  ) : (
+                    <button
+                      key={action.label}
+                      onClick={action.onClick}
+                      title={action.title}
+                      className="flex flex-col items-center gap-0.5 rounded-lg px-1 py-2 text-center transition-colors hover:bg-surface text-text-secondary hover:text-text"
+                    >
+                      <span className="text-sm leading-none">{action.icon}</span>
+                      <span className="text-2xs font-medium">{action.label}</span>
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Submit for Review */}
           {agentIdState && (
             <div className="border-b border-border px-5 py-4">
@@ -710,6 +891,22 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                     )}
                   </div>
 
+                  {/* Quality gate advisory — shown when score is below threshold */}
+                  {qualityScore !== null && qualityScore < QUALITY_GATE_THRESHOLD && (
+                    <div className="mb-2 flex items-start gap-2 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-800">
+                      <span className="shrink-0 mt-0.5">⚠</span>
+                      <span>
+                        Quality score is <strong>{qualityScore.toFixed(1)}/5.0</strong> — below the recommended threshold of {QUALITY_GATE_THRESHOLD.toFixed(1)}.
+                        Consider addressing quality issues before submitting.{" "}
+                        {agentIdState && (
+                          <a href={`/registry/${agentIdState}?tab=quality`} className="underline hover:text-orange-900">
+                            View details →
+                          </a>
+                        )}
+                      </span>
+                    </div>
+                  )}
+
                   <button
                     onClick={!validationReport ? handleValidate : handleSubmitForReview}
                     disabled={loading || validating || (!!validationReport && !canSubmit)}
@@ -765,49 +962,81 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             </div>
           )}
 
-          {/* Governance violations detail */}
-          {validationReport && !validationReport.valid && (
+          {/* Governance violations — with per-warning acknowledgement workflow */}
+          {validationReport && validationReport.violations.length > 0 && (
             <div className="border-b border-border px-5 py-4">
-              <h2 className="text-sm font-semibold text-text">Violations</h2>
-              <div className="mt-3 space-y-2">
-                {validationReport.violations.map((v, i) => (
-                  <div
-                    key={i}
-                    className={`rounded-lg border p-3 text-xs ${
-                      v.severity === "error"
-                        ? "border-red-200 bg-red-50"
-                        : "border-yellow-200 bg-yellow-50"
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <span
-                        className={`shrink-0 rounded px-1 py-0.5 text-xs font-medium ${
-                          v.severity === "error"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {v.severity}
-                      </span>
-                      <div>
-                        <p className="font-medium text-text">{v.message}</p>
-                        {v.suggestion && (
-                          <div className="mt-1.5 border-l-2 border-blue-300 bg-blue-50 rounded px-2 py-1">
-                            <p className="text-blue-600 text-xs font-medium mb-0.5">✦ Suggested fix</p>
-                            <p className="text-blue-800 text-xs">{v.suggestion}</p>
-                          </div>
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-text">Violations</h2>
+                {warningViolations.length > 0 && (
+                  <span className="text-xs text-text-tertiary">
+                    {acknowledgedCount}/{warningViolations.length} acknowledged
+                  </span>
+                )}
+              </div>
+              <div className="space-y-2">
+                {validationReport.violations.map((v, i) => {
+                  const isAck = acknowledgedRuleIds.has(v.ruleId);
+                  const isError = v.severity === "error";
+                  return (
+                    <div
+                      key={v.ruleId || i}
+                      className={`rounded-lg border p-3 text-xs transition-all ${
+                        isAck
+                          ? "border-green-200 bg-green-50 opacity-60"
+                          : isError
+                          ? "border-red-200 bg-red-50"
+                          : "border-yellow-200 bg-yellow-50"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span
+                          className={`shrink-0 rounded px-1 py-0.5 text-xs font-medium ${
+                            isAck
+                              ? "bg-green-100 text-green-700"
+                              : isError
+                              ? "bg-red-100 text-red-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}
+                        >
+                          {isAck ? "✓ ack" : v.severity}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-text">{v.message}</p>
+                          {v.suggestion && !isAck && (
+                            <div className="mt-1.5 border-l-2 border-blue-300 bg-blue-50 rounded px-2 py-1">
+                              <p className="text-blue-600 text-xs font-medium mb-0.5">✦ Suggested fix</p>
+                              <p className="text-blue-800 text-xs">{v.suggestion}</p>
+                            </div>
+                          )}
+                          <p className="mt-0.5 font-mono text-text-tertiary">{v.field}</p>
+                        </div>
+                        {!isError && !isAck && (
+                          <button
+                            onClick={() => handleAcknowledge(v.ruleId)}
+                            className="shrink-0 rounded-md border border-yellow-300 bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 hover:bg-yellow-200 transition-colors"
+                          >
+                            Acknowledge
+                          </button>
                         )}
-                        <p className="mt-0.5 font-mono text-text-tertiary">{v.field}</p>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
+              {/* Summary: all warnings reviewed, no errors — ready to submit */}
+              {allWarningsAcknowledged && warningViolations.length > 0 && blockerCount === 0 && (
+                <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
+                  <p className="font-semibold">✓ All warnings reviewed</p>
+                  <p className="mt-0.5 text-green-700">
+                    You&apos;ve acknowledged every warning — this blueprint is ready to submit.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Governance section (if no violations) */}
-          {validationReport?.valid && (
+          {/* Governance section (shown only when truly zero violations — no errors, no warnings) */}
+          {validationReport?.valid && validationReport.violations.length === 0 && (
             <div className="border-b border-border px-5 py-4">
               <h2 className="text-sm font-semibold">Governance</h2>
               <div className="mt-3">
@@ -1027,19 +1256,70 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             </div>
           )}
 
-          {/* Refinement Chat */}
-          <div className="border-b border-border px-5 py-4">
-            <h2 className="text-sm font-semibold">Refinement Chat</h2>
-            <p className="mt-1 text-xs text-text-secondary">
-              Describe changes — Claude will regenerate the blueprint. Each message is a refinement round.
-            </p>
+          {/* Right rail tab strip — Refine / Companion AI (P1-29) */}
+          <div className="border-b border-border px-4 pt-3">
+            <div className="flex gap-0">
+              {(["refine", "companion"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setRightRailTab(tab)}
+                  className={`px-3 py-2 text-xs font-medium border-b-2 -mb-px transition-colors ${
+                    rightRailTab === tab
+                      ? "border-primary text-primary"
+                      : "border-transparent text-text-tertiary hover:text-text"
+                  }`}
+                >
+                  {tab === "refine" ? "Refine" : "Companion AI"}
+                </button>
+              ))}
+            </div>
           </div>
 
+          {rightRailTab === "companion" ? (
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <CompanionChat
+                blueprintId={id}
+                onApplyChange={(prompt) => {
+                  // P1-226: Stage the prompt for confirmation before running refinement
+                  setRightRailTab("refine");
+                  setPendingApplyPrompt(prompt);
+                }}
+                violationCount={blockerCount}
+                qualityScore={qualityScore}
+              />
+            </div>
+          ) : (
           <div className="flex flex-1 flex-col min-h-0">
             {/* Message history */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
               {refinementHistory.length === 0 && (
                 <div className="py-4 px-2 space-y-2">
+                  {/* P1-40: checkpoint banner — shown before first refinement */}
+                  {!checkpointResult && (
+                    <div className="mb-3 rounded-lg border border-border bg-surface-muted px-3 py-2.5">
+                      <p className="text-xs text-text-secondary mb-1.5">
+                        💾 Save a restore point before making changes.
+                      </p>
+                      {checkpointError && (
+                        <p className="text-2xs text-danger mb-1.5">{checkpointError}</p>
+                      )}
+                      <button
+                        onClick={handleSaveCheckpoint}
+                        disabled={checkpointSaving}
+                        className="rounded-md border border-border bg-surface px-2.5 py-1 text-xs text-text-secondary hover:bg-surface-raised hover:text-text disabled:opacity-40 transition-colors"
+                      >
+                        {checkpointSaving ? "Saving…" : "Save checkpoint"}
+                      </button>
+                    </div>
+                  )}
+                  {checkpointResult && (
+                    <div className="mb-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
+                      ✓ Checkpoint saved as &ldquo;{checkpointResult.name}&rdquo;.{" "}
+                      <a href={`/blueprints/${checkpointResult.id}`} className="underline hover:no-underline">
+                        View →
+                      </a>
+                    </div>
+                  )}
                   <p className="text-center text-xs text-text-tertiary mb-3">
                     Describe what to change. For example:
                   </p>
@@ -1087,6 +1367,35 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               <div ref={refinementEndRef} />
             </div>
 
+            {/* P1-226: Companion AI suggestion — confirm before applying */}
+            {pendingApplyPrompt && (
+              <div className="border-t border-amber-200 bg-amber-50 p-3 space-y-2">
+                <p className="text-xs font-semibold text-amber-800">Apply this suggestion to your blueprint?</p>
+                <p className="text-xs text-amber-700 line-clamp-3 italic">&ldquo;{pendingApplyPrompt}&rdquo;</p>
+                <p className="text-2xs text-amber-600">This will modify your blueprint. Consider saving a checkpoint first if you haven&apos;t already.</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      const prompt = pendingApplyPrompt;
+                      setPendingApplyPrompt(null);
+                      handleRefine(prompt);
+                    }}
+                    disabled={refining}
+                    className="rounded-lg bg-amber-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-800 disabled:opacity-50"
+                  >
+                    {refining ? "Applying…" : "Confirm — Apply Changes"}
+                  </button>
+                  <button
+                    onClick={() => setPendingApplyPrompt(null)}
+                    disabled={refining}
+                    className="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Input */}
             <div className="border-t border-border p-3">
               {error && !submitting && !refinementHistory.some((m) => m.content.includes(error!)) && (
@@ -1118,6 +1427,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               <p className="mt-1 text-center text-2xs text-text-tertiary">⌘ Enter to send</p>
             </div>
           </div>
+          )}
         </aside>
       </div>
     </div>

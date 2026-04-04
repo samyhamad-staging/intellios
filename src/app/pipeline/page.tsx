@@ -88,12 +88,19 @@ function matchesSearch(agent: Agent, query: string): boolean {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+// P2-488: Audience / violation filter options
+type AudienceFilter = "all" | "clean" | "violations" | "actionable";
+type SortOrder = "updated" | "created" | "name";
+
 export default function PipelinePage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  // P2-488: Audience filter + sort order
+  const [audienceFilter, setAudienceFilter] = useState<AudienceFilter>("all");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("updated");
 
   useEffect(() => {
     fetch("/api/registry")
@@ -102,12 +109,31 @@ export default function PipelinePage() {
       .catch(() => { setError("Failed to load pipeline"); setLoading(false); });
   }, []);
 
-  const filtered = useMemo(
-    () => agents.filter(
+  const filtered = useMemo(() => {
+    let result = agents.filter(
       (a) => (!filterTag || a.tags?.includes(filterTag)) && matchesSearch(a, searchQuery)
-    ),
-    [agents, filterTag, searchQuery]
-  );
+    );
+
+    // P2-488: Audience filter
+    if (audienceFilter === "clean") {
+      result = result.filter((a) => (a.violationCount ?? 0) === 0);
+    } else if (audienceFilter === "violations") {
+      result = result.filter((a) => (a.violationCount ?? 0) > 0);
+    } else if (audienceFilter === "actionable") {
+      result = result.filter((a) => ["draft", "in_review", "approved"].includes(a.status));
+    }
+
+    // P2-488: Sort order
+    if (sortOrder === "created") {
+      result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } else if (sortOrder === "name") {
+      result = [...result].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+    } else {
+      result = [...result].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    }
+
+    return result;
+  }, [agents, filterTag, searchQuery, audienceFilter, sortOrder]);
 
   const byStatus = (status: Status) => filtered.filter((a) => a.status === status);
   const allTags = Array.from(new Set(agents.flatMap((a) => a.tags ?? []))).sort();
@@ -134,7 +160,8 @@ export default function PipelinePage() {
               {loading ? "Loading…" : `${agents.length} agent${agents.length === 1 ? "" : "s"} across all stages`}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {/* Search */}
             <div className="relative">
               <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary" />
               <input
@@ -142,15 +169,42 @@ export default function PipelinePage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search agents…"
-                className="w-48 rounded-lg border border-border bg-surface py-1.5 pl-8 pr-3 text-sm placeholder:text-text-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"
+                className="w-44 rounded-lg border border-border bg-surface py-1.5 pl-8 pr-3 text-sm placeholder:text-text-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"
               />
             </div>
+
+            {/* P2-488: Audience filter chips */}
+            <div className="flex items-center gap-1 rounded-lg border border-border bg-surface px-1.5 py-1">
+              {(["all", "actionable", "clean", "violations"] as AudienceFilter[]).map((f) => {
+                const LABELS: Record<AudienceFilter, string> = {
+                  all: "All",
+                  actionable: "Actionable",
+                  clean: "Clean",
+                  violations: "Violations",
+                };
+                return (
+                  <button
+                    key={f}
+                    onClick={() => setAudienceFilter(f)}
+                    className={`rounded-md px-2 py-0.5 text-xs font-medium transition-colors ${
+                      audienceFilter === f
+                        ? "bg-primary text-white"
+                        : "text-text-secondary hover:text-text hover:bg-surface-muted"
+                    }`}
+                  >
+                    {LABELS[f]}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Tag filter */}
             {allTags.length > 0 && (
               <Select
                 value={filterTag || "_all_"}
                 onValueChange={(v) => setFilterTag(v === "_all_" ? "" : v)}
               >
-                <SelectTrigger className="text-sm">
+                <SelectTrigger className="text-sm h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -159,9 +213,25 @@ export default function PipelinePage() {
                 </SelectContent>
               </Select>
             )}
-            {(searchQuery || filterTag) && (
+
+            {/* P2-488: Sort order */}
+            <Select
+              value={sortOrder}
+              onValueChange={(v) => setSortOrder(v as SortOrder)}
+            >
+              <SelectTrigger className="text-sm h-8 w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="updated">Last updated</SelectItem>
+                <SelectItem value="created">Newest first</SelectItem>
+                <SelectItem value="name">Name A→Z</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {(searchQuery || filterTag || audienceFilter !== "all") && (
               <button
-                onClick={() => { setSearchQuery(""); setFilterTag(""); }}
+                onClick={() => { setSearchQuery(""); setFilterTag(""); setAudienceFilter("all"); }}
                 className="text-xs text-text-tertiary hover:text-text underline"
               >
                 Clear

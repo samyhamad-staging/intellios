@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { agentBlueprints } from "@/lib/db/schema";
+import { agentBlueprints, intakeSessions } from "@/lib/db/schema";
 import { desc, eq, isNull, sql } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -144,7 +144,34 @@ export async function GET(request: NextRequest) {
           : null,
     };
 
-    return NextResponse.json({ enterprises, totals });
+    // P2-562: Per-department (agent-category) breakdown
+    // Join agentBlueprints → intakeSessions to get agentType distribution
+    const agentTypeRows = await db
+      .select({
+        agentType:     intakeSessions.agentType,
+        status:        agentBlueprints.status,
+        count:         sql<number>`COUNT(DISTINCT ${agentBlueprints.agentId})::int`,
+      })
+      .from(agentBlueprints)
+      .innerJoin(intakeSessions, eq(agentBlueprints.sessionId, intakeSessions.id))
+      .groupBy(intakeSessions.agentType, agentBlueprints.status);
+
+    // Aggregate into agentType buckets
+    const agentTypeMap: Record<string, { total: number; deployed: number }> = {};
+    for (const row of agentTypeRows) {
+      const key = row.agentType ?? "unclassified";
+      if (!agentTypeMap[key]) agentTypeMap[key] = { total: 0, deployed: 0 };
+      agentTypeMap[key].total += row.count;
+      if (row.status === "deployed" || row.status === "approved") {
+        agentTypeMap[key].deployed += row.count;
+      }
+    }
+
+    const byAgentType = Object.entries(agentTypeMap)
+      .map(([agentType, counts]) => ({ agentType, ...counts }))
+      .sort((a, b) => b.total - a.total);
+
+    return NextResponse.json({ enterprises, totals, byAgentType });
   } catch (err) {
     console.error(`[${requestId}] Failed to fetch fleet overview:`, err);
     return apiError(

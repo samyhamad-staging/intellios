@@ -17,6 +17,67 @@ interface Notification {
 
 const POLL_INTERVAL_MS = 30_000;
 
+// P2-606: Group notifications — collapse same-type + same-entity into digest cards
+interface NotificationGroup {
+  kind: "single";
+  notification: Notification;
+}
+interface NotificationDigest {
+  kind: "digest";
+  type: string;
+  entityId: string;
+  entityType: string;
+  link: string | null;
+  count: number;
+  /** Summary label, e.g. "Agent X triggered 5 policy violations" */
+  label: string;
+  hasUnread: boolean;
+  latestAt: string;
+}
+type NotificationItem = NotificationGroup | NotificationDigest;
+
+function groupNotifications(notifications: Notification[]): NotificationItem[] {
+  // Build a map keyed by type+entityId
+  const groupMap = new Map<string, Notification[]>();
+  for (const n of notifications) {
+    const key = `${n.type}::${n.entityId}`;
+    const existing = groupMap.get(key);
+    if (existing) existing.push(n);
+    else groupMap.set(key, [n]);
+  }
+
+  const result: NotificationItem[] = [];
+  // Preserve original order: use the first occurrence index
+  const seen = new Set<string>();
+  for (const n of notifications) {
+    const key = `${n.type}::${n.entityId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const group = groupMap.get(key)!;
+    if (group.length === 1) {
+      result.push({ kind: "single", notification: n });
+    } else {
+      // Build a human-readable summary from the type
+      const typeLabel = n.type
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+      const agentLabel = n.title.split(" ")[0] ?? "Agent";
+      result.push({
+        kind: "digest",
+        type: n.type,
+        entityId: n.entityId,
+        entityType: n.entityType,
+        link: n.link,
+        count: group.length,
+        label: `${agentLabel} — ${group.length}× ${typeLabel}`,
+        hasUnread: group.some((g) => !g.read),
+        latestAt: group[0].createdAt,
+      });
+    }
+  }
+  return result;
+}
+
 /**
  * NotificationBell — nav component that polls /api/notifications every 30 s
  * when the window is focused. Shows an unread count badge and a dropdown panel
@@ -83,22 +144,20 @@ export default function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleOpen = async () => {
-    if (!open) {
-      setOpen(true);
-      if (unreadCount > 0) {
-        // Optimistic update
-        setUnreadCount(0);
-        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-        setLoading(true);
-        try {
-          await fetch("/api/notifications", { method: "PATCH" });
-        } finally {
-          setLoading(false);
-        }
-      }
-    } else {
-      setOpen(false);
+  const handleOpen = () => {
+    setOpen((prev) => !prev);
+  };
+
+  const handleMarkAllRead = async () => {
+    if (unreadCount === 0 || loading) return;
+    // Optimistic update — flip all to read immediately so the UI responds instantly
+    setUnreadCount(0);
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setLoading(true);
+    try {
+      await fetch("/api/notifications", { method: "PATCH" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -163,50 +222,83 @@ export default function NotificationBell() {
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50">
             <span className="text-sm font-semibold text-gray-700">
               Notifications
+              {unreadCount > 0 && (
+                <span className="ml-1.5 rounded-full bg-indigo-100 px-1.5 py-0.5 text-xs font-medium text-indigo-700">
+                  {unreadCount}
+                </span>
+              )}
             </span>
-            {loading && (
+            {loading ? (
               <span className="text-xs text-gray-400">Marking read…</span>
-            )}
+            ) : unreadCount > 0 ? (
+              <button
+                onClick={handleMarkAllRead}
+                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+              >
+                Mark all as read
+              </button>
+            ) : null}
           </div>
 
-          {/* List */}
+          {/* List — P2-606: grouped digest rendering */}
           <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center text-sm text-gray-400">
                 No notifications yet
               </div>
             ) : (
-              notifications.map((n) => (
-                <button
-                  key={n.id}
-                  onClick={() => handleNotificationClick(n)}
-                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
-                    !n.read ? "bg-indigo-50/50" : ""
-                  }`}
-                >
-                  <div className="flex items-start gap-2.5">
-                    <span className="text-base mt-0.5 shrink-0">
-                      {typeIcon(n.type)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-semibold text-gray-800 truncate">
-                          {n.title}
-                        </p>
-                        <span className="text-2xs text-gray-400 shrink-0">
-                          {formatRelative(n.createdAt)}
-                        </span>
+              groupNotifications(notifications).map((item) => {
+                if (item.kind === "single") {
+                  const n = item.notification;
+                  return (
+                    <button
+                      key={n.id}
+                      onClick={() => handleNotificationClick(n)}
+                      className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
+                        !n.read ? "bg-indigo-50/50" : ""
+                      }`}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <span className="text-base mt-0.5 shrink-0">{typeIcon(n.type)}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-semibold text-gray-800 truncate">{n.title}</p>
+                            <span className="text-2xs text-gray-400 shrink-0">{formatRelative(n.createdAt)}</span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
+                        </div>
+                        {!n.read && <span className="mt-1.5 shrink-0 w-2 h-2 rounded-full bg-indigo-500" />}
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                        {n.message}
-                      </p>
+                    </button>
+                  );
+                }
+                // Digest card
+                const d = item;
+                return (
+                  <button
+                    key={`${d.type}::${d.entityId}`}
+                    onClick={() => {
+                      setOpen(false);
+                      if (d.link) router.push(d.link);
+                    }}
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
+                      d.hasUnread ? "bg-indigo-50/50" : ""
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-base mt-0.5 shrink-0">{typeIcon(d.type)}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold text-gray-800 truncate">{d.label}</p>
+                          <span className="text-2xs text-gray-400 shrink-0">{formatRelative(d.latestAt)}</span>
+                        </div>
+                        <p className="text-xs text-indigo-600 mt-0.5">View all {d.count} →</p>
+                      </div>
+                      {d.hasUnread && <span className="mt-1.5 shrink-0 w-2 h-2 rounded-full bg-indigo-500" />}
                     </div>
-                    {!n.read && (
-                      <span className="mt-1.5 shrink-0 w-2 h-2 rounded-full bg-indigo-500" />
-                    )}
-                  </div>
-                </button>
-              ))
+                  </button>
+                );
+              })
             )}
           </div>
 

@@ -1,2 +1,17 @@
-// Re-exports the audit log viewer inside the Governor layout.
-export { default } from "@/app/audit/page";
+import AuditPage from "@/app/audit/page";
+
+export default function GovernorAuditPage() {
+  return (
+    <>
+      <div className="flex items-center gap-3 border-b border-violet-100 bg-violet-50 px-6 py-2.5">
+        <span className="inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700">
+          Governor
+        </span>
+        <p className="text-xs text-violet-600">
+          Audit Log — complete governance audit trail across the entire fleet
+        </p>
+      </div>
+      <AuditPage />
+    </>
+  );
+}

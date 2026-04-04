@@ -1,10 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { ValidationReport } from "@/lib/governance/types";
 import { VersionDiff } from "@/components/registry/version-diff";
-import { Sparkles, ThumbsUp, ThumbsDown, CheckCircle } from "lucide-react";
+import { Sparkles, ThumbsUp, ThumbsDown, CheckCircle, Clock } from "lucide-react";
+
+// ── SLA helpers ───────────────────────────────────────────────────────────────
+
+const REVIEW_SLA_DAYS = 5; // 5-day review SLA (configurable)
+
+function ReviewSlaBadge({ submittedAt }: { submittedAt: string }) {
+  const submittedMs = new Date(submittedAt).getTime();
+  const elapsedMs = Date.now() - submittedMs;
+  const elapsedDays = elapsedMs / (24 * 3_600_000);
+  const slaRemainingDays = REVIEW_SLA_DAYS - elapsedDays;
+
+  const waitedLabel =
+    elapsedDays < 1
+      ? `${Math.round(elapsedDays * 24)}h`
+      : `${Math.floor(elapsedDays)}d`;
+
+  if (slaRemainingDays <= 0) {
+    const overdueDays = Math.abs(Math.floor(slaRemainingDays));
+    return (
+      <div className="flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs text-red-700">
+        <Clock className="h-3 w-3 shrink-0" />
+        <span>
+          <span className="font-semibold">Overdue {overdueDays > 0 ? `${overdueDays}d` : "< 1d"}</span>
+          {" · "}Waiting {waitedLabel} · SLA {REVIEW_SLA_DAYS}d
+        </span>
+      </div>
+    );
+  }
+
+  const remainingLabel =
+    slaRemainingDays < 1
+      ? `${Math.round(slaRemainingDays * 24)}h`
+      : `${Math.floor(slaRemainingDays)}d`;
+  const isUrgent = slaRemainingDays < 1;
+
+  return (
+    <div className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs ${
+      isUrgent
+        ? "border-amber-200 bg-amber-50 text-amber-700"
+        : "border-gray-100 bg-gray-50 text-gray-500"
+    }`}>
+      <Clock className="h-3 w-3 shrink-0" />
+      <span>
+        Waiting {waitedLabel}
+        {" · "}SLA {REVIEW_SLA_DAYS}d
+        {" · "}
+        <span className={isUrgent ? "font-semibold" : ""}>{remainingLabel} remaining</span>
+      </span>
+    </div>
+  );
+}
 
 type ReviewAction = "approve" | "reject" | "request_changes";
 
@@ -82,6 +133,15 @@ export function ReviewPanel({
   const [error, setError] = useState<string | null>(null);
   const [aiBrief, setAiBrief] = useState<null | "loading" | RiskBrief>(null);
   const [stepToast, setStepToast] = useState<string | null>(null);
+  // P2-252: AI brief feedback
+  const [briefFeedback, setBriefFeedback] = useState<"up" | "down" | null>(null);
+  // P2-573: ref for scrolling to diff section
+  const diffSectionRef = useRef<HTMLDivElement>(null);
+
+  function handleExpandDiff() {
+    setDiffExpanded(true);
+    setTimeout(() => diffSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }
 
   // ── AI Risk Brief ───────────────────────────────────────────────────────────
   async function generateAiBrief() {
@@ -168,6 +228,29 @@ export function ReviewPanel({
 
   return (
     <div className="space-y-5">
+      {/* P2-573: Re-review banner — shown when a prior version exists */}
+      {previousBlueprintId && (
+        <div className="flex items-center justify-between rounded-lg border border-violet-200 bg-violet-50 px-4 py-2.5">
+          <div className="flex items-center gap-2 text-sm text-violet-800">
+            <span className="text-violet-500">↔</span>
+            <span>
+              Re-review: <span className="font-semibold">v{previousVersion}</span>
+              {" → "}
+              <span className="font-semibold">v{version}</span>
+            </span>
+          </div>
+          <button
+            onClick={handleExpandDiff}
+            className="text-xs font-medium text-violet-700 hover:text-violet-900 underline underline-offset-2"
+          >
+            See what changed ↓
+          </button>
+        </div>
+      )}
+
+      {/* SLA waiting badge */}
+      <ReviewSlaBadge submittedAt={submittedAt} />
+
       {/* AI Risk Brief */}
       <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
         <div className="flex items-center justify-between">
@@ -222,6 +305,37 @@ export function ReviewPanel({
               </span>
               <span className="text-xs text-gray-500">— {aiBrief.recommendationReason}</span>
             </div>
+            {/* P2-252: AI Assessment Feedback */}
+            <div className="flex items-center gap-2 pt-1">
+              <span className="text-xs text-indigo-400">Was this brief accurate?</span>
+              <button
+                onClick={() => setBriefFeedback(briefFeedback === "up" ? null : "up")}
+                title="Accurate assessment"
+                className={`rounded p-1 transition-colors ${
+                  briefFeedback === "up"
+                    ? "bg-green-100 text-green-700"
+                    : "text-indigo-300 hover:text-green-600 hover:bg-green-50"
+                }`}
+              >
+                <ThumbsUp size={13} />
+              </button>
+              <button
+                onClick={() => setBriefFeedback(briefFeedback === "down" ? null : "down")}
+                title="Inaccurate assessment"
+                className={`rounded p-1 transition-colors ${
+                  briefFeedback === "down"
+                    ? "bg-red-100 text-red-700"
+                    : "text-indigo-300 hover:text-red-500 hover:bg-red-50"
+                }`}
+              >
+                <ThumbsDown size={13} />
+              </button>
+              {briefFeedback && (
+                <span className="text-xs text-indigo-400">
+                  {briefFeedback === "up" ? "Thanks — helps improve future briefs." : "Noted — we'll improve risk analysis accuracy."}
+                </span>
+              )}
+            </div>
           </div>
         )}
         {aiBrief === null && (
@@ -231,7 +345,7 @@ export function ReviewPanel({
 
       {/* Version diff — shown when this is a re-review (prior version exists) */}
       {previousBlueprintId && (
-        <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+        <div ref={diffSectionRef} className="rounded-lg border border-gray-200 bg-white overflow-hidden">
           <button
             onClick={() => setDiffExpanded((e) => !e)}
             className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors"

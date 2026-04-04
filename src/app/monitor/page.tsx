@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
-import { Activity, RefreshCw, Cpu } from "lucide-react";
+import { Activity, RefreshCw, Cpu, CheckCircle2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
@@ -132,6 +132,24 @@ export default function MonitorPage() {
   const [role, setRole] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [healthFilter, setHealthFilter] = useState<"all" | "clean" | "degraded" | "critical" | "unknown">("all");
+
+  // P1-33: Per-agent alert acknowledgement — client-side, browser-local
+  const ACK_KEY = "monitor-ack";
+  const [acknowledgedAgentIds, setAcknowledgedAgentIds] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem("monitor-ack");
+      return raw ? new Set<string>(JSON.parse(raw) as string[]) : new Set<string>();
+    } catch { return new Set<string>(); }
+  });
+
+  function toggleAckAgent(agentId: string) {
+    setAcknowledgedAgentIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(agentId)) { next.delete(agentId); } else { next.add(agentId); }
+      try { localStorage.setItem(ACK_KEY, JSON.stringify([...next])); } catch { /* quota */ }
+      return next;
+    });
+  }
 
   // AgentCore live status
   const [agcHealth, setAgcHealth] = useState<AgentCoreHealthEntry[]>([]);
@@ -390,9 +408,17 @@ export default function MonitorPage() {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-          <div className="border-b border-gray-100 px-5 py-2.5 text-xs text-gray-400">
-            {filtered.length} agent{filtered.length === 1 ? "" : "s"}
-            {filtered.length !== agents.length && ` (filtered from ${agents.length})`}
+          <div className="border-b border-gray-100 px-5 py-2.5 flex items-center gap-3">
+            <span className="text-xs text-gray-400">
+              {filtered.length} agent{filtered.length === 1 ? "" : "s"}
+              {filtered.length !== agents.length && ` (filtered from ${agents.length})`}
+            </span>
+            {acknowledgedAgentIds.size > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-xs font-medium text-green-700">
+                <CheckCircle2 className="h-3 w-3" />
+                {acknowledgedAgentIds.size} acknowledged
+              </span>
+            )}
           </div>
           <Table striped>
             <TableHead>
@@ -424,8 +450,10 @@ export default function MonitorPage() {
               ) : (
                 filtered.map((agent) => {
                   const isChecking = checkingId === agent.agentId;
+                  const isAcked = acknowledgedAgentIds.has(agent.agentId);
+                  const isAlertable = agent.healthStatus === "degraded" || agent.healthStatus === "critical";
                   return (
-                    <TableRow key={agent.agentId}>
+                    <TableRow key={agent.agentId} className={isAcked ? "opacity-60" : undefined}>
                       <TableCell>
                         <div className="font-medium text-gray-900 truncate max-w-48">
                           {agent.name ?? "Unnamed Agent"}
@@ -496,6 +524,21 @@ export default function MonitorPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-3">
+                          {/* P1-33: Acknowledge button — shown for degraded/critical agents */}
+                          {isAlertable && (
+                            <button
+                              onClick={() => toggleAckAgent(agent.agentId)}
+                              className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors ${
+                                isAcked
+                                  ? "border-green-200 bg-white text-green-700 hover:border-red-200 hover:text-red-600"
+                                  : "border-gray-200 bg-white text-gray-500 hover:border-green-300 hover:text-green-700"
+                              }`}
+                              title={isAcked ? "Un-acknowledge alert" : "Acknowledge — mark as known/accepted"}
+                            >
+                              <CheckCircle2 className="h-3 w-3" />
+                              {isAcked ? "Undo" : "Acknowledge"}
+                            </button>
+                          )}
                           {canCheck && (
                             <button
                               onClick={() => handleCheckOne(agent.agentId)}

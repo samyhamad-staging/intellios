@@ -5,13 +5,14 @@ import { and, eq, isNull } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
+import { getEnterpriseId, enterpriseScope } from "@/lib/auth/enterprise-scope";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import type { ApprovalStepRecord } from "@/lib/settings/types";
 
 /**
  * GET /api/review
- * Returns all blueprints in `in_review` status, scoped to the caller's enterprise.
- * Admins see all enterprises.
+ * Returns all blueprints in `in_review` status, scoped to the caller's enterprise
+ * via middleware-injected x-enterprise-id header. Admins see all enterprises.
  *
  * Query params:
  *   ?role=X  — When provided, filters results to blueprints where the active
@@ -22,20 +23,17 @@ export async function GET(request: NextRequest) {
   const { session: authSession, error } = await requireAuth(["reviewer", "compliance_officer", "admin"]);
   if (error) return error;
   const requestId = getRequestId(request);
+  const ctx = getEnterpriseId(request);
 
   const { searchParams } = new URL(request.url);
   const roleFilter = searchParams.get("role");
 
   try {
-    const enterpriseFilter =
-      authSession.user.role === "admin"
-        ? eq(agentBlueprints.status, "in_review")
-        : authSession.user.enterpriseId
-        ? and(
-            eq(agentBlueprints.status, "in_review"),
-            eq(agentBlueprints.enterpriseId, authSession.user.enterpriseId)
-          )
-        : and(eq(agentBlueprints.status, "in_review"), isNull(agentBlueprints.enterpriseId));
+    // Combine enterprise scope with status filter
+    const scope = enterpriseScope(agentBlueprints.enterpriseId, ctx);
+    const enterpriseFilter = scope
+      ? and(eq(agentBlueprints.status, "in_review"), scope)
+      : eq(agentBlueprints.status, "in_review");
 
     const rows = await db
       .select({

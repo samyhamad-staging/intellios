@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Mail, PenLine } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -295,6 +295,186 @@ function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
   );
 }
 
+// ─── P2-512: Bulk CSV Invite Form ────────────────────────────────────────────
+
+interface BulkRow {
+  email: string;
+  role: string;
+  status: "pending" | "sending" | "ok" | "error";
+  message?: string;
+}
+
+function BulkInviteForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+  const [rows, setRows] = useState<BulkRow[]>([]);
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const VALID_ROLES = new Set(ROLES.map((r) => r.value));
+
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setParseError(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = reader.result as string;
+      const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      const parsed: BulkRow[] = [];
+      for (const line of lines) {
+        // Skip header lines (email,role or Email,Role)
+        if (line.toLowerCase().startsWith("email")) continue;
+        const parts = line.split(",").map((p) => p.trim().replace(/^["']|["']$/g, ""));
+        const email = parts[0] ?? "";
+        const role = (parts[1] ?? "architect").toLowerCase();
+        if (!email.includes("@")) continue;
+        const normalizedRole = VALID_ROLES.has(role) ? role : "architect";
+        parsed.push({ email, role: normalizedRole, status: "pending" });
+      }
+      if (parsed.length === 0) {
+        setParseError("No valid rows found. Expected format: email,role (one per line).");
+        return;
+      }
+      if (parsed.length > 50) {
+        setParseError(`Too many rows (${parsed.length}). Maximum 50 invitations per upload.`);
+        return;
+      }
+      setRows(parsed);
+    };
+    reader.readAsText(file);
+  }
+
+  async function handleSend() {
+    setRunning(true);
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i].status !== "pending") continue;
+      setRows((prev) => prev.map((r, idx) => idx === i ? { ...r, status: "sending" } : r));
+      try {
+        const res = await fetch("/api/admin/users/invite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: rows[i].email, role: rows[i].role }),
+        });
+        const data = await res.json() as { message?: string };
+        setRows((prev) => prev.map((r, idx) =>
+          idx === i
+            ? { ...r, status: res.ok ? "ok" : "error", message: res.ok ? undefined : (data.message ?? "Failed") }
+            : r
+        ));
+      } catch {
+        setRows((prev) => prev.map((r, idx) =>
+          idx === i ? { ...r, status: "error", message: "Network error" } : r
+        ));
+      }
+    }
+    setRunning(false);
+    setDone(true);
+  }
+
+  const allDone = rows.length > 0 && rows.every((r) => r.status === "ok" || r.status === "error");
+  const successCount = rows.filter((r) => r.status === "ok").length;
+  const errorCount = rows.filter((r) => r.status === "error").length;
+
+  return (
+    <div className="rounded-xl border border-violet-200 bg-violet-50 px-6 py-5 space-y-4">
+      <div>
+        <h3 className="text-sm font-semibold text-gray-900">Bulk Invite via CSV</h3>
+        <p className="mt-0.5 text-xs text-gray-500">
+          Upload a CSV with columns: <code className="font-mono bg-white px-1 rounded">email,role</code>.
+          Valid roles: {ROLES.map((r) => r.value).join(", ")}. Defaults to <code className="font-mono bg-white px-1 rounded">architect</code> if omitted.
+        </p>
+      </div>
+
+      {parseError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{parseError}</div>
+      )}
+
+      {rows.length === 0 ? (
+        <div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv,text/csv"
+            onChange={handleFile}
+            className="block text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-violet-700 hover:file:bg-violet-200"
+          />
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50">
+                <th className="py-2 pl-3 pr-2 text-left font-semibold text-gray-500">Email</th>
+                <th className="px-2 py-2 text-left font-semibold text-gray-500">Role</th>
+                <th className="px-3 py-2 text-left font-semibold text-gray-500">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={i} className="border-b border-gray-100 last:border-0">
+                  <td className="py-1.5 pl-3 pr-2 text-gray-700">{row.email}</td>
+                  <td className="px-2 py-1.5">
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-gray-600">{row.role}</span>
+                  </td>
+                  <td className="px-3 py-1.5">
+                    {row.status === "pending" && <span className="text-gray-400">Pending</span>}
+                    {row.status === "sending" && <span className="text-violet-600 animate-pulse">Sending…</span>}
+                    {row.status === "ok" && <span className="text-green-700 font-semibold">✓ Sent</span>}
+                    {row.status === "error" && <span className="text-red-600">✗ {row.message}</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {allDone && (
+        <p className="text-xs font-medium text-gray-700">
+          Done: {successCount} sent, {errorCount} failed.
+        </p>
+      )}
+
+      <div className="flex items-center gap-3 pt-1">
+        {rows.length > 0 && !done && (
+          <button
+            onClick={handleSend}
+            disabled={running}
+            className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
+          >
+            {running ? "Sending…" : `Send ${rows.length} Invitation${rows.length !== 1 ? "s" : ""}`}
+          </button>
+        )}
+        {rows.length > 0 && !running && !done && (
+          <button
+            onClick={() => { setRows([]); if (fileRef.current) fileRef.current.value = ""; }}
+            className="text-xs text-gray-500 hover:text-gray-700 underline"
+          >
+            Change file
+          </button>
+        )}
+        {done ? (
+          <button
+            onClick={onDone}
+            className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+          >
+            Done
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Inline Role Editor ───────────────────────────────────────────────────────
 
 interface RoleEditorProps {
@@ -394,6 +574,7 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
+  const [showBulkInvite, setShowBulkInvite] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [inviteSuccessToast, setInviteSuccessToast] = useState<string | null>(null);
 
@@ -453,7 +634,7 @@ export default function AdminUsersPage() {
     {} as Record<string, number>
   );
 
-  const showingForm = showCreate || showInvite;
+  const showingForm = showCreate || showInvite || showBulkInvite;
 
   return (
     <div className="px-6 py-6 space-y-6">
@@ -472,6 +653,17 @@ export default function AdminUsersPage() {
         </div>
         {!showingForm && (
           <div className="flex items-center gap-2">
+            {/* P2-512: Bulk CSV invite */}
+            <button
+              onClick={() => setShowBulkInvite(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              title="Bulk invite via CSV"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+              Bulk CSV
+            </button>
             <button
               onClick={() => setShowInvite(true)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-white px-4 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-50 transition-colors"
@@ -516,6 +708,14 @@ export default function AdminUsersPage() {
           <InviteUserForm
             onInvited={handleInvited}
             onCancel={() => setShowInvite(false)}
+          />
+        )}
+
+        {/* P2-512: Bulk CSV invite form */}
+        {showBulkInvite && (
+          <BulkInviteForm
+            onDone={() => { setShowBulkInvite(false); void fetch("/api/admin/users/invitations").then((r) => r.json()).then((d: { invitations?: Invitation[] }) => { if (d.invitations) setInvitations(d.invitations); }); }}
+            onCancel={() => setShowBulkInvite(false)}
           />
         )}
 

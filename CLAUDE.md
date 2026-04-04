@@ -31,6 +31,7 @@ src/                   ← Application source code
     registry/          ← Agent Registry UI pages
     review/            ← Review queue UI page
   components/
+    catalyst/          ← Catalyst UI Kit (Tailwind Labs) — 27 polished components
     chat/              ← Chat UI: container, bubbles, input, tool display, streaming
     blueprint/         ← Blueprint view component
     governance/        ← Validation report component
@@ -46,6 +47,29 @@ src/                   ← Application source code
   package.json         ← Dependencies (Next.js 16, AI SDK v5, Drizzle, Zod)
   tsconfig.json        ← TypeScript configuration
 ```
+
+## UI Component Library — Catalyst
+
+`src/components/catalyst/` contains the full **Catalyst UI Kit** by Tailwind Labs (27 TypeScript components). Import from `@/components/catalyst`:
+
+```tsx
+import { Button, Badge, Table, TableHead, TableBody, TableRow, TableCell } from '@/components/catalyst'
+import { Dialog, DialogTitle, DialogDescription, DialogBody, DialogActions } from '@/components/catalyst'
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/catalyst'
+import { Input, InputGroup } from '@/components/catalyst'
+import { Sidebar, SidebarItem, SidebarSection, SidebarLabel } from '@/components/catalyst'
+```
+
+**Available components:** Alert · AuthLayout · Avatar · Badge · Button · Checkbox · Combobox · DescriptionList · Dialog · Divider · Dropdown · Fieldset · Heading · Input · Link · Listbox · Navbar · Pagination · Radio · Select · Sidebar · SidebarLayout · StackedLayout · Switch · Table · Text · Textarea
+
+**Rules:**
+- Prefer Catalyst components over hand-rolling new UI primitives.
+- Catalyst components live in `src/components/catalyst/` and are owned by this project (copy-paste model — no npm package). Edit them freely.
+- Existing `src/components/ui/` components remain in place. When redesigning a screen, prefer Catalyst as the baseline.
+- Catalyst's `Link` is wired to Next.js `next/link` — use it for all client-side navigation.
+- No extra npm dependencies: `@headlessui/react`, `clsx`, `next/link`, and `react` are the only imports.
+
+---
 
 ## Conventions
 

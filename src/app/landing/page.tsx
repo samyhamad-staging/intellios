@@ -4,7 +4,10 @@
  * Accessible without authentication.
  */
 
+"use client";
+
 import Link from "next/link";
+import { RequestAccessModal } from "@/components/landing/request-access-modal";
 import {
   ShieldCheckIcon,
   CpuChipIcon,
@@ -235,12 +238,16 @@ export default function LandingPage() {
             >
               Sign in
             </Link>
-            <Link
-              href="/register"
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
-            >
-              Request access
-            </Link>
+            <RequestAccessModal>
+              {(open) => (
+                <button
+                  onClick={open}
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
+                >
+                  Request access
+                </button>
+              )}
+            </RequestAccessModal>
           </div>
         </nav>
       </header>
@@ -283,13 +290,17 @@ export default function LandingPage() {
 
           {/* CTAs */}
           <div className="mt-10 flex items-center justify-center gap-4 flex-wrap">
-            <Link
-              href="/register"
-              className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors flex items-center gap-2"
-            >
-              Request early access
-              <ArrowRightIcon className="h-4 w-4" />
-            </Link>
+            <RequestAccessModal>
+              {(open) => (
+                <button
+                  onClick={open}
+                  className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors flex items-center gap-2"
+                >
+                  Request early access
+                  <ArrowRightIcon className="h-4 w-4" />
+                </button>
+              )}
+            </RequestAccessModal>
             <Link
               href="/login"
               className="rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
@@ -542,13 +553,17 @@ export default function LandingPage() {
             financial services, healthcare, and regulated enterprise.
           </p>
           <div className="mt-10 flex items-center justify-center gap-4 flex-wrap">
-            <Link
-              href="/register"
-              className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50 transition-colors flex items-center gap-2"
-            >
-              Request early access
-              <ArrowRightIcon className="h-4 w-4" />
-            </Link>
+            <RequestAccessModal>
+              {(open) => (
+                <button
+                  onClick={open}
+                  className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50 transition-colors flex items-center gap-2"
+                >
+                  Request early access
+                  <ArrowRightIcon className="h-4 w-4" />
+                </button>
+              )}
+            </RequestAccessModal>
             <Link
               href="/login"
               className="rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors"

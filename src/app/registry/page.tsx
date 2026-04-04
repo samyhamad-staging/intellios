@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkeletonList } from "@/components/ui/skeleton";
@@ -15,6 +15,8 @@ interface RegistryEntry {
   id: string; agentId: string; version: string; name: string | null;
   tags: string[]; status: string; sessionId: string; createdAt: string; updatedAt: string;
   monthlyCostUsd: number | null;
+  violationCount: number | null;
+  warningCount: number | null;
 }
 
 interface WorkflowEntry {
@@ -32,6 +34,54 @@ const STATUS_LABELS: Record<string, string> = {
   draft: "Draft", in_review: "In Review", approved: "Approved",
   deployed: "Deployed", rejected: "Rejected", deprecated: "Deprecated",
 };
+const STATUS_DESCRIPTIONS: Record<string, string> = {
+  draft: "Work in progress — not yet submitted for review",
+  in_review: "Submitted and awaiting human or governance review",
+  approved: "Passed review and governance checks — ready to deploy",
+  deployed: "Running in production and collecting telemetry",
+  rejected: "Returned from review with required changes",
+  deprecated: "Superseded by a newer version — no longer active",
+};
+
+// ─── Health Pulse ─────────────────────────────────────────────────────────────
+// Derives a green / amber / red / gray health signal from governance data.
+// violationCount: null = not yet validated; 0 = clean; >0 = errors present.
+// warningCount:   null = not yet validated; 0 = no warnings; >0 = warnings.
+
+type HealthColor = "green" | "amber" | "red" | "gray";
+
+function deriveHealth(violationCount: number | null, warningCount: number | null): HealthColor {
+  if (violationCount === null) return "gray";
+  if (violationCount > 0) return "red";
+  if (warningCount !== null && warningCount > 0) return "amber";
+  return "green";
+}
+
+function healthLabel(color: HealthColor, violationCount: number | null, warningCount: number | null): string {
+  if (color === "gray") return "Not yet validated";
+  if (color === "red") return `${violationCount} governance error${violationCount !== 1 ? "s" : ""}`;
+  if (color === "amber") return `${warningCount} governance warning${warningCount !== 1 ? "s" : ""}`;
+  return "Passing governance";
+}
+
+const HEALTH_CLASSES: Record<HealthColor, string> = {
+  green: "bg-emerald-500",
+  amber: "bg-amber-400",
+  red:   "bg-red-500",
+  gray:  "bg-gray-300",
+};
+
+function HealthPulse({ violationCount, warningCount }: { violationCount: number | null; warningCount: number | null }) {
+  const color = deriveHealth(violationCount, warningCount);
+  const label = healthLabel(color, violationCount, warningCount);
+  return (
+    <span
+      title={label}
+      aria-label={label}
+      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${HEALTH_CLASSES[color]}`}
+    />
+  );
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -45,9 +95,13 @@ function matchesSearch(name: string | null, id: string, tags: string[] | undefin
 
 export default function RegistryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // ── Tab ──
-  const [activeTab, setActiveTab] = useState<ArtifactTab>("agents");
+  // ── Tab — initialized from ?tab= URL param ──
+  const [activeTab, setActiveTab] = useState<ArtifactTab>(() => {
+    const tab = searchParams.get("tab");
+    return (tab === "workflows" ? "workflows" : "agents") as ArtifactTab;
+  });
 
   // ── Agent state ──
   const [agents, setAgents] = useState<RegistryEntry[]>([]);
@@ -61,9 +115,9 @@ export default function RegistryPage() {
   const [wflowsError, setWflowsError] = useState<string | null>(null);
   const [wflowsLoaded, setWflowsLoaded] = useState(false);
 
-  // ── Shared filter state ──
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  // ── Shared filter state — initialized from ?q= and ?status= URL params ──
+  const [searchQuery, setSearchQueryState] = useState<string>(() => searchParams.get("q") ?? "");
+  const [statusFilter, setStatusFilterState] = useState<string>(() => searchParams.get("status") ?? "");
 
   // ─── Data fetching ────────────────────────────────────────────────────────
 
@@ -84,12 +138,35 @@ export default function RegistryPage() {
     }
   }, [activeTab, wflowsLoaded]);
 
-  // ─── Tab switch (reset filters) ───────────────────────────────────────────
+  // ─── URL-synced filter helpers ────────────────────────────────────────────
+  // All filter mutations write to URL so filters survive back/forward
+  // navigation and can be shared via link (e.g. /registry?status=deployed).
+
+  function buildRegistryURL(tab: ArtifactTab, q: string, status: string): string {
+    const p = new URLSearchParams();
+    if (tab !== "agents") p.set("tab", tab);
+    if (q) p.set("q", q);
+    if (status) p.set("status", status);
+    return p.toString() ? `/registry?${p}` : "/registry";
+  }
+
+  const setSearchQuery = (q: string) => {
+    setSearchQueryState(q);
+    router.replace(buildRegistryURL(activeTab, q, statusFilter), { scroll: false });
+  };
+
+  const setStatusFilter = (s: string) => {
+    setStatusFilterState(s);
+    router.replace(buildRegistryURL(activeTab, searchQuery, s), { scroll: false });
+  };
+
+  // ─── Tab switch (resets filters and URL) ─────────────────────────────────
 
   const switchTab = (tab: ArtifactTab) => {
     setActiveTab(tab);
-    setSearchQuery("");
-    setStatusFilter("");
+    setSearchQueryState("");
+    setStatusFilterState("");
+    router.replace(buildRegistryURL(tab, "", ""), { scroll: false });
   };
 
   // ─── Clone handler ────────────────────────────────────────────────────────
@@ -185,6 +262,7 @@ export default function RegistryPage() {
             <button
               key={s}
               onClick={() => setStatusFilter(statusFilter === s ? "" : s)}
+              title={STATUS_DESCRIPTIONS[s]}
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${statusFilter === s ? "bg-violet-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
             >
               {STATUS_LABELS[s]}
@@ -242,6 +320,7 @@ export default function RegistryPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
+                        <HealthPulse violationCount={agent.violationCount} warningCount={agent.warningCount} />
                         <span className="truncate text-sm font-medium text-text">{agent.name ?? "Unnamed Agent"}</span>
                         <StatusBadge status={agent.status} />
                       </div>

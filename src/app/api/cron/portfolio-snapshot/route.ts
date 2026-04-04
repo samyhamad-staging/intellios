@@ -16,10 +16,11 @@
  *   - violationsByType: { error: N, warning: N }
  *   - agentsByRiskTier: { low: N, medium: N, high: N, critical: N }
  *
- * Security: optional Bearer token via CRON_SECRET env var.
+ * Security: mandatory Bearer token via CRON_SECRET env var.
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireCronAuth } from "@/lib/auth/cron-auth";
 import { db } from "@/lib/db";
 import {
   agentBlueprints,
@@ -50,13 +51,8 @@ function currentWeekStart(): string {
 }
 
 export async function POST(request: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = request.headers.get("authorization");
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const cronError = requireCronAuth(request);
+  if (cronError) return cronError;
 
   const { searchParams } = new URL(request.url);
   const filterEnterprise = searchParams.get("enterpriseId") ?? null;

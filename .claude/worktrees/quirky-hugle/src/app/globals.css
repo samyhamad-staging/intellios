@@ -1,0 +1,263 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ── Design token layer — semantic aliases exposed as Tailwind utilities ─ */
+@theme {
+  /* Fonts */
+  --font-family-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-family-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* ── Type scale — micro sizes (tokenized from arbitrary text-[Npx]) ── */
+  --text-2xs: 0.625rem;      /* 10px — micro labels, section headers */
+  --text-xs-tight: 0.6875rem; /* 11px — compact tags, metadata */
+
+  /* ── Brand — indigo-violet (cool, AI-native) ───────────────────────── */
+  --color-primary:        #4f46e5; /* indigo-600 */
+  --color-primary-hover:  #4338ca; /* indigo-700 */
+  --color-primary-subtle: #e0e7ff; /* indigo-100 */
+  --color-primary-muted:  #eef2ff; /* indigo-50  */
+  --color-primary-fg:     #ffffff;
+
+  /* ── Danger ─────────────────────────────────────────────────────────── */
+  --color-danger:         #dc2626; /* red-600 */
+  --color-danger-hover:   #b91c1c; /* red-700 */
+  --color-danger-subtle:  #fee2e2; /* red-100 */
+  --color-danger-muted:   #fef2f2; /* red-50  */
+  --color-danger-text:    #991b1b; /* red-800 */
+  --color-danger-fg:      #ffffff;
+
+  /* ── Status: success — emerald ──────────────────────────────────────── */
+  --color-success:        #059669; /* emerald-600 */
+  --color-success-hover:  #047857; /* emerald-700 */
+  --color-success-subtle: #d1fae5; /* emerald-100 */
+  --color-success-muted:  #ecfdf5; /* emerald-50  */
+  --color-success-text:   #065f46; /* emerald-800 */
+  --color-success-fg:     #ffffff;
+
+  /* ── Status: warning — amber ─────────────────────────────────────────── */
+  --color-warning:        #d97706; /* amber-600 */
+  --color-warning-hover:  #b45309; /* amber-700 */
+  --color-warning-subtle: #fef3c7; /* amber-100 */
+  --color-warning-muted:  #fffbeb; /* amber-50  */
+  --color-warning-text:   #92400e; /* amber-800 */
+  --color-warning-fg:     #ffffff;
+
+  /* ── Status: caution — orange ───────────────────────────────────────── */
+  --color-caution:        #ea580c; /* orange-600 */
+  --color-caution-hover:  #c2410c; /* orange-700 */
+  --color-caution-subtle: #ffedd5; /* orange-100 */
+  --color-caution-muted:  #fff7ed; /* orange-50  */
+  --color-caution-text:   #9a3412; /* orange-800 */
+  --color-caution-fg:     #ffffff;
+
+  /* ── Status: info — sky ─────────────────────────────────────────────── */
+  --color-info:           #0284c7; /* sky-600 */
+  --color-info-hover:     #0369a1; /* sky-700 */
+  --color-info-subtle:    #e0f2fe; /* sky-100 */
+  --color-info-muted:     #f0f9ff; /* sky-50  */
+  --color-info-text:      #075985; /* sky-800 */
+  --color-info-fg:        #ffffff;
+
+  /* ── Risk tiers ─────────────────────────────────────────────────────── */
+  /* low — emerald */
+  --color-risk-low:         #10b981; /* emerald-500 */
+  --color-risk-low-subtle:  #d1fae5; /* emerald-100 */
+  --color-risk-low-muted:   #ecfdf5; /* emerald-50  */
+  --color-risk-low-text:    #065f46; /* emerald-800 */
+  --color-risk-low-border:  #a7f3d0; /* emerald-200 */
+
+  /* medium — amber */
+  --color-risk-medium:        #f59e0b; /* amber-500 */
+  --color-risk-medium-subtle: #fef3c7; /* amber-100 */
+  --color-risk-medium-muted:  #fffbeb; /* amber-50  */
+  --color-risk-medium-text:   #92400e; /* amber-800 */
+  --color-risk-medium-border: #fde68a; /* amber-200 */
+
+  /* high — orange */
+  --color-risk-high:          #f97316; /* orange-500 */
+  --color-risk-high-subtle:   #ffedd5; /* orange-100 */
+  --color-risk-high-muted:    #fff7ed; /* orange-50  */
+  --color-risk-high-text:     #9a3412; /* orange-800 */
+  --color-risk-high-border:   #fed7aa; /* orange-200 */
+
+  /* critical — red */
+  --color-risk-critical:        #ef4444; /* red-500 */
+  --color-risk-critical-subtle: #fee2e2; /* red-100 */
+  --color-risk-critical-muted:  #fef2f2; /* red-50  */
+  --color-risk-critical-text:   #991b1b; /* red-800 */
+  --color-risk-critical-border: #fecaca; /* red-200 */
+
+  /* ── Policy types ───────────────────────────────────────────────────── */
+  /* safety — orange */
+  --color-policy-safety-subtle: #ffedd5;
+  --color-policy-safety-text:   #9a3412;
+  --color-policy-safety-border: #fed7aa;
+
+  /* compliance — sky */
+  --color-policy-compliance-subtle: #e0f2fe;
+  --color-policy-compliance-text:   #075985;
+  --color-policy-compliance-border: #bae6fd;
+
+  /* data_handling — violet */
+  --color-policy-data-handling-subtle: #ede9fe;
+  --color-policy-data-handling-text:   #4c1d95;
+  --color-policy-data-handling-border: #ddd6fe;
+
+  /* access_control — indigo */
+  --color-policy-access-control-subtle: #e0e7ff;
+  --color-policy-access-control-text:   #312e81;
+  --color-policy-access-control-border: #c7d2fe;
+
+  /* audit — slate */
+  --color-policy-audit-subtle: #f1f5f9;
+  --color-policy-audit-text:   #334155;
+  --color-policy-audit-border: #e2e8f0;
+
+  /* ── Surfaces (cool blue-tinted) ─────────────────────────────────────── */
+  --color-surface:        #ffffff;
+  --color-surface-raised: #f8f9fc; /* cool slate-50 */
+  --color-surface-muted:  #f0f2f8; /* cool blue-gray */
+  --color-surface-overlay: rgba(15, 23, 42, 0.4); /* slate-950 @ 40% — modal backdrop */
+
+  /* ── Borders (cool-shifted) ──────────────────────────────────────────── */
+  --color-border:         #e1e5ef; /* cool slate-200 */
+  --color-border-strong:  #8b95ad; /* cool slate-400 */
+  --color-border-subtle:  #ebeef5; /* cool slate-100 */
+
+  /* ── Text ────────────────────────────────────────────────────────────── */
+  --color-text:           #0f172a; /* slate-950 */
+  --color-text-secondary: #64748b; /* slate-500 */
+  --color-text-tertiary:  #94a3b8; /* slate-400 */
+  --color-text-disabled:  #cbd5e1; /* slate-300 */
+
+  /* ── Radii ───────────────────────────────────────────────────────────── */
+  --radius-sm: 0.375rem; /* 6px  */
+  --radius:    0.5rem;   /* 8px  */
+  --radius-lg: 0.75rem;  /* 12px */
+  --radius-xl: 1rem;     /* 16px */
+  --radius-card: 0.75rem; /* alias: card corners */
+}
+
+/* ── Design tokens ─────────────────────────────────────────────────────── */
+:root {
+  /* shadcn/ui compat aliases */
+  --radius: 0.5rem;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --border: #e1e5ef;
+  --input: #e1e5ef;
+  --ring: #4f46e5;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --muted: #f0f2f8;
+  --muted-foreground: #64748b;
+  --accent: #eef2ff;
+  --accent-foreground: #4f46e5;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  /* Sidebar */
+  --sidebar-bg: #0c1222;
+  --sidebar-border: #1a2338;
+  --sidebar-text: #8b95ad;
+  --sidebar-text-active: #ffffff;
+  --sidebar-active-bg: rgba(99, 102, 241, 0.10);
+  --sidebar-hover-bg: rgba(99, 102, 241, 0.06);
+  --sidebar-accent: #818cf8;
+  --sidebar-active-glow: 0 0 12px rgba(99, 102, 241, 0.15);
+  --sidebar-width: 240px;
+
+  /* Content */
+  --content-bg: #f8f9fc;
+
+  /* Elevation — indigo-tinted for depth */
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-raised: 0 4px 12px rgba(79, 70, 229, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-modal: 0 24px 48px rgba(79, 70, 229, 0.12), 0 8px 16px rgba(15, 23, 42, 0.08);
+  --shadow-primary: 0 4px 14px rgba(79, 70, 229, 0.25), 0 2px 4px rgba(79, 70, 229, 0.10);
+  --shadow-primary-hover: 0 6px 20px rgba(79, 70, 229, 0.35), 0 2px 6px rgba(79, 70, 229, 0.15);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  --gradient-primary-hover: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+  --gradient-sidebar-header: linear-gradient(180deg, #141d35 0%, var(--sidebar-bg) 100%);
+  --gradient-page-wash: linear-gradient(180deg, rgba(99, 102, 241, 0.03) 0%, transparent 200px);
+  --gradient-login-bg: linear-gradient(135deg, #0c1222 0%, #1e1b4b 50%, #1a1645 100%);
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────── */
+html,
+body {
+  font-family: var(--font-family-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+pre,
+code,
+kbd,
+samp {
+  font-family: var(--font-family-mono);
+}
+
+/* ── Primary button — gradient + glow ─────────────────────────────────── */
+.btn-primary {
+  background: var(--gradient-primary);
+  box-shadow: var(--shadow-primary);
+  color: #fff;
+  transition: all 150ms ease;
+}
+.btn-primary:hover {
+  background: var(--gradient-primary-hover);
+  box-shadow: var(--shadow-primary-hover);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+/* ── Intake strip animations ─────────────────────────────────────────── */
+@keyframes domain-scan {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.6; }
+  100% { transform: translateX(200%); opacity: 0; }
+}
+
+@keyframes signal-bar {
+  0%, 100% { transform: scaleY(0.3); opacity: 0.4; }
+  50%       { transform: scaleY(1);   opacity: 1;   }
+}
+
+.score-ring-circle {
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Sidebar scrollbar — darker */
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

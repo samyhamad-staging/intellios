@@ -13,15 +13,21 @@ import {
   ChevronRight,
   Bot,
   Inbox,
+  FileText,
+  Flame,
   CheckCircle,
   AlertTriangle,
   Rocket,
   ShieldAlert,
   Clock,
+  Shield,
+  BarChart2,
+  Search,
 } from "lucide-react";
 import type { ValidationReport } from "@/lib/governance/types";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { FleetGovernanceDashboard } from "@/components/dashboard/fleet-governance-dashboard";
+import { HomeAgentList } from "@/components/dashboard/home-agent-list";
 import { getRecentSnapshots } from "@/lib/awareness/metrics-worker";
 
 function timeAgo(dateStr: string | Date): string {
@@ -175,11 +181,12 @@ export default async function Home() {
         </div>
 
         {/* Quick action cards */}
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { href: "/pipeline", icon: Kanban,  label: "Pipeline Board", sub: `${allAgents.length} agents`, color: "text-primary" },
-            { href: "/registry", icon: Library, label: "Agent Registry",  sub: "All versions",              color: "text-blue-600" },
-            { href: "/intake",   icon: Plus,    label: "New Intake",      sub: "Start from scratch",        color: "text-green-600" },
+            { href: "/intake",      icon: Plus,      label: "New Intake",      sub: "Start from scratch",           color: "text-green-600" },
+            { href: "/blueprints",  icon: FileText,  label: "Blueprints",      sub: `${allAgents.length} packages`, color: "text-violet-600" },
+            { href: "/pipeline",    icon: Kanban,    label: "Pipeline",        sub: "Track progress",               color: "text-primary" },
+            { href: "/registry",    icon: Library,   label: "Registry",        sub: "Deployed agents",              color: "text-blue-600" },
           ].map(({ href, icon: Icon, label, sub, color }) => (
             <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] hover:border-primary-subtle hover:shadow-[var(--shadow-raised)] transition-all min-w-0">
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-raised group-hover:bg-primary-muted transition-colors ${color}`}>
@@ -264,39 +271,21 @@ export default async function Home() {
           );
         })()}
 
-        {/* Recent agents */}
-        <section>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Recent Agents</h2>
-          {myAgents.length === 0 ? (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface py-14 text-center">
-              <Inbox size={28} className="mb-3 text-text-tertiary" />
-              <p className="text-sm font-medium text-text-secondary">No agents yet</p>
-              <p className="mt-1 text-xs text-text-tertiary">Start an intake session to design your first agent.</p>
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
-              {myAgents.slice(0, 8).map((agent, i) => (
-                <Link
-                  key={agent.agentId}
-                  href={`/registry/${agent.agentId}`}
-                  className={`flex items-center gap-3 px-5 py-3.5 hover:bg-surface-raised transition-colors ${i > 0 ? "border-t border-border" : ""}`}
-                >
-                  <Bot size={15} className="shrink-0 text-text-tertiary" />
-                  <span className="flex-1 truncate text-sm font-medium text-text">{agent.name ?? "Unnamed Agent"}</span>
-                  <StatusBadge status={agent.status} />
-                  <span className="text-xs text-text-tertiary">{timeAgo(agent.updatedAt)}</span>
-                  <ChevronRight size={13} className="text-text-tertiary" />
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
+        {/* Recent agents — P2-34: searchable + filterable */}
+        <HomeAgentList agents={myAgents} />
       </div>
     );
   }
 
   // ── Reviewer / Compliance Officer ─────────────────────────────────────────
   if (role === "reviewer" || role === "compliance_officer") {
+    // Derive the highest-risk pending item for the urgency callout
+    const criticalItems = inReviewAgents.filter((a) => {
+      const report = a.validationReport as ValidationReport | null;
+      return report?.violations?.some((v) => v.severity === "critical" || v.severity === "error");
+    });
+    const urgentItem = criticalItems[0] ?? null;
+
     return (
       <div className="px-6 py-6">
         <div className="mb-6 flex items-start justify-between">
@@ -316,13 +305,40 @@ export default async function Home() {
           </Link>
         </div>
 
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            { href: "/review",   icon: ClipboardList, label: "Review Queue",   sub: `${inReviewAgents.length} pending`, color: "text-amber-600" },
-            { href: "/pipeline", icon: Kanban,         label: "Pipeline Board", sub: `${allAgents.length} total`,        color: "text-primary" },
-            { href: "/registry", icon: Library,        label: "Agent Registry", sub: "All versions",                     color: "text-blue-600" },
-          ].map(({ href, icon: Icon, label, sub, color }) => (
-            <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] hover:border-primary-subtle hover:shadow-[var(--shadow-raised)] transition-all min-w-0">
+        {/* Urgency callout — highest-risk item surfaced immediately */}
+        {urgentItem && (
+          <Link
+            href={`/registry/${urgentItem.agentId}?tab=review`}
+            className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 transition-colors hover:bg-red-100"
+          >
+            <Flame size={16} className="shrink-0 text-red-600" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-red-700">
+                {urgentItem.name ?? "Unnamed Agent"} has governance violations — needs your review
+              </p>
+              <p className="mt-0.5 text-xs text-red-500">
+                {criticalItems.length > 1 ? `+${criticalItems.length - 1} more high-risk items in queue` : "Review to approve, reject, or request changes"}
+              </p>
+            </div>
+            <ChevronRight size={14} className="shrink-0 text-red-400" />
+          </Link>
+        )}
+
+        <div className={`mb-6 grid grid-cols-1 gap-4 ${role === "compliance_officer" ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
+          {(role === "compliance_officer"
+            ? [
+                { href: "/review",      icon: ClipboardList, label: "Review Queue",      sub: `${inReviewAgents.length} pending`,  color: "text-amber-600"  },
+                { href: "/governance",  icon: Shield,        label: "Governance Hub",    sub: "Policies & violations",             color: "text-violet-600" },
+                { href: "/governance",  icon: BarChart2,     label: "Compliance Posture",sub: "Fleet health at a glance",          color: "text-emerald-600"},
+                { href: "/registry",    icon: Library,       label: "Agent Registry",    sub: "All versions",                      color: "text-blue-600"   },
+              ]
+            : [
+                { href: "/review",   icon: ClipboardList, label: "Review Queue",   sub: `${inReviewAgents.length} pending`, color: "text-amber-600" },
+                { href: "/pipeline", icon: Kanban,        label: "Pipeline Board", sub: `${allAgents.length} total`,        color: "text-primary"   },
+                { href: "/registry", icon: Library,       label: "Agent Registry", sub: "All versions",                    color: "text-blue-600"  },
+              ]
+          ).map(({ href, icon: Icon, label, sub, color }) => (
+            <Link key={`${href}-${label}`} href={href} className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] hover:border-primary-subtle hover:shadow-[var(--shadow-raised)] transition-all min-w-0">
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-raised group-hover:bg-primary-muted transition-colors ${color}`}>
                 <Icon size={16} />
               </div>
@@ -338,26 +354,74 @@ export default async function Home() {
         <section>
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Pending Reviews</h2>
           {inReviewAgents.length === 0 ? (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface py-14 text-center">
-              <CheckCircle size={28} className="mb-3 text-green-400" />
+            <div className="rounded-xl border border-dashed border-border bg-surface px-6 py-10 text-center">
+              <CheckCircle size={28} className="mx-auto mb-3 text-green-400" />
               <p className="text-sm font-medium text-text-secondary">Review queue is clear</p>
+              <p className="mt-1 text-xs text-text-tertiary">
+                {role === "compliance_officer"
+                  ? "Use this time to review governance posture or update policies."
+                  : "No agents are waiting for review right now."}
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {role === "compliance_officer" ? (
+                  <>
+                    <Link
+                      href="/governance"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 transition-colors"
+                    >
+                      <Shield size={12} /> Review Governance Hub
+                    </Link>
+                    <Link
+                      href="/registry"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-raised transition-colors"
+                    >
+                      <Library size={12} /> Browse Agent Registry
+                    </Link>
+                  </>
+                ) : (
+                  <Link
+                    href="/registry"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-raised transition-colors"
+                  >
+                    <Search size={12} /> Browse Recent Agents
+                  </Link>
+                )}
+              </div>
             </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
-              {inReviewAgents.slice(0, 8).map((agent, i) => (
-                <Link
-                  key={agent.agentId}
-                  href={`/registry/${agent.agentId}?tab=review`}
-                  className={`flex items-center gap-3 px-5 py-3.5 hover:bg-surface-raised transition-colors ${i > 0 ? "border-t border-border" : ""}`}
-                >
-                  <Bot size={15} className="shrink-0 text-text-tertiary" />
-                  <span className="flex-1 truncate text-sm font-medium text-text">{agent.name ?? "Unnamed Agent"}</span>
-                  <StatusBadge status={agent.status} />
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Review</span>
-                  <span className="text-xs text-text-tertiary">{timeAgo(agent.updatedAt)}</span>
-                  <ChevronRight size={13} className="text-text-tertiary" />
-                </Link>
-              ))}
+              {[...inReviewAgents]
+                .sort((a, b) => {
+                  // Sort: governance errors first, then oldest first
+                  const aHasError = (a.validationReport as ValidationReport | null)?.violations?.some((v) => v.severity === "critical" || v.severity === "error") ? 0 : 1;
+                  const bHasError = (b.validationReport as ValidationReport | null)?.violations?.some((v) => v.severity === "critical" || v.severity === "error") ? 0 : 1;
+                  if (aHasError !== bHasError) return aHasError - bHasError;
+                  return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+                })
+                .slice(0, 8)
+                .map((agent, i) => {
+                  const hasErrors = (agent.validationReport as ValidationReport | null)?.violations?.some((v) => v.severity === "critical" || v.severity === "error");
+                  return (
+                    <Link
+                      key={agent.agentId}
+                      href={`/registry/${agent.agentId}?tab=review`}
+                      className={`flex items-center gap-3 px-5 py-3.5 hover:bg-surface-raised transition-colors ${i > 0 ? "border-t border-border" : ""}`}
+                    >
+                      {hasErrors
+                        ? <Flame size={15} className="shrink-0 text-red-500" />
+                        : <Bot size={15} className="shrink-0 text-text-tertiary" />
+                      }
+                      <span className="flex-1 truncate text-sm font-medium text-text">{agent.name ?? "Unnamed Agent"}</span>
+                      <StatusBadge status={agent.status} />
+                      {hasErrors
+                        ? <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">Violations</span>
+                        : <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Review</span>
+                      }
+                      <span className="text-xs text-text-tertiary">{timeAgo(agent.updatedAt)}</span>
+                      <ChevronRight size={13} className="text-text-tertiary" />
+                    </Link>
+                  );
+                })}
             </div>
           )}
         </section>
@@ -448,6 +512,32 @@ export default async function Home() {
           {counts.deprecated > 0 && (
             <span className="text-xs text-text-tertiary">{counts.deprecated} Deprecated</span>
           )}
+        </div>
+      )}
+
+      {/* Viewer Explore — contextual nav for read-only users */}
+      {role === "viewer" && (
+        <div className="mb-6">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Explore</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { href: "/registry",   icon: Search,    label: "Agent Registry",   sub: "Browse deployed agents",   color: "text-blue-600"   },
+              { href: "/pipeline",   icon: Kanban,    label: "Pipeline Board",   sub: "See active work",          color: "text-primary"    },
+              { href: "/governance", icon: Shield,    label: "Governance Hub",   sub: "Policies & compliance",    color: "text-violet-600" },
+              { href: "/blueprints", icon: FileText,  label: "Blueprints",       sub: "Review specifications",    color: "text-amber-600"  },
+            ].map(({ href, icon: Icon, label, sub, color }) => (
+              <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] hover:border-primary-subtle hover:shadow-[var(--shadow-raised)] transition-all min-w-0">
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-raised group-hover:bg-primary-muted transition-colors ${color}`}>
+                  <Icon size={16} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-text truncate">{label}</p>
+                  <p className="text-xs text-text-tertiary">{sub}</p>
+                </div>
+                <ChevronRight size={14} className="ml-auto text-text-tertiary group-hover:text-text-secondary" />
+              </Link>
+            ))}
+          </div>
         </div>
       )}
 

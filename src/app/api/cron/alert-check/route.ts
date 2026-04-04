@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireCronAuth } from "@/lib/auth/cron-auth";
 import { checkAndFireAlerts } from "@/lib/telemetry/alerts";
 
 /**
@@ -9,17 +10,12 @@ import { checkAndFireAlerts } from "@/lib/telemetry/alerts";
  *
  * Recommended schedule: every 15 minutes via Vercel Cron or external scheduler.
  *
- * Security: optional Bearer token via CRON_SECRET env var.
+ * Security: mandatory Bearer token via CRON_SECRET env var.
  * Query param `enterpriseId` scopes the check to a single enterprise (optional).
  */
 export async function POST(request: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = request.headers.get("authorization");
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const cronError = requireCronAuth(request);
+  if (cronError) return cronError;
 
   const { searchParams } = new URL(request.url);
   const enterpriseId = searchParams.get("enterpriseId") ?? null;

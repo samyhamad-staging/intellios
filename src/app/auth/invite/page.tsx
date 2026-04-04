@@ -12,6 +12,8 @@ function InvitePage() {
   const [status, setStatus] = useState<InviteStatus>("loading");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("");
+  const [inviterName, setInviterName] = useState("");
+  const [enterpriseName, setEnterpriseName] = useState("");
 
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -35,6 +37,8 @@ function InvitePage() {
         const data = await res.json();
         setInviteEmail(data.email);
         setInviteRole(data.role);
+        setInviterName(data.inviterName ?? "");
+        setEnterpriseName(data.enterpriseName ?? "");
         setStatus("valid");
       })
       .catch(() => setStatus("invalid"));
@@ -130,6 +134,31 @@ function InvitePage() {
 
           {status === "valid" && (
             <>
+              {/* P2-91: Trust banner — inviter name + enterprise name */}
+              {(inviterName || enterpriseName) && (
+                <div className="mb-5 rounded-lg bg-indigo-50 border border-indigo-100 px-4 py-3">
+                  <p className="text-sm text-indigo-800">
+                    {inviterName && enterpriseName ? (
+                      <>
+                        <span className="font-semibold">{inviterName}</span>
+                        {" at "}
+                        <span className="font-semibold">{enterpriseName}</span>
+                        {" has invited you to Intellios."}
+                      </>
+                    ) : inviterName ? (
+                      <>
+                        <span className="font-semibold">{inviterName}</span>
+                        {" has invited you to Intellios."}
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-semibold">{enterpriseName}</span>
+                        {" has invited you to Intellios."}
+                      </>
+                    )}
+                  </p>
+                </div>
+              )}
               <div className="mb-6">
                 <h2 className="mb-1 text-lg font-semibold text-gray-900">You&apos;ve been invited</h2>
                 <p className="text-sm text-gray-500">

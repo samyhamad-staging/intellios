@@ -2,6 +2,154 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 116 — 2026-04-03: The Audit That Closed the Sprint
+
+Every sprint has a closing movement — not the last feature added, but the moment the scope is understood clearly enough to declare it done. Session 116 was that moment for the P1 residual items.
+
+The session began with two genuine gaps: P1-239 (blocking deployment when a red-team simulation returned HIGH or CRITICAL) and P1-275 (showing meaningful progress during a red-team run rather than a blank spinner). Both were real frictions. P1-239 meant architects could deploy agents that had already demonstrated adversarial vulnerability — the governance system had context it was not sharing with the person about to press Deploy. P1-275 meant that on a slow connection, the only feedback during a 25-second evaluation was an animated icon; architects were navigating away and losing the run state.
+
+The implementations were surgical. P1-239 used the existing `localStorage["redteam-history-${blueprintId}"]` store — the same data the red-team panel already writes — rather than adding a database column or an API call. This kept the warning stateless and always in sync with the most recent simulation the user actually ran in their browser. P1-275 used a time-bucketed ticker (2.5 s per attack × 10 attacks = 25 s estimated) to simulate per-attack progress, because the API runs all 10 attacks in parallel on the server and returns a single response. The simulation is honest: it says "~Xs remaining" rather than pretending to count actual completions, and it caps at attack 9 so it never shows "complete" before the real response arrives.
+
+The more interesting part of the session was what the audit found. Seven of the nine P1 items on the sprint list were already implemented — some in sessions 099 and 100, some in earlier P1 work. The quality rubric tooltips were in `quality-dashboard.tsx`. The confirm-before-apply refinement staging was the `pendingApplyPrompt` state added in session 105. The session re-entry warm recap was the `sessionRecap` useMemo passed to `ChatContainer`. The governor context banners and "Review next critical" quick-action were session 100's work.
+
+This pattern — discovering that earlier sessions had already solved the problem — is both validating and instructive. It is validating because it means the sprint was thorough: the items were addressed when encountered, even when they weren't on a named list. It is instructive because it reveals how the experience map's IDs can drift from the actual implementation record. The UX map assigns new IDs to experiences when it inventories them; the code assigns work to sessions when it lands. Without a periodic reconciliation pass, the two can diverge. This session closed that gap for the P1 tier.
+
+The P1 sprint is now complete. The P2 sprint completed in session 115. The platform's human-facing experience has been systematically raised across every priority tier in the UX map. The next logical horizon is either a second-pass quality review — looking at the platform as a first-time user would, with fresh eyes and no knowledge of which sessions built what — or turning to the next capability layer: expanded deployment targets, multi-agent composition, or the enterprise onboarding flow. That decision belongs to the next session.
+
+---
+
+## Session 090 — 2026-04-03: The Platform Describes Itself
+
+Sessions 001 through 089 built Intellios. Session 090 read it.
+
+The UX Experience Map (`intellios-ux-map.jsx`) was the vehicle — a React artifact that inventories every human-facing experience in the platform, scores it across four dimensions (UX polish, strategic importance, completeness, friction risk), and maps the directed flows that connect experiences into journeys. But the more revealing outcome was what five passes of systematic audit uncovered: the most powerful parts of Intellios were either unmapped, mischaracterized, or hidden from users who needed them most.
+
+**The gap between assumption and reality.** At the start of this session, the map had 41 experiences. After reading the actual component source — not the route names, not the folder structure, but the code — the count grew to 53. Twelve experiences that existed and worked had never been inventoried. This is not a build failure; it is a documentation failure of a specific kind: the platform evolved faster than anyone's mental model of it. The experiences that were added last — often the most sophisticated ones — were the least visible in any summary.
+
+**The three most consequential discoveries:**
+
+`review-decision` (440 LOC) is the most important human moment in the entire Intellios workflow. It is where an authorized reviewer reads an AI-generated risk brief, inspects a version diff, and presses Approve or Reject. Every governance claim Intellios makes to enterprise customers flows through this screen. It was not in the map at all.
+
+`help-panel` was described as a static FAQ panel. In reality it is a Phase 47 multi-turn streaming AI copilot — page-aware, role-aware, powered by claude-haiku-4-5 — that receives the user's current pathname and answers platform-specific questions in context. It is arguably the most sophisticated discovery assistance layer in the product. Most users have never found it because nothing in the interface directs them to it.
+
+`admin-settings` was described as "branding and model config." It is the governance enforcement console: circuit breaker thresholds, approval chain builder, SR 11-7 periodic review scheduler, AWS Bedrock AgentCore deployment targets with IAM role ARN configuration, and the `requireTestsBeforeApproval` gate. A compliance officer implementing Intellios must configure this console correctly before any governance claims are real. The misdescription understated its importance by approximately the entire point of the product.
+
+**The refinement-chat / companion-chat distinction matters.** Both panels live in Blueprint Studio. Both involve AI conversation about the blueprint. They do entirely different things: companion-chat (314 LOC) gives advisory suggestions via SuggestedChange cards that the user must manually apply; refinement-chat (130 LOC) calls `/api/blueprints/[id]/refine/stream` and invokes `onBlueprintUpdated` — it directly mutates the ABP. One is an advisor. One is an editor. Conflating them would produce design decisions that are wrong in both directions.
+
+**The audit method is repeatable.** Each pass used a different signal: LOC ranking to find large unmapped components, API route listing to find flows with no UI representation, direct source reading to verify descriptions written from assumption. The integrity check script (duplicate ID detection + invalid flow reference detection) ran after each pass. The pattern — assume nothing, verify everything — applies to any future platform audit and is worth formalizing as a development discipline.
+
+**The optimum utility of the map is threefold.** As a sprint sequencing engine, the P0/P1 priority tier feeds directly into backlog without translation — the 4 P0s are unambiguous work items. As a design partner discovery instrument, sharing the map with a prospect and asking "which of these workflows matters most to your team?" surfaces their priorities in the vocabulary of the product rather than abstract feature lists. As an investor precision instrument, the map answers "how complete is the product?" with structure: 53 experiences, 48 directed flows, 6 governance clusters — not "we're about 70% done."
+
+**The broader pattern.** This session is a structural inflection point. The previous 89 sessions answered the question: can Intellios be built? The UX map now answers: what has been built, how finished is each part, and where should effort go next? The product is real. The map makes that legible.
+
+---
+
+## Session 115 — 2026-04-03: The P2 Sprint Closes
+
+Three items. The sprint is done.
+
+The invite trust banner is perhaps the most disproportionately high-value UX change of the entire sprint relative to the effort required. A user who receives an invite link to an enterprise platform and lands on a form that says only "You've been invited — Join Intellios as compliance officer" has no social proof that the invitation is legitimate. Enterprise users are trained to be skeptical of unexpected account-creation requests. The difference between "You've been invited to Intellios" and "Sarah Chen at Acme Bank has invited you to Intellios" is the difference between a phishing-adjacent experience and a contextually grounded one. The second version answers the question the user was already asking silently: who sent this, and why? The implementation required a single join on `invitedBy` to get the inviter's name, and a slug formatter to convert `acme-bank` into `Acme Bank`. Two functions. The impact on invite completion rate for new enterprise users is likely material.
+
+The "Remember this device" toggle completes a gap that has been present since the authentication layer was built. Intellios targets financial services environments, which is why the default session maxAge was set to 8 hours — a conservative choice appropriate for shared workstations and regulated environments. But architects, reviewers, and compliance officers who use Intellios daily from their own laptops are re-authenticating multiple times per week. The toggle gives them a choice rather than imposing a policy. The implementation is architecturally correct: `token.exp` is overridden in the JWT callback rather than changing the global `session.maxAge`, which means the extension is per-user and per-session, not platform-wide. The preference is also persisted to localStorage so the user doesn't have to re-enable it every visit.
+
+The fleet page department view closes the last open gap between what the Fleet page and the Monitor page respectively tell a super-admin. Monitor answers: what is the health of production agents right now? Fleet now answers: what is the composition of the agent portfolio, and what does it cost? The `byAgentType` breakdown is the structural addition — joining blueprints to intake sessions to get agent type, then mapping agent types to department proxies (Automation → IT/Operations, Decision Support → Risk/Compliance, etc.) and cost rates. The cost estimate is deliberately labeled "Est." and the blended rate is exposed in the UI — this is honest about what it is (a planning approximation, not a billing figure) while still being actionable for budget conversations.
+
+The P2 sprint ran across 8 sessions (108–115) and delivered 35 UX improvements across every layer of the platform: onboarding, auth, intake, blueprint studio, governance, registry, admin, and infrastructure. Zero new npm dependencies. Zero schema migrations. Every change was additive and client-side where possible, with the server only touched when data was genuinely unavailable in the client. That discipline made the sprint fast, safe, and reversible.
+
+What comes next is not more polish. The platform is polished. What comes next is the go-to-market layer: the landing page, the trial onboarding flow, the demo environment configuration, and the documentation that lets a prospect stand Intellios up in their own infrastructure. The technical foundation is enterprise-grade. The question now is whether it can be discovered and adopted.
+
+---
+
+## Session 114 — 2026-04-03: The Confirmation Moment
+
+There is a category of UX work that is easy to defer because it doesn't add capability. No new data is captured. No new workflow is unlocked. The product functions without it. This category is confirmation design — the moment after a user takes an action where the product tells them what just happened, whether it worked, and what comes next. Session 114 was almost entirely about this category.
+
+The reset password confirmation is the clearest example. Before this session, a user who successfully reset their password saw a check emoji, one sentence, and a link. After this session they see: an animated pulse-ring check, three bullet security notices (sessions invalidated, update your password manager, contact admin if this wasn't you), a "Sign in now" button, and a visible countdown. None of that adds capability. All of it adds trust. When security-sensitive actions like password resets complete silently, users wonder if it worked. Explicit confirmation of security consequences — "your previous sessions have been invalidated" — is the product behaving like an enterprise tool rather than a consumer app.
+
+The stakeholder submission confirmation follows the same logic but for a different audience. When a stakeholder completes their contribution to an intake session, they are a non-Intellios user who arrived via a unique link, spent time answering questions about their domain, and is now done. The previous experience told them "your contribution has been recorded" and showed them a technical note about the AI orchestrator updating a shared view. That message was written for an engineer, not for a risk manager at a bank who just spent 20 minutes answering questions about their compliance constraints. The replacement says: here is what you contributed, here is what happens to it (the architect is notified, the blueprint will incorporate your constraints), here is where the rest of the team stands, and you can close this tab. The last line is the most important. A person who doesn't know what to do next is a friction event. "You can close this tab" is not a trivial addition.
+
+The Invite Stakeholder chip in the domain strip is a different kind of UX work — it adds a capability, but in the right place. Previously, inviting a stakeholder required navigating elsewhere. The chip puts the action at the exact moment when it's most relevant: when an architect is looking at domain coverage and can see which domains are unfilled. The popover form is deliberate in asking for RACI role and domain explicitly — these are not administrative fields, they shape what the stakeholder is asked and what their contribution is indexed as. Making them visible at invite time (rather than hiding them in an admin form) is a design choice about respecting the architect's expertise.
+
+The signup progress indicator and the home page blueprint search are UX improvements with cleaner justifications: the progress indicator reduces abandonment by showing that there are only 3 steps; the search filter reduces cognitive load by letting a busy architect with 20 agents find the one they're looking for without scanning. Both are implemented without any server calls — all state is derived from what's already in memory. This is a pattern worth noting: when a component already has all the data it needs, client-side filtering is always the right answer. It is faster, simpler, and doesn't generate load.
+
+The broader arc of the P2 sprint is becoming visible. P0 fixed things that were broken. P1 added things that were missing. P2 is making things feel finished. The difference between a product that works and a product that feels enterprise-grade is largely in this third category — the confirmations, the filters, the feedback loops, the moments where the platform acknowledges what the user just did and orients them toward what comes next.
+
+---
+
+## Session 113 — 2026-04-03: Closing the Distance Between Intent and Action
+
+Eight P2 items in one session. What's notable is not the count — it's what this sprint is doing to the product's surface area of confidence.
+
+The items in P2 are not features. They are the last few millimeters of distance between a workflow that technically exists and a workflow that a person will actually complete without friction. Consider what was delivered: the Template Preview panel means the first decision a new user makes — which template to start from — is now informed instead of blind. The Clone tab means an existing agent becomes a starting point instead of a reference to re-type. The bulk CSV invite means onboarding a 20-person team takes one file upload instead of 20 clicks. The Validate Deployment Target button means an admin can confirm that their IAM configuration is correct before they learn it's wrong at 2am during a production deployment attempt.
+
+**The pattern of this sprint is: close the gap at the last moment.** The template existed. The clone API existed. The invite endpoint existed. The deployment validation logic existed. What P2 adds is not backend capability — it's the UI moment where a user would have otherwise bounced, hesitated, guessed incorrectly, or had to go find another tool. Every P2 item in this sprint is an experience where the platform was asking users to take a step it wasn't helping them complete.
+
+**The QuickStart modal is a good lens for this.** It is the first substantive decision a new user makes on Intellios. Before this session, clicking a template card immediately dropped them into the express lane — no preview, no recourse, no understanding of what "Customer Service Agent" actually contains. After this session, clicking a template opens a panel showing the agent's persona, all 3–5 tools with their descriptions and types, the governance policy chips, and the tags. The user arrives at the express lane having already decided — not having been pushed. That is a meaningfully different relationship between the product and the user.
+
+The clone flow is similarly structural. Enterprises running AI agent programs will, at some point, want to spin up a variant of a proven agent — a copy of their customer service agent tuned for a different region, a fork of their compliance monitor with stricter constraints. The pattern of "start from what worked" is as natural in enterprise AI as it is in software development. The clone tab makes that pattern a three-click action from the same modal where you'd start from scratch. There is no reason to leave the platform to copy-paste a configuration.
+
+**On continuity across context windows.** This session crossed a window boundary cleanly. The API route was written in the first window; the UI wiring happened in the second, picking up from a precise summary of where work stopped. The zero-degradation continuation is now a reliable pattern: every session ends with enough documentation that the next session needs no re-orientation.
+
+The P2 sprint continues. The remaining items — search/filter on the home page, signup progress indicator, invite stakeholder chip — are all in the same category: last-meter UX closures. The platform's capability is not in question. The question the sprint is answering is: at every moment where a user could feel friction or uncertainty, has someone made a deliberate choice to reduce it?
+
+---
+
+## Session 112 — 2026-04-03: Depth of Comparison
+
+Session 112 continued the P2 sprint with five items that share a structural pattern: they each take data the platform already holds and make it *comparable* — across versions, across channels, across time periods.
+
+**Cross-version comparison as first-class output.** The red-team comparison strip (P2-276) is a small component with a disproportionate effect on how operators think about agent security. Before this change, running red-team on v1.2 gave you a number: 8/10. Now it gives you a delta: "8/10 → ↑ +2 attacks resisted · risk improved vs v1.1." The number tells you where you are. The comparison tells you whether your changes worked. Security posture is always relative to a baseline; now the baseline is visible at the moment the result appears.
+
+**The version selector normalizes multi-version thinking.** The simulation sandbox previously always simulated the latest version. Engineers and compliance officers sometimes need to verify that a behavior present in v1.1 was intentionally removed in v1.2 — or that a regression didn't sneak back in. The version selector (P2-423) makes that a two-click action rather than a manual workaround (deploy v1.1 to a test environment, run separately, compare mentally). Version switching resets the chat state rather than carrying forward messages — a deliberate design choice to prevent confusion between sessions.
+
+**Policy search acknowledges that policies are first-class entities.** The command palette originally searched pages and agents. Policies — which may number in the dozens for a mature enterprise deployment — were findable only by navigating to the governance hub and scrolling. P2-584 treats policies with the same searchability as agents: type a policy name fragment, see it, navigate to it. The implementation fetches once on palette open and filters client-side, making it instantaneous after the first keystroke. Policies are now as fast to navigate as any other entity in the platform.
+
+**Notification routing as governance for the notification layer.** There's a subtle irony in enterprise governance software having only two notification toggles (notifyOnBreach, notifyOnApproval). Governance platforms send dozens of event types — rejections, deployments, review assignments, anomalies — and route them to different stakeholders through different channels for good reason: a policy violation should page an on-call engineer via PagerDuty, while a blueprint approval doesn't need to. P2-607 adds the routing matrix that should have existed from the start. The existing JSONB settings column absorbs the new fields via deep-merge without any schema migration, which is the right pattern for evolving configuration.
+
+**The sprint pattern holds.** 22 P2 items completed across 5 sessions. The pattern is consistent: read the existing component, identify the specific moment of friction, add the minimum UI that closes it. No new dependencies introduced. No database changes made. The platform's capabilities are not growing — its expressiveness is.
+
+---
+
+## Session 111 — 2026-04-03: Feedback Loops and Context Awareness
+
+Session 111 continued closing the gap between what the platform knows and what it shows. Six items, a common theme: the platform already had the data; the missing piece was surfacing it at the moment it matters.
+
+**The re-review banner is about cognitive framing.** When a reviewer opens a blueprint that's been sent back and revised, they need to know immediately: this is not a first review. The previous architecture made them find the version diff themselves — a collapsible section below the AI brief and SLA badge. The banner moves a single sentence ("Re-review: v1.1 → v1.2 · see what changed ↓") to the very first thing a reviewer sees. One scroll target, zero hunting. The diff was already there; the banner is pure navigation and framing.
+
+**AI brief feedback closes the trust loop.** The AI Risk Brief is the most prominent AI-generated content in the entire review workflow. It shapes reviewer decisions on every blueprint. But with no feedback mechanism, there was no signal about accuracy — the model would continue generating assessments with no correction gradient. The thumbs feedback is minimal UI (two icon buttons, one line of confirmation copy), but it establishes the pattern: AI assessments can be evaluated. The backend wiring can come later; the user expectation is set now.
+
+**Quality deltas make refinement meaningful.** Before this change, an architect could refine a blueprint three times and have no objective evidence of improvement. The delta display changes that: every quality dimension now shows whether it moved up, down, or stayed flat since the previous version. This converts the quality dashboard from a static snapshot into a comparison instrument — which is what architects actually need during iterative development.
+
+**Help panel context is the most architecturally interesting change.** The problem was a structural one: the Help Panel lives in the sidebar, rendered far from the page components that know what the user is looking at. Prop drilling through the layout was rejected (too invasive). The solution was a browser custom event — `intellios:help-context` — dispatched by pages via `useEffect` whenever their key state changes. The panel listens, stores the latest context, and injects it into every API call. The effect is that a question like "why does my blueprint have violations?" now generates an answer that says "Your blueprint — Customer Service Agent — has 3 governance violations" rather than a generic explanation of what violations are. The pattern is generic and any page can participate.
+
+**Notification grouping is about signal-to-noise.** A deployed agent that triggers 10 consecutive policy violations creates 10 notification rows — all identical except for timestamps. The grouped digest collapses them into one card. The underlying data is preserved (the "View all N →" link takes the user to the right place), but the panel is now scannable. This is the difference between a notification system that reports events and one that communicates significance.
+
+**The governance date range picker is about executive readability.** The analytics section always showed all-time data — which, for a platform still in early deployment, means "data from the last few weeks" regardless of what period you care about. The 30/90/365 chip picker makes the time context explicit. The narrative summary converts the numbers ("91%, 3, 14") into a sentence ("In the last 90 days: 14 agents approved with a 91% pass rate, 3 violations detected"). Numbers tell. Narratives persuade. Governance stakeholders need both.
+
+---
+
+## Session 110 — 2026-04-03: The Platform Guides Its Own Use
+
+Session 110 is the third P2 sprint continuation — five items touching five different parts of the platform. The work is incremental, but a strategic thread runs through all of it: the platform is becoming increasingly self-guiding.
+
+**The briefing widget is the clearest example.** The AI Intelligence Briefing already existed — the monitoring subsystem generates it, the API serves it. What was missing was a surface point that brought it front and center before architects got lost in individual metrics. The dashboard widget does this without any new infrastructure: it surfaces the most recent briefing health status and the first sentence of the brief, exactly where architects look when they arrive. One widget converts a feature that existed but was invisible into a daily habit.
+
+**Context-aware companion prompts are the same pattern applied to suggestions.** The Companion AI could already answer any question about a blueprint. But the empty-state chips were fixed: "What should I improve first?" regardless of whether there were governance violations that made the answer obvious or a quality score of 2.1 that made it equally obvious. Now the chip list re-ranks itself based on the blueprint's actual state. A designer with three active violations gets violation prompts first. A designer with clean governance but poor quality gets quality prompts first. The UX now reflects what the system actually knows — which is the definition of intelligent interface design.
+
+**The ambiguity flag sort encodes expert knowledge.** An architect seeing a list of unresolved flags has to mentally triage them. Flags about governance, tool permissions, and compliance constraints matter more than flags about agent names or descriptions. The `flagImpact()` heuristic does that triage automatically — high-impact fields surface first, and the red/slate badge makes the classification transparent rather than hidden. This is a case where the interface teaches the user what to care about, not just reflects what exists.
+
+**`detectChangedSection` closes the feedback loop on refinement.** When an architect submits a refinement — "tighten the constraints on PII access" — the ABP mutates, the page re-renders, but nothing tells the architect what changed. They have to scan the entire blueprint manually. Now the diff runs automatically, the nav sidebar highlights the changed section, and the page scrolls there. The cost was one utility function and a `setTimeout`. The effect is that the refinement workflow now has a defined end: the architect sees exactly what moved. This is the kind of micro-improvement that, accumulated across a workflow, turns a tool from one that technically works into one people want to use.
+
+**The P2 sprint as a whole is precision polish.** The P1 sprint (sessions 092–109) was about missing capabilities — flows that had no entry point, features that existed but weren't surfaced. The P2 items are different: they are about the quality of the experience once you're inside a flow. The distinction matters because P1 work creates access; P2 work creates fluency. Both are necessary before a product can be handed to a real user and trusted to guide them.
+
+---
+
+## Session 089 — 2026-04-03: Platform Pitch Deck
+
+*[No journal entry written for this session — pitch deck creation session, documentation compliance pending.]*
+
+---
+
 ## Session 087 — 2026-04-02: The Session List as a Workspace
 
 The conversation phase (session 086) tells a user what's possible. The session list tells a user where they are. This session addressed the session list — the workspace home for architects building agents — which had accumulated a structural problem that made it unusable as a real working surface.

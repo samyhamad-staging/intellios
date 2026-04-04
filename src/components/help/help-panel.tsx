@@ -145,8 +145,20 @@ function getMessageText(
     .join("");
 }
 
+// P2-595: Live page context provided by pages via custom browser event
+interface HelpPageContext {
+  agentName?: string;
+  blueprintStatus?: string;
+  violationCount?: number;
+}
+
 interface HelpPanelProps {
   role: string;
+  /**
+   * "icon"  (default) — compact icon-only button for embedding in tight spaces.
+   * "row"             — full-width labeled row styled like a nav item, for sidebar placement.
+   */
+  variant?: "icon" | "row";
 }
 
 function extractAction(
@@ -171,20 +183,37 @@ function extractAction(
   return null;
 }
 
-export function HelpPanel({ role }: HelpPanelProps) {
+export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  // P2-595: Live context from the current page
+  const [pageContext, setPageContext] = useState<HelpPageContext | null>(null);
+
+  // P2-595: Listen for context updates dispatched by pages
+  useEffect(() => {
+    function handleContextUpdate(e: CustomEvent<HelpPageContext>) {
+      setPageContext(e.detail ?? null);
+    }
+    window.addEventListener("intellios:help-context", handleContextUpdate as EventListener);
+    // Clear context when the pathname changes (navigated away)
+    return () => {
+      window.removeEventListener("intellios:help-context", handleContextUpdate as EventListener);
+    };
+  }, []);
+
+  // Clear stale page context on pathname changes
+  useEffect(() => { setPageContext(null); }, [pathname]);
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/help/chat",
-        body: { pathname },
+        body: { pathname, pageContext },
       }),
-    [pathname]
+    [pathname, pageContext]
   );
 
   const { messages, sendMessage, status, setMessages } = useChat({
@@ -234,16 +263,34 @@ export function HelpPanel({ role }: HelpPanelProps) {
 
   return (
     <>
-      {/* Trigger button */}
-      <button
-        onClick={() => setOpen(true)}
-        title="Help & guidance"
-        aria-label="Help"
-        className="rounded p-1 transition-colors hover:bg-white/10"
-        style={{ color: "var(--sidebar-text)" }}
-      >
-        <HelpCircle size={13} />
-      </button>
+      {/* Trigger — "icon" variant: compact icon button for sidebar footer / tight spaces */}
+      {variant === "icon" && (
+        <button
+          onClick={() => setOpen(true)}
+          title="Ask Intellios"
+          aria-label="Ask Intellios"
+          className="rounded p-1 transition-colors hover:bg-white/10"
+          style={{ color: "var(--sidebar-text)" }}
+        >
+          <HelpCircle size={13} />
+        </button>
+      )}
+
+      {/* Trigger — "row" variant: full-width labeled nav-style row */}
+      {variant === "row" && (
+        <button
+          onClick={() => setOpen(true)}
+          className="group flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors hover:bg-white/10"
+          style={{ color: "var(--sidebar-text)" }}
+        >
+          <HelpCircle size={16} className="shrink-0 opacity-70 group-hover:opacity-100" />
+          <span className="flex-1 text-left">Ask Intellios</span>
+          {/* Subtle AI indicator */}
+          <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none bg-violet-500/20 text-violet-300">
+            AI
+          </span>
+        </button>
+      )}
 
       {open && (
         <>
@@ -256,32 +303,55 @@ export function HelpPanel({ role }: HelpPanelProps) {
           {/* Panel */}
           <div className="fixed right-0 top-0 z-50 h-full w-[400px] bg-white border-l border-gray-200 shadow-xl flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <HelpCircle size={15} className="text-violet-500" />
-                <span className="text-sm font-semibold text-gray-800">
-                  Ask Intellios
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                {!isEmpty && (
+            <div className="border-b border-gray-100">
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <HelpCircle size={15} className="text-violet-500" />
+                  <span className="text-sm font-semibold text-gray-800">
+                    Ask Intellios
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {!isEmpty && (
+                    <button
+                      onClick={() => setMessages([])}
+                      title="Clear conversation"
+                      aria-label="Clear conversation"
+                      className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
                   <button
-                    onClick={() => setMessages([])}
-                    title="Clear conversation"
-                    aria-label="Clear conversation"
+                    onClick={() => setOpen(false)}
+                    aria-label="Close help panel"
                     className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                   >
-                    <Trash2 size={13} />
+                    <X size={14} />
                   </button>
-                )}
-                <button
-                  onClick={() => setOpen(false)}
-                  aria-label="Close help panel"
-                  className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                >
-                  <X size={14} />
-                </button>
+                </div>
               </div>
+              {/* P2-595: Live context strip — shown when a page provides context */}
+              {pageContext && (pageContext.agentName || pageContext.blueprintStatus) && (
+                <div className="flex items-center gap-1.5 flex-wrap px-4 py-1.5 bg-violet-50 border-t border-violet-100">
+                  <span className="text-2xs text-violet-400 font-medium">Context:</span>
+                  {pageContext.agentName && (
+                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-2xs text-violet-700 font-medium">
+                      {pageContext.agentName}
+                    </span>
+                  )}
+                  {pageContext.blueprintStatus && (
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-2xs text-gray-600 font-medium">
+                      {pageContext.blueprintStatus}
+                    </span>
+                  )}
+                  {pageContext.violationCount !== undefined && pageContext.violationCount > 0 && (
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-2xs text-red-700 font-medium">
+                      {pageContext.violationCount} violation{pageContext.violationCount !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Body */}

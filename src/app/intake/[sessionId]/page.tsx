@@ -537,6 +537,7 @@ export default function IntakeSessionPage({
                 setEditingClassification(true);
               }
             }}
+            sessionId={sessionId}
           />
         </div>
 

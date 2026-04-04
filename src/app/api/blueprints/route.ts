@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { intakeSessions, agentBlueprints } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { generateBlueprint } from "@/lib/generation/generate";
 import { validateBlueprint } from "@/lib/governance/validator";
 import { loadPolicies } from "@/lib/governance/load-policies";
@@ -13,7 +13,46 @@ import { getRequestId } from "@/lib/request-id";
 import { publishEvent } from "@/lib/events/publish";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
+import { getEnterpriseId, enterpriseScope } from "@/lib/auth/enterprise-scope";
 import { z } from "zod";
+
+/**
+ * GET /api/blueprints
+ * Returns all blueprint versions scoped to the caller's enterprise,
+ * ordered by updatedAt desc (most recent first).
+ */
+export async function GET(request: NextRequest) {
+  const { error } = await requireAuth();
+  if (error) return error;
+  const requestId = getRequestId(request);
+  const ctx = getEnterpriseId(request);
+
+  try {
+    const filter = enterpriseScope(agentBlueprints.enterpriseId, ctx);
+
+    const rows = await db
+      .select({
+        id: agentBlueprints.id,
+        agentId: agentBlueprints.agentId,
+        version: agentBlueprints.version,
+        name: agentBlueprints.name,
+        tags: agentBlueprints.tags,
+        status: agentBlueprints.status,
+        validationReport: agentBlueprints.validationReport,
+        createdBy: agentBlueprints.createdBy,
+        createdAt: agentBlueprints.createdAt,
+        updatedAt: agentBlueprints.updatedAt,
+      })
+      .from(agentBlueprints)
+      .where(filter ?? undefined)
+      .orderBy(desc(agentBlueprints.updatedAt));
+
+    return NextResponse.json({ blueprints: rows });
+  } catch (err) {
+    console.error(`[${requestId}] Failed to list blueprints:`, err);
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to list blueprints", undefined, requestId);
+  }
+}
 
 const GenerateBody = z.object({
   sessionId: z.string().uuid(),

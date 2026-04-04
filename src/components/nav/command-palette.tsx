@@ -20,6 +20,7 @@ import {
   Webhook,
   Search,
   Bot,
+  ShieldCheck,
 } from "lucide-react";
 
 // ── Nav item catalogue ──────────────────────────────────────────────────────
@@ -180,6 +181,22 @@ const STATUS_DOTS: Record<string, string> = {
   deprecated: "bg-gray-300",
 };
 
+// P2-584: Policy result shape
+interface PolicyResult {
+  id: string;
+  name: string;
+  type: string;
+  description?: string | null;
+}
+
+const POLICY_TYPE_LABELS: Record<string, string> = {
+  safety: "Safety",
+  compliance: "Compliance",
+  data_handling: "Data Handling",
+  access_control: "Access Control",
+  audit: "Audit",
+};
+
 // ── Component ───────────────────────────────────────────────────────────────
 
 interface Props {
@@ -192,6 +209,10 @@ export function CommandPalette({ role, onClose }: Props) {
   const [query, setQuery] = useState("");
   const [agentResults, setAgentResults] = useState<AgentResult[]>([]);
   const agentFetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // P2-584: Policy search state
+  const [policyResults, setPolicyResults] = useState<PolicyResult[]>([]);
+  const allPoliciesRef = useRef<PolicyResult[]>([]);
+  const policiesFetchedRef = useRef(false);
 
   const entries = ALL_ENTRIES.filter(
     (e) => e.roles.includes("all") || e.roles.includes(role)
@@ -225,11 +246,42 @@ export function CommandPalette({ role, onClose }: Props) {
     } catch { /* non-critical */ }
   }, []);
 
+  // P2-584: Fetch policies once on first open, then filter client-side
+  const fetchPolicies = useCallback(async () => {
+    if (policiesFetchedRef.current) return;
+    policiesFetchedRef.current = true;
+    try {
+      const res = await fetch("/api/governance/policies");
+      if (!res.ok) return;
+      const data = await res.json();
+      allPoliciesRef.current = (data.policies ?? []) as PolicyResult[];
+    } catch { /* non-critical */ }
+  }, []);
+
+  useEffect(() => {
+    fetchPolicies();
+  }, [fetchPolicies]);
+
   useEffect(() => {
     if (agentFetchTimer.current) clearTimeout(agentFetchTimer.current);
     agentFetchTimer.current = setTimeout(() => fetchAgents(query), 200);
     return () => { if (agentFetchTimer.current) clearTimeout(agentFetchTimer.current); };
   }, [query, fetchAgents]);
+
+  // P2-584: Filter policies client-side (no debounce needed — data already loaded)
+  useEffect(() => {
+    if (query.length < 2) { setPolicyResults([]); return; }
+    const lq = query.toLowerCase();
+    setPolicyResults(
+      allPoliciesRef.current
+        .filter((p) =>
+          p.name.toLowerCase().includes(lq) ||
+          p.type.toLowerCase().includes(lq) ||
+          (p.description ?? "").toLowerCase().includes(lq)
+        )
+        .slice(0, 4)
+    );
+  }, [query]);
 
   function navigate(href: string) {
     router.push(href);
@@ -257,7 +309,7 @@ export function CommandPalette({ role, onClose }: Props) {
             <Command.Input
               value={query}
               onValueChange={setQuery}
-              placeholder="Search pages and agents…"
+              placeholder="Search pages, agents, and policies…"
               className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
             />
             <kbd className="shrink-0 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-2xs font-medium text-gray-400">
@@ -318,6 +370,33 @@ export function CommandPalette({ role, onClose }: Props) {
                         <span className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOTS[agent.status] ?? "bg-gray-300"}`} />
                         {agent.status.replace("_", " ")} · v{agent.version}
                         {agent.tags?.length > 0 && ` · ${agent.tags.slice(0, 2).join(", ")}`}
+                      </p>
+                    </div>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
+
+            {/* P2-584: Policy search results */}
+            {policyResults.length > 0 && (
+              <Command.Group heading="Policies" className="mb-1 [&_[cmdk-group-heading]]:mb-1 [&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:pt-1 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-gray-400">
+                {policyResults.map((policy) => (
+                  <Command.Item
+                    key={policy.id}
+                    value={[policy.name, policy.type, policy.description ?? ""].join(" ")}
+                    onSelect={() => navigate(`/governance?policy=${policy.id}`)}
+                    className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 hover:bg-gray-50"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-500 group-aria-selected:border-violet-200 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600">
+                      <ShieldCheck size={14} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-800 group-aria-selected:text-violet-700">
+                        {policy.name}
+                      </p>
+                      <p className="truncate text-xs text-gray-400">
+                        {POLICY_TYPE_LABELS[policy.type] ?? policy.type}
+                        {policy.description && ` · ${policy.description.slice(0, 60)}`}
                       </p>
                     </div>
                   </Command.Item>

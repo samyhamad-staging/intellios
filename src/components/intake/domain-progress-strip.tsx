@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Target, Cpu, GitBranch, Database, ShieldAlert, Lock, ScrollText,
+  UserPlus, X, Check, Loader2,
 } from "lucide-react";
 import type { IntakeTransparencyMetadata, DomainProgress } from "@/lib/types/intake-transparency";
 import type { AgentType, IntakeRiskTier } from "@/lib/types/intake";
@@ -205,6 +206,8 @@ interface DomainProgressStripProps {
   onDomainClick?: (domainKey: string) => void;
   /** Shown before the first AI response populates transparency.domains */
   initialDomains?: DomainProgress[];
+  /** P2-134: Session ID — enables the Invite Stakeholder chip */
+  sessionId?: string;
 }
 
 export function DomainProgressStrip({
@@ -214,6 +217,7 @@ export function DomainProgressStrip({
   onOverrideClick,
   onDomainClick,
   initialDomains,
+  sessionId,
 }: DomainProgressStripProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hoveredDomain, setHoveredDomain] = useState<string | null>(null);
@@ -339,6 +343,14 @@ export function DomainProgressStrip({
         <span className="text-2xs font-mono text-text-tertiary leading-none">domains</span>
       </div>
 
+      {/* P2-134: Invite Stakeholder chip */}
+      {sessionId && (
+        <>
+          <div className="h-4 w-px bg-border shrink-0" />
+          <InviteStakeholderChip sessionId={sessionId} />
+        </>
+      )}
+
       {/* Tooltip */}
       {hoveredDomain && tooltipPos && (
         <DomainTooltip
@@ -398,6 +410,160 @@ function DomainTooltip({
         <p className="text-slate-500 font-mono text-2xs mt-1">
           Click to focus here
         </p>
+      )}
+    </div>
+  );
+}
+
+// ── P2-134: Invite Stakeholder Chip ───────────────────────────────────────────
+
+const INVITE_DOMAINS = ["compliance", "risk", "legal", "security", "it", "operations", "business"] as const;
+const RACI_ROLES = ["consulted", "informed", "responsible", "accountable"] as const;
+
+function InviteStakeholderChip({ sessionId }: { sessionId: string }) {
+  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [domain, setDomain] = useState<typeof INVITE_DOMAINS[number]>("compliance");
+  const [raciRole, setRaciRole] = useState<typeof RACI_ROLES[number]>("consulted");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const reset = useCallback(() => {
+    setEmail(""); setName(""); setDomain("compliance"); setRaciRole("consulted");
+    setStatus("idle"); setErrorMsg(null);
+  }, []);
+
+  async function handleSend(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus("sending");
+    setErrorMsg(null);
+    try {
+      const res = await fetch(`/api/intake/sessions/${sessionId}/invitations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inviteeEmail: email, inviteeName: name || undefined, domain, raciRole }),
+      });
+      if (res.ok) {
+        setStatus("sent");
+        setTimeout(() => { setOpen(false); reset(); }, 2000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setErrorMsg((data as { message?: string }).message ?? "Could not send invitation.");
+        setStatus("error");
+      }
+    } catch {
+      setErrorMsg("Network error. Please try again.");
+      setStatus("error");
+    }
+  }
+
+  return (
+    <div className="relative shrink-0" ref={popoverRef}>
+      {/* Trigger chip */}
+      <button
+        onClick={() => { setOpen((v) => !v); if (!open) reset(); }}
+        className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-2xs font-medium transition-colors ${
+          open
+            ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+            : "border-border bg-surface text-text-tertiary hover:border-indigo-200 hover:text-indigo-600 hover:bg-indigo-50/50"
+        }`}
+        title="Invite a stakeholder to contribute to this intake session"
+      >
+        <UserPlus size={11} />
+        <span className="hidden sm:inline">Invite</span>
+      </button>
+
+      {/* Popover */}
+      {open && (
+        <div className="absolute left-0 top-full mt-2 z-50 w-72 rounded-xl border border-border bg-surface shadow-[var(--shadow-raised)]">
+          {status === "sent" ? (
+            <div className="flex flex-col items-center gap-2 py-6 px-4 text-center">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100">
+                <Check size={16} className="text-green-600" />
+              </div>
+              <p className="text-xs font-semibold text-text">Invitation sent!</p>
+              <p className="text-2xs text-text-tertiary">{email}</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSend} className="p-4 space-y-3">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-semibold text-text">Invite Stakeholder</p>
+                <button type="button" onClick={() => setOpen(false)} className="text-text-tertiary hover:text-text">
+                  <X size={13} />
+                </button>
+              </div>
+              <p className="text-2xs text-text-secondary -mt-1">
+                A unique link will be emailed for them to contribute their domain expertise.
+              </p>
+
+              {/* Email */}
+              <div>
+                <label className="mb-1 block text-2xs font-medium text-text-secondary uppercase tracking-wide">Email *</label>
+                <input
+                  type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                  placeholder="stakeholder@company.com"
+                  className="w-full rounded-lg border border-border bg-surface-muted px-3 py-1.5 text-xs text-text placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+                />
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="mb-1 block text-2xs font-medium text-text-secondary uppercase tracking-wide">Name (optional)</label>
+                <input
+                  type="text" value={name} onChange={(e) => setName(e.target.value)}
+                  placeholder="Jane Smith"
+                  className="w-full rounded-lg border border-border bg-surface-muted px-3 py-1.5 text-xs text-text placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+                />
+              </div>
+
+              {/* Domain + RACI row */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="mb-1 block text-2xs font-medium text-text-secondary uppercase tracking-wide">Domain *</label>
+                  <select
+                    value={domain} onChange={(e) => setDomain(e.target.value as typeof INVITE_DOMAINS[number])}
+                    className="w-full rounded-lg border border-border bg-surface-muted px-2 py-1.5 text-xs text-text focus:border-primary focus:outline-none capitalize"
+                  >
+                    {INVITE_DOMAINS.map((d) => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-2xs font-medium text-text-secondary uppercase tracking-wide">RACI Role</label>
+                  <select
+                    value={raciRole} onChange={(e) => setRaciRole(e.target.value as typeof RACI_ROLES[number])}
+                    className="w-full rounded-lg border border-border bg-surface-muted px-2 py-1.5 text-xs text-text focus:border-primary focus:outline-none capitalize"
+                  >
+                    {RACI_ROLES.map((r) => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {errorMsg && <p className="text-2xs text-red-600">{errorMsg}</p>}
+
+              <button
+                type="submit"
+                disabled={status === "sending" || !email}
+                className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
+              >
+                {status === "sending" ? <><Loader2 size={12} className="animate-spin" /> Sending…</> : <><UserPlus size={12} /> Send Invitation</>}
+              </button>
+            </form>
+          )}
+        </div>
       )}
     </div>
   );

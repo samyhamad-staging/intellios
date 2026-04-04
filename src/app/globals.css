@@ -261,3 +261,40 @@ samp {
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+/* ── Form input utilities (Express Lane editor + shared) ────────────────── */
+.input-field {
+  width: 100%;
+  border-radius: 0.625rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.input-field::placeholder { color: var(--color-text-tertiary); }
+.input-field:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+.input-field-sm {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.input-field-sm::placeholder { color: var(--color-text-tertiary); }
+.input-field-sm:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}

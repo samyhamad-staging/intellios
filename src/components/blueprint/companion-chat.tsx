@@ -6,17 +6,43 @@ import type { UIMessage } from "ai";
 import { useEffect, useRef, useMemo, useCallback } from "react";
 import { MessageBubble } from "@/components/chat/message-bubble";
 import { ChatInput } from "@/components/chat/chat-input";
-import { Sparkles, ArrowRight, Copy, Check } from "lucide-react";
+import { Sparkles, ArrowRight, Copy, Check, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 // ── Suggested prompts for empty state ─────────────────────────────────────────
 
-const COMPANION_PROMPTS = [
+const BASE_COMPANION_PROMPTS = [
   "What should I improve first?",
   "Explain the governance violations",
   "Is this blueprint ready for review?",
   "Suggest improvements to the instructions",
 ];
+
+const VIOLATION_PROMPTS = [
+  "Explain the governance violations",
+  "How do I fix the failing policies?",
+  "Which violation should I address first?",
+  "What should I improve first?",
+];
+
+const QUALITY_PROMPTS = [
+  "How can I improve the quality score?",
+  "Which dimension needs the most work?",
+  "What should I improve first?",
+  "Is this blueprint ready for review?",
+];
+
+/**
+ * Returns a context-ranked list of suggested prompts based on the blueprint's
+ * current validation and quality state. If violations exist, governance-focused
+ * prompts appear first. If quality is low, quality-improvement prompts lead.
+ * Falls back to the default set when no context is available.
+ */
+function getRankedPrompts(violationCount: number | null, qualityScore: number | null): string[] {
+  if (violationCount !== null && violationCount > 0) return VIOLATION_PROMPTS;
+  if (qualityScore !== null && qualityScore < 3.0) return QUALITY_PROMPTS;
+  return BASE_COMPANION_PROMPTS;
+}
 
 // ── Suggested Change Card ─────────────────────────────────────────────────────
 
@@ -97,13 +123,20 @@ function SuggestChangeCard({
 interface CompanionChatProps {
   blueprintId: string;
   onApplyChange: (refinementPrompt: string) => void;
+  /** Number of active governance violations — used to rank suggested prompts */
+  violationCount?: number | null;
+  /** Blueprint quality score (0–5 scale) — used to rank suggested prompts */
+  qualityScore?: number | null;
 }
 
 export function CompanionChat({
   blueprintId,
   onApplyChange,
+  violationCount = null,
+  qualityScore = null,
 }: CompanionChatProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const HISTORY_KEY = `companion-history-${blueprintId}`;
 
   const transport = useMemo(
     () =>
@@ -113,10 +146,32 @@ export function CompanionChat({
     [blueprintId]
   );
 
+  // P1-30: Load persisted conversation on mount so returning architects keep context
+  const [initialMsgs] = useState<UIMessage[]>(() => {
+    try {
+      const raw = localStorage.getItem(`companion-history-${blueprintId}`);
+      return raw ? (JSON.parse(raw) as UIMessage[]) : [];
+    } catch { return []; }
+  });
+
   const { messages, sendMessage, status } = useChat({
     transport,
     id: `companion-${blueprintId}`,
+    initialMessages: initialMsgs,
   });
+
+  // P1-30: Persist conversation to localStorage on every message change
+  useEffect(() => {
+    try {
+      if (messages.length > 0) localStorage.setItem(HISTORY_KEY, JSON.stringify(messages));
+    } catch { /* storage quota — ignore */ }
+  }, [messages, HISTORY_KEY]);
+
+  function handleClearHistory() {
+    try { localStorage.removeItem(HISTORY_KEY); } catch { /* ignore */ }
+    // useChat state can only be reset by remounting — reload the page
+    window.location.reload();
+  }
 
   const isStreaming = status === "streaming" || status === "submitted";
 
@@ -152,6 +207,15 @@ export function CompanionChat({
           Blueprint Companion
         </span>
         <span className="text-2xs text-gray-400">AI Design Partner</span>
+        {messages.length > 0 && (
+          <button
+            onClick={handleClearHistory}
+            title="Clear conversation history"
+            className="ml-auto text-gray-300 hover:text-gray-500 transition-colors"
+          >
+            <Trash2 size={12} />
+          </button>
+        )}
       </div>
 
       {/* Messages */}
@@ -169,8 +233,18 @@ export function CompanionChat({
                 I know its content, governance, and original requirements.
               </p>
             </div>
+            {violationCount !== null && violationCount > 0 && (
+              <p className="text-2xs text-red-600 font-medium mb-1">
+                {violationCount} governance violation{violationCount !== 1 ? "s" : ""} detected — governance prompts ranked first
+              </p>
+            )}
+            {(violationCount === null || violationCount === 0) && qualityScore !== null && qualityScore < 3.0 && (
+              <p className="text-2xs text-amber-600 font-medium mb-1">
+                Quality score {qualityScore.toFixed(1)}/5.0 — quality prompts ranked first
+              </p>
+            )}
             <div className="w-full space-y-1.5">
-              {COMPANION_PROMPTS.map((prompt) => (
+              {getRankedPrompts(violationCount, qualityScore).map((prompt) => (
                 <button
                   key={prompt}
                   onClick={() => handleSend(prompt)}

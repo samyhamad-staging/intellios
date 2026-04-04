@@ -71,6 +71,66 @@ function getDiffDays(isoDate: string): number {
   return Math.floor((Date.now() - new Date(isoDate).getTime()) / (1000 * 60 * 60 * 24));
 }
 
+// ── Duplicate Session Button ───────────────────────────────────────────────────
+
+function DuplicateSessionButton({ sessionId }: { sessionId: string }) {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  const [state, setState] = useState<"idle" | "loading" | "error">("idle");
+
+  async function handleDuplicate(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (state === "loading") return;
+    setState("loading");
+
+    try {
+      const res = await fetch(`/api/intake/sessions/${sessionId}/duplicate`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        setState("error");
+        setTimeout(() => setState("idle"), 2000);
+        return;
+      }
+
+      const data = (await res.json()) as { sessionId: string };
+      startTransition(() => {
+        router.push(`/intake/${data.sessionId}`);
+        router.refresh();
+      });
+    } catch {
+      setState("error");
+      setTimeout(() => setState("idle"), 2000);
+    }
+  }
+
+  return (
+    <button
+      onClick={handleDuplicate}
+      title="Duplicate session"
+      disabled={state === "loading"}
+      className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 hover:border-violet-300 hover:text-violet-600 disabled:opacity-50 transition-colors shadow-sm"
+    >
+      {state === "loading" ? (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
+          <path d="M21 12a9 9 0 1 1-6.22-8.56" />
+        </svg>
+      ) : state === "error" ? (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      ) : (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 // ── Session Row ────────────────────────────────────────────────────────────────
 
 function SessionRow({
@@ -203,9 +263,10 @@ function SessionRow({
         />
       </div>
 
-      {/* Delete button — fades in on hover */}
+      {/* Action buttons — fade in on hover */}
       {isActive && (
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <DuplicateSessionButton sessionId={s.id} />
           <DeleteSessionButton sessionId={s.id} />
         </div>
       )}

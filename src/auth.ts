@@ -81,6 +81,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        // P2-57: "Remember this device" — "true" extends JWT to 30 days
+        remember: { label: "Remember", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
@@ -105,6 +107,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.name,
           role: user.role,
           enterpriseId: user.enterpriseId ?? null,
+          // Forward remember flag so jwt callback can extend expiry
+          remember: credentials.remember === "true" ? "true" : "false",
         };
       },
     }),
@@ -188,6 +192,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.enterpriseId =
           (user as { enterpriseId: string | null }).enterpriseId ?? null;
+        // P2-57: Extend JWT to 30 days when "Remember this device" was checked
+        if ((user as { remember?: string }).remember === "true") {
+          token.exp = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
+        }
       }
       return token;
     },

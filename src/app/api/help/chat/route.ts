@@ -25,9 +25,21 @@ import { z } from "zod";
 const ChatBody = z.object({
   messages: z.array(z.unknown()).min(1).max(200),
   pathname: z.string().max(200),
+  // P2-595: Optional live page context injected by the current page
+  pageContext: z.object({
+    agentName: z.string().max(200).optional(),
+    blueprintStatus: z.string().max(50).optional(),
+    violationCount: z.number().int().min(0).optional(),
+  }).optional(),
 });
 
-function buildHelpSystemPrompt(role: string, pathname: string): string {
+interface PageContext {
+  agentName?: string;
+  blueprintStatus?: string;
+  violationCount?: number;
+}
+
+function buildHelpSystemPrompt(role: string, pathname: string, pageContext?: PageContext): string {
   return `You are the built-in help copilot for Intellios — an enterprise AI agent factory.
 Your job is to give concise, accurate, role-appropriate answers to questions about using Intellios.
 This is a multi-turn conversation. Use context from prior messages to give coherent, connected answers.
@@ -125,7 +137,13 @@ The viewer role provides read-only access to the full platform: registry, bluepr
 ---
 
 The user is currently on page: ${pathname}
-The user's role is: ${role}
+The user's role is: ${role}${pageContext ? `
+
+## Current Page Context (use for specific, grounded answers)
+${pageContext.agentName ? `- Agent: ${pageContext.agentName}` : ""}
+${pageContext.blueprintStatus ? `- Blueprint status: ${pageContext.blueprintStatus}` : ""}
+${pageContext.violationCount !== undefined ? `- Active violations: ${pageContext.violationCount}` : ""}
+When the user asks about "this agent", "my blueprint", "these violations", etc. — refer to the above context.` : ""}
 
 Answer in context of their role and current page. Be specific and actionable. End each response with a brief follow-up suggestion.
 
@@ -159,7 +177,8 @@ export async function POST(request: NextRequest) {
     const messages = body.messages as UIMessage[];
     const systemPrompt = buildHelpSystemPrompt(
       authSession.user.role ?? "architect",
-      body.pathname
+      body.pathname,
+      body.pageContext,
     );
 
     const modelMessages = await convertToModelMessages(messages);

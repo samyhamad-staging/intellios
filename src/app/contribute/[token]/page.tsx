@@ -22,11 +22,43 @@ export default async function ContributePage({ params }: PageProps) {
   }
 
   if (new Date(invitation.expiresAt) < new Date() && invitation.status !== "completed") {
+    // P1-41: Richer expired-invite page with actionable next steps
+    const sessionName =
+      (session?.intakeContext as { agentPurpose?: string } | null)?.agentPurpose ??
+      "Agent Design Session";
+    const mailtoSubject = encodeURIComponent(`Re-invitation request — ${sessionName}`);
+    const mailtoBody = encodeURIComponent(
+      `Hi,\n\nMy invitation link for "${sessionName}" has expired. Could you please send me a new invitation?\n\nInvitation reference: ${token.slice(0, 12)}…\n\nThank you.`
+    );
     return (
-      <ErrorPage
-        title="Invitation expired"
-        message="This invitation link has expired. Please contact the session designer for a new invitation."
-      />
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
+        <div className="max-w-sm text-center">
+          <div className="mb-4 text-4xl">⏱️</div>
+          <h1 className="mb-2 text-lg font-semibold text-gray-900">Invitation link expired</h1>
+          <p className="text-sm text-gray-500">
+            Your invitation to contribute to{" "}
+            <span className="font-medium text-gray-800">{sessionName}</span> has expired.
+            Invitation links are valid for a limited time.
+          </p>
+          <div className="mt-6 space-y-3">
+            <p className="text-xs font-medium text-gray-700">Request a new link</p>
+            <p className="text-xs text-gray-500">
+              Contact the person who sent you this invitation and ask them to resend it.
+              You can use the button below to draft a request email.
+            </p>
+            <a
+              href={`mailto:?subject=${mailtoSubject}&body=${mailtoBody}`}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
+            >
+              ✉ Draft request email
+            </a>
+            {invitation.inviteeName && (
+              <p className="text-xs text-gray-400">Invitation was for: {invitation.inviteeName}</p>
+            )}
+          </div>
+          <p className="mt-8 text-xs text-gray-400">Intellios — Enterprise Agent Factory</p>
+        </div>
+      </div>
     );
   }
 

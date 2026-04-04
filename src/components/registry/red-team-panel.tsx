@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ShieldAlert, ShieldCheck, AlertTriangle, Play, RefreshCw } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { ShieldAlert, ShieldCheck, AlertTriangle, Play, RefreshCw, Download } from "lucide-react";
 import type { RedTeamReport, Attack } from "@/lib/types/red-team";
 import { ATTACK_CATEGORY_LABELS } from "@/lib/types/red-team";
 
@@ -100,6 +100,107 @@ function ScoreRing({ score, total = 10 }: { score: number; total?: number }) {
   );
 }
 
+// ─── P2-240: Run history types ────────────────────────────────────────────────
+
+interface RunHistoryEntry {
+  version: string;
+  riskTier: RedTeamReport["riskTier"];
+  score: number;
+  total: number;
+  runAt: string;
+}
+
+const RISK_TIER_COLORS: Record<RedTeamReport["riskTier"], string> = {
+  LOW: "bg-green-100 text-green-800 border-green-200",
+  MEDIUM: "bg-amber-100 text-amber-800 border-amber-200",
+  HIGH: "bg-orange-100 text-orange-800 border-orange-200",
+  CRITICAL: "bg-red-100 text-red-800 border-red-200",
+};
+
+function useRunHistory(blueprintId: string) {
+  const KEY = `redteam-history-${blueprintId}`;
+  const [history, setHistory] = useState<RunHistoryEntry[]>(() => {
+    try {
+      const raw = localStorage.getItem(KEY);
+      return raw ? (JSON.parse(raw) as RunHistoryEntry[]) : [];
+    } catch { return []; }
+  });
+
+  function recordRun(entry: RunHistoryEntry) {
+    setHistory((prev) => {
+      // De-dupe by version — keep latest run per version, newest first
+      const filtered = prev.filter((h) => h.version !== entry.version);
+      const next = [entry, ...filtered].slice(0, 5);
+      try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* quota */ }
+      return next;
+    });
+  }
+
+  return { history, recordRun };
+}
+
+// ─── P2-276: Cross-version comparison strip ──────────────────────────────────
+
+interface ComparisonStripProps {
+  current: { version: string; score: number; total: number; riskTier: RedTeamReport["riskTier"] };
+  previous: RunHistoryEntry;
+}
+
+function ComparisonStrip({ current, previous }: ComparisonStripProps) {
+  const scoreDiff = current.score - previous.score;
+  const improved = scoreDiff > 0;
+  const same = scoreDiff === 0;
+
+  const TIER_ORDER: Record<RedTeamReport["riskTier"], number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+  const tierImproved = TIER_ORDER[current.riskTier] > TIER_ORDER[previous.riskTier];
+  const tierSame = current.riskTier === previous.riskTier;
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+        Version Comparison
+      </p>
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Previous */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-gray-500">v{previous.version}</span>
+          <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${TIER_STYLES[previous.riskTier]}`}>
+            {previous.riskTier}
+          </span>
+          <span className="text-xs text-gray-600">{previous.score}/{previous.total}</span>
+        </div>
+
+        {/* Arrow */}
+        <span className="text-gray-300 text-sm">→</span>
+
+        {/* Current */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-semibold text-gray-800">v{current.version}</span>
+          <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${TIER_STYLES[current.riskTier]}`}>
+            {current.riskTier}
+          </span>
+          <span className="text-xs font-medium text-gray-700">{current.score}/{current.total}</span>
+        </div>
+
+        {/* Delta */}
+        {!same && (
+          <span className={`text-xs font-semibold ${improved ? "text-green-600" : "text-red-500"}`}>
+            {improved ? `↑ +${scoreDiff}` : `↓ ${scoreDiff}`} attacks resisted
+          </span>
+        )}
+        {!tierSame && (
+          <span className={`text-xs font-medium ${tierImproved ? "text-green-600" : "text-orange-600"}`}>
+            · risk {tierImproved ? "improved" : "increased"}
+          </span>
+        )}
+        {same && tierSame && (
+          <span className="text-xs text-gray-400">· no change</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main panel ───────────────────────────────────────────────────────────────
 
 interface RedTeamPanelProps {
@@ -108,10 +209,51 @@ interface RedTeamPanelProps {
   version: string;
 }
 
+// P1-275: Total attack count is fixed at 10; estimated runtime is 25s.
+// Since the API runs all attacks in parallel we simulate per-attack progress
+// with a time-bucketed ticker (fires every 2.5s) so architects see
+// "Running attack N of 10 · ~Xs remaining" instead of a blank spinner.
+const TOTAL_ATTACKS = 10;
+const ESTIMATED_SECONDS = 25;
+const TICK_MS = (ESTIMATED_SECONDS / TOTAL_ATTACKS) * 1_000; // 2 500 ms
+
 export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelProps) {
   const [report, setReport] = useState<RedTeamReport | null>(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // P2-240: Run history
+  const { history, recordRun } = useRunHistory(blueprintId);
+
+  // P1-275: Simulated per-attack progress counter
+  const [runProgress, setRunProgress] = useState(0);
+  useEffect(() => {
+    if (!running) {
+      setRunProgress(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setRunProgress((p) => Math.min(p + 1, TOTAL_ATTACKS - 1));
+    }, TICK_MS);
+    return () => clearInterval(id);
+  }, [running]);
+
+  const handleExport = useCallback(() => {
+    if (!report) return;
+    const payload = {
+      agentName,
+      version,
+      exportedAt: new Date().toISOString(),
+      report,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const safeName = agentName.replace(/\s+/g, "-").toLowerCase();
+    a.download = `red-team-report-${safeName}-v${version}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [report, agentName, version]);
 
   async function runTest() {
     setRunning(true);
@@ -126,6 +268,14 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
       }
       const data = (await res.json()) as RedTeamReport;
       setReport(data);
+      // P2-240: Persist this run to history
+      recordRun({
+        version,
+        riskTier: data.riskTier,
+        score: data.score,
+        total: data.attacks.length,
+        runAt: data.runAt,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Red-team run failed.");
     } finally {
@@ -136,45 +286,101 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
   // Empty state
   if (!report && !running) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 gap-4 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-50">
-          <ShieldAlert className="h-7 w-7 text-orange-500" />
-        </div>
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900">Adversarial Red-Team</h3>
-          <p className="mt-1 text-sm text-gray-500 max-w-xs">
-            Generate 10 tailored attack prompts and evaluate how well{" "}
-            <span className="font-medium">{agentName}</span> resists them.
-          </p>
-          <p className="mt-1 text-xs text-gray-400">Takes ~20–30 seconds.</p>
-        </div>
-        <button
-          onClick={runTest}
-          className="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
-        >
-          <Play className="h-3.5 w-3.5" />
-          Run Red-Team
-        </button>
-        {error && (
-          <p className="text-sm text-red-600 max-w-xs">{error}</p>
+      <div className="space-y-5">
+        {/* P2-240: Run history strip — shown when prior runs exist */}
+        {history.length > 0 && (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Run history
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              {history.map((h) => (
+                <div
+                  key={h.runAt}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${RISK_TIER_COLORS[h.riskTier]}`}
+                  title={`Run at ${new Date(h.runAt).toLocaleString()}`}
+                >
+                  <span>v{h.version}</span>
+                  <span className="opacity-60">·</span>
+                  <span>{h.riskTier}</span>
+                  <span className="opacity-60">·</span>
+                  <span>{h.score}/{h.total}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
+        <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-50">
+            <ShieldAlert className="h-7 w-7 text-orange-500" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">Adversarial Red-Team</h3>
+            <p className="mt-1 text-sm text-gray-500 max-w-xs">
+              Generate 10 tailored attack prompts and evaluate how well{" "}
+              <span className="font-medium">{agentName}</span> resists them.
+            </p>
+            <p className="mt-1 text-xs text-gray-400">Takes ~20–30 seconds.</p>
+          </div>
+          <button
+            onClick={runTest}
+            className="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
+          >
+            <Play className="h-3.5 w-3.5" />
+            {history.some((h) => h.version === version) ? "Re-run" : "Run Red-Team"}
+          </button>
+          {error && (
+            <p className="text-sm text-red-600 max-w-xs">{error}</p>
+          )}
+        </div>
       </div>
     );
   }
 
-  // Loading state
+  // P1-275: Loading state with live per-attack progress
   if (running) {
+    const displayAttack = runProgress + 1; // 1-indexed for display
+    const elapsedSec = runProgress * (ESTIMATED_SECONDS / TOTAL_ATTACKS);
+    const remainingSec = Math.max(1, Math.round(ESTIMATED_SECONDS - elapsedSec));
+    const progressPct = (runProgress / TOTAL_ATTACKS) * 100;
+
     return (
-      <div className="flex flex-col items-center justify-center h-96 gap-4 text-center">
+      <div className="flex flex-col items-center justify-center h-96 gap-5 text-center px-6">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-50">
           <RefreshCw className="h-7 w-7 text-orange-500 animate-spin" />
         </div>
-        <div>
+        <div className="w-full max-w-xs">
           <h3 className="text-sm font-semibold text-gray-900">Running red-team evaluation…</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Generating attack prompts and evaluating responses in parallel.
+          {/* Live progress label */}
+          <p className="mt-2 text-sm font-medium text-orange-600 tabular-nums">
+            Running attack {displayAttack} of {TOTAL_ATTACKS}
+            <span className="text-gray-400 font-normal"> · ~{remainingSec}s remaining</span>
           </p>
-          <p className="mt-1 text-xs text-gray-400">This usually takes 20–30 seconds.</p>
+          {/* Progress bar */}
+          <div className="mt-3 h-1.5 w-full rounded-full bg-orange-100 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-orange-400 transition-all duration-[2400ms] ease-linear"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          {/* Attack index pips */}
+          <div className="mt-3 flex items-center justify-center gap-1">
+            {Array.from({ length: TOTAL_ATTACKS }).map((_, i) => (
+              <span
+                key={i}
+                className={`inline-block h-1.5 w-1.5 rounded-full transition-colors ${
+                  i < runProgress
+                    ? "bg-orange-400"
+                    : i === runProgress
+                    ? "bg-orange-500 scale-125"
+                    : "bg-gray-200"
+                }`}
+              />
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-gray-400">
+            Attacks run in parallel — evaluating responses with Claude
+          </p>
         </div>
       </div>
     );
@@ -209,14 +415,32 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
             Run at {new Date(report.runAt).toLocaleString()}
           </p>
         </div>
-        <button
-          onClick={runTest}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          Re-run
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            title="Download red team report as JSON"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export
+          </button>
+          <button
+            onClick={runTest}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Re-run
+          </button>
+        </div>
       </div>
+
+      {/* P2-276: Cross-version comparison strip — shown when a prior version's run exists */}
+      {history.length > 0 && history[0].version !== version && (
+        <ComparisonStrip
+          current={{ version, score: report.score, total: report.attacks.length, riskTier: report.riskTier }}
+          previous={history[0]}
+        />
+      )}
 
       {/* Risk guidance */}
       {report.riskTier === "CRITICAL" || report.riskTier === "HIGH" ? (

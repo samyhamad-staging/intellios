@@ -14,7 +14,8 @@
  *   - Empty state with explanation
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { CheckCircle2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ViolationRow {
@@ -78,11 +79,77 @@ function formatThreshold(metric: string, value: number): string {
   return value.toLocaleString();
 }
 
+// ── Daily-bucket sparkline ────────────────────────────────────────────────────
+
+function ViolationsSparkline({ violations, days }: { violations: ViolationRow[]; days: number }) {
+  // Build bucket array of length `days`, each counting violations on that calendar day
+  const buckets = Array.from({ length: days }, (_, i) => {
+    const bucketStart = new Date(Date.now() - (days - 1 - i) * 86_400_000);
+    const dateStr = bucketStart.toISOString().slice(0, 10); // YYYY-MM-DD
+    return violations.filter((v) => v.detectedAt.slice(0, 10) === dateStr).length;
+  });
+
+  const maxCount = Math.max(...buckets, 1);
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-xs font-semibold text-gray-500">
+          Violations — last {days} days
+        </p>
+        <p className="text-xs text-gray-400">
+          {violations.length} total
+        </p>
+      </div>
+      <div className="flex items-end gap-px h-8">
+        {buckets.map((count, i) => {
+          const heightPct = count === 0 ? 0 : Math.max(8, Math.round((count / maxCount) * 100));
+          const color = count === 0 ? "bg-gray-200" : count === maxCount && count > 0 ? "bg-red-400" : "bg-orange-300";
+          const dateLabel = new Date(Date.now() - (days - 1 - i) * 86_400_000).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+          return (
+            <div
+              key={i}
+              title={`${dateLabel}: ${count} violation${count !== 1 ? "s" : ""}`}
+              className={`flex-1 rounded-sm ${color} transition-all`}
+              style={{ height: count === 0 ? "4px" : `${heightPct}%` }}
+            />
+          );
+        })}
+      </div>
+      {maxCount > 0 && (
+        <div className="mt-1.5 flex justify-between text-2xs text-gray-400">
+          <span>{new Date(Date.now() - (days - 1) * 86_400_000).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+          <span>Today</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
   const [violations, setViolations] = useState<ViolationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [severityFilter, setSeverityFilter] = useState<SeverityFilter>("all");
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
+
+  // P1-31: Per-row acknowledgement — client-side only, stored in localStorage.
+  // No DB migration needed; acknowledged state is per-browser and per-agent.
+  const ACK_KEY = `violations-ack-${agentId}`;
+  const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem(`violations-ack-${agentId}`);
+      return raw ? new Set<string>(JSON.parse(raw) as string[]) : new Set<string>();
+    } catch { return new Set<string>(); }
+  });
+
+  const toggleAck = useCallback((id: string) => {
+    setAcknowledgedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      try { localStorage.setItem(ACK_KEY, JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  }, [ACK_KEY]);
 
   useEffect(() => {
     setLoading(true);
@@ -100,6 +167,32 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
   const errorCount   = violations.filter((v) => v.severity === "error").length;
   const warningCount = violations.filter((v) => v.severity === "warning").length;
 
+  // P2-447: Export violations as CSV — pure client-side, no new deps
+  function exportCsv() {
+    const header = ["id", "severity", "policyName", "ruleId", "metric", "observedValue", "threshold", "message", "detectedAt"].join(",");
+    const rows = violations.map((v) =>
+      [
+        v.id,
+        v.severity,
+        `"${v.policyName.replace(/"/g, '""')}"`,
+        v.ruleId,
+        v.metric,
+        v.observedValue,
+        v.threshold,
+        `"${v.message.replace(/"/g, '""')}"`,
+        v.detectedAt,
+      ].join(",")
+    );
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `violations-${agentId.slice(0, 8)}-${timeRange}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="p-6 space-y-5">
       {/* Header */}
@@ -113,7 +206,7 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
 
         {/* Summary chips */}
         {!loading && violations.length > 0 && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {errorCount > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 border border-red-200">
                 <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
@@ -124,6 +217,12 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 border border-amber-200">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                 {warningCount} warning{warningCount !== 1 ? "s" : ""}
+              </span>
+            )}
+            {acknowledgedIds.size > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700 border border-green-200">
+                <CheckCircle2 className="h-3 w-3" />
+                {acknowledgedIds.size} acknowledged
               </span>
             )}
           </div>
@@ -160,7 +259,31 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
             ))}
           </SelectContent>
         </Select>
+
+        {/* CSV export — only when there's data to export */}
+        {!loading && violations.length > 0 && (
+          <button
+            onClick={exportCsv}
+            title={`Export ${violations.length} violation${violations.length !== 1 ? "s" : ""} as CSV`}
+            className="ml-auto flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export CSV
+          </button>
+        )}
       </div>
+
+      {/* Trend sparkline — shown for 7d / 30d ranges when violations exist */}
+      {!loading && violations.length > 0 && timeRange !== "1d" && (
+        <ViolationsSparkline
+          violations={violations}
+          days={timeRange === "7d" ? 7 : 30}
+        />
+      )}
 
       {/* Content */}
       {loading ? (
@@ -180,40 +303,51 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
         </div>
       ) : (
         <div className="space-y-2">
-          {violations.map((v) => (
+          {violations.map((v) => {
+            const isAcked = acknowledgedIds.has(v.id);
+            return (
             <div
               key={v.id}
-              className={`rounded-lg border p-4 ${
-                v.severity === "error"
+              className={`rounded-lg border p-4 transition-opacity ${
+                isAcked
+                  ? "border-green-200 bg-green-50 opacity-60"
+                  : v.severity === "error"
                   ? "border-red-200 bg-red-50"
                   : "border-amber-200 bg-amber-50"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  {/* Row 1: severity + policy name */}
+                  {/* Row 1: severity + policy name + ack badge */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wide ${
-                        v.severity === "error"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-amber-100 text-amber-700"
-                      }`}
-                    >
+                    {isAcked ? (
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wide bg-green-100 text-green-700">
+                        <CheckCircle2 className="h-2.5 w-2.5" />
+                        acknowledged
+                      </span>
+                    ) : (
                       <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          v.severity === "error" ? "bg-red-500" : "bg-amber-500"
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wide ${
+                          v.severity === "error"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-amber-100 text-amber-700"
                         }`}
-                      />
-                      {v.severity}
-                    </span>
-                    <span className="text-xs font-semibold text-gray-800 truncate">
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            v.severity === "error" ? "bg-red-500" : "bg-amber-500"
+                          }`}
+                        />
+                        {v.severity}
+                      </span>
+                    )}
+                    <span className={`text-xs font-semibold truncate ${isAcked ? "text-gray-500" : "text-gray-800"}`}>
                       {v.policyName}
                     </span>
                   </div>
 
                   {/* Row 2: violation message */}
-                  <p className="mt-1 text-sm text-gray-700">{v.message}</p>
+                  <p className={`mt-1 text-sm ${isAcked ? "text-gray-500 line-through" : "text-gray-700"}`}>{v.message}</p>
 
                   {/* Row 3: metric detail */}
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
@@ -225,7 +359,7 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
                       <span className="font-medium text-gray-700">Observed:</span>{" "}
                       <span
                         className={
-                          v.severity === "error" ? "text-red-700 font-semibold" : "text-amber-700 font-semibold"
+                          isAcked ? "text-gray-500" : v.severity === "error" ? "text-red-700 font-semibold" : "text-amber-700 font-semibold"
                         }
                       >
                         {formatObservedValue(v.metric, v.observedValue)}
@@ -242,16 +376,31 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
                   </div>
                 </div>
 
-                {/* Timestamp */}
-                <div className="text-right shrink-0">
-                  <p className="text-2xs text-gray-400">{timeAgo(v.detectedAt)}</p>
-                  <p className="text-2xs text-gray-400 mt-0.5">
-                    {new Date(v.detectedAt).toLocaleDateString()}
-                  </p>
+                {/* Timestamp + Acknowledge button */}
+                <div className="text-right shrink-0 flex flex-col items-end gap-2">
+                  <div>
+                    <p className="text-2xs text-gray-400">{timeAgo(v.detectedAt)}</p>
+                    <p className="text-2xs text-gray-400 mt-0.5">
+                      {new Date(v.detectedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => toggleAck(v.id)}
+                    className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-2xs font-medium transition-colors ${
+                      isAcked
+                        ? "border-green-200 bg-white text-green-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                        : "border-gray-200 bg-white text-gray-500 hover:border-green-300 hover:text-green-700"
+                    }`}
+                    title={isAcked ? "Un-acknowledge" : "Acknowledge — mark as known/accepted"}
+                  >
+                    <CheckCircle2 className="h-2.5 w-2.5" />
+                    {isAcked ? "Undo" : "Acknowledge"}
+                  </button>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

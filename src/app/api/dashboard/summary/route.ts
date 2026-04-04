@@ -5,6 +5,7 @@ import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
+import { getEnterpriseId, enterpriseScope } from "@/lib/auth/enterprise-scope";
 
 /**
  * GET /api/dashboard/summary
@@ -16,21 +17,12 @@ export async function GET(request: NextRequest) {
   const { session: authSession, error } = await requireAuth();
   if (error) return error;
   const requestId = getRequestId(request);
+  const ctx = getEnterpriseId(request);
 
   try {
-    const enterpriseFilter =
-      authSession.user.role === "admin"
-        ? undefined
-        : authSession.user.enterpriseId
-        ? eq(agentBlueprints.enterpriseId, authSession.user.enterpriseId)
-        : isNull(agentBlueprints.enterpriseId);
-
-    const policyEnterpriseFilter =
-      authSession.user.role === "admin"
-        ? undefined
-        : authSession.user.enterpriseId
-        ? eq(governancePolicies.enterpriseId, authSession.user.enterpriseId)
-        : isNull(governancePolicies.enterpriseId);
+    // Enterprise-scoped filters derived from middleware-injected context
+    const enterpriseFilter = enterpriseScope(agentBlueprints.enterpriseId, ctx);
+    const policyEnterpriseFilter = enterpriseScope(governancePolicies.enterpriseId, ctx);
 
     // Fetch minimal agent fields (no blueprint JSON, no tags)
     const agents = await db

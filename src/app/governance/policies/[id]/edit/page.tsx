@@ -127,15 +127,23 @@ export default function EditPolicyPage({
 
   return (
     <div className="px-6 py-6">
-      {/* Page header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">Edit Policy</h1>
-          <p className="mt-0.5 text-sm text-gray-500">{policy.name}</p>
-        </div>
-        <Link href="/governance" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-          ← Governance
+      {/* Breadcrumb */}
+      <nav className="mb-3 flex items-center gap-1.5 text-xs text-gray-400" aria-label="Breadcrumb">
+        <Link href="/governance" className="hover:text-gray-700 transition-colors">
+          Governance
         </Link>
+        <span className="text-gray-300">/</span>
+        <Link href="/governance" className="hover:text-gray-700 transition-colors">
+          Policies
+        </Link>
+        <span className="text-gray-300">/</span>
+        <span className="text-gray-600 font-medium truncate max-w-[200px]" title={policy.name}>{policy.name}</span>
+      </nav>
+
+      {/* Page header */}
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-gray-900">Edit Policy</h1>
+        <p className="mt-0.5 text-sm text-gray-500">{policy.name}</p>
       </div>
 
       <div className="max-w-3xl">

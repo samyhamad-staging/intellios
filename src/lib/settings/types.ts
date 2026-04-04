@@ -89,6 +89,37 @@ export interface EnterpriseSettings {
     notifyOnBreach: boolean;
     /** Send notification email when a blueprint is approved. Default: true */
     notifyOnApproval: boolean;
+    /**
+     * P1-433: Slack incoming webhook URL.
+     * When set, governance alerts (SLA breach, approval, anomaly) are also
+     * posted to this Slack channel. Format: https://hooks.slack.com/services/…
+     */
+    slackWebhookUrl: string | null;
+    /**
+     * P1-433: PagerDuty Events API v2 integration key (routing key).
+     * When set, critical alerts (anomaly detected, SLA breach) trigger a
+     * PagerDuty incident. Obtain from PagerDuty → Services → Integrations.
+     */
+    pagerdutyKey: string | null;
+    /**
+     * P2-607: Per-event, per-channel notification routing matrix.
+     * Each event key maps to an object of { email, slack, pagerduty } booleans.
+     * Missing entries default to all-true for email, false for slack/pagerduty.
+     */
+    routing?: {
+      blueprint_approved:  { email: boolean; slack: boolean; pagerduty: boolean };
+      blueprint_rejected:  { email: boolean; slack: boolean; pagerduty: boolean };
+      blueprint_deployed:  { email: boolean; slack: boolean; pagerduty: boolean };
+      policy_violation:    { email: boolean; slack: boolean; pagerduty: boolean };
+      sla_breach:          { email: boolean; slack: boolean; pagerduty: boolean };
+      review_assigned:     { email: boolean; slack: boolean; pagerduty: boolean };
+      anomaly_detected:    { email: boolean; slack: boolean; pagerduty: boolean };
+    };
+    /**
+     * P2-607: Digest frequency — how often to batch non-critical notifications.
+     * "immediate" sends each alert as it occurs (default).
+     */
+    digestFrequency?: "immediate" | "daily" | "weekly";
   };
   /**
    * Sequential multi-step approval chain. Each entry defines a required
@@ -267,6 +298,18 @@ export const DEFAULT_ENTERPRISE_SETTINGS: EnterpriseSettings = {
     adminEmail: null,
     notifyOnBreach: true,
     notifyOnApproval: true,
+    slackWebhookUrl: null,
+    pagerdutyKey: null,
+    digestFrequency: "immediate",
+    routing: {
+      blueprint_approved:  { email: true,  slack: false, pagerduty: false },
+      blueprint_rejected:  { email: true,  slack: true,  pagerduty: false },
+      blueprint_deployed:  { email: true,  slack: true,  pagerduty: false },
+      policy_violation:    { email: true,  slack: true,  pagerduty: true  },
+      sla_breach:          { email: true,  slack: true,  pagerduty: true  },
+      review_assigned:     { email: true,  slack: false, pagerduty: false },
+      anomaly_detected:    { email: true,  slack: true,  pagerduty: true  },
+    },
   },
   approvalChain: [],
   awareness: {

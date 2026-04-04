@@ -15,6 +15,13 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // P2-57: Remember this device — persisted across page loads
+  const [rememberDevice, setRememberDevice] = useState(false);
+  useEffect(() => {
+    try {
+      setRememberDevice(localStorage.getItem("intellios_remember_device") === "true");
+    } catch { /* localStorage unavailable */ }
+  }, []);
 
   // H2-3.1: SSO domain detection
   const [ssoEnabled, setSsoEnabled] = useState(false);
@@ -43,9 +50,15 @@ function LoginForm() {
     setError(null);
     setLoading(true);
 
+    // P2-57: Persist remember preference
+    try {
+      localStorage.setItem("intellios_remember_device", String(rememberDevice));
+    } catch { /* localStorage unavailable */ }
+
     const result = await signIn("credentials", {
       email,
       password,
+      remember: String(rememberDevice),
       redirect: false,
     });
 
@@ -189,6 +202,29 @@ function LoginForm() {
               </div>
             )}
 
+            {/* P2-57: Remember this device */}
+            {!ssoEnabled && (
+              <label className="flex cursor-pointer items-center gap-2.5 select-none">
+                <div
+                  onClick={() => setRememberDevice((v) => !v)}
+                  className={`relative flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+                    rememberDevice
+                      ? "border-indigo-500 bg-indigo-500"
+                      : "border-white/20 bg-white/5 hover:border-white/35"
+                  }`}
+                >
+                  {rememberDevice && (
+                    <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 10 10" fill="none">
+                      <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </div>
+                <span className="font-mono text-2xs text-white/40 hover:text-white/60 transition-colors">
+                  Remember this device for 30 days
+                </span>
+              </label>
+            )}
+
             {error && (
               <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
                 {error}
@@ -213,7 +249,8 @@ function LoginForm() {
           </form>
         </div>
 
-        {/* ── Demo accounts ─────────────────────────────────────────────── */}
+        {/* P1-56: Demo accounts — only visible when NEXT_PUBLIC_DEMO_MODE=true */}
+        {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
         <div className="mt-4">
           {/* Section divider */}
           <div className="mb-3 flex items-center gap-3">
@@ -245,6 +282,7 @@ function LoginForm() {
             ))}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

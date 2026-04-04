@@ -26,6 +26,7 @@ import {
   Package,
   Plug,
   Key,
+  FileText,
 } from "lucide-react";
 import NotificationBell from "@/components/nav/notification-bell";
 import { HelpPanel } from "@/components/help/help-panel";
@@ -78,6 +79,7 @@ function getNavSections(role: string | null | undefined): NavSection[] {
       items: [
         { label: "Overview", href: "/", icon: LayoutDashboard },
         ...(isArchitect ? [{ label: "Design Studio", href: "/intake", icon: MessageSquare }] : []),
+        ...(isArchitect ? [{ label: "Blueprints", href: "/blueprints", icon: FileText }] : []),
         { label: "Pipeline", href: "/pipeline", icon: Kanban },
         { label: "Registry", href: "/registry", icon: Library },
         { label: "Templates", href: "/templates", icon: Package },
@@ -257,6 +259,14 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
         })}
       </nav>
 
+      {/* Ask Intellios — labeled row above user footer for discoverability */}
+      <div
+        className="shrink-0 px-3 py-1.5"
+        style={{ borderTop: "1px solid var(--sidebar-border)" }}
+      >
+        <HelpPanel role={user.role ?? "architect"} variant="row" />
+      </div>
+
       {/* User */}
       <div
         className="shrink-0 px-3 py-3"
@@ -275,7 +285,7 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
             )}
           </div>
           <div className="flex items-center gap-0.5">
-            <HelpPanel role={user.role ?? "architect"} />
+            {/* HelpPanel icon removed — "Ask Intellios" row above is the primary affordance */}
             <form action={signOutAction}>
               <button
                 type="submit"

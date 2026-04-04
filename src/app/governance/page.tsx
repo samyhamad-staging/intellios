@@ -107,6 +107,11 @@ export default function GovernanceHubPage() {
   const [templatePacks, setTemplatePacks] = useState<TemplatePack[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analyticsLoadedAt, setAnalyticsLoadedAt] = useState<Date | null>(null);
+  // Analytics section collapsed by default — summary line shown; expand for charts
+  const [analyticsExpanded, setAnalyticsExpanded] = useState(false);
+  // P2-344: Date range for analytics (days)
+  const [analyticsDays, setAnalyticsDays] = useState<30 | 90 | 365>(90);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [importingPack, setImportingPack] = useState<string | null>(null);
@@ -146,15 +151,17 @@ export default function GovernanceHubPage() {
       setAnalyticsLoading(false);
       return;
     }
-    fetch("/api/governance/analytics")
+    setAnalyticsLoading(true);
+    fetch(`/api/governance/analytics?days=${analyticsDays}`)
       .then((r) => r.json())
       .then((data) => {
         setAnalytics(data);
+        setAnalyticsLoadedAt(new Date());
         setAnalyticsLoading(false);
       })
       .catch(() => setAnalyticsLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [analyticsDays]);
 
   const showToast = (message: string, type: "success" | "error") => {
     setImportToast({ message, type });
@@ -259,6 +266,129 @@ export default function GovernanceHubPage() {
     .filter((a) => a.violationCount !== null && a.violationCount > 0)
     .sort((a, b) => (b.violationCount ?? 0) - (a.violationCount ?? 0));
 
+  // ── Export Compliance Report (P1-334) ────────────────────────────────────────
+  // Generates a print-optimised HTML window from in-memory analytics data.
+  // No new dependencies — the browser's native print dialog handles PDF export.
+  function exportComplianceReport() {
+    const reportDate = new Date().toLocaleDateString("en-US", {
+      year: "numeric", month: "long", day: "numeric",
+    });
+    const passRate = analytics?.validationPassRate != null
+      ? `${analytics.validationPassRate}%` : "N/A";
+    const totalViolations = analytics?.policyViolationsByType.reduce((s, t) => s + t.count, 0) ?? 0;
+    const approvedCount = analytics?.agentStatusCounts?.["approved"] ?? 0;
+    const pendingCount = (analytics?.agentStatusCounts?.["pending_review"] ?? 0)
+      + (analytics?.agentStatusCounts?.["pending"] ?? 0);
+    const avgTime = analytics?.avgTimeToApprovalHours != null
+      ? `${analytics.avgTimeToApprovalHours.toFixed(1)} hrs` : "N/A";
+
+    const topViolationsRows = (analytics?.topViolatedPolicies ?? [])
+      .slice(0, 10)
+      .map(
+        (p) =>
+          `<tr><td>${escapeHtml(p.policyName)}</td><td style="text-align:center">${p.count}</td></tr>`,
+      )
+      .join("");
+
+    const violationsByTypeRows = (analytics?.policyViolationsByType ?? [])
+      .map(
+        (v) =>
+          `<tr><td style="text-transform:capitalize">${escapeHtml(v.type.replace(/_/g, " "))}</td><td style="text-align:center">${v.count}</td></tr>`,
+      )
+      .join("");
+
+    const agentViolationRows = agentsWithViolations
+      .slice(0, 20)
+      .map(
+        (a) =>
+          `<tr><td>${escapeHtml(a.name ?? a.agentId)}</td><td style="text-align:center;color:#b91c1c;font-weight:600">${a.violationCount}</td><td style="text-transform:capitalize">${escapeHtml(a.status)}</td></tr>`,
+      )
+      .join("");
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Intellios — Compliance Report ${reportDate}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 12px; color: #111; background: #fff; padding: 40px; }
+  h1 { font-size: 22px; font-weight: 700; color: #111; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: #6b7280; margin-bottom: 32px; }
+  h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin: 28px 0 14px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 8px; }
+  .kpi { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 16px; }
+  .kpi-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; margin-bottom: 4px; }
+  .kpi-value { font-size: 24px; font-weight: 700; color: #111; }
+  .kpi-value.red { color: #b91c1c; }
+  .kpi-value.green { color: #15803d; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th { background: #f9fafb; text-align: left; padding: 7px 10px; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+  td { padding: 7px 10px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+  .footer { margin-top: 40px; font-size: 10px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 14px; display: flex; justify-content: space-between; }
+  @media print {
+    body { padding: 20px; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<h1>Intellios Compliance Report</h1>
+<p class="subtitle">Generated ${reportDate} &nbsp;·&nbsp; ${policies.length} active policies &nbsp;·&nbsp; ${agents.length} agents</p>
+
+<h2>Executive Summary</h2>
+<div class="kpi-grid">
+  <div class="kpi"><div class="kpi-label">Validation Pass Rate</div><div class="kpi-value ${analytics?.validationPassRate != null && analytics.validationPassRate < 80 ? "red" : "green"}">${passRate}</div></div>
+  <div class="kpi"><div class="kpi-label">Total Violations</div><div class="kpi-value ${totalViolations > 0 ? "red" : "green"}">${totalViolations}</div></div>
+  <div class="kpi"><div class="kpi-label">Approved Agents</div><div class="kpi-value green">${approvedCount}</div></div>
+  <div class="kpi"><div class="kpi-label">Avg Time to Approval</div><div class="kpi-value">${avgTime}</div></div>
+</div>
+
+${violationsByTypeRows ? `<h2>Violations by Category</h2>
+<table><thead><tr><th>Category</th><th style="text-align:center">Count</th></tr></thead>
+<tbody>${violationsByTypeRows}</tbody></table>` : ""}
+
+${topViolationsRows ? `<h2>Top Violated Policies</h2>
+<table><thead><tr><th>Policy</th><th style="text-align:center">Violations</th></tr></thead>
+<tbody>${topViolationsRows}</tbody></table>` : ""}
+
+${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.length})</h2>
+<table><thead><tr><th>Agent</th><th style="text-align:center">Violations</th><th>Status</th></tr></thead>
+<tbody>${agentViolationRows}</tbody></table>` : ""}
+
+<h2>Active Policies (${policies.length})</h2>
+<table>
+  <thead><tr><th>Policy</th><th>Type</th><th>Version</th><th>Created</th></tr></thead>
+  <tbody>
+    ${policies.map((p) => `<tr>
+      <td>${escapeHtml(p.name)}</td>
+      <td style="text-transform:capitalize">${escapeHtml(p.type.replace(/_/g, " "))}</td>
+      <td>v${p.policyVersion}</td>
+      <td>${new Date(p.createdAt).toLocaleDateString()}</td>
+    </tr>`).join("")}
+  </tbody>
+</table>
+
+<div class="footer">
+  <span>Intellios Enterprise Governance Platform</span>
+  <span>Confidential — For authorized use only</span>
+</div>
+<script>window.onload = function(){ window.print(); };<\/script>
+</body>
+</html>`;
+
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
+  }
+
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
   return (
     <div className="px-6 py-6 space-y-6">
       {/* Page header */}
@@ -278,6 +408,81 @@ export default function GovernanceHubPage() {
         </Link>
       </div>
 
+      {/* ── Quick Actions ────────────────────────────────────────────────────
+           Surfaces frequently-needed actions without requiring the user to
+           scroll through the analytics and policy list sections. Actions are
+           conditionally rendered based on role and current page state.        */}
+      {!loading && (
+        <div className="flex flex-wrap items-center gap-2">
+          {canManagePolicies && (
+            <Link
+              href="/governance/policies/new"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-100 transition-colors"
+            >
+              <Plus size={13} />
+              New Policy
+            </Link>
+          )}
+          {canManagePolicies && templatePacks.length > 0 && (
+            <button
+              onClick={() =>
+                document.getElementById("template-packs")?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+            >
+              <Download size={13} />
+              Import Pack
+            </button>
+          )}
+          {agentsWithViolations.length > 0 && (
+            <button
+              onClick={() =>
+                document.getElementById("violations")?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors"
+            >
+              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-200 text-[10px] font-bold text-red-800">
+                {agentsWithViolations.length}
+              </span>
+              Active Violations
+            </button>
+          )}
+          {!canViewAnalytics && (
+            <Link
+              href="/audit"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+            >
+              Audit Trail →
+            </Link>
+          )}
+          {canViewAnalytics && analytics && (
+            <button
+              onClick={exportComplianceReport}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors"
+            >
+              <Download size={13} />
+              Export Compliance Report
+            </button>
+          )}
+          {canViewAnalytics && (
+            <a
+              href="/api/compliance/calendar.ics"
+              download="intellios-compliance-calendar.ics"
+              title="Download an .ics file with all compliance review deadlines and policy renewal dates — import into Outlook or Google Calendar"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              Add to Calendar
+            </a>
+          )}
+        </div>
+      )}
+
       <div className="space-y-6">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -288,9 +493,81 @@ export default function GovernanceHubPage() {
         {/* ── Governance Analytics ─────────────────────────────────────────── */}
         {canViewAnalytics && (
           <section>
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
-              Analytics
-            </h2>
+            {/* Collapsible header — summary line when collapsed */}
+            <button
+              onClick={() => setAnalyticsExpanded((v) => !v)}
+              className="mb-4 flex w-full items-center justify-between group"
+            >
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 group-hover:text-gray-700 transition-colors">
+                Analytics
+              </h2>
+              <div className="flex items-center gap-3">
+                {!analyticsExpanded && !analyticsLoading && analytics && (
+                  <span className="text-xs text-gray-400">
+                    {analytics.validationPassRate != null ? `Pass rate: ${analytics.validationPassRate}%` : ""}
+                    {analytics.validationPassRate != null && " · "}
+                    {(() => {
+                      const total = analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0);
+                      return total > 0 ? <span className="text-red-500 font-medium">{total} violation{total !== 1 ? "s" : ""}</span> : "0 violations";
+                    })()}
+                    {analytics.avgTimeToApprovalHours != null && ` · ${analytics.avgTimeToApprovalHours < 24 ? `${analytics.avgTimeToApprovalHours}h` : `${Math.round(analytics.avgTimeToApprovalHours / 24)}d`} avg approval`}
+                  </span>
+                )}
+                {analyticsExpanded && analyticsLoadedAt && (
+                  <span className="text-xs text-gray-400" title={analyticsLoadedAt.toLocaleString()}>
+                    Refreshed {analyticsLoadedAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
+                <span className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors">
+                  {analyticsExpanded ? "▲ Collapse" : "▼ Expand"}
+                </span>
+              </div>
+            </button>
+
+            {analyticsExpanded && (
+              <>
+            {/* P2-344: Date range selector */}
+            <div className="mb-4 flex items-center gap-2">
+              <span className="text-xs text-gray-400 font-medium">Period:</span>
+              {([30, 90, 365] as const).map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setAnalyticsDays(d)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                    analyticsDays === d
+                      ? "bg-indigo-600 text-white"
+                      : "border border-gray-200 bg-white text-gray-600 hover:border-indigo-300 hover:text-indigo-700"
+                  }`}
+                >
+                  {d === 365 ? "Last 365 days" : `Last ${d} days`}
+                </button>
+              ))}
+            </div>
+
+            {/* P2-344: Narrative summary */}
+            {!analyticsLoading && analytics && (() => {
+              const passRate = analytics.validationPassRate ?? null;
+              const totalViolations = analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0);
+              const approved = analytics.agentStatusCounts?.["approved"] ?? 0;
+              const deployed = analytics.agentStatusCounts?.["deployed"] ?? 0;
+              const periodLabel = analyticsDays === 365 ? "In the last year" : `In the last ${analyticsDays} days`;
+              const passPhrase = passRate != null
+                ? ` with a ${passRate}% validation pass rate`
+                : "";
+              const violationPhrase = totalViolations > 0
+                ? `, ${totalViolations} violation${totalViolations !== 1 ? "s" : ""} detected`
+                : ", no violations detected";
+              const deployedPhrase = deployed > 0 ? ` and ${deployed} agent${deployed !== 1 ? "s" : ""} running in production` : "";
+              return (
+                <div className="mb-5 rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-3">
+                  <p className="text-xs font-semibold text-indigo-700 mb-0.5">Summary</p>
+                  <p className="text-sm text-indigo-900">
+                    {periodLabel}: <span className="font-semibold">{approved} agent{approved !== 1 ? "s" : ""} approved</span>
+                    {passPhrase}{violationPhrase}{deployedPhrase}.
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* KPI Row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -535,6 +812,8 @@ export default function GovernanceHubPage() {
                   <div className="h-32 animate-pulse rounded-xl bg-gray-100" />
                 </div>
               </div>
+            )}
+              </>
             )}
           </section>
         )}
@@ -863,7 +1142,7 @@ export default function GovernanceHubPage() {
 
         {/* ── Compliance Starter Packs ────────────────────────────────────── */}
         {templatePacks.length > 0 && (
-          <section>
+          <section id="template-packs">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">

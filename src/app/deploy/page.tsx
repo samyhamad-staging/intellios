@@ -41,6 +41,7 @@ interface Agent {
   tags: string[];
   status: string;
   violationCount: number | null;
+  riskTier: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -68,6 +69,21 @@ interface AgentCoreModalState {
     deployedAt: string;
   } | null;
   error: string | null;
+}
+
+// P1-239: Read the most recent red-team risk tier from the localStorage run history.
+// Red-team run history is written by red-team-panel.tsx under the key
+// `redteam-history-${blueprintId}` as an array of RunHistoryEntry objects.
+function getLatestRedTeamTier(blueprintId: string): "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | null {
+  try {
+    const raw = localStorage.getItem(`redteam-history-${blueprintId}`);
+    if (!raw) return null;
+    const history = JSON.parse(raw) as Array<{ riskTier?: string }>;
+    if (!history.length) return null;
+    const tier = history[0].riskTier;
+    if (tier === "LOW" || tier === "MEDIUM" || tier === "HIGH" || tier === "CRITICAL") return tier;
+    return null;
+  } catch { return null; }
 }
 
 function timeAgo(dateStr: string): string {
@@ -98,6 +114,10 @@ function DeployConfirmModal({
   onCancel: () => void;
 }) {
   const changeRefRef = useRef<HTMLInputElement>(null);
+  // P1-239: Check latest red-team run tier from localStorage run history
+  const [redTeamTier] = useState<"LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | null>(
+    () => getLatestRedTeamTier(modal.agent.id)
+  );
 
   useEffect(() => {
     changeRefRef.current?.focus();
@@ -131,6 +151,38 @@ function DeployConfirmModal({
             </div>
           </div>
         </div>
+
+        {/* P1-43: Red-team risk warning — intake risk tier */}
+        {(modal.agent.riskTier === "high" || modal.agent.riskTier === "critical") && (
+          <div className="mx-6 mt-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+            <span className="mt-0.5 shrink-0 text-red-500">⚠</span>
+            <div>
+              <p className="text-xs font-semibold text-red-800 capitalize">
+                {modal.agent.riskTier} risk tier
+              </p>
+              <p className="text-xs text-red-700 mt-0.5">
+                This agent has been classified as <strong>{modal.agent.riskTier} risk</strong>.
+                Ensure your change reference covers a completed security review and that all red-team findings have been remediated before deploying to production.
+              </p>
+            </div>
+          </div>
+        )}
+        {/* P1-239: Red-team simulation result warning — blocks if HIGH or CRITICAL */}
+        {(redTeamTier === "HIGH" || redTeamTier === "CRITICAL") && (
+          <div className="mx-6 mt-3 flex items-start gap-3 rounded-lg border border-orange-300 bg-orange-50 px-4 py-3">
+            <span className="mt-0.5 shrink-0 text-orange-600">🛡</span>
+            <div>
+              <p className="text-xs font-semibold text-orange-900">
+                Red Team: {redTeamTier} risk findings unresolved
+              </p>
+              <p className="text-xs text-orange-800 mt-0.5">
+                The most recent adversarial simulation returned{" "}
+                <strong>{redTeamTier}</strong> risk. Review and remediate red-team
+                findings in the Blueprint Studio before deploying to production.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Fields */}
         <div className="space-y-5 px-6 py-5">
@@ -253,6 +305,38 @@ function AgentCoreDeployModal({
         </div>
 
         <div className="px-6 py-5">
+          {/* P1-43: Red-team risk warning for AgentCore modal — intake risk tier */}
+          {agcModal.phase === "confirm" && (agcModal.agent.riskTier === "high" || agcModal.agent.riskTier === "critical") && (
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+              <span className="mt-0.5 shrink-0 text-red-500">⚠</span>
+              <div>
+                <p className="text-xs font-semibold text-red-800 capitalize">
+                  {agcModal.agent.riskTier} risk tier
+                </p>
+                <p className="text-xs text-red-700 mt-0.5">
+                  This agent is classified as <strong>{agcModal.agent.riskTier} risk</strong>.
+                  Confirm all red-team findings are remediated before deploying to AgentCore.
+                </p>
+              </div>
+            </div>
+          )}
+          {/* P1-239: Red-team simulation result warning for AgentCore modal */}
+          {agcModal.phase === "confirm" && (() => {
+            const tier = getLatestRedTeamTier(agcModal.agent.id);
+            return (tier === "HIGH" || tier === "CRITICAL") ? (
+              <div className="mb-4 flex items-start gap-3 rounded-lg border border-orange-300 bg-orange-50 px-4 py-3">
+                <span className="mt-0.5 shrink-0 text-orange-600">🛡</span>
+                <div>
+                  <p className="text-xs font-semibold text-orange-900">
+                    Red Team: {tier} risk findings unresolved
+                  </p>
+                  <p className="text-xs text-orange-800 mt-0.5">
+                    Adversarial simulation returned <strong>{tier}</strong> risk. Remediate red-team findings before deploying to AgentCore.
+                  </p>
+                </div>
+              </div>
+            ) : null;
+          })()}
           {/* Confirm phase */}
           {agcModal.phase === "confirm" && (
             <div className="space-y-4">
@@ -354,6 +438,14 @@ function AgentCoreDeployModal({
                   className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
                 >
                   View in Registry →
+                </Link>
+              )}
+              {agcModal.phase === "error" && (
+                <Link
+                  href={`/registry/${agcModal.agent.agentId}`}
+                  className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-900 transition-colors"
+                >
+                  ← Try previous version
                 </Link>
               )}
               <button

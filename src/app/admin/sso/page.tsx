@@ -62,6 +62,10 @@ export default function AdminSsoPage() {
   const [platformConfigured, setPlatformConfigured] = useState(false);
   // Group-role mapping as editable rows
   const [groupRows, setGroupRows] = useState<{ group: string; role: string }[]>([]);
+  // P1-542: Test SSO modal state
+  const [testModalOpen, setTestModalOpen] = useState(false);
+  const [testStatus, setTestStatus] = useState<"idle" | "waiting" | "success" | "error">("idle");
+  const [testMessage, setTestMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/sso")
@@ -345,23 +349,163 @@ export default function AdminSsoPage() {
           </Field>
         </Section>
 
-        {/* Save */}
-        <div className="flex justify-end gap-3">
-          <Link
-            href="/admin/settings"
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </Link>
+        {/* Save / Test */}
+        <div className="flex items-center justify-between gap-3">
           <button
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+            onClick={() => { setTestStatus("idle"); setTestMessage(null); setTestModalOpen(true); }}
+            disabled={!sso.issuer || !platformConfigured}
+            title={!platformConfigured ? "Platform OIDC not configured" : !sso.issuer ? "Enter an issuer URL first" : ""}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            {saving ? "Saving…" : "Save SSO Settings"}
+            Test SSO Configuration
           </button>
+          <div className="flex gap-3">
+            <Link
+              href="/admin/settings"
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </Link>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Save SSO Settings"}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* ── Test SSO Modal (P1-542) ──────────────────────────────────────────── */}
+      {testModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) setTestModalOpen(false); }}
+        >
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
+            {/* Header */}
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">Test SSO Configuration</h2>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  Opens your IdP login in a new window. Results are reported here.
+                </p>
+              </div>
+              <button
+                onClick={() => setTestModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Config preview */}
+            <div className="mb-5 rounded-lg border border-gray-100 bg-gray-50 p-4 space-y-2 text-xs">
+              <div className="flex justify-between gap-2">
+                <span className="font-medium text-gray-500 uppercase tracking-wide">Protocol</span>
+                <span className="font-mono text-gray-800 uppercase">{sso.protocol}</span>
+              </div>
+              <div className="flex justify-between gap-2">
+                <span className="font-medium text-gray-500 uppercase tracking-wide">Issuer</span>
+                <span className="font-mono text-gray-800 truncate max-w-[200px]" title={sso.issuer}>{sso.issuer || "—"}</span>
+              </div>
+              <div className="flex justify-between gap-2">
+                <span className="font-medium text-gray-500 uppercase tracking-wide">Domain</span>
+                <span className="font-mono text-gray-800">{sso.emailDomain || "—"}</span>
+              </div>
+              <div className="flex justify-between gap-2">
+                <span className="font-medium text-gray-500 uppercase tracking-wide">Status</span>
+                <span className={`font-medium ${sso.enabled ? "text-green-600" : "text-amber-600"}`}>
+                  {sso.enabled ? "Enabled" : "Disabled (save settings first)"}
+                </span>
+              </div>
+            </div>
+
+            {/* Status feedback */}
+            {testStatus === "waiting" && (
+              <div className="mb-4 flex items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2.5 text-sm text-indigo-700">
+                <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+                Waiting for login window to complete…
+              </div>
+            )}
+            {testStatus === "success" && (
+              <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5 text-sm text-green-700">
+                ✓ {testMessage ?? "SSO login completed successfully."}
+              </div>
+            )}
+            {testStatus === "error" && (
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+                ✗ {testMessage ?? "SSO login failed or was cancelled."}
+              </div>
+            )}
+
+            {/* How it works note */}
+            {testStatus === "idle" && (
+              <div className="mb-4 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2.5 text-xs text-amber-700">
+                A popup will open to your IdP&rsquo;s login page. Complete the login to verify the
+                configuration. Make sure pop-ups are not blocked by your browser.
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setTestModalOpen(false)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                {testStatus === "success" || testStatus === "error" ? "Done" : "Cancel"}
+              </button>
+              {testStatus !== "success" && (
+                <button
+                  disabled={testStatus === "waiting"}
+                  onClick={() => {
+                    setTestStatus("waiting");
+                    setTestMessage(null);
+                    const popup = window.open(
+                      "/api/auth/signin/oidc?callbackUrl=%2Fadmin%2Fsso%3Fsso_test%3D1",
+                      "sso-test",
+                      "width=520,height=640,resizable=yes,scrollbars=yes"
+                    );
+                    if (!popup) {
+                      setTestStatus("error");
+                      setTestMessage("Pop-up was blocked. Please allow pop-ups for this page and try again.");
+                      return;
+                    }
+                    const poll = setInterval(() => {
+                      try {
+                        if (popup.closed) {
+                          clearInterval(poll);
+                          setTestStatus("success");
+                          setTestMessage(
+                            "Login window closed. If you completed the flow successfully, your SSO configuration is working."
+                          );
+                        }
+                      } catch {
+                        clearInterval(poll);
+                        setTestStatus("error");
+                        setTestMessage("Pop-up closed unexpectedly or was blocked by a security policy.");
+                      }
+                    }, 800);
+                    setTimeout(() => {
+                      if (!popup.closed) {
+                        popup.close();
+                        clearInterval(poll);
+                        setTestStatus("error");
+                        setTestMessage("Test timed out after 3 minutes.");
+                      }
+                    }, 3 * 60 * 1000);
+                  }}
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                >
+                  {testStatus === "waiting" ? "Waiting…" : "Start Test Login"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

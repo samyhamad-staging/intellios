@@ -130,11 +130,31 @@ export function StakeholderWorkspace({
       {/* Main content */}
       <div className="mx-auto max-w-5xl px-6 py-6">
         {submitted ? (
-          <SubmittedState synthesis={synthesis} collaborators={collaborators} />
+          <SubmittedState
+            synthesis={synthesis}
+            collaborators={collaborators}
+            inviteeName={inviteeName}
+            sessionName={sessionContext.name}
+            domainLabel={domainLabel}
+          />
         ) : (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
             {/* AI Interview — takes 3/5 width */}
             <div className="lg:col-span-3">
+              {/* P1-39: Stakeholder orientation banner */}
+              <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
+                <p className="text-sm font-medium text-blue-900">
+                  You&apos;ve been invited to help design{" "}
+                  <span className="font-semibold">{sessionContext.name}</span>
+                  {(roleTitle ?? domain) && (
+                    <> as the <span className="font-semibold">{roleTitle ?? domain}</span> expert</>
+                  )}.
+                </p>
+                <p className="mt-1 text-xs text-blue-700">
+                  Your input on requirements, constraints, and policies will directly shape how this AI agent behaves in production.
+                  This interview takes approximately 10 minutes.
+                </p>
+              </div>
               <div className="rounded-xl border border-gray-200 bg-white p-5">
                 <h2 className="mb-4 text-sm font-semibold text-gray-700">
                   AI Requirements Interview
@@ -207,58 +227,117 @@ export function StakeholderWorkspace({
   );
 }
 
+// P2-181: Enhanced stakeholder submission confirmation
 function SubmittedState({
   synthesis,
   collaborators,
+  inviteeName,
+  sessionName,
+  domainLabel,
 }: {
   synthesis: string | null;
   collaborators: Collaborator[];
+  inviteeName: string | null;
+  sessionName: string;
+  domainLabel: string;
 }) {
-  return (
-    <div className="mx-auto max-w-2xl text-center">
-      <div className="mb-6">
-        <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-2xl">
-          ✓
-        </span>
-      </div>
-      <h2 className="mb-2 text-xl font-semibold text-gray-900">
-        Your contribution has been recorded
-      </h2>
-      <p className="mb-8 text-sm text-gray-500">
-        Thank you — your requirements will be incorporated into the agent design. The AI orchestrator is updating the team&apos;s shared view.
-      </p>
+  const pendingCount = collaborators.filter((c) => c.status === "pending").length;
+  const contributedCount = collaborators.filter((c) => c.status === "completed").length;
 
+  return (
+    <div className="mx-auto max-w-xl">
+      {/* Success icon + header */}
+      <div className="mb-8 text-center">
+        <div className="relative inline-flex justify-center mb-5">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+            <svg className="h-7 w-7 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          {/* Subtle pulse ring */}
+          <div className="absolute inset-0 h-14 w-14 rounded-full border-2 border-green-300/50 animate-ping" />
+        </div>
+        <h2 className="text-xl font-semibold text-gray-900">
+          {inviteeName ? `Thanks, ${inviteeName}!` : "Contribution recorded"}
+        </h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Your <strong>{domainLabel}</strong> perspective has been captured for{" "}
+          <strong>{sessionName}</strong>.
+        </p>
+      </div>
+
+      {/* What happens next */}
+      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5">
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">What happens next</h3>
+        <div className="space-y-3">
+          {[
+            {
+              step: "1",
+              title: "Your input is added to the design",
+              detail: "The architect has been notified and your requirements are visible in the intake session.",
+            },
+            {
+              step: "2",
+              title: "Stakeholder coverage is updated",
+              detail: `${contributedCount + 1} of ${contributedCount + 1 + pendingCount} stakeholders${pendingCount > 0 ? ` — ${pendingCount} still pending` : " have all contributed"}.`,
+            },
+            {
+              step: "3",
+              title: "Blueprint will reflect your constraints",
+              detail: "When the architect generates the blueprint, your governance requirements and constraints will be incorporated.",
+            },
+          ].map(({ step, title, detail }) => (
+            <div key={step} className="flex gap-3">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-bold text-green-700">
+                {step}
+              </span>
+              <div>
+                <p className="text-sm font-medium text-gray-800">{title}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Collaboration summary */}
       {synthesis && (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 text-left">
+        <div className="mb-4 rounded-xl border border-gray-200 bg-white p-5">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
-            Collaboration Summary
+            Team Summary
           </h3>
           <div className="text-sm text-gray-600 leading-relaxed">
-            {synthesis.split("\n").map((line, i) => (
+            {synthesis.split("\n").filter(Boolean).map((line, i) => (
               <p key={i} className="mb-2 last:mb-0">{line}</p>
             ))}
           </div>
         </div>
       )}
 
+      {/* Team */}
       {collaborators.length > 0 && (
-        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 text-left">
+        <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Team</h3>
           <div className="space-y-1.5">
             {collaborators.map((c, i) => {
               const st = STATUS_DISPLAY[c.status] ?? STATUS_DISPLAY.pending;
               return (
                 <div key={i} className="flex items-center gap-2">
-                  <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
-                  <span className="text-xs text-gray-600">{c.roleTitle}</span>
+                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${st.dot}`} />
+                  <span className="text-xs text-gray-700">{c.roleTitle}</span>
                   <span className="text-xs text-gray-400">· {DOMAIN_LABELS[c.domain] ?? c.domain}</span>
-                  <span className={`ml-auto text-2xs ${st.color}`}>{st.label}</span>
+                  <span className={`ml-auto text-2xs font-medium ${st.color}`}>{st.label}</span>
                 </div>
               );
             })}
           </div>
         </div>
       )}
+
+      {/* Close guidance */}
+      <p className="text-center text-xs text-gray-400 mt-6">
+        You&apos;re all done — you can close this tab.
+      </p>
     </div>
   );
 }

@@ -1,19 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { userInvitations } from "@/lib/db/schema";
+import { userInvitations, users } from "@/lib/db/schema";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import crypto from "node:crypto";
 
 /**
  * GET /api/auth/invite/validate?token=...
  *
- * Validates an invitation token and returns the associated email and role.
- * Used by the accept-invitation page to pre-fill the form and confirm the
- * token is still valid before the user types their credentials.
+ * Validates an invitation token and returns the associated email, role,
+ * inviter name, and enterprise name.
+ * Used by the accept-invitation page to pre-fill the form and display
+ * a trust banner before the user types their credentials.
  *
  * Public — no requireAuth.
- * Returns 200 { email, role } if valid; 404 if expired, used, or not found.
+ * Returns 200 { email, role, inviterName, enterpriseName } if valid;
+ * 404 if expired, used, or not found.
  */
+
+/** Converts a slug like "acme-bank" or "jp_morgan" → "Acme Bank" / "Jp Morgan" */
+function formatEnterpriseName(slug: string | null | undefined): string {
+  if (!slug) return "";
+  return slug
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const rawToken = searchParams.get("token");
@@ -39,5 +50,27 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ email: invitation.email, role: invitation.role });
+  // Resolve inviter name and enterprise name for the trust banner
+  let inviterName = "";
+  let enterpriseName = formatEnterpriseName(invitation.enterpriseId);
+
+  const inviter = await db.query.users.findFirst({
+    where: eq(users.id, invitation.invitedBy),
+    columns: { name: true, enterpriseId: true },
+  });
+
+  if (inviter) {
+    inviterName = inviter.name;
+    // Use inviter's enterpriseId as fallback if invitation row doesn't have one
+    if (!enterpriseName && inviter.enterpriseId) {
+      enterpriseName = formatEnterpriseName(inviter.enterpriseId);
+    }
+  }
+
+  return NextResponse.json({
+    email: invitation.email,
+    role: invitation.role,
+    inviterName,
+    enterpriseName,
+  });
 }

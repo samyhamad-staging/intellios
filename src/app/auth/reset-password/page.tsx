@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, Suspense, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const token = searchParams.get("token") ?? "";
 
   const [password, setPassword] = useState("");
@@ -12,6 +13,15 @@ function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // P2-101: auto-redirect countdown after success
+  const [countdown, setCountdown] = useState(5);
+
+  useEffect(() => {
+    if (!success) return;
+    if (countdown <= 0) { router.push("/login"); return; }
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [success, countdown, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,23 +73,55 @@ function ResetPasswordForm() {
 
         {/* Card */}
         <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+          {/* P2-101: Rich password reset confirmation */}
           {success ? (
             <div className="text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-50 mx-auto">
-                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+              {/* Animated success icon */}
+              <div className="relative mb-5 flex justify-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
+                  <svg className="h-7 w-7 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                {/* Pulse ring */}
+                <div
+                  className="absolute inset-0 mx-auto h-14 w-14 rounded-full border-2 border-green-300/60"
+                  style={{ animation: "ping 2s cubic-bezier(0,0,0.2,1) infinite" }}
+                />
               </div>
-              <h2 className="mb-2 text-lg font-semibold text-gray-900">Password updated</h2>
-              <p className="mb-6 text-sm text-gray-500">
-                Your password has been changed. You can now sign in with your new password.
+
+              <h2 className="mb-1 text-lg font-semibold text-gray-900">Password updated</h2>
+              <p className="mb-5 text-sm text-gray-500 leading-relaxed">
+                Your password has been changed successfully. Your previous password is no longer valid.
               </p>
+
+              {/* Security notice */}
+              <div className="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-left">
+                <p className="text-xs font-semibold text-green-800 mb-1">Security notice</p>
+                <ul className="space-y-1">
+                  {[
+                    "All previous sessions have been invalidated.",
+                    "Update any saved passwords in your password manager.",
+                    "Contact your admin if you didn't request this change.",
+                  ].map((tip) => (
+                    <li key={tip} className="flex items-start gap-1.5 text-xs text-green-700">
+                      <span className="mt-0.5 shrink-0">·</span>
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* CTA + countdown */}
               <a
                 href="/login"
-                className="inline-block rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                className="block w-full rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
               >
-                Sign in →
+                Sign in now →
               </a>
+              <p className="mt-3 text-xs text-gray-400">
+                Redirecting automatically in {countdown}s…
+              </p>
             </div>
           ) : (
             <>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -55,6 +55,41 @@ export default function AdminSettingsPage() {
     );
   }
 
+  // ── Section jump nav ──────────────────────────────────────────────────────
+  const SECTIONS = [
+    { id: "branding",           label: "Branding" },
+    { id: "periodic-review",    label: "Periodic Review" },
+    { id: "review-sla",         label: "Review SLA" },
+    { id: "governance-rules",   label: "Governance Rules" },
+    { id: "notifications",      label: "Notifications" },
+    { id: "approval-chain",     label: "Approval Chain" },
+    { id: "deployment-targets", label: "Deployment" },
+  ] as const;
+
+  type SectionId = typeof SECTIONS[number]["id"];
+  const [activeSection, setActiveSection] = useState<SectionId>("branding");
+
+  // IntersectionObserver to track which section is in view
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    SECTIONS.forEach(({ id }) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveSection(id as SectionId); },
+        { rootMargin: "-20% 0px -60% 0px", threshold: 0 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach((o) => o.disconnect());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function jumpTo(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <div className="px-6 py-6 space-y-6">
       {/* Page header */}
@@ -74,10 +109,27 @@ export default function AdminSettingsPage() {
         </button>
       </div>
 
+      {/* Sticky section jump navigation */}
+      <div className="sticky top-0 z-10 -mx-6 flex gap-0 overflow-x-auto border-b border-gray-200 bg-white/95 px-6 backdrop-blur">
+        {SECTIONS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => jumpTo(id)}
+            className={`whitespace-nowrap border-b-2 px-3 py-2.5 text-xs font-medium transition-colors ${
+              activeSection === id
+                ? "border-gray-900 text-gray-900"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-6">
 
         {/* Branding */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section id="branding" className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Branding</h2>
           <p className="mt-1 text-sm text-gray-500">
             Customize how Intellios appears to your users.
@@ -152,7 +204,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Periodic Review */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section id="periodic-review" className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Periodic Model Review</h2>
           <p className="mt-1 text-sm text-gray-500">
             SR 11-7 requires periodic model revalidation after initial deployment.
@@ -222,7 +274,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Review SLA */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section id="review-sla" className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Review SLA</h2>
           <p className="mt-1 text-sm text-gray-500">
             Time thresholds for blueprints in the <code className="text-xs bg-gray-100 px-1 rounded">in_review</code> state.
@@ -276,7 +328,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Governance Rules */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section id="governance-rules" className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Governance Rules</h2>
           <p className="mt-1 text-sm text-gray-500">
             Control which governance gates are enforced in the design and review workflow.
@@ -332,72 +384,268 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Notifications */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section id="notifications" className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Notifications</h2>
           <p className="mt-1 text-sm text-gray-500">
-            Configure who receives email alerts for governance events.
+            Configure alert channels for governance events. At least one channel must be set to receive notifications.
           </p>
-          <div className="mt-5 space-y-4">
+          <div className="mt-5 space-y-6">
+
+            {/* ── Email channel ─────────────────────────────────────────────── */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Admin notification email
-              </label>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Leave blank to notify only users with the reviewer or compliance_officer role.
-              </p>
-              <input
-                type="email"
-                value={settings.notifications.adminEmail ?? ""}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    notifications: {
-                      ...s.notifications,
-                      adminEmail: e.target.value || null,
-                    },
-                  }))
-                }
-                placeholder="admin@yourcompany.com"
-                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
-              />
-            </div>
-            {(
-              [
-                {
-                  key: "notifyOnBreach" as const,
-                  label: "Notify on SLA breach",
-                  description: "Send email when a blueprint exceeds the breach threshold.",
-                },
-                {
-                  key: "notifyOnApproval" as const,
-                  label: "Notify on approval",
-                  description: "Send email when a blueprint is approved or rejected.",
-                },
-              ] as const
-            ).map(({ key, label, description }) => (
-              <label key={key} className="flex items-start gap-3 cursor-pointer">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Email</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Admin notification email
+                </label>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Leave blank to notify only users with the reviewer or compliance_officer role.
+                </p>
                 <input
-                  type="checkbox"
-                  checked={settings.notifications[key]}
+                  type="email"
+                  value={settings.notifications.adminEmail ?? ""}
                   onChange={(e) =>
                     setSettings((s) => ({
                       ...s,
-                      notifications: { ...s.notifications, [key]: e.target.checked },
+                      notifications: {
+                        ...s.notifications,
+                        adminEmail: e.target.value || null,
+                      },
                     }))
                   }
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                  placeholder="admin@yourcompany.com"
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
                 />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{label}</p>
-                  <p className="text-xs text-gray-500">{description}</p>
-                </div>
-              </label>
-            ))}
+              </div>
+              <div className="mt-4 space-y-3">
+                {(
+                  [
+                    {
+                      key: "notifyOnBreach" as const,
+                      label: "Notify on SLA breach",
+                      description: "Send email when a blueprint exceeds the breach threshold.",
+                    },
+                    {
+                      key: "notifyOnApproval" as const,
+                      label: "Notify on approval",
+                      description: "Send email when a blueprint is approved or rejected.",
+                    },
+                  ] as const
+                ).map(({ key, label, description }) => (
+                  <label key={key} className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.notifications[key]}
+                      onChange={(e) =>
+                        setSettings((s) => ({
+                          ...s,
+                          notifications: { ...s.notifications, [key]: e.target.checked },
+                        }))
+                      }
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{label}</p>
+                      <p className="text-xs text-gray-500">{description}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* ── P2-607: Event routing matrix ──────────────────────────────── */}
+            <div className="border-t border-gray-100 pt-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                Event Routing
+              </p>
+              <p className="text-xs text-gray-400 mb-3">
+                Choose which channels receive each event type. Channel must be configured above to receive alerts.
+              </p>
+              {(() => {
+                type EventKey = keyof NonNullable<typeof settings.notifications.routing>;
+                const EVENT_LABELS: Record<EventKey, string> = {
+                  blueprint_approved: "Blueprint approved",
+                  blueprint_rejected: "Blueprint rejected",
+                  blueprint_deployed: "Blueprint deployed",
+                  policy_violation:   "Policy violation",
+                  sla_breach:         "SLA breach",
+                  review_assigned:    "Review assigned",
+                  anomaly_detected:   "Anomaly detected",
+                };
+                const CHANNELS: Array<{ key: "email" | "slack" | "pagerduty"; label: string }> = [
+                  { key: "email",     label: "Email" },
+                  { key: "slack",     label: "Slack" },
+                  { key: "pagerduty", label: "PagerDuty" },
+                ];
+                const routing = settings.notifications.routing ?? {};
+                const DEFAULT_ROUTE = { email: true, slack: false, pagerduty: false };
+
+                return (
+                  <div className="overflow-x-auto rounded-lg border border-gray-200">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-gray-100 bg-gray-50">
+                          <th className="py-2 pl-4 pr-3 text-left font-semibold text-gray-500 w-full">Event</th>
+                          {CHANNELS.map((ch) => (
+                            <th key={ch.key} className="px-4 py-2 text-center font-semibold text-gray-500 whitespace-nowrap">
+                              {ch.label}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(Object.keys(EVENT_LABELS) as EventKey[]).map((evt, idx) => {
+                          const row = (routing as Record<EventKey, { email: boolean; slack: boolean; pagerduty: boolean }>)[evt] ?? DEFAULT_ROUTE;
+                          return (
+                            <tr key={evt} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                              <td className="py-2 pl-4 pr-3 text-gray-700">{EVENT_LABELS[evt]}</td>
+                              {CHANNELS.map((ch) => (
+                                <td key={ch.key} className="px-4 py-2 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={row[ch.key]}
+                                    onChange={(e) =>
+                                      setSettings((s) => ({
+                                        ...s,
+                                        notifications: {
+                                          ...s.notifications,
+                                          routing: {
+                                            ...(s.notifications.routing ?? {}),
+                                            [evt]: {
+                                              ...row,
+                                              [ch.key]: e.target.checked,
+                                            },
+                                          } as NonNullable<typeof s.notifications.routing>,
+                                        },
+                                      }))
+                                    }
+                                    className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                                  />
+                                </td>
+                              ))}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* ── P2-607: Digest frequency ──────────────────────────────────── */}
+            <div className="border-t border-gray-100 pt-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
+                Digest Frequency
+              </p>
+              <div className="flex items-center gap-3">
+                {(["immediate", "daily", "weekly"] as const).map((freq) => (
+                  <label key={freq} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="digestFrequency"
+                      value={freq}
+                      checked={(settings.notifications.digestFrequency ?? "immediate") === freq}
+                      onChange={() =>
+                        setSettings((s) => ({
+                          ...s,
+                          notifications: { ...s.notifications, digestFrequency: freq },
+                        }))
+                      }
+                      className="h-4 w-4 border-gray-300 text-gray-900 focus:ring-gray-900"
+                    />
+                    <span className="text-sm text-gray-700 capitalize">{freq}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="mt-1.5 text-xs text-gray-400">
+                {(settings.notifications.digestFrequency ?? "immediate") === "immediate"
+                  ? "Every alert is sent as it occurs."
+                  : (settings.notifications.digestFrequency ?? "immediate") === "daily"
+                  ? "Non-critical alerts are batched into a daily digest email."
+                  : "Non-critical alerts are batched into a weekly digest email. Critical alerts (SLA breach, anomaly) are still sent immediately."}
+              </p>
+            </div>
+
+            {/* ── Slack channel (P1-433) ─────────────────────────────────────── */}
+            <div className="border-t border-gray-100 pt-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Slack</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Incoming webhook URL
+                </label>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  SLA breach and governance alerts will be posted to the channel configured in this webhook.
+                  Create one at{" "}
+                  <a
+                    href="https://api.slack.com/messaging/webhooks"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-gray-600"
+                  >
+                    api.slack.com/messaging/webhooks
+                  </a>
+                  .
+                </p>
+                <input
+                  type="url"
+                  value={settings.notifications.slackWebhookUrl ?? ""}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      notifications: {
+                        ...s.notifications,
+                        slackWebhookUrl: e.target.value || null,
+                      },
+                    }))
+                  }
+                  placeholder="Paste your Slack Incoming Webhook URL here"
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-gray-400 focus:outline-none"
+                />
+                {settings.notifications.slackWebhookUrl && (
+                  <p className="mt-1 text-xs text-emerald-600">✓ Slack notifications active</p>
+                )}
+              </div>
+            </div>
+
+            {/* ── PagerDuty channel (P1-433) ─────────────────────────────────── */}
+            <div className="border-t border-gray-100 pt-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">PagerDuty</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Events API v2 integration key
+                </label>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Critical alerts (SLA breach, anomaly detected) will trigger a PagerDuty incident.
+                  Find this key in PagerDuty under Services → Integrations → Events API v2.
+                </p>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={settings.notifications.pagerdutyKey ?? ""}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      notifications: {
+                        ...s.notifications,
+                        pagerdutyKey: e.target.value || null,
+                      },
+                    }))
+                  }
+                  placeholder="Enter integration key (32 characters)"
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-gray-400 focus:outline-none"
+                />
+                {settings.notifications.pagerdutyKey && (
+                  <p className="mt-1 text-xs text-emerald-600">✓ PagerDuty alerting active</p>
+                )}
+              </div>
+            </div>
+
           </div>
         </section>
 
         {/* Approval Chain */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section id="approval-chain" className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Approval Chain</h2>
           <p className="mt-1 text-sm text-gray-500">
             Define a sequential multi-step approval workflow. Each step requires a reviewer with the specified role
@@ -476,7 +724,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* Deployment Targets */}
-        <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <section id="deployment-targets" className="rounded-xl border border-gray-200 bg-white p-6">
           <h2 className="text-base font-semibold text-gray-900">Deployment Targets</h2>
           <p className="mt-1 text-sm text-gray-500">
             Configure direct deployment targets. AWS credentials are read from server environment
@@ -650,6 +898,14 @@ export default function AdminSettingsPage() {
                   />
                 </div>
               </div>
+              {/* P2-502: Validate deployment target */}
+              <ValidateDeploymentTargetButton
+                config={{
+                  region: settings.deploymentTargets?.agentcore?.region ?? "",
+                  agentResourceRoleArn: settings.deploymentTargets?.agentcore?.agentResourceRoleArn ?? "",
+                  foundationModel: settings.deploymentTargets?.agentcore?.foundationModel ?? "",
+                }}
+              />
             )}
           </div>
         </section>
@@ -664,6 +920,70 @@ export default function AdminSettingsPage() {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── P2-502: Validate Deployment Target ──────────────────────────────────────
+interface ValidateCheck {
+  label: string;
+  ok: boolean;
+  detail: string;
+}
+
+function ValidateDeploymentTargetButton({ config }: {
+  config: { region: string; agentResourceRoleArn: string; foundationModel: string };
+}) {
+  const [status, setStatus] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [checks, setChecks] = useState<ValidateCheck[]>([]);
+
+  async function handleValidate() {
+    setStatus("running");
+    setChecks([]);
+    try {
+      const res = await fetch("/api/admin/settings/validate-deployment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+      });
+      const data = await res.json();
+      setChecks(data.checks ?? []);
+      setStatus("done");
+    } catch {
+      setStatus("error");
+      setChecks([{ label: "Network", ok: false, detail: "Could not reach validation endpoint." }]);
+    }
+  }
+
+  return (
+    <div className="mt-4 space-y-3">
+      <button
+        onClick={handleValidate}
+        disabled={status === "running"}
+        className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 transition-colors"
+      >
+        {status === "running" ? "Validating…" : "Validate Deployment Target"}
+      </button>
+      {checks.length > 0 && (
+        <div className="rounded-lg border border-gray-200 overflow-hidden">
+          {checks.map((c) => (
+            <div
+              key={c.label}
+              className={`flex items-start gap-3 px-4 py-3 border-b border-gray-100 last:border-b-0 ${
+                c.ok ? "bg-white" : "bg-red-50/40"
+              }`}
+            >
+              <span className={`mt-0.5 shrink-0 text-base leading-none ${c.ok ? "text-green-500" : "text-red-500"}`}>
+                {c.ok ? "✓" : "✗"}
+              </span>
+              <div className="min-w-0">
+                <p className={`text-xs font-semibold ${c.ok ? "text-gray-700" : "text-red-700"}`}>{c.label}</p>
+                <p className={`text-xs mt-0.5 ${c.ok ? "text-gray-500" : "text-red-600"}`}>{c.detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

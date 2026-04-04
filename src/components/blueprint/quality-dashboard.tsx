@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { HelpCircle } from "lucide-react";
 import {
   ResponsiveContainer,
   LineChart as ReLineChart,
@@ -52,14 +53,52 @@ interface Props {
   agentId?: string;
   /** If "deployed" or "suspended", production quality section is shown. */
   agentStatus?: string;
+  /** P2-264: Quality score of the prior blueprint version — enables delta display. */
+  previousScore?: QualityScore | null;
+  /** Human-readable version label for the previous score, e.g. "1.2.0" */
+  previousVersion?: string | null;
+}
+
+// P2-264: Format a signed score delta with ↑/↓ arrow
+function formatDelta(current: number, previous: number): { label: string; classes: string } | null {
+  const diff = current - previous;
+  if (Math.abs(diff) < 0.05) return null; // suppress noise < 0.05
+  const sign = diff > 0 ? "↑" : "↓";
+  const classes = diff > 0 ? "text-green-600" : "text-red-500";
+  return { label: `${sign} ${Math.abs(diff).toFixed(1)}`, classes };
 }
 
 const DIMENSIONS = [
-  { key: "intentAlignment" as const, label: "Intent Alignment", description: "How well the blueprint captures the intended agent purpose" },
-  { key: "toolAppropriateness" as const, label: "Tool Appropriateness", description: "Suitability and completeness of the tool configuration" },
-  { key: "instructionSpecificity" as const, label: "Instruction Specificity", description: "Clarity and precision of behavioral instructions" },
-  { key: "governanceAdequacy" as const, label: "Governance Adequacy", description: "Depth and coverage of governance constraints" },
-  { key: "ownershipCompleteness" as const, label: "Ownership Completeness", description: "Quality of ownership, accountability, and metadata" },
+  {
+    key: "intentAlignment" as const,
+    label: "Intent Alignment",
+    description: "How well the blueprint captures the intended agent purpose",
+    rubric: "1 = purpose is vague or absent  ·  3 = purpose is stated but broad  ·  5 = purpose is precisely defined with clear success criteria and scope boundaries",
+  },
+  {
+    key: "toolAppropriateness" as const,
+    label: "Tool Appropriateness",
+    description: "Suitability and completeness of the tool configuration",
+    rubric: "1 = no tools or entirely wrong tools  ·  3 = some tools listed but descriptions are vague  ·  5 = all required tools specified with correct scoping and parameter constraints",
+  },
+  {
+    key: "instructionSpecificity" as const,
+    label: "Instruction Specificity",
+    description: "Clarity and precision of behavioral instructions",
+    rubric: "1 = instructions are generic or contradictory  ·  3 = instructions cover common cases  ·  5 = instructions are unambiguous with explicit edge-case handling and refusal criteria",
+  },
+  {
+    key: "governanceAdequacy" as const,
+    label: "Governance Adequacy",
+    description: "Depth and coverage of governance constraints",
+    rubric: "1 = no governance constraints defined  ·  3 = basic constraints present (e.g., PII)  ·  5 = comprehensive constraints covering all relevant policies with enforcement modes specified",
+  },
+  {
+    key: "ownershipCompleteness" as const,
+    label: "Ownership Completeness",
+    description: "Quality of ownership, accountability, and metadata",
+    rubric: "1 = no owner or metadata  ·  3 = owner named with basic metadata  ·  5 = full ownership chain including team, review schedule, and escalation path",
+  },
 ];
 
 function scoreColor(val: number): string {
@@ -110,7 +149,43 @@ function scoreGrade(score: number): { label: string; color: string } {
   return           { label: "Poor",       color: "text-red-600" };
 }
 
-export function QualityDashboard({ score, loading, agentId, agentStatus }: Props) {
+// ─── Rubric tooltip ───────────────────────────────────────────────────────────
+
+function RubricTooltip({ rubric }: { rubric: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative inline-flex shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="text-gray-300 hover:text-gray-400 transition-colors"
+        aria-label="Show scoring rubric"
+      >
+        <HelpCircle className="h-3.5 w-3.5" />
+      </button>
+      {open && (
+        <div className="absolute bottom-5 left-0 z-20 w-64 rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
+          <p className="mb-1 text-2xs font-semibold uppercase tracking-wide text-gray-400">Scoring Rubric</p>
+          <p className="text-xs text-gray-600 leading-relaxed">{rubric}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function QualityDashboard({ score, loading, agentId, agentStatus, previousScore, previousVersion }: Props) {
   const showProduction = !!agentId && (agentStatus === "deployed" || agentStatus === "suspended");
 
   const [prodQuality, setProdQuality] = useState<ProductionQuality | null>(null);
@@ -157,6 +232,9 @@ export function QualityDashboard({ score, loading, agentId, agentStatus }: Props
   }
 
   const overall = parseFloat(score.overallScore ?? "0");
+  // P2-264: Overall delta vs previous version
+  const prevOverall = previousScore ? parseFloat(previousScore.overallScore ?? "0") : null;
+  const overallDelta = prevOverall !== null ? formatDelta(overall, prevOverall) : null;
 
   return (
     <div className="space-y-6">
@@ -169,7 +247,18 @@ export function QualityDashboard({ score, loading, agentId, agentStatus }: Props
           <p className="mt-1 text-xs text-gray-400">/ 100</p>
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-gray-900">Overall Quality Score</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-semibold text-gray-900">Overall Quality Score</p>
+            {/* P2-264: Delta badge */}
+            {overallDelta && (
+              <span
+                className={`text-xs font-semibold tabular-nums ${overallDelta.classes}`}
+                title={`vs v${previousVersion ?? "previous"}`}
+              >
+                {overallDelta.label} vs v{previousVersion ?? "prev"}
+              </span>
+            )}
+          </div>
           <p className="mt-0.5 text-xs text-gray-500">
             Average of 5 dimensions, scaled 0–100
           </p>
@@ -191,17 +280,31 @@ export function QualityDashboard({ score, loading, agentId, agentStatus }: Props
             const rawVal = score[dim.key];
             const val = rawVal !== null ? parseFloat(rawVal) : null;
             const pct = val !== null ? ((val - 1) / 4) * 100 : 0;
+            // P2-264: Per-dimension delta
+            const prevRaw = previousScore ? previousScore[dim.key] : null;
+            const prevVal = prevRaw !== null && prevRaw !== undefined ? parseFloat(prevRaw) : null;
+            const dimDelta = val !== null && prevVal !== null ? formatDelta(val, prevVal) : null;
 
             return (
               <div key={dim.key} className="py-3">
                 <div className="flex items-center justify-between mb-1.5">
-                  <div>
-                    <span className="text-sm font-medium text-gray-800">{dim.label}</span>
-                    <p className="text-xs text-gray-400">{dim.description}</p>
+                  <div className="flex items-start gap-1.5 min-w-0">
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium text-gray-800">{dim.label}</span>
+                      <p className="text-xs text-gray-400">{dim.description}</p>
+                    </div>
+                    <RubricTooltip rubric={dim.rubric} />
                   </div>
-                  <span className={`ml-4 shrink-0 text-sm font-bold tabular-nums ${val !== null ? scoreTextColor(val) : "text-gray-400"}`}>
-                    {val !== null ? val.toFixed(1) : "—"}
-                  </span>
+                  <div className="ml-4 shrink-0 flex items-center gap-1.5">
+                    {dimDelta && (
+                      <span className={`text-2xs font-semibold tabular-nums ${dimDelta.classes}`}>
+                        {dimDelta.label}
+                      </span>
+                    )}
+                    <span className={`text-sm font-bold tabular-nums ${val !== null ? scoreTextColor(val) : "text-gray-400"}`}>
+                      {val !== null ? val.toFixed(1) : "—"}
+                    </span>
+                  </div>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
                   <div

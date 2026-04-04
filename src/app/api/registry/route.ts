@@ -1,29 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { agentBlueprints, agentTelemetry } from "@/lib/db/schema";
+import { agentBlueprints, agentTelemetry, intakeSessions } from "@/lib/db/schema";
 import { and, desc, eq, gte, isNull, lt, sql } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
+import { getEnterpriseId, enterpriseScope } from "@/lib/auth/enterprise-scope";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 
 /**
  * GET /api/registry
  * Returns all registered agents — latest version per agentId, scoped to the
- * caller's enterprise. Admins see all agents across enterprises.
+ * caller's enterprise via middleware-injected x-enterprise-id header.
+ * Admins see all agents across enterprises.
  */
 export async function GET(request: NextRequest) {
   const { session: authSession, error } = await requireAuth();
   if (error) return error;
   const requestId = getRequestId(request);
+
+  // Read enterprise context from middleware-injected headers (single enforcement point)
+  const ctx = getEnterpriseId(request);
+
   try {
-    // Build enterprise filter: admin sees all; others see their enterprise only
-    const enterpriseFilter =
-      authSession.user.role === "admin"
-        ? undefined
-        : authSession.user.enterpriseId
-        ? eq(agentBlueprints.enterpriseId, authSession.user.enterpriseId)
-        : isNull(agentBlueprints.enterpriseId);
+    // Enterprise-scoped filter — derived from middleware, not from request params
+    const filter = enterpriseScope(agentBlueprints.enterpriseId, ctx);
 
     // Fetch blueprints; DISTINCT ON agentId ordered by created_at desc gives latest per agent
     const agents = await db
@@ -36,11 +37,13 @@ export async function GET(request: NextRequest) {
         status: agentBlueprints.status,
         sessionId: agentBlueprints.sessionId,
         validationReport: agentBlueprints.validationReport,
+        riskTier: intakeSessions.riskTier,
         createdAt: agentBlueprints.createdAt,
         updatedAt: agentBlueprints.updatedAt,
       })
       .from(agentBlueprints)
-      .where(enterpriseFilter)
+      .leftJoin(intakeSessions, eq(agentBlueprints.sessionId, intakeSessions.id))
+      .where(filter)
       .orderBy(agentBlueprints.agentId, desc(agentBlueprints.createdAt));
 
     // Sort the results by updatedAt desc (distinctOn forces agentId ordering)
@@ -54,12 +57,11 @@ export async function GET(request: NextRequest) {
     const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
     const periodEnd   = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
 
-    const enterpriseId = authSession.user.role === "admin" ? null : (authSession.user.enterpriseId ?? null);
-    const settings = await getEnterpriseSettings(enterpriseId);
+    const settings = await getEnterpriseSettings(ctx.enterpriseId);
     const { inputCostPer1kTokens, outputCostPer1kTokens } = settings.costRates;
 
-    const telFilter = enterpriseId
-      ? and(eq(agentTelemetry.enterpriseId, enterpriseId), gte(agentTelemetry.timestamp, periodStart), lt(agentTelemetry.timestamp, periodEnd))
+    const telFilter = ctx.enterpriseId
+      ? and(eq(agentTelemetry.enterpriseId, ctx.enterpriseId), gte(agentTelemetry.timestamp, periodStart), lt(agentTelemetry.timestamp, periodEnd))
       : and(isNull(agentTelemetry.enterpriseId), gte(agentTelemetry.timestamp, periodStart), lt(agentTelemetry.timestamp, periodEnd));
 
     const costRows = await db
@@ -92,8 +94,11 @@ export async function GET(request: NextRequest) {
       const violationCount = report?.violations
         ? report.violations.filter((v) => v.severity === "error").length
         : null; // null = not yet validated
+      const warningCount = report?.violations
+        ? report.violations.filter((v) => v.severity === "warning").length
+        : null;
       const monthlyCostUsd = costByAgent.get(a.agentId) ?? null;
-      return { ...a, violationCount, monthlyCostUsd, validationReport: undefined };
+      return { ...a, violationCount, warningCount, monthlyCostUsd, validationReport: undefined, riskTier: a.riskTier ?? null };
     });
 
     return NextResponse.json({ agents: enriched });

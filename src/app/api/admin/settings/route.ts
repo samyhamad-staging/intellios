@@ -76,6 +76,9 @@ const SettingsBody = z.object({
     adminEmail: z.string().email().nullable(),
     notifyOnBreach: z.boolean(),
     notifyOnApproval: z.boolean(),
+    // P1-433: additional alert channels
+    slackWebhookUrl: z.string().url().nullable().optional(),
+    pagerdutyKey: z.string().max(64).nullable().optional(),
   }).optional(),
   approvalChain: z.array(ApprovalChainStepSchema).optional(),
   branding: z.object({

@@ -7,6 +7,142 @@ import { StatusBadge } from "@/components/registry/status-badge";
 import { ArrowLeft, GitBranch, Users, ArrowRight, Database, AlertTriangle } from "lucide-react";
 import type { WorkflowDefinition } from "@/lib/types/workflow";
 
+// ─── Workflow Flow Diagram ────────────────────────────────────────────────────
+
+/**
+ * WorkflowFlowDiagram — renders a left-to-right flow visualization.
+ *
+ * Uses BFS from the "start" sentinel to order nodes, then renders each node as
+ * a labeled box with connecting arrows. Handles branching by showing parallel
+ * nodes at the same depth level stacked vertically.
+ */
+function WorkflowFlowDiagram({ definition }: { definition: WorkflowDefinition }) {
+  const { agents, handoffRules } = definition;
+
+  if (!agents || agents.length === 0 || !handoffRules || handoffRules.length === 0) {
+    return null;
+  }
+
+  // Build adjacency list and BFS-order the nodes
+  const adjacency = new Map<string, string[]>();
+  for (const rule of handoffRules) {
+    if (!adjacency.has(rule.from)) adjacency.set(rule.from, []);
+    adjacency.get(rule.from)!.push(rule.to);
+  }
+
+  // BFS from "start" to get ordered levels
+  const levels: string[][] = [];
+  const visited = new Set<string>();
+  let queue: string[] = ["start"];
+  while (queue.length > 0) {
+    const level: string[] = [];
+    const nextQueue: string[] = [];
+    for (const node of queue) {
+      if (visited.has(node)) continue;
+      visited.add(node);
+      level.push(node);
+      const neighbours = adjacency.get(node) ?? [];
+      for (const n of neighbours) {
+        if (!visited.has(n)) nextQueue.push(n);
+      }
+    }
+    if (level.length > 0) levels.push(level);
+    queue = nextQueue;
+  }
+
+  // Collect all edges (from → to) for arrow rendering
+  const edges: Array<{ from: string; to: string; condition: string }> = handoffRules.map((r) => ({
+    from: r.from,
+    to: r.to,
+    condition: r.condition,
+  }));
+
+  // Helper: get display label for a node id
+  const agentMap = new Map(agents.map((a) => [a.agentId, a]));
+  function nodeLabel(id: string): { label: string; sub: string | null; isAgent: boolean } {
+    if (id === "start") return { label: "Start", sub: null, isAgent: false };
+    if (id === "end") return { label: "End", sub: null, isAgent: false };
+    const agent = agentMap.get(id);
+    if (agent) return { label: agent.role, sub: id.slice(0, 8), isAgent: true };
+    return { label: id.slice(0, 8), sub: null, isAgent: false };
+  }
+
+  return (
+    <section className="mb-6">
+      <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="4" cy="12" r="2" /><circle cx="20" cy="12" r="2" />
+          <circle cx="12" cy="5" r="2" /><circle cx="12" cy="19" r="2" />
+          <line x1="6" y1="12" x2="10" y2="12" /><line x1="14" y1="12" x2="18" y2="12" />
+          <line x1="12" y1="7" x2="12" y2="10" /><line x1="12" y1="14" x2="12" y2="17" />
+        </svg>
+        Flow
+      </h2>
+      <div className="overflow-x-auto">
+        <div className="flex items-start gap-0 min-w-max">
+          {levels.map((level, li) => (
+            <div key={li} className="flex items-center">
+              {/* Node column — stacked vertically if multiple nodes at same depth */}
+              <div className="flex flex-col gap-2">
+                {level.map((nodeId) => {
+                  const { label, sub, isAgent } = nodeLabel(nodeId);
+                  const isSentinel = nodeId === "start" || nodeId === "end";
+                  const outgoing = edges.filter((e) => e.from === nodeId);
+                  const allConditionsTrue = outgoing.every((e) => e.condition === "true" || e.condition === "always");
+
+                  return (
+                    <div key={nodeId} className="flex flex-col items-center">
+                      {/* Node box */}
+                      <div
+                        title={outgoing.map((e) => `→ ${e.to}: ${e.condition}`).join("\n")}
+                        className={`flex flex-col items-center justify-center rounded-lg border px-3 py-2 text-center min-w-[90px] max-w-[120px] ${
+                          isSentinel
+                            ? "border-gray-300 bg-gray-100 text-gray-500"
+                            : isAgent
+                            ? "border-violet-200 bg-violet-50 text-violet-800"
+                            : "border-blue-200 bg-blue-50 text-blue-700"
+                        }`}
+                      >
+                        <span className={`text-xs font-semibold leading-tight ${isSentinel ? "uppercase tracking-wide text-[10px]" : ""}`}>
+                          {label}
+                        </span>
+                        {sub && <span className="mt-0.5 font-mono text-[9px] text-gray-400 leading-none">{sub}</span>}
+                        {!allConditionsTrue && outgoing.length > 1 && (
+                          <span className="mt-1 rounded-full bg-amber-100 px-1.5 text-[9px] text-amber-700 font-medium">
+                            {outgoing.length} branches
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Arrow connector — skip after last level */}
+              {li < levels.length - 1 && (
+                <div className="flex items-center self-stretch">
+                  <div className="flex flex-col items-center justify-center px-2 self-center">
+                    <svg width="28" height="12" viewBox="0 0 28 12" fill="none">
+                      <line x1="0" y1="6" x2="22" y2="6" stroke="#d1d5db" strokeWidth="1.5" />
+                      <polyline points="18,2 24,6 18,10" stroke="#d1d5db" strokeWidth="1.5" fill="none" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Condition legend — shown when non-trivial conditions exist */}
+      {edges.some((e) => e.condition !== "true" && e.condition !== "always") && (
+        <p className="mt-2 text-xs text-gray-400">
+          Hover a node to see its outgoing transition conditions.
+        </p>
+      )}
+    </section>
+  );
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface WorkflowRecord {
@@ -193,6 +329,9 @@ export default function WorkflowDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Flow Diagram */}
+      <WorkflowFlowDiagram definition={def} />
 
       {/* Participating Agents */}
       <section className="mb-6">

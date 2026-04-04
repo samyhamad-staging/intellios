@@ -28,6 +28,8 @@ export default function NewPolicyPage() {
         return;
       }
 
+      // Clear the auto-saved draft now that the policy has been saved
+      try { localStorage.removeItem("policy-draft-new"); } catch { /* ignore */ }
       router.push("/governance");
     } catch {
       setError("Network error. Please try again.");
@@ -37,17 +39,25 @@ export default function NewPolicyPage() {
 
   return (
     <div className="px-6 py-6">
-      {/* Page header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">New Policy</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
-            Define a governance policy with rules that apply to agent blueprints
-          </p>
-        </div>
-        <Link href="/governance" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-          ← Governance
+      {/* Breadcrumb */}
+      <nav className="mb-3 flex items-center gap-1.5 text-xs text-gray-400" aria-label="Breadcrumb">
+        <Link href="/governance" className="hover:text-gray-700 transition-colors">
+          Governance
         </Link>
+        <span className="text-gray-300">/</span>
+        <Link href="/governance" className="hover:text-gray-700 transition-colors">
+          Policies
+        </Link>
+        <span className="text-gray-300">/</span>
+        <span className="text-gray-600 font-medium">New Policy</span>
+      </nav>
+
+      {/* Page header */}
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-gray-900">New Policy</h1>
+        <p className="mt-0.5 text-sm text-gray-500">
+          Define a governance policy with rules that apply to agent blueprints
+        </p>
       </div>
 
       <div className="max-w-3xl">
@@ -60,6 +70,7 @@ export default function NewPolicyPage() {
           onSubmit={handleSubmit}
           submitLabel="Create Policy"
           saving={saving}
+          draftKey="policy-draft-new"
         />
       </div>
     </div>

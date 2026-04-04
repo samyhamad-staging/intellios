@@ -14,11 +14,27 @@ import { useRef, useEffect, useMemo, useState, useCallback } from "react";
 import { MessageBubble } from "@/components/chat/message-bubble";
 import { ChatInput } from "@/components/chat/chat-input";
 import { RedTeamPanel } from "./red-team-panel";
+import { ShieldCheck, X } from "lucide-react";
+
+// P1-32: Saved scenario library
+interface SavedScenario {
+  id: string;
+  label: string;
+  text: string;
+}
+
+// P2-423: Version entry passed from registry page
+interface VersionEntry {
+  id: string;
+  version: string;
+}
 
 interface SimulatePanelProps {
   blueprintId: string;
   agentName: string | null;
   version: string;
+  // P2-423: all available versions so user can switch simulation target
+  allVersions?: VersionEntry[];
 }
 
 // Inner component keyed externally so "Clear" fully remounts the chat state
@@ -30,6 +46,36 @@ function SimulatePanelInner({
 }: SimulatePanelProps & { onClear: () => void }) {
   const isFirstMessage = useRef(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // P1-32: Saved scenario library — browser-local, keyed by blueprintId
+  const SCENARIOS_KEY = `sim-scenarios-${blueprintId}`;
+  const [scenarios, setScenarios] = useState<SavedScenario[]>(() => {
+    try {
+      const raw = localStorage.getItem(`sim-scenarios-${blueprintId}`);
+      return raw ? (JSON.parse(raw) as SavedScenario[]) : [];
+    } catch { return []; }
+  });
+  const [addingScenario, setAddingScenario] = useState(false);
+  const [newScenarioLabel, setNewScenarioLabel] = useState("");
+  const [newScenarioText, setNewScenarioText] = useState("");
+
+  function saveNewScenario() {
+    const label = newScenarioLabel.trim();
+    const text = newScenarioText.trim();
+    if (!label || !text) return;
+    const next: SavedScenario[] = [...scenarios, { id: crypto.randomUUID(), label, text }];
+    setScenarios(next);
+    try { localStorage.setItem(SCENARIOS_KEY, JSON.stringify(next)); } catch { /* quota */ }
+    setNewScenarioLabel("");
+    setNewScenarioText("");
+    setAddingScenario(false);
+  }
+
+  function deleteScenario(id: string) {
+    const next = scenarios.filter((s) => s.id !== id);
+    setScenarios(next);
+    try { localStorage.setItem(SCENARIOS_KEY, JSON.stringify(next)); } catch { /* quota */ }
+  }
 
   const transport = useMemo(
     () =>
@@ -90,6 +136,10 @@ function SimulatePanelInner({
             <p className="mt-0.5 text-xs text-gray-400">
               Sandbox — agent cannot access real systems
             </p>
+            <div className="mt-1.5 flex items-center gap-1 text-2xs text-emerald-600">
+              <ShieldCheck className="h-3 w-3 shrink-0" />
+              <span>This session is being audited for compliance evidence</span>
+            </div>
           </div>
           {messages.length > 0 && (
             <button
@@ -100,6 +150,86 @@ function SimulatePanelInner({
             </button>
           )}
         </div>
+      </div>
+
+      {/* P1-32: Saved Scenario Library */}
+      <div className="shrink-0 border-b border-gray-100 bg-white px-5 py-2.5">
+        {scenarios.length === 0 && !addingScenario ? (
+          <button
+            onClick={() => setAddingScenario(true)}
+            className="text-xs text-gray-400 hover:text-violet-600 transition-colors"
+          >
+            + Save a test scenario
+          </button>
+        ) : (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {scenarios.map((s) => (
+              <div
+                key={s.id}
+                className="group flex items-center gap-0.5 rounded-full border border-violet-200 bg-violet-50 pl-2.5 pr-1.5 py-0.5"
+              >
+                <button
+                  onClick={() => handleSend(s.text)}
+                  className="max-w-32 truncate text-xs font-medium text-violet-700 hover:text-violet-900 transition-colors"
+                  title={s.text}
+                >
+                  {s.label}
+                </button>
+                <button
+                  onClick={() => deleteScenario(s.id)}
+                  className="ml-0.5 shrink-0 text-violet-300 opacity-0 hover:text-red-500 group-hover:opacity-100 transition-opacity"
+                  title="Remove scenario"
+                >
+                  <X size={10} />
+                </button>
+              </div>
+            ))}
+            {!addingScenario && (
+              <button
+                onClick={() => setAddingScenario(true)}
+                className="rounded-full border border-dashed border-gray-200 px-2.5 py-0.5 text-xs text-gray-400 hover:border-violet-300 hover:text-violet-600 transition-colors"
+              >
+                + Add
+              </button>
+            )}
+          </div>
+        )}
+
+        {addingScenario && (
+          <div className="mt-2 flex flex-col gap-1.5">
+            <input
+              type="text"
+              placeholder="Short label (e.g. 'PII exfiltration attempt')"
+              value={newScenarioLabel}
+              onChange={(e) => setNewScenarioLabel(e.target.value)}
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus
+              className="rounded-md border border-gray-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400"
+            />
+            <textarea
+              placeholder="Prompt text to send to the agent…"
+              value={newScenarioText}
+              onChange={(e) => setNewScenarioText(e.target.value)}
+              rows={2}
+              className="resize-none rounded-md border border-gray-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={saveNewScenario}
+                disabled={!newScenarioLabel.trim() || !newScenarioText.trim()}
+                className="rounded-md bg-violet-600 px-3 py-1 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-40 transition-colors"
+              >
+                Save scenario
+              </button>
+              <button
+                onClick={() => { setAddingScenario(false); setNewScenarioLabel(""); setNewScenarioText(""); }}
+                className="rounded-md border border-gray-200 px-3 py-1 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Messages */}
@@ -162,8 +292,41 @@ export function SimulatePanel(props: SimulatePanelProps) {
   const [chatKey, setChatKey] = useState(0);
   const [mode, setMode] = useState<Mode>("chat");
 
+  // P2-423: Active version for simulation — defaults to the latest (props.blueprintId / props.version)
+  const [activeVersionId, setActiveVersionId] = useState<string>(props.blueprintId);
+  const [activeVersion, setActiveVersion] = useState<string>(props.version);
+
+  function switchVersion(entry: VersionEntry) {
+    if (entry.id === activeVersionId) return;
+    setActiveVersionId(entry.id);
+    setActiveVersion(entry.version);
+    setChatKey((k) => k + 1); // clear chat when switching version
+  }
+
+  const hasMultipleVersions = (props.allVersions?.length ?? 0) > 1;
+
   return (
     <div className="flex flex-col h-full">
+      {/* P2-423: Version selector — shown when multiple versions available */}
+      {hasMultipleVersions && (
+        <div className="shrink-0 flex items-center gap-1.5 border-b border-gray-100 bg-white px-5 py-2 overflow-x-auto">
+          <span className="shrink-0 text-xs text-gray-400 mr-1">Simulating:</span>
+          {props.allVersions!.map((v) => (
+            <button
+              key={v.id}
+              onClick={() => switchVersion(v)}
+              className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
+                v.id === activeVersionId
+                  ? "bg-violet-100 text-violet-700 ring-1 ring-violet-300"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50 border border-gray-200"
+              }`}
+            >
+              v{v.version}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Mode toggle */}
       <div className="shrink-0 flex items-center gap-1 border-b border-gray-100 bg-white px-5 py-2">
         <button
@@ -193,15 +356,17 @@ export function SimulatePanel(props: SimulatePanelProps) {
         {mode === "chat" ? (
           <SimulatePanelInner
             key={chatKey}
-            {...props}
+            blueprintId={activeVersionId}
+            agentName={props.agentName}
+            version={activeVersion}
             onClear={() => setChatKey((k) => k + 1)}
           />
         ) : (
           <div className="h-full overflow-y-auto px-5 py-4">
             <RedTeamPanel
-              blueprintId={props.blueprintId}
-              agentName={props.agentName ?? `Agent ${props.blueprintId.slice(0, 8)}`}
-              version={props.version}
+              blueprintId={activeVersionId}
+              agentName={props.agentName ?? `Agent ${activeVersionId.slice(0, 8)}`}
+              version={activeVersion}
             />
           </div>
         )}

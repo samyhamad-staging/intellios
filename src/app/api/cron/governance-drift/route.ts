@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireCronAuth } from "@/lib/auth/cron-auth";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -20,16 +21,11 @@ import type { ABP } from "@/lib/types/abp";
  *   5. On drift: notify admin + compliance_officer, update governanceDrift column
  *
  * Runs daily (or on-demand). Schedule in vercel.json.
- * Security: optional Bearer token via CRON_SECRET.
+ * Security: mandatory Bearer token via CRON_SECRET.
  */
 export async function GET(request: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const cronError = requireCronAuth(request);
+  if (cronError) return cronError;
 
   const now = new Date();
 

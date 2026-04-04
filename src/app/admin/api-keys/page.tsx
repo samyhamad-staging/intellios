@@ -13,6 +13,7 @@ interface ApiKey {
   createdBy: string;
   createdAt: string;
   lastUsedAt: string | null;
+  usageCount: number;
 }
 
 export default function ApiKeysPage() {
@@ -42,7 +43,7 @@ export default function ApiKeysPage() {
     if (r.ok) {
       const data = await r.json();
       setNewKey({ key: data.key, name: data.name });
-      setKeys((prev) => [...prev, { id: data.id, name: data.name, keyPrefix: data.keyPrefix, scopes: data.scopes, createdBy: "", createdAt: data.createdAt, lastUsedAt: null }]);
+      setKeys((prev) => [...prev, { id: data.id, name: data.name, keyPrefix: data.keyPrefix, scopes: data.scopes, createdBy: "", createdAt: data.createdAt, lastUsedAt: null, usageCount: 0 }]);
       setForm({ name: "", scopes: [] });
     }
     setCreating(false);
@@ -157,9 +158,19 @@ export default function ApiKeysPage() {
                 <span key={s} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{s}</span>
               ))}
             </div>
-            <p className="text-xs text-slate-400 whitespace-nowrap">
-              {k.lastUsedAt ? `Used ${new Date(k.lastUsedAt).toLocaleDateString()}` : "Never used"}
-            </p>
+            <div className="flex flex-col items-end gap-0.5 shrink-0">
+              <p className="text-xs text-slate-400 whitespace-nowrap">
+                {k.lastUsedAt
+                  ? `Last used ${new Date(k.lastUsedAt).toLocaleDateString()}`
+                  : "Never used"}
+              </p>
+              <p className="text-xs font-mono text-slate-400 whitespace-nowrap"
+                title={`${k.usageCount.toLocaleString()} total request${k.usageCount !== 1 ? "s" : ""}`}>
+                {k.usageCount > 0
+                  ? `${k.usageCount >= 1000 ? `${(k.usageCount / 1000).toFixed(1)}k` : k.usageCount} req`
+                  : "0 req"}
+              </p>
+            </div>
             <button
               onClick={() => handleRevoke(k.id)}
               className="text-slate-400 hover:text-red-500 transition-colors"

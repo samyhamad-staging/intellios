@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, ArrowRight } from "lucide-react";
 
 interface QueueEntry {
   id: string;
@@ -109,6 +109,32 @@ export default function GovernorHomePage() {
           ))}
         </div>
       ) : (
+        {/* Quick-action: Review next critical */}
+        {queue.length > 0 && (
+          <div className="mb-1">
+            <Link
+              href={`/registry/${queue[0].agentId}?tab=review`}
+              className="flex items-center justify-between rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 hover:bg-violet-100 transition-colors group"
+            >
+              <div>
+                <p className="text-xs font-semibold text-violet-700">Review next critical</p>
+                <p className="mt-0.5 text-sm font-medium text-violet-900 truncate max-w-xs">
+                  {queue[0].name ?? `Agent ${queue[0].agentId.slice(0, 8)}`}
+                </p>
+                <p className="text-xs text-violet-500 mt-0.5">
+                  {(() => {
+                    const h = Math.round((Date.now() - new Date(queue[0].updatedAt).getTime()) / 3_600_000);
+                    const waited = h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`;
+                    return `Waiting ${waited}`;
+                  })()}
+                  {queue.length > 1 && ` · ${queue.length - 1} more in queue`}
+                </p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-violet-400 group-hover:text-violet-600 shrink-0 transition-colors" />
+            </Link>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
 
           {/* Pending Approvals */}

@@ -83,25 +83,111 @@ function formatRelative(iso: string) {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+// P2-552: Enhanced delivery row with color-coded status + retry context
 function DeliveryRow({ d }: { d: DeliveryRecord }) {
+  const statusBadge =
+    d.status === "success" ? (
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
+        <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+        success
+      </span>
+    ) : d.status === "failed" ? (
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">
+        <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+        failed
+      </span>
+    ) : (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+        pending
+      </span>
+    );
+
+  const httpColor =
+    d.responseStatus === null ? "text-gray-400"
+    : d.responseStatus >= 200 && d.responseStatus < 300 ? "text-green-700 font-medium"
+    : d.responseStatus >= 400 ? "text-red-600 font-medium"
+    : "text-gray-500";
+
   return (
-    <TableRow>
-      <TableCell className="text-gray-500">{formatRelative(d.createdAt)}</TableCell>
-      <TableCell className="font-mono text-gray-700">{d.eventType}</TableCell>
-      <TableCell>
-        {d.status === "success" ? (
-          <span className="text-green-600 font-medium">✓ success</span>
-        ) : d.status === "failed" ? (
-          <span className="text-red-600 font-medium">✗ failed</span>
-        ) : (
-          <span className="text-amber-600">pending</span>
-        )}
+    <TableRow className={d.status === "failed" ? "bg-red-50/30" : undefined}>
+      <TableCell className="text-gray-500 whitespace-nowrap" title={formatDate(d.createdAt)}>
+        {formatRelative(d.createdAt)}
       </TableCell>
-      <TableCell className="text-gray-500">
+      <TableCell className="font-mono text-xs text-gray-700">{d.eventType}</TableCell>
+      <TableCell>{statusBadge}</TableCell>
+      <TableCell className={httpColor}>
         {d.responseStatus ?? "—"}
       </TableCell>
       <TableCell className="text-gray-500">{d.attempts}</TableCell>
+      <TableCell className="text-gray-400 text-xs whitespace-nowrap">
+        {d.lastAttemptedAt ? (
+          <span title={`Last attempt: ${formatDate(d.lastAttemptedAt)}`}>
+            {formatRelative(d.lastAttemptedAt)}
+          </span>
+        ) : "—"}
+      </TableCell>
     </TableRow>
+  );
+}
+
+// P2-552: Delivery log summary header
+function DeliveryLogHeader({ deliveries, onRefresh, loading }: {
+  deliveries: DeliveryRecord[];
+  onRefresh: () => void;
+  loading: boolean;
+}) {
+  const success = deliveries.filter((d) => d.status === "success").length;
+  const failed = deliveries.filter((d) => d.status === "failed").length;
+  const pending = deliveries.filter((d) => d.status === "pending").length;
+
+  function exportCsv() {
+    const rows = [
+      ["when", "event", "status", "http_status", "attempts", "last_attempt"],
+      ...deliveries.map((d) => [
+        d.createdAt,
+        d.eventType,
+        d.status,
+        d.responseStatus ?? "",
+        d.attempts,
+        d.lastAttemptedAt ?? "",
+      ]),
+    ];
+    const csv = rows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `webhook-deliveries.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div className="mb-2 flex items-center justify-between">
+      <div className="flex items-center gap-3 text-xs">
+        <span className="text-gray-500">{deliveries.length} deliveries</span>
+        {success > 0 && <span className="text-green-700 font-medium">✓ {success} success</span>}
+        {failed > 0 && <span className="text-red-600 font-medium">✗ {failed} failed</span>}
+        {pending > 0 && <span className="text-amber-600">{pending} pending</span>}
+      </div>
+      <div className="flex items-center gap-2">
+        {deliveries.length > 0 && (
+          <button onClick={exportCsv} className="text-xs text-gray-400 hover:text-gray-600 underline">
+            Export CSV
+          </button>
+        )}
+        <button
+          onClick={onRefresh}
+          disabled={loading}
+          className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-40"
+        >
+          {loading ? "Refreshing…" : "↻ Refresh"}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -125,21 +211,25 @@ function WebhookCard({
   const [loadingDeliveries, setLoadingDeliveries] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const fetchDeliveries = useCallback(async () => {
+    setLoadingDeliveries(true);
+    try {
+      const res = await fetch(`/api/admin/webhooks/${wh.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDeliveries(data.deliveries ?? []);
+      }
+    } finally {
+      setLoadingDeliveries(false);
+    }
+  }, [wh.id]);
+
   const handleExpandDeliveries = useCallback(async () => {
     if (!expanded) {
-      setLoadingDeliveries(true);
-      try {
-        const res = await fetch(`/api/admin/webhooks/${wh.id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setDeliveries(data.deliveries ?? []);
-        }
-      } finally {
-        setLoadingDeliveries(false);
-      }
+      await fetchDeliveries();
     }
     setExpanded((v) => !v);
-  }, [expanded, wh.id]);
+  }, [expanded, fetchDeliveries]);
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
@@ -229,30 +319,40 @@ function WebhookCard({
         </button>
       </div>
 
-      {/* Delivery log */}
+      {/* P2-552: Delivery log — enhanced with summary header, CSV export, refresh */}
       {expanded && (
         <div className="border-t border-gray-100 px-4 py-3">
           {loadingDeliveries ? (
             <p className="text-xs text-gray-400">Loading deliveries…</p>
-          ) : deliveries.length === 0 ? (
-            <p className="text-xs text-gray-400">No deliveries yet.</p>
           ) : (
-            <Table dense>
-              <TableHead>
-                <TableRow>
-                  <TableHeader>When</TableHeader>
-                  <TableHeader>Event</TableHeader>
-                  <TableHeader>Status</TableHeader>
-                  <TableHeader>HTTP</TableHeader>
-                  <TableHeader>Attempts</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {deliveries.map((d) => (
-                  <DeliveryRow key={d.id} d={d} />
-                ))}
-              </TableBody>
-            </Table>
+            <>
+              <DeliveryLogHeader
+                deliveries={deliveries}
+                onRefresh={fetchDeliveries}
+                loading={loadingDeliveries}
+              />
+              {deliveries.length === 0 ? (
+                <p className="text-xs text-gray-400">No deliveries yet.</p>
+              ) : (
+                <Table dense>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>When</TableHeader>
+                      <TableHeader>Event</TableHeader>
+                      <TableHeader>Status</TableHeader>
+                      <TableHeader>HTTP</TableHeader>
+                      <TableHeader>Attempts</TableHeader>
+                      <TableHeader>Last attempt</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {deliveries.map((d) => (
+                      <DeliveryRow key={d.id} d={d} />
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </>
           )}
         </div>
       )}

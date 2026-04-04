@@ -2,7 +2,321 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-04-02 (Session 087 — Design Studio Session List UX/UI Overhaul)
+**Last updated:** 2026-04-03 (Session 116 — Residual P1 Sprint complete)
+
+---
+
+## ✓ Session 116 Complete (2026-04-03) — Residual P1 Sprint
+
+2 P1 items implemented, 7 confirmed already done. Zero new dependencies. Zero schema migrations. 2 files modified.
+
+- **Red team risk block in deploy modals (P1-239)** — `getLatestRedTeamTier(blueprintId)` helper reads `localStorage["redteam-history-${blueprintId}"]` (written by the red-team panel after each run). Both `DeployConfirmModal` and `AgentCoreDeployModal` now render an orange advisory warning when the most recent simulation returned HIGH or CRITICAL. The warning differentiates from the existing red intake-risk block (which comes from the DB), is non-blocking, and uses the IIFE pattern in `AgentCoreDeployModal` to avoid adding state to the already-complex component.
+- **Live per-attack progress during red-team runs (P1-275)** — `RedTeamPanel`'s static loading spinner replaced with a simulated per-attack progress counter. `TOTAL_ATTACKS = 10` and `ESTIMATED_SECONDS = 25` are constants; a `useEffect` ticker fires every 2.5 s (capped at attack 9 so it never shows "complete" before the actual response). The loading state shows: "Running attack N of 10 · ~Xs remaining", a CSS-transitioned progress bar, and a 10-pip row with completed/active/pending states. Resets to 0 on unmount/completion.
+- **Confirmed already implemented (7 items):** P1-133 (session re-entry warm recap), P1-262 (quality rubric tooltips), P1-226 (confirm-before-apply refinement), P1-227 (version checkpoint), P1-354 (governor sub-page context banners), P1-355 (review next critical quick-action).
+
+---
+
+## ✓ Session 115 Complete (2026-04-03) — P2 UX Sprint Final
+
+3 P2 items. **P2 sprint now complete.** Zero new dependencies. Zero schema migrations. 6 files modified.
+
+- **Inviter trust banner on invite accept page (P2-91)** — `GET /api/auth/invite/validate` extended to join the `users` table on `invitedBy` and return `inviterName` + `enterpriseName` (derived by title-casing the `enterpriseId` slug via `formatEnterpriseName()`). The invite accept page now shows an indigo trust banner: "Sarah Chen at Acme Bank has invited you to Intellios." Only rendered when at least one of the two fields is known; handles partial data gracefully.
+- **"Remember this device" toggle on login (P2-57)** — `Credentials` provider updated to accept a `remember` field. In the `jwt()` callback, `token.exp` is set to 30 days from now when `remember === "true"`, extending the session from the default 8 hours. Login page: `rememberDevice` state hydrated from `localStorage` on mount; a custom-styled checkbox ("Remember this device for 30 days") shown between the password field and error display; preference written to `localStorage` on every submit; `String(rememberDevice)` passed as the `remember` credential.
+- **Per-department cost view on admin fleet page (P2-562)** — `GET /api/admin/fleet-overview` extended with a `byAgentType` query joining `agentBlueprints` → `intakeSessions` to produce per-agent-type total/deployed counts. Fleet page adds: (1) a violet platform cost summary banner (`deployedAgents × $150/mo` blended estimate); (2) "Est. Monthly Cost" column in the enterprise table with per-enterprise and platform-total figures; (3) a "By Agent Category" grid showing each agent type (Automation/Decision Support/Autonomous/Data Access) with department label, total/deployed counts, deploy-rate progress bar, and per-type cost rate ($120–$250/mo).
+
+---
+
+## ✓ Session 114 Complete (2026-04-03) — P2 UX Sprint (continued)
+
+6 P2 items. Zero new dependencies. Zero schema migrations. 8 files modified, 1 created.
+
+- **Blueprint search/filter on home page (P2-34)** — New `HomeAgentList` client component replaces the static architect agent list. Adds a search input and 5 status filter chips (All / Draft / In Review / Approved / Deployed) with real-time client-side filtering via `useMemo`. Empty state shows a "no match" view with a "Clear filters" link. The server component passes the full `myAgents` array as a prop — zero additional server round-trips.
+- **Signup progress indicator (P2-69)** — A 3-step indicator (Organization → Identity → Security) appears above the registration form. The active step is derived from `form` state via `useMemo`: Organization done when company name filled; Identity done when first/last/email filled; Security done when both password fields ≥ 8 chars. Step dots transition gray → indigo → green ✓; connecting lines fill proportionally as steps complete.
+- **Password reset confirmation screen (P2-101)** — The sparse post-reset success state is replaced with a proper confirmation: animated pulse-ring check icon, personalized security notice (previous sessions invalidated, update password manager, contact admin if unexpected), prominent "Sign in now →" CTA, and a 5-second countdown auto-redirect using `useEffect` + `useRouter`. The countdown is visible below the CTA and decrements visibly.
+- **Invite Stakeholder chip in domain strip (P2-134)** — `InviteStakeholderChip` appended to the `DomainProgressStrip` when `sessionId` prop is provided. Renders as a compact pill ("Invite") at the far end of the strip. Click opens a popover form: email (required), name (optional), domain select (7 options: compliance/risk/legal/security/it/operations/business), RACI role select (4 options). POSTs to the existing `POST /api/intake/sessions/${sessionId}/invitations` endpoint. Shows a "Invitation sent!" confirmation state before auto-closing. Intake session page wired with `sessionId={sessionId}` prop.
+- **Stakeholder submission confirmation (P2-181)** — `SubmittedState` in `stakeholder-workspace.tsx` replaced with a rich, personalized confirmation screen. Now receives `inviteeName`, `sessionName`, and `domainLabel` props. Shows: animated pulse-ring check, personalized headline ("Thanks, Jane!" when name known), domain and session context, "What happens next" 3-step card (contribution visible, stakeholder coverage count with pending indicator, blueprint will incorporate constraints), optional team synthesis, collaborator roster, and "You can close this tab" footer. Replaces opaque technical jargon with plain human language.
+
+---
+
+## ✓ Session 113 Complete (2026-04-03) — P2 UX Sprint (continued)
+
+8 P2 items. Zero new dependencies. Zero schema migrations. 10 files modified/created. Session spanned 2 context windows with seamless continuation.
+
+- **Export Regulatory Evidence button (P2-287)** — `DownloadEvidenceButton` wired to registry agent detail regulatory tab; visible only when agent is `approved` or `deployed`; downloads structured JSON evidence bundle via the existing MRM endpoint. Reviewers and compliance officers can now pull an audit-ready package in one click.
+- **Pipeline audience + sort filters (P2-488)** — Audience chip row (All / Actionable / Clean / Violations) and sort select (Updated / Created / Name) added above the pipeline grid. Both filters composed in a single `useMemo`. Architects and governors can now focus on what needs their attention without scanning the full list.
+- **Webhook delivery log enhancements (P2-552)** — Color-coded dot+text status badges, HTTP status cell with green/red coloring, `lastAttemptedAt` column with ISO tooltip, red-tinted rows for failed deliveries. `DeliveryLogHeader` shows success/fail/pending counts, a client-side CSV export button, and a refresh button. Makes the delivery log usable for active troubleshooting rather than just passive audit.
+- **Test Connection buttons for integrations (P2-532)** — New `POST /api/admin/integrations/test` API route handles live connectivity for all 4 adapters: Slack (webhook POST), Teams (MessageCard POST), ServiceNow (GET sys_user with Basic auth), Jira (GET /myself with Basic auth). `TestConnectionButton` component shows idle/testing/ok/fail states with 8-second auto-reset. Admins can now validate integrations without leaving the settings page.
+- **Bulk CSV invite on Users page (P2-512)** — `BulkInviteForm` component: file input via `useRef`, client-side CSV parser (max 50 rows, skips header, strips quotes), preview table, sequential send loop with per-row status chips, done summary. "Bulk CSV" toggle button added to Users page header. Eliminates the need to invite team members one by one.
+- **Validate Deployment Target button (P2-502)** — `POST /api/admin/settings/validate-deployment` runs 4 checks: AWS region format regex, IAM Role ARN pattern (`arn:aws:iam::\d{12}:role/.+`), foundation model presence, and AWS credential env vars. `ValidateDeploymentTargetButton` component renders inside the AgentCore settings block, showing per-check colored rows (✓/✗ with detail text). Prevents misconfigured deployments from failing silently at runtime.
+- **Template preview modal (P2-169)** — Clicking a template card in the QuickStart modal now opens `TemplatePreviewPanel` as an absolute overlay within the modal card. The panel shows: full description, tags, persona snippet, all tools with type badge + description, governance policy chips. "Use This Template" CTA navigates to the express lane; back arrow returns to the list. Removes the blind leap from template name to full express lane setup.
+- **Clone existing agent tab in QuickStart modal (P2-123)** — Third "Clone" tab added to QuickStart modal. Fetches `GET /api/blueprints` on first open; searchable agent list by name; clicking an agent pre-fills the name as "Copy of {originalName}"; "Clone Agent" POSTs to `/api/blueprints/${id}/clone` and navigates to the new blueprint page. Makes it natural to fork a proven agent as a starting point rather than rebuilding from scratch.
+
+---
+
+## ✓ Session 112 Complete (2026-04-03) — P2 UX Sprint (continued)
+
+5 P2 items. Zero new dependencies. Zero schema migrations. 6 files modified.
+
+- **Red-team run history (P2-240)** — Completed from prior session. `useRunHistory` hook with localStorage persistence per blueprintId; history strip with colored risk-tier chips above launch button; "Re-run" vs "Run Red-Team" label based on whether current version has a prior run.
+- **Cross-version test comparison (P2-276)** — After a red-team run completes, a "Version Comparison" strip appears when a prior version's result exists in history. Shows both versions (tier badge + score), a directional arrow, and a delta: "↑ +2 attacks resisted · risk improved" (green) or "↓ -1 · risk increased" (orange). Uses localStorage data — zero API calls.
+- **Version selector in simulation sandbox (P2-423)** — `SimulatePanel` now accepts an `allVersions` prop. When multiple versions exist, a row of version pill chips renders above the Chat/Red Team mode toggle. Clicking a chip switches `blueprintId` and `version` for both the chat sandbox and red-team panel; chat history is cleared on switch. Registry page now passes the `versions` array.
+- **Command palette policy search (P2-584)** — Policies fetched once on palette open from `GET /api/governance/policies`, held in a ref, filtered client-side on query change. A "Policies" `Command.Group` renders after "Agents" with `ShieldCheck` icons, policy name, type label, and description preview. Navigates to `/governance?policy={id}`. Placeholder updated to "Search pages, agents, and policies…".
+- **Notification preferences routing matrix (P2-607)** — Extended `EnterpriseSettings.notifications` with an optional `routing` object (7 events × 3 channels) and `digestFrequency` ("immediate" | "daily" | "weekly"). Safe defaults added. Admin settings page gains two new subsections: a bordered event × channel checkbox table with alternating row backgrounds, and a digest frequency radio group with contextual description. Zero schema migration (JSONB deep-merge with defaults).
+
+---
+
+## ✓ Session 111 Complete (2026-04-03) — P2 UX Sprint (continued)
+
+6 P2 items across 5 IDs. Zero new dependencies. Zero schema migrations. 10 files modified.
+
+- **Re-review comparison banner (P2-573)** — When a blueprint was being re-reviewed after changes, reviewers had no upfront signal that this was a re-review or easy way to find what changed. Added a violet "↔ Re-review: v1.1 → v1.2 · See what changed ↓" banner at the very top of the review panel when a prior blueprint version exists. Clicking "See what changed" expands the VersionDiff section and smooth-scrolls to it — reviewers no longer need to hunt for the diff.
+- **AI Risk Brief thumbs feedback (P2-252)** — The AI Risk Brief had no feedback mechanism, making it impossible to signal when assessments were inaccurate. Added ThumbsUp/ThumbsDown buttons (already imported, never used) below the recommendation row. Toggling a thumb shows brief confirmation micro-copy. Client-side only — creates a training signal pattern ready for backend wiring.
+- **Quality score delta vs previous version (P2-264)** — Architects doing iterative refinement had no way to know if their change improved or degraded the quality score. Added `previousScore` and `previousVersion` props to `QualityDashboard`. The registry page now fetches the penultimate version's quality score and passes it. Green ↑/red ↓ arrows appear at the overall headline and beside each of the 5 dimension scores.
+- **Help panel copilot live context (P2-595)** — The "Ask Intellios" help panel always gave generic answers regardless of what the user was looking at. Pages now dispatch a custom `intellios:help-context` event carrying the current agent name, blueprint status, and violation count. The panel listens, shows a violet context strip in the header, and passes the context in the API request body. The system prompt explicitly instructs the model to reference the context when answering questions about "this agent" or "these violations".
+- **Notification grouping (P2-606)** — High-frequency events (e.g., 10 governance violations on the same agent) created 10 separate notification rows, making the panel unreadable. Added `groupNotifications()` which collapses same-type + same-entity runs into a single digest card: "Agent X — 5× Blueprint Status Changed · View all 5 →". Single events render as before.
+- **Governance analytics date range + narrative (P2-344)** — The governance analytics section always showed all-time data with no period context, and no narrative summary for executive readers. Added a "Last 30 / Last 90 / Last 365 days" chip picker that re-fetches analytics with `?days=N`. Added an auto-computed narrative summary box: "In the last 90 days: 14 agents approved with 91% pass rate, 3 violations detected, 7 agents running in production."
+
+---
+
+## ✓ Session 110 Complete (2026-04-03) — P2 UX Sprint (continued)
+
+5 P2 items. Zero new dependencies. Zero schema migrations. 5 files modified.
+
+- **Daily briefing widget on dashboard (P2-467)** — The Intellios dashboard had no connection to the AI intelligence briefings generated by the monitoring subsystem. Added `AiBriefingWidget` below the Recent Deployments section. Fetches the latest briefing from the existing `/api/monitor/intelligence/briefing` endpoint, shows a health-colored card (green/amber/red/gray), a ~200-char content preview, and a "View full briefing →" link to the monitor page. Zero new API routes.
+- **Context-aware companion AI prompts (P2-216)** — The Blueprint Companion's empty-state prompt chips were static, showing the same suggestions regardless of the blueprint's governance or quality state. Added three ranked prompt sets: `VIOLATION_PROMPTS` (surfaces when governance violations exist), `QUALITY_PROMPTS` (surfaces when quality score < 3.0/5.0), and `BASE_COMPANION_PROMPTS` (default). A context hint chip above the suggestions tells the architect why certain prompts are being ranked first.
+- **API key usage count in admin UI (P2-522)** — The admin API Keys page listed key names and scopes but not usage data, making it impossible to audit which keys were active. Added `usageCount` to the `ApiKey` interface and a formatted "Xk req / 0 req" display stacked below the last-used date in each key row. Full count tooltip on hover.
+- **Ambiguity flags sorted by heuristic impact (P2-146)** — Unresolved ambiguity flags on the Intake Review page appeared in creation order, burying critical governance/capability flags after minor identity ones. Added a `flagImpact()` heuristic that classifies fields by keyword match against a `HIGH_IMPACT_FIELDS` set (governance, capabilities, tools, instructions, constraints, etc.). Flags now sort high-impact first. Each flag shows a red "High impact" or slate "Low impact" badge in its header row.
+- **Auto-highlight changed section after refinement (P2-228)** — After running a blueprint refinement, architects had no visual cue about which section was updated. Added `detectChangedSection()` which JSON-serializes each of the 8 ABP sections (identity, instructions, tools, knowledge, constraints, governance, audit, ownership) and returns the first that differs between pre- and post-refinement ABPs. `handleRefine` now sets `activeSection` to the changed section and smooth-scrolls to it after a 150ms render delay.
+
+---
+
+## ✓ Session 109 Complete (2026-04-03) — P2 UX Sprint (continued)
+
+5 P2 items. Zero new dependencies. Zero schema migrations. 4 files modified.
+
+- **Add to Calendar (P2-366)** — The governance compliance calendar API endpoint existed but had no UI entry point. Added a blue "Add to Calendar" button to the governance Quick Actions bar. Clicking downloads an `.ics` file with all compliance review deadlines and policy renewal dates, ready to import into Outlook or Google Calendar. Available to all analytics-capable roles.
+- **Workflow step flow visualization (P2-411)** — The workflow detail page listed agents and handoff rules as text tables with no visual representation of orchestration order. Added a `WorkflowFlowDiagram` component at the top of the page. Uses BFS traversal from the "start" sentinel to order nodes, renders them as labeled boxes with SVG arrow connectors, and marks branching points with an amber badge. Handles wide workflows via horizontal scroll.
+- **Deployment history timeline (P2-379)** — The Versions tab had a table of versions but no temporal deployment view. Added a deployment history timeline at the top of the tab when at least one version was deployed. Shows each deployed version in chronological order with deploy date, deployer, and "ran Xd" duration until superseded. The latest version gets a green dot. Uses the already-loaded `versions` state — zero additional API calls.
+- **Export violations as CSV (P2-447)** — SOC 2 auditors request runtime violation logs as evidence. Added "Export CSV" button to the violations panel filter row. Generates an RFC-4180 CSV client-side using `Blob` + `URL.createObjectURL` — instant, zero server round-trip. Columns: id, severity, policyName, ruleId, metric, observedValue, threshold, message, detectedAt. Filename includes agentId, time range, and date.
+- **Analytics last-refreshed timestamp (P2-356)** — Governance stakeholders couldn't tell if the analytics sparklines reflected current data. Added `analyticsLoadedAt` state that captures the fetch completion time. When the analytics section is expanded, "Refreshed HH:MM" appears in the header row with a full datetime tooltip.
+
+---
+
+## ✓ Session 108 Complete (2026-04-03) — P2 UX Sprint
+
+5 P2 items. Zero new dependencies. Zero schema migrations. 7 files modified/created.
+
+- **Health pulse badge in agent header (P2-401)** — The agent registry detail page showed a status badge but surfaced no health signal. A green "Healthy" or red "N error(s)" pill now appears inline in the page header right after the lifecycle status badge. Wires into `healthData` already fetched by the page — zero additional API calls. Tooltip shows full error/warning counts and last-checked timestamp. Hidden when health is unknown (not yet checked).
+- **Policy breadcrumbs (P2-324)** — The New Policy and Edit Policy pages showed a right-aligned "← Governance" back link but no breadcrumb trail. Replaced with a full Governance / Policies / {name} breadcrumb `<nav>` above each page header. Edit page shows the policy name truncated at 200px with a native `title` tooltip for long names. Removes the back-link redundancy while improving wayfinding.
+- **Telemetry empty state code snippet (P2-435)** — The production dashboard empty state was a vague message pointing to an API endpoint. Added a full `TelemetrySnippetPanel` component with Python and cURL tabs, syntax-highlighted dark code block, and a copy-to-clipboard button. The `agentId` is dynamically interpolated into the payload so the snippet is ready to run. A footer hint directs users to the API key location in admin settings.
+- **Status filter legend tooltips (P2-390)** — The registry status filter pills (Draft, In Review, Approved, Deployed…) gave no indication of what each status means. Added `STATUS_DESCRIPTIONS` record and wired `title={STATUS_DESCRIPTIONS[s]}` onto each pill. Hovering any status pill now shows a plain-English description of what that lifecycle state means.
+- **Duplicate intake session (P2-113)** — There was no way to reuse a session's captured context as a starting point for a related agent. Added `POST /api/intake/sessions/[id]/duplicate` which creates a new active session copying `intakeContext`, `intakePayload`, `agentType`, `riskTier`, and `expertiseLevel` — but not chat messages (fresh conversation on pre-populated payload). A `DuplicateSessionButton` appears on hover in the intake session list alongside the existing delete button; navigates to the new session on success.
+
+---
+
+## ✓ Session 107 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+3 P1 items. Zero new dependencies. Zero schema migrations. 5 files modified.
+
+- **Welcome page role personalization (P1-81)** — Every role was shown the same generic setup checklist. The welcome page now reads the user's role from the session and renders a tailored hero card and step sequence. Admin sees Settings → Invite Team → Governance. Compliance Officer sees the governance dashboard and alert config. Reviewer is pointed straight to the review queue. Architect (default) sees the Design Studio path. Hero headline, CTA text, and secondary link also adapt per role — the page now functions as a role-specific launchpad rather than a generic onboarding screen.
+- **Blueprint persistent action tray (P1-204)** — The 4 core blueprint actions (Refine with AI, Simulate, Export, Deploy) were scattered across multiple tabs and menus, forcing architects to hunt for them. A compact 4-column action tray now appears at the very top of the right rail on every blueprint page, always visible when the agent has a registry ID. One click to reach any core action from anywhere in the blueprint workbench.
+- **Notification channel config — Slack + PagerDuty (P1-433)** — Alert thresholds existed but had no delivery mechanism beyond email. Added Slack incoming webhook URL and PagerDuty Events API v2 integration key to the `EnterpriseSettings.notifications` type, the API Zod schema, and the admin settings UI. The Notifications section is now structured into three labelled subsections (Email · Slack · PagerDuty). Each channel shows a green "active" confirmation when configured. Stored in the existing JSONB settings column — zero DB migrations.
+
+---
+
+## ✓ Session 106 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+5 P1 items. Zero new dependencies. Zero schema migrations. 6 files modified.
+
+- **Preview ABP before generating (P1-157)** — Architects had no way to review the structured intake payload before committing to blueprint generation. A "Preview ABP" button in the sticky footer of the Intake Review component opens a slide-in overlay showing all captured data (Identity, Capabilities, Constraints, Governance, Context). A "Generate Blueprint →" shortcut button in the panel footer lets architects proceed directly from the preview.
+- **Reviewer self-assignment in review queue (P1-299)** — The review queue had no assignment workflow; all blueprints looked equally unclaimed. Each queue card now has an "Assign to me" button (using `e.stopPropagation()` to avoid triggering the parent link). Assignments are stored in localStorage keyed by `blueprintId`. "My assignments" bubble to the top of the sorted list. An assignment counter chip appears above the queue when any assignments exist.
+- **Export Compliance Report (P1-334)** — Governance teams needed a board-ready compliance document. Added "Export Compliance Report" button to the Governance Hub Quick Actions (visible to viewers and up, only when analytics are loaded). Clicking generates a print-optimised HTML report in a new window — `window.print()` fires automatically so the browser's native PDF dialog opens. Report covers: KPI summary (pass rate, violations, approved agents, avg approval time), violations by category, top violated policies, agents requiring attention, and the full active policy list. Zero new dependencies — no PDF library required.
+- **Enterprise branding on register page (P1-67/68)** — The register page was a plain gray form, disconnected from the enterprise dark theme of the login page. Converted `register/page.tsx` to use the same dark gradient background, dot-grid overlay, ambient glow orbs, and Cpu logo lockup as login. Updated `register-form.tsx` to use a dark glassmorphism card (backdrop-blur, white/10 borders, transparent inputs, indigo focus rings, gradient submit button). Relabelled "Company name" to "Enterprise name" to match enterprise product positioning.
+- **Test SSO Configuration button (P1-542)** — SSO admins had no way to validate their OIDC configuration without asking a user to attempt a real login. Added "Test SSO Configuration" button to the SSO settings footer. Opens a modal showing the current config snapshot (protocol, issuer, domain, enabled status). "Start Test Login" opens the OIDC `/api/auth/signin/oidc` route in a 520×640 popup — a genuine end-to-end test against the configured IdP. Polls for popup close; reports success or specific error (blocked popup, timeout). Button is disabled when issuer is empty or platform OIDC is not configured.
+
+---
+
+## ✓ Session 105 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+7 P1 items. Zero new dependencies. Zero schema migrations. 9 files modified.
+
+- **Test case template library (P1-42)** — Test suites previously required architects to write all test cases from scratch. The Tests tab now shows a "Quick add from library" chip row with 5 pre-authored templates: PII exfiltration attempt, Out-of-scope request, Prompt injection probe (all Standard tier), plus Escalation bypass attempt and Data exfiltration via tool (Critical tier, marked with red dot). One click pre-fills the form and opens it. No DB query needed — all client-side.
+- **Red-team risk warning in deploy (P1-43)** — High and critical risk agents can now be deployed without any warning — a compliance gap. Extended `GET /api/registry` with a LEFT JOIN on `intakeSessions` to surface `riskTier` per agent blueprint. Both the standard Deploy-to-Production modal and the AgentCore deploy modal now render a red `⚠ [tier] risk tier` banner when `riskTier` is high or critical, reminding operators that security review is required.
+- **Review decision notifications fixed (P1-251)** — The notification handler for `blueprint.reviewed` events was reading `meta.reviewAction` but the review route publishes `payload.decision`. Result: all review notifications sent generic "Blueprint reviewed" titles rather than action-specific "Approved" / "Rejected" / "Changes requested". Fixed with a one-line `(meta.reviewAction ?? meta.decision)` alias in the handler. Creators now receive properly-titled notifications on every review decision.
+- **Demo mode env flag (P1-56)** — Demo account quick-fill buttons on the login page were always visible, looking unprofessional to enterprise buyers. Wrapped the entire demo accounts section in `process.env.NEXT_PUBLIC_DEMO_MODE === "true"`. Default: hidden. Documented in `.env.example`.
+- **Onboarding checklist persistence (P1-80)** — The welcome page setup checklist had no memory. Converted from server component to `"use client"`. Added localStorage-backed `visitedSteps: Set<string>`. Each step shows a green `CheckCircle2` icon after first visit. CTA changes to "Revisit →". Progress counter shows "X/3 visited" or "✓ All done".
+- **Confirm-before-apply for companion AI suggestions (P1-226)** — Companion AI "Apply" buttons triggered blueprint refinement immediately with no confirmation step. Added `pendingApplyPrompt` state; clicking Apply now stages the prompt. A confirmation banner shows the suggestion text and requires an explicit "Confirm — Apply Changes" click. Cancel discards without running refinement.
+
+---
+
+## ✓ Session 104 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+3 P1 items from the UX Experience Map. Zero new dependencies. Zero schema migrations. 3 files modified.
+
+- **Simulate panel saved scenario library (P1-32)** — Architects running repeated compliance tests (PII exfiltration, out-of-scope requests, edge cases) previously had to retype or paste the same prompts every session. The sandbox now has a saved scenario library: a horizontally-scrollable chip list above the messages area. Clicking a chip immediately sends that prompt. A "+ Add" button opens an inline form (label + prompt text). Scenarios are stored in `localStorage` keyed by `blueprintId`. Hover-reveal ✕ to delete. Built without modifying `ChatInput` — click-to-send was the correct pattern since `ChatInput` manages its own input state internally.
+- **Monitor alert acknowledgement (P1-33)** — Degraded and critical agents on the Deployment Monitor page were previously read-only — there was no workflow for confirming a known issue had been reviewed. Each degraded/critical row now shows an "Acknowledge" button (matching the violations panel pattern from P1-31). Clicking dims the row to 60% opacity and shows a green "Undo" toggle. An "X acknowledged" chip appears in the table count row. `localStorage`-persisted, browser-local — consistent with the rest of the acknowledgement pattern in this sprint.
+- **Generate Blueprint time estimate (P1-34)** — The intake review Generate button now reads "Generate Blueprint (~20s) →". A single-character addition that sets accurate expectations and prevents the architect from abandoning the page thinking the action has stalled.
+
+---
+
+## ✓ Session 103 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+3 P1 items from the UX Experience Map. Zero new dependencies. Zero schema migrations. 3 files modified.
+
+- **Companion AI tab + one-click apply (P1-29)** — `CompanionChat` was fully implemented but never imported anywhere. The blueprint page right rail now has a two-tab header: "Refine" (existing manual chat) and "Companion AI" (the AI design partner). When an architect clicks "Apply Change" on a suggestion card, the component switches to the Refine tab and calls the refinement API directly — no copy-paste required. `handleRefine` was extended to accept an optional `directPrompt` so both paths share the same execution logic.
+- **Companion chat history persistence (P1-30)** — Architects revisit blueprints over multiple sessions. The companion chat now loads its prior conversation from `localStorage` as `initialMessages` on mount and saves messages back on every update. A trash icon in the header clears the history (and reloads the page to reset the `useChat` state, since the hook has no public reset API). No backend changes.
+- **Violations per-row acknowledgement (P1-31)** — Runtime violations with no resolution workflow are noise; there's no way to distinguish known/accepted issues from new ones. Each violation row now has an "Acknowledge" button that stores the ID in `localStorage` (keyed per agent). Acknowledged rows dim to 60% opacity, switch to a green "acknowledged" badge, and get a strikethrough message. The header shows an "X acknowledged" green chip. Toggle ("Undo") un-acknowledges. No DB migration — browser-local for this sprint.
+
+---
+
+## ✓ Session 102 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+3 P1 items from the UX Experience Map. Zero new dependencies. Zero schema migrations. 4 files modified.
+
+- **Deploy console rollback CTA (P1-26)** — When an AgentCore deployment fails, operators previously had only a "Done" button — leaving them without a clear path to recovery. The error-phase footer now shows "← Try previous version" as a `Link` to the agent's registry page, where all versions are listed and a stable version can be selected for re-deployment. One additional line of JSX; no API changes needed.
+- **Production KPI period-over-period deltas (P1-27)** — The five KPI cards (Invocations, Error Rate, P50 Latency, P99 Latency, Tokens) now each show a "+X% vs prior 7d" or "−X% vs prior 7d" badge in green (improvement) or red (regression). Computed from a `prev7d` window (days 8–14) against the existing `last7d` window. Sub-1% changes are suppressed to avoid noise. A KPI card showing "14,832 invocations" is ambiguous — "+12% vs prior 7d" immediately contextualises whether the agent is growing or in decline.
+- **Policy form auto-save (P1-28)** — Governors building complex governance policies can now navigate away without losing work. A `draftKey` prop on `PolicyForm` enables: 30-second localStorage auto-save, draft restoration on page reload (when no `initialValues` are present), and a "Draft saved X min ago" indicator in the submit row. The new-policy page passes `draftKey="policy-draft-new"` and clears the draft immediately before routing on successful save. Built with three `useEffect` hooks; no backend calls, no schema changes.
+
+---
+
+## ✓ Session 101 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+3 P1 items from the UX Experience Map. Zero new dependencies. Zero schema migrations. 3 files modified.
+
+- **Simulate panel audit indicator (P1-23)** — The sandbox header now shows a small green badge: "This session is being audited for compliance evidence." The firstMessage audit flag was already wired into the transport — this change surfaces that fact to the user. Architects and reviewers now know their simulation sessions are logged as governance evidence, which both builds trust and satisfies compliance requirements.
+- **Violations panel trend sparkline (P1-24)** — A daily bar chart now appears between the filters and the violation list (for 7d and 30d time ranges). Computed from the already-loaded violations array — no new API call. Orange bars for active violations, red for the peak day. Without the trend, a count of "14 violations" is ambiguous — you can't tell if it's improving or worsening.
+- **Dashboard role-aware Next Actions (P1-25)** — The dashboard now fetches `/api/me` in parallel with the summary data and renders a "Your Next Actions" section with 3 role-specific priority cards. Architect: drafts in progress / quality scores / deployments ready. Reviewer / compliance officer: review queue (amber when non-empty) / governance compliance / audit log. Governor / admin: pending approvals (amber when non-empty) / fleet health / policies. Each card is a direct link. Replaces the role-blind generic dashboard that showed the same information regardless of who was viewing it.
+
+---
+
+## ✓ Session 100 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+3 P1 items from the UX Experience Map. Zero new dependencies. Zero schema migrations. 6 files modified.
+
+- **Governor "Review next critical" CTA (P1-20)** — A violet action card now appears above the Pending Approvals grid on the Governor command center. It shows the first (highest-priority) blueprint in the review queue: agent name, how long it's been waiting, and queue depth. Clicking navigates directly to `?tab=review` on that agent's registry page. Only renders when the queue is non-empty. Governors previously had no way to jump straight to the most urgent item.
+- **Governor context banner on sub-pages (P1-21)** — All four governor sub-pages (Approvals, Audit, Fleet, Policies) were bare 2-line re-exports of their originals — rendering identically to the non-governor versions with no role framing. Each is now a wrapper component that renders a violet "Governor · [context description]" banner strip above the original page. The banner communicates scope ("fleet-wide", "enterprise-wide") and confirms the governor's elevated view.
+- **Review decision SLA badge (P1-22)** — A `ReviewSlaBadge` now appears at the top of `ReviewPanel`, above the AI Risk Brief. It shows: "Waiting Xd · SLA 5d · Xd remaining". Three states: gray (safe), amber (< 24h remaining), red + "Overdue Xd" (past SLA). `REVIEW_SLA_DAYS = 5` constant is editable. Reviewers were previously unaware of urgency context while making decisions.
+
+---
+
+## ✓ Session 099 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+3 P1 items from the UX Experience Map. Zero new dependencies. Zero schema migrations. 3 files modified.
+
+- **Red team report JSON export (P1-17)** — The `RedTeamPanel` now has an "Export" button in the report header (alongside "Re-run"). Clicking downloads the full `RedTeamReport` serialised to JSON with agent name, version, and export timestamp as wrapper metadata. Filename: `red-team-report-{agent}-v{version}.json`. This is the security evidence artefact governance teams need for audit files and examiner responses.
+- **Quality dimension rubric tooltips (P1-18)** — Each of the 5 quality dimension rows in `QualityDashboard` now has a `(?)` help button. Clicking opens a tooltip showing the 1/3/5 scoring rubric for that dimension (e.g. "1 = no tools or entirely wrong tools · 3 = some tools listed but descriptions vague · 5 = all required tools specified with correct scoping and parameter constraints"). Tooltip closes on outside click. Without these rubrics, a score of 3.2 on "Tool Appropriateness" was unactionable — now it has a clear target.
+- **Test run live progress indicator (P1-19)** — The "Run Tests" button in the Tests tab is now replaced by a live progress block while a run is executing: "Running case X of N · ~Ys remaining" plus a 1px animated progress bar. Driven by a `setInterval` elapsed counter and an estimated 8s/case pace. Caps at 95% to avoid a stuck appearance. Previous behavior (static "Running N tests…" disabled button) caused architects to navigate away assuming the run had frozen on slow connections.
+
+---
+
+## ✓ Session 098 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+3 P1 items from the UX Experience Map. Zero new dependencies. Zero schema migrations. 3 files modified.
+
+- **Notification "Mark all as read" button (P1-14)** — Removed the previous behavior where opening the notification dropdown automatically marked all notifications as read (a surprising, hard-to-reverse side effect). Now the dropdown opens without affecting read state. An explicit "Mark all as read" button appears in the header when unread notifications exist. Clicking it triggers the optimistic update and background PATCH. Unread count badge added to the header alongside the label.
+- **Governance analytics section collapsed by default (P1-15)** — The analytics section (3 KPI cards + 2 charts + skeleton loader) is now hidden by default. A clickable toggle replaces the static heading. When collapsed, a 1-line summary shows inline: "Pass rate: 87% · 3 violations · 2d avg approval". Expanding shows the full analytics content. This saves ~300px of prime scroll real estate for users who visit the governance page to take action.
+- **Blueprint quality gate advisory (P1-16)** — The blueprint workbench now fetches the quality score from `/api/blueprints/[id]/quality` on mount. When the `overallScore` is below 3.0/5.0 (`QUALITY_GATE_THRESHOLD`), an orange advisory warning appears above the Submit button: "Quality score is X.X/5.0 — below the recommended threshold of 3.0. Consider addressing quality issues before submitting." Includes a direct link to the Quality tab in the registry. Non-blocking — architects can still submit.
+
+---
+
+## ✓ Session 097 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+1 P1 item from the UX Experience Map. Zero new dependencies. Zero schema migrations. 1 file modified.
+
+- **Blueprint detail — governance violations acknowledgement workflow (P1-13)** — Warning-severity violations in the blueprint workbench right rail now have an explicit "Acknowledge" button. Clicking it dims the card to 60% opacity, turns it green, changes the badge to "✓ ack", and collapses the suggestion box (acknowledged = read + accepted). A header counter ("X/Y acknowledged") tracks progress. The Submit button changes its label to "Acknowledge N warnings below" until all warnings are acknowledged, at which point it becomes the normal "Submit for Review" CTA. A green "All warnings reviewed" summary appears below the list when all warnings are acknowledged and no errors remain. The clean governance section (previously shown on `valid=true` even with warnings present) now correctly only renders when `violations.length === 0`. Acknowledgement state is session-scoped — no DB schema change needed.
+
+---
+
+## ✓ Session 096 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+1 P1 item from the UX Experience Map. Zero new dependencies. Zero schema migrations. 1 file modified.
+
+- **Registry filter state persisted in URL params (P1-12)** — `activeTab`, `searchQuery`, and `statusFilter` in the Registry page are now initialized from `?tab=`, `?q=`, and `?status=` URL params on mount. Every filter interaction (`setSearchQuery`, `setStatusFilter`, `switchTab`) updates the URL via `router.replace(..., { scroll: false })`. Defaults are omitted to keep the base URL clean. Practical benefits: filtered views are now shareable (e.g. `/registry?status=deployed`), browser Back/Forward navigate to the correct filter state, and refreshing the page preserves the current filters.
+
+---
+
+## ✓ Session 095 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+1 P1 item from the UX Experience Map. Zero new dependencies. Zero schema migrations. 1 file modified.
+
+- **Home page — role-aware next actions (P1-11)** — Three role gaps addressed in `src/app/page.tsx`:
+  - *Compliance officer* now sees 4 governance-focused quick-action cards (Review Queue · Governance Hub · Compliance Posture · Agent Registry) on a 4-column grid, replacing the reviewer-targeted 3-card set it previously shared.
+  - *Empty-queue state* expanded for both roles: compliance officers get "Review Governance Hub" (violet CTA) + "Browse Agent Registry" (neutral); reviewers get "Browse Recent Agents". The green checkmark "all clear" signal is preserved above the guidance.
+  - *Viewer role* in the admin/overview branch now renders an "Explore" navigation block (Agent Registry · Pipeline Board · Governance Hub · Blueprints) before the admin action queue, replacing a blank zone with contextual forward navigation.
+
+---
+
+## ✓ Session 094 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+3 P1 items from the UX Experience Map. Zero new dependencies. Zero schema migrations. 4 files modified, 2 created.
+
+- **Governance hub quick actions** — Quick-action bar rendered after data load (below page header), before analytics section. Buttons: New Policy (canManagePolicies), Import Pack (canManagePolicies + packs exist, scrolls to `#template-packs`), Active Violations count-badge (scrolls to `#violations`), Audit Trail (for non-analytics roles). Added `id="template-packs"` to starter packs section. Actions are contextual — only visible items relevant to the user's role and current data state are shown.
+- **Landing page Request Access modal** — All three "Request access" CTAs now open a modal (`RequestAccessModal`, render-prop pattern) instead of navigating to `/register`. Modal: email + company (required) + role select + freeform message. On submit: POSTs to new `POST /api/waitlist` endpoint which emits a structured `WAITLIST_SUBMISSION` JSON log (Vercel log drain capturable). Success state: "You're on the list" with confirmation. Zero schema migration needed.
+- **Ask Intellios affordance** — `HelpPanel` gains a `variant="row"` prop rendering a full-width, labeled nav-style button ("Ask Intellios" + violet AI badge). Sidebar renders this above the user footer (separated by `borderTop`), replacing the 13px icon buried in the footer icon cluster. Default `"icon"` variant preserved for backward compatibility.
+
+---
+
+## ✓ Session 093 Complete (2026-04-03) — P1 UX Sprint (continued)
+
+3 P1 items from the UX Experience Map. Zero new dependencies, zero schema migrations. 4 files modified.
+
+- **Regulatory panel — contextual fix guidance** — For each `missing` requirement across all three frameworks (EU AI Act, SR 11-7, NIST AI RMF), a blue "How to fix" box now appears with a plain-language instruction and a direct link to the relevant Intellios page (Governance, Admin Settings, Blueprints, or Intake). Coverage: all 26 defined requirement IDs. Header summary shows total gap count with "fix guidance below" nudge. `FrameworkSection` header now shows a gap count badge.
+- **Registry list — health pulse indicator** — Each agent row now shows a 2.5-size colored dot: green (validated, 0 violations), amber (validated, warnings only), red (has governance errors), gray (not yet validated). `warningCount` added to registry API response alongside existing `violationCount`. Tooltip on hover states the reason.
+- **Agent detail — status context bar** — A contextual strip now appears below the header for `draft`, `approved`, `rejected`, and `deprecated` states (deployed and in_review already had strips). The bar shows the state's meaning and a primary CTA: Submit for Review (draft), Deploy to Production (approved, links to /deploy), Create New Version (rejected), Clone as New Agent (deprecated). Inline `handleContextBarTransition` callback wired to existing lifecycle API. `LifecycleControls` in header preserved as fallback.
+
+---
+
+## ✓ Session 092 Complete (2026-04-03) — P1 UX Sprint
+
+5 P1 items from the UX Experience Map. Zero new dependencies, zero schema migrations. 4 files modified.
+
+- **Blueprints sidebar nav** — `FileText` nav item added after Design Studio for architect/admin roles. Blueprints now reachable from every page.
+- **Architect home quick actions** — Expanded to 4 cards (New Intake · Blueprints · Pipeline · Registry). Blueprints promoted as the primary creation artifact.
+- **Reviewer home urgency** — Red callout surfaces the highest-risk pending blueprint at the top of the home page. Pending list sorted by governance severity. `Violations` badge vs `Review` badge distinguishes risk level.
+- **Admin settings section nav** — Sticky horizontal tab strip with IntersectionObserver tracking active section as user scrolls. 7 sections: Branding · Periodic Review · Review SLA · Governance Rules · Notifications · Approval Chain · Deployment.
+- **Express Lane progress indicator** — 4 step-dots in the header: Identity · Capabilities · Constraints · Governance. Turns emerald with checkmark once each section's key field is filled. Clickable to toggle sections.
+
+---
+
+## ✓ Session 091 Complete (2026-04-03) — P0 UX Fixes
+
+**All 4 P0 issues from the UX Experience Map resolved.** Zero new dependencies, zero schema migrations.
+
+- **Blueprint list page** — `src/app/blueprints/page.tsx` created. `GET /api/blueprints` endpoint added. Search, 5-tab status filter, governance badges, empty state with intake CTA.
+- **Review queue priority sort + SLA** — Risk tier derived from `validationReport` (CRITICAL/HIGH/MEDIUM/LOW). SLA countdown (24/48/72/96h from `updatedAt`). Queue sorted highest risk first, then oldest within tier. Live 30-second tick.
+- **Express Lane inline validation** — Agent name (required, ≥2 chars, human-name heuristic), tool names (snake_case regex), retention days (1–365). Fires on blur + keystroke-after-touch. Blocks form submission.
+- **Welcome page hero CTA** — Gradient hero card with "Create your first agent" as the primary action. Setup steps demoted to optional secondary section below.
+
+---
+
+## ✓ Session 090 Complete (2026-04-03) — UX Experience Map: Full Platform Audit
+
+**GTM Analysis Phase.** Comprehensive audit of all human-facing experiences in the Intellios platform, producing a scored, prioritized, interactive UX Experience Map (`intellios-ux-map.jsx`). Four progressive passes over the full codebase (page.tsx files, all components by LOC, API routes, lib/ directory) built a complete experience inventory from 41 → 53 experiences. No code changes — strategic analysis and documentation only.
+
+**Final map state:** 53 experiences · 48 directed flows · 107 recommendations (4 P0 · 60 P1 · 43 P2) across 6 clusters: Entry (7), Create (7), Review (11), Govern (6), Operate (11), Admin (11).
+
+**Key discoveries that changed the product picture:**
+- `help-panel` is a live multi-turn AI copilot (Phase 47, claude-haiku-4-5, page-aware) — not a static FAQ. Needs a visible "Ask Intellios" affordance.
+- `admin-settings` controls 7 sections of live governance enforcement (circuit breaker, multi-step approval chain, SR 11-7 periodic review, AWS deployment targets, SLA thresholds) — currently mischaracterized as "branding, model config." Needs section navigation.
+- `blueprint-report` is a formal 8-section MRM Report written for bank examiners, with audit logging on every view — currently underpromoted in the platform.
+- `review-decision` (440 LOC, AI risk brief + approve/reject, SLA badge, version diff) — the most consequential human decision point in the entire workflow — was entirely absent from the map.
+- 4 P0 priorities precisely specified: (1) Blueprint list page missing (`/blueprints/page.tsx`), (2) Review queue priority sorting + SLA timers, (3) Express Lane inline field validation, (4) Welcome hero action ("Create your first agent").
+
+**Pitch deck:** Also completed in Session 089 (same date) — 12-slide investor pitch deck for the $2.5M pre-seed raise.
+
+---
+
+## ✓ Session 089 Complete (2026-04-03) — GTM Preparation: Investor Pitch Deck
+
+12-slide pre-seed investor pitch deck ($2.5M raise). Midnight Executive palette (DEEP_NAVY #12183D / ICE_BLUE #CADCFC / ACCENT cyan #38BDF8). Built with python-pptx. Visual QA via LibreOffice PDF conversion + pdftoppm image inspection. Spacing fixes applied after QA round 1. Pricing tiers: Starter $2,500/mo · Enterprise $15,000/mo · Platform custom. Narrative arc: Title → Problem → Solution → How It Works → Product (ABP) → Market (TAM $86B / SAM $12B / SOM $480M) → Business Model → Competitive Landscape → Traction → Why Now → Team → The Ask. 1 new file, 0 code changes.
+
+---
+
+## ✓ Session 088 Complete (2026-04-03) — Express-Lane Intake + Middleware Tenant Isolation
+
+**Part 1: Express-Lane Intake.** Template-based fast path for blueprint generation — users skip the full 3-phase intake conversation and generate a blueprint from a pre-configured template in under 2 minutes. QuickStartModal enhanced with tabbed UI ("Describe Your Agent" + "Start from Template"). Express-lane page (`/intake/express/[templateId]`) with section-by-section editor. `POST /api/blueprints/from-template` API: template resolve → merge customizations → stub session → ABP assembly → governance validation → persist.
+
+**Part 2: Middleware Tenant Isolation (ADR-012).** Centralized enterprise_id enforcement at the middleware layer for SOC 2 readiness. Full security audit of all 120 API routes (zero critical vulnerabilities). Middleware now injects `x-enterprise-id`, `x-user-role`, `x-actor-email` from JWT on every authenticated request. New `enterpriseScope()` utility generates Drizzle WHERE filters from middleware headers (single enforcement point). 4 key routes refactored as reference pattern (`/api/registry`, `/api/dashboard/summary`, `/api/review`, `/api/governance/policies`). All 6 cron routes hardened with mandatory `requireCronAuth()` — fails 503 (closed) when `CRON_SECRET` is unset. 6 new files, 14 modified, 0 migrations, 0 new deps.
 
 ---
 

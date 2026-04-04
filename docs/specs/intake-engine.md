@@ -1,13 +1,17 @@
 # Intake Engine — Specification
 
 **Subsystem:** Design Studio
-**Status:** Complete — Phase 17 (generation intelligence — adaptive model selection, 2026-03-13)
+**Status:** Complete — Session 088 (express-lane intake — template-based fast path, 2026-04-03)
 
 ## Purpose
 
 Captures enterprise requirements, constraints, and governance context for agent creation. Produces a structured intake payload that the Generation Engine consumes and a Phase 1 context record that the governance validator and MRM report use.
 
 The engine operates as a **three-phase process** designed to eliminate the completeness blindspot inherent in discovery-driven intake: Claude cannot know to probe for FINRA compliance if the user never mentions financial data. Phase 1 captures domain signals first; Phase 2 uses those signals to enforce context-appropriate governance requirements deterministically; Phase 3 requires explicit human acknowledgment of what was captured before generation proceeds.
+
+### Express-Lane Path (Session 088)
+
+An alternative **express-lane** path bypasses the full 3-phase conversation for common agent types. Users select a built-in template from the QuickStartModal's "Start from Template" tab, customize any ABP sections in a visual editor (`/intake/express/[templateId]`), and generate a blueprint directly via `POST /api/blueprints/from-template`. Governance validation runs post-generation (templates embed pre-configured policies). A stub intake session (status: "completed") is created for FK/audit trail, with `intakePayload._source = "express-lane"` for provenance. This reduces time-to-first-blueprint from ~20 conversation turns to ~2 minutes.
 
 ## Inputs
 

@@ -88,6 +88,27 @@ function computeHealth(data: TelemetryRow[]): {
   return { label: "Healthy", color: "text-green-700", bg: "bg-green-100" };
 }
 
+/**
+ * Compute a period-over-period delta badge for a KPI.
+ * Returns null when there is no previous-period data or the change is < 1%.
+ * Pass lowerIsBetter=true for error rate and latency (decrease = green).
+ */
+function formatDelta(
+  current: number,
+  prev: number | null,
+  lowerIsBetter = false
+): { label: string; color: string } | null {
+  if (prev === null || prev === 0) return null;
+  const pct = ((current - prev) / prev) * 100;
+  if (Math.abs(pct) < 1) return null;
+  const improved = lowerIsBetter ? pct < 0 : pct > 0;
+  const sign = pct > 0 ? "+" : "";
+  return {
+    label: `${sign}${Math.round(pct)}% vs prior 7d`,
+    color: improved ? "text-green-600" : "text-red-500",
+  };
+}
+
 function groupByDay(data: TelemetryRow[]): Array<{
   day: string;
   invocations: number;
@@ -125,6 +146,12 @@ const OPERATOR_LABELS: Record<string, string> = {
   eq: "=",
 };
 
+// P1-37: Notification channel stored in localStorage (no DB migration)
+interface NotifyChannel {
+  email: string;
+  slackWebhook: string;
+}
+
 function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canManage: boolean }) {
   const [thresholds, setThresholds] = useState<AlertThreshold[]>([]);
   const [tLoading, setTLoading] = useState(true);
@@ -136,6 +163,29 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
     value: "",
     windowMinutes: "60",
   });
+
+  // P1-37: Notification channel config — browser-local
+  const NOTIFY_KEY = `notify-channel-${agentId}`;
+  const [notifyChannel, setNotifyChannel] = useState<NotifyChannel>(() => {
+    try {
+      const raw = localStorage.getItem(`notify-channel-${agentId}`);
+      return raw ? (JSON.parse(raw) as NotifyChannel) : { email: "", slackWebhook: "" };
+    } catch { return { email: "", slackWebhook: "" }; }
+  });
+  const [notifyDraft, setNotifyDraft] = useState<NotifyChannel>(notifyChannel);
+  const [editingNotify, setEditingNotify] = useState(false);
+  const [notifySavedAt, setNotifySavedAt] = useState<Date | null>(null);
+
+  function saveNotifyChannel() {
+    setNotifyChannel(notifyDraft);
+    try {
+      localStorage.setItem(NOTIFY_KEY, JSON.stringify(notifyDraft));
+      setNotifySavedAt(new Date());
+    } catch { /* quota */ }
+    setEditingNotify(false);
+  }
+
+  const hasNotifyConfig = Boolean(notifyChannel.email || notifyChannel.slackWebhook);
 
   useEffect(() => {
     fetch(`/api/registry/${agentId}/alerts`)
@@ -202,6 +252,96 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
           <span className="text-gray-400">/ {t.windowMinutes}m window</span>
         </div>
       ))}
+
+      {/* P1-37: Notification channel config */}
+      <div className="border-t border-gray-100 pt-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-medium text-gray-600">Notify when triggered</p>
+            {hasNotifyConfig && !editingNotify && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-xs text-green-700">
+                ● Active
+              </span>
+            )}
+          </div>
+          {canManage && !editingNotify && (
+            <button
+              onClick={() => { setNotifyDraft(notifyChannel); setEditingNotify(true); }}
+              className="text-xs text-blue-600 hover:underline"
+            >
+              {hasNotifyConfig ? "Edit" : "Configure"}
+            </button>
+          )}
+        </div>
+
+        {!editingNotify && hasNotifyConfig && (
+          <div className="mt-2 space-y-1">
+            {notifyChannel.email && (
+              <div className="flex items-center gap-2 text-xs text-gray-600">
+                <span className="text-gray-400">Email:</span>
+                <span className="font-mono truncate max-w-48">{notifyChannel.email}</span>
+              </div>
+            )}
+            {notifyChannel.slackWebhook && (
+              <div className="flex items-center gap-2 text-xs text-gray-600">
+                <span className="text-gray-400">Slack webhook:</span>
+                <span className="font-mono truncate max-w-48">{notifyChannel.slackWebhook.slice(0, 36)}…</span>
+              </div>
+            )}
+            {notifySavedAt && (
+              <p className="text-2xs text-gray-400">
+                Saved {notifySavedAt.toLocaleTimeString()}
+              </p>
+            )}
+          </div>
+        )}
+
+        {!editingNotify && !hasNotifyConfig && canManage && (
+          <p className="mt-1 text-xs text-gray-400">
+            No notification channel configured — threshold breaches are silent.
+          </p>
+        )}
+
+        {editingNotify && (
+          <div className="mt-2 space-y-2">
+            <div>
+              <label className="text-xs text-gray-500">Email address</label>
+              <input
+                type="email"
+                placeholder="ops@company.com"
+                value={notifyDraft.email}
+                onChange={(e) => setNotifyDraft((d) => ({ ...d, email: e.target.value }))}
+                className="mt-0.5 w-full rounded border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-500">Slack webhook URL</label>
+              <input
+                type="url"
+                placeholder="https://hooks.slack.com/services/…"
+                value={notifyDraft.slackWebhook}
+                onChange={(e) => setNotifyDraft((d) => ({ ...d, slackWebhook: e.target.value }))}
+                className="mt-0.5 w-full rounded border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={saveNotifyChannel}
+                disabled={!notifyDraft.email && !notifyDraft.slackWebhook}
+                className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-40 transition-colors"
+              >
+                Save channel
+              </button>
+              <button
+                onClick={() => setEditingNotify(false)}
+                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {adding && (
         <form onSubmit={handleCreate} className="space-y-3 border-t border-gray-100 pt-3">
@@ -278,6 +418,79 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
   );
 }
 
+// ---------------------------------------------------------------------------
+// Telemetry snippet panel (shown in empty state)
+// ---------------------------------------------------------------------------
+
+function TelemetrySnippetPanel({ snippetPython, snippetCurl }: { snippetPython: string; snippetCurl: string }) {
+  const [lang, setLang] = useState<"python" | "curl">("python");
+  const [copied, setCopied] = useState(false);
+  const snippet = lang === "python" ? snippetPython : snippetCurl;
+
+  function handleCopy() {
+    navigator.clipboard.writeText(snippet).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
+  }
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      {/* Header row */}
+      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2.5">
+        <span className="text-xs font-medium text-gray-600">Send your first event</span>
+        <div className="flex items-center gap-2">
+          {/* Language tabs */}
+          <div className="flex rounded-md border border-gray-200 overflow-hidden text-xs">
+            {(["python", "curl"] as const).map((l) => (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                className={`px-2.5 py-1 font-mono transition-colors ${
+                  lang === l
+                    ? "bg-gray-800 text-white"
+                    : "bg-white text-gray-500 hover:bg-gray-50"
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+          {/* Copy button */}
+          <button
+            onClick={handleCopy}
+            title="Copy to clipboard"
+            className="flex items-center gap-1 rounded border border-gray-200 px-2.5 py-1 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
+          >
+            {copied ? (
+              <>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                Copied
+              </>
+            ) : (
+              <>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                Copy
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+      {/* Code block */}
+      <pre className="overflow-x-auto bg-gray-900 px-4 py-4 text-xs leading-relaxed text-gray-100">
+        <code>{snippet}</code>
+      </pre>
+      {/* Footer hint */}
+      <div className="border-t border-gray-100 bg-gray-50 px-4 py-2 text-xs text-gray-400">
+        Replace <span className="font-mono text-gray-600">YOUR_TELEMETRY_API_KEY</span> with the key from Admin → Settings → API Keys.
+        Batch multiple events per request for efficiency.
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
 export function ProductionDashboard({ agentId, data, loading, canManageAlerts = false }: ProductionDashboardProps) {
   if (loading) {
     return (
@@ -290,9 +503,41 @@ export function ProductionDashboard({ agentId, data, loading, canManageAlerts = 
   }
 
   if (!data || data.length === 0) {
+    const snippetPython = `import requests
+
+requests.post(
+  "https://your-intellios-host/api/telemetry/ingest",
+  headers={
+    "Authorization": "Bearer YOUR_TELEMETRY_API_KEY",
+    "Content-Type": "application/json",
+  },
+  json={
+    "agentId": "${agentId}",
+    "invocations": 1,
+    "errors": 0,
+    "latencyP50Ms": 320,
+    "latencyP99Ms": 890,
+    "tokensIn": 512,
+    "tokensOut": 128,
+  },
+)`;
+    const snippetCurl = `curl -X POST https://your-intellios-host/api/telemetry/ingest \\
+  -H "Authorization: Bearer YOUR_TELEMETRY_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "agentId": "${agentId}",
+    "invocations": 1,
+    "errors": 0,
+    "latencyP50Ms": 320,
+    "latencyP99Ms": 890,
+    "tokensIn": 512,
+    "tokensOut": 128
+  }'`;
+
     return (
-      <div className="p-6 max-w-xl space-y-6">
-        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-6 py-10 text-center">
+      <div className="p-6 max-w-2xl space-y-6">
+        {/* Hero empty state */}
+        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-6 py-8 text-center">
           <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gray-200">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-500">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.5a9 9 0 1 1 18 0M12 9v4" />
@@ -300,13 +545,17 @@ export function ProductionDashboard({ agentId, data, loading, canManageAlerts = 
           </div>
           <p className="text-sm font-medium text-gray-700">No production telemetry yet</p>
           <p className="mt-1 text-xs text-gray-500 max-w-sm mx-auto">
-            Configure your deployed agent to push metrics to{" "}
+            Push metrics from your deployed agent to{" "}
             <code className="rounded bg-gray-200 px-1 py-0.5 font-mono text-xs">
               POST /api/telemetry/ingest
-            </code>{" "}
-            with your <span className="font-medium">TELEMETRY_API_KEY</span>. Data appears here within minutes.
+            </code>
+            . Data appears here within minutes.
           </p>
         </div>
+
+        {/* Code snippet panel */}
+        <TelemetrySnippetPanel snippetPython={snippetPython} snippetCurl={snippetCurl} />
+
         <AlertThresholdsPanel agentId={agentId} canManage={canManageAlerts} />
       </div>
     );
@@ -336,6 +585,20 @@ export function ProductionDashboard({ agentId, data, loading, canManageAlerts = 
   const medianP99 =
     p99s.length > 0 ? Math.round(p99s.reduce((a, b) => a + b, 0) / p99s.length) : null;
 
+  // Previous 7-day window (days 8–14) for period-over-period deltas
+  const prev7d = data.filter((r) => {
+    const age = now - new Date(r.timestamp).getTime();
+    return age >= 7 * 86_400_000 && age < 14 * 86_400_000;
+  });
+  const prevTotalInv   = prev7d.reduce((s, r) => s + r.invocations, 0);
+  const prevTotalErr   = prev7d.reduce((s, r) => s + r.errors, 0);
+  const prevErrorRate  = prevTotalInv > 0 ? (prevTotalErr / prevTotalInv) * 100 : 0;
+  const prevTotalTokens = prev7d.reduce((s, r) => s + r.tokensIn + r.tokensOut, 0);
+  const prevP50s = prev7d.map((r) => r.latencyP50Ms).filter((v): v is number => v !== null);
+  const prevP99s = prev7d.map((r) => r.latencyP99Ms).filter((v): v is number => v !== null);
+  const prevMedianP50  = prevP50s.length > 0 ? Math.round(prevP50s.reduce((a, b) => a + b, 0) / prevP50s.length) : null;
+  const prevMedianP99  = prevP99s.length > 0 ? Math.round(prevP99s.reduce((a, b) => a + b, 0) / prevP99s.length) : null;
+
   const dailyData = groupByDay(data);
   const maxInv = Math.max(...dailyData.map((d) => d.invocations), 1);
 
@@ -364,19 +627,23 @@ export function ProductionDashboard({ agentId, data, loading, canManageAlerts = 
           {
             label: "Invocations (7d)",
             value: totalInv.toLocaleString(),
+            delta: formatDelta(totalInv, prevTotalInv > 0 ? prevTotalInv : null),
           },
           {
             label: "Error rate (7d)",
             value: `${errorRate.toFixed(1)}%`,
             highlight: errorRate > 5,
+            delta: formatDelta(errorRate, prevTotalInv > 0 ? prevErrorRate : null, true),
           },
           {
             label: "P50 latency",
             value: medianP50 !== null ? `${medianP50} ms` : "—",
+            delta: medianP50 !== null ? formatDelta(medianP50, prevMedianP50, true) : null,
           },
           {
             label: "P99 latency",
             value: medianP99 !== null ? `${medianP99} ms` : "—",
+            delta: medianP99 !== null ? formatDelta(medianP99, prevMedianP99, true) : null,
           },
           {
             label: "Tokens (7d)",
@@ -386,6 +653,7 @@ export function ProductionDashboard({ agentId, data, loading, canManageAlerts = 
                 : totalTokens >= 1_000
                 ? `${(totalTokens / 1_000).toFixed(0)}K`
                 : totalTokens.toLocaleString(),
+            delta: formatDelta(totalTokens, prevTotalTokens > 0 ? prevTotalTokens : null),
           },
         ].map((kpi) => (
           <div
@@ -400,6 +668,9 @@ export function ProductionDashboard({ agentId, data, loading, canManageAlerts = 
             >
               {kpi.value}
             </p>
+            {kpi.delta && (
+              <p className={`mt-0.5 text-xs ${kpi.delta.color}`}>{kpi.delta.label}</p>
+            )}
           </div>
         ))}
       </div>
