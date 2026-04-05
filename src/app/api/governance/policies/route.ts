@@ -31,18 +31,23 @@ const DesignTimeRuleSchema = z.object({
   message:  z.string().min(1),
 });
 
+// W3-03: scopedAgentIds — null = all agents, string[] = specific logical agentIds
+const ScopedAgentIdsSchema = z.array(z.string().uuid()).nullable().optional();
+
 const CreatePolicyBody = z.discriminatedUnion("type", [
   z.object({
-    name:        z.string().min(1).max(200),
-    type:        z.literal(RUNTIME_POLICY_TYPE),
-    description: z.string().max(1000).optional(),
-    rules:       z.array(RuntimeRuleSchema).default([]),
+    name:           z.string().min(1).max(200),
+    type:           z.literal(RUNTIME_POLICY_TYPE),
+    description:    z.string().max(1000).optional(),
+    rules:          z.array(RuntimeRuleSchema).default([]),
+    scopedAgentIds: ScopedAgentIdsSchema,
   }),
   z.object({
-    name:        z.string().min(1).max(200),
-    type:        z.enum(DESIGN_TIME_POLICY_TYPES),
-    description: z.string().max(1000).optional(),
-    rules:       z.array(DesignTimeRuleSchema).default([]),
+    name:           z.string().min(1).max(200),
+    type:           z.enum(DESIGN_TIME_POLICY_TYPES),
+    description:    z.string().max(1000).optional(),
+    rules:          z.array(DesignTimeRuleSchema).default([]),
+    scopedAgentIds: ScopedAgentIdsSchema,
   }),
 ]);
 
@@ -105,6 +110,8 @@ export async function POST(request: NextRequest) {
         description: body.description ?? null,
         rules: body.rules,
         enterpriseId: authSession.user.enterpriseId ?? null,
+        // W3-03: store null for global scope, or an array of agentId UUIDs
+        scopedAgentIds: body.scopedAgentIds ?? null,
       })
       .returning();
 

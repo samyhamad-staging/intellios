@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Calendar, Download, Clock, Shield, ChevronRight } from "lucide-react";
 import { Heading } from "@/components/catalyst/heading";
 import { SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface ReviewEvent {
   id: string;
@@ -127,9 +128,12 @@ export default function ComplianceCalendarPage() {
             </Heading>
 
             {data.agentReviews.length === 0 ? (
-              <div className="rounded-lg border border-border bg-surface-muted p-6 text-center text-sm text-text-secondary">
-                No periodic reviews scheduled. Deploy agents and set review dates in the Registry.
-              </div>
+              <EmptyState
+                icon={Clock}
+                heading="No periodic reviews scheduled"
+                subtext="Deploy agents and set review dates in the Registry to see them here."
+                className="py-8 rounded-xl border border-border"
+              />
             ) : (
               <div className="divide-y divide-border-subtle rounded-xl border border-border overflow-hidden">
                 {data.agentReviews.map((ev) => (
@@ -168,9 +172,12 @@ export default function ComplianceCalendarPage() {
             </Heading>
 
             {data.policyReviews.length === 0 ? (
-              <div className="rounded-lg border border-border bg-surface-muted p-6 text-center text-sm text-text-secondary">
-                No policy reviews due in the next 12 months.
-              </div>
+              <EmptyState
+                icon={Shield}
+                heading="No policy reviews due"
+                subtext="All policies are up to date. Annual reviews will appear here when they approach."
+                className="py-8 rounded-xl border border-border"
+              />
             ) : (
               <div className="divide-y divide-border-subtle rounded-xl border border-border overflow-hidden">
                 {data.policyReviews.map((ev) => (

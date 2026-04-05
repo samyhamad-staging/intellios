@@ -11,7 +11,7 @@ export function Heading({ className, level = 1, ...props }: HeadingProps) {
     'font-semibold text-text',
     {
       'text-2xl/8 sm:text-xl/8': level === 1,
-      'text-xl/7 sm:text-lg/7': level === 2,
+      'text-xl/8 sm:text-lg/6': level === 2,
       'text-lg/6 sm:text-base/6': level === 3,
       'text-base/6 sm:text-sm/6': level === 4 || level === 5,
       'text-sm/6 sm:text-xs/6': level === 6,
@@ -32,7 +32,7 @@ export function Subheading({ className, level = 2, ...props }: HeadingProps) {
   const subheadingClasses = clsx(
     'font-semibold text-text',
     {
-      'text-base/7': level === 2,
+      'text-base/6': level === 2,
       'text-sm/6': level === 3 || level === 4 || level === 5,
       'text-xs/6': level === 6,
     }

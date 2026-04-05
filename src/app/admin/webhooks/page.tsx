@@ -9,6 +9,10 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { FormField, FormSection } from "@/components/ui/form-field";
+import {
+  Dialog, DialogTitle, DialogDescription, DialogBody, DialogActions,
+} from "@/components/catalyst/dialog";
+import { Button as CatalystButton } from "@/components/catalyst/button";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -213,7 +217,7 @@ function WebhookCard({
   const [expanded, setExpanded] = useState(false);
   const [deliveries, setDeliveries] = useState<DeliveryRecord[]>([]);
   const [loadingDeliveries, setLoadingDeliveries] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const fetchDeliveries = useCallback(async () => {
     setLoadingDeliveries(true);
@@ -236,6 +240,7 @@ function WebhookCard({
   }, [expanded, fetchDeliveries]);
 
   return (
+    <>
     <div className="rounded-lg border border-border bg-surface overflow-hidden">
       {/* Card header */}
       <div className="flex items-center justify-between px-4 py-3">
@@ -272,29 +277,12 @@ function WebhookCard({
           >
             {expanded ? "Hide log" : "Delivery log"}
           </button>
-          {!confirmDelete ? (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="text-xs px-2 py-1 rounded text-red-500 hover:bg-red-50"
-            >
-              Delete
-            </button>
-          ) : (
-            <span className="flex items-center gap-1">
-              <button
-                onClick={() => onDelete(wh.id)}
-                className="text-xs px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700"
-              >
-                Confirm
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                className="text-xs px-2 py-1 rounded text-text-secondary hover:bg-surface-muted"
-              >
-                Cancel
-              </button>
-            </span>
-          )}
+          <button
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-xs px-2 py-1 rounded text-red-500 hover:bg-red-50"
+          >
+            Delete
+          </button>
         </div>
       </div>
 
@@ -361,6 +349,29 @@ function WebhookCard({
         </div>
       )}
     </div>
+
+    {/* Delete confirmation dialog */}
+    <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
+      <DialogTitle>Delete webhook?</DialogTitle>
+      <DialogDescription>
+        Are you sure you want to delete <strong>{wh.name}</strong>?
+        Event deliveries to <code className="font-mono text-xs">{wh.url}</code> will
+        stop immediately. This cannot be undone.
+      </DialogDescription>
+      <DialogBody />
+      <DialogActions>
+        <CatalystButton plain onClick={() => setShowDeleteDialog(false)}>
+          Cancel
+        </CatalystButton>
+        <CatalystButton
+          color="red"
+          onClick={() => { onDelete(wh.id); setShowDeleteDialog(false); }}
+        >
+          Delete webhook
+        </CatalystButton>
+      </DialogActions>
+    </Dialog>
+    </>
   );
 }
 

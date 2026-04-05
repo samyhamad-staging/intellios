@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ValidationReport } from "@/lib/governance/types";
 import { VersionDiff } from "@/components/registry/version-diff";
 import { FormField } from "@/components/ui/form-field";
-import { Sparkles, ThumbsUp, ThumbsDown, CheckCircle, Clock } from "lucide-react";
+import { Sparkles, ThumbsUp, ThumbsDown, CheckCircle, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { SectionHeading } from "@/components/ui/section-heading";
 
 // ── SLA helpers ───────────────────────────────────────────────────────────────
@@ -61,6 +61,16 @@ function ReviewSlaBadge({ submittedAt }: { submittedAt: string }) {
 
 type ReviewAction = "approve" | "reject" | "request_changes";
 
+/** A single prior approval step — from a multi-step workflow */
+export interface ApprovalHistoryEntry {
+  stepLabel: string;
+  reviewerName?: string | null;
+  reviewerEmail: string;
+  action: "approve" | "request_changes" | "reject";
+  comment: string;
+  decidedAt: string;
+}
+
 interface RiskBrief {
   riskLevel: "low" | "medium" | "high";
   summary: string;
@@ -83,6 +93,8 @@ interface ReviewPanelProps {
   previousBlueprintId?: string | null;
   /** Version string of the prior blueprint, e.g. "1.0.0" */
   previousVersion?: string | null;
+  /** Prior approval step decisions — shown in a collapsible Approval History section */
+  approvalHistory?: ApprovalHistoryEntry[];
 }
 
 const ACTIONS: {
@@ -127,9 +139,11 @@ export function ReviewPanel({
   onReviewComplete,
   previousBlueprintId = null,
   previousVersion = null,
+  approvalHistory = [],
 }: ReviewPanelProps) {
   const [selectedAction, setSelectedAction] = useState<ReviewAction | null>(null);
   const [diffExpanded, setDiffExpanded] = useState(false);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
   const [rationale, setRationale] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -444,11 +458,69 @@ export function ReviewPanel({
         )}
       </div>
 
-      {/* Previous review comment */}
-      {previousComment && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-xs font-medium text-amber-700 mb-1">Previous reviewer comment</p>
-          <p className="text-sm text-amber-800">{previousComment}</p>
+      {/* Previous review comment (single, legacy) */}
+      {previousComment && approvalHistory.length === 0 && (
+        <div className="rounded-lg border border-warning-muted bg-warning-muted px-4 py-3">
+          <p className="text-xs font-medium text-warning-text mb-1">Previous reviewer comment</p>
+          <p className="text-sm text-warning-text">{previousComment}</p>
+        </div>
+      )}
+
+      {/* Approval History — multi-step workflow prior decisions */}
+      {approvalHistory.length > 0 && (
+        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <button
+            onClick={() => setHistoryExpanded((e) => !e)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-surface-raised transition-colors"
+          >
+            <span className="text-sm font-medium text-text flex items-center gap-2">
+              Approval History
+              <span className="inline-flex items-center justify-center rounded-full bg-primary-muted text-primary text-xs font-semibold h-4 w-4">
+                {approvalHistory.length}
+              </span>
+            </span>
+            {historyExpanded ? (
+              <ChevronUp className="h-4 w-4 text-text-tertiary" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-text-tertiary" />
+            )}
+          </button>
+          {historyExpanded && (
+            <div className="border-t border-border-subtle divide-y divide-border-subtle">
+              {approvalHistory.map((entry, idx) => {
+                const actionColors = {
+                  approve: "bg-success-muted text-success-text",
+                  request_changes: "bg-warning-muted text-warning-text",
+                  reject: "bg-danger-muted text-danger-text",
+                };
+                const actionLabels = {
+                  approve: "Approved",
+                  request_changes: "Changes Requested",
+                  reject: "Rejected",
+                };
+                return (
+                  <div key={idx} className="px-4 py-3 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-text-secondary">{entry.stepLabel}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${actionColors[entry.action]}`}>
+                          {actionLabels[entry.action]}
+                        </span>
+                      </div>
+                      <span className="text-xs text-text-tertiary whitespace-nowrap">
+                        {new Date(entry.decidedAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-secondary">
+                      <span className="font-medium">{entry.reviewerName ?? entry.reviewerEmail}</span>
+                      {" · "}
+                      <span className="italic">{entry.comment}</span>
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

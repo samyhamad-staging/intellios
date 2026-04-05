@@ -10,7 +10,7 @@
  *   alert            — Alert banners (info / warning / error / success)
  *   auth-layout      — Centered auth page shell
  *   avatar           — User/team avatar with initials fallback
- *   badge            — Status and label badges
+ *   badge            — (removed; use ui/badge instead — semantic variants match design tokens)
  *   button           — Button + ButtonGroup (solid / outline / plain / destructive)
  *   checkbox         — Checkbox with label and description
  *   combobox         — Searchable select / autocomplete
@@ -39,7 +39,7 @@
 export * from './alert'
 export * from './auth-layout'
 export * from './avatar'
-export * from './badge'
+// Note: catalyst/badge.tsx removed (W3-06). Use ui/badge for semantic badge variants.
 export * from './button'
 export * from './checkbox'
 export * from './combobox'

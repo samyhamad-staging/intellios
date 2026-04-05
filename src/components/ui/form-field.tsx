@@ -8,7 +8,8 @@ import { cn } from './cn';
  * FormField Props
  *
  * Standardizes form field layouts across the Intellios application.
- * Handles label, description, error state, and required/optional indicators.
+ * Handles label, description, error state, required/optional indicators,
+ * character count, and on-blur touched state.
  */
 export interface FormFieldProps {
   /** Field label text */
@@ -27,6 +28,12 @@ export interface FormFieldProps {
   children: React.ReactNode;
   /** Additional className for the wrapper */
   className?: string;
+  /** Maximum character count — shows a live counter when provided */
+  maxLength?: number;
+  /** Current character count for the field (pass value.length) */
+  currentLength?: number;
+  /** Whether the field has been blurred/touched (shows error only after touch) */
+  touched?: boolean;
 }
 
 /**
@@ -56,24 +63,50 @@ export const FormField = React.forwardRef<
       optional,
       children,
       className,
+      maxLength,
+      currentLength,
+      touched,
     },
     ref
   ) => {
+    // Show error only after the field has been touched (on-blur validation)
+    // If `touched` is not provided, always show errors (legacy behaviour)
+    const showError = error && (touched === undefined || touched);
+    const charCount = currentLength ?? 0;
+    const nearLimit = maxLength && charCount >= maxLength * 0.85;
+    const overLimit = maxLength && charCount > maxLength;
+
     return (
       <div ref={ref} className={cn('flex flex-col', className)}>
-        {/* Label with required asterisk or optional indicator */}
-        <label
-          htmlFor={htmlFor}
-          className="text-sm font-medium text-text"
-        >
-          {label}
-          {required && <span className="text-danger-text ml-1">*</span>}
-          {optional && !required && (
-            <span className="text-text-tertiary ml-1 font-normal text-xs">
-              (optional)
+        {/* Label row — label + optional character counter */}
+        <div className="flex items-baseline justify-between gap-2">
+          <label
+            htmlFor={htmlFor}
+            className="text-sm font-medium text-text"
+          >
+            {label}
+            {required && <span className="text-danger-text ml-1">*</span>}
+            {optional && !required && (
+              <span className="text-text-tertiary ml-1 font-normal text-xs">
+                (optional)
+              </span>
+            )}
+          </label>
+          {maxLength !== undefined && (
+            <span
+              className={cn(
+                'text-xs tabular-nums shrink-0',
+                overLimit
+                  ? 'text-danger font-medium'
+                  : nearLimit
+                    ? 'text-warning'
+                    : 'text-text-tertiary'
+              )}
+            >
+              {charCount}/{maxLength}
             </span>
           )}
-        </label>
+        </div>
 
         {/* Description text below label */}
         {description && (
@@ -87,8 +120,8 @@ export const FormField = React.forwardRef<
           {children}
         </div>
 
-        {/* Error message with icon */}
-        {error && (
+        {/* Error message with icon — only shown after touch */}
+        {showError && (
           <div className="flex items-start gap-1.5 mt-1 text-xs text-danger-text">
             <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
             <span>{error}</span>

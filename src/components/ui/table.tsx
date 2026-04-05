@@ -128,12 +128,14 @@ export function TableRow({
 
 export function TableHeader({
   className,
+  scope = "col",
   ...props
 }: React.ComponentPropsWithoutRef<"th">) {
   const { bleed, grid } = useContext(TableContext);
 
   return (
     <th
+      scope={scope}
       {...props}
       className={clsx(
         className,

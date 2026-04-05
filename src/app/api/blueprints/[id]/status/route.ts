@@ -124,9 +124,12 @@ export async function PATCH(
     // This prevents stale validation reports (e.g. policies added/changed after last manual validate)
     // from allowing non-compliant blueprints through the review gate.
     if (newStatus === "in_review") {
+      // W3-03: pass agentId so scoped policies are filtered correctly at submission time
       const freshReport = await validateBlueprint(
         blueprint.abp as ABP,
-        blueprint.enterpriseId ?? null
+        blueprint.enterpriseId ?? null,
+        undefined,
+        blueprint.agentId
       );
 
       // Persist the fresh report so Blueprint Workbench and MRM report see the current state

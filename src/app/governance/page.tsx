@@ -1,9 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query/keys";
+import { fetchAgents, fetchPolicies, fetchGovernanceTemplates, fetchGovernanceAnalytics } from "@/lib/query/fetchers";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Shield, Plus, Download } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/catalyst/button";
 import { Heading, Subheading } from "@/components/catalyst/heading";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
@@ -41,6 +46,7 @@ interface Policy {
   enterpriseId: string | null;
   policyVersion: number;
   createdAt: string;
+  scopedAgentIds: string[] | null;
 }
 
 interface SimBlueprint {
@@ -85,38 +91,61 @@ interface AnalyticsData {
 }
 
 const FRAMEWORK_COLORS: Record<string, string> = {
-  "SR 11-7":       "bg-blue-50 text-blue-700 border-blue-200",
-  "EU AI Act":     "bg-purple-50 text-purple-700 border-purple-200",
-  "GDPR":          "bg-green-50 text-green-700 border-green-200",
+  "SR 11-7":       "bg-policy-compliance-subtle text-policy-compliance-text border-policy-compliance-border",
+  "EU AI Act":     "bg-policy-data-handling-subtle text-policy-data-handling-text border-policy-data-handling-border",
+  "GDPR":          "bg-policy-audit-subtle text-policy-audit-text border-policy-audit-border",
   "Best Practices":"bg-surface-raised text-text border-border",
 };
 
 const POLICY_TYPE_COLORS: Record<string, string> = {
-  safety:         "bg-red-50 text-red-700 border-red-200",
-  compliance:     "bg-blue-50 text-blue-700 border-blue-200",
-  data_handling:  "bg-purple-50 text-purple-700 border-purple-200",
-  access_control: "bg-amber-50 text-amber-700 border-amber-200",
-  audit:          "bg-green-50 text-green-700 border-green-200",
+  safety:         "bg-policy-safety-subtle text-policy-safety-text border-policy-safety-border",
+  compliance:     "bg-policy-compliance-subtle text-policy-compliance-text border-policy-compliance-border",
+  data_handling:  "bg-policy-data-handling-subtle text-policy-data-handling-text border-policy-data-handling-border",
+  access_control: "bg-policy-access-control-subtle text-policy-access-control-text border-policy-access-control-border",
+  audit:          "bg-policy-audit-subtle text-policy-audit-text border-policy-audit-border",
 };
 
 export default function GovernanceHubPage() {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const canManagePolicies =
     session?.user?.role === "admin" || session?.user?.role === "compliance_officer";
   const canViewAnalytics =
     session?.user?.role === "admin" || session?.user?.role === "compliance_officer" || session?.user?.role === "viewer";
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [policies, setPolicies] = useState<Policy[]>([]);
-  const [templatePacks, setTemplatePacks] = useState<TemplatePack[]>([]);
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [analyticsLoading, setAnalyticsLoading] = useState(true);
-  const [analyticsLoadedAt, setAnalyticsLoadedAt] = useState<Date | null>(null);
+
+  // P2-344: Date range for analytics (days) — declared before queries that depend on it
+  const [analyticsDays, setAnalyticsDays] = useState<30 | 90 | 365>(90);
+
+  // ── React Query data fetching ───────────────────────────────────────────────
+  const { data: agents = [], isLoading: agentsLoading, error: agentsErr } =
+    useQuery({ queryKey: queryKeys.registry.agents(), queryFn: fetchAgents });
+
+  const { data: policies = [], isLoading: policiesLoading, error: policiesErr } =
+    useQuery({ queryKey: queryKeys.governance.policies(), queryFn: fetchPolicies });
+
+  const { data: templatePacks = [], isLoading: templatePacksLoading } =
+    useQuery({ queryKey: queryKeys.governance.templates(), queryFn: fetchGovernanceTemplates });
+
+  const {
+    data: analytics,
+    isLoading: analyticsLoading,
+    dataUpdatedAt: analyticsUpdatedAt,
+  } = useQuery({
+    queryKey: queryKeys.governance.analytics(analyticsDays),
+    queryFn: () => fetchGovernanceAnalytics(analyticsDays) as Promise<AnalyticsData | null>,
+    enabled: canViewAnalytics,
+    // Analytics are expensive — keep fresh for 2 minutes
+    staleTime: 2 * 60 * 1000,
+  });
+  const analyticsLoadedAt = analyticsUpdatedAt ? new Date(analyticsUpdatedAt) : null;
+
+  const loading = agentsLoading || policiesLoading || templatePacksLoading;
+  const error = agentsErr ? (agentsErr as Error).message
+    : policiesErr ? (policiesErr as Error).message
+    : null;
+
   // Analytics section collapsed by default — summary line shown; expand for charts
   const [analyticsExpanded, setAnalyticsExpanded] = useState(false);
-  // P2-344: Date range for analytics (days)
-  const [analyticsDays, setAnalyticsDays] = useState<30 | 90 | 365>(90);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [importingPack, setImportingPack] = useState<string | null>(null);
   const [importToast, setImportToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [duplicatePrompt, setDuplicatePrompt] = useState<{ packId: string; duplicates: string[] } | null>(null);
@@ -127,46 +156,6 @@ export default function GovernanceHubPage() {
   const [simResults, setSimResults] = useState<Record<string, SimResult>>({});
   const [violationsSearchValue, setViolationsSearchValue] = useState("");
   const [violationsCurrentPage, setViolationsCurrentPage] = useState(1);
-
-  const loadPolicies = () =>
-    fetch("/api/governance/policies")
-      .then((r) => r.json())
-      .then((govData) => setPolicies(govData.policies ?? []));
-
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/registry").then((r) => r.json()),
-      fetch("/api/governance/policies").then((r) => r.json()),
-      fetch("/api/governance/templates").then((r) => r.json()),
-    ])
-      .then(([registryData, govData, templateData]) => {
-        setAgents(registryData.agents ?? []);
-        setPolicies(govData.policies ?? []);
-        setTemplatePacks(templateData.packs ?? []);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Failed to load governance data");
-        setLoading(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    if (!canViewAnalytics) {
-      setAnalyticsLoading(false);
-      return;
-    }
-    setAnalyticsLoading(true);
-    fetch(`/api/governance/analytics?days=${analyticsDays}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setAnalytics(data);
-        setAnalyticsLoadedAt(new Date());
-        setAnalyticsLoading(false);
-      })
-      .catch(() => setAnalyticsLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [analyticsDays]);
 
   const showToast = (message: string, type: "success" | "error") => {
     setImportToast({ message, type });
@@ -224,7 +213,7 @@ export default function GovernanceHubPage() {
       }
       const data = await res.json();
       showToast(`✓ Imported ${data.created} polic${data.created === 1 ? "y" : "ies"} from pack`, "success");
-      await loadPolicies();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.governance.policies() });
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Import failed", "error");
     } finally {
@@ -455,9 +444,9 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
               onClick={() =>
                 document.getElementById("violations")?.scrollIntoView({ behavior: "smooth", block: "start" })
               }
-              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg border border-danger-muted bg-danger-muted px-3 py-1.5 text-sm font-medium text-danger-text hover:bg-danger-subtle transition-colors"
             >
-              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-200 text-[10px] font-bold text-red-800">
+              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-danger-subtle text-[10px] font-bold text-danger-text">
                 {agentsWithViolations.length}
               </span>
               Active Violations
@@ -485,7 +474,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
               href="/api/compliance/calendar.ics"
               download="intellios-compliance-calendar.ics"
               title="Download an .ics file with all compliance review deadlines and policy renewal dates — import into Outlook or Google Calendar"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-info-muted bg-info-muted px-3 py-1.5 text-sm font-medium text-info-text hover:bg-info-subtle transition-colors"
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -501,7 +490,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
 
       <div className="space-y-6">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-lg border border-danger-muted bg-danger-muted p-4 text-sm text-danger-text">
             {error}
           </div>
         )}
@@ -524,7 +513,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                     {analytics.validationPassRate != null && " · "}
                     {(() => {
                       const total = analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0);
-                      return total > 0 ? <span className="text-red-500 font-medium">{total} violation{total !== 1 ? "s" : ""}</span> : "0 violations";
+                      return total > 0 ? <span className="text-danger font-medium">{total} violation{total !== 1 ? "s" : ""}</span> : "0 violations";
                     })()}
                     {analytics.avgTimeToApprovalHours != null && ` · ${analytics.avgTimeToApprovalHours < 24 ? `${analytics.avgTimeToApprovalHours}h` : `${Math.round(analytics.avgTimeToApprovalHours / 24)}d`} avg approval`}
                   </span>
@@ -598,19 +587,19 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                   sub: "of validated agents",
                   color:
                     analytics?.validationPassRate != null && analytics.validationPassRate >= 80
-                      ? "bg-green-50 border-green-200 text-green-900"
+                      ? "bg-success-muted border border-success-muted text-success-text"
                       : analytics?.validationPassRate != null && analytics.validationPassRate >= 50
-                      ? "bg-amber-50 border-amber-200 text-amber-900"
+                      ? "bg-warning-muted border border-warning-muted text-warning-text"
                       : analytics?.validationPassRate != null
-                      ? "bg-red-50 border-red-200 text-red-900"
+                      ? "bg-danger-muted border border-danger-muted text-danger-text"
                       : "bg-surface border-border text-text",
                   subColor:
                     analytics?.validationPassRate != null && analytics.validationPassRate >= 80
-                      ? "text-green-600"
+                      ? "text-success"
                       : analytics?.validationPassRate != null && analytics.validationPassRate >= 50
-                      ? "text-amber-600"
+                      ? "text-warning"
                       : analytics?.validationPassRate != null
-                      ? "text-red-600"
+                      ? "text-danger"
                       : "text-text-tertiary",
                 },
                 {
@@ -638,13 +627,13 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                     !analyticsLoading &&
                     analytics &&
                     analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0) > 0
-                      ? "bg-red-50 border-red-200 text-red-900"
+                      ? "bg-danger-muted border border-danger-muted text-danger-text"
                       : "bg-surface border-border text-text",
                   subColor:
                     !analyticsLoading &&
                     analytics &&
                     analytics.policyViolationsByType.reduce((s, t) => s + t.count, 0) > 0
-                      ? "text-red-600"
+                      ? "text-danger"
                       : "text-text-tertiary",
                 },
               ].map(({ label, value, sub, color, subColor }) => (
@@ -852,26 +841,26 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                 label: "Passing Governance",
                 value: loading ? "–" : clean,
                 sub: total > 0 ? `${Math.round((clean / total) * 100)}% of agents` : "—",
-                color: "bg-green-50 border-green-200 text-green-900",
-                subColor: "text-green-600",
+                color: "bg-success-muted border border-success-muted text-success-text",
+                subColor: "text-success",
               },
               {
                 label: "With Errors",
                 value: loading ? "–" : withErrors,
                 sub: withErrors > 0 ? "need remediation" : "none",
                 color: withErrors > 0
-                  ? "bg-red-50 border-red-200 text-red-900"
+                  ? "bg-danger-muted border border-danger-muted text-danger-text"
                   : "bg-surface border-border text-text",
-                subColor: withErrors > 0 ? "text-red-600" : "text-text-tertiary",
+                subColor: withErrors > 0 ? "text-danger" : "text-text-tertiary",
               },
               {
                 label: "Not Validated",
                 value: loading ? "–" : notValidated,
                 sub: notValidated > 0 ? "validate in Workbench" : "all validated",
                 color: notValidated > 0
-                  ? "bg-amber-50 border-amber-200 text-amber-900"
+                  ? "bg-warning-muted border border-warning-muted text-warning-text"
                   : "bg-surface border-border text-text",
-                subColor: notValidated > 0 ? "text-amber-600" : "text-text-tertiary",
+                subColor: notValidated > 0 ? "text-warning" : "text-text-tertiary",
               },
             ].map(({ label, value, sub, color, subColor }) => (
               <div key={label} className={`rounded-card border p-5 ${color}`}>
@@ -916,7 +905,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                     </span>
                   </div>
                   <div className="flex items-center gap-4 shrink-0">
-                    <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
+                    <span className="rounded-full bg-danger-subtle px-2.5 py-0.5 text-xs font-medium text-danger-text">
                       {agent.violationCount} error{agent.violationCount === 1 ? "" : "s"}
                     </span>
                     <span className="text-xs text-text-tertiary">View →</span>
@@ -937,9 +926,9 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
 
         {!loading && agentsWithViolations.length === 0 && total > 0 && notValidated === 0 && (
           <section>
-            <div className="rounded-card border border-green-200 bg-green-50 p-6 text-center">
-              <p className="text-lg font-medium text-green-800">✓ All validated agents pass governance</p>
-              <p className="mt-1 text-sm text-green-600">
+            <div className="rounded-card border border-success-muted bg-success-muted p-6 text-center">
+              <p className="text-lg font-medium text-success-text">✓ All validated agents pass governance</p>
+              <p className="mt-1 text-sm text-success">
                 {clean} agent{clean === 1 ? "" : "s"} validated against {policies.length} polic{policies.length === 1 ? "y" : "ies"}
               </p>
             </div>
@@ -962,30 +951,31 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
             )}
           </div>
 
+          {/* W3-08: aria-live region announces loading → content transitions */}
+          <div aria-live="polite" aria-atomic="false">
           {loading && (
-            <div className="space-y-2">
+            <div role="status" aria-label="Loading policies" aria-busy="true" className="space-y-2">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="h-16 animate-pulse rounded-lg bg-surface-muted" />
               ))}
+              <span className="sr-only">Loading policies…</span>
             </div>
           )}
 
           {!loading && policies.length === 0 && (
-            <div className="rounded-card border border-dashed border-border bg-surface p-10 text-center">
-              <p className="text-sm text-text-tertiary">No governance policies defined.</p>
-              {canManagePolicies ? (
-                <Link
-                  href="/governance/policies/new"
-                  className="mt-3 inline-block rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
-                >
+            <EmptyState
+              icon={Shield}
+              heading="No governance policies defined"
+              subtext={canManagePolicies
+                ? "Create your first policy to start validating agent blueprints against your enterprise standards."
+                : "Contact your administrator to define governance policies for this enterprise."}
+              action={canManagePolicies ? (
+                <Button href="/governance/policies/new" color="indigo">
+                  <Plus size={14} />
                   Create first policy
-                </Link>
-              ) : (
-                <p className="mt-1 text-xs text-text-tertiary">
-                  Contact your administrator to define governance policies.
-                </p>
-              )}
-            </div>
+                </Button>
+              ) : undefined}
+            />
           )}
 
           {!loading && policies.length > 0 && (
@@ -1007,6 +997,14 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                         {policy.policyVersion > 1 && (
                           <span className="shrink-0 rounded-full bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-xs font-medium text-indigo-700">
                             v{policy.policyVersion}
+                          </span>
+                        )}
+                        {Array.isArray(policy.scopedAgentIds) && policy.scopedAgentIds.length > 0 && (
+                          <span
+                            className="shrink-0 rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs font-medium text-amber-700"
+                            title={`Scoped to ${policy.scopedAgentIds.length} agent${policy.scopedAgentIds.length !== 1 ? "s" : ""}`}
+                          >
+                            {policy.scopedAgentIds.length} agent{policy.scopedAgentIds.length !== 1 ? "s" : ""}
                           </span>
                         )}
                         {!policy.enterpriseId && (
@@ -1052,7 +1050,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                         {canManagePolicies && (
                           <Link
                             href={`/governance/policies/${policy.id}/edit`}
-                            className="inline-block text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                            className="inline-block text-xs text-primary hover:text-primary-hover transition-colors"
                           >
                             {policy.enterpriseId === null ? "View" : "Edit"} →
                           </Link>
@@ -1074,14 +1072,14 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                         <div className="flex items-center gap-3 mb-3">
                           <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
                             sim.summary.newViolations > 0
-                              ? "bg-red-50 border-red-200 text-red-700"
+                              ? "bg-danger-muted border-danger-muted text-danger-text"
                               : "bg-surface-raised border-border text-text-secondary"
                           }`}>
                             {sim.summary.newViolations} new violation{sim.summary.newViolations !== 1 ? "s" : ""}
                           </span>
                           <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
                             sim.summary.resolvedViolations > 0
-                              ? "bg-green-50 border-green-200 text-green-700"
+                              ? "bg-success-muted border-success-muted text-success-text"
                               : "bg-surface-raised border-border text-text-secondary"
                           }`}>
                             {sim.summary.resolvedViolations} resolved
@@ -1099,8 +1097,8 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                               <div key={b.blueprintId} className="flex items-center gap-2">
                                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
                                   b.status === "new_violations"
-                                    ? "bg-red-100 text-red-700"
-                                    : "bg-green-100 text-green-700"
+                                    ? "bg-danger-subtle text-danger-text"
+                                    : "bg-success-subtle text-success-text"
                                 }`}>
                                   {b.status === "new_violations" ? `+${b.newViolationCount}` : `−${b.resolvedViolationCount}`}
                                 </span>
@@ -1173,6 +1171,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
               ))}
             </div>
           )}
+          </div>{/* end aria-live region */}
         </section>
 
         {/* ── Compliance Starter Packs ────────────────────────────────────── */}

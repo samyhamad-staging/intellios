@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -78,7 +79,8 @@ export function GovernorSidebar({ user, branding }: GovernorSidebarProps) {
   return (
     <>
       <aside
-        className="flex h-full w-56 shrink-0 flex-col overflow-hidden"
+        className="flex h-full shrink-0 flex-col overflow-hidden"
+        style={{ width: "var(--sidebar-width, 240px)" } as React.CSSProperties}
         style={{ backgroundColor: "var(--sidebar-bg)", borderRight: "1px solid var(--sidebar-border)" }}
       >
         {/* Brand + header */}
@@ -92,7 +94,7 @@ export function GovernorSidebar({ user, branding }: GovernorSidebarProps) {
           ) : (
             <div
               className="flex h-6 w-6 items-center justify-center rounded shrink-0"
-              style={{ backgroundColor: branding?.primaryColor ?? "#7c3aed" }}
+              style={{ backgroundColor: branding?.primaryColor ?? "var(--color-primary)" }}
             >
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                 <path d="M2 11L7 3L12 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -146,12 +148,13 @@ export function GovernorSidebar({ user, branding }: GovernorSidebarProps) {
                       color: active ? "var(--sidebar-text-active)" : "var(--sidebar-text)",
                       backgroundColor: active ? "var(--sidebar-active-bg)" : "transparent",
                       borderLeft: active ? "2px solid var(--sidebar-accent)" : "2px solid transparent",
+                      boxShadow: active ? "var(--sidebar-active-glow, none)" : "none",
                     }}
                   >
                     <Icon
                       size={15}
                       className="shrink-0 transition-colors"
-                      style={{ color: active ? "#a78bfa" : "inherit" }}
+                      style={{ color: active ? "var(--sidebar-accent)" : "inherit" }}
                     />
                     <span className="font-medium">{item.label}</span>
                   </Link>
@@ -178,7 +181,7 @@ export function GovernorSidebar({ user, branding }: GovernorSidebarProps) {
           style={{ borderTop: "1px solid var(--sidebar-border)" }}
         >
           <div className="flex items-center gap-2.5 rounded-lg px-2 py-2">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs-tight font-semibold text-white">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs-tight font-semibold text-white">
               {initials}
             </div>
             <div className="min-w-0 flex-1">

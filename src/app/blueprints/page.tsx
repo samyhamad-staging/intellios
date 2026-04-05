@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query/keys";
+import { fetchBlueprints } from "@/lib/query/fetchers";
 import Link from "next/link";
 import { Button } from "@/components/catalyst/button";
 import { Heading } from "@/components/catalyst/heading";
+import { InlineAlert } from "@/components/catalyst/alert";
 import { TableToolbar } from "@/components/ui/table-toolbar";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -86,24 +90,18 @@ function relativeTime(iso: string): string {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function BlueprintsPage() {
-  const [blueprints, setBlueprints] = useState<BlueprintEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: blueprintsRaw,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: queryKeys.blueprints.list(),
+    queryFn: fetchBlueprints,
+  });
+  const blueprints = (blueprintsRaw ?? []) as BlueprintEntry[];
+  const error = queryError ? (queryError as Error).message : null;
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<StatusTab>("all");
-
-  useEffect(() => {
-    fetch("/api/blueprints")
-      .then((r) => r.json())
-      .then((data) => {
-        setBlueprints(data.blueprints ?? []);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Failed to load blueprints");
-        setLoading(false);
-      });
-  }, []);
 
   // ── Filtered list ──────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -180,9 +178,9 @@ export default function BlueprintsPage() {
 
       {/* ── Error ────────────────────────────────────────────────────────── */}
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <InlineAlert variant="error" className="flex items-center gap-2">
           <AlertCircle size={15} /> {error}
-        </div>
+        </InlineAlert>
       )}
 
       {/* ── Empty ────────────────────────────────────────────────────────── */}

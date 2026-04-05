@@ -53,10 +53,18 @@ interface SkeletonListProps {
 /** Pre-built skeleton for a list of card rows */
 export function SkeletonList({ rows = 4, height = "h-20", gap = "space-y-3" }: SkeletonListProps) {
   return (
-    <div className={gap}>
+    <div
+      className={gap}
+      role="status"
+      aria-label="Loading content"
+      aria-live="polite"
+      aria-busy="true"
+    >
       {Array.from({ length: rows }).map((_, i) => (
         <Skeleton key={i} height={height} />
       ))}
+      {/* Screen-reader text announces the loading state */}
+      <span className="sr-only">Loading…</span>
     </div>
   );
 }

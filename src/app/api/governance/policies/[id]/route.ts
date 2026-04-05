@@ -13,10 +13,12 @@ import { randomUUID } from "crypto";
 const ALL_POLICY_TYPES = ["safety", "compliance", "data_handling", "access_control", "audit", "runtime"] as const;
 
 const UpdatePolicyBody = z.object({
-  name: z.string().min(1).max(200).optional(),
-  type: z.enum(ALL_POLICY_TYPES).optional(),
-  description: z.string().max(1000).nullable().optional(),
-  rules: z.array(z.unknown()).optional(),
+  name:           z.string().min(1).max(200).optional(),
+  type:           z.enum(ALL_POLICY_TYPES).optional(),
+  description:    z.string().max(1000).nullable().optional(),
+  rules:          z.array(z.unknown()).optional(),
+  // W3-03: null = all agents, string[] = specific agentIds; omit key = inherit from previous version
+  scopedAgentIds: z.array(z.string().uuid()).nullable().optional(),
 });
 
 /** Fetch a policy by id. Returns undefined if not found. */
@@ -118,6 +120,11 @@ export async function PATCH(
     const newDescription = "description" in body ? (body.description ?? null) : policy.description;
     const newRules = body.rules !== undefined ? (body.rules as unknown[]) : (policy.rules as unknown[]);
 
+    // W3-03: inherit scopedAgentIds from previous version unless explicitly updated
+    const newScopedAgentIds = "scopedAgentIds" in body
+      ? (body.scopedAgentIds ?? null)
+      : (policy.scopedAgentIds as string[] | null ?? null);
+
     let newPolicy: typeof policy;
 
     await db.transaction(async (tx) => {
@@ -134,6 +141,7 @@ export async function PATCH(
           policyVersion: policy.policyVersion + 1,
           previousVersionId: policy.id,
           supersededAt: null,
+          scopedAgentIds: newScopedAgentIds,
           createdAt: new Date(),
         })
         .returning();

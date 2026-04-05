@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import NextLink from "next/link";
 import { ValidationReport, Violation } from "@/lib/governance/types";
 import { getSeverityTheme } from "@/lib/status-theme";
 
@@ -154,7 +155,17 @@ function ViolationCard({ violation }: { violation: Violation }) {
             {violation.message}
           </p>
           <p className="mt-0.5 text-xs text-text-secondary">
-            {violation.policyName} · <span className="font-mono">{violation.field}</span>
+            {violation.policyId ? (
+              <NextLink
+                href={`/governance/policies/${violation.policyId}/edit`}
+                className="hover:underline hover:text-primary"
+              >
+                {violation.policyName}
+              </NextLink>
+            ) : (
+              violation.policyName
+            )}{" "}
+            · <span className="font-mono">{violation.field}</span>
           </p>
           {violation.suggestion && (
             <button

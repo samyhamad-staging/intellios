@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useSession } from "next-auth/react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query/keys";
 import Link from "next/link";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { TableToolbar, Pagination } from "@/components/ui/table-toolbar";
 import { Heading } from "@/components/catalyst/heading";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { Activity, RefreshCw, Cpu, CheckCircle2 } from "lucide-react";
+import { Activity, RefreshCw, Cpu, CheckCircle2, SearchX } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 
@@ -127,12 +131,28 @@ function KpiCard({
 }
 
 export default function MonitorPage() {
-  const [agents, setAgents] = useState<AgentHealth[]>([]);
-  const [summary, setSummary] = useState<MonitorSummary>({ total: 0, clean: 0, degraded: 0, critical: 0, unknown: 0 });
-  const [loading, setLoading] = useState(true);
+  const { data: sessionData } = useSession();
+  const queryClient = useQueryClient();
+  const role = sessionData?.user?.role ?? "";
+
+  const {
+    data: monitorData,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: queryKeys.monitor.agents(),
+    queryFn: async () => {
+      const res = await fetch("/api/monitor");
+      if (!res.ok) throw new Error("Failed to load monitor data");
+      return res.json() as Promise<{ agents: AgentHealth[]; summary: MonitorSummary }>;
+    },
+    // Refresh every 30s while the tab is focused — matches the old polling pattern
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+  });
+  const agents = monitorData?.agents ?? [];
+  const summary = monitorData?.summary ?? { total: 0, clean: 0, degraded: 0, critical: 0, unknown: 0 };
+
   const [checkingAll, setCheckingAll] = useState(false);
-  const [checkingId, setCheckingId] = useState<string | null>(null);
-  const [role, setRole] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [healthFilter, setHealthFilter] = useState<"all" | "clean" | "degraded" | "critical" | "unknown">("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -162,75 +182,50 @@ export default function MonitorPage() {
   const [checkingAgc, setCheckingAgc] = useState(false);
   const [agcError, setAgcError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Fetch current user role for gating "Check Now" and "Check All" buttons
-    fetch("/api/me")
-      .then((r) => r.json())
-      .then((d) => setRole(d.role ?? ""))
-      .catch(() => {});
-    loadAgents();
-  }, []);
-
-  async function loadAgents() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/monitor");
-      const data = await res.json();
-      setAgents(data.agents ?? []);
-      setSummary(data.summary ?? { total: 0, clean: 0, degraded: 0, critical: 0, unknown: 0 });
-    } catch {
-      // Keep existing state on fetch failure
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function handleCheckAll() {
     setCheckingAll(true);
     try {
       await fetch("/api/monitor/check-all", { method: "POST" });
-      await loadAgents();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.monitor.agents() });
     } finally {
       setCheckingAll(false);
     }
   }
 
-  async function handleCheckOne(agentId: string) {
-    setCheckingId(agentId);
-    try {
-      const res = await fetch(`/api/monitor/${agentId}/check`, { method: "POST" });
-      if (res.ok) {
-        const result = await res.json();
-        // Update the agent row and recompute summary counts in a single state update
-        setAgents((current) => {
-          const updated = current.map((a) =>
-            a.agentId === agentId
-              ? {
-                  ...a,
-                  healthStatus:        result.healthStatus as "clean" | "degraded" | "critical" | "unknown",
-                  errorCount:          result.errorCount,
-                  warningCount:        result.warningCount,
-                  lastCheckedAt:       result.checkedAt,
-                  productionErrorRate: result.productionErrorRate ?? null,
-                  productionLatencyP99: result.productionLatencyP99 ?? null,
-                  lastTelemetryAt:     result.lastTelemetryAt ?? null,
-                }
-              : a
-          );
-          setSummary({
-            total:    updated.length,
-            clean:    updated.filter((a) => a.healthStatus === "clean").length,
-            degraded: updated.filter((a) => a.healthStatus === "degraded").length,
-            critical: updated.filter((a) => a.healthStatus === "critical").length,
-            unknown:  updated.filter((a) => a.healthStatus === "unknown").length,
-          });
-          return updated;
-        });
+  // ── Optimistic single-agent health check ─────────────────────────────────
+  const checkOneMutation = useMutation({
+    mutationFn: (targetAgentId: string) =>
+      fetch(`/api/monitor/${targetAgentId}/check`, { method: "POST" }),
+    onMutate: async (targetAgentId) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.monitor.agents() });
+      const previous = queryClient.getQueryData<{ agents: AgentHealth[]; summary: MonitorSummary }>(
+        queryKeys.monitor.agents()
+      );
+      // Optimistically mark the agent as "unknown" to signal the check is running
+      if (previous) {
+        queryClient.setQueryData<{ agents: AgentHealth[]; summary: MonitorSummary }>(
+          queryKeys.monitor.agents(),
+          {
+            ...previous,
+            agents: previous.agents.map((a) =>
+              a.agentId === targetAgentId
+                ? { ...a, healthStatus: "unknown" as const, lastCheckedAt: new Date().toISOString() }
+                : a
+            ),
+          }
+        );
       }
-    } finally {
-      setCheckingId(null);
-    }
-  }
+      return { previous };
+    },
+    onError: (_err, _targetAgentId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.monitor.agents(), context.previous);
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.monitor.agents() });
+    },
+  });
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -428,19 +423,27 @@ export default function MonitorPage() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="px-5 py-8 text-center text-sm text-text-tertiary">
-                    No agents match your filters.{" "}
-                    <button
-                      onClick={() => { setSearchQuery(""); setHealthFilter("all"); }}
-                      className="text-blue-600 hover:underline"
-                    >
-                      Clear filters
-                    </button>
+                  <TableCell colSpan={9}>
+                    <EmptyState
+                      icon={SearchX}
+                      heading={agents.length === 0 ? "No agents deployed yet" : "No agents match your filters"}
+                      subtext={agents.length === 0
+                        ? "Deploy agents from the Registry to start monitoring their health."
+                        : "Try adjusting your search query or health status filter."}
+                      action={agents.length > 0 ? (
+                        <button
+                          onClick={() => { setSearchQuery(""); setHealthFilter("all"); }}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Clear filters
+                        </button>
+                      ) : undefined}
+                    />
                   </TableCell>
                 </TableRow>
               ) : (
                 paged.map((agent) => {
-                  const isChecking = checkingId === agent.agentId;
+                  const isChecking = checkOneMutation.isPending && checkOneMutation.variables === agent.agentId;
                   const isAcked = acknowledgedAgentIds.has(agent.agentId);
                   const isAlertable = agent.healthStatus === "degraded" || agent.healthStatus === "critical";
                   return (
@@ -532,7 +535,7 @@ export default function MonitorPage() {
                           )}
                           {canCheck && (
                             <button
-                              onClick={() => handleCheckOne(agent.agentId)}
+                              onClick={() => checkOneMutation.mutate(agent.agentId)}
                               disabled={isChecking || checkingAll}
                               className="text-xs text-blue-600 hover:underline disabled:opacity-40"
                             >

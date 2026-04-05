@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query/keys";
+import { fetchAgents, fetchWorkflows } from "@/lib/query/fetchers";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { StatusBadge } from "@/components/registry/status-badge";
@@ -106,40 +109,34 @@ export default function RegistryPage() {
     return (tab === "workflows" ? "workflows" : "agents") as ArtifactTab;
   });
 
-  // ── Agent state ──
-  const [agents, setAgents] = useState<RegistryEntry[]>([]);
-  const [agentsLoading, setAgentsLoading] = useState(true);
-  const [agentsError, setAgentsError] = useState<string | null>(null);
-  const [cloningId, setCloningId] = useState<string | null>(null);
+  // ── Data fetching — React Query ──────────────────────────────────────────
+  const {
+    data: agents = [],
+    isLoading: agentsLoading,
+    error: agentsQueryError,
+  } = useQuery({
+    queryKey: queryKeys.registry.agents(),
+    queryFn: fetchAgents,
+  });
+  const agentsError = agentsQueryError ? (agentsQueryError as Error).message : null;
 
-  // ── Workflow state ──
-  const [wflows, setWflows] = useState<WorkflowEntry[]>([]);
-  const [wflowsLoading, setWflowsLoading] = useState(false);
-  const [wflowsError, setWflowsError] = useState<string | null>(null);
-  const [wflowsLoaded, setWflowsLoaded] = useState(false);
+  // Lazy-load workflows only when the user switches to the workflows tab.
+  const {
+    data: wflows = [],
+    isLoading: wflowsLoading,
+    error: wflowsQueryError,
+  } = useQuery({
+    queryKey: queryKeys.registry.workflows(),
+    queryFn: fetchWorkflows,
+    enabled: activeTab === "workflows",
+  });
+  const wflowsError = wflowsQueryError ? (wflowsQueryError as Error).message : null;
+
+  const [cloningId, setCloningId] = useState<string | null>(null);
 
   // ── Shared filter state — initialized from ?q= and ?status= URL params ──
   const [searchQuery, setSearchQueryState] = useState<string>(() => searchParams.get("q") ?? "");
   const [statusFilter, setStatusFilterState] = useState<string>(() => searchParams.get("status") ?? "");
-
-  // ─── Data fetching ────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    fetch("/api/registry")
-      .then((r) => r.json())
-      .then((data) => { setAgents(data.agents ?? []); setAgentsLoading(false); })
-      .catch(() => { setAgentsError("Failed to load registry"); setAgentsLoading(false); });
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === "workflows" && !wflowsLoaded) {
-      setWflowsLoading(true);
-      fetch("/api/workflows")
-        .then((r) => r.json())
-        .then((data) => { setWflows(data.workflows ?? []); setWflowsLoading(false); setWflowsLoaded(true); })
-        .catch(() => { setWflowsError("Failed to load workflows"); setWflowsLoading(false); });
-    }
-  }, [activeTab, wflowsLoaded]);
 
   // ─── URL-synced filter helpers ────────────────────────────────────────────
   // All filter mutations write to URL so filters survive back/forward
@@ -253,15 +250,15 @@ export default function RegistryPage() {
         />
       </div>
 
-      {/* Show skeleton during any loading state, including the initial
-          workflow load (before wflowsLoaded becomes true). */}
-      {(loading || (activeTab === "workflows" && !wflowsLoaded && !wflowsError)) && (
-        <SkeletonList rows={4} />
-      )}
+      {/* W3-08: aria-live region announces loading → content transitions */}
+      <div aria-live="polite" aria-atomic="false">
+
+      {/* Show skeleton during any loading state */}
+      {loading && <SkeletonList rows={4} />}
 
       {/* Error */}
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
       )}
 
       {/* ── Agent list ────────────────────────────────────────────────────── */}
@@ -345,10 +342,7 @@ export default function RegistryPage() {
       )}
 
       {/* ── Workflow list ──────────────────────────────────────────────────── */}
-      {/* C-08: Show loading state while workflows are being fetched (prevents
-          the brief window where wflowsLoaded=false + wflowsLoading=false
-          causes the agent skeleton/list to bleed through). */}
-      {activeTab === "workflows" && !wflowsLoading && !wflowsError && wflowsLoaded && (
+      {activeTab === "workflows" && !wflowsLoading && !wflowsError && (
         <>
           {wflows.length === 0 && (
             <EmptyState
@@ -402,6 +396,8 @@ export default function RegistryPage() {
           )}
         </>
       )}
+
+      </div>{/* end aria-live region */}
     </div>
   );
 }

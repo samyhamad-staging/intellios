@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { CheckSquare, AlertTriangle, Download } from "lucide-react";
+import { CheckSquare, AlertTriangle, Download, ClipboardList, FileCheck } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Heading, Subheading } from "@/components/catalyst/heading";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 import { TableToolbar, Pagination } from "@/components/ui/table-toolbar";
@@ -81,9 +82,9 @@ function formatAge(hours: number): string {
 }
 
 const SLA_COLORS: Record<string, string> = {
-  ok: "text-green-600",
-  warning: "text-amber-600",
-  breach: "text-red-600",
+  ok: "text-success",
+  warning: "text-warning",
+  breach: "text-danger",
 };
 
 const SLA_LABELS: Record<string, string> = {
@@ -217,7 +218,7 @@ export default function CompliancePage() {
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="text-center">
-          <p className="text-sm text-red-600 mb-3">{error}</p>
+          <p className="text-sm text-danger mb-3">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="text-sm text-text-secondary hover:text-text"
@@ -276,11 +277,11 @@ export default function CompliancePage() {
                     sub: `${posture.healthCounts.clean} healthy · ${posture.healthCounts.critical} critical`,
                     color:
                       posture.healthCounts.critical > 0
-                        ? "bg-red-50 border-red-200 text-red-900"
+                        ? "bg-danger-muted border-danger-muted text-danger-text"
                         : "bg-surface border-border text-text",
                     subColor:
                       posture.healthCounts.critical > 0
-                        ? "text-red-600"
+                        ? "text-danger"
                         : "text-text-tertiary",
                   },
                   {
@@ -293,22 +294,22 @@ export default function CompliancePage() {
                     color:
                       posture.complianceRate != null &&
                       posture.complianceRate >= 80
-                        ? "bg-green-50 border-green-200 text-green-900"
+                        ? "bg-success-muted border-success-muted text-success-text"
                         : posture.complianceRate != null &&
                           posture.complianceRate >= 50
-                        ? "bg-amber-50 border-amber-200 text-amber-900"
+                        ? "bg-warning-muted border-warning-muted text-warning-text"
                         : posture.complianceRate != null
-                        ? "bg-red-50 border-red-200 text-red-900"
+                        ? "bg-danger-muted border-danger-muted text-danger-text"
                         : "bg-surface border-border text-text",
                     subColor:
                       posture.complianceRate != null &&
                       posture.complianceRate >= 80
-                        ? "text-green-600"
+                        ? "text-success"
                         : posture.complianceRate != null &&
                           posture.complianceRate >= 50
-                        ? "text-amber-600"
+                        ? "text-warning"
                         : posture.complianceRate != null
-                        ? "text-red-600"
+                        ? "text-danger"
                         : "text-text-tertiary",
                   },
                   {
@@ -321,12 +322,12 @@ export default function CompliancePage() {
                     color:
                       posture.testCoverage.pct != null &&
                       posture.testCoverage.pct >= 80
-                        ? "bg-green-50 border-green-200 text-green-900"
+                        ? "bg-success-muted border-success-muted text-success-text"
                         : "bg-surface border-border text-text",
                     subColor:
                       posture.testCoverage.pct != null &&
                       posture.testCoverage.pct >= 80
-                        ? "text-green-600"
+                        ? "text-success"
                         : "text-text-tertiary",
                   },
                   {
@@ -339,18 +340,18 @@ export default function CompliancePage() {
                     color:
                       posture.oldestReviewHours != null &&
                       posture.oldestReviewHours >= 72
-                        ? "bg-red-50 border-red-200 text-red-900"
+                        ? "bg-danger-muted border-danger-muted text-danger-text"
                         : posture.oldestReviewHours != null &&
                           posture.oldestReviewHours >= 48
-                        ? "bg-amber-50 border-amber-200 text-amber-900"
+                        ? "bg-warning-muted border-warning-muted text-warning-text"
                         : "bg-surface border-border text-text",
                     subColor:
                       posture.oldestReviewHours != null &&
                       posture.oldestReviewHours >= 72
-                        ? "text-red-600"
+                        ? "text-danger"
                         : posture.oldestReviewHours != null &&
                           posture.oldestReviewHours >= 48
-                        ? "text-amber-600"
+                        ? "text-warning"
                         : "text-text-tertiary",
                   },
                   {
@@ -359,12 +360,12 @@ export default function CompliancePage() {
                     sub: "need attention",
                     color:
                       posture.atRiskCount > 0
-                        ? "bg-amber-50 border-amber-200 text-amber-900"
-                        : "bg-green-50 border-green-200 text-green-900",
+                        ? "bg-warning-muted border-warning-muted text-warning-text"
+                        : "bg-success-muted border-success-muted text-success-text",
                     subColor:
                       posture.atRiskCount > 0
-                        ? "text-amber-600"
-                        : "text-green-600",
+                        ? "text-warning"
+                        : "text-success",
                   },
                 ].map(({ label, value, sub, color, subColor }) => {
                   const anchor = label === "At-Risk Agents" ? "#at-risk" : label === "Compliance Rate" ? "#policy-coverage" : label === "Review Queue" ? "#review-queue" : undefined;
@@ -394,15 +395,15 @@ export default function CompliancePage() {
                 Periodic Review Status (SR 11-7)
               </SectionHeading>
               {(posture.overdueReviews?.length ?? 0) === 0 ? (
-                <div className="rounded-xl border border-green-200 bg-green-50 p-5 text-center">
-                  <p className="text-sm font-medium text-green-800">✓ All deployments on schedule</p>
-                  <p className="mt-0.5 text-xs text-green-600">No deployed agents have overdue periodic reviews.</p>
+                <div className="rounded-xl border border-success-muted bg-success-muted p-5 text-center">
+                  <p className="text-sm font-medium text-success-text">✓ All deployments on schedule</p>
+                  <p className="mt-0.5 text-xs text-success">No deployed agents have overdue periodic reviews.</p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5">
+                  <div className="flex items-center gap-2 rounded-lg border border-danger-muted bg-danger-muted px-4 py-2.5">
                     <AlertTriangle size={14} className="text-red-600 shrink-0" />
-                    <span className="text-sm font-medium text-red-800">
+                    <span className="text-sm font-medium text-danger-text">
                       {posture.overdueReviews.length} agent{posture.overdueReviews.length !== 1 ? "s" : ""} with overdue periodic review
                     </span>
                   </div>
@@ -426,11 +427,11 @@ export default function CompliancePage() {
                                 <div className="font-medium text-text">{item.agentName}</div>
                                 <div className="text-xs text-text-tertiary">v{item.version}</div>
                               </TableCell>
-                              <TableCell className="text-sm text-red-700">
+                              <TableCell className="text-sm text-danger-text">
                                 {new Date(item.nextReviewDue).toLocaleDateString(undefined, { dateStyle: "medium" })}
                               </TableCell>
                               <TableCell>
-                                <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                                <span className="rounded-full bg-danger-subtle px-2 py-0.5 text-xs font-medium text-danger-text">
                                   {daysOverdue}d overdue
                                 </span>
                               </TableCell>
@@ -441,7 +442,7 @@ export default function CompliancePage() {
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-3">
-                                  <Link href={`/registry/${item.agentId}`} className="text-xs text-blue-600 hover:underline">View →</Link>
+                                  <Link href={`/registry/${item.agentId}`} className="text-xs text-primary hover:underline">View →</Link>
                                   <button
                                     onClick={() => { setCompleteModal(item); setReviewNotes(""); setCompleteError(null); }}
                                     className="text-xs text-violet-700 hover:text-violet-900 font-medium"
@@ -469,11 +470,11 @@ export default function CompliancePage() {
                 <p className="text-xs text-text-tertiary mt-0.5">Agents with unresolved validation errors</p>
               </div>
               {posture.atRiskAgents.length === 0 ? (
-                <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
-                  <p className="text-sm font-medium text-green-800">
+                <div className="rounded-xl border border-success-muted bg-success-muted p-6 text-center">
+                  <p className="text-sm font-medium text-success-text">
                     ✓ No agents at risk
                   </p>
-                  <p className="mt-1 text-xs text-green-600">
+                  <p className="mt-1 text-xs text-success">
                     All approved and deployed blueprints pass governance and have
                     test coverage.
                   </p>
@@ -530,7 +531,7 @@ export default function CompliancePage() {
                               {agent.issues.map((issue, i) => (
                                 <li
                                   key={i}
-                                  className="text-xs text-amber-700"
+                                  className="text-xs text-warning-text"
                                 >
                                   • {issue}
                                 </li>
@@ -542,9 +543,9 @@ export default function CompliancePage() {
                               <span
                                 className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
                                   agent.healthStatus === "critical"
-                                    ? "bg-red-100 text-red-700"
+                                    ? "bg-danger-subtle text-danger-text"
                                     : agent.healthStatus === "clean"
-                                    ? "bg-green-100 text-green-700"
+                                    ? "bg-success-subtle text-success-text"
                                     : "bg-surface-muted text-text-secondary"
                                 }`}
                               >
@@ -596,11 +597,11 @@ export default function CompliancePage() {
               </div>
 
               {posture.reviewQueue.length === 0 ? (
-                <div className="rounded-xl border border-border bg-surface p-6 text-center">
-                  <p className="text-sm text-text-tertiary">
-                    No blueprints pending review
-                  </p>
-                </div>
+                <EmptyState
+                  icon={ClipboardList}
+                  heading="No blueprints pending review"
+                  subtext="All submitted blueprints have been reviewed. New submissions will appear here."
+                />
               ) : (
                 <div className="space-y-2">
                   {posture.reviewQueue
@@ -647,17 +648,12 @@ export default function CompliancePage() {
               </SectionHeading>
 
               {posture.policyCoverage.length === 0 ? (
-                <div className="rounded-xl border border-border bg-surface p-6 text-center">
-                  <p className="text-sm text-text-tertiary">
-                    No active governance policies.{" "}
-                    <Link
-                      href="/governance"
-                      className="text-primary hover:underline"
-                    >
-                      Define policies →
-                    </Link>
-                  </p>
-                </div>
+                <EmptyState
+                  icon={FileCheck}
+                  heading="No active governance policies"
+                  subtext="Define policies in the Governance Hub to start tracking coverage across your agent fleet."
+                  action={<Link href="/governance" className="text-sm text-primary hover:underline">Go to Governance Hub →</Link>}
+                />
               ) : (
                 <div className="overflow-hidden rounded-xl border border-border bg-surface">
                   <Table striped>
@@ -682,7 +678,7 @@ export default function CompliancePage() {
                           </TableCell>
                           <TableCell className="text-right">
                             {policy.violationCount > 0 ? (
-                              <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                              <span className="rounded-full bg-danger-subtle px-2 py-0.5 text-xs font-medium text-danger-text">
                                 {policy.violationCount}
                               </span>
                             ) : (

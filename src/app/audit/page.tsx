@@ -141,6 +141,7 @@ export default function AuditTrailPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
+  const [exportingAll, setExportingAll] = useState(false);
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -179,6 +180,37 @@ export default function AuditTrailPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityType, actorEmail, from, to, page]);
 
+  // ── Export ALL rows (paginates to overcome 100-row API cap) ─────────────────
+  async function exportAllCsv() {
+    setExportingAll(true);
+    try {
+      const EXPORT_BATCH = 100;
+      const all: AuditEntry[] = [];
+      let offset = 0;
+      let fetchedTotal = total;
+      do {
+        const params = new URLSearchParams();
+        if (entityType) params.set("entityType", entityType);
+        if (actorEmail.trim()) params.set("actorEmail", actorEmail.trim());
+        if (from) params.set("from", from);
+        if (to) params.set("to", to);
+        params.set("limit", String(EXPORT_BATCH));
+        params.set("offset", String(offset));
+        const res = await fetch(`/api/audit?${params.toString()}`);
+        const data = await res.json();
+        all.push(...(data.entries ?? []));
+        fetchedTotal = data.total ?? fetchedTotal;
+        offset += EXPORT_BATCH;
+      } while (offset < fetchedTotal);
+      exportCsv(all);
+    } catch {
+      // fall back to exporting current page only
+      exportCsv(entries);
+    } finally {
+      setExportingAll(false);
+    }
+  }
+
   return (
     <div className="px-6 py-6 space-y-4">
       {/* Page header */}
@@ -190,12 +222,16 @@ export default function AuditTrailPage() {
           </div>
           <p className="mt-0.5 text-sm text-text-secondary">Complete audit trail of platform activity</p>
         </div>
-        {entries.length > 0 && (
+        {loaded && total > 0 && (
           <button
-            onClick={() => exportCsv(entries)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-text-secondary hover:border-border-strong hover:text-text transition-colors"
+            onClick={exportAllCsv}
+            disabled={exportingAll}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-text-secondary hover:border-border-strong hover:text-text transition-colors disabled:opacity-60"
           >
-            <Download size={13} />Export CSV ({entries.length})
+            <Download size={13} />
+            {exportingAll
+              ? "Exporting…"
+              : `Export CSV (${total.toLocaleString()} row${total === 1 ? "" : "s"})`}
           </button>
         )}
       </div>

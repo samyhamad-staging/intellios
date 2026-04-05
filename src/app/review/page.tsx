@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query/keys";
 import Link from "next/link";
 import { ValidationReport } from "@/lib/governance/types";
 import type { ApprovalStepRecord, ApprovalChainStep, EnterpriseSettings } from "@/lib/settings/types";
@@ -17,7 +20,11 @@ import {
   Flame,
   AlertTriangle,
   Clock,
+  Search,
+  X,
+  UserCheck,
 } from "lucide-react";
+import { Checkbox } from "@/components/catalyst/checkbox";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -101,12 +108,59 @@ function govBadge(report: ValidationReport | null) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ReviewQueuePage() {
-  const [blueprints, setBlueprints] = useState<QueueEntry[]>([]);
+  const { data: sessionData } = useSession();
+  const userRole = sessionData?.user?.role ?? null;
+  const userEmail = sessionData?.user?.email ?? null;
+
+  const roleParam = userRole && userRole !== "admin" ? `?role=${encodeURIComponent(userRole)}` : "";
+
+  const {
+    data: blueprints = [],
+    isLoading: loading,
+    error: reviewErr,
+  } = useQuery({
+    queryKey: [...queryKeys.review.queue(), roleParam],
+    queryFn: async () => {
+      const res = await fetch(`/api/review${roleParam}`);
+      if (!res.ok) throw new Error("Failed to load review queue");
+      const data = await res.json();
+      return (data.blueprints ?? []) as QueueEntry[];
+    },
+    enabled: sessionData !== undefined,
+  });
+  const error = reviewErr ? (reviewErr as Error).message : null;
+
   const [settings, setSettings] = useState<EnterpriseSettings>(DEFAULT_ENTERPRISE_SETTINGS);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  // Bulk selection state (Catalyst Checkbox adoption — W2-07)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll(ids: string[]) {
+    setSelectedIds((prev) =>
+      prev.size === ids.length && ids.every((id) => prev.has(id))
+        ? new Set()
+        : new Set(ids)
+    );
+  }
+
+  function bulkAssignToMe(ids: string[]) {
+    if (!userEmail) return;
+    setAssignments((prev) => {
+      const next = { ...prev };
+      for (const id of ids) next[id] = userEmail;
+      try { localStorage.setItem(ASSIGN_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+    setSelectedIds(new Set());
+  }
 
   // P1-299: Reviewer assignment — localStorage, browser-local
   // Key: "review-assignments" → JSON object mapping blueprintId → assignee email
@@ -136,30 +190,16 @@ export default function ReviewQueuePage() {
     return () => clearInterval(id);
   }, []);
 
+  // Load admin settings (best-effort, only for admins)
   useEffect(() => {
-    fetch("/api/auth/session")
-      .then((r) => r.json())
-      .then((data) => {
-        const role = data?.user?.role ?? null;
-        setUserRole(role);
-        setUserEmail(data?.user?.email ?? null);
-        if (role === "admin") {
-          fetch("/api/admin/settings")
-            .then((r) => r.json())
-            .then((d) => setSettings(d.settings ?? DEFAULT_ENTERPRISE_SETTINGS))
-            .catch(() => {});
-        }
-        // W-02/W-11: Admin should see ALL in-review items regardless of which
-        // approval step they are at. Passing ?role=admin to the API would only
-        // return blueprints where the active step's role === "admin", causing
-        // the queue to appear empty when blueprints are at "reviewer" steps.
-        const roleParam = (role && role !== "admin") ? `?role=${encodeURIComponent(role)}` : "";
-        return fetch(`/api/review${roleParam}`);
-      })
-      .then((r) => r?.json())
-      .then((data) => { if (data) setBlueprints(data.blueprints ?? []); setLoading(false); })
-      .catch(() => { setError("Failed to load review queue"); setLoading(false); });
-  }, []);
+    if (userRole === "admin") {
+      fetch("/api/admin/settings")
+        .then((r) => r.json())
+        .then((d) => setSettings(d.settings ?? DEFAULT_ENTERPRISE_SETTINGS))
+        .catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userRole]);
 
   const chain: ApprovalChainStep[] = settings.approvalChain ?? [];
 
@@ -170,6 +210,17 @@ export default function ReviewQueuePage() {
     if (rA !== rB) return rA - rB;
     return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
   });
+
+  // ── Search filter ────────────────────────────────────────────────────────────
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return sorted;
+    return sorted.filter((bp) =>
+      bp.name?.toLowerCase().includes(q) ||
+      bp.agentId.toLowerCase().includes(q) ||
+      bp.submittedBy?.toLowerCase().includes(q)
+    );
+  }, [sorted, searchQuery]);
 
   return (
     <div className="max-w-screen-2xl mx-auto w-full px-6 py-6">
@@ -216,6 +267,29 @@ export default function ReviewQueuePage() {
           </div>
         )}
       </div>
+
+      {/* ── Search filter (shown when queue has items) ───────────────────── */}
+      {!loading && sorted.length > 0 && (
+        <div className="mb-4 relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by agent name, ID, or submitter…"
+            className="w-full rounded-lg border border-border bg-surface py-2 pl-8 pr-8 text-sm placeholder:text-text-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 sm:w-80"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text"
+              aria-label="Clear search"
+            >
+              <X size={13} />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── Loading ──────────────────────────────────────────────────────── */}
       {loading && (
@@ -273,10 +347,62 @@ export default function ReviewQueuePage() {
         </div>
       )}
 
+      {/* ── No search results ────────────────────────────────────────────── */}
+      {!loading && sorted.length > 0 && filtered.length === 0 && (
+        <EmptyState
+          icon={Search}
+          heading="No matching blueprints"
+          subtext={`No items in the review queue match "${searchQuery}".`}
+          action={<button onClick={() => setSearchQuery("")} className="text-sm text-primary hover:underline">Clear search</button>}
+        />
+      )}
+
+      {/* ── Bulk action bar (shown when ≥1 item selected) ───────────────── */}
+      {filtered.length > 0 && (
+        <div className="mb-3 flex items-center gap-3">
+          {/* Select-all checkbox */}
+          <div
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelectAll(filtered.map((b) => b.id)); }}
+            className="flex items-center gap-2 cursor-pointer select-none"
+          >
+            <Checkbox
+              checked={selectedIds.size > 0 && selectedIds.size === filtered.length}
+              indeterminate={selectedIds.size > 0 && selectedIds.size < filtered.length}
+              onChange={() => toggleSelectAll(filtered.map((b) => b.id))}
+              color="indigo"
+            />
+            <span className="text-xs text-text-tertiary">
+              {selectedIds.size === 0
+                ? "Select all"
+                : `${selectedIds.size} of ${filtered.length} selected`}
+            </span>
+          </div>
+
+          {selectedIds.size > 0 && userEmail && (
+            <>
+              <div className="h-3.5 w-px bg-border" />
+              <button
+                onClick={() => bulkAssignToMe([...selectedIds])}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition-colors"
+              >
+                <UserCheck size={12} />
+                Assign to me
+              </button>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-xs text-text-tertiary hover:text-text transition-colors"
+              >
+                Clear selection
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {/* ── Queue items ───────────────────────────────────────────────────── */}
-      {sorted.length > 0 && (
+      {filtered.length > 0 && (
         <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
-          {[...sorted].sort((a, b) => {
+          {[...filtered].sort((a, b) => {
             // P1-299: Assigned-to-me items surface to top
             const aAssigned = assignments[a.id] === userEmail ? -1 : 0;
             const bAssigned = assignments[b.id] === userEmail ? -1 : 0;
@@ -299,6 +425,18 @@ export default function ReviewQueuePage() {
                 className={`block px-5 py-4 interactive-row border-l-2 ${theme.border} ${i > 0 ? "border-t border-border" : ""}`}
               >
                 <div className="flex items-start gap-4">
+                  {/* Bulk select checkbox (W2-07) */}
+                  <div
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(bp.id); }}
+                    className="mt-2 shrink-0"
+                  >
+                    <Checkbox
+                      checked={selectedIds.has(bp.id)}
+                      onChange={() => toggleSelect(bp.id)}
+                      color="indigo"
+                    />
+                  </div>
+
                   {/* Risk icon */}
                   <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${theme.bg} ${theme.text}`}>
                     <RiskIcon size={15} />

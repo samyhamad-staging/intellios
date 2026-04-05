@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heading } from "@/components/catalyst/heading";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { Printer, TrendingUp, Shield, DollarSign, Users, AlertTriangle } from "lucide-react";
+import { Printer, TrendingUp, Shield, DollarSign, Users, AlertTriangle, BellOff } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -281,7 +282,12 @@ export default function ExecutiveDashboardPage() {
               <Link href="/governor/audit" className="text-xs text-violet-600 hover:underline print:hidden">View audit log →</Link>
             </div>
             {alerts.length === 0 ? (
-              <p className="text-sm text-text-tertiary">No recent alerts.</p>
+              <EmptyState
+                icon={BellOff}
+                heading="No recent alerts"
+                subtext="All monitored agents are operating within normal parameters."
+                className="py-8"
+              />
             ) : (
               <ul className="space-y-2">
                 {alerts.map((n) => (

@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query/keys";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Heading, Subheading } from "@/components/catalyst/heading";
@@ -166,12 +168,11 @@ interface WorkflowRecord {
 export default function WorkflowDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router  = useRouter();
+  const queryClient = useQueryClient();
 
   const [workflow, setWorkflow] = useState<WorkflowRecord | null>(null);
   const [loading, setLoading]  = useState(true);
   const [error, setError]      = useState<string | null>(null);
-  const [transitioning, setTransitioning] = useState(false);
-  const [transitionError, setTransitionError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/workflows/${id}`)
@@ -185,28 +186,46 @@ export default function WorkflowDetailPage() {
       .catch(() => { setError("Failed to load workflow"); setLoading(false); });
   }, [id]);
 
-  const transition = async (newStatus: string, comment?: string) => {
-    setTransitioning(true);
-    setTransitionError(null);
-    try {
+  // ── Optimistic workflow status transition ──────────────────────────────────
+  const transitionMutation = useMutation({
+    mutationFn: async ({ newStatus, comment }: { newStatus: string; comment?: string }) => {
       const res = await fetch(`/api/workflows/${id}/status`, {
         method:  "PATCH",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ status: newStatus, comment }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setTransitionError(data.error ?? "Failed to update status");
-      } else {
-        setWorkflow((w) => w ? { ...w, status: data.status } : w);
+      if (!res.ok) throw new Error(data.error ?? "Failed to update status");
+      return data;
+    },
+    onMutate: async ({ newStatus }) => {
+      // Snapshot the current workflow state for rollback
+      const previousWorkflow = workflow;
+      // Cancel any in-flight workflow list refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.registry.workflows() });
+      const previousWorkflows = queryClient.getQueryData(queryKeys.registry.workflows());
+      // Optimistically update local state immediately
+      setWorkflow((w) => w ? { ...w, status: newStatus } : w);
+      return { previousWorkflow, previousWorkflows };
+    },
+    onError: (_err, _vars, context) => {
+      // Rollback local state
+      if (context?.previousWorkflow !== undefined) {
+        setWorkflow(context.previousWorkflow);
       }
-    } catch { setTransitionError("Failed to update status"); }
-    finally { setTransitioning(false); }
-  };
+      // Rollback workflows list cache
+      if (context?.previousWorkflows !== undefined) {
+        queryClient.setQueryData(queryKeys.registry.workflows(), context.previousWorkflows);
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.registry.workflows() });
+    },
+  });
 
-  const handleDeprecate = async () => {
+  const handleDeprecate = () => {
     if (!confirm("Deprecate this workflow? It will remain readable but no longer active.")) return;
-    await transition("deprecated");
+    transitionMutation.mutate({ newStatus: "deprecated" });
   };
 
   // ─── Loading / Error ──────────────────────────────────────────────────────
@@ -272,37 +291,41 @@ export default function WorkflowDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          {transitionError && (
-            <span className="text-xs text-red-600 max-w-xs">{transitionError}</span>
+          {transitionMutation.error && (
+            <span className="text-xs text-red-600 max-w-xs">
+              {transitionMutation.error instanceof Error
+                ? transitionMutation.error.message
+                : "Failed to update status"}
+            </span>
           )}
           {workflow.status === "draft" && (
             <button
-              onClick={() => transition("in_review")}
-              disabled={transitioning}
+              onClick={() => transitionMutation.mutate({ newStatus: "in_review" })}
+              disabled={transitionMutation.isPending}
               className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors"
             >
-              {transitioning ? "Updating…" : "Submit for Review"}
+              {transitionMutation.isPending ? "Updating…" : "Submit for Review"}
             </button>
           )}
           {workflow.status === "in_review" && (
             <>
               <button
-                onClick={() => transition("approved")}
-                disabled={transitioning}
+                onClick={() => transitionMutation.mutate({ newStatus: "approved" })}
+                disabled={transitionMutation.isPending}
                 className="rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100 disabled:opacity-50 transition-colors"
               >
-                {transitioning ? "Updating…" : "Approve"}
+                {transitionMutation.isPending ? "Updating…" : "Approve"}
               </button>
               <button
-                onClick={() => transition("rejected")}
-                disabled={transitioning}
+                onClick={() => transitionMutation.mutate({ newStatus: "rejected" })}
+                disabled={transitionMutation.isPending}
                 className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
               >
                 Reject
               </button>
               <button
-                onClick={() => transition("draft")}
-                disabled={transitioning}
+                onClick={() => transitionMutation.mutate({ newStatus: "draft" })}
+                disabled={transitionMutation.isPending}
                 className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-raised disabled:opacity-50 transition-colors"
               >
                 Return to Draft
@@ -311,17 +334,17 @@ export default function WorkflowDetailPage() {
           )}
           {workflow.status === "rejected" && (
             <button
-              onClick={() => transition("draft")}
-              disabled={transitioning}
+              onClick={() => transitionMutation.mutate({ newStatus: "draft" })}
+              disabled={transitionMutation.isPending}
               className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-raised disabled:opacity-50 transition-colors"
             >
-              {transitioning ? "Updating…" : "Reset to Draft"}
+              {transitionMutation.isPending ? "Updating…" : "Reset to Draft"}
             </button>
           )}
           {workflow.status !== "deprecated" && (
             <button
               onClick={handleDeprecate}
-              disabled={transitioning}
+              disabled={transitionMutation.isPending}
               className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
             >
               Deprecate

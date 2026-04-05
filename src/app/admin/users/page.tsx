@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Mail, PenLine } from "lucide-react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { Mail, PenLine, Search, X } from "lucide-react";
 import { Heading, Subheading } from "@/components/catalyst/heading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -639,6 +639,17 @@ export default function AdminUsersPage() {
   const [showInvite, setShowInvite] = useState(false);
   const [showBulkInvite, setShowBulkInvite] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [userSearch, setUserSearch] = useState("");
+
+  const filteredUsers = useMemo(() => {
+    const q = userSearch.trim().toLowerCase();
+    if (!q) return userList;
+    return userList.filter((u) =>
+      u.name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      u.role.toLowerCase().includes(q)
+    );
+  }, [userList, userSearch]);
   const [inviteSuccessToast, setInviteSuccessToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -790,6 +801,32 @@ export default function AdminUsersPage() {
           />
         )}
 
+        {/* User search */}
+        {!loading && userList.length > 0 && (
+          <div className="relative w-64 max-w-xs">
+            <Search
+              size={14}
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary"
+            />
+            <input
+              type="text"
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              placeholder="Search users…"
+              className="input-field-sm w-full pl-8"
+            />
+            {userSearch && (
+              <button
+                onClick={() => setUserSearch("")}
+                aria-label="Clear search"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text transition-colors"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+        )}
+
         {/* User table */}
         <div className="overflow-hidden rounded-xl border border-border bg-surface">
           {loading && (
@@ -838,8 +875,20 @@ export default function AdminUsersPage() {
                 </div>
               </div>
 
+              {filteredUsers.length === 0 && (
+                <div className="px-6 py-10 text-center">
+                  <p className="text-sm text-text-tertiary">No users match your search.</p>
+                  <button
+                    onClick={() => setUserSearch("")}
+                    className="mt-2 text-sm text-violet-600 hover:text-violet-800 transition-colors"
+                  >
+                    Clear search
+                  </button>
+                </div>
+              )}
+
               <div className="divide-y divide-border-subtle">
-                {userList.map((user) => {
+                {filteredUsers.map((user) => {
                   const isSelf = user.id === currentUserId;
                   return (
                     <div

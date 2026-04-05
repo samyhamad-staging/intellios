@@ -2,8 +2,41 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FormField, FormSection } from "@/components/ui/form-field";
+import { Combobox, ComboboxOption, ComboboxLabel } from "@/components/catalyst/combobox";
+import { Checkbox } from "@/components/catalyst/checkbox";
+
+// ─── ABP Field Suggestions ────────────────────────────────────────────────────
+// Common field paths from the Agent Blueprint Package schema, shown as
+// autocomplete suggestions in the rule editor's ABP field path combobox.
+
+const ABP_FIELD_SUGGESTIONS: string[] = [
+  "identity.name",
+  "identity.version",
+  "identity.description",
+  "identity.domain",
+  "identity.tags",
+  "model.provider",
+  "model.modelId",
+  "model.temperature",
+  "model.maxTokens",
+  "model.systemPrompt",
+  "tools[].name",
+  "tools[].type",
+  "tools[].description",
+  "resources[].type",
+  "resources[].name",
+  "security.piiHandling",
+  "security.dataRetention",
+  "compliance.frameworks",
+  "governance.escalationPath",
+  "constraints.allowedDomains",
+  "constraints.blockedDomains",
+  "metadata.owner",
+  "metadata.team",
+];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -108,6 +141,17 @@ export interface PolicyFormValues {
   type: PolicyType;
   description: string;
   rules: PolicyRule[] | RuntimePolicyRule[];
+  /**
+   * W3-03 per-agent scope. null = applies to all agents in this enterprise.
+   * Non-null = array of logical agentId UUIDs this policy is restricted to.
+   */
+  scopedAgentIds: string[] | null;
+}
+
+/** Lightweight agent reference used in the scope selector. */
+interface AgentRef {
+  agentId: string;
+  name: string | null;
 }
 
 // ─── Simulation result types ──────────────────────────────────────────────────
@@ -205,21 +249,38 @@ function RuleRow({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {/* Field */}
+        {/* Field — Catalyst Combobox with ABP field path suggestions */}
         <FormField
           label="ABP field path"
           htmlFor={`rule-${index}-field`}
           error={undefined}
         >
-          <input
-            id={`rule-${index}-field`}
-            type="text"
-            value={rule.field}
-            onChange={(e) => onChange({ ...rule, field: e.target.value })}
-            placeholder="e.g. identity.name"
-            disabled={readOnly}
-            className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
-          />
+          {readOnly ? (
+            <input
+              id={`rule-${index}-field`}
+              type="text"
+              value={rule.field}
+              readOnly
+              placeholder="e.g. identity.name"
+              className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary bg-surface-muted text-text-tertiary"
+            />
+          ) : (
+            <Combobox<string>
+              options={ABP_FIELD_SUGGESTIONS}
+              displayValue={(v) => v ?? ""}
+              value={rule.field || null}
+              onChange={(v) => onChange({ ...rule, field: v ?? "" })}
+              onInputChange={(q) => onChange({ ...rule, field: q })}
+              placeholder="e.g. identity.name"
+              aria-label="ABP field path"
+            >
+              {(option) => (
+                <ComboboxOption value={option}>
+                  <ComboboxLabel>{option}</ComboboxLabel>
+                </ComboboxOption>
+              )}
+            </Combobox>
+          )}
         </FormField>
 
         {/* Operator */}
@@ -258,7 +319,7 @@ function RuleRow({
               onChange={(e) => onChange({ ...rule, value: e.target.value })}
               placeholder="Comparison value"
               disabled={readOnly}
-              className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
+              className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-primary focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
             />
           </FormField>
         )}
@@ -298,7 +359,7 @@ function RuleRow({
           onChange={(e) => onChange({ ...rule, message: e.target.value })}
           placeholder="Shown when this rule is violated"
           disabled={readOnly}
-          className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
+          className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-primary focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
         />
       </FormField>
     </div>
@@ -400,7 +461,7 @@ function RuntimeRuleRow({
               onChange={(e) => onChange({ ...rule, value: e.target.value })}
               placeholder={opDef?.placeholder ?? ""}
               disabled={readOnly}
-              className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
+              className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-primary focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
             />
           </FormField>
         )}
@@ -440,7 +501,7 @@ function RuntimeRuleRow({
           onChange={(e) => onChange({ ...rule, message: e.target.value })}
           placeholder="Shown when this threshold is breached"
           disabled={readOnly}
-          className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
+          className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-primary focus:outline-none disabled:bg-surface-muted disabled:text-text-tertiary"
         />
       </FormField>
     </div>
@@ -465,6 +526,48 @@ export default function PolicyForm({
   const isRuntime = type === "runtime";
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // ── W3-03: Per-agent scope ─────────────────────────────────────────────────
+  // scopedAgentIds = null means "all agents"; non-null = specific agents only
+  const [scopedAgentIds, setScopedAgentIds] = useState<string[] | null>(
+    initialValues?.scopedAgentIds ?? null
+  );
+  const [agentSearch, setAgentSearch] = useState("");
+  const [availableAgents, setAvailableAgents] = useState<AgentRef[]>([]);
+  const [agentsLoading, setAgentsLoading] = useState(false);
+
+  useEffect(() => {
+    if (readOnly) return;
+    setAgentsLoading(true);
+    fetch("/api/registry")
+      .then((r) => r.json())
+      .then((data: { agents?: Array<{ agentId: string; name: string | null }> }) => {
+        if (data.agents) {
+          setAvailableAgents(
+            data.agents.map((a) => ({ agentId: a.agentId, name: a.name }))
+          );
+        }
+      })
+      .catch(() => { /* non-critical — scope defaults to all agents */ })
+      .finally(() => setAgentsLoading(false));
+  }, [readOnly]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const filteredAgents = availableAgents.filter((a) => {
+    if (!agentSearch.trim()) return true;
+    const q = agentSearch.toLowerCase();
+    return (a.name ?? "").toLowerCase().includes(q) || a.agentId.toLowerCase().includes(q);
+  });
+
+  function toggleAgent(agentId: string) {
+    setScopedAgentIds((prev) => {
+      if (prev === null) return [agentId];
+      if (prev.includes(agentId)) {
+        const next = prev.filter((id) => id !== agentId);
+        return next.length === 0 ? null : next;
+      }
+      return [...prev, agentId];
+    });
+  }
+
   // ── Draft auto-save ────────────────────────────────────────────────────────
   const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
   const [tickNow, setTickNow] = useState(() => Date.now());
@@ -480,12 +583,14 @@ export default function PolicyForm({
         type?: PolicyType;
         description?: string;
         rules?: PolicyRule[] | RuntimePolicyRule[];
+        scopedAgentIds?: string[] | null;
         savedAt?: string;
       };
       if (parsed.name !== undefined) setName(parsed.name);
       if (parsed.type !== undefined) setType(parsed.type);
       if (parsed.description !== undefined) setDescription(parsed.description);
       if (parsed.rules !== undefined) setRules(parsed.rules);
+      if ("scopedAgentIds" in parsed) setScopedAgentIds(parsed.scopedAgentIds ?? null);
       if (parsed.savedAt) setDraftSavedAt(new Date(parsed.savedAt));
     } catch { /* malformed draft — ignore */ }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -498,13 +603,13 @@ export default function PolicyForm({
         const now = new Date();
         localStorage.setItem(
           draftKey,
-          JSON.stringify({ name, type, description, rules, savedAt: now.toISOString() })
+          JSON.stringify({ name, type, description, rules, scopedAgentIds, savedAt: now.toISOString() })
         );
         setDraftSavedAt(now);
       } catch { /* storage quota or private browsing — ignore */ }
     }, 30_000);
     return () => clearInterval(id);
-  }, [draftKey, readOnly, name, type, description, rules]);
+  }, [draftKey, readOnly, name, type, description, rules, scopedAgentIds]);
 
   // Tick every 60 s so "saved X min ago" label stays current
   useEffect(() => {
@@ -583,6 +688,7 @@ export default function PolicyForm({
       type,
       description: description.trim(),
       rules: cleanedRules,
+      scopedAgentIds,
     });
   }
 
@@ -674,7 +780,7 @@ export default function PolicyForm({
             onChange={(e) => { setName(e.target.value); setSimDirty(true); }}
             placeholder="e.g. PII Data Handling Policy"
             disabled={readOnly}
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none disabled:bg-surface-raised disabled:text-text-tertiary"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-text placeholder-text-tertiary focus:border-primary focus:outline-none disabled:bg-surface-raised disabled:text-text-tertiary"
           />
         </FormField>
 
@@ -716,10 +822,144 @@ export default function PolicyForm({
             placeholder="Describe what this policy enforces and why it exists"
             rows={3}
             disabled={readOnly}
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-text placeholder-text-tertiary focus:border-blue-400 focus:outline-none resize-none disabled:bg-surface-raised disabled:text-text-tertiary"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-text placeholder-text-tertiary focus:border-primary focus:outline-none resize-none disabled:bg-surface-raised disabled:text-text-tertiary"
           />
         </FormField>
       </FormSection>
+
+      {/* ── Scope Section ────────────────────────────────────────────────────── */}
+      <div className="rounded-xl border border-border bg-surface px-6 py-5">
+        <div className="mb-4">
+          <h2 className="text-sm font-semibold text-text">Agent Scope</h2>
+          <p className="mt-0.5 text-xs text-text-tertiary">
+            Choose which agents this policy evaluates. Scoped policies are skipped during validation
+            for agents not in the list.
+          </p>
+        </div>
+
+        {readOnly ? (
+          /* Read-only scope display */
+          <div className="text-sm text-text">
+            {scopedAgentIds === null || scopedAgentIds.length === 0 ? (
+              <span className="text-text-secondary">All agents (enterprise-wide)</span>
+            ) : (
+              <div className="space-y-1">
+                <span className="text-xs font-medium text-text-tertiary uppercase tracking-wider">
+                  Restricted to {scopedAgentIds.length} agent{scopedAgentIds.length !== 1 ? "s" : ""}
+                </span>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {scopedAgentIds.map((id) => {
+                    const agent = availableAgents.find((a) => a.agentId === id);
+                    return (
+                      <span
+                        key={id}
+                        className="inline-flex items-center rounded-full bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700"
+                      >
+                        {agent?.name ?? id.slice(0, 8) + "…"}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Editable scope selector */
+          <div className="space-y-4">
+            {/* Scope mode toggle */}
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="scope-mode"
+                  checked={scopedAgentIds === null}
+                  onChange={() => setScopedAgentIds(null)}
+                  className="h-3.5 w-3.5 accent-indigo-600"
+                />
+                <span className="text-sm text-text">
+                  All agents{" "}
+                  <span className="text-text-tertiary text-xs">(enterprise-wide default)</span>
+                </span>
+              </label>
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="scope-mode"
+                  checked={scopedAgentIds !== null}
+                  onChange={() => setScopedAgentIds([])}
+                  className="h-3.5 w-3.5 accent-indigo-600"
+                />
+                <span className="text-sm text-text">
+                  Specific agents only
+                </span>
+              </label>
+            </div>
+
+            {/* Agent picker — only shown when "Specific agents" is selected */}
+            {scopedAgentIds !== null && (
+              <div className="rounded-lg border border-border bg-surface-muted p-4 space-y-3">
+                {/* Search */}
+                <div className="relative">
+                  <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary" />
+                  <input
+                    type="text"
+                    value={agentSearch}
+                    onChange={(e) => setAgentSearch(e.target.value)}
+                    placeholder="Search agents…"
+                    className="w-full rounded-md border border-border bg-surface pl-8 pr-3 py-1.5 text-sm text-text placeholder-text-tertiary focus:border-primary focus:outline-none"
+                  />
+                </div>
+
+                {/* Agent list */}
+                {agentsLoading ? (
+                  <p className="text-xs text-text-tertiary text-center py-3">Loading agents…</p>
+                ) : filteredAgents.length === 0 ? (
+                  <p className="text-xs text-text-tertiary text-center py-3">
+                    {availableAgents.length === 0
+                      ? "No agents registered yet."
+                      : "No agents match your search."}
+                  </p>
+                ) : (
+                  <div className="max-h-52 overflow-y-auto space-y-1">
+                    {filteredAgents.map((agent) => {
+                      const selected = scopedAgentIds.includes(agent.agentId);
+                      return (
+                        <label
+                          key={agent.agentId}
+                          className={`flex items-center gap-3 rounded-lg border px-3 py-2 cursor-pointer transition-colors ${
+                            selected
+                              ? "border-indigo-200 bg-indigo-50"
+                              : "border-transparent hover:border-border hover:bg-surface"
+                          }`}
+                        >
+                          <Checkbox
+                            checked={selected}
+                            onChange={() => toggleAgent(agent.agentId)}
+                            color="indigo"
+                          />
+                          <span className="text-sm text-text truncate">
+                            {agent.name ?? <span className="text-text-tertiary italic">Unnamed agent</span>}
+                          </span>
+                          <span className="ml-auto shrink-0 font-mono text-xs text-text-tertiary">
+                            {agent.agentId.slice(0, 8)}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Selection summary */}
+                <p className="text-xs text-text-tertiary">
+                  {scopedAgentIds.length === 0
+                    ? "No agents selected — policy will not evaluate any agent until at least one is added."
+                    : `${scopedAgentIds.length} of ${availableAgents.length} agent${availableAgents.length !== 1 ? "s" : ""} selected`}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* ── Rules ─────────────────────────────────────────────────────────────── */}
       <div className="rounded-xl border border-border bg-surface px-6 py-5">
@@ -741,7 +981,7 @@ export default function PolicyForm({
             <button
               type="button"
               onClick={addRule}
-              className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+              className="rounded-lg border border-info-muted bg-info-muted px-3 py-1.5 text-sm font-medium text-info-text hover:bg-info-subtle transition-colors"
             >
               + Add Rule
             </button>
@@ -784,13 +1024,13 @@ export default function PolicyForm({
                 errors[`rule_${i}_message`]) && (
                 <div className="mt-1 space-y-0.5 px-1">
                   {errors[`rule_${i}_field`] && (
-                    <p className="text-xs text-red-600">{errors[`rule_${i}_field`]}</p>
+                    <p className="text-xs text-danger">{errors[`rule_${i}_field`]}</p>
                   )}
                   {errors[`rule_${i}_value`] && (
-                    <p className="text-xs text-red-600">{errors[`rule_${i}_value`]}</p>
+                    <p className="text-xs text-danger">{errors[`rule_${i}_value`]}</p>
                   )}
                   {errors[`rule_${i}_message`] && (
-                    <p className="text-xs text-red-600">{errors[`rule_${i}_message`]}</p>
+                    <p className="text-xs text-danger">{errors[`rule_${i}_message`]}</p>
                   )}
                 </div>
               )}
@@ -801,12 +1041,17 @@ export default function PolicyForm({
 
       {/* ── Runtime Policy Note ───────────────────────────────────────────────── */}
       {!readOnly && isRuntime && (
-        <div className="rounded-xl border border-blue-100 bg-blue-50 px-6 py-4">
-          <p className="text-sm font-semibold text-blue-800 mb-1">Runtime Policy</p>
-          <p className="text-xs text-blue-700">
-            This policy evaluates against live telemetry — it cannot be previewed against stored blueprints.
-            Rules are checked every 15 minutes via the alert-check cron job. Breaches create in-app notifications
-            and fire webhook events. Auto-suspension (H2-1.4) will be added in the next sprint.
+        <div className="rounded-xl border border-info-muted bg-info-muted px-6 py-4 space-y-2">
+          <p className="text-sm font-semibold text-info-text">Runtime Policy — Live Telemetry Only</p>
+          <p className="text-xs text-info-text opacity-80">
+            This policy evaluates against live agent telemetry, not blueprint structure. Blueprint-level
+            simulation is not available for runtime policies. Rules are checked every 15 minutes via the
+            alert-check cron job. Breaches create in-app notifications and fire webhook events.
+          </p>
+          <p className="text-xs">
+            <Link href="/governance?filter=runtime" className="text-info font-medium hover:underline">
+              View runtime violations in Governance Hub →
+            </Link>
           </p>
         </div>
       )}
@@ -821,24 +1066,29 @@ export default function PolicyForm({
                 See how this policy would affect approved and deployed blueprints before saving.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleSimulate}
-              disabled={simulating || rules.length === 0}
-              className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700 hover:bg-purple-100 disabled:opacity-50 transition-colors"
-            >
-              {simulating ? "Analyzing…" : "Preview Impact"}
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              <button
+                type="button"
+                onClick={handleSimulate}
+                disabled={simulating || rules.length === 0}
+                className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700 hover:bg-purple-100 disabled:opacity-50 transition-colors"
+              >
+                {simulating ? "Analyzing…" : "Preview Impact"}
+              </button>
+              {rules.length === 0 && (
+                <p className="text-xs text-text-tertiary">Add at least one rule to preview impact</p>
+              )}
+            </div>
           </div>
 
           {simDirty && simResult && (
-            <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            <div className="mb-3 rounded-lg border border-warning-muted bg-warning-muted px-3 py-2 text-xs text-warning-text">
               ⚠ Simulation may be outdated — policy has changed since last preview.
             </div>
           )}
 
           {simError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <div className="rounded-lg border border-danger-muted bg-danger-muted px-3 py-2 text-xs text-danger-text">
               {simError}
             </div>
           )}
@@ -858,7 +1108,7 @@ export default function PolicyForm({
                     value: simResult.summary.newViolations,
                     color:
                       simResult.summary.newViolations > 0
-                        ? "bg-red-50 border-red-200 text-red-700"
+                        ? "bg-danger-muted border-danger-muted text-danger-text"
                         : "bg-surface-raised border-border text-text-secondary",
                   },
                   {
@@ -866,7 +1116,7 @@ export default function PolicyForm({
                     value: simResult.summary.resolvedViolations,
                     color:
                       simResult.summary.resolvedViolations > 0
-                        ? "bg-green-50 border-green-200 text-green-700"
+                        ? "bg-success-muted border-success-muted text-success-text"
                         : "bg-surface-raised border-border text-text-secondary",
                   },
                   {
@@ -897,8 +1147,8 @@ export default function PolicyForm({
                         key={bp.blueprintId}
                         className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${
                           bp.status === "new_violations"
-                            ? "border-red-200 bg-red-50"
-                            : "border-green-200 bg-green-50"
+                            ? "border-danger-muted bg-danger-muted"
+                            : "border-success-muted bg-success-muted"
                         }`}
                       >
                         <Link
@@ -910,8 +1160,8 @@ export default function PolicyForm({
                         <span
                           className={`shrink-0 ml-3 text-xs font-medium ${
                             bp.status === "new_violations"
-                              ? "text-red-700"
-                              : "text-green-700"
+                              ? "text-danger-text"
+                              : "text-success-text"
                           }`}
                         >
                           {bp.status === "new_violations"

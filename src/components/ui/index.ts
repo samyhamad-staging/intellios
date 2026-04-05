@@ -9,7 +9,7 @@ export { FormField, FormSection, type FormFieldProps, type FormSectionProps } fr
 export { CatalystLink } from "./catalyst-link";
 export { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "./table";
 export { DescriptionList, DescriptionTerm, DescriptionDetails } from "./description-list";
-export { Heading, Subheading } from "./heading";
+export { Heading, Subheading } from "../catalyst/heading";
 export { Divider } from "./divider";
 export { Text, TextLink, Strong, Code } from "./text";
 export { Switch, SwitchField, SwitchGroup } from "./switch";
@@ -28,3 +28,4 @@ export {
 export { TableToolbar, Pagination, type TableToolbarProps, type FilterChip, type PaginationProps } from "./table-toolbar";
 export { Tooltip, type TooltipProps } from "./tooltip";
 export { SectionHeading, type SectionHeadingProps } from "./section-heading";
+export { ThemeToggle } from "./theme-toggle";

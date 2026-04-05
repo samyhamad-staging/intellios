@@ -6,6 +6,7 @@ import Link from "next/link";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Heading, Subheading } from "@/components/catalyst/heading";
+import { InlineAlert } from "@/components/catalyst/alert";
 import PolicyForm, { PolicyFormValues } from "@/components/governance/policy-form";
 
 interface Policy {
@@ -15,6 +16,7 @@ interface Policy {
   description: string | null;
   rules: unknown[];
   enterpriseId: string | null;
+  scopedAgentIds: string[] | null;
 }
 
 export default function EditPolicyPage({
@@ -31,6 +33,9 @@ export default function EditPolicyPage({
   const [deleting, setDeleting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // W3-05: cascade impact count — fetched when user opens the delete confirmation
+  const [dependentCount, setDependentCount] = useState<number | null>(null);
+  const [dependentCountLoading, setDependentCountLoading] = useState(false);
 
   useEffect(() => {
     fetch(`/api/governance/policies/${id}`)
@@ -71,6 +76,22 @@ export default function EditPolicyPage({
     } catch {
       setSaveError("Network error. Please try again.");
       setSaving(false);
+    }
+  }
+
+  async function fetchDependentCount() {
+    if (dependentCount !== null || dependentCountLoading) return;
+    setDependentCountLoading(true);
+    try {
+      const res = await fetch(`/api/governance/policies/${id}/dependents`);
+      if (res.ok) {
+        const data = (await res.json()) as { blueprintCount: number };
+        setDependentCount(data.blueprintCount);
+      }
+    } catch {
+      // non-critical — show confirmation without count
+    } finally {
+      setDependentCountLoading(false);
     }
   }
 
@@ -125,6 +146,7 @@ export default function EditPolicyPage({
     type: policy.type as PolicyFormValues["type"],
     description: policy.description ?? "",
     rules: (policy.rules as PolicyFormValues["rules"]) ?? [],
+    scopedAgentIds: policy.scopedAgentIds ?? null,
   };
 
   return (
@@ -146,16 +168,14 @@ export default function EditPolicyPage({
 
       <div className="max-w-3xl">
         {saveError && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {saveError}
-          </div>
+          <InlineAlert variant="error" className="mb-6">{saveError}</InlineAlert>
         )}
 
         {policy.enterpriseId === null && (
-          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <InlineAlert variant="warning" className="mb-6">
             <span className="font-medium">Platform policy.</span> This is a global platform-level
             policy. Only administrators can modify or delete it.
-          </div>
+          </InlineAlert>
         )}
 
         <PolicyForm
@@ -178,27 +198,44 @@ export default function EditPolicyPage({
 
             {!confirmDelete ? (
               <button
-                onClick={() => setConfirmDelete(true)}
+                onClick={() => { setConfirmDelete(true); fetchDependentCount(); }}
                 className="rounded-lg border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
               >
                 Delete Policy
               </button>
             ) : (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-text-secondary">Are you sure? This cannot be undone.</span>
-                <button
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
-                >
-                  {deleting ? "Deleting…" : "Yes, Delete"}
-                </button>
-                <button
-                  onClick={() => setConfirmDelete(false)}
-                  className="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised transition-colors"
-                >
-                  Cancel
-                </button>
+              <div className="space-y-3">
+                {/* W3-05: cascade impact warning */}
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+                  {dependentCountLoading ? (
+                    "Checking impact…"
+                  ) : dependentCount !== null && dependentCount > 0 ? (
+                    <>
+                      <span className="font-medium">
+                        This policy is evaluated against {dependentCount} active blueprint{dependentCount !== 1 ? "s" : ""}.
+                      </span>{" "}
+                      Deleting it will remove this policy from all future validations. Existing
+                      validation reports are unaffected. This action cannot be undone.
+                    </>
+                  ) : (
+                    "This policy is not currently evaluated against any active blueprints. Deleting it will remove it from all future validations. This action cannot be undone."
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                  >
+                    {deleting ? "Deleting…" : "Yes, Delete"}
+                  </button>
+                  <button
+                    onClick={() => { setConfirmDelete(false); setDependentCount(null); }}
+                    className="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
           </div>

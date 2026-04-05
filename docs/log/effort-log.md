@@ -38,6 +38,235 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 126 — 2026-04-04
+
+**W3-01 Dark Mode — Wave 3 Complete**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-sonnet-4-6 |
+| Input tokens (est.) | ~45,000 |
+| Output tokens (est.) | ~6,000 |
+| Tool calls (est.) | ~25 |
+| Estimated cost | ~$0.23 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 1 |
+| Decisions made | 1 (D-Approve: "go ahead") |
+| Engagement type | Direction-setting |
+| Estimated time | ~2 min |
+
+### Notes
+
+The token investment from Wave 1 (purging hardcoded colours → semantic tokens) paid off here — dark mode required zero per-page changes. All 36 UX Audit items complete across 8 sessions.
+
+---
+
+## Session 125 — 2026-04-04
+
+**W3-09 Optimistic Updates**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-sonnet-4-6 |
+| Input tokens (est.) | ~50,000 |
+| Output tokens (est.) | ~5,000 |
+| Tool calls (est.) | ~25 |
+| Estimated cost | ~$0.23 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 1 |
+| Decisions made | 1 (D-Approve: "Great. Please proceed.") |
+| Engagement type | Direction-setting |
+| Estimated time | ~3 min |
+
+### Notes
+
+Investigation confirmed localStorage-only mutations (review assignment, monitor acknowledge) are already instant — excluded from scope. Three server-mutation sites converted to `useMutation` with snapshot/rollback pattern. Highest-value change: `LifecycleControls` cache patch makes status badges in both the detail page and the agents list update simultaneously and instantly on click.
+
+---
+
+## Session 124 — 2026-04-04
+
+**W3-08 Accessibility Hardening**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-sonnet-4-6 |
+| Input tokens (est.) | ~55,000 |
+| Output tokens (est.) | ~6,000 |
+| Tool calls (est.) | ~30 |
+| Estimated cost | ~$0.26 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 2 |
+| Decisions made | 1 (D-Approve: "Great. Please proceed.") |
+| Engagement type | Direction-setting |
+| Estimated time | ~5 min |
+
+### Notes
+
+Discovered and fixed stale `wflowsLoaded` references from W3-07 during investigation. The `scope="col"` default on `TableHeader` was the highest leverage-per-line change of Wave 3 — one prop default fixes all tables simultaneously.
+
+---
+
+## Session 123 — 2026-04-04
+
+**W3-07 React Query Adoption**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-sonnet-4-6 |
+| Input tokens (est.) | ~80,000 |
+| Output tokens (est.) | ~8,000 |
+| Tool calls (est.) | ~40 |
+| Estimated cost | ~$0.36 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 2 |
+| Decisions made | 1 (D-Approve: "Yes") |
+| Engagement type | Direction-setting |
+| Estimated time | ~5 min |
+
+### Notes
+
+Largest scope session in Wave 3. Investigation + 5 page migrations + 2 new library files + full documentation. The `GovernancePolicySummary` type required a schema lookup to correct field names (type vs policyType, policyVersion vs version).
+
+---
+
+## Session 122 — 2026-04-04
+
+**UX Audit Wave 3 — W3-02 Compliance Evidence Inline Viewer**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-sonnet-4-6 |
+| Input tokens (est.) | ~45,000 |
+| Output tokens (est.) | ~4,000 |
+| Tool calls (est.) | ~18 |
+| Estimated cost | ~$0.20 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 2 |
+| Decisions made | 1 (D-Approve: "great. proceed") |
+| Engagement type | Direction-setting |
+| Estimated time | ~5 min |
+
+### Notes
+
+Investigation-heavy session. Most effort went into reading the evidence endpoint, quality state, test run types, and Regulatory tab structure before determining the fix. The implementation itself (imports + JSX) was compact: 1 file modified. Zero new APIs or state required.
+
+---
+
+## Session 121 — 2026-04-04
+
+**UX Audit Wave 3 — W3-03 through W3-06**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-sonnet-4-6 |
+| Scope | Continuation session: W3-03 (policy binding) + W3-04 (InlineAlert) + W3-05 (cascade warning) + W3-06 (badge cleanup) + documentation |
+| Input tokens (est.) | ~160k (context summary carry-forward + 18+ file reads: schema, validator, load-policies, types, policies API routes, policy-form, edit page, governance list, registry agentId page, catalyst alert, effort log, roadmap) |
+| Output tokens (est.) | ~18k (W3-03 scope selector code, migration, API changes, InlineAlert component, cascade endpoint + UI, badge cleanup, session log, docs) |
+| Files read | ~18 |
+| Files modified | ~15 |
+| Files created | 3 (`0035_policy_scope.sql`, `dependents/route.ts`, `session-121.md`) |
+| Files deleted | 1 (`catalyst/badge.tsx`) |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 0 (session started from prior context summary; pure continuation) |
+| Decisions made | 0 (Wave 3 scope defined in prior session) |
+| Engagement type | Delegation |
+| Estimated time | < 5 min (review of completed work) |
+
+---
+
+## Session 120 — 2026-04-05
+
+**UX Audit Wave 2 — Core UX (W2-06 + W2-07, completion)**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-sonnet-4-6 |
+| Scope | Continuation session: W2-06 completion + W2-07 (Combobox + Checkbox) + documentation |
+| Input tokens (est.) | ~140k (context summary carry-forward + file reads for policy-form, review page, combobox, checkbox, admin/users) |
+| Output tokens (est.) | ~12k (code changes across 5 files + session log + _index + roadmap + journal + this entry) |
+| Files read | ~12 |
+| Files modified | 5 (`admin/users/page.tsx`, `catalyst/combobox.tsx`, `policy-form.tsx`, `review/page.tsx`, docs) |
+| Files created | 1 (`docs/log/2026-04-05_session-120.md`) |
+| Files deleted | 0 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 2 ("Great. Please proceed." to start Wave 2 continuation) |
+| Decisions made | 0 (Wave 2 scope defined in Session 119; session is pure execution) |
+| Engagement type | Delegation |
+| Estimated time | < 5 min (prompt + review) |
+
+---
+
+## Session 119 — 2026-04-04
+
+**UX Audit Wave 1 — Foundation (14 items)**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-sonnet-4-6 |
+| Scope | Full codebase UX audit (7 phases) + 14 Wave 1 items implemented + documentation |
+| Input tokens (est.) | ~180k (context summary carry-forward + ~25 file reads + tool results) |
+| Output tokens (est.) | ~22k (code changes across ~20 files + session log + roadmap + journal + this entry) |
+| Files read | ~25 |
+| Files modified | ~20 |
+| Files created | 2 (`app/governor/error.tsx`, `app/admin/error.tsx`) |
+| Files deleted | 1 (`src/components/ui/heading.tsx`) |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | ~5 (audit request, tracker review, wave selection, "let's go", "great proceed") |
+| Decisions made | 2 (D-Scope: commissioned full UX audit; D-Scope: selected Wave 1 Foundation as first implementation wave) |
+| Engagement type | Direction-setting then delegation |
+| Estimated time | ~10 min |
+
+---
+
 ## Session 116 — 2026-04-03
 
 **Residual P1 Sprint — 2 implemented, 7 confirmed done**

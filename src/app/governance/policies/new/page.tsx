@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Heading } from "@/components/catalyst/heading";
+import { InlineAlert } from "@/components/catalyst/alert";
 import PolicyForm, { PolicyFormValues } from "@/components/governance/policy-form";
 
 export default function NewPolicyPage() {
@@ -60,9 +61,7 @@ export default function NewPolicyPage() {
 
       <div className="max-w-3xl">
         {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
+          <InlineAlert variant="error" className="mb-6">{error}</InlineAlert>
         )}
         <PolicyForm
           onSubmit={handleSubmit}

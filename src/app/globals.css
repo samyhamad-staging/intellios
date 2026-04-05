@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* ── Dark mode — class strategy (.dark on <html>) ───────────────────────── */
+/* Activates all Catalyst dark: utilities when ancestor has .dark class      */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ── Design token layer — semantic aliases exposed as Tailwind utilities ─ */
 @theme {
   /* Fonts */
@@ -185,6 +189,111 @@
   --gradient-sidebar-header: linear-gradient(180deg, #141d35 0%, var(--sidebar-bg) 100%);
   --gradient-page-wash: linear-gradient(180deg, rgba(99, 102, 241, 0.03) 0%, transparent 200px);
   --gradient-login-bg: linear-gradient(135deg, #0c1222 0%, #1e1b4b 50%, #1a1645 100%);
+}
+
+/* ── Dark mode token overrides ─────────────────────────────────────────── */
+html.dark {
+  color-scheme: dark;
+
+  /* ── Surfaces ── */
+  --color-surface:         #0f172a; /* slate-950 */
+  --color-surface-raised:  #1e293b; /* slate-800 */
+  --color-surface-muted:   #334155; /* slate-700 */
+  --color-surface-overlay: rgba(2, 6, 23, 0.7);
+
+  /* ── Borders ── */
+  --color-border:        #334155; /* slate-700 */
+  --color-border-strong: #475569; /* slate-600 */
+  --color-border-subtle: #1e293b; /* slate-800 */
+
+  /* ── Text ── */
+  --color-text:          #f8fafc; /* slate-50 */
+  --color-text-secondary: #94a3b8; /* slate-400 */
+  --color-text-tertiary:  #64748b; /* slate-500 */
+  --color-text-disabled:  #475569; /* slate-600 */
+
+  /* ── Primary brand — slightly lighter for dark bg contrast ── */
+  --color-primary:        #6366f1; /* indigo-500 */
+  --color-primary-hover:  #818cf8; /* indigo-400 */
+  --color-primary-subtle: rgba(99, 102, 241, 0.15);
+  --color-primary-muted:  rgba(99, 102, 241, 0.08);
+
+  /* ── Status — semi-transparent subtle/muted on dark bg ── */
+  --color-danger-subtle:  rgba(220, 38, 38, 0.18);
+  --color-danger-muted:   rgba(220, 38, 38, 0.10);
+  --color-danger-text:    #fca5a5; /* red-300 */
+  --color-success-subtle: rgba(5, 150, 105, 0.18);
+  --color-success-muted:  rgba(5, 150, 105, 0.10);
+  --color-success-text:   #6ee7b7; /* emerald-300 */
+  --color-warning-subtle: rgba(217, 119, 6, 0.18);
+  --color-warning-muted:  rgba(217, 119, 6, 0.10);
+  --color-warning-text:   #fcd34d; /* amber-300 */
+  --color-info-subtle:    rgba(2, 132, 199, 0.18);
+  --color-info-muted:     rgba(2, 132, 199, 0.10);
+  --color-info-text:      #7dd3fc; /* sky-300 */
+
+  /* ── Risk tiers ── */
+  --color-risk-low-subtle:  rgba(16, 185, 129, 0.15);
+  --color-risk-low-muted:   rgba(16, 185, 129, 0.08);
+  --color-risk-low-text:    #6ee7b7;
+  --color-risk-low-border:  rgba(16, 185, 129, 0.30);
+  --color-risk-medium-subtle:  rgba(245, 158, 11, 0.15);
+  --color-risk-medium-muted:   rgba(245, 158, 11, 0.08);
+  --color-risk-medium-text:    #fcd34d;
+  --color-risk-medium-border:  rgba(245, 158, 11, 0.30);
+  --color-risk-high-subtle:  rgba(249, 115, 22, 0.15);
+  --color-risk-high-muted:   rgba(249, 115, 22, 0.08);
+  --color-risk-high-text:    #fb923c;
+  --color-risk-high-border:  rgba(249, 115, 22, 0.30);
+  --color-risk-critical-subtle:  rgba(239, 68, 68, 0.15);
+  --color-risk-critical-muted:   rgba(239, 68, 68, 0.08);
+  --color-risk-critical-text:    #fca5a5;
+  --color-risk-critical-border:  rgba(239, 68, 68, 0.30);
+
+  /* ── Policy types ── */
+  --color-policy-safety-subtle: rgba(234, 88, 12, 0.15);
+  --color-policy-safety-text:   #fdba74;
+  --color-policy-safety-border: rgba(234, 88, 12, 0.30);
+  --color-policy-compliance-subtle: rgba(2, 132, 199, 0.15);
+  --color-policy-compliance-text:   #7dd3fc;
+  --color-policy-compliance-border: rgba(2, 132, 199, 0.30);
+  --color-policy-data-handling-subtle: rgba(109, 40, 217, 0.15);
+  --color-policy-data-handling-text:   #c4b5fd;
+  --color-policy-data-handling-border: rgba(109, 40, 217, 0.30);
+  --color-policy-access-control-subtle: rgba(79, 70, 229, 0.15);
+  --color-policy-access-control-text:   #a5b4fc;
+  --color-policy-access-control-border: rgba(79, 70, 229, 0.30);
+  --color-policy-audit-subtle: #1e293b;
+  --color-policy-audit-text:   #94a3b8;
+  --color-policy-audit-border: #334155;
+
+  /* ── shadcn/ui compat aliases ── */
+  --background:          #0f172a;
+  --foreground:          #f8fafc;
+  --border:              #334155;
+  --input:               #334155;
+  --muted:               #1e293b;
+  --muted-foreground:    #94a3b8;
+  --accent:              rgba(99, 102, 241, 0.10);
+  --accent-foreground:   #818cf8;
+  --popover:             #1e293b;
+  --popover-foreground:  #f8fafc;
+
+  /* ── Content / page background ── */
+  --content-bg: #020617; /* slate-950 darkest */
+
+  /* ── Elevation shadows — use pure black for depth on dark ── */
+  --shadow-card:   0 1px 2px rgba(0, 0, 0, 0.40), 0 1px 3px rgba(0, 0, 0, 0.30);
+  --shadow-raised: 0 4px 12px rgba(0, 0, 0, 0.40), 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-modal:  0 24px 48px rgba(0, 0, 0, 0.60), 0 8px 16px rgba(0, 0, 0, 0.40);
+}
+
+/* Dark mode scrollbar */
+html.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
 
 /* ── Base ──────────────────────────────────────────────────────────────── */

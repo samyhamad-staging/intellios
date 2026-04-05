@@ -89,6 +89,11 @@ export interface GovernancePolicy {
   type: string;
   description: string | null;
   rules: PolicyRule[];
+  /**
+   * W3-03 per-agent scope. null = applies to all agents in the enterprise.
+   * Non-null = array of logical agentId UUIDs this policy is restricted to.
+   */
+  scopedAgentIds: string[] | null;
 }
 
 /** A stored runtime governance policy as loaded from the database. */

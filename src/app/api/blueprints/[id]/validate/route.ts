@@ -39,9 +39,11 @@ export async function POST(
     const abp = readABP(blueprint.abp);
     // Use denormalized enterpriseId from blueprint (set at creation)
     const enterpriseId = blueprint.enterpriseId ?? null;
+    // W3-03: pass agentId so scoped policies are filtered correctly
+    const agentId = blueprint.agentId;
 
     // Run validation
-    const report = await validateBlueprint(abp, enterpriseId);
+    const report = await validateBlueprint(abp, enterpriseId, undefined, agentId);
 
     // Persist the report
     await db

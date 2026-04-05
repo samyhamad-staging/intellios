@@ -3,6 +3,40 @@ import clsx from 'clsx'
 import type React from 'react'
 import { Text } from './text'
 
+// ─── InlineAlert ──────────────────────────────────────────────────────────────
+// Inline banner component replacing ad-hoc coloured divs (W3-04).
+// Use for page-level status messages: errors, warnings, info notices, success.
+
+const inlineVariants = {
+  error:   'border-red-200 bg-red-50 text-red-700',
+  warning: 'border-amber-200 bg-amber-50 text-amber-800',
+  info:    'border-blue-200 bg-blue-50 text-blue-700',
+  success: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+}
+
+export function InlineAlert({
+  variant = 'info',
+  className,
+  children,
+}: {
+  variant?: keyof typeof inlineVariants;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      role="alert"
+      className={clsx(
+        'rounded-lg border px-4 py-3 text-sm',
+        inlineVariants[variant],
+        className
+      )}
+    >
+      {children}
+    </div>
+  )
+}
+
 const sizes = {
   xs: 'sm:max-w-xs',
   sm: 'sm:max-w-sm',

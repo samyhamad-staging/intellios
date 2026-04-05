@@ -8,6 +8,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Tooltip } from "@/components/ui/tooltip";
 import { FormField } from "@/components/ui/form-field";
+import {
+  Dialog, DialogTitle, DialogDescription, DialogBody, DialogActions,
+} from "@/components/catalyst/dialog";
+import { Button as CatalystButton } from "@/components/catalyst/button";
 
 interface ApiKey {
   id: string;
@@ -28,6 +32,8 @@ export default function ApiKeysPage() {
   const [newKey, setNewKey] = useState<{ key: string; name: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [form, setForm] = useState({ name: "", scopes: [] as string[] });
+  const [revokeTarget, setRevokeTarget] = useState<ApiKey | null>(null);
+  const [revoking, setRevoking] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/api-keys")
@@ -53,9 +59,13 @@ export default function ApiKeysPage() {
     setCreating(false);
   }
 
-  async function handleRevoke(id: string) {
-    const r = await fetch(`/api/admin/api-keys/${id}`, { method: "DELETE" });
-    if (r.ok) setKeys((prev) => prev.filter((k) => k.id !== id));
+  async function handleRevokeConfirmed() {
+    if (!revokeTarget) return;
+    setRevoking(true);
+    const r = await fetch(`/api/admin/api-keys/${revokeTarget.id}`, { method: "DELETE" });
+    if (r.ok) setKeys((prev) => prev.filter((k) => k.id !== revokeTarget.id));
+    setRevoking(false);
+    setRevokeTarget(null);
   }
 
   function toggleScope(scope: string) {
@@ -193,7 +203,7 @@ export default function ApiKeysPage() {
             </div>
             <Tooltip content="Revoke key">
               <button
-                onClick={() => handleRevoke(k.id)}
+                onClick={() => setRevokeTarget(k)}
                 className="text-text-tertiary hover:text-red-500 transition-colors"
                 title="Revoke key"
                 aria-label="Revoke key"
@@ -204,6 +214,25 @@ export default function ApiKeysPage() {
           </div>
         ))}
       </section>
+
+      {/* Revoke confirmation dialog */}
+      <Dialog open={revokeTarget !== null} onClose={() => setRevokeTarget(null)}>
+        <DialogTitle>Revoke API key?</DialogTitle>
+        <DialogDescription>
+          Are you sure you want to revoke <strong>{revokeTarget?.name}</strong>
+          {" "}(<code>{revokeTarget?.keyPrefix}••••</code>)?
+          Any integrations using this key will stop working immediately. This cannot be undone.
+        </DialogDescription>
+        <DialogBody />
+        <DialogActions>
+          <CatalystButton plain onClick={() => setRevokeTarget(null)}>
+            Cancel
+          </CatalystButton>
+          <CatalystButton color="red" onClick={handleRevokeConfirmed} disabled={revoking}>
+            {revoking ? "Revoking…" : "Revoke key"}
+          </CatalystButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

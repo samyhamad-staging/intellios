@@ -45,6 +45,17 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      {/*
+        Anti-flash script — runs synchronously before React hydrates.
+        Reads theme preference from localStorage and falls back to system
+        preference. Adds .dark to <html> immediately so Tailwind dark: utilities
+        are active on first paint, preventing a flash of light mode.
+      */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(t===null&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');}catch(e){}})();`,
+        }}
+      />
       <body className="antialiased" style={{ backgroundColor: "var(--content-bg)" }}>
         <Providers session={session}>
           <Toaster position="bottom-right" richColors />

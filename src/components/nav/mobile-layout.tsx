@@ -22,6 +22,13 @@ export default function MobileLayout({ sidebar, children }: MobileLayoutProps) {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      {/* W3-08: Skip-navigation link — visible on focus for keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-lg focus:bg-indigo-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg focus:outline-none"
+      >
+        Skip to main content
+      </a>
       {/* ── Desktop sidebar — always visible at lg+ ── */}
       <div className="hidden lg:flex shrink-0">
         {sidebar}
@@ -39,6 +46,7 @@ export default function MobileLayout({ sidebar, children }: MobileLayoutProps) {
 
       {/* Drawer */}
       <div
+        id="mobile-sidebar"
         className={`
           fixed inset-y-0 left-0 z-50 lg:hidden
           transform transition-transform duration-200 ease-out
@@ -49,7 +57,7 @@ export default function MobileLayout({ sidebar, children }: MobileLayoutProps) {
       </div>
 
       {/* ── Main content ── */}
-      <main className="flex-1 overflow-y-auto" style={{ backgroundColor: "var(--content-bg)" }}>
+      <main id="main-content" aria-label="Main content" className="flex-1 overflow-y-auto" style={{ backgroundColor: "var(--content-bg)" }}>
         {/* Mobile top bar with hamburger — hidden on desktop */}
         <div
           className="flex items-center gap-3 px-4 py-3 border-b border-border lg:hidden sticky top-0 z-10"
@@ -57,8 +65,10 @@ export default function MobileLayout({ sidebar, children }: MobileLayoutProps) {
         >
           <button
             onClick={() => setSidebarOpen(true)}
-            className="rounded-md p-1.5 transition-colors hover:bg-surface-raised"
+            className="rounded-md p-2.5 transition-colors hover:bg-surface-raised min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label="Open navigation"
+            aria-expanded={sidebarOpen}
+            aria-controls="mobile-sidebar"
           >
             <Menu size={20} style={{ color: "var(--sidebar-text)" }} />
           </button>
@@ -67,7 +77,9 @@ export default function MobileLayout({ sidebar, children }: MobileLayoutProps) {
           </span>
         </div>
 
-        {children}
+        <div className="max-w-screen-2xl mx-auto">
+          {children}
+        </div>
       </main>
     </div>
   );

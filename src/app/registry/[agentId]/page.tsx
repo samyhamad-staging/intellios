@@ -8,7 +8,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/catalyst/button";
 import { Heading, Subheading } from "@/components/catalyst/heading";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
@@ -33,6 +33,8 @@ import { QualityDashboard } from "@/components/blueprint/quality-dashboard";
 import DownloadEvidenceButton from "@/components/mrm/download-evidence-button";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 import { FormField } from "@/components/ui/form-field";
+import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/catalyst/description-list";
+import { InlineAlert } from "@/components/catalyst/alert";
 
 interface CurrentUser {
   email: string;
@@ -643,7 +645,7 @@ export default function AgentDetailPage({
           {/* Actions menu — all secondary actions in one dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="md">
+              <Button outline>
                 Actions
                 <svg className="ml-1 h-3.5 w-3.5 opacity-50" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
@@ -869,6 +871,68 @@ export default function AgentDetailPage({
         );
       })()}
 
+      {/* Suspended Agent Banner — H2-1.4: Shown when the agent has been suspended.
+           Provides investigation context and admin-only Resume / Deprecate actions. */}
+      {latest.status === "suspended" && (
+        <div className="shrink-0 border-b border-amber-300 bg-amber-50 px-6 py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 text-xl shrink-0">⏸</span>
+              <div>
+                <p className="text-sm font-semibold text-amber-900">
+                  Agent Suspended — No New Requests Are Being Processed
+                </p>
+                <p className="mt-0.5 text-xs text-amber-800">
+                  This agent was suspended by the governance circuit breaker or by an administrator.
+                  All runtime invocations are paused until an administrator resumes the agent.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-amber-700">
+                  <span className="font-medium">Investigation steps:</span>
+                  <span>1. Review runtime violations below</span>
+                  <span>·</span>
+                  <span>2. Check the activity log for the suspension event</span>
+                  <span>·</span>
+                  <span>3. Resolve root cause</span>
+                  <span>·</span>
+                  <span>4. Resume when safe</span>
+                </div>
+                <div className="mt-2 flex gap-3">
+                  <a
+                    href="/monitor"
+                    className="text-xs font-medium text-amber-800 underline hover:text-amber-900"
+                  >
+                    View Monitor →
+                  </a>
+                  <a
+                    href="/governance"
+                    className="text-xs font-medium text-amber-800 underline hover:text-amber-900"
+                  >
+                    View Runtime Violations →
+                  </a>
+                  <a
+                    href="/audit"
+                    className="text-xs font-medium text-amber-800 underline hover:text-amber-900"
+                  >
+                    View Audit Log →
+                  </a>
+                </div>
+              </div>
+            </div>
+            {/* Admin-only inline Resume / Deprecate quick actions */}
+            {currentUser?.role === "admin" && (
+              <div className="flex shrink-0 items-center gap-2">
+                <LifecycleControls
+                  blueprintId={latest.id}
+                  agentId={latest.agentId}
+                  currentStatus={latest.status}
+                  onStatusChange={handleStatusChange}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Approval Progress Strip — shown when in_review with a multi-step chain configured */}
       {isInReview && (() => {
         const chain: ApprovalChainStep[] = enterpriseSettings.approvalChain ?? [];
@@ -949,6 +1013,7 @@ export default function AgentDetailPage({
             onClick: () => { setCloneName(""); setCloneModalOpen(true); },
           },
         };
+        // Note: "suspended" is handled by the dedicated Suspended Banner strip above the tabs.
         const bar = bars[latest.status as Status];
         if (!bar) return null;
         return (
@@ -1131,7 +1196,26 @@ export default function AgentDetailPage({
 
         {activeTab === "regulatory" && (
           <div className="p-6 max-w-3xl">
-            {/* P2-287: Export Regulatory Evidence button — shown for approved/deployed blueprints */}
+            {/* W3-02: MRM Report access — prominent link to formatted inline report (was buried in Actions dropdown) */}
+            <div className="mb-4 flex items-center justify-between rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3.5">
+              <div>
+                <p className="text-sm font-semibold text-indigo-900">Model Risk Management (MRM) Report</p>
+                <p className="text-xs text-indigo-700 mt-0.5">
+                  14-section formatted compliance report covering governance validation, approval chain, SOD
+                  evidence, regulatory framework assessment, and SR 11-7 periodic review schedule.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 ml-4 shrink-0">
+                <Link
+                  href={`/blueprints/${latest.id}/report`}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+                >
+                  View MRM Report →
+                </Link>
+              </div>
+            </div>
+
+            {/* P2-287: Export Evidence Package — for approved/deployed blueprints */}
             {(latest.status === "approved" || latest.status === "deployed") && (
               <div className="mb-4 flex items-center justify-between rounded-lg border border-border-subtle bg-surface-raised px-4 py-3">
                 <div>
@@ -1146,6 +1230,159 @@ export default function AgentDetailPage({
                 />
               </div>
             )}
+            {/* W3-02: Evidence Summary — quality scorecard + test evidence inline (no JSON download needed) */}
+            {qualityLoading && (
+              <div className="mb-4 rounded-lg border border-border bg-surface-raised px-4 py-3 text-sm text-text-tertiary animate-pulse">
+                Loading evidence summary…
+              </div>
+            )}
+            {!qualityLoading && (qualityScore || testRuns.length > 0) && (
+              <div className="mb-4 space-y-4">
+                {/* Quality Scorecard */}
+                {qualityScore && (
+                  <div className="rounded-lg border border-border bg-surface overflow-hidden">
+                    <div className="border-b border-border bg-surface-raised px-4 py-2.5 flex items-center justify-between">
+                      <SectionHeading>Quality Evaluation</SectionHeading>
+                      <span className="text-xs text-text-tertiary">
+                        {new Date(qualityScore.evaluatedAt).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                      </span>
+                    </div>
+                    <div className="px-4 py-3">
+                      {/* Overall score banner */}
+                      {qualityScore.overallScore !== null && (
+                        <div className="mb-3 flex items-center gap-2">
+                          <span className="text-sm text-text-secondary">Overall Score</span>
+                          <span className={`ml-auto text-sm font-semibold tabular-nums ${
+                            parseFloat(qualityScore.overallScore) >= 0.8
+                              ? "text-emerald-700"
+                              : parseFloat(qualityScore.overallScore) >= 0.6
+                              ? "text-amber-700"
+                              : "text-red-700"
+                          }`}>
+                            {Math.round(parseFloat(qualityScore.overallScore) * 100)}%
+                          </span>
+                        </div>
+                      )}
+                      <DescriptionList>
+                        <DescriptionTerm>Intent Alignment</DescriptionTerm>
+                        <DescriptionDetails>
+                          {qualityScore.intentAlignment !== null
+                            ? `${Math.round(parseFloat(qualityScore.intentAlignment) * 100)}%`
+                            : "—"}
+                        </DescriptionDetails>
+                        <DescriptionTerm>Tool Appropriateness</DescriptionTerm>
+                        <DescriptionDetails>
+                          {qualityScore.toolAppropriateness !== null
+                            ? `${Math.round(parseFloat(qualityScore.toolAppropriateness) * 100)}%`
+                            : "—"}
+                        </DescriptionDetails>
+                        <DescriptionTerm>Instruction Specificity</DescriptionTerm>
+                        <DescriptionDetails>
+                          {qualityScore.instructionSpecificity !== null
+                            ? `${Math.round(parseFloat(qualityScore.instructionSpecificity) * 100)}%`
+                            : "—"}
+                        </DescriptionDetails>
+                        <DescriptionTerm>Governance Adequacy</DescriptionTerm>
+                        <DescriptionDetails>
+                          {qualityScore.governanceAdequacy !== null
+                            ? `${Math.round(parseFloat(qualityScore.governanceAdequacy) * 100)}%`
+                            : "—"}
+                        </DescriptionDetails>
+                        <DescriptionTerm>Ownership Completeness</DescriptionTerm>
+                        <DescriptionDetails>
+                          {qualityScore.ownershipCompleteness !== null
+                            ? `${Math.round(parseFloat(qualityScore.ownershipCompleteness) * 100)}%`
+                            : "—"}
+                        </DescriptionDetails>
+                      </DescriptionList>
+                      {qualityScore.flags.length > 0 && (
+                        <InlineAlert variant="warning" className="mt-3">
+                          <p className="font-medium mb-1">Quality Flags ({qualityScore.flags.length})</p>
+                          <ul className="space-y-0.5 list-disc list-inside">
+                            {qualityScore.flags.map((flag, i) => (
+                              <li key={i} className="text-xs">{flag}</li>
+                            ))}
+                          </ul>
+                        </InlineAlert>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Test Evidence Summary */}
+                {testRuns.length > 0 && (() => {
+                  const latestRun = testRuns[0];
+                  const passRate = latestRun.totalCases > 0
+                    ? Math.round((latestRun.passedCases / latestRun.totalCases) * 100)
+                    : null;
+                  return (
+                    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+                      <div className="border-b border-border bg-surface-raised px-4 py-2.5 flex items-center justify-between">
+                        <SectionHeading>Test Evidence</SectionHeading>
+                        <span className="text-xs text-text-tertiary">{testRuns.length} run{testRuns.length !== 1 ? "s" : ""}</span>
+                      </div>
+                      <div className="px-4 py-3">
+                        {/* Latest run summary */}
+                        <div className="mb-3 flex items-center gap-3">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                            latestRun.status === "passed"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : latestRun.status === "failed"
+                              ? "bg-red-50 text-red-700 border border-red-200"
+                              : "bg-amber-50 text-amber-700 border border-amber-200"
+                          }`}>
+                            {latestRun.status === "passed" ? "✓" : latestRun.status === "failed" ? "✗" : "!"}{" "}
+                            {latestRun.status.charAt(0).toUpperCase() + latestRun.status.slice(1)}
+                          </span>
+                          <span className="text-sm text-text-secondary">Latest run</span>
+                          {passRate !== null && (
+                            <span className="ml-auto text-sm font-semibold tabular-nums text-text">
+                              {latestRun.passedCases}/{latestRun.totalCases} passed ({passRate}%)
+                            </span>
+                          )}
+                        </div>
+                        {/* Run history table — last 5 */}
+                        <Table dense>
+                          <TableHead>
+                            <TableRow>
+                              <TableHeader>Date</TableHeader>
+                              <TableHeader>Status</TableHeader>
+                              <TableHeader>Passed</TableHeader>
+                              <TableHeader>Failed</TableHeader>
+                              <TableHeader>Run By</TableHeader>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {testRuns.slice(0, 5).map((run) => (
+                              <TableRow key={run.id} className="interactive-row">
+                                <TableCell className="whitespace-nowrap text-xs text-text-secondary">
+                                  {run.completedAt
+                                    ? new Date(run.completedAt).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })
+                                    : "Running…"}
+                                </TableCell>
+                                <TableCell>
+                                  <span className={`text-xs font-medium ${
+                                    run.status === "passed" ? "text-emerald-700"
+                                    : run.status === "failed" ? "text-red-700"
+                                    : "text-amber-700"
+                                  }`}>
+                                    {run.status.charAt(0).toUpperCase() + run.status.slice(1)}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="tabular-nums text-xs">{run.passedCases}</TableCell>
+                                <TableCell className="tabular-nums text-xs">{run.failedCases}</TableCell>
+                                <TableCell className="text-xs text-text-secondary truncate max-w-[120px]">{run.runBy}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
             <RegulatoryPanel blueprintId={latest.id} />
           </div>
         )}

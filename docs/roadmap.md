@@ -2,7 +2,113 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-04-03 (Session 116 — Residual P1 Sprint complete)
+**Last updated:** 2026-04-04 (Session 126 — W3-01 Dark Mode) — **Wave 3 UX Audit 36/36 COMPLETE**
+
+---
+
+## ✓ Session 126 Complete (2026-04-04) — W3-01 (P3): Dark Mode — **WAVE 3 COMPLETE**
+
+1 Wave 3 item implemented. Zero new npm dependencies. Zero schema migrations. 3 files modified, 1 created.
+
+- **Dark Mode (W3-01, P3)** — Class-based dark theme (`html.dark`) implemented end-to-end. `@custom-variant dark (&:where(.dark, .dark *))` added to `globals.css` so all Catalyst `dark:` utilities activate on the `.dark` class. `html.dark {}` block overrides all semantic CSS custom properties: surfaces (`#0f172a / #1e293b / #334155`), borders (`#334155 / #475569`), text (`#f8fafc / #94a3b8 / #64748b`), primary brand (`#6366f1` — lighter for dark bg contrast), all status/risk/policy subtle+muted+border as semi-transparent rgba, shadcn compat tokens, content-bg, shadows, and scrollbar. Anti-flash inline `<script>` before `<body>` in `layout.tsx` reads `localStorage('theme')` and falls back to `prefers-color-scheme`, adding `.dark` before React hydrates. `ThemeToggle` Sun/Moon button component created; added to sidebar user footer row. **Wave 3 UX Audit 36/36 complete.**
+
+**UX Audit tracker:** 36/36 items complete. Wave 3 fully done. All P0–P3 items resolved.
+
+---
+
+## ✓ Session 125 Complete (2026-04-04) — W3-09 (P3): Optimistic Updates
+
+1 Wave 3 item implemented. Zero new npm dependencies. Zero schema migrations. 3 files modified, 0 created.
+
+- **Optimistic updates for status transitions (W3-09, P3)** — `useMutation` from `@tanstack/react-query` adopted in three mutation sites. `LifecycleControls`: blueprint status transitions (`PATCH /api/blueprints/:id/status`) now update the detail page UI and the `registry.agents()` list cache immediately on click, with automatic rollback on error. `monitor/page.tsx`: health check-one button (`POST /api/monitor/:agentId/check`) optimistically sets the row's `healthStatus` to `"unknown"` while the check runs; `checkingId` state removed in favour of `checkOneMutation.isPending`. `workflow/[id]/page.tsx`: workflow status transitions update local state instantly; `transitioning` state removed. All three mutations snapshot cache/state on `onMutate`, restore on `onError`, and background-invalidate on `onSettled`. 0 new TypeScript errors.
+
+**UX Audit tracker:** 35/36 items complete. Remaining: W3-01 (Dark Mode).
+
+---
+
+## ✓ Session 124 Complete (2026-04-04) — W3-08 (P3): Accessibility Hardening
+
+1 Wave 3 item implemented. Zero new npm dependencies. Zero schema migrations. 5 files modified, 1 created.
+
+- **Accessibility hardening (W3-08, P3)** — Skip link (`sr-only focus:not-sr-only`) targeting `id="main-content"` on `<main aria-label="Main content">`. Mobile hamburger button expanded from ~32px to 44px+ touch target (WCAG 2.1 AA) with `aria-expanded` + `aria-controls` wired to drawer `id`. `TableHeader` component gains `scope="col"` default — all 40+ data tables now have correct column scope without callsite changes. `SkeletonList` gains `role="status"`, `aria-live="polite"`, `aria-busy="true"`, sr-only "Loading…" text. New `ui/visually-hidden.tsx`: `VisuallyHidden` (sr-only wrapper) and `LiveRegion` (polite status announcer) utilities. Registry and governance pages gain `aria-live="polite"` content wrappers and `role="alert"` on error divs. Fixed stale `wflowsLoaded` references from the W3-07 migration.
+
+**UX Audit tracker:** 34/36 items complete. Remaining: W3-09 (Optimistic Updates), W3-01 (Dark Mode).
+
+---
+
+## ✓ Session 123 Complete (2026-04-04) — W3-07 (P1): React Query Client-Side Cache
+
+1 Wave 3 item implemented. 1 new npm dependency. Zero schema migrations. 7 files modified, 2 files created.
+
+- **React Query adoption (W3-07, P1)** — `@tanstack/react-query` v5.96.2 added. `QueryClientProvider` with browser singleton (staleTime 30s, gcTime 5min, retry 1, refetchOnWindowFocus) wired into root `Providers`. Central `lib/query/keys.ts` key factory (typed arrays for 9 domains) and `lib/query/fetchers.ts` typed fetcher library (11 functions + `apiFetch` error helper) created. 5 priority list pages migrated: `registry/page.tsx` (agents + lazy workflows), `blueprints/page.tsx`, `governance/page.tsx` (3 parallel fetches + analytics with enabled guard; `loadPolicies()` → `invalidateQueries`), `review/page.tsx` (session → `useSession`, queue → `useQuery` with role-derived key), `monitor/page.tsx` (`useQuery` with `refetchInterval: 30s`; mutations use `invalidateQueries`). 0 new TypeScript errors.
+
+**UX Audit tracker:** 33/41 items complete. Remaining: W3-01 (Dark Mode), W3-08 (Accessibility hardening), W3-09 (Optimistic Updates), W3-10 (Dark Mode CSS).
+
+---
+
+## ✓ Session 122 Complete (2026-04-04) — UX Audit Wave 3: W3-02 Compliance Evidence Inline Viewer (P0)
+
+1 Wave 3 item implemented. Zero new npm dependencies. Zero schema migrations. 1 file modified.
+
+- **Compliance Evidence Inline Viewer (W3-02, P0)** — Evidence Summary section added to the Regulatory tab in `registry/[agentId]/page.tsx`. Two new cards inserted between the "Export Evidence Package" button and `<RegulatoryPanel />`. (1) Quality Evaluation card: overall score banner (green/amber/red by threshold), Catalyst `DescriptionList` with all 5 dimensions (Intent Alignment, Tool Appropriateness, Instruction Specificity, Governance Adequacy, Ownership Completeness) as percentages, `InlineAlert variant="warning"` flag list. (2) Test Evidence card: latest run status badge with pass rate, `Table dense` showing last 5 runs (date, status, passed, failed, run by). Loading state via `animate-pulse` skeleton while `qualityLoading` is true. Zero new API calls — uses already-fetched `qualityScore` and `testRuns` page state.
+
+**UX Audit tracker:** 32/41 items complete. Remaining: W1-11 (Client-Side Cache), W3-01 (Dark Mode), W3-07 (React Query), W3-08 (Accessibility hardening), W3-09 (Optimistic Updates), W3-10 (Dark Mode CSS).
+
+---
+
+## ✓ Session 121 Complete (2026-04-04) — UX Audit Wave 3: Polish & Delight (W3-03 — W3-06)
+
+4 Wave 3 items implemented. Zero new npm dependencies. 1 schema migration. ~15 files modified, 3 created, 1 deleted.
+
+- **Per-agent policy scope (W3-03, P0)** — `scoped_agent_ids JSONB DEFAULT NULL` column added to `governance_policies` (migration 0035). `GovernancePolicy` type extended with `scopedAgentIds: string[] | null`. `loadPolicies(enterpriseId, agentId?)` filters scoped policies in memory. `validateBlueprint` accepts optional `agentId` 4th param; wired at the validate route and status route submission gate. PATCH/create routes accept `scopedAgentIds` in body; PATCH inherits from previous version when key absent. `policy-form.tsx` gains "Agent Scope" section: radio toggle (All agents / Specific agents), async agent picker (fetches `/api/registry`), Catalyst Checkbox per agent, search filter, selection summary, readOnly badge display. Governance list shows amber scope count badge. Dashboard: 31/41 items done (P0 7/7, P1 7/7, P2 8/8, P3 4/6, Catalyst 10/10).
+- **Catalyst `InlineAlert` component (W3-04, P1)** — Extended `catalyst/alert.tsx` with `InlineAlert` (4 variants: error/warning/info/success; `role="alert"`). Adopted in `policies/new`, `policies/[id]/edit`, and `blueprints/page.tsx`, replacing 4 ad-hoc error/warning divs.
+- **Policy cascade warning (W3-05, P3)** — New `GET /api/governance/policies/[id]/dependents` endpoint returns count of active blueprints in scope (W3-03 scope-aware). Edit page fetches count lazily on Delete click; amber banner shows "evaluated against N blueprints" or "not currently evaluated against any active blueprints" before confirming deletion.
+- **Catalyst Badge deduplication (W3-06, P2)** — `catalyst/badge.tsx` deleted. Barrel export removed from `catalyst/index.ts`. `ui/badge` is now the sole canonical badge component. Zero import breakage — no file referenced Catalyst Badge directly.
+
+**UX Audit tracker:** 31/41 items complete. Remaining: W1-11 (Client-Side Cache), W3-01 (Dark Mode), W3-02 (Accessibility), W3-05 (Optimistic Updates), P1-4 (React Query).
+
+---
+
+## ✓ Session 120 Complete (2026-04-05) — UX Audit Wave 2: Core UX (completion)
+
+Completed the final 2 of 7 Wave 2 Core UX items. Zero new dependencies. Zero schema migrations. 5 files modified.
+
+- **Search coverage: admin users (W2-06)** — Search input, clear button, `filteredUsers` memo, and "No users match" empty state added to `admin/users/page.tsx`. Pattern matches TableToolbar search UI.
+- **Catalyst Combobox — ABP field path (W2-07)** — `combobox.tsx` extended with `onInputChange` for free-text entry. `policy-form.tsx` `RuleRow` adopts Combobox with 23 ABP field path suggestions (`identity.*`, `model.*`, `tools[].`, `security.*`, etc.). Falls back to plain read-only input when `readOnly=true`.
+- **Catalyst Checkbox — review queue bulk selection (W2-07)** — `review/page.tsx` adds `selectedIds` state, `toggleSelect`, `toggleSelectAll`, `bulkAssignToMe` helpers. Select-all Checkbox (with indeterminate state), per-card Checkbox (stopPropagation inside Link), and contextual bulk action bar ("Assign to me", "Clear selection").
+
+Wave 2 is now fully complete (7/7 items). Ready to begin Wave 3 — Polish & Delight.
+
+---
+
+## ✓ Session 119 Complete (2026-04-04) — UX Audit Wave 1: Foundation
+
+14 items from the comprehensive UX audit Wave 1 "Foundation" tier implemented. A full 7-phase audit (Navigation & IA, Component Library Consistency, Design Token Usage, Accessibility, Form UX, Error Handling, Copy & Messaging) produced a 41-item tracker. Wave 1 addresses all quick wins resolving component duplication, design token alignment, dangerous-action safeguards, and accessibility patterns. Zero new npm dependencies. Zero schema migrations. ~20 files modified, 2 files created, 1 file deleted.
+
+- **Component library consolidation** — Deleted dead `ui/heading.tsx` (hardcoded `text-zinc-950` bypassing design tokens). Redirected `ui/index.ts` barrel to `catalyst/heading`. Replaced `ui/switch`, `ui/description-list`, and `ui/divider` with thin re-exports to their canonical `catalyst/` counterparts, eliminating dual-maintenance surfaces.
+- **Catalyst Button migration** — `lifecycle-controls.tsx` and `registry/[agentId]/page.tsx` migrated from legacy `ui/button` (variant API) to `catalyst/button` (color/outline/plain API). Added `variantToCatalystProps()` helper for the mapping.
+- **Dangerous-action confirmation dialogs** — Deprecate and Reject actions in `lifecycle-controls.tsx` now require Catalyst Dialog confirmation with contextual description. API key revocation and webhook deletion likewise wrapped in Catalyst confirmation dialogs. No irreversible action is now one-click.
+- **Semantic design tokens throughout** — Governance hub and compliance pages converted from 30+ hardcoded Tailwind color classes (`bg-red-50`, `text-green-700`, etc.) to semantic token utilities (`bg-danger-muted`, `text-success`, `bg-policy-safety-subtle`, etc.). Policy-type color maps in governance hub use per-type policy tokens.
+- **Governor sidebar token alignment** — `bg-violet-600` → `bg-primary`; icon color `#a78bfa` → `var(--sidebar-accent)`; active nav glow via `var(--sidebar-active-glow)`; sidebar width via `var(--sidebar-width, 240px)`; logo fallback → `var(--color-primary)`. Enterprise branding can now fully override sidebar appearance without code changes.
+- **Navigation & layout** — `mobile-layout.tsx` content area wrapped in `max-w-screen-2xl mx-auto` for readability on ultrawide displays.
+- **Error boundaries** — `app/governor/error.tsx` and `app/admin/error.tsx` created as Next.js error boundaries for the two sub-apps. Both use semantic danger tokens, Catalyst Button for retry, and contextual back links.
+- **Form UX enhancements** — `form-field.tsx` extended with optional `maxLength` / `currentLength` (character counter with three color states) and `touched` (on-blur validation, backward compatible). No existing callsites require changes.
+- **Review panel approval history** — Collapsible "Approval History (N)" section added to `review-panel.tsx` above the Decision radio buttons. Shows each prior step's action badge (semantic colors), reviewer identity, rationale, and timestamp.
+- **Policy form UX** — `policy-form.tsx`: info-note and Add Rule button converted to info tokens; disabled simulation now explains why; rule error text tokenized; focus rings tokenized; added link to Governance Hub for runtime violations.
+- **Governance policy links** — `validation-report.tsx`: policy names in violation cards now link to `/governance/policies/${id}/edit` when `policyId` is present, enabling direct remediation navigation.
+- **Catalyst heading standardization** — Line-height utilities aligned across heading levels (level 2 and subheading level 2 corrected for tighter spacing consistency).
+
+---
+
+## ✓ Session 118 Complete (2026-04-04) — UI Polish: Heroicons to Lucide & Page Header Standardization
+
+See session 118 log entry.
+
+---
+
+## ✓ Session 117 Complete (2026-04-04) — TableToolbar & Pagination Components + QA Remediation Sprint
+
+See session 117 log entry.
 
 ---
 

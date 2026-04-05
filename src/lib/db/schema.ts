@@ -203,6 +203,8 @@ export const governancePolicies = pgTable("governance_policies", {
   policyVersion: integer("policy_version").notNull().default(1),
   previousVersionId: uuid("previous_version_id").references((): AnyPgColumn => governancePolicies.id),
   supersededAt: timestamp("superseded_at", { withTimezone: true }),
+  // W3-03: per-agent policy scope. null = applies to all agents; string[] = specific logical agentIds only.
+  scopedAgentIds: jsonb("scoped_agent_ids").default(null),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

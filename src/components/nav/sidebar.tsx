@@ -28,6 +28,7 @@ import {
   Key,
   FileText,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import NotificationBell from "@/components/nav/notification-bell";
 import { HelpPanel } from "@/components/help/help-panel";
 import { CommandPalette } from "@/components/nav/command-palette";
@@ -293,7 +294,7 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
             )}
           </div>
           <div className="flex items-center gap-0.5">
-            {/* HelpPanel icon removed — "Ask Intellios" row above is the primary affordance */}
+            <ThemeToggle />
             <form action={signOutAction}>
               <Tooltip content="Sign out">
                 <button

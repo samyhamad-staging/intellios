@@ -19,13 +19,16 @@ import { loadPolicies } from "./load-policies";
  *                       Pass these when the caller already holds the policy set to avoid
  *                       a redundant round-trip (e.g., the generate route loads once and
  *                       passes to both generateBlueprint and validateBlueprint).
+ * @param agentId      - W3-03: logical agent UUID. When provided, scoped-out policies are
+ *                       excluded from evaluation. Ignored when `policies` is pre-supplied.
  */
 export async function validateBlueprint(
   abp: ABP,
   enterpriseId: string | null = null,
-  policies?: GovernancePolicy[]
+  policies?: GovernancePolicy[],
+  agentId?: string | null
 ): Promise<ValidationReport> {
-  const resolvedPolicies = policies ?? await loadPolicies(enterpriseId);
+  const resolvedPolicies = policies ?? await loadPolicies(enterpriseId, agentId);
 
   if (resolvedPolicies.length === 0) {
     return {

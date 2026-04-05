@@ -3,6 +3,14 @@
 import React from "react";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/catalyst/button";
+import {
+  Pagination as CatalystPagination,
+  PaginationPrevious,
+  PaginationList,
+  PaginationPage,
+  PaginationGap,
+  PaginationNext,
+} from "@/components/catalyst/pagination";
 
 /**
  * FilterChip represents a single filter option with active state and optional count
@@ -147,41 +155,63 @@ export interface PaginationProps {
 }
 
 /**
- * Pagination — A simple pagination control with Previous/Next buttons
+ * Pagination — Built on Catalyst Pagination primitives.
  *
- * Displays: "Page X of Y" with Previous/Next buttons using Catalyst Button component
- * - Previous button disabled on page 1
- * - Next button disabled on last page
+ * Displays: Previous / numbered pages (with ellipsis) / Next
+ * - Previous disabled on page 1, Next disabled on last page
+ * - Shows up to 7 page buttons, collapsing with gap when range is large
  */
 export function Pagination({
   currentPage,
   totalPages,
   onPageChange,
 }: PaginationProps) {
-  const isFirstPage = currentPage === 1;
-  const isLastPage = currentPage === totalPages;
+  if (totalPages <= 1) return null;
+
+  /** Build the sequence of page numbers / "gap" sentinels to render */
+  function pageSequence(): (number | "gap")[] {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages: (number | "gap")[] = [1];
+    const lo = Math.max(2, currentPage - 1);
+    const hi = Math.min(totalPages - 1, currentPage + 1);
+    if (lo > 2) pages.push("gap");
+    for (let p = lo; p <= hi; p++) pages.push(p);
+    if (hi < totalPages - 1) pages.push("gap");
+    pages.push(totalPages);
+    return pages;
+  }
 
   return (
     <div className="flex items-center justify-between gap-4 px-5 py-3 border-t border-border-subtle">
       <span className="text-xs text-text-tertiary">
         Page {currentPage} of {totalPages}
       </span>
-      <div className="flex items-center gap-2">
-        <Button
+      <CatalystPagination>
+        <PaginationPrevious
           onClick={() => onPageChange(currentPage - 1)}
-          disabled={isFirstPage}
-          plain
-        >
-          ← Previous
-        </Button>
-        <Button
+          disabled={currentPage === 1}
+        />
+        <PaginationList>
+          {pageSequence().map((p, i) =>
+            p === "gap" ? (
+              <PaginationGap key={`gap-${i}`} />
+            ) : (
+              <PaginationPage
+                key={p}
+                href="#"
+                current={p === currentPage}
+                onClick={(e: React.MouseEvent) => { e.preventDefault(); if (p !== currentPage) onPageChange(p); }}
+              >
+                {p}
+              </PaginationPage>
+            )
+          )}
+        </PaginationList>
+        <PaginationNext
           onClick={() => onPageChange(currentPage + 1)}
-          disabled={isLastPage}
-          plain
-        >
-          Next →
-        </Button>
-      </div>
+          disabled={currentPage === totalPages}
+        />
+      </CatalystPagination>
     </div>
   );
 }

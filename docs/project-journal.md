@@ -2,6 +2,148 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 126 — 2026-04-04: The Last Wave
+
+Dark mode has sat at the bottom of the Wave 3 tracker since the audit was created. It is the one item that touches everything — every surface, every border, every text colour, every semantic status signal — which is why it was deferred until the token system was stable. That stability has been earned over 36 sessions. Today it pays off.
+
+The implementation is a three-layer stack. The CSS layer (`html.dark {}`) overrides every semantic custom property defined in `:root`. Because the codebase spent Wave 1 purging hardcoded colours and replacing them with design tokens like `--color-surface`, `--color-border`, `--color-text`, the dark mode CSS can change every surface and text colour in the platform with a single rule block — no page-by-page changes needed. Status colours, risk tiers, policy types, shadows, and scrollbars all follow the same pattern: the semantic token changes; every component that uses it changes automatically.
+
+The second layer is Tailwind's `@custom-variant dark` directive. Catalyst ships with `dark:` variants on many of its components. Before this session, those variants had no effect because Tailwind v4 defaults to `prefers-color-scheme: dark` and the app didn't set that. The directive `@custom-variant dark (&:where(.dark, .dark *))` redirects the `dark:` variant to activate on the `.dark` class on any ancestor — which means all of Catalyst's dark styling (table rows, dialog overlays, button borders, input fields) now activates correctly when the user toggles dark mode.
+
+The third layer is the anti-flash script. Server-rendered React pages send HTML before JavaScript runs. Without intervention, a user who has chosen dark mode would see a flash of the light theme on every page load while React boots and the `ThemeToggle` component's `useEffect` runs. The inline `<script>` runs synchronously before the browser renders anything — it checks localStorage and `prefers-color-scheme` and sets the `.dark` class immediately, so the first pixel painted is already correct.
+
+The sidebar was already dark. It has been from the beginning. The toggle naturally lives in the user footer next to the sign-out button — the same row where per-user preferences belong.
+
+Wave 3 is complete. All 36 items done.
+
+---
+
+## Session 125 — 2026-04-04: Making Mutations Feel Free
+
+The perceptual contract of a good UI is simple: when you click a button, something should happen immediately. Not after a network round-trip. Not after a spinner resolves. The click is the action; the network call is a detail.
+
+Until this session, every status transition in Intellios violated that contract. Clicking "Submit for Review" in `LifecycleControls` would disable the button and show "…" while the browser waited for the server to acknowledge the PATCH. The agent's status badge in the list did not update until the next time the page fetched. If the network was slow, nothing appeared to happen for a second or more.
+
+The React Query migration in W3-07 laid the groundwork for fixing this: the registry agents list is now in a shared cache. `useMutation` with `onMutate` + `onError` + `onSettled` is the idiomatic React Query pattern for optimistic updates. The approach is precise: snapshot the cache before mutating, patch it immediately, and restore the snapshot if the server rejects the operation. This means the UI and cache reflect reality instantly for happy-path operations, and silently self-correct on failure.
+
+Three mutation sites were converted this session. `LifecycleControls` is the highest-value target — it drives every lifecycle transition across the blueprint registry, and those transitions (approve, reject, suspend) are significant user actions. The detail page badge and the list page badge now change the moment the button is clicked. The `monitor/page.tsx` check-one button gains a similar improvement: clicking "↻ Check Now" immediately marks the agent as "unknown" (signalling the check is re-running) rather than leaving the stale status while the POST travels to the server. The `workflow/[id]/page.tsx` transition buttons were the simplest: replace `setTransitioning(true)` gating with immediate `setWorkflow` optimism and rollback on error.
+
+One design choice worth noting: the monitor acknowledgement button and the review queue assignment button were intentionally excluded. Both are localStorage-only operations — they are already instant by definition, with no server round-trip to optimise. The `handleCheckAll` button was also left as a plain async function since there is no meaningful optimistic state to show for a bulk health check whose result is unknown until the server responds.
+
+35 of 36 Wave 3 items are now complete. The only remaining item is Dark Mode — a longer-running effort involving CSS custom property overrides and a theme toggle persisted to localStorage. Every P0 through P3 item in the UX Audit tracker is done.
+
+---
+
+## Session 124 — 2026-04-04: What Screen Readers Have Been Missing
+
+Accessibility work has a particular texture. Unlike adding a feature, you are not adding something new to the experience — you are making the existing experience available to people who have always been there but whom the interface has been ignoring.
+
+The most important change in this session was the skip link. Every keyboard user who navigates to Intellios has been pressing Tab dozens of times to get past the sidebar navigation before reaching the main content. A single `<a href="#main-content" className="sr-only focus:not-sr-only">` at the top of the layout collapses that to one keystroke. It is invisible to mouse users, visible exactly when keyboard users need it, and costs nothing. That it was absent is a straightforward gap.
+
+The `scope="col"` default on `TableHeader` is the most leverage-efficient change in the session. One line of code — `scope?: "col" | "row" | ...` with default `"col"` — fixes the column scope declaration on every table in the platform simultaneously. There are at least a dozen data tables across the registry, governance, monitor, audit, and compliance pages. Screen readers use the scope attribute to associate cells with their headers when navigating by column; without it, every table cell is structurally ambiguous. The fix required zero changes to callsites.
+
+The `SkeletonList` change addresses a subtle failure mode. When content loads, sighted users see the skeleton dissolve into real content. Screen reader users have no equivalent signal — they see a static page, then a silently different static page. Adding `role="status"` with `aria-live="polite"` and a sr-only "Loading…" text means the loading state is announced when the skeleton appears, and the content announcement follows when the skeleton disappears and real content enters the live region.
+
+The 44px touch target fix on the mobile hamburger button is the most mechanical change: `p-1.5` → `p-2.5 min-w-[44px] min-h-[44px]`. The icon rendered at 20px inside 27px of clickable area. At 44px it meets the WCAG 2.1 AA minimum for touch targets and is easier to tap on phones.
+
+The `VisuallyHidden` and `LiveRegion` components formalize patterns that have been ad-hoc across the codebase (scattered `sr-only` spans, no standard way to announce status). These are building blocks for future accessibility work — the `LiveRegion` component in particular is ready to use for form submission feedback, governance validation completion, and any other async operation that currently completes silently.
+
+---
+
+## Session 123 — 2026-04-04: The Infrastructure That Was Already There
+
+React Query was already installed. The package had somehow found its way into `node_modules` without appearing in `package.json` — a state that works in development but would silently fail in a clean CI deploy. The session began by adding it properly, then building the infrastructure that makes it useful.
+
+The core design decision was to avoid the "one `useQuery` per file" anti-pattern where each component independently constructs its query key as a raw string array. The `lib/query/keys.ts` factory solves this: typed factory functions that return `as const` arrays, organized by domain. When you want to invalidate all governance policies across any component that fetches them, you write `queryClient.invalidateQueries({ queryKey: queryKeys.governance.policies() })` — not `queryClient.invalidateQueries({ queryKey: ["governance", "policies"] })` from memory. The factory is the single source of truth for key shape.
+
+The five page migrations revealed a few patterns worth noting. The governance page had a `loadPolicies()` function — a manual refetch helper called after template pack imports. This is exactly the pattern React Query's `invalidateQueries` was designed to replace. The deletion was satisfying: a function that existed to work around the lack of a cache is no longer needed when there is one.
+
+The monitor page had a different shape: a `setInterval` polling pattern (every 30s) implemented via `useEffect`. React Query's `refetchInterval` option handles this directly and with better semantics — it respects `refetchIntervalInBackground: false`, meaning the polling stops when the user switches tabs and resumes when they return. The old `setInterval` continued polling in the background regardless.
+
+The review page was the most tangled: a chained fetch pattern where session data determined which URL to call for the queue. Replacing `fetch("/api/auth/session")` with `useSession()` from NextAuth untangled the chain. The queue query runs with `enabled: sessionData !== undefined` to prevent a fetch before the session is known.
+
+The broader impact of this session is invisible to users but meaningful to developers: every navigation to a list page that was visited in the last 30 seconds now renders instantly from cache, with a background refetch if the data is stale. The network tab goes from a waterfall on every route change to a quiet background tick.
+
+---
+
+## Session 122 — 2026-04-04: The Document That Was Already There
+
+W3-02 had the most dramatic ratio of investigation to implementation of any tracker item so far. The problem statement described building a "Compliance Evidence Viewer" — something that sounded like a new feature requiring new infrastructure. The investigation revealed that the infrastructure was already built, the data was already fetched, and the only missing piece was a decision about where to render it.
+
+The evidence package endpoint existed, was battle-tested, and served the right data. The MRM Report page existed, was fully formatted, and was already prominently linked from the Regulatory tab. The `qualityScore` state was already fetched on mount via a non-critical background call. The `testRuns` state was already populated from the test harness. None of this was visible from the tracker item. The tracker item described the *absence* of inline review capability — it did not describe what was already there.
+
+The gap, once diagnosed, was a rendering gap. Five quality dimensions and their scores existed in page state but were only shown in the "quality" tab. Test run history existed in page state but was only shown in the "tests" tab. A compliance officer navigating to the Regulatory tab for audit purposes had no inline view of either — they had to navigate away, or download a JSON bundle and inspect it raw.
+
+The fix was to surface both data sources in the Regulatory tab using the same data already fetched by the page. No new API calls. No new state. The Evidence Summary section adds a Quality Evaluation card (DescriptionList of 5 dimensions, overall percentage with traffic-light coloring, InlineAlert for any flags) and a Test Evidence card (latest run status badge, dense Table of last 5 runs with pass rates). Both sit above the RegulatoryPanel in the tab — context-setting information for the analyst reviewing the SR 11-7 framework assessment below.
+
+There is a broader principle here. The tracker's language around "Compliance Evidence Viewer with SR 11-7 section navigator, expandable evidence per requirement, and PDF export" described a potentially large scope. The minimal version that resolves the actual pain (inline review without raw JSON) was already possible with data in flight. Shipping the minimal version now captures the value; the larger scope can be revisited if the minimal version turns out insufficient. This is not cutting corners — it is correctly identifying the load-bearing assumption ("analysts cannot review inline") and addressing it before building monuments on top of it.
+
+Wave 3's P0 item is now done. The remaining work is infrastructure (React Query, optimistic updates) and investment horizon (dark mode, accessibility hardening). The product is reviewable, navigable, and honest about its evidence. That was the goal of Wave 3.
+
+---
+
+## Session 121 — 2026-04-04: Precision and Completeness
+
+Wave 3 began with the hardest item on the list: per-agent policy binding.
+
+The gap was architectural, not cosmetic. Every governance policy in Intellios applied to every blueprint in the enterprise. An admin creating a strict security policy for a high-risk trading agent would also see it applied to a low-stakes customer FAQ bot, generating false violations, creating noise in validation reports, and eroding the signal-to-noise ratio of the governance system. The fix required threading an optional `agentId` through every layer of the validation stack — from the Drizzle schema at the bottom to the policy form at the top.
+
+**The schema choice.** `scoped_agent_ids JSONB DEFAULT NULL` was deliberately designed as an opt-in field. `NULL` means "I want this policy to apply globally," which is the correct default — you should not have to touch the scope field to get the old behavior. A non-null array means "I have thought carefully about scope and want to restrict this." This maps cleanly onto the real-world distinction between a company-wide prohibition on PII in model prompts (should be global) and a circuit breaker threshold tuned specifically for a trading agent (should be scoped). The data model reflects the intent.
+
+**The validator chain.** The existing call to `loadPolicies(enterpriseId)` was augmented to accept a second optional `agentId` parameter. Filtering happens in memory after the database query — a deliberate choice over writing a Postgres `@>` JSONB containment query. The in-memory filter is simpler to reason about, testable without a database, and the expected number of policies per enterprise is small enough that a Postgres round-trip saving is not worth the complexity. This is an example of choosing correctness and clarity over premature optimization.
+
+**The scope selector UI.** Designing the policy form scope selector required thinking carefully about what "scope" means to a compliance officer who has never thought about UUIDs. The final design uses a radio toggle ("All agents" vs "Specific agents") to surface the decision point, and resolves agent UUIDs to human-readable names via an async fetch of the registry. Checkboxes are Catalyst Checkbox (the W2-07 adoption we made in the previous session, now being productively reused). The readOnly mode renders scope as badge pills, again showing names not IDs. The design always talks in the language of the person using it.
+
+**`InlineAlert`.** The tracker listed "Catalyst Alert adoption" as a Wave 3 item, but the Catalyst `Alert` component is actually a dialog-based modal — not an inline notification banner. The tracker was written before the component's actual shape was examined. The principled response was to extend `catalyst/alert.tsx` with a new `InlineAlert` export that provides the four inline variants (error, warning, info, success) the tracker intended. This is the right kind of pragmatism: when the artifact doesn't match the intent, fix the artifact, not the intent. The `InlineAlert` component replaces scattered ad-hoc colored divs in the governance pages, adds `role="alert"` for accessibility, and is available to the rest of the codebase.
+
+**Policy cascade warning.** The delete confirmation for a governance policy previously said only "This cannot be undone." It gave no information about the impact of the action. The W3-05 enhancement adds a lightweight `GET .../dependents` endpoint that counts active blueprints in scope, and surfaces that count in the delete confirmation as an amber impact banner. An admin can now see "This policy is evaluated against 14 active blueprints" before confirming — not to block the action, but to ensure the action is taken with full awareness. Small piece of UI, significant piece of trust.
+
+**Badge deduplication.** The simplest item in Wave 3 was W3-06: delete `catalyst/badge.tsx`. The Catalyst Badge had 18 color variants using raw Tailwind color names; `ui/badge` has 8 semantic variants aligned to Intellios design tokens. No file imported the Catalyst Badge — it was purely latent duplication. Deleting it reduces the surface area of the component library, removes a source of future divergence, and makes the canonical `ui/badge` unambiguous. Zero import breakage. Zero ceremony.
+
+With Wave 3 items W3-03 through W3-06 complete, the UX audit tracker stands at 31/41 items done. The remaining items are in two categories: infrastructure work (client-side caching via React Query, optimistic updates) and long-horizon investment (dark mode, accessibility hardening). Both deserve dedicated sessions.
+
+## Session 120 — 2026-04-05: The Texture of Completeness
+
+Wave 2 is done.
+
+There is a specific kind of satisfaction that comes from completing a wave of UX work — not from any individual feature, but from the aggregate texture of the product. The feeling of using software that loads gracefully, tells you when there is nothing to show, lets you find what you are looking for, and never wastes your time re-entering data you have already entered. Wave 1 established the floor. Wave 2 filled in the middle register: the states between "everything is working" and "something is catastrophically broken."
+
+**Loading skeletons.** Eight pages now render structured skeleton scaffolding during server-side data fetches. The skeletons are not generic — each one mirrors the shape of the actual content it precedes: the Kanban columns appear as column-shaped ghosts on the pipeline, the KPI cards appear as card-shaped ghosts on governance and compliance. This is not cosmetic. It reduces perceived latency by giving the browser something to paint that closely resembles the destination. The user's eye does not need to re-orient when the real content arrives.
+
+**Empty states.** The empty-state work addressed a specific failure mode in governance software: the unnavigable blank. When a compliance officer opens the violations page and finds nothing, does that mean everything is fine, or does it mean the system is not configured? The answer needs to be in the interface, not inferred. Fifteen empty states were added or upgraded — each with a contextual icon, a heading that distinguishes between "nothing exists yet" and "nothing matches your filter," and where appropriate, an action to move forward. The governance hub's "No governance policies defined" state now routes admins directly to policy creation; the compliance hub's "No policy coverage items" state routes to the governance hub for configuration. The platform communicates its own remediation path.
+
+**Search and filtering.** Adding search to the admin users page completes a pattern that now runs across every major list in the platform. The filtering architecture is consistent: `useMemo` over a state array, trimmed lowercase query, multi-field match, clear button, "no match" empty state. An engineer joining the codebase can read any one filter implementation and understand all of them.
+
+**The audit export fix.** The CSV export bug was a quiet one — the kind that looks like it is working until a power user exports a dataset large enough to cross the 50-row threshold. The fix is a paginated fetch loop that accumulates all batches before triggering the download. The button label now shows the actual count (`Export CSV (247 rows)`) so users know exactly what they are getting before clicking. This was the highest-severity item in Wave 2 because it was invisible: users who exported "all audit events" were silently receiving a truncated dataset.
+
+**Catalyst Combobox and Checkbox.** W2-07 represents the most architecturally interesting work in this wave. The Combobox adoption in the policy rule editor adds a new capability to the Catalyst component itself: the `onInputChange` callback that enables free-text entry alongside dropdown suggestions. This is the right extension point — the component stays a Combobox (not a plain text input with a datalist hack), but the field path field behavior is now "search-as-you-type from a known vocabulary, but always accept custom input." The vocabulary of 23 ABP field paths is the right cognitive scaffolding: governance authors do not need to memorize the schema to author correct rules.
+
+The Checkbox on the review queue demonstrates a different principle: stopPropagation inside a link card. The review queue card is a `<Link>` — clicking anywhere on it navigates to the blueprint detail. But the bulk selection checkbox and the "Assign to me" button both need to fire without navigating. The existing assignment button already established the pattern; the Checkbox follows it. The result is a review queue where a governance officer can assign their morning's batch of reviews in seconds, without opening each card individually.
+
+Wave 2 is complete. Wave 3 is next.
+
+---
+
+## Session 119 — 2026-04-04: The Foundation Pass
+
+There is a category of engineering work that is invisible when it is done well and impossible to ignore when it is not. Consistency work — the kind that ensures every button speaks the same language, every error message reaches the same semantic layer, every destructive action requires the same deliberate confirmation — lives in this category. Session 119 was a foundation pass of that kind.
+
+The session began with a 7-phase UX audit of the entire Intellios codebase. The audit looked not for missing features but for the quieter failures: the component that bypasses the design token system, the action that fires with no warning, the error state that shows in red because `red-600` was the first thing that came to mind rather than because `text-danger` was the established convention. Forty-one items emerged across four waves. Wave 1 — the Foundation tier, 14 items — went in this session.
+
+**The component consolidation question.** Intellios has two UI component layers: the Catalyst kit (27 polished TypeScript components from Tailwind Labs) and a `src/components/ui/` directory that grew up alongside it. The audit found that `ui/heading.tsx`, `ui/switch.tsx`, `ui/description-list.tsx`, and `ui/divider.tsx` were either dead code or full copies of their Catalyst counterparts with no differentiation. The resolution was not to pick one layer and delete the other — the `ui/` path is used by too much existing code to safely remove — but to make `ui/` a thin re-export layer pointing to `catalyst/` as the canonical source. Four files became four one-liners. The dual-maintenance surface disappeared. Existing import paths continued to work. This is the right architecture for a "copy-paste component kit" model: a single implementation, two addressable paths.
+
+**The confirmation dialog gap.** The most operationally consequential finding was a cluster of irreversible actions with no confirmation step: Deprecate and Reject in the lifecycle controls, API key revocation, webhook deletion. In a governance platform — a product whose central value proposition is deliberate, audited control over AI agents — having a single click trigger "Deprecate this blueprint" was a striking omission. The Catalyst Dialog component was already in the kit, already handling focus trapping, keyboard dismiss, and backdrop. The only work was wiring it to the right state transitions and writing the confirmation copy. The copy matters: "Deprecating this blueprint marks it as no longer active. Agents running on it may need to be migrated. This action cannot be undone." That sentence is the difference between a modal and a safeguard.
+
+**The semantic token gap.** The governance hub and compliance pages were the worst offenders for hardcoded color classes. Thirty-plus instances of `bg-red-50`, `text-red-700`, `border-green-200`, `text-yellow-600` — none of them wrong in isolation, all of them wrong in aggregate. When an enterprise customer enables white-label theming and sets their primary color, those hardcoded values do not move. The design token system exists precisely to solve this: `bg-danger-muted`, `text-success`, `bg-policy-safety-subtle`. A Python sed script handled the mechanical replacement; the result is that both pages now respond fully to enterprise branding overrides.
+
+**The governor sidebar lesson.** The governor sidebar had three hardcoded color values: an avatar `bg-violet-600`, an active icon `#a78bfa` hex literal, and a logo fallback `#7c3aed`. These were not accidents — they were the original purple brand values that were correct before the CSS token system existed. The audit revealed them as debt. The fix was straightforward: each hardcoded value was replaced with its corresponding CSS custom property (`var(--sidebar-accent)`, `var(--color-primary)`). The sidebar width was also moved from a Tailwind `w-56` class to `var(--sidebar-width, 240px)`. Enterprise customers can now configure the entire sidebar appearance through CSS variables without touching TypeScript.
+
+**The form UX additions.** The character counter and on-blur validation additions to `FormField` are small in implementation and large in daily experience. A form that shows "Name is required" before the user has typed anything is not validating — it is accusing. The `touched` prop (defaulting to undefined for backward compatibility) ensures errors appear only after the user has interacted with a field. The `maxLength` counter gives visible feedback about capacity before the user hits a hidden wall. Both patterns are table stakes for production form UX.
+
+**What Wave 1 establishes.** Consistency work compounds. Once the semantic token system is consistently applied across two major pages, extending it to the next page costs less — the pattern is established and the conventions are visible. Once the Catalyst Dialog is wired to confirmation flows in lifecycle controls, wiring it to API key revocation and webhook deletion is a template copy. Once `FormField` supports `touched` and `maxLength`, every new form gets these behaviors for free. Wave 1 does not just fix 14 items — it raises the floor for everything built after it.
+
+---
+
 ## Session 116 — 2026-04-03: The Audit That Closed the Sprint
 
 Every sprint has a closing movement — not the last feature added, but the moment the scope is understood clearly enough to declare it done. Session 116 was that moment for the P1 residual items.
