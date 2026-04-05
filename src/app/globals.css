@@ -297,6 +297,10 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 }
 
 /* ── Base ──────────────────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
 html,
 body {
   font-family: var(--font-family-sans);
@@ -432,6 +436,32 @@ samp {
 .input-field-sm:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+/* ── Scroll reveal animations (marketing pages) ─────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* Stagger children in grids */
+.grid > .reveal:nth-child(2) { transition-delay: 0.08s; }
+.grid > .reveal:nth-child(3) { transition-delay: 0.16s; }
+.grid > .reveal:nth-child(4) { transition-delay: 0.24s; }
+.grid > .reveal:nth-child(5) { transition-delay: 0.32s; }
+
+/* Subtle float for hero background SVG */
+@keyframes hero-float {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50%      { transform: translate(-50%, -52%) scale(1.01); }
+}
+.hero-bg-float {
+  animation: hero-float 8s ease-in-out infinite;
 }
 
 /* ── C-12: Responsive breakpoints ─────────────────────────────────────── */
