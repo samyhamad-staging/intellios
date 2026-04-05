@@ -100,7 +100,7 @@ interface BlueprintVersion {
   abp: ABP;
 }
 
-type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed";
+type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed" | "suspended";
 type Tab = "blueprint" | "summary" | "governance" | "quality" | "review" | "versions" | "regulatory" | "tests" | "simulate";
 
 export default function AgentDetailPage({

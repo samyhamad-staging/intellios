@@ -51,7 +51,8 @@ const ACTIONS: Record<Status, Action[]> = {
 };
 
 /** Map legacy variant names to Catalyst Button props */
-function variantToCatalystProps(variant: Action["variant"]): { color?: "indigo" | "red"; outline?: true; plain?: true } {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function variantToCatalystProps(variant: Action["variant"]): any {
   switch (variant) {
     case "primary":     return { color: "indigo" };
     case "secondary":   return { outline: true };
@@ -111,6 +112,7 @@ export function LifecycleControls({
   const queryClient = useQueryClient();
   const [creatingVersion, setCreatingVersion] = useState(false);
   const [pendingAction, setPendingAction] = useState<Status | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const actions = ACTIONS[currentStatus as Status] ?? [];
   const canCreateNewVersion = currentStatus === "approved" || currentStatus === "deployed";

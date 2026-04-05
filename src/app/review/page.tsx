@@ -32,7 +32,7 @@ interface QueueEntry {
   id: string; agentId: string; version: string; name: string | null; tags: string[];
   status: string; validationReport: ValidationReport | null; reviewComment: string | null;
   reviewedAt: string | null; currentApprovalStep: number; approvalProgress: ApprovalStepRecord[];
-  enterpriseId: string | null; createdAt: string; updatedAt: string;
+  enterpriseId: string | null; createdAt: string; updatedAt: string; submittedBy: string | null;
 }
 
 // ── Risk tier derivation ──────────────────────────────────────────────────────

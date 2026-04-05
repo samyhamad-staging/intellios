@@ -97,6 +97,7 @@ export async function POST(request: NextRequest) {
           message: r.message,
         })
       ),
+      scopedAgentIds: null,
     };
 
     // ── 2. Load approved + deployed blueprints ─────────────────────────────

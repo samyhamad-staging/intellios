@@ -80,8 +80,7 @@ export function GovernorSidebar({ user, branding }: GovernorSidebarProps) {
     <>
       <aside
         className="flex h-full shrink-0 flex-col overflow-hidden"
-        style={{ width: "var(--sidebar-width, 240px)" } as React.CSSProperties}
-        style={{ backgroundColor: "var(--sidebar-bg)", borderRight: "1px solid var(--sidebar-border)" }}
+        style={{ width: "var(--sidebar-width, 240px)", backgroundColor: "var(--sidebar-bg)", borderRight: "1px solid var(--sidebar-border)" } as React.CSSProperties}
       >
         {/* Brand + header */}
         <div

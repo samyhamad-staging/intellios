@@ -268,7 +268,7 @@ function RuleRow({
             <Combobox<string>
               options={ABP_FIELD_SUGGESTIONS}
               displayValue={(v) => v ?? ""}
-              value={rule.field || null}
+              value={rule.field || undefined}
               onChange={(v) => onChange({ ...rule, field: v ?? "" })}
               onInputChange={(q) => onChange({ ...rule, field: q })}
               placeholder="e.g. identity.name"

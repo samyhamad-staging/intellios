@@ -132,7 +132,7 @@ export default function GovernanceHubPage() {
     dataUpdatedAt: analyticsUpdatedAt,
   } = useQuery({
     queryKey: queryKeys.governance.analytics(analyticsDays),
-    queryFn: () => fetchGovernanceAnalytics(analyticsDays) as Promise<AnalyticsData | null>,
+    queryFn: () => fetchGovernanceAnalytics(analyticsDays) as unknown as Promise<AnalyticsData | null>,
     enabled: canViewAnalytics,
     // Analytics are expensive — keep fresh for 2 minutes
     staleTime: 2 * 60 * 1000,
