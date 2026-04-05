@@ -23,10 +23,8 @@ import {
   Building2,
   Scale,
   TrendingUp,
-  FileText,
   Users,
   Cloud,
-  Download,
   Cpu,
   Menu,
   X,
@@ -68,6 +66,7 @@ const NAV_LINKS = [
   { label: "Product", href: "#pillars" },
   { label: "Architecture", href: "#architecture" },
   { label: "Use Cases", href: "#personas" },
+  { label: "Why Us", href: "#why-intellios" },
   { label: "ROI", href: "#roi" },
 ];
 
@@ -183,25 +182,10 @@ const FOOTER_LINKS = {
     { label: "Platform Overview", href: "#pillars" },
     { label: "Architecture", href: "#architecture" },
     { label: "Use Cases", href: "#personas" },
-    { label: "Docs", href: "#" },
+    { label: "Why Intellios", href: "#why-intellios" },
   ],
   Company: [
-    { label: "About", href: "#" },
-    { label: "Blog", href: "#" },
-    { label: "Careers", href: "#" },
-    { label: "Contact", href: "#" },
-  ],
-  Resources: [
-    { label: "AI Governance Whitepaper", href: "#" },
-    { label: "ROI Calculator", href: "#" },
-    { label: "SR 11-7 Guide", href: "#" },
-    { label: "Case Studies", href: "#" },
-  ],
-  Legal: [
-    { label: "Privacy Policy", href: "#" },
-    { label: "Terms of Service", href: "#" },
-    { label: "Security", href: "#" },
-    { label: "Responsible AI", href: "#" },
+    { label: "Contact Sales", href: "mailto:sales@intellios.io" },
   ],
 };
 
@@ -255,7 +239,7 @@ export default function LandingPage() {
                   onClick={open}
                   className="hidden sm:inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
                 >
-                  Request a Demo
+                  Request Early Access
                 </button>
               )}
             </RequestAccessModal>
@@ -298,7 +282,7 @@ export default function LandingPage() {
                       onClick={() => { setMobileMenuOpen(false); open(); }}
                       className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors text-center"
                     >
-                      Request a Demo
+                      Request Early Access
                     </button>
                   )}
                 </RequestAccessModal>
@@ -381,8 +365,11 @@ export default function LandingPage() {
             </span>
           </h1>
 
-          <p className="reveal mt-6 text-lg leading-8 text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-            Enterprises are deploying AI agents faster than they can govern them — creating regulatory risk, shadow AI, and compliance gaps that compound with every ungoverned deployment. Intellios is the governed control plane that sits above your cloud runtimes, ensuring every agent is policy-compliant from design through production.
+          <p className="reveal mt-6 text-lg leading-8 font-medium text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
+            The control plane that makes every AI agent policy-compliant from design through production.
+          </p>
+          <p className="reveal mt-3 text-base leading-7 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
+            Runtime-agnostic. Audit-ready by default. Built for regulated industries.
           </p>
 
           <div className="reveal mt-10 flex items-center justify-center gap-4 flex-wrap">
@@ -392,7 +379,7 @@ export default function LandingPage() {
                   onClick={open}
                   className="btn-primary rounded-xl px-7 py-3.5 text-sm font-semibold flex items-center gap-2"
                 >
-                  Request a Demo
+                  Request Early Access
                   <ArrowRight size={16} />
                 </button>
               )}
@@ -405,9 +392,89 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          <p className="reveal mt-8 text-xs text-gray-400 dark:text-gray-500">
-            Built for financial services, healthcare, and regulated enterprise
-          </p>
+          <div className="reveal mt-8 flex flex-wrap items-center justify-center gap-2">
+            {["Financial Services", "Healthcare", "Insurance", "Federal"].map((v) => (
+              <span key={v} className="inline-flex items-center rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                {v}
+              </span>
+            ))}
+          </div>
+
+          {/* ── Product visualization mockup ── */}
+          <div className="reveal mt-14 mx-auto max-w-4xl">
+            <div className="rounded-xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 shadow-xl overflow-hidden">
+              {/* Browser chrome */}
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-gray-700/50">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/80" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-amber-400/80" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/80" />
+                </div>
+                <div className="flex-1 mx-8">
+                  <div className="rounded-md bg-white dark:bg-slate-600/50 border border-gray-200 dark:border-gray-600 px-3 py-1 text-xs text-gray-400 dark:text-gray-500 text-center">
+                    app.intellios.io/blueprints/review
+                  </div>
+                </div>
+              </div>
+              {/* App UI mockup */}
+              <div className="p-5 sm:p-6 bg-gray-50 dark:bg-slate-900/50">
+                <div className="grid grid-cols-12 gap-4">
+                  {/* Sidebar hint */}
+                  <div className="col-span-3 hidden sm:block space-y-2">
+                    <div className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white flex items-center gap-1.5">
+                      <ShieldCheck size={12} />
+                      Governance
+                    </div>
+                    {["Blueprints", "Registry", "Policies", "Audit Trail"].map((item) => (
+                      <div key={item} className="rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Main content area */}
+                  <div className="col-span-12 sm:col-span-9 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">Blueprint Review: Claims-Triage-Agent v2.1</div>
+                      <div className="flex gap-1.5">
+                        <span className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+                          4/4 Policies Passed
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:text-indigo-400">
+                          Ready for Approval
+                        </span>
+                      </div>
+                    </div>
+                    {/* Validation results */}
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { label: "Safety Baseline", status: "passed" },
+                        { label: "SR 11-7 Compliance", status: "passed" },
+                        { label: "Access Control", status: "passed" },
+                        { label: "Audit Standards", status: "passed" },
+                      ].map((check) => (
+                        <div key={check.label} className="flex items-center gap-2 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 px-3 py-2">
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-500/15">
+                            <ShieldCheck size={10} className="text-emerald-600 dark:text-emerald-400" />
+                          </div>
+                          <span className="text-xs text-gray-700 dark:text-gray-300">{check.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Governance score bar */}
+                    <div className="rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 p-3">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Governance Score</span>
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">98/100</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                        <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-emerald-500" style={{ width: "98%" }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div
@@ -434,7 +501,7 @@ export default function LandingPage() {
               AI agents are scaling. Governance isn&apos;t.
             </p>
             <p className="mt-4 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-              The enterprise AI agent market is accelerating, but governance models haven&apos;t kept pace. The result: regulatory exposure, shadow AI proliferation, and compliance gaps that widen with every ungoverned deployment.
+              The enterprise AI agent market is accelerating. Oversight and controls have not kept pace.
             </p>
           </div>
 
@@ -475,7 +542,7 @@ export default function LandingPage() {
               Three pillars of governed AI agent delivery
             </p>
             <p className="mt-4 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-              Intellios embeds governance across the full agent lifecycle — from the first policy decision to the last audit request. Not bolted on. Built in.
+              Intellios embeds policy enforcement, audit readiness, and fleet visibility across the full agent lifecycle. Not bolted on. Built in.
             </p>
           </div>
 
@@ -504,7 +571,7 @@ export default function LandingPage() {
               Intellios governs. Your cloud runs. Your agents perform.
             </p>
             <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-              McKinsey warns of &ldquo;agent sprawl — the uncontrolled proliferation of redundant, fragmented, and ungoverned agents across teams and functions&rdquo; and calls for structured governance, design standards, and lifecycle management to prevent agent ecosystems from becoming fragile and unscalable.
+              What McKinsey calls &ldquo;agent sprawl&rdquo; — the unchecked proliferation of ungoverned agents — Intellios was designed to prevent.
             </p>
             <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 italic">
               McKinsey, &ldquo;Seizing the Agentic AI Advantage,&rdquo; June 2025
@@ -705,10 +772,35 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Mid-page CTA ── */}
+      <section className="reveal border-t border-indigo-100 dark:border-indigo-500/10 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-500/5 dark:to-violet-500/5 py-14 px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
+            Ready to see how it works for your team?
+          </p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            We&apos;re onboarding design partners from regulated industries. Tell us about your use case.
+          </p>
+          <div className="mt-6">
+            <RequestAccessModal>
+              {(open) => (
+                <button
+                  onClick={open}
+                  className="btn-primary rounded-xl px-7 py-3 text-sm font-semibold inline-flex items-center gap-2"
+                >
+                  Request Early Access
+                  <ArrowRight size={16} />
+                </button>
+              )}
+            </RequestAccessModal>
+          </div>
+        </div>
+      </section>
+
       {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 6 — Differentiation                                     */}
       {/* ════════════════════════════════════════════════════════════════ */}
-      <section className="border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8">
+      <section id="why-intellios" className="border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14 reveal">
             <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
@@ -719,7 +811,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {/* vs. Building from Scratch */}
             <div className="reveal rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 p-8 shadow-sm">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-500/10 mb-4">
@@ -755,7 +847,20 @@ export default function LandingPage() {
                 vs. Point Solutions
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                Fragmented monitoring or policy tools don&apos;t cover the full lifecycle. Intellios is end-to-end: design-time governance through production observability, unified in a single governed control plane.
+                Fragmented monitoring or policy tools don&apos;t cover the full lifecycle. Intellios is end-to-end: design-time controls through production observability in one platform.
+              </p>
+            </div>
+
+            {/* White-Label Ready */}
+            <div className="reveal rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 p-8 shadow-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-500/10 mb-4">
+                <Zap size={20} className="text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+                White-Label Ready
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                Deploy under your brand, inside your compliance posture. Multi-tenant by design, Intellios powers your agent platform without exposing ours — ideal for partner ecosystems and managed services.
               </p>
             </div>
           </div>
@@ -767,70 +872,71 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       <section className="py-20 sm:py-24 px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          {/* Logo placeholders */}
+          {/* Design partner signal */}
           <div className="reveal text-center mb-14">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-6">
-              Trusted by teams at
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
+              Designed with input from teams in
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-6">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex h-10 w-32 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700/50 bg-gray-50 dark:bg-slate-800/30"
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {["Financial Services", "Healthcare", "Insurance", "Federal & Defense"].map((vertical) => (
+                <span
+                  key={vertical}
+                  className="inline-flex items-center rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-4 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400"
                 >
-                  <span className="text-xs text-gray-300 dark:text-gray-600">
-                    Logo
-                  </span>
-                </div>
+                  <Building2 size={14} className="mr-1.5 text-gray-400 dark:text-gray-500" />
+                  {vertical}
+                </span>
               ))}
             </div>
           </div>
 
-          {/* Pull quote */}
+          {/* Data-driven value callout */}
           <div className="reveal mx-auto max-w-3xl rounded-2xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/5 p-8 sm:p-10 text-center mb-14">
-            <svg
-              className="mx-auto mb-4 h-8 w-8 text-indigo-300 dark:text-indigo-500/50"
-              fill="currentColor"
-              viewBox="0 0 32 32"
-            >
-              <path d="M9.352 4C4.456 7.456 1 13.12 1 19.36c0 5.088 3.072 8.064 6.624 8.064 3.36 0 5.856-2.688 5.856-5.856 0-3.168-2.208-5.472-5.088-5.472-.576 0-1.344.096-1.536.192.48-3.264 3.552-7.104 6.624-9.024L9.352 4zm16.512 0c-4.8 3.456-8.256 9.12-8.256 15.36 0 5.088 3.072 8.064 6.624 8.064 3.264 0 5.856-2.688 5.856-5.856 0-3.168-2.304-5.472-5.184-5.472-.576 0-1.248.096-1.44.192.48-3.264 3.456-7.104 6.528-9.024L25.864 4z" />
-            </svg>
-            <blockquote className="text-lg font-medium text-gray-800 dark:text-gray-200 leading-relaxed mb-4">
-              Intellios cut our MRM documentation cycle from 12 weeks to 2. For the first time, we&apos;re audit-ready before the auditor arrives.
-            </blockquote>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              — VP of Model Risk, Fortune 100 Financial Institution
+            <p className="text-4xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400 mb-3">
+              12 weeks &rarr; 2 weeks
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">
-              (Illustrative — design partner testimonial)
+            <p className="text-lg font-medium text-gray-800 dark:text-gray-200 leading-relaxed mb-2">
+              The MRM documentation reduction our governance engine is designed to deliver.
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Policy-as-code and automated compliance evidence generation collapse audit preparation from months to days.
             </p>
           </div>
 
-          {/* Compliance badges */}
+          {/* Compliance badges — separated achieved vs planned */}
           <div className="reveal">
-            <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-6">
-              Compliance & Security
+            <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
+              Regulatory Framework Alignment
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              {[
-                { label: "SOC 2 Type II", status: "Planned" },
-                { label: "ISO 27001", status: "Planned" },
-                { label: "FedRAMP Ready", status: "Roadmap" },
-                { label: "SR 11-7", status: null },
-                { label: "EU AI Act", status: null },
-                { label: "NIST AI RMF", status: null },
-              ].map((badge) => (
+            <div className="flex flex-wrap items-center justify-center gap-2.5 mb-4">
+              {["SR 11-7", "EU AI Act", "NIST AI RMF"].map((badge) => (
                 <span
-                  key={badge.label}
+                  key={badge}
                   className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 px-3.5 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-400"
                 >
                   <ShieldCheck size={12} />
+                  {badge}
+                </span>
+              ))}
+            </div>
+            <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
+              Security Certifications — In Progress
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2.5">
+              {[
+                { label: "SOC 2 Type II", target: "Q3 2026" },
+                { label: "ISO 27001", target: "Q4 2026" },
+                { label: "FedRAMP Ready", target: "2027" },
+              ].map((badge) => (
+                <span
+                  key={badge.label}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-700/50 border-dashed px-3.5 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400"
+                >
+                  <ShieldCheck size={12} className="text-gray-400 dark:text-gray-500" />
                   {badge.label}
-                  {badge.status && (
-                    <span className="ml-1 text-[10px] font-normal text-indigo-400 dark:text-indigo-500">
-                      ({badge.status})
-                    </span>
-                  )}
+                  <span className="text-[10px] font-normal text-gray-400 dark:text-gray-500">
+                    (Target: {badge.target})
+                  </span>
                 </span>
               ))}
             </div>
@@ -877,13 +983,13 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Forrester benchmark note */}
+          {/* Intellios-specific ROI argument */}
           <div className="reveal mt-8 rounded-xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/5 p-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-              Forrester TEI studies on comparable enterprise AI platforms show 300%+ ROI over three years when governance and platform reuse are built in.
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-relaxed">
+              At $670K additional breach cost per shadow AI incident, governance pays for itself on the first prevented event. Factor in regulatory penalties that routinely reach eight figures, and the question isn&apos;t whether you can afford governance — it&apos;s whether you can afford not to have it.
             </p>
             <p className="mt-2 text-xs text-gray-400 dark:text-gray-500 italic">
-              Forrester TEI of Microsoft Foundry, February 2026. Note: Intellios does not yet have its own commissioned TEI study — referenced as a benchmark framework.
+              Derived from IBM Cost of a Data Breach Report 2025 and OCC enforcement action data cited above.
             </p>
           </div>
         </div>
@@ -921,38 +1027,23 @@ export default function LandingPage() {
                   onClick={open}
                   className="rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50 transition-colors flex items-center gap-2"
                 >
-                  Request a Demo
+                  Request Early Access
                   <ArrowRight size={16} />
                 </button>
               )}
             </RequestAccessModal>
-            <Link
-              href="#"
+            <a
+              href="mailto:sales@intellios.io?subject=Intellios%20Sales%20Inquiry"
               className="rounded-xl border border-white/20 px-7 py-3.5 text-sm font-semibold text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-colors"
             >
               Talk to Sales
-            </Link>
+            </a>
           </div>
 
-          {/* Whitepaper callout */}
-          <div className="mt-10 inline-flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-5 py-3">
-            <FileText size={18} className="text-indigo-400 shrink-0" />
-            <div className="text-left">
-              <p className="text-sm font-medium text-white">
-                The AI-Native SDLC
-              </p>
-              <p className="text-xs text-gray-400">
-                Why governance is the new center of gravity
-              </p>
-            </div>
-            <Link
-              href="#"
-              className="ml-2 flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
-            >
-              <Download size={14} />
-              Download
-            </Link>
-          </div>
+          {/* Supporting context */}
+          <p className="mt-8 text-sm text-gray-400 max-w-lg mx-auto">
+            White-label ready. Deploy under your brand, inside your compliance posture.
+          </p>
         </div>
       </section>
 
@@ -961,9 +1052,9 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       <footer className="bg-gray-900 dark:bg-slate-950 border-t border-white/10 py-14 px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-2 gap-8 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
             {/* Brand column */}
-            <div className="col-span-2 lg:col-span-1">
+            <div className="col-span-2 lg:col-span-2">
               <Link href="/landing" className="flex items-center gap-2.5">
                 <div className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-600">
                   <Zap size={14} className="text-white" />
@@ -1003,17 +1094,6 @@ export default function LandingPage() {
             <p className="text-xs text-gray-500">
               &copy; {new Date().getFullYear()} Intellios. All rights reserved.
             </p>
-            <div className="flex items-center gap-6">
-              <Link href="#" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="#" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
-                Terms of Service
-              </Link>
-              <Link href="#" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
-                Security
-              </Link>
-            </div>
           </div>
         </div>
       </footer>
