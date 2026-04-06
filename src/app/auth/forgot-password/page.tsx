@@ -65,13 +65,13 @@ export default function ForgotPasswordPage() {
             <Subheading level={2} className="mb-2 text-white">
               Check your inbox
             </Subheading>
-            <p className="text-sm text-white/60">
+            <p className="text-sm text-white/70">
               If an account with that email exists, a reset link has been sent.
               Check your inbox and spam folder.
             </p>
             <a
               href="/login"
-              className="mt-6 inline-block text-sm text-indigo-400/80 hover:text-indigo-300 transition-colors"
+              className="mt-6 inline-block text-sm text-indigo-400/80 hover:text-indigo-300 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded"
             >
               &larr; Back to sign in
             </a>
@@ -85,8 +85,8 @@ export default function ForgotPasswordPage() {
               <Subheading level={2} className="text-white">
                 Reset your password
               </Subheading>
-              <p className="mt-2 text-sm text-white/50">
-                Enter your email and we&apos;ll send you a reset link.
+              <p className="mt-2 text-sm text-white/70">
+                Enter your email and we'll send you a reset link.
               </p>
             </div>
 
@@ -102,7 +102,7 @@ export default function ForgotPasswordPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                   placeholder="you@example.com"
                   aria-describedby={error ? "forgot-error" : undefined}
                 />
@@ -121,7 +121,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg btn-primary py-2.5 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full rounded-lg btn-primary py-2.5 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               >
                 {loading && (
                   <svg
@@ -153,7 +153,7 @@ export default function ForgotPasswordPage() {
             <div className="mt-4 text-center">
               <a
                 href="/login"
-                className="text-xs text-white/50 hover:text-white/80 transition-colors"
+                className="text-xs text-white/70 hover:text-white/90 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded inline-block"
               >
                 &larr; Back to sign in
               </a>

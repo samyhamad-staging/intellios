@@ -109,6 +109,4 @@ export async function POST(
     return NextResponse.json(report);
   } catch (err) {
     console.error(`[${requestId}] Red-team error:`, err);
-    return aiError(err, requestId);
-  }
-}
+    return aiError(err,

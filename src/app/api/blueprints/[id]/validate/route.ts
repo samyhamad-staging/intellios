@@ -73,6 +73,4 @@ export async function POST(
     return NextResponse.json({ report });
   } catch (error) {
     console.error(`[${requestId}] Failed to validate blueprint:`, error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to run validation", undefined, requestId);
-  }
-}
+    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to run validation", undefined, re

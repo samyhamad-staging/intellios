@@ -3,7 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
-import { Cpu } from "lucide-react";
+import { Cpu, Shield, GitBranch, Activity, Zap } from "lucide-react";
 import { FormField } from "@/components/ui/form-field";
 import { Heading, Subheading } from "@/components/catalyst";
 
@@ -95,7 +95,7 @@ function LoginForm() {
 
   return (
     <div
-      className="relative flex min-h-screen items-center justify-center overflow-hidden"
+      className="relative flex min-h-screen overflow-hidden"
       style={{ background: "linear-gradient(135deg, #07071a 0%, #0d0d2b 50%, #07071a 100%)" }}
     >
       {/* Dot-grid overlay */}
@@ -116,7 +116,65 @@ function LoginForm() {
         style={{ background: "radial-gradient(circle, rgba(139,92,246,0.10), transparent 70%)" }}
       />
 
-      <div className="relative z-10 w-full max-w-sm px-4">
+      {/* ── Left Panel — Marketing Content (desktop only) ────────────── */}
+      <div className="hidden lg:flex lg:w-[55%] flex-col justify-center px-8 py-12">
+        <div className="relative z-10 max-w-xl">
+          {/* Logo & name */}
+          <div className="mb-12 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-indigo-500/30 bg-indigo-500/10">
+              <Zap size={20} className="text-indigo-400" />
+            </div>
+            <span className="text-2xl font-bold text-white">Intellios</span>
+          </div>
+
+          {/* Headline */}
+          <h1 className="mb-8 text-4xl font-bold tracking-tight text-white leading-tight">
+            The governed control plane for enterprise AI agents
+          </h1>
+
+          {/* Value Propositions */}
+          <div className="space-y-5 mb-12">
+            <div className="flex gap-4">
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/20 shrink-0">
+                <Shield size={16} className="text-indigo-300" />
+              </div>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                <span className="font-semibold text-white">Deterministic governance</span> — every agent validated against your policies before deployment
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/20 shrink-0">
+                <GitBranch size={16} className="text-indigo-300" />
+              </div>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                <span className="font-semibold text-white">Auto-generated SR 11-7 audit trails</span> — compliance evidence that writes itself
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/20 shrink-0">
+                <Activity size={16} className="text-indigo-300" />
+              </div>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                <span className="font-semibold text-white">Continuous compliance monitoring</span> — know when policy drift occurs, instantly
+              </p>
+            </div>
+          </div>
+
+          {/* Testimonial */}
+          <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6">
+            <p className="text-sm italic text-gray-300 mb-3">
+              "Intellios reduced our agent governance overhead by 80% while actually improving our compliance posture."
+            </p>
+            <p className="text-xs font-semibold text-indigo-300">
+              VP Engineering, Top-10 US Bank (Design Partner)
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Right Panel — Login Form ────────────────────────────────── */}
+      <div className="w-full lg:w-[45%] flex items-center justify-center px-4 py-8 lg:py-0">
+        <div className="relative z-10 w-full max-w-sm">
         {/* ── Logo lockup ───────────────────────────────────────────────── */}
         <div className="mb-8 flex flex-col items-center gap-3">
           <div className="relative">
@@ -167,7 +225,7 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                 placeholder="you@intellios.dev"
                 aria-describedby={error ? "login-error" : undefined}
               />
@@ -199,7 +257,7 @@ function LoginForm() {
                   required={!ssoEnabled}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-text-tertiary focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-text-tertiary focus:border-indigo-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                 />
               </FormField>
             )}
@@ -211,9 +269,9 @@ function LoginForm() {
                   type="checkbox"
                   checked={rememberDevice}
                   onChange={(e) => setRememberDevice(e.target.checked)}
-                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-white/5 text-indigo-500 focus:ring-indigo-500/30 focus:ring-offset-0 accent-indigo-500"
+                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-white/5 text-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 accent-indigo-500"
                 />
-                <span className="font-mono text-2xs text-white/60 hover:text-white/80 transition-colors">
+                <span className="font-mono text-2xs text-white/80 hover:text-white/90 transition-colors">
                   Remember this device for 30 days
                 </span>
               </label>
@@ -241,7 +299,7 @@ function LoginForm() {
 
             {/* M-02: Add create account link + improve forgot-password contrast */}
             <div className="flex items-center justify-between">
-              <a href="/auth/forgot-password" className="text-xs text-white/60 hover:text-white/80 transition-colors">
+              <a href="/auth/forgot-password" className="text-xs text-white/80 hover:text-white/90 transition-colors">
                 Forgot your password?
               </a>
               <a href="/register" className="text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors">
@@ -251,40 +309,41 @@ function LoginForm() {
           </form>
         </div>
 
-        {/* P1-56: Demo accounts — only visible when NEXT_PUBLIC_DEMO_MODE=true */}
-        {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
-        <div className="mt-4">
-          {/* Section divider */}
-          <div className="mb-3 flex items-center gap-3">
-            <div className="h-px flex-1 bg-white/8" />
-            <span className="font-mono text-2xs uppercase tracking-widest text-white/20">Demo accounts</span>
-            <div className="h-px flex-1 bg-white/8" />
-          </div>
-          {/* Clickable rows — click to fill credentials */}
-          <div className="space-y-1">
-            {DEMO_ACCOUNTS.map((acc) => (
-              <button
-                key={acc.email}
-                type="button"
-                onClick={() => handleQuickFill(acc.email, acc.password)}
-                className="group flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-left transition-all hover:border-white/8 hover:bg-white/5"
-              >
-                <div className="min-w-0 flex-1">
-                  <span className="block truncate font-mono text-xs text-white/60 transition-colors group-hover:text-white/85">
-                    {acc.email}
+          {/* P1-56: Demo accounts — only visible when NEXT_PUBLIC_DEMO_MODE=true */}
+          {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
+          <div className="mt-4">
+            {/* Section divider */}
+            <div className="mb-3 flex items-center gap-3">
+              <div className="h-px flex-1 bg-white/8" />
+              <span className="font-mono text-2xs uppercase tracking-widest text-white/50">Demo accounts</span>
+              <div className="h-px flex-1 bg-white/8" />
+            </div>
+            {/* Clickable rows — click to fill credentials */}
+            <div className="space-y-1">
+              {DEMO_ACCOUNTS.map((acc) => (
+                <button
+                  key={acc.email}
+                  type="button"
+                  onClick={() => handleQuickFill(acc.email, acc.password)}
+                  className="group flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-left transition-all hover:border-white/8 hover:bg-white/5"
+                >
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate font-mono text-xs text-white/80 transition-colors group-hover:text-white/90">
+                      {acc.email}
+                    </span>
+                    <span className="block font-mono text-2xs text-white/50 transition-colors group-hover:text-white/70">
+                      {acc.password}
+                    </span>
+                  </div>
+                  <span className={`shrink-0 whitespace-nowrap rounded-md border px-2 py-0.5 font-mono text-2xs font-medium ${acc.badge}`}>
+                    {acc.role}
                   </span>
-                  <span className="block font-mono text-2xs text-white/20 transition-colors group-hover:text-white/40">
-                    {acc.password}
-                  </span>
-                </div>
-                <span className={`shrink-0 whitespace-nowrap rounded-md border px-2 py-0.5 font-mono text-2xs font-medium ${acc.badge}`}>
-                  {acc.role}
-                </span>
-              </button>
-            ))}
+                </button>
+              ))}
+            </div>
           </div>
+          )}
         </div>
-        )}
       </div>
     </div>
   );

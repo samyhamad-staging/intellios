@@ -84,7 +84,7 @@ export function RegisterForm() {
 
   /* ── Shared input class (dark-themed, matches login page) ─────────────── */
   const inputCls =
-    "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/60 focus:outline-none focus:ring-1 focus:ring-indigo-500/40 transition-colors";
+    "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 transition-colors";
 
   return (
     <div
@@ -96,11 +96,11 @@ export function RegisterForm() {
       }}
     >
       <h2 className="mb-1 text-lg font-semibold text-white">Create your account</h2>
-      <p className="mb-5 text-xs text-white/40">Set up your enterprise workspace in seconds</p>
+      <p className="mb-5 text-xs text-white/70">Set up your enterprise workspace in seconds</p>
 
       {/* P2-69: 3-step progress indicator */}
       <div className="mb-6">
-        <div className="flex items-center">
+        <div className="flex items-center" role="list">
           {[
             { n: 1, label: "Organization" },
             { n: 2, label: "Identity" },
@@ -109,7 +109,7 @@ export function RegisterForm() {
             const done = signupStep >= n;
             const active = signupStep === n - 1;
             return (
-              <div key={n} className="flex items-center" style={{ flex: idx < 2 ? "1" : "none" }}>
+              <div key={n} className="flex items-center" role="listitem" style={{ flex: idx < 2 ? "1" : "none" }} aria-label={`Step ${n} of 3: ${label}`} aria-current={active ? "step" : undefined}>
                 <div className="flex flex-col items-center gap-1">
                   <div
                     className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold transition-all duration-300 ${
@@ -117,12 +117,12 @@ export function RegisterForm() {
                         ? "border-indigo-500 bg-indigo-500 text-white"
                         : active
                         ? "border-indigo-500/60 bg-indigo-500/10 text-indigo-400"
-                        : "border-white/15 bg-transparent text-white/25"
+                        : "border-white/15 bg-transparent text-white/50"
                     }`}
                   >
                     {done ? <Check size={13} strokeWidth={2.5} /> : n}
                   </div>
-                  <span className={`text-[10px] font-medium transition-colors ${done ? "text-indigo-400" : active ? "text-white/50" : "text-white/20"}`}>
+                  <span className={`text-[10px] font-medium transition-colors ${done ? "text-indigo-400" : active ? "text-white/80" : "text-white/50"}`}>
                     {label}
                   </span>
                 </div>
@@ -228,24 +228,24 @@ export function RegisterForm() {
             </FormField>
 
             {/* P2-2: Password validation checklist */}
-            <div className="space-y-1.5 mb-2">
-              <div className="flex items-center gap-2 text-xs">
+            <div className="space-y-1.5 mb-2" aria-label="Password requirements" aria-live="polite">
+              <div className="flex items-center gap-2 text-xs" aria-label={`Minimum 8 characters: ${form.password.length >= 8 ? "met" : "not met"}`}>
                 <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" className={form.password.length >= 8 ? "text-emerald-400" : "text-white/30"} />
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" className={form.password.length >= 8 ? "text-emerald-400" : "text-white/50"} />
                   {form.password.length >= 8 && (
                     <path d="M5 8L7 10L11 6" stroke="currentColor" strokeWidth="1.5" className="text-emerald-400" strokeLinecap="round" strokeLinejoin="round" />
                   )}
                 </svg>
-                <span className={form.password.length >= 8 ? "text-emerald-400" : "text-white/30"}>At least 8 characters</span>
+                <span className={form.password.length >= 8 ? "text-emerald-400" : "text-white/50"}>At least 8 characters</span>
               </div>
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-2 text-xs" aria-label={`Passwords match: ${form.password === form.confirmPassword && form.password.length > 0 ? "met" : "not met"}`}>
                 <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" className={form.password === form.confirmPassword && form.password.length > 0 ? "text-emerald-400" : "text-white/30"} />
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" className={form.password === form.confirmPassword && form.password.length > 0 ? "text-emerald-400" : "text-white/50"} />
                   {form.password === form.confirmPassword && form.password.length > 0 && (
                     <path d="M5 8L7 10L11 6" stroke="currentColor" strokeWidth="1.5" className="text-emerald-400" strokeLinecap="round" strokeLinejoin="round" />
                   )}
                 </svg>
-                <span className={form.password === form.confirmPassword && form.password.length > 0 ? "text-emerald-400" : "text-white/30"}>Passwords match</span>
+                <span className={form.password === form.confirmPassword && form.password.length > 0 ? "text-emerald-400" : "text-white/50"}>Passwords match</span>
               </div>
             </div>
 
@@ -268,10 +268,10 @@ export function RegisterForm() {
                 type="checkbox"
                 checked={agreedToTerms}
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border border-white/20 bg-white/5 checked:border-indigo-500 checked:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:ring-offset-0 cursor-pointer transition-all"
+                className="mt-1 h-4 w-4 rounded border border-white/20 bg-white/5 checked:border-indigo-500 checked:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 cursor-pointer transition-all"
                 required
               />
-              <label htmlFor="agreedToTerms" className="text-xs text-white/70 leading-relaxed cursor-pointer">
+              <label htmlFor="agreedToTerms" className="text-xs text-white/80 leading-relaxed cursor-pointer">
                 I agree to the{" "}
                 <Link href="/landing/terms" className="text-indigo-400 hover:text-indigo-300 underline-offset-2 hover:underline transition-colors">
                   Terms of Service
@@ -297,7 +297,7 @@ export function RegisterForm() {
             <button
               type="button"
               onClick={() => setCurrentStep((s) => s - 1)}
-              className="rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/60 hover:text-white/90 hover:border-white/25 transition-all"
+              className="rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/80 hover:text-white/90 hover:border-white/25 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             >
               ← Back
             </button>
@@ -308,7 +308,7 @@ export function RegisterForm() {
               type="button"
               disabled={!stepValid[currentStep]}
               onClick={() => setCurrentStep((s) => s + 1)}
-              className="flex-1 rounded-lg py-2.5 text-sm font-semibold text-white disabled:opacity-40 transition-all"
+              className="flex-1 rounded-lg py-2.5 text-sm font-semibold text-white disabled:opacity-40 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               style={{
                 background: "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)",
                 boxShadow: stepValid[currentStep] ? "0 0 20px rgba(99,102,241,0.35)" : "none",
@@ -320,7 +320,7 @@ export function RegisterForm() {
             <button
               type="submit"
               disabled={loading || !stepValid[2]}
-              className="flex-1 rounded-lg py-2.5 text-sm font-semibold text-white disabled:opacity-40 transition-all flex items-center justify-center gap-2"
+              className="flex-1 rounded-lg py-2.5 text-sm font-semibold text-white disabled:opacity-40 transition-all flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               style={{
                 background: "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)",
                 boxShadow: loading ? "none" : "0 0 20px rgba(99,102,241,0.35)",
@@ -340,12 +340,12 @@ export function RegisterForm() {
         {/* Divider */}
         <div className="flex items-center gap-3 py-1">
           <div className="h-px flex-1 bg-white/10" />
-          <span className="text-2xs text-white/25 uppercase tracking-widest">or</span>
+          <span className="text-2xs text-white/50 uppercase tracking-widest">or</span>
           <div className="h-px flex-1 bg-white/10" />
         </div>
 
         <div className="text-center">
-          <span className="text-xs text-white/40">
+          <span className="text-xs text-white/70">
             Already have an account?{" "}
             <Link href="/login" className="text-indigo-400 hover:text-indigo-300 underline-offset-2 hover:underline transition-colors">
               Sign in

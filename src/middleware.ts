@@ -119,7 +119,7 @@ export default auth((req) => {
   }
 
   const isLoginPage = pathname === "/login";
-  const isLandingPage = pathname === "/landing";
+  const isLandingPage = pathname === "/landing" || pathname.startsWith("/landing/");
   const isRegisterPage = pathname === "/register";
   const isTemplatesPage = pathname === "/templates";
 

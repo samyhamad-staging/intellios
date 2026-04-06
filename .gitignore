@@ -2,14 +2,4 @@
 .claude/settings.local.json
 .claude/worktrees/
 
-# Next.js
-.next/
-out/
-
-# Dependencies
-node_modules/
-
-# OS
-.DS_Store
-Thumbs.db
-.~lock.*
+# Next.j

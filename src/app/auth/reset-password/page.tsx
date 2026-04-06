@@ -114,7 +114,7 @@ function ResetPasswordForm() {
             <Subheading level={2} className="mb-1 text-white">
               Password updated
             </Subheading>
-            <p className="mb-5 text-sm text-white/60 leading-relaxed">
+            <p className="mb-5 text-sm text-white/70 leading-relaxed">
               Your password has been changed successfully. Your previous password
               is no longer valid.
             </p>
@@ -132,7 +132,7 @@ function ResetPasswordForm() {
                 ].map((tip) => (
                   <li
                     key={tip}
-                    className="flex items-start gap-1.5 text-xs text-emerald-300/80"
+                    className="flex items-start gap-1.5 text-xs text-emerald-300"
                   >
                     <span className="mt-0.5 shrink-0">&middot;</span>
                     {tip}
@@ -144,11 +144,11 @@ function ResetPasswordForm() {
             {/* CTA + countdown */}
             <a
               href="/login"
-              className="block w-full rounded-lg btn-primary py-2.5 text-sm font-medium text-center"
+              className="block w-full rounded-lg btn-primary py-2.5 text-sm font-medium text-center focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             >
               Sign in now &rarr;
             </a>
-            <p className="mt-3 text-xs text-white/30">
+            <p className="mt-3 text-xs text-white/50">
               Redirecting automatically in {countdown}s&hellip;
             </p>
           </div>
@@ -161,7 +161,7 @@ function ResetPasswordForm() {
               <Subheading level={2} className="text-white">
                 Set a new password
               </Subheading>
-              <p className="mt-2 text-sm text-white/50">
+              <p className="mt-2 text-sm text-white/70">
                 Choose a password with at least 8 characters.
               </p>
             </div>
@@ -179,7 +179,7 @@ function ResetPasswordForm() {
                   minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                   aria-describedby={error ? "reset-error" : undefined}
                 />
               </FormField>
@@ -192,7 +192,7 @@ function ResetPasswordForm() {
                   required
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                 />
               </FormField>
 
@@ -208,7 +208,7 @@ function ResetPasswordForm() {
                   {error.includes("expired") && (
                     <a
                       href="/auth/forgot-password"
-                      className="mt-1 block text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors"
+                      className="mt-1 block text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded"
                     >
                       Request a new reset link &rarr;
                     </a>
@@ -219,7 +219,7 @@ function ResetPasswordForm() {
               <button
                 type="submit"
                 disabled={loading || !token}
-                className="w-full rounded-lg btn-primary py-2.5 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full rounded-lg btn-primary py-2.5 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               >
                 {loading && (
                   <svg

@@ -4,8 +4,7 @@
  */
 
 import { Metadata } from "next";
-import Link from "next/link";
-import { Zap, ShieldCheck, Lock, Eye, Server, CheckCircle } from "lucide-react";
+import { ShieldCheck, Lock, Eye, Server, CheckCircle } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Security & Compliance — Intellios",
@@ -14,29 +13,7 @@ export const metadata: Metadata = {
 
 export default function SecurityPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950">
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-gray-900/10 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 backdrop-blur-sm">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-          <Link href="/landing" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
-              <Zap size={16} className="text-white" />
-            </div>
-            <span className="text-base font-semibold tracking-tight text-gray-900 dark:text-white">
-              Intellios
-            </span>
-          </Link>
-          <Link
-            href="/landing"
-            className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            Back to home
-          </Link>
-        </nav>
-      </header>
-
-      {/* ── Content ────────────────────────────────────────────────────── */}
-      <main className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
+    <div className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
         <div className="mb-12">
           <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-4">
             Security & Compliance
@@ -390,26 +367,6 @@ export default function SecurityPage() {
             </div>
           </section>
         </div>
-      </main>
-
-      {/* ── Footer ─────────────────────────────────────────────────────── */}
-      <footer className="bg-gray-900 dark:bg-slate-950 border-t border-white/10 py-14 px-6 lg:px-8 mt-20">
-        <div className="mx-auto max-w-4xl">
-          <div className="flex items-center justify-between gap-4 pb-8 border-b border-white/10">
-            <Link href="/landing" className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-600">
-                <Zap size={14} className="text-white" />
-              </div>
-              <span className="text-sm font-semibold text-white">
-                Intellios
-              </span>
-            </Link>
-            <p className="text-xs text-gray-500">
-              &copy; {new Date().getFullYear()} Intellios. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

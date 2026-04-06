@@ -6,15 +6,12 @@
  */
 
 import Link from "next/link";
-import { RequestAccessModal } from "@/components/landing/request-access-modal";
+import { RequestAccessButton } from "@/components/landing/request-access-button";
 import { ScrollRevealWrapper } from "@/components/landing/scroll-reveal-wrapper";
-import { MobileNav } from "@/components/landing/mobile-nav";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { HeroIllustration } from "@/components/landing/hero-illustration";
 import {
   ShieldCheck,
-  Zap,
-  ArrowRight,
   ChevronRight,
   Eye,
   Settings,
@@ -33,16 +30,6 @@ import {
 /* ─────────────────────────────────────────────────────────────────────── */
 /*  Data                                                                    */
 /* ─────────────────────────────────────────────────────────────────────── */
-
-const NAV_LINKS = [
-  { label: "Problem", href: "#governance-gap" },
-  { label: "Product", href: "#pillars" },
-  { label: "Architecture", href: "#architecture" },
-  { label: "Use Cases", href: "#personas" },
-  { label: "Why Us", href: "#why-intellios" },
-  { label: "ROI", href: "#roi" },
-  { label: "Templates", href: "/templates" },
-];
 
 const GOVERNANCE_GAP_STATS = [
   {
@@ -151,26 +138,6 @@ const ROI_STATS = [
   },
 ];
 
-const FOOTER_LINKS = {
-  Product: [
-    { label: "Platform Overview", href: "#pillars" },
-    { label: "Architecture", href: "#architecture" },
-    { label: "Use Cases", href: "#personas" },
-    { label: "Why Intellios", href: "#why-intellios" },
-  ],
-  Company: [
-    { label: "About", href: "#why-intellios" },
-    { label: "Contact Sales", href: "mailto:sales@intellios.io" },
-    { label: "Pricing", href: "/landing/pricing" },
-    { label: "Careers", href: "mailto:careers@intellios.io" },
-  ],
-  Legal: [
-    { label: "Privacy Policy", href: "/landing/privacy" },
-    { label: "Terms of Service", href: "/landing/terms" },
-    { label: "Security", href: "/landing/security" },
-  ],
-};
-
 /* ─────────────────────────────────────────────────────────────────────── */
 /*  Page                                                                    */
 /* ─────────────────────────────────────────────────────────────────────── */
@@ -178,56 +145,6 @@ const FOOTER_LINKS = {
 export default function LandingPage() {
   return (
     <ScrollRevealWrapper>
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-gray-900/10 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 backdrop-blur-sm">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-          <div className="flex lg:flex-1">
-            <Link href="/landing" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
-                <Zap size={16} className="text-white" />
-              </div>
-              <span className="text-base font-semibold tracking-tight text-gray-900 dark:text-white">
-                Intellios
-              </span>
-            </Link>
-          </div>
-
-          {/* Desktop nav */}
-          <div className="hidden lg:flex lg:gap-x-8">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 rounded transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="flex flex-1 items-center justify-end gap-3">
-            <Link
-              href="/login"
-              className="hidden sm:block text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 rounded transition-colors"
-            >
-              Sign in
-            </Link>
-            <RequestAccessModal>
-              {(open) => (
-                <button
-                  onClick={open}
-                  className="inline-flex rounded-lg bg-indigo-600 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
-                >
-                  <span className="sm:hidden">Get Access</span>
-                  <span className="hidden sm:inline">Request Early Access</span>
-                </button>
-              )}
-            </RequestAccessModal>
-
-            <MobileNav navLinks={NAV_LINKS} />
-          </div>
-        </nav>
-      </header>
 
       {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 1 — Hero                                               */}
@@ -311,17 +228,11 @@ export default function LandingPage() {
 
           <div className="reveal mt-10 flex flex-col items-center gap-3">
             <div className="flex items-center justify-center gap-4 flex-wrap">
-              <RequestAccessModal>
-                {(open) => (
-                  <button
-                    onClick={open}
-                    className="btn-primary rounded-xl px-7 py-3.5 text-sm font-semibold flex items-center gap-2"
-                  >
-                    Request Early Access
-                    <ArrowRight size={16} />
-                  </button>
-                )}
-              </RequestAccessModal>
+              <RequestAccessButton
+                label="Request Early Access"
+                mobileLabel="Request Early Access"
+                variant="large"
+              />
               <Link
                 href="#pillars"
                 className="rounded-xl border border-gray-300 dark:border-gray-700 px-7 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
@@ -429,6 +340,23 @@ export default function LandingPage() {
           aria-hidden="true"
         >
           <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-violet-400 to-indigo-300 opacity-20 dark:opacity-[0.15] sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]" />
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/*  SECTION 1b — Trusted By (Design Partners)                       */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <section className="py-8 border-b border-gray-100 dark:border-white/5">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <p className="text-center text-xs font-medium uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-6">
+            Design partners from regulated enterprise
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
+            <span className="text-sm font-semibold text-gray-300 dark:text-gray-600">Top-10 US Bank</span>
+            <span className="text-sm font-semibold text-gray-300 dark:text-gray-600">Fortune 100 Insurer</span>
+            <span className="text-sm font-semibold text-gray-300 dark:text-gray-600">Global Healthcare System</span>
+            <span className="text-sm font-semibold text-gray-300 dark:text-gray-600">Federal Agency</span>
+          </div>
         </div>
       </section>
 
@@ -729,17 +657,11 @@ export default function LandingPage() {
             Currently onboarding design partners from financial services, healthcare, and regulated enterprise.
           </p>
           <div className="mt-6 flex flex-col items-center gap-2">
-            <RequestAccessModal>
-              {(open) => (
-                <button
-                  onClick={open}
-                  className="btn-primary rounded-xl px-7 py-3 text-sm font-semibold inline-flex items-center gap-2"
-                >
-                  Tell Us Your Use Case
-                  <ArrowRight size={16} />
-                </button>
-              )}
-            </RequestAccessModal>
+            <RequestAccessButton
+              label="Tell Us Your Use Case"
+              mobileLabel="Tell Us Your Use Case"
+              variant="large"
+            />
             <p className="text-xs text-gray-400 dark:text-gray-500">
               Takes 30 seconds. We respond within one business day.
             </p>
@@ -853,23 +775,26 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Compliance badges — separated achieved vs planned */}
-          <div className="reveal">
-            <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
-              Regulatory Framework Alignment
+          {/* Compliance badges — industry standards */}
+          <div className="reveal mt-12">
+            <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-6">
+              Built for Regulated Enterprise
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-2.5 mb-4">
-              {["SR 11-7", "EU AI Act", "NIST AI RMF"].map((badge) => (
-                <span
-                  key={badge}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 px-3.5 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-400"
-                >
-                  <ShieldCheck size={12} />
-                  {badge}
-                </span>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {[
+                { label: "SOC 2 Type II" },
+                { label: "GDPR" },
+                { label: "HIPAA" },
+                { label: "SR 11-7 / MRM" },
+                { label: "EU AI Act" },
+                { label: "NIST AI RMF" },
+              ].map((badge) => (
+                <div key={badge.label} className="flex items-center gap-2 rounded-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-4 py-2">
+                  <ShieldCheck size={14} className="text-indigo-600 dark:text-indigo-400" />
+                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{badge.label}</span>
+                </div>
               ))}
             </div>
-            {/* Security certifications roadmap moved to FAQ — listing in-progress certs here inadvertently highlights gaps */}
           </div>
         </div>
       </section>
@@ -1066,17 +991,12 @@ export default function LandingPage() {
           </p>
           <div className="mt-10 flex flex-col items-center gap-3">
             <div className="flex items-center justify-center gap-4 flex-wrap">
-              <RequestAccessModal>
-                {(open) => (
-                  <button
-                    onClick={open}
-                    className="rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50 transition-colors flex items-center gap-2"
-                  >
-                    Apply for Design Partnership
-                    <ArrowRight size={16} />
-                  </button>
-                )}
-              </RequestAccessModal>
+              <RequestAccessButton
+                label="Apply for Design Partnership"
+                mobileLabel="Apply for Design Partnership"
+                variant="large"
+                className="!bg-white !text-indigo-600 hover:!bg-indigo-50"
+              />
               <a
                 href="mailto:sales@intellios.io?subject=Intellios%20Sales%20Inquiry"
                 className="rounded-xl border border-white/20 px-7 py-3.5 text-sm font-semibold text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-colors"
@@ -1095,57 +1015,6 @@ export default function LandingPage() {
           </p>
         </div>
       </section>
-
-      {/* ════════════════════════════════════════════════════════════════ */}
-      {/*  SECTION 10 — Footer                                             */}
-      {/* ════════════════════════════════════════════════════════════════ */}
-      <footer className="bg-gray-900 dark:bg-slate-950 border-t border-white/10 py-14 px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
-            {/* Brand column */}
-            <div className="col-span-2 lg:col-span-2">
-              <Link href="/landing" className="flex items-center gap-2.5">
-                <div className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-600">
-                  <Zap size={14} className="text-white" />
-                </div>
-                <span className="text-sm font-semibold text-white">
-                  Intellios
-                </span>
-              </Link>
-              <p className="mt-3 text-xs text-gray-400 max-w-xs leading-relaxed">
-                The governed control plane for enterprise AI agents. Design, govern, and deploy under your brand, inside your compliance posture.
-              </p>
-            </div>
-
-            {/* Link columns */}
-            {Object.entries(FOOTER_LINKS).map(([heading, links]) => (
-              <div key={heading}>
-                <p className="font-semibold text-gray-400 text-sm mb-3">
-                  {heading}
-                </p>
-                <ul className="space-y-2.5">
-                  {links.map((l) => (
-                    <li key={l.label}>
-                      <Link
-                        href={l.href}
-                        className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
-                      >
-                        {l.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-12 border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-gray-500">
-              &copy; {new Date().getFullYear()} Intellios. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
     </ScrollRevealWrapper>
   );
 }

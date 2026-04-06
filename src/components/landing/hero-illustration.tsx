@@ -57,6 +57,14 @@ export function HeroIllustration({ className = "", size = "lg" }: HeroIllustrati
         .hero-illustration-container {
           animation: gentle-float 4s ease-in-out infinite;
         }
+
+        @media (prefers-reduced-motion: reduce) {
+          .hero-node,
+          .hero-connector,
+          .hero-illustration-container {
+            animation: none !important;
+          }
+        }
       `}</style>
 
       <div className={`hero-illustration-container ${sizeMap[size]} ${className}`}>

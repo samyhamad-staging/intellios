@@ -23,8 +23,31 @@ import Providers from "@/components/providers";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 
 export const metadata: Metadata = {
-  title: "Intellios",
-  description: "Enterprise Agent Factory",
+  title: {
+    default: "Intellios",
+    template: "%s | Intellios",
+  },
+  description:
+    "Intellios is an enterprise AI agent factory enabling Fortune 500 companies in regulated industries to design, govern, and deploy AI agents with built-in compliance for SR 11-7, EU AI Act, HIPAA, and NIST AI RMF.",
+  metadataBase: new URL("https://intellios.app"),
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/favicon.svg",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Intellios",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default async function RootLayout({
@@ -57,6 +80,12 @@ export default async function RootLayout({
         }}
       />
       <body className="antialiased" style={{ backgroundColor: "var(--content-bg)" }}>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium text-sm"
+        >
+          Skip to main content
+        </a>
         <Providers session={session}>
           <Toaster position="bottom-right" richColors />
           {session?.user ? (
@@ -74,10 +103,10 @@ export default async function RootLayout({
                 />
               }
             >
-              {children}
+              <main id="main-content">{children}</main>
             </MobileLayout>
           ) : (
-            <>{children}</>
+            <main id="main-content">{children}</main>
           )}
         </Providers>
       </body>
