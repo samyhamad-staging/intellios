@@ -12,6 +12,8 @@ import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { HeroIllustration } from "@/components/landing/hero-illustration";
 import {
   ShieldCheck,
+  Zap,
+  ArrowRight,
   ChevronRight,
   Eye,
   Settings,
