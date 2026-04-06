@@ -1,41 +1,43 @@
 ---
-id: "01-001"
-title: "What Is Intellios"
-slug: "what-is-intellios"
-type: "concept"
+id: 01-001
+title: What Is Intellios
+slug: what-is-intellios
+type: concept
 audiences:
-  - "executive"
-  - "compliance"
-  - "product"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- executive
+- compliance
+- product
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "platform-overview"
-  - "governance"
-  - "enterprise-ai"
-  - "compliance"
-  - "agent-factory"
+- platform-overview
+- governance
+- enterprise-ai
+- compliance
+- agent-factory
 prerequisites: []
 related:
-  - "Agent Blueprint Package"
-  - "Governance-as-Code"
-  - "Agent Lifecycle"
+- 03-001
+- 03-002
+- 03-005
 next_steps:
-  - "Getting Started with Design Studio"
-  - "Understanding Agent Blueprint Packages"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Intellios is a white-label enterprise agent factory and governed control plane
-  for deploying AI agents at scale. It enables enterprises to design, generate,
-  govern, and manage AI agents under their own brand while maintaining compliance,
-  auditability, and policy control — turning ungoverned shadow AI into structured,
-  enterprise-grade automation.
+- 03-008
+- 03-001
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Intellios is a white-label enterprise agent factory and governed control plane
+  for deploying AI agents at scale. It enables enterprises to design, generate, govern,
+  and manage AI agents under their own brand while maintaining compliance, auditability,
+  and policy control — turning ungoverned shadow AI into structured, enterprise-grade
+  automation.
+
+  '
 ---
+
 
 # What Is Intellios
 

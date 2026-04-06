@@ -45,9 +45,9 @@ Recent regulatory actions against financial institutions for AI/model governance
 
 ## Regulatory Framework for AI Governance
 
-### Federal Reserve (SR 11-7)
+### Federal Reserve (SR 11-7 — Guidance on Model Risk Management)
 
-**"Guidance on Model Risk Management"** requires:
+The Federal Reserve guidance requires:
 
 1. **Model documentation:** "A model should be well-documented with clear descriptions of its purpose, assumptions, limitations, validation results, and approved use cases."
    - *Intellios benefit:* Agent blueprints auto-generate model cards (documentation)

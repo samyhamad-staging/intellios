@@ -1,43 +1,46 @@
 ---
-id: "03-002"
-title: "Governance-as-Code: Deterministic Policy Automation"
-slug: "governance-as-code"
-type: "concept"
+id: 03-002
+title: 'Governance-as-Code: Deterministic Policy Automation'
+slug: governance-as-code
+type: concept
 audiences:
-  - "compliance"
-  - "engineering"
-  - "executive"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+- engineering
+- executive
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "governance"
-  - "policy"
-  - "compliance"
-  - "rules"
-  - "automation"
-  - "deterministic"
-  - "governance-as-code"
+- governance
+- policy
+- compliance
+- rules
+- automation
+- deterministic
+- governance-as-code
 prerequisites: []
 related:
-  - "Agent Blueprint Package"
-  - "Governance Validator"
-  - "Agent Lifecycle"
-  - "Compliance Evidence Chain"
+- 03-001
+- 03-003
+- 03-005
+- 03-007
 next_steps:
-  - "Defining Governance Policies"
-  - "Agent Lifecycle"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Governance-as-Code is Intellios's foundational principle: governance policies are
-  expressed as structured, machine-evaluable rules—not documents, checklists, or manual
-  reviews. Policies use 11 deterministic operators and are evaluated the same way every time,
-  ensuring reproducible, auditable compliance decisions that gate the agent creation pipeline.
+- 05-010
+- 03-005
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Governance-as-Code is Intellios''s foundational principle: governance policies
+  are expressed as structured, machine-evaluable rules—not documents, checklists,
+  or manual reviews. Policies use 11 deterministic operators and are evaluated the
+  same way every time, ensuring reproducible, auditable compliance decisions that
+  gate the agent creation pipeline.
+
+  '
 ---
+
 
 # Governance-as-Code: Deterministic Policy Automation
 

@@ -26,16 +26,17 @@ tldr: >
 
 | Article | Type | Audiences | Description |
 |---|---|---|---|
-| [Agent Blueprint Package (ABP)](agent-blueprint-package.md) | Concept | EN, AR, PM | The central artifact: structure, versioning, and lifecycle of an agent blueprint |
-| [Governance-as-Code](governance-as-code.md) | Concept | EN, AR, CO | Policy definition and enforcement through code: compliance automation |
-| [Policy Engine](policy-engine.md) | Concept | AR, EN | How policies are evaluated, applied, and reported on agent blueprints |
-| [Policy Expression Language](policy-expression-language.md) | Reference | EN, AR | Syntax and examples for writing governance policies |
-| [Agent Lifecycle States](agent-lifecycle-states.md) | Reference | EN, PM, AR | The states an agent moves through: draft, review, approved, deployed, retired |
-| [Runtime Adapters](runtime-adapters.md) | Concept | EN, AR | Pluggable adapters that connect agents to external runtimes and services |
-| [Compliance Evidence Chain](compliance-evidence-chain.md) | Concept | CO, EN, AR | Immutable audit trail: how compliance evidence is captured and reported |
+| [Agent Blueprint Package (ABP)](agent-blueprint-package.md) | Concept | EN, PM | The central artifact: structure, versioning, and lifecycle of an agent blueprint |
+| [Governance-as-Code](governance-as-code.md) | Concept | EN, CO | Policy definition and enforcement through code: compliance automation |
+| [Policy Engine](policy-engine.md) | Concept | EN | How policies are evaluated, applied, and reported on agent blueprints |
+| [Policy Expression Language](policy-expression-language.md) | Reference | EN | Syntax and examples for writing governance policies |
+| [Agent Lifecycle States](agent-lifecycle-states.md) | Reference | EN, PM | The states an agent moves through: draft, review, approved, deployed, retired |
+| [Runtime Adapters](runtime-adapters.md) | Concept | EN | Pluggable adapters that connect agents to external runtimes and services |
+| [Compliance Evidence Chain](compliance-evidence-chain.md) | Concept | CO, EN | Immutable audit trail: how compliance evidence is captured and reported |
 | [Design Studio](design-studio.md) | Concept | PM, EN | Visual interface for designing agent blueprints, managing tools, and configuring parameters |
-| [Control Plane](control-plane.md) | Concept | AR, EN | Orchestration engine that manages blueprint generation, governance validation, and deployment |
+| [Control Plane](control-plane.md) | Concept | EN | Orchestration engine that manages blueprint generation, governance validation, and deployment |
 | [Stakeholder Contributions](stakeholder-contributions.md) | Concept | CO, PM, EN | How compliance, security, and product teams provide policy and business constraints |
+| [How to Create Your First Agent](how-to-create-first-agent.md) | Task | EN, PM | Step-by-step guide to creating and configuring your first agent blueprint |
 
 ## Suggested Reading Order
 
@@ -51,9 +52,9 @@ tldr: >
 
 ## Audiences
 
-- **EN** — Engineer
-- **AR** — Architect
+- **E** — Executive / Business stakeholder
 - **CO** — Compliance Officer
+- **EN** — Engineer
 - **PM** — Product Manager
 
 ## Related Sections

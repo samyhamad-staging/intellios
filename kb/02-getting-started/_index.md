@@ -28,7 +28,7 @@ tldr: >
 |---|---|---|---|
 | [Executive Quick Start](executive-quick-start.md) | Task | E, CO, PM | 30-minute orientation: key concepts, roles, and first actions for leadership |
 | [Compliance Onboarding](compliance-onboarding.md) | Task | CO, EN | Verify governance setup, review policies, confirm audit trail capabilities |
-| [Engineer Setup Guide](engineer-setup-guide.md) | Task | EN, AR | Install SDKs, configure APIs, run first integration test |
+| [Engineer Setup Guide](engineer-setup-guide.md) | Task | EN | Install SDKs, configure APIs, run first integration test |
 | [PM Orientation](pm-orientation.md) | Task | PM | Product management perspective: release planning, feature tracking, roadmap alignment |
 
 ## Suggested Reading Order
@@ -43,7 +43,6 @@ tldr: >
 - **E** — Executive / Business stakeholder
 - **CO** — Compliance Officer
 - **EN** — Engineer
-- **AR** — Architect
 - **PM** — Product Manager
 
 ## Related Sections

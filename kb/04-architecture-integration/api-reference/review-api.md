@@ -21,7 +21,7 @@ tags:
   - "approval-workflow"
   - "governance"
   - "audit"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: "REST API for managing the blueprint review and approval workflow. Retrieve review queues, approve/reject blueprints, and request design changes with complete audit trails."
 ---
 

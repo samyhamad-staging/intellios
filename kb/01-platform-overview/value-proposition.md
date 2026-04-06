@@ -1,40 +1,43 @@
 ---
-id: "01-002"
-title: "Value Proposition: Why Intellios"
-slug: "value-proposition"
-type: "concept"
+id: 01-002
+title: 'Value Proposition: Why Intellios'
+slug: value-proposition
+type: concept
 audiences:
-  - "executive"
-  - "product"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- executive
+- product
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "value-proposition"
-  - "roi"
-  - "governance"
-  - "compliance"
-  - "cost-reduction"
-  - "deployment-velocity"
+- value-proposition
+- roi
+- governance
+- compliance
+- cost-reduction
+- deployment-velocity
 prerequisites: []
 related:
-  - "What Is Intellios"
-  - "Governance-as-Code"
-  - "Agent Lifecycle States"
+- 01-001
+- 03-002
+- 03-005
 next_steps:
-  - "Getting Started with Design Studio"
-  - "SR 11-7 Compliance Mapping"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Intellios delivers measurable financial and operational value: regulatory penalty avoidance
-  ($50M-$200M average exposure per incident), Model Risk Management cost reduction ($5M-$15M
-  annually), and 70-80% faster time-to-deployment for governed agents. It is the only
-  platform that makes governance the path of least resistance, not a regulatory gate.
+- 03-008
+- 05-001
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Intellios delivers measurable financial and operational value: regulatory penalty
+  avoidance ($50M-$200M average exposure per incident), Model Risk Management cost
+  reduction ($5M-$15M annually), and 70-80% faster time-to-deployment for governed
+  agents. It is the only platform that makes governance the path of least resistance,
+  not a regulatory gate.
+
+  '
 ---
+
 
 # Value Proposition: Why Intellios
 
@@ -75,7 +78,7 @@ Intellios generates governance evidence automatically as a byproduct of agent cr
 
 When a regulator examines your AI governance practices, you can produce a comprehensive, timestamped, policy-driven evidence chain that demonstrates control. You do not have to construct this narrative retroactively; Intellios constructs it in real-time.
 
-**Financial Impact:** By eliminating one enforcement action (probability: [PLACEHOLDER: firm-specific estimate], impact: $50M-$200M), the value exceeds implementation cost by orders of magnitude.
+**Financial Impact:** By eliminating the risk of enforcement actions (historical impact: $50M-$200M per incident in financial services), the governance value alone exceeds implementation cost.
 
 ---
 
@@ -203,7 +206,7 @@ This is the fundamental shift Intellios enables. It transforms governance from f
 - **Governance Operational Cost** — $10M/year (12 FTEs).
 - **Deployment Cycle Time** — 10 weeks per agent.
 - **New Agents (18-month projection)** — 40 agents deployed = 400 agent-weeks of governance work.
-- **Regulatory Risk** — No systematic governance evidence. Probability of regulatory examination: [PLACEHOLDER]. Expected penalty if violations found: $50M-$150M.
+- **Regulatory Risk** — No systematic governance evidence. High probability of regulatory examination in current enforcement climate. Expected penalty if violations found: $50M-$150M.
 
 **With Intellios:**
 

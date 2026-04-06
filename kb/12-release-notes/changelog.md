@@ -241,8 +241,8 @@ None. v1.1.0 is fully backwards compatible with v1.0.x deployments.
 
 ## Feedback & Bug Reports
 
-Found a bug or want to request a feature? Open an issue on GitHub: [PLACEHOLDER: github.com/intellios/intellios/issues]
+Found a bug or want to request a feature? Open an issue on GitHub: https://github.com/intellios/intellios/issues
 
-For security vulnerabilities, email [PLACEHOLDER: security@intellios.com] (do not use public issues).
+For security vulnerabilities, email security@intellios.ai (do not use public issues).
 
 For urgent issues, follow escalation procedures in [Escalation Paths](./escalation-paths.md).

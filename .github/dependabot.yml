@@ -1,0 +1,45 @@
+version: 2
+updates:
+  # npm dependencies (src/ directory)
+  - package-ecosystem: npm
+    directory: /src
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 10
+    reviewers:
+      - samyhamad-staging
+    labels:
+      - dependencies
+      - automated
+    # Group minor/patch updates to reduce PR noise
+    groups:
+      aws-sdk:
+        patterns:
+          - "@aws-sdk/*"
+      ai-sdk:
+        patterns:
+          - "@ai-sdk/*"
+          - "ai"
+      radix-ui:
+        patterns:
+          - "@radix-ui/*"
+      testing:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+    # Ignore known deferred CVEs until breaking upgrades are feasible
+    ignore:
+      - dependency-name: "esbuild"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - ci

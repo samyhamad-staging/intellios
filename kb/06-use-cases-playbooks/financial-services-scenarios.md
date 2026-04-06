@@ -1,39 +1,45 @@
 ---
-id: "06-001"
-title: "Financial Services Scenarios"
-slug: "financial-services-scenarios"
-type: "concept"
+id: 06-001
+title: Financial Services Scenarios
+slug: financial-services-scenarios
+type: concept
 audiences:
-  - "product"
-  - "compliance"
-  - "executive"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- product
+- compliance
+- executive
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "use-cases"
-  - "financial-services"
-  - "compliance"
-  - "governance"
-  - "agent-scenarios"
+- use-cases
+- financial-services
+- compliance
+- governance
+- agent-scenarios
 prerequisites:
-  - "What Is Intellios"
-  - "Agent Blueprint Package"
+- 01-001
+- 03-001
 related:
-  - "Agent Onboarding Playbook"
-  - "Governance-as-Code"
-  - "Compliance Evidence Chain"
+- 06-005
+- 03-002
+- 03-007
 next_steps:
-  - "Agent Onboarding Playbook"
-  - "SR 11-7 Compliance Mapping"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Financial services enterprises can deploy six categories of AI agents—customer advisory, risk analysis, fraud detection, KYC/AML, customer service, and portfolio management—each with distinct governance requirements. Intellios automates compliance validation for FINRA, SOX, GLBA, and other regulatory frameworks, enabling rapid deployment while maintaining audit evidence.
+- 06-005
+- 05-001
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Financial services enterprises can deploy six categories of AI agents—customer
+  advisory, risk analysis, fraud detection, KYC/AML, customer service, and portfolio
+  management—each with distinct governance requirements. Intellios automates compliance
+  validation for FINRA, SOX, GLBA, and other regulatory frameworks, enabling rapid
+  deployment while maintaining audit evidence.
+
+  '
 ---
+
 
 # Financial Services Scenarios
 
@@ -65,7 +71,7 @@ A regional bank wants to deploy a customer-facing agent that answers questions a
 
 The agent must satisfy:
 
-1. **Model Risk Management (SR 11-7)** — The Federal Reserve requires documentation of the model's purpose, risk classification, governance structure, approval chain, and ongoing performance monitoring. The ABP must include model identity, risk metrics, and monitoring requirements.
+1. **Model Risk Management (SR 11-7 — Guidance on Model Risk Management)** — The Federal Reserve requires documentation of the model's purpose, risk classification, governance structure, approval chain, and ongoing performance monitoring. The Agent Blueprint Package (ABP) must include model identity, risk metrics, and monitoring requirements.
 
 2. **PII Handling (GLBA & Privacy)** — Customer account data is sensitive. The agent must be configured with:
    - Data redaction rules for logged interactions

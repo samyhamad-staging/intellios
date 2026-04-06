@@ -1,46 +1,49 @@
 ---
-id: "08-001"
-title: "Data Handling & Encryption"
-slug: "data-handling-encryption"
-type: "concept"
+id: 08-001
+title: Data Handling & Encryption
+slug: data-handling-encryption
+type: concept
 audiences:
-  - "engineering"
-  - "compliance"
-  - "executive"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- engineering
+- compliance
+- executive
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "security"
-  - "encryption"
-  - "data-protection"
-  - "compliance"
-  - "privacy"
-  - "ai-safety"
+- security
+- encryption
+- data-protection
+- compliance
+- privacy
+- ai-safety
 prerequisites:
-  - "What Is Intellios"
-  - "Agent Blueprint Package"
+- 01-001
+- 03-001
 related:
-  - "Tenant Isolation"
-  - "Secret Management"
-  - "SOC 2 Compliance"
-  - "Governance Validator"
+- 08-004
+- 08-005
+- 08-002
+- 03-003
 next_steps:
-  - "Secret Management"
-  - "Tenant Isolation"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Intellios encrypts all sensitive data at rest (AES-256 in PostgreSQL RDS, S3 encryption)
-  and in transit (TLS 1.2+). Agent Blueprint Packages, governance policies, audit trails,
-  and intake transcripts are protected through enterprise-scoped isolation, segmented
-  storage, and strict access controls. PII within ABPs is not processed—only referenced
-  in constraints—but carefully controlled. AI models (Claude API, Bedrock) process ABP
-  metadata only with contractual data processing agreements that prohibit training use.
+- 08-005
+- 08-004
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Intellios encrypts all sensitive data at rest (AES-256 in PostgreSQL RDS, S3
+  encryption) and in transit (TLS 1.2+). Agent Blueprint Packages, governance policies,
+  audit trails, and intake transcripts are protected through enterprise-scoped isolation,
+  segmented storage, and strict access controls. PII within ABPs is not processed—only
+  referenced in constraints—but carefully controlled. AI models (Claude API, Bedrock)
+  process ABP metadata only with contractual data processing agreements that prohibit
+  training use.
+
+  '
 ---
+
 
 # Data Handling & Encryption
 
@@ -56,8 +59,8 @@ This article covers:
 - Data classification and sensitivity levels
 - Encryption mechanisms (at rest, in transit)
 - Multi-tenant data isolation
-- How Intellios uses external AI services (Claude API, Bedrock)
-- Handling of PII and constrained data
+- How Intellios uses external AI services (Claude Application Programming Interface [API], Bedrock)
+- Handling of Personally Identifiable Information (PII) and constrained data
 - Data retention and residency requirements
 - Secrets management
 - Compliance considerations

@@ -1,37 +1,45 @@
 ---
-id: "05-003"
-title: "EU AI Act Readiness: Compliance Framework for Enterprise AI Agents"
-slug: "eu-ai-act-readiness"
-type: "concept"
+id: 05-003
+title: 'EU AI Act Readiness: Compliance Framework for Enterprise AI Agents'
+slug: eu-ai-act-readiness
+type: concept
 audiences:
-  - "compliance"
-  - "executive"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+- executive
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "eu-ai-act"
-  - "compliance"
-  - "regulatory"
-  - "risk-management"
-  - "transparency"
-  - "high-risk-ai"
+- eu-ai-act
+- compliance
+- regulatory
+- risk-management
+- transparency
+- high-risk-ai
 prerequisites: []
 related:
-  - "SR 11-7 Compliance Mapping"
-  - "Governance-as-Code"
-  - "Agent Blueprint Package"
+- 05-001
+- 03-002
+- 03-001
 next_steps:
-  - "Defining Governance Policies"
-  - "Model Inventory Management"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  The EU AI Act establishes a risk-based framework for governing artificial intelligence systems in the European Union. Enterprise AI agents are classified as high-risk systems under the Act, triggering mandatory requirements for transparency, human oversight, accuracy, robustness, risk management documentation, conformity assessment, and post-market monitoring. This guide maps EU AI Act obligations to Intellios capabilities, identifies implementation gaps, and establishes a roadmap for achieving compliance by the Act's entry into force.
+- 05-010
+- 05-005
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'The EU AI Act establishes a risk-based framework for governing artificial intelligence
+  systems in the European Union. Enterprise AI agents are classified as high-risk
+  systems under the Act, triggering mandatory requirements for transparency, human
+  oversight, accuracy, robustness, risk management documentation, conformity assessment,
+  and post-market monitoring. This guide maps EU AI Act obligations to Intellios capabilities,
+  identifies implementation gaps, and establishes a roadmap for achieving compliance
+  by the Act''s entry into force.
+
+  '
 ---
+
 
 # EU AI Act Readiness: Compliance Framework for Enterprise AI Agents
 

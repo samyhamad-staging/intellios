@@ -44,6 +44,10 @@ The glossary is organized alphabetically and includes:
 
 ## Audiences
 
+- **E** — Executive / Business stakeholder
+- **CO** — Compliance Officer
+- **EN** — Engineer
+- **PM** — Product Manager
 - **All** — All roles use the glossary to clarify terminology
 
 ## When to Use the Glossary

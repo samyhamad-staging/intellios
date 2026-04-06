@@ -76,6 +76,7 @@ tldr: >
 | 03-008 | [Design Studio](03-core-concepts/design-studio.md) | C | EN, P | P1 | ✅ | 01-003 |
 | 03-009 | [Control Plane](03-core-concepts/control-plane.md) | C | EN, CO | P1 | ✅ | 01-003 |
 | 03-010 | [Stakeholder Contributions](03-core-concepts/stakeholder-contributions.md) | C | CO, P | P1 | ✅ | 03-008 |
+| 03-011 | [How to Create Your First Agent](03-core-concepts/how-to-create-first-agent.md) | T | EN, P | P0 | ✅ | 01-003 |
 
 ---
 
@@ -96,6 +97,7 @@ tldr: >
 | 04-011 | [Webhook Integration](04-architecture-integration/webhook-integration.md) | T | EN | P1 | ✅ | 04-001 |
 | 04-012 | [Database Schema](04-architecture-integration/database-schema.md) | R | EN | P1 | ✅ | 04-001 |
 | 04-013 | [Deployment Guide](04-architecture-integration/deployment-guide.md) | T | EN | P0 | ✅ | 04-001 |
+| 04-014 | [How to Make Your First API Call](04-architecture-integration/how-to-make-first-api-call.md) | T | EN | P0 | ✅ | 04-001 |
 
 ---
 
@@ -113,6 +115,11 @@ tldr: >
 | 05-008 | [Audit Trail Generation](05-governance-compliance/audit-trail-generation.md) | T | CO | P0 | ✅ | 03-007 |
 | 05-009 | [Compliance Evidence Workflows](05-governance-compliance/compliance-evidence-workflows.md) | T | CO | P1 | ✅ | 03-007, 05-008 |
 | 05-010 | [Policy Authoring Guide](05-governance-compliance/policy-authoring-guide.md) | T | CO, EN | P0 | ✅ | 03-004 |
+| 05-011 | [How to Update an Existing Governance Policy](05-governance-compliance/how-to-update-governance-policy.md) | T | CO, EN | P1 | ✅ | 05-010 |
+| 05-012 | [How to Export a Compliance Report](05-governance-compliance/how-to-export-compliance-report.md) | T | CO | P0 | ✅ | 03-007 |
+| 05-013 | [How to Investigate a Governance Violation](05-governance-compliance/how-to-investigate-governance-violation.md) | T | CO, EN | P1 | ✅ | 03-003 |
+| 05-014 | [How to Set Up Audit Logging](05-governance-compliance/how-to-set-up-audit-logging.md) | T | CO, EN | P0 | ✅ | 05-008 |
+| 05-015 | [How to Prepare for a Regulatory Examination](05-governance-compliance/how-to-prepare-for-regulatory-exam.md) | T | CO, E | P1 | ✅ | 05-001 |
 
 ---
 
@@ -128,6 +135,7 @@ tldr: >
 | 06-006 | [Incident Response: Model Drift](06-use-cases-playbooks/incident-response-model-drift.md) | T | CO, EN | P1 | ✅ | 05-006 |
 | 06-007 | [Express-Lane Templates](06-use-cases-playbooks/express-lane-templates.md) | T | P, EN | P1 | ✅ | 03-008 |
 | 06-008 | [Stakeholder Intake Playbook](06-use-cases-playbooks/stakeholder-intake-playbook.md) | T | P, CO | P1 | ✅ | 03-010 |
+| 06-009 | [How to Clone and Customize an Agent](06-use-cases-playbooks/how-to-clone-and-customize-agent.md) | T | EN, P | P1 | ✅ | 03-001 |
 
 ---
 
@@ -142,6 +150,13 @@ tldr: >
 | 07-005 | [Agent Fleet Management](07-administration-operations/agent-fleet-management.md) | T | EN, P | P1 | ✅ | 03-005 |
 | 07-006 | [Multi-Tenancy](07-administration-operations/multi-tenancy.md) | C | EN | P1 | ✅ | 04-001 |
 | 07-007 | [Backup & Recovery](07-administration-operations/backup-recovery.md) | T | EN | P2 | ✅ | 04-012 |
+| 07-008 | [How to Promote an Agent to Production](07-administration-operations/how-to-promote-agent-to-production.md) | T | EN | P0 | ✅ | 04-013 |
+| 07-009 | [How to Add a Team Member](07-administration-operations/how-to-add-team-member.md) | T | EN | P1 | ✅ | 07-001 |
+| 07-010 | [How to Roll Back an Agent Version](07-administration-operations/how-to-rollback-agent-version.md) | T | EN | P1 | ✅ | 03-005 |
+| 07-011 | [How to Create and Manage API Keys](07-administration-operations/how-to-create-api-key.md) | T | EN | P1 | ✅ | 04-001 |
+| 07-012 | [How to Configure SSO Authentication](07-administration-operations/how-to-configure-sso.md) | T | EN | P1 | ✅ | 07-001 |
+| 07-013 | [How to View Agent Audit History](07-administration-operations/how-to-view-agent-audit-history.md) | T | CO, EN | P1 | ✅ | 03-005 |
+| 07-014 | [How to Set Up Automated Backups](07-administration-operations/how-to-set-up-backup-schedule.md) | T | EN | P2 | ✅ | 07-007 |
 
 ---
 
@@ -181,6 +196,16 @@ tldr: >
 | 10-004 | [Product FAQ](10-faq-troubleshooting/product-faq.md) | R | P | P2 | ✅ | 01-001 |
 | 10-005 | [Known Issues](10-faq-troubleshooting/known-issues.md) | TS | EN | P1 | ✅ | — |
 | 10-006 | [Escalation Paths](10-faq-troubleshooting/escalation-paths.md) | R | All | P1 | ✅ | — |
+| 10-007 | [Fix: Governance Validation Failures](10-faq-troubleshooting/fix-governance-validation-failures.md) | TS | EN, CO | P0 | ✅ | — |
+| 10-008 | [Fix: API Authentication Errors](10-faq-troubleshooting/fix-api-authentication-errors.md) | TS | EN | P0 | ✅ | — |
+| 10-009 | [Fix: Blueprint Generation Timeout](10-faq-troubleshooting/fix-blueprint-generation-timeout.md) | TS | EN | P1 | ✅ | — |
+| 10-010 | [Fix: Webhook Delivery Failures](10-faq-troubleshooting/fix-webhook-delivery-failures.md) | TS | EN | P1 | ✅ | — |
+| 10-011 | [Fix: Intake Session Errors](10-faq-troubleshooting/fix-intake-session-errors.md) | TS | EN, P | P1 | ✅ | — |
+| 10-012 | [Fix: Agent Deployment Failures](10-faq-troubleshooting/fix-agent-deployment-failures.md) | TS | EN | P0 | ✅ | — |
+| 10-013 | [Fix: Policy Evaluation Unexpected Results](10-faq-troubleshooting/fix-policy-evaluation-unexpected-results.md) | TS | CO, EN | P1 | ✅ | — |
+| 10-014 | [Fix: User Permission Denied](10-faq-troubleshooting/fix-user-permission-denied.md) | TS | EN | P1 | ✅ | — |
+| 10-015 | [Fix: Blueprint Refinement Conflicts](10-faq-troubleshooting/fix-blueprint-refinement-conflicts.md) | TS | EN | P1 | ✅ | — |
+| 10-016 | [Fix: Compliance Report Generation Errors](10-faq-troubleshooting/fix-compliance-report-generation-errors.md) | TS | CO, EN | P1 | ✅ | — |
 
 ---
 
@@ -206,11 +231,11 @@ tldr: >
 
 | Priority | Count | Status | Description |
 |---|---|---|---|
-| **P0** | 37 | ✅ | Must-have for KB launch — covers core platform understanding, key compliance mappings, and essential engineering docs |
-| **P1** | 35 | ✅ | High-impact — deepens coverage across all audiences, fills industry-specific and operational gaps |
-| **P2** | 10 | ✅ | Important — supporting content (case studies, advanced troubleshooting, backup procedures) |
+| **P0** | 45 | ✅ | Must-have for KB launch — covers core platform understanding, key compliance mappings, and essential engineering docs |
+| **P1** | 52 | ✅ | High-impact — deepens coverage across all audiences, fills industry-specific and operational gaps |
+| **P2** | 11 | ✅ | Important — supporting content (case studies, advanced troubleshooting, backup procedures) |
 | **P3** | 0 | — | Nice-to-have — reserved for future expansion |
-| **Total** | 82 | ✅ | + 7 section landing pages (`_index.md`) = **89 articles** |
+| **Total** | 108 | ✅ | + 7 section landing pages (`_index.md`) = **115 articles** |
 
 ---
 

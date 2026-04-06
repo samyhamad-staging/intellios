@@ -29,7 +29,7 @@ related:
 next_steps:
   - "05-002"
   - "10-003"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: >
   Day-to-day governance policy operations in Intellios. Policies define compliance rules,
   safety constraints, and audit requirements. Create policies via the Policy Authoring GUI
@@ -51,7 +51,7 @@ Governance policies are the constraints that every agent blueprint in your enter
 
 **What policies do:**
 - Define mandatory safeguards (e.g., "all agents must log decisions")
-- Enforce access control (e.g., "agents accessing PII must be approved by Legal")
+- Enforce access control (e.g., "agents accessing Personally Identifiable Information (PII) must be approved by Legal")
 - Ensure data handling compliance (e.g., "agents cannot export data outside region X")
 - Document audit trails (e.g., "all deployments must be auditable")
 - Prevent risky agent behaviors (e.g., "no agent shall modify production data without explicit approval")

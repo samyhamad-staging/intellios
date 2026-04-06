@@ -30,7 +30,7 @@ related:
 next_steps:
   - "04-013"
   - "07-003"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: >
   Step-by-step walkthrough for connecting Intellios to Azure AI Foundry via the Azure AI Foundry runtime adapter. Covers Azure authentication, RBAC configuration, environment setup, credential validation, deployment of your first agent blueprint, and observability integration. Expected time: 45–90 minutes.
 ---
@@ -475,7 +475,7 @@ curl -X GET "https://[YOUR_INTELLIOS_URL]/api/monitor/ai-foundry-health" \
 ### 3. Invoke the Agent via Azure AI Foundry
 
 ```bash
-# [PLACEHOLDER] — Azure CLI command to invoke agent via AI Foundry Runtime API
+# az ai-foundry agent invoke --agent-name "mortgage-assistant" --input "What rates are available?"
 az ml agent invoke \
   --agent-id [AGENT_ID_FROM_STEP_8] \
   --workspace-name intellios-workspace \
@@ -552,7 +552,7 @@ aws bedrock-agent-runtime invoke-agent \
   --region us-east-1
 
 # Test on Azure AI Foundry
-# [PLACEHOLDER] — Azure CLI equivalent
+# az ai-foundry agent invoke --agent-name "claims-processor" --input "Process claim CLM-2024-001"
 az ml agent invoke \
   --agent-id [AZURE_AGENT_ID] \
   --workspace-name intellios-workspace \
@@ -584,7 +584,7 @@ If you encounter issues during integration:
 | Error: `InvalidResourceGroup: Resource group 'rg-intellios-agents' not found` | Resource group does not exist or credentials lack access | Create the resource group: `az group create --name rg-intellios-agents --location eastus`. Verify subscription: `az account show --query id`. |
 | Error: `Insufficient permissions to perform operation on workspace` | Service principal lacks Cognitive Services Contributor or Contributor role | Assign required roles: `az role assignment create --assignee [SP_OBJECT_ID] --role "Cognitive Services Contributor" --scope /subscriptions/[SUB_ID]/resourceGroups/rg-intellios-agents`. |
 | Deployment hangs for >120 seconds, then times out | Agent preparation is slow (large instruction, many tools) | Increase `AZURE_DEPLOYMENT_TIMEOUT_MS` to 180000 (3 minutes). Simplify agent (fewer tools, shorter instructions). This is normal for complex agents. |
-| Deployment succeeds, but health check shows `foundryStatus: "Failed"` | Agent definition has validation error (invalid tool schema, instruction too short) | [PLACEHOLDER] — Check deployment logs in Azure AI Foundry console for validation errors. |
+| Deployment succeeds, but health check shows `foundryStatus: "Failed"` | Agent definition has validation error (invalid tool schema, instruction too short) | Open the Azure AI Foundry console → Agents → select agent → Logs tab. Check for validation errors in the agent definition (invalid tool schema, instruction too short, missing required fields). |
 | Error: "Azure CLI not found or not authenticated" | Azure CLI is not installed or you are not authenticated to Azure | Install Azure CLI: `curl -sL https://aka.ms/InstallAzureCLIDeb \| bash`. Authenticate: `az login` and verify with `az account show`. |
 | Webhook receiver returns HTTP 403 "Event Grid signature verification failed" | Event Grid token signature invalid or secret mismatch | Verify the Event Grid topic subscription and custom headers. Re-create the subscription with the correct webhook URL and token. |
 | Agent invocation returns error "Tool not found" | Tool defined in ABP but not present in deployed agent | Verify tool name in ABP matches tool name in the Azure AI Foundry agent definition (case-sensitive). Check the Azure portal → Agent → "Tools" tab. |

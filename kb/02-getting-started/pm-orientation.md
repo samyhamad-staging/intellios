@@ -298,17 +298,31 @@ Week 5-6: Deploy to production
 
 ---
 
+## Verify Your Success
+
+After completing this guide, you should be able to confirm:
+
+1. **You can navigate** the Blueprint Studio and understand the agent design workflow
+2. **You understand** how intake sessions capture requirements from multiple stakeholders
+3. **You can read** a governance validation report and identify pass/fail status
+4. **You know** how agents move through lifecycle states (draft → review → approved → deployed)
+5. **You have reviewed** the product roadmap and upcoming features relevant to your team
+
+If any of these are unclear, revisit the relevant section above or contact your Intellios product team.
+
+---
+
 ## Next Steps
 
 1. **Schedule platform walkthrough:** Ask engineering team for 30-min demo
 2. **Create first test agent:** Use pre-built template; complete intake-to-approval workflow
 3. **Review executive FAQ:** [Link to Executive FAQ](../10-faq-troubleshooting/executive-faq.md) for strategic context
-4. **Join PM channel:** Intellios Product feedback channel: [PLACEHOLDER: #intellios-pm on Slack]
+4. **Join PM channel:** #intellios-pm on your organization's Slack workspace
 
 ---
 
 ## Get Help
 
-- **Product questions:** [PLACEHOLDER: product@intellios.com]
+- **Product questions:** product@intellios.ai
 - **Platform walkthrough:** Ask your CSM for training session
-- **Feature ideas:** Post in [PLACEHOLDER: canny.io/intellios/roadmap]
+- **Feature ideas:** the Intellios product feedback portal at https://feedback.intellios.ai/roadmap

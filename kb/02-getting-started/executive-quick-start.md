@@ -1,41 +1,43 @@
 ---
-id: "02-001"
-title: "Executive Quick Start: Intellios in 15 Minutes"
-slug: "executive-quick-start"
-type: "task"
+id: 02-001
+title: 'Executive Quick Start: Intellios in 15 Minutes'
+slug: executive-quick-start
+type: task
 audiences:
-  - "executive"
-  - "product"
-status: "published"
-version: "1.0.0"
-platform_version: "1.2.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- executive
+- product
+status: published
+version: 1.0.0
+platform_version: 1.2.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "quick-start"
-  - "executive"
-  - "onboarding"
-  - "value-proposition"
-  - "roi"
-  - "governance"
+- quick-start
+- executive
+- onboarding
+- value-proposition
+- roi
+- governance
 prerequisites: []
 related:
-  - "Value Proposition: Why Intellios"
-  - "What Is Intellios"
-  - "Agent Lifecycle States"
+- 01-002
+- 01-001
+- 03-005
 next_steps:
-  - "ROI Dashboard Overview"
-  - "Three-Pillar Financial Model"
-  - "Financial Services Scenarios"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Intellios is your governed control plane for enterprise AI agents. In 15 minutes, understand the
-  governance gap it closes, see the platform's key screens, follow an agent from creation to approval,
-  and identify your first use case. Result: compliant agents that deploy 70-80% faster and save
-  $6M-$7M annually on compliance operations.
+- 09-001
+- 09-001
+- 06-001
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Intellios is your governed control plane for enterprise AI agents. In 15 minutes,
+  understand the governance gap it closes, see the platform''s key screens, follow
+  an agent from creation to approval, and identify your first use case. Result: compliant
+  agents that deploy 70-80% faster and save $6M-$7M annually on compliance operations.
+
+  '
 ---
+
 
 # Executive Quick Start: Intellios in 15 Minutes
 
@@ -302,8 +304,7 @@ Engineering training and first intake: 1-2 weeks. You can pilot with your first 
 is ongoing.
 
 **Q: How much does Intellios cost?**
-A: Licensing is typically based on agent count and organization size. A mid-sized financial services firm
-with 50-150 agents: $[PLACEHOLDER: pricing model]. Payback period: 2-6 months (cost savings alone).
+A: Licensing is typically based on agent count and organization size. Please contact your Intellios account team for pricing details. Payback period: 2-6 months (cost savings alone).
 
 **Q: Will this slow down our teams?**
 A: No. Intellios is faster. Intake + governance validation + review averages 2-3 weeks. Traditional
@@ -332,6 +333,20 @@ intake, governance validation, human review, and the Agent Registry using your c
 
 **Option 2: Self-Guided Trial** — Request a trial instance of Intellios. You can explore the UI and see
 how governance works in your own environment (with sample data).
+
+---
+
+## Verify Your Success
+
+After completing this guide, you should be able to confirm:
+
+1. **You can explain** what Intellios does in one sentence to a colleague
+2. **You have seen** the Blueprint Studio and understand the agent design flow
+3. **You understand** the governance validation process and review workflow
+4. **You know** who on your team owns compliance, engineering, and product responsibilities
+5. **You have identified** 2-3 candidate use cases for your first Intellios agents
+
+If any of these are unclear, revisit the relevant section above or contact your Intellios account team.
 
 ---
 

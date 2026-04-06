@@ -1,6 +1,6 @@
 ---
 id: "03-007"
-title: "Compliance Evidence Chain"
+title: "Compliance Evidence Chain: How Audit Trails Are Built"
 slug: "compliance-evidence-chain"
 type: "concept"
 audiences:
@@ -25,7 +25,7 @@ tldr: >
   regulatory examination readiness and institutional accountability
 ---
 
-# Compliance Evidence Chain
+# Compliance Evidence Chain: How Audit Trails Are Built
 
 ## TL;DR
 

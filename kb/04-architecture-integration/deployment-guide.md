@@ -1,6 +1,6 @@
 ---
 id: "04-013"
-title: "Deploy Intellios to Production"
+title: "How to Deploy Intellios to Production"
 slug: "deployment-guide"
 type: "task"
 audiences:
@@ -30,12 +30,12 @@ related:
 next_steps:
   - "07-003"
   - "08-005"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: >
   Complete walkthrough for deploying Intellios to a production AWS environment. Covers infrastructure setup (ECS Fargate, ALB, RDS, S3), application build and containerization, database migration, DNS and SSL configuration, deployment validation, and post-deployment monitoring. Expected time: 2–4 hours (depending on AWS account setup).
 ---
 
-# Deploy Intellios to Production
+# How to Deploy Intellios to Production
 
 > **TL;DR:** Deploy Intellios to production in 10 steps: set up AWS infrastructure (ECS cluster, ALB, RDS PostgreSQL, S3), build the Next.js application, configure environment variables, create a Docker image, deploy to ECS Fargate, run database migrations, configure DNS and SSL, verify the deployment with health checks and smoke tests, and set up monitoring and scaling policies.
 

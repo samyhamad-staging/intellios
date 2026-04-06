@@ -38,11 +38,11 @@ tldr: >
 
 ## Audiences
 
-- **All** — All roles benefit from release notes
 - **E** — Executive / Business stakeholder
-- **PM** — Product Manager
+- **CO** — Compliance Officer
 - **EN** — Engineer
-- **AR** — Architect
+- **PM** — Product Manager
+- **All** — All roles benefit from release notes
 
 ## Version Support
 

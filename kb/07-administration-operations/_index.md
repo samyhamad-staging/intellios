@@ -26,13 +26,20 @@ tldr: >
 
 | Article | Type | Audiences | Description |
 |---|---|---|---|
-| [RBAC Configuration](rbac-configuration.md) | Task | EN, AR | Define roles and permissions for teams: admins, compliance officers, engineers, product managers |
-| [Policy Management](policy-management.md) | Task | CO, EN, OPS | Deploy, update, and retire governance policies across agent fleets |
-| [Observability & Dashboards](observability-dashboards.md) | Task | EN, OPS | Monitor system health, agent execution, and governance compliance metrics |
-| [Alerting Configuration](alerting-configuration.md) | Task | OPS | Configure alerts for anomalies, compliance violations, and operational issues |
-| [Agent Fleet Management](agent-fleet-management.md) | Task | EN, OPS | Manage hundreds of agents at scale: versioning, updates, and lifecycle controls |
-| [Multi-Tenancy](multi-tenancy.md) | Concept | AR, EN | Multi-tenant architecture: isolation, resource sharing, and per-tenant customization |
-| [Backup & Recovery](backup-recovery.md) | Task | EN, OPS | Backup strategies, disaster recovery procedures, and business continuity planning |
+| [RBAC Configuration](rbac-configuration.md) | Task | EN | Define roles and permissions for teams: admins, compliance officers, engineers, product managers |
+| [Policy Management](policy-management.md) | Task | CO, EN | Deploy, update, and retire governance policies across agent fleets |
+| [Observability & Dashboards](observability-dashboards.md) | Task | EN | Monitor system health, agent execution, and governance compliance metrics |
+| [Alerting Configuration](alerting-configuration.md) | Task | EN | Configure alerts for anomalies, compliance violations, and operational issues |
+| [Agent Fleet Management](agent-fleet-management.md) | Task | EN | Manage hundreds of agents at scale: versioning, updates, and lifecycle controls |
+| [Multi-Tenancy](multi-tenancy.md) | Concept | EN | Multi-tenant architecture: isolation, resource sharing, and per-tenant customization |
+| [Backup & Recovery](backup-recovery.md) | Task | EN | Backup strategies, disaster recovery procedures, and business continuity planning |
+| [How to Promote an Agent to Production](how-to-promote-agent-to-production.md) | Task | EN | Procedures for promoting agents from staging environments to production |
+| [How to Add a Team Member](how-to-add-team-member.md) | Task | EN | Invite and onboard new team members with appropriate role assignments |
+| [How to Roll Back an Agent Version](how-to-rollback-agent-version.md) | Task | EN | Revert agents to previous versions to address issues or unexpected behavior |
+| [How to Create and Manage API Keys](how-to-create-api-key.md) | Task | EN | Generate, rotate, and revoke API keys for programmatic access |
+| [How to Configure SSO Authentication](how-to-configure-sso.md) | Task | EN | Set up single sign-on integration with enterprise identity providers |
+| [How to View Agent Audit History](how-to-view-agent-audit-history.md) | Task | CO, EN | Access complete audit logs for tracking changes and compliance investigation |
+| [How to Set Up Automated Backups](how-to-set-up-backup-schedule.md) | Task | EN | Configure automated backup schedules and storage targets for disaster recovery |
 
 ## Suggested Reading Order
 
@@ -46,10 +53,10 @@ tldr: >
 
 ## Audiences
 
-- **EN** — Engineer
-- **AR** — Architect
-- **OPS** — Operations team
+- **E** — Executive / Business stakeholder
 - **CO** — Compliance Officer
+- **EN** — Engineer
+- **PM** — Product Manager
 
 ## Related Sections
 

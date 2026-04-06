@@ -1,47 +1,46 @@
 ---
-id: "05-008"
-title: "Generate and Verify Audit Trails for Compliance Examination"
-slug: "audit-trail-generation"
-type: "task"
+id: 05-008
+title: Generate and Verify Audit Trails for Compliance Examination
+slug: audit-trail-generation
+type: task
 audiences:
-  - "compliance"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "audit-trail"
-  - "compliance"
-  - "evidence-generation"
-  - "regulatory-examination"
-  - "sr-11-7"
-  - "documentation"
-prerequisites:
-  - "Intellios deployed and operational"
-  - "At least one approved agent in the Registry"
-  - "Access to Intellios API or Admin Dashboard"
-  - "Compliance team role or Administrator access"
+- audit-trail
+- compliance
+- evidence-generation
+- regulatory-examination
+- sr-11-7
+- documentation
+prerequisites: []
 related:
-  - "Compliance Evidence Chain"
-  - "SR 11-7 Compliance Mapping"
-  - "Agent Registry"
-  - "Agent Lifecycle States"
+- 03-007
+- 05-001
+- 03-001
+- 03-005
 next_steps:
-  - "Configure audit trail retention policies"
-  - "Automate compliance report generation"
-  - "Prepare for regulatory examination"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  This task guide walks compliance teams through generating and exporting
-  audit trails from Intellios for regulatory examination readiness. You will
-  learn what Intellios captures automatically, how to retrieve audit evidence
-  for specific agents, export compliance packages, generate time-filtered
-  reports, configure retention policies, and verify audit trail completeness.
-  Complete this task to ensure your audit evidence is examination-ready.
+- 05-008
+- 05-008
+- 05-008
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'This task guide walks compliance teams through generating and exporting audit
+  trails from Intellios for regulatory examination readiness. You will learn what
+  Intellios captures automatically, how to retrieve audit evidence for specific agents,
+  export compliance packages, generate time-filtered reports, configure retention
+  policies, and verify audit trail completeness. Complete this task to ensure your
+  audit evidence is examination-ready.
+
+  '
 ---
+
+
 
 # Generate and Verify Audit Trails for Compliance Examination
 
@@ -88,7 +87,7 @@ Before starting, ensure you have:
 | **Generation** | ABP creation, schema version used, generator configuration, generation errors | Creation timestamp | Generation session ID, input lineage (from intake) |
 | **Governance Validation** | Policy evaluation, violations detected, severity classification, remediation tracking | Validation run timestamp | Policy version, evaluator ID, policy count, violation count |
 | **Review & Approval** | Reviewer assignment, review completion, approval/rejection decision, rationale comments | Review submission and decision timestamps | Reviewer ID, decision type, comment text |
-| **Deployment** | Deployment command, environment target, deployment timestamp, version lock | Deployment timestamp | Deployed-by identity, target environment, ABP version |
+| **Deployment** | Deployment command, environment target, deployment timestamp, version lock | Deployment timestamp | Deployed-by identity, target environment, Agent Blueprint Package (ABP) version |
 | **Lifecycle Transitions** | Every state change (draft → in_review → approved → deprecated), triggers, guards | Transition timestamp | From-state, to-state, triggering actor, comment |
 
 **Expected result:** You understand that Intellios automatically records all governance actions. No manual logging is required, and nothing can be backdated or deleted—the audit trail is immutable.

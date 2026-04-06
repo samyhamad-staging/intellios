@@ -276,7 +276,7 @@ related:                                  # Article IDs for cross-reference
 next_steps:                               # Suggested reading after this article
   - "05-010"                              # Policy Authoring Guide
   - "07-002"                              # Policy Management
-feedback_url: "[PLACEHOLDER]"             # Link to feedback form/channel
+feedback_url: "https://feedback.intellios.ai/kb"             # Link to feedback form/channel
 tldr: >
   Intellios policies use a structured expression language with 11 operators
   (exists, equals, contains, matches, etc.) applied to ABP field paths.

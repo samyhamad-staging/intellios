@@ -28,10 +28,10 @@ tldr: >
 |---|---|---|---|
 | [Data Handling & Encryption](data-handling-encryption.md) | Concept | EN, CO, E | Data classification, encryption at rest/in transit, AI data handling, PII, retention policies |
 | [Tenant Isolation](tenant-isolation.md) | Concept | EN, CO | Multi-tenant architecture, middleware enforcement, query-layer filtering, SOC 2 verification |
-| [SOC 2 Readiness](soc2-readiness.md) | Reference | EN, OPS | SOC 2 Type II compliance: security, availability, processing integrity, and confidentiality controls |
-| [FedRAMP Readiness](fedramp-readiness.md) | Reference | AR, EN, E | FedRAMP compliance roadmap: security controls, authorization, and government deployment |
-| [Secret Management](secret-management.md) | Task | EN, OPS | Secure API keys, credentials, encryption keys, and database passwords using HashiCorp Vault |
-| [Penetration Testing Program](penetration-testing-program.md) | Task | AR, EN, OPS | Security testing methodology, annual assessments, and vulnerability remediation |
+| [SOC 2 Readiness](soc2-readiness.md) | Reference | EN | SOC 2 Type II compliance: security, availability, processing integrity, and confidentiality controls |
+| [FedRAMP Readiness](fedramp-readiness.md) | Reference | EN, E | FedRAMP compliance roadmap: security controls, authorization, and government deployment |
+| [Secret Management](secret-management.md) | Task | EN | Secure API keys, credentials, encryption keys, and database passwords using HashiCorp Vault |
+| [Penetration Testing Program](penetration-testing-program.md) | Task | EN | Security testing methodology, annual assessments, and vulnerability remediation |
 
 ## Suggested Reading Order
 
@@ -44,11 +44,10 @@ tldr: >
 
 ## Audiences
 
-- **AR** — Architect
-- **EN** — Engineer
-- **OPS** — Operations team
 - **E** — Executive / Business stakeholder
 - **CO** — Compliance Officer
+- **EN** — Engineer
+- **PM** — Product Manager
 
 ## Related Sections
 

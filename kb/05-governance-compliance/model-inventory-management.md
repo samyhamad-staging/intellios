@@ -1,42 +1,49 @@
 ---
-id: "05-005"
-title: "Model Inventory Management: Using Intellios as Your SR 11-7 Registry"
-slug: "model-inventory-management"
-type: "task"
+id: 05-005
+title: How to Manage Your Model Inventory
+slug: model-inventory-management
+type: task
 audiences:
-  - "compliance"
-  - "engineering"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+- engineering
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "model-inventory"
-  - "sr-11-7"
-  - "registry"
-  - "compliance"
-  - "documentation"
-  - "audit"
-prerequisites:
-  - "Intellios deployed and operational"
-  - "Access to Intellios Admin Dashboard or API"
-  - "Compliance team role or Administrator access"
+- model-inventory
+- sr-11-7
+- registry
+- compliance
+- documentation
+- audit
+prerequisites: []
 related:
-  - "Agent Registry"
-  - "SR 11-7 Compliance Mapping"
-  - "Agent Lifecycle States"
+- 03-001
+- 05-001
+- 03-005
 next_steps:
-  - "Generating Compliance Evidence Packages"
-  - "Configuring Drift Detection"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  SR 11-7 requires banks to maintain a complete model inventory with unique identification, documentation, and lifecycle tracking. The Intellios Agent Registry serves as the authoritative model inventory, capturing all required fields (agent ID, version, status, owner, data classification, regulatory scope, validation results) automatically. This task walks compliance teams through populating the registry, searching and filtering for audit purposes, generating inventory reports, performing bulk operations, and verifying inventory completeness. Complete this task to have a compliant, audit-ready model inventory.
+- 03-007
+- 05-006
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'SR 11-7 requires banks to maintain a complete model inventory with unique identification,
+  documentation, and lifecycle tracking. The Intellios Agent Registry serves as the
+  authoritative model inventory, capturing all required fields (agent ID, version,
+  status, owner, data classification, regulatory scope, validation results) automatically.
+  This task walks compliance teams through populating the registry, searching and
+  filtering for audit purposes, generating inventory reports, performing bulk operations,
+  and verifying inventory completeness. Complete this task to have a compliant, audit-ready
+  model inventory.
+
+  '
 ---
 
-# Model Inventory Management: Using Intellios as Your SR 11-7 Registry
+
+
+# How to Manage Your Model Inventory
 
 > **TL;DR:** The Intellios Agent Registry is your authoritative SR 11-7 model inventory, capturing all agents with unique IDs, versioning, status, ownership, data classification, and approval records automatically. This task teaches you how to maintain the registry, query it for compliance reporting, generate inventory exports, perform bulk operations, and verify completeness. By the end, you will have a compliant model inventory suitable for regulatory examination.
 

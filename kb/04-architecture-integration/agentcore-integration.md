@@ -28,7 +28,7 @@ related:
 next_steps:
   - "04-013"
   - "07-003"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: >
   Step-by-step walkthrough for connecting Intellios to AWS Bedrock Agents via the AgentCore adapter. Covers IAM setup, environment configuration, credential validation, and deployment of your first agent blueprint to production. Expected time: 45–90 minutes.
 ---

@@ -22,7 +22,7 @@ tags:
   - "blueprint-versioning"
   - "lifecycle-management"
   - "crud"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: "REST API for querying, cloning, and managing agent blueprints throughout their lifecycle. Version control, lifecycle status transitions, and complete audit history."
 ---
 

@@ -1,46 +1,49 @@
 ---
-id: "05-010"
-title: "Policy Authoring Guide: Creating Custom Governance Rules"
-slug: "policy-authoring-guide"
-type: "task"
+id: 05-010
+title: 'Policy Authoring Guide: Creating Custom Governance Rules'
+slug: policy-authoring-guide
+type: task
 audiences:
-  - "compliance"
-  - "engineering"
-status: "published"
-version: "1.0.0"
-platform_version: "1.2.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+- engineering
+status: published
+version: 1.0.0
+platform_version: 1.2.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "governance"
-  - "policy"
-  - "policy-authoring"
-  - "rules"
-  - "compliance"
-  - "operators"
-  - "governance-as-code"
-  - "deterministic"
+- governance
+- policy
+- policy-authoring
+- rules
+- compliance
+- operators
+- governance-as-code
+- deterministic
 prerequisites:
-  - "Governance-as-Code: Deterministic Policy Automation"
-  - "Agent Blueprint Package (ABP)"
-  - "Policy Expression Language"
+- 03-002
+- 03-001
+- 03-004
 related:
-  - "Governance-as-Code"
-  - "Policy Expression Language"
-  - "Governance Validator"
-  - "Agent Lifecycle"
+- 03-002
+- 03-004
+- 03-003
+- 03-005
 next_steps:
-  - "Advanced Policy Authoring"
-  - "Policy Testing and Validation"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Learn to author deterministic governance policies that validate your AI agents against enterprise
-  requirements. Map business rules to ABP fields, select the right operator, set severity levels, and
-  test policies using the Governance API. Includes three worked examples: financial services compliance,
-  data security controls, and operational standards.
+- 05-010
+- 05-010
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Learn to author deterministic governance policies that validate your AI agents
+  against enterprise requirements. Map business rules to ABP fields, select the right
+  operator, set severity levels, and test policies using the Governance API. Includes
+  three worked examples: financial services compliance, data security controls, and
+  operational standards.
+
+  '
 ---
+
 
 # Policy Authoring Guide: Creating Custom Governance Rules
 

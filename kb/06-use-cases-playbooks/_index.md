@@ -31,9 +31,10 @@ tldr: >
 | [Healthcare Scenarios](healthcare-scenarios.md) | Task | CO, E, EN | Healthcare deployment: patient interaction, clinical decision support, and privacy-compliant agents |
 | [Shadow AI Remediation Playbook](shadow-ai-remediation-playbook.md) | Task | CO, EN | Identify, assess, and remediate unauthorized agents and shadow AI deployments |
 | [Agent Onboarding Playbook](agent-onboarding-playbook.md) | Task | PM, EN, CO | Step-by-step process for bringing agents through intake, design, governance, and deployment |
-| [Incident Response Model Drift](incident-response-model-drift.md) | Task | EN, OPS | Procedures for detecting, investigating, and remediating agent performance degradation |
+| [Incident Response Model Drift](incident-response-model-drift.md) | Task | EN | Procedures for detecting, investigating, and remediating agent performance degradation |
 | [Express-Lane Templates](express-lane-templates.md) | Reference | PM, EN | Pre-built agent templates for rapid deployment of common use cases |
 | [Stakeholder Intake Playbook](stakeholder-intake-playbook.md) | Task | PM, CO, E | Engage business teams, compliance, and security teams in the agent intake process |
+| [How to Clone and Customize an Agent](how-to-clone-and-customize-agent.md) | Task | EN, PM | Create a new agent variant by cloning an existing agent and customizing it |
 
 ## Suggested Reading Order
 
@@ -48,11 +49,10 @@ tldr: >
 
 ## Audiences
 
-- **CO** — Compliance Officer
 - **E** — Executive / Business stakeholder
+- **CO** — Compliance Officer
 - **EN** — Engineer
 - **PM** — Product Manager
-- **OPS** — Operations team
 
 ## Related Sections
 

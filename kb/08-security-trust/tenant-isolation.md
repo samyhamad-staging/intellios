@@ -1,46 +1,49 @@
 ---
-id: "08-004"
-title: "Tenant Isolation"
-slug: "tenant-isolation"
-type: "concept"
+id: 08-004
+title: Tenant Isolation
+slug: tenant-isolation
+type: concept
 audiences:
-  - "engineering"
-  - "compliance"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- engineering
+- compliance
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "security"
-  - "multi-tenancy"
-  - "isolation"
-  - "compliance"
-  - "authentication"
-  - "authorization"
+- security
+- multi-tenancy
+- isolation
+- compliance
+- authentication
+- authorization
 prerequisites:
-  - "What Is Intellios"
-  - "Data Handling & Encryption"
+- 01-001
+- 08-001
 related:
-  - "Data Handling & Encryption"
-  - "Secret Management"
-  - "SOC 2 Compliance"
-  - "Architecture & Integration"
+- 08-001
+- 08-005
+- 08-002
+- 04-001
 next_steps:
-  - "Secret Management"
-  - "SOC 2 Compliance"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Intellios is a shared-infrastructure, logically-isolated multi-tenant platform. Every
-  data table includes an enterprise_id column; tenant isolation is enforced at the middleware
-  and query layers via ADR-012. The authenticated user's enterprise_id is extracted from
-  their JWT, injected into request headers by Next.js middleware, and used to filter all
-  database queries. Cross-tenant access is cryptographically impossible at the query layer.
-  Audit trails, policies, and agents are scoped per enterprise. SOC 2 audits confirm zero
-  cross-tenant data leakage. Compliance with FedRAMP is [PLACEHOLDER].
+- 08-005
+- 08-002
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Intellios is a shared-infrastructure, logically-isolated multi-tenant platform.
+  Every data table includes an enterprise_id column; tenant isolation is enforced
+  at the middleware and query layers via ADR-012. The authenticated user''s enterprise_id
+  is extracted from their JWT, injected into request headers by Next.js middleware,
+  and used to filter all database queries. Cross-tenant access is cryptographically
+  impossible at the query layer. Audit trails, policies, and agents are scoped per
+  enterprise. SOC 2 audits confirm zero cross-tenant data leakage. Compliance with
+  FedRAMP is [PLACEHOLDER].
+
+  '
 ---
+
 
 # Tenant Isolation
 

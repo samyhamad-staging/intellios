@@ -1,6 +1,6 @@
 ---
 id: 10-005
-title: Known Issues
+title: "Known Issues and Workarounds (v1.2.0)"
 slug: known-issues
 type: troubleshooting
 audiences:
@@ -18,7 +18,7 @@ tags:
 tldr: Current limitations and workarounds for Intellios platform
 ---
 
-# Known Issues
+# Known Issues and Workarounds (v1.2.0)
 
 ## Issue 1: Large ABP Validation Timeout (>500 KB)
 

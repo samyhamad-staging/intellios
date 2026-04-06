@@ -1,48 +1,50 @@
 ---
-id: "01-003"
-title: "Architecture Overview"
-slug: "architecture-overview"
-type: "concept"
+id: 01-003
+title: Architecture Overview
+slug: architecture-overview
+type: concept
 audiences:
-  - "executive"
-  - "engineering"
-  - "product"
-status: "published"
-version: "1.0.0"
-platform_version: "1.2.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- executive
+- engineering
+- product
+status: published
+version: 1.0.0
+platform_version: 1.2.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "architecture"
-  - "design-studio"
-  - "control-plane"
-  - "subsystems"
-  - "data-flow"
-  - "infrastructure"
-  - "system-design"
+- architecture
+- design-studio
+- control-plane
+- subsystems
+- data-flow
+- infrastructure
+- system-design
 prerequisites:
-  - "What Is Intellios"
+- 01-001
 related:
-  - "Agent Blueprint Package"
-  - "Design Studio"
-  - "Control Plane"
-  - "Governance-as-Code"
-  - "Agent Lifecycle"
+- 03-001
+- 03-008
+- 03-009
+- 03-002
+- 03-005
 next_steps:
-  - "Design Studio Deep Dive"
-  - "Control Plane Deep Dive"
-  - "Understanding Governance Policies"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Intellios is organized into two major subsystems: the Design Studio (where agents
-  are created and designed) and the Control Plane (where governance, validation, and
-  lifecycle management occur). Agents flow through this pipeline as Agent Blueprint
+- 03-008
+- 03-009
+- 03-002
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Intellios is organized into two major subsystems: the Design Studio (where
+  agents are created and designed) and the Control Plane (where governance, validation,
+  and lifecycle management occur). Agents flow through this pipeline as Agent Blueprint
   Packages—immutable, versioned artifacts that serve as the single source of truth.
   Execution is delegated to cloud runtimes via runtime adapters, keeping the platform
   deployment-agnostic.
+
+  '
 ---
+
 
 # Architecture Overview
 

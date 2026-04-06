@@ -19,7 +19,7 @@ tags:
 prerequisites: []
 related: []
 next_steps: []
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: >
   {2-3 sentence summary. What information does this reference contain?
   Who needs it and when?}

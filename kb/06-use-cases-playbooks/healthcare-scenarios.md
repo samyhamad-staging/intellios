@@ -1,40 +1,47 @@
 ---
-id: "06-003"
-title: "Healthcare Scenarios: Governance Patterns for Clinical and Operational Agents"
-slug: "healthcare-scenarios"
-type: "concept"
+id: 06-003
+title: 'Healthcare Scenarios: Governance Patterns for Clinical and Operational Agents'
+slug: healthcare-scenarios
+type: concept
 audiences:
-  - "product"
-  - "compliance"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- product
+- compliance
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "healthcare"
-  - "use-cases"
-  - "governance"
-  - "compliance"
-  - "hipaa"
-  - "clinical-ai"
+- healthcare
+- use-cases
+- governance
+- compliance
+- hipaa
+- clinical-ai
 prerequisites:
-  - "Agent Blueprint Package"
-  - "Governance-as-Code"
-  - "Agent Lifecycle"
+- 03-001
+- 03-002
+- 03-005
 related:
-  - "Insurance Scenarios"
-  - "Governance Policy Guide"
-  - "Compliance Evidence Chain"
+- 06-002
+- 05-010
+- 03-007
 next_steps:
-  - "Building Your First Healthcare Agent"
-  - "Configuring Governance Policies"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Healthcare organizations deploy AI agents for clinical decision support, patient scheduling, medical coding, prior authorization, and patient education. Each agent must comply with HIPAA, FDA regulations (for clinical decision support), state medical practice acts, and internal safety governance. Intellios patterns ensure agents maintain patient privacy, support human decision-makers (not replace them), generate audit evidence, and remain safe and compliant throughout their lifecycle.
+- 06-003
+- 05-010
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Healthcare organizations deploy AI agents for clinical decision support, patient
+  scheduling, medical coding, prior authorization, and patient education. Each agent
+  must comply with HIPAA, FDA regulations (for clinical decision support), state medical
+  practice acts, and internal safety governance. Intellios patterns ensure agents
+  maintain patient privacy, support human decision-makers (not replace them), generate
+  audit evidence, and remain safe and compliant throughout their lifecycle.
+
+  '
 ---
+
 
 # Healthcare Scenarios: Governance Patterns for Clinical and Operational Agents
 

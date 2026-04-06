@@ -1,50 +1,52 @@
 ---
-id: "03-003"
-title: "Policy Engine: Deterministic Governance Evaluation"
-slug: "policy-engine"
-type: "concept"
+id: 03-003
+title: 'Policy Engine: Deterministic Governance Evaluation'
+slug: policy-engine
+type: concept
 audiences:
-  - "compliance"
-  - "engineering"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+- engineering
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "policy-engine"
-  - "governance-validator"
-  - "validation"
-  - "rules"
-  - "evaluation"
-  - "policies"
-  - "remediation"
-  - "deterministic"
-  - "control-plane"
+- policy-engine
+- governance-validator
+- validation
+- rules
+- evaluation
+- policies
+- remediation
+- deterministic
+- control-plane
 prerequisites:
-  - "Agent Blueprint Package"
-  - "Governance-as-Code"
+- 03-001
+- 03-002
 related:
-  - "Governance-as-Code"
-  - "Policy Expression Language"
-  - "Agent Blueprint Package"
-  - "Agent Lifecycle States"
-  - "Compliance Evidence Chain"
+- 03-002
+- 03-004
+- 03-001
+- 03-005
+- 03-007
 next_steps:
-  - "Understanding Governance Policies"
-  - "Policy Expression Language Reference"
-  - "Defining Custom Policies"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  The Policy Engine is the evaluation subsystem within Intellios's Control Plane that
-  deterministically validates Agent Blueprint Packages against enterprise governance policies.
-  It comprises the Governance Validator (evaluation engine) and policy storage layer.
-  Every validation produces an immutable Validation Report containing violations with
-  severity levels, and Claude generates remediation suggestions. Error-severity violations
-  block the draft→in_review transition; warnings are informational.
+- 03-002
+- 03-004
+- 05-010
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'The Policy Engine is the evaluation subsystem within Intellios''s Control Plane
+  that deterministically validates Agent Blueprint Packages against enterprise governance
+  policies. It comprises the Governance Validator (evaluation engine) and policy storage
+  layer. Every validation produces an immutable Validation Report containing violations
+  with severity levels, and Claude generates remediation suggestions. Error-severity
+  violations block the draft→in_review transition; warnings are informational.
+
+  '
 ---
+
 
 # Policy Engine: Deterministic Governance Evaluation
 

@@ -19,7 +19,7 @@ tags:
 prerequisites: []
 related: []
 next_steps: []
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: >
   {2-3 sentence summary. What is this concept? Why does it matter?
   Write for the broadest listed audience — if executives are included,

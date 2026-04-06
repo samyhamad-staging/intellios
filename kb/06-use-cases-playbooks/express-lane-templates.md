@@ -1,39 +1,47 @@
 ---
-id: "06-007"
-title: "Express-Lane Templates: Rapid Agent Onboarding"
-slug: "express-lane-templates"
-type: "task"
+id: 06-007
+title: 'Express-Lane Templates: Rapid Agent Onboarding'
+slug: express-lane-templates
+type: task
 audiences:
-  - "product"
-  - "engineering"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- product
+- engineering
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "workflows"
-  - "templates"
-  - "design-studio"
-  - "intake"
-  - "agent-creation"
+- workflows
+- templates
+- design-studio
+- intake
+- agent-creation
 prerequisites:
-  - "Agent Blueprint Package"
-  - "Intake Engine"
-  - "Governance-as-Code"
+- 03-001
+- 03-008
+- 03-002
 related:
-  - "Insurance Scenarios"
-  - "Healthcare Scenarios"
-  - "Governance Policy Guide"
+- 06-002
+- 06-003
+- 05-010
 next_steps:
-  - "Creating Your First Agent"
-  - "Defining Custom Templates"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Express-lane templates are pre-configured intake paths for common agent types (claims processor, chatbot, document analyzer, etc.). They reduce design time by automating setup: populating standard governance policies, providing example capabilities, and shortcutting the conversational intake for well-understood patterns. This guide explains what templates are, how to use built-in templates, how to create custom templates, when to use them, and how templates are governed.
+- 03-011
+- 06-007
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Express-lane templates are pre-configured intake paths for common agent types
+  (claims processor, chatbot, document analyzer, etc.). They reduce design time by
+  automating setup: populating standard governance policies, providing example capabilities,
+  and shortcutting the conversational intake for well-understood patterns. This guide
+  explains what templates are, how to use built-in templates, how to create custom
+  templates, when to use them, and how templates are governed.
+
+  '
 ---
+
+
 
 # Express-Lane Templates: Rapid Agent Onboarding
 

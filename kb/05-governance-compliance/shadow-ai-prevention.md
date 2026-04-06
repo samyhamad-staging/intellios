@@ -1,47 +1,49 @@
 ---
-id: "05-007"
-title: "Shadow AI Prevention: Establishing Unified Enterprise Agent Governance"
-slug: "shadow-ai-prevention"
-type: "concept"
+id: 05-007
+title: How to Detect and Prevent Shadow AI
+slug: shadow-ai-prevention
+type: concept
 audiences:
-  - "compliance"
-  - "executive"
-  - "engineering"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+- executive
+- engineering
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "shadow-ai"
-  - "governance"
-  - "compliance"
-  - "risk-management"
-  - "agent-control"
-  - "regulatory"
-  - "sr-11-7"
+- shadow-ai
+- governance
+- compliance
+- risk-management
+- agent-control
+- regulatory
+- sr-11-7
 prerequisites: []
 related:
-  - "Compliance Evidence Chain"
-  - "SR 11-7 Compliance Mapping"
-  - "Agent Lifecycle States"
-  - "Governance-as-Code"
+- 03-007
+- 05-001
+- 03-005
+- 03-002
 next_steps:
-  - "Audit Trail Generation"
-  - "Shadow AI Remediation Playbook"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Shadow AI—ungoverned, unauthorized AI agents operating outside enterprise
-  oversight—represents a critical regulatory and operational risk. Intellios
-  prevents shadow AI through centralized governance, mandatory policy validation,
-  lifecycle controls, compliance evidence chains, and organizational policy
-  enforcement. This article defines shadow AI, explains why it's dangerous,
-  and maps Intellios's prevention mechanisms to specific threat vectors.
+- 05-008
+- 06-004
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Shadow AI—ungoverned, unauthorized AI agents operating outside enterprise oversight—represents
+  a critical regulatory and operational risk. Intellios prevents shadow AI through
+  centralized governance, mandatory policy validation, lifecycle controls, compliance
+  evidence chains, and organizational policy enforcement. This article defines shadow
+  AI, explains why it''s dangerous, and maps Intellios''s prevention mechanisms to
+  specific threat vectors.
+
+  '
 ---
 
-# Shadow AI Prevention: Establishing Unified Enterprise Agent Governance
+
+# How to Detect and Prevent Shadow AI
 
 > **TL;DR:** Shadow AI—unauthorized, undocumented AI agents operating without enterprise oversight—poses catastrophic regulatory, compliance, and operational risk. Intellios eliminates shadow AI through four integrated mechanisms: a centralized Agent Registry as the single source of truth, governance-as-code policies that every agent must satisfy before operation, immutable compliance evidence chains that expose any ungoverned deployment, and organizational policy enforcement that makes agent creation outside Intellios non-compliant.
 

@@ -1,37 +1,47 @@
 ---
-id: "05-006"
-title: "Drift Detection: Monitoring Agents for Specification and Behavioral Deviation"
-slug: "drift-detection"
-type: "concept"
+id: 05-006
+title: 'Drift Detection: Monitoring Agents for Specification and Behavioral Deviation'
+slug: drift-detection
+type: concept
 audiences:
-  - "compliance"
-  - "engineering"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+- engineering
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "drift-detection"
-  - "monitoring"
-  - "compliance"
-  - "governance"
-  - "runtime"
-  - "risk-management"
+- drift-detection
+- monitoring
+- compliance
+- governance
+- runtime
+- risk-management
 prerequisites: []
 related:
-  - "Agent Blueprint Package"
-  - "Governance-as-Code"
-  - "SR 11-7 Compliance Mapping"
+- 03-001
+- 03-002
+- 05-001
 next_steps:
-  - "Configuring Drift Alerts"
-  - "Post-Market Monitoring"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Drift is any deviation of a deployed agent's behavior from its specification (ABP). Drift detection is the continuous monitoring and alerting system that compares runtime observations against the approved blueprint. Three types of drift matter: specification drift (ABP changed but agent not updated), behavioral drift (agent outputs degrade despite stable ABP), and policy drift (new governance policies post-deployment). Intellios detects drift through observability integration, rate limiting, constraint violation monitoring, and behavioral baselines. Automated alerts trigger escalation workflows. Understanding drift is essential for SR 11-7 compliance and operational risk management.
+- 05-006
+- 05-006
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Drift is any deviation of a deployed agent''s behavior from its specification
+  (ABP). Drift detection is the continuous monitoring and alerting system that compares
+  runtime observations against the approved blueprint. Three types of drift matter:
+  specification drift (ABP changed but agent not updated), behavioral drift (agent
+  outputs degrade despite stable ABP), and policy drift (new governance policies post-deployment).
+  Intellios detects drift through observability integration, rate limiting, constraint
+  violation monitoring, and behavioral baselines. Automated alerts trigger escalation
+  workflows. Understanding drift is essential for SR 11-7 compliance and operational
+  risk management.
+
+  '
 ---
+
 
 # Drift Detection: Monitoring Agents for Specification and Behavioral Deviation
 

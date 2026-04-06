@@ -1,37 +1,43 @@
 ---
-id: "09-001"
-title: "Three-Pillar ROI Framework"
-slug: "three-pillar-roi-framework"
-type: "concept"
+id: 09-001
+title: Three-Pillar ROI Framework
+slug: three-pillar-roi-framework
+type: concept
 audiences:
-  - "executive"
-  - "product"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- executive
+- product
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "roi"
-  - "business-case"
-  - "financial-services"
-  - "governance"
-  - "cost-benefit"
+- roi
+- business-case
+- financial-services
+- governance
+- cost-benefit
 prerequisites:
-  - "What Is Intellios"
-  - "Agent Blueprint Package"
+- 01-001
+- 03-001
 related:
-  - "TCO Comparison: Build vs. Intellios"
-  - "Financial Services Scenarios"
+- 09-002
+- 06-001
 next_steps:
-  - "TCO Comparison: Build vs. Intellios"
-  - "Agent Onboarding Playbook"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Intellios delivers ROI through three pillars: (1) Regulatory Penalty Avoidance ($50M-$200M per incident), (2) MRM Cost Reduction (60-70% automation of $5M-$15M annual spend), and (3) Governed Deployment Velocity (6-12 weeks down to 1-3 weeks). For a mid-size bank (50 agents, $8M MRM), the composite three-year ROI exceeds 300%, with payback within 18 months.
+- 09-002
+- 06-005
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Intellios delivers ROI through three pillars: (1) Regulatory Penalty Avoidance
+  ($50M-$200M per incident), (2) MRM Cost Reduction (60-70% automation of $5M-$15M
+  annual spend), and (3) Governed Deployment Velocity (6-12 weeks down to 1-3 weeks).
+  For a mid-size bank (50 agents, $8M MRM), the composite three-year ROI exceeds 300%,
+  with payback within 18 months.
+
+  '
 ---
+
 
 # Three-Pillar ROI Framework
 

@@ -28,7 +28,7 @@ Intellios is pursuing SOC 2 Type II certification to provide independent audit v
 
 ## What is SOC 2?
 
-**SOC 2** (Service Organization Control Framework) is an audit standard that evaluates a service provider's controls over five Trust Service Criteria:
+**SOC 2 (Service Organization Control Framework)** is an audit standard that evaluates a service provider's controls over five Trust Service Criteria:
 
 1. **Security (CC):** Controls protecting assets and preventing unauthorized access
 2. **Availability (A):** Controls ensuring systems are available for operation and use

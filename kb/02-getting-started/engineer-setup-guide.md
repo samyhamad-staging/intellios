@@ -1,51 +1,49 @@
 ---
-id: "02-003"
-title: "Engineer Setup Guide: Deploy Intellios End-to-End in 60 Minutes"
-slug: "engineer-setup-guide"
-type: "task"
+id: 02-003
+title: 'Engineer Setup Guide: Deploy Intellios End-to-End in 60 Minutes'
+slug: engineer-setup-guide
+type: task
 audiences:
-  - "engineering"
-  - "devops"
-  - "platform"
-status: "published"
-version: "1.0.0"
-platform_version: "1.2.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- engineering
+- devops
+- platform
+status: published
+version: 1.0.0
+platform_version: 1.2.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "quick-start"
-  - "engineering"
-  - "onboarding"
-  - "deployment"
-  - "setup"
-  - "environment-configuration"
-  - "database"
-  - "runtime-adapters"
-prerequisites:
-  - "AWS account with AgentCore (or Azure / on-premise alternative)"
-  - "PostgreSQL 14+ instance (managed AWS RDS or self-hosted)"
-  - "Node.js 20+ runtime"
-  - "npm or yarn package manager"
-  - "Git version control"
-  - "Familiarity with Next.js, TypeScript, and REST APIs"
+- quick-start
+- engineering
+- onboarding
+- deployment
+- setup
+- environment-configuration
+- database
+- runtime-adapters
+prerequisites: []
 related:
-  - "System Architecture"
-  - "Runtime Adapter Pattern"
-  - "Deployment Guide"
-  - "Observability Bridge"
+- 04-001
+- 04-003
+- 04-013
+- 07-003
 next_steps:
-  - "Advanced Runtime Adapter Configuration"
-  - "Custom Policy Engine Extensions"
-  - "Multi-Cloud Deployment Strategy"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Clone the Intellios repository, configure environment variables, run database migrations, start the
-  Next.js development server, create a test agent via intake, configure the AgentCore runtime adapter,
-  deploy your first governed agent, and verify observability. End-to-end in 60 minutes. Outcome: You have
-  a working Intellios instance with a deployed agent and live governance validation.
+- 04-003
+- 03-003
+- 04-013
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Clone the Intellios repository, configure environment variables, run database
+  migrations, start the Next.js development server, create a test agent via intake,
+  configure the AgentCore runtime adapter, deploy your first governed agent, and verify
+  observability. End-to-end in 60 minutes. Outcome: You have a working Intellios instance
+  with a deployed agent and live governance validation.
+
+  '
 ---
+
+
 
 # Engineer Setup Guide: Deploy Intellios End-to-End in 60 Minutes
 
@@ -826,6 +824,20 @@ You've deployed Intellios and your first governed agent. Here's what to do next:
 2. **Scale to multi-cloud** — Deploy agents to multiple runtimes simultaneously
 3. **Integrate with compliance systems** — Export evidence chains to your COSO/audit platform
 4. **Optimize costs** — Review AgentCore usage and right-size instances
+
+---
+
+## Verify Your Success
+
+After completing this guide, you should be able to confirm:
+
+1. **API connectivity works** — Run `curl -H "Authorization: Bearer $TOKEN" https://[your-host]/api/intake` and receive a 200 response
+2. **You can create an intake session** — POST to `/api/intake` and receive a session ID
+3. **You can trigger blueprint generation** — POST to `/api/blueprints/generate` with a valid session ID
+4. **Webhook delivery works** — If configured, verify your endpoint receives a test event
+5. **You understand** the API reference documentation and can locate endpoint details for intake, blueprints, governance, and registry
+
+If any verification step fails, see [Engineering FAQ](../10-faq-troubleshooting/engineering-faq.md) or [API Authentication Troubleshooting](../10-faq-troubleshooting/fix-api-authentication-errors.md).
 
 ---
 

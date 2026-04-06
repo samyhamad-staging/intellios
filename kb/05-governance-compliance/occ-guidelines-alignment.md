@@ -24,7 +24,7 @@ tldr: >
 
 ## Overview
 
-The **Office of the Comptroller of the Currency (OCC)** issued comprehensive guidance on model risk management that complements the Federal Reserve's SR 11-7 framework. The OCC expectations, articulated across supervisory guidance, examination procedures, and regulatory correspondence, establish a **governance framework for managing model risk** with particular emphasis on:
+The **Office of the Comptroller of the Currency (OCC)** issued comprehensive guidance on model risk management that complements the Federal Reserve's SR 11-7 (Guidance on Model Risk Management) framework. The OCC expectations, articulated across supervisory guidance, examination procedures, and regulatory correspondence, establish a **governance framework for managing model risk** with particular emphasis on:
 
 - Clear organizational roles and board/senior management oversight
 - Independent validation separate from model development

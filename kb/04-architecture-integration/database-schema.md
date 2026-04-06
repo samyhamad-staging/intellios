@@ -28,7 +28,7 @@ related:
   - "12-001"
 next_steps:
   - "04-013"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: >
   Intellios uses PostgreSQL with 16 core tables managed via Drizzle ORM. Primary tables:
   agent_blueprints (Agent Blueprint Packages + versions), intake_sessions (design intake),

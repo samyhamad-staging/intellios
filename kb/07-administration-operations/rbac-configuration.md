@@ -1,6 +1,6 @@
 ---
 id: "07-001"
-title: "Role-Based Access Control (RBAC) Configuration"
+title: "How to Set Up Roles and Permissions (RBAC)"
 slug: "rbac-configuration"
 type: "task"
 audiences:
@@ -30,7 +30,7 @@ related:
 next_steps:
   - "07-002"
   - "08-006"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: >
   Intellios RBAC is in post-MVP planning. This document describes the intended architecture
   and implementation roadmap. Current MVP uses basic role field in users table (architect,
@@ -39,9 +39,9 @@ tldr: >
   Audit trail logs all RBAC changes for compliance.
 ---
 
-# Role-Based Access Control (RBAC) Configuration
+# How to Set Up Roles and Permissions (RBAC)
 
-> **TL;DR:** Intellios RBAC is designed for post-MVP release. This document describes the intended RBAC architecture, planned role hierarchy, granular permissions matrix, configuration steps, SSO/SAML integration points, and audit trail requirements. Current MVP uses a basic `role` field in the users table; full RBAC will introduce per-enterprise role management, dynamic permissions, and integration with enterprise identity systems.
+> **TL;DR:** Intellios Role-Based Access Control (RBAC) is designed for post-MVP release. This document describes the intended RBAC architecture, planned role hierarchy, granular permissions matrix, configuration steps, Single Sign-On (SSO) / Security Assertion Markup Language (SAML) integration points, and audit trail requirements. Current MVP uses a basic `role` field in the users table; full RBAC will introduce per-enterprise role management, dynamic permissions, and integration with enterprise identity systems.
 
 ---
 

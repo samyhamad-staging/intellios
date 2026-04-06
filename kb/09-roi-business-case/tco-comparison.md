@@ -1,37 +1,44 @@
 ---
-id: "09-002"
-title: "TCO Comparison: Build vs. Intellios"
-slug: "tco-comparison"
-type: "reference"
+id: 09-002
+title: 'TCO Comparison: Build vs. Intellios'
+slug: tco-comparison
+type: reference
 audiences:
-  - "executive"
-  - "product"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- executive
+- product
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "roi"
-  - "business-case"
-  - "total-cost-ownership"
-  - "financial-services"
-  - "cost-benefit"
+- roi
+- business-case
+- total-cost-ownership
+- financial-services
+- cost-benefit
 prerequisites:
-  - "What Is Intellios"
-  - "Three-Pillar ROI Framework"
+- 01-001
+- 09-001
 related:
-  - "Three-Pillar ROI Framework"
-  - "Financial Services Scenarios"
+- 09-001
+- 06-001
 next_steps:
-  - "Three-Pillar ROI Framework"
-  - "Agent Onboarding Playbook"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Building AI governance infrastructure in-house costs $3M-$5M in year 1 (6-8 engineers × 12-18 months) plus $1M-$2M ongoing, with 3-5 year time-to-value. Intellios delivers equivalent or superior capability in 4-8 weeks for a fraction of the engineering cost, with transparent ongoing costs and no technical debt. TCO comparison: 3-year build cost ($5M-$9M) vs. Intellios licensing ($3.9M), plus 3-year faster time-to-value worth $30M-$50M.
+- 09-001
+- 06-005
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Building AI governance infrastructure in-house costs $3M-$5M in year 1 (6-8
+  engineers × 12-18 months) plus $1M-$2M ongoing, with 3-5 year time-to-value. Intellios
+  delivers equivalent or superior capability in 4-8 weeks for a fraction of the engineering
+  cost, with transparent ongoing costs and no technical debt. TCO comparison: 3-year
+  build cost ($5M-$9M) vs. Intellios licensing ($3.9M), plus 3-year faster time-to-value
+  worth $30M-$50M.
+
+  '
 ---
+
 
 # TCO Comparison: Build vs. Intellios
 

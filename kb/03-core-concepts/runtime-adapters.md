@@ -1,41 +1,48 @@
 ---
-id: "03-006"
-title: "Runtime Adapters"
-slug: "runtime-adapters"
-type: "concept"
+id: 03-006
+title: 'Runtime Adapters: How Agents Connect to Cloud Platforms'
+slug: runtime-adapters
+type: concept
 audiences:
-  - "engineering"
-  - "product"
-status: "published"
-version: "1.2.0"
-platform_version: "1.2.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios Platform Engineering"
+- engineering
+- product
+status: published
+version: 1.2.0
+platform_version: 1.2.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios Platform Engineering
 reviewers: []
 tags:
-  - "runtime"
-  - "adapter"
-  - "agentcore"
-  - "ai-foundry"
-  - "cloud"
-  - "deployment"
-  - "execution"
-  - "multi-cloud"
+- runtime
+- adapter
+- agentcore
+- ai-foundry
+- cloud
+- deployment
+- execution
+- multi-cloud
 prerequisites: []
 related:
-  - "Agent Blueprint Package (ABP)"
-  - "Agent Lifecycle"
-  - "Observability"
+- 03-001
+- 03-005
+- 07-003
 next_steps:
-  - "Configure a Runtime Adapter to Deploy Agents"
-  - "Runtime Adapter Integration Guide"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Runtime adapters are the abstraction layer that translates governed Agent Blueprint Packages (ABPs) into cloud provider-specific execution formats. Intellios is a governance platform, not an execution platform—it designs and governs agents but delegates execution to cloud runtimes through pluggable adapters. This separation enables multi-cloud deployments, vendor independence, and consistent governance across different execution environments.
+- 04-003
+- 04-003
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Runtime adapters are the abstraction layer that translates governed Agent Blueprint
+  Packages (ABPs) into cloud provider-specific execution formats. Intellios is a governance
+  platform, not an execution platform—it designs and governs agents but delegates
+  execution to cloud runtimes through pluggable adapters. This separation enables
+  multi-cloud deployments, vendor independence, and consistent governance across different
+  execution environments.
+
+  '
 ---
 
-# Runtime Adapters
+
+# Runtime Adapters: How Agents Connect to Cloud Platforms
 
 > **TL;DR:** Runtime adapters are the abstraction layer that translates governed Agent Blueprint Packages (ABPs) into cloud provider-specific execution formats. Intellios is a governance platform, not an execution platform—it designs and governs agents but delegates execution to cloud runtimes through pluggable adapters. This separation enables multi-cloud deployments, vendor independence, and consistent governance across different execution environments.
 

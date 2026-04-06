@@ -1,36 +1,43 @@
 ---
-id: "07-004"
-title: "Alerting Configuration: Setting Up Agent Monitoring Alerts"
-slug: "alerting-configuration"
-type: "task"
+id: 07-004
+title: 'Alerting Configuration: Setting Up Agent Monitoring Alerts'
+slug: alerting-configuration
+type: task
 audiences:
-  - "engineering"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- engineering
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "operations"
-  - "alerting"
-  - "monitoring"
-  - "incident-response"
-  - "escalation"
+- operations
+- alerting
+- monitoring
+- incident-response
+- escalation
 prerequisites:
-  - "Observability Dashboards"
-  - "Agent Fleet Management"
+- 07-003
+- 07-005
 related:
-  - "Incident Response: Model Drift"
-  - "Compliance Evidence Chain"
+- 06-006
+- 03-007
 next_steps:
-  - "Incident Response Playbook"
-  - "Agent Fleet Management"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Alerts automatically notify on-call teams when agents deviate from expected behavior. Intellios supports four alert types: performance alerts (latency, error rate), fairness/bias alerts, governance violation alerts, and SLA breach alerts. This guide covers configuring alert thresholds, selecting notification channels (email, Slack, PagerDuty, webhooks), setting escalation policies, and defining suppression rules to reduce alert fatigue.
+- 06-006
+- 07-005
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Alerts automatically notify on-call teams when agents deviate from expected
+  behavior. Intellios supports four alert types: performance alerts (latency, error
+  rate), fairness/bias alerts, governance violation alerts, and SLA breach alerts.
+  This guide covers configuring alert thresholds, selecting notification channels
+  (email, Slack, PagerDuty, webhooks), setting escalation policies, and defining suppression
+  rules to reduce alert fatigue.
+
+  '
 ---
+
 
 # Alerting Configuration: Setting Up Agent Monitoring Alerts
 

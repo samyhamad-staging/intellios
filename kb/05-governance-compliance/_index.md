@@ -31,11 +31,16 @@ tldr: >
 | [EU AI Act Readiness](eu-ai-act-readiness.md) | Reference | CO | EU AI Act compliance roadmap: risk classification, transparency, governance, and audit requirements |
 | [MRM Documentation Automation](mrm-documentation-automation.md) | Task | CO, EN | Automate model risk management documentation and evidence capture |
 | [Model Inventory Management](model-inventory-management.md) | Concept | CO, EN | Centralized registry of deployed models with metadata, versions, and governance status |
-| [Drift Detection](drift-detection.md) | Concept | EN, AR | Monitor agent behavior and model performance for degradation and policy violations |
+| [Drift Detection](drift-detection.md) | Concept | EN | Monitor agent behavior and model performance for degradation and policy violations |
 | [Shadow AI Prevention](shadow-ai-prevention.md) | Task | CO, EN | Identify and remediate rogue AI agents; prevent unauthorized agent deployment |
-| [Audit Trail Generation](audit-trail-generation.md) | Concept | CO, EN, AR | Immutable audit logs for compliance reporting and incident investigation |
+| [Audit Trail Generation](audit-trail-generation.md) | Concept | CO, EN | Immutable audit logs for compliance reporting and incident investigation |
 | [Compliance Evidence Workflows](compliance-evidence-workflows.md) | Task | CO, EN | Capture and manage compliance evidence for governance, audit, and regulatory reporting |
-| [Policy Authoring Guide](policy-authoring-guide.md) | Task | EN, AR, CO | Write custom governance policies to enforce organization-specific compliance rules |
+| [Policy Authoring Guide](policy-authoring-guide.md) | Task | EN, CO | Write custom governance policies to enforce organization-specific compliance rules |
+| [How to Update an Existing Governance Policy](how-to-update-governance-policy.md) | Task | CO, EN | Step-by-step guide to modifying and versioning existing policies |
+| [How to Export a Compliance Report](how-to-export-compliance-report.md) | Task | CO | Generate and export compliance reports for audits and regulatory submissions |
+| [How to Investigate a Governance Violation](how-to-investigate-governance-violation.md) | Task | CO, EN | Procedures for investigating and remediating policy violations |
+| [How to Set Up Audit Logging](how-to-set-up-audit-logging.md) | Task | CO, EN | Configure comprehensive audit logging for compliance and incident investigation |
+| [How to Prepare for a Regulatory Examination](how-to-prepare-for-regulatory-exam.md) | Task | CO, E | Prepare compliance documentation and evidence for regulatory audits |
 
 ## Suggested Reading Order
 
@@ -52,10 +57,10 @@ tldr: >
 
 ## Audiences
 
+- **E** — Executive / Business stakeholder
 - **CO** — Compliance Officer
 - **EN** — Engineer
-- **AR** — Architect
-- **E** — Executive / Business stakeholder
+- **PM** — Product Manager
 
 ## Related Sections
 

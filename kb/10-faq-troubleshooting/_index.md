@@ -28,10 +28,20 @@ tldr: >
 |---|---|---|---|
 | [Executive FAQ](executive-faq.md) | Reference | E, CO, PM | Answers to business, ROI, and governance questions for leadership |
 | [Compliance FAQ](compliance-faq.md) | Reference | CO | Governance, audit trails, regulatory compliance, and evidence collection questions |
-| [Engineering FAQ](engineering-faq.md) | Reference | EN, AR | API integration, deployment, scaling, and technical troubleshooting |
+| [Engineering FAQ](engineering-faq.md) | Reference | EN | API integration, deployment, scaling, and technical troubleshooting |
 | [Product FAQ](product-faq.md) | Reference | PM | Feature questions, roadmap, release cycles, and product direction |
 | [Known Issues](known-issues.md) | Reference | All | Documented issues, limitations, and available workarounds |
 | [Escalation Paths](escalation-paths.md) | Reference | All | Support contacts, escalation procedures, and SLA commitments |
+| [Fix: Governance Validation Failures](fix-governance-validation-failures.md) | Troubleshooting | EN, CO | Diagnose and resolve policy validation errors and rejections |
+| [Fix: API Authentication Errors](fix-api-authentication-errors.md) | Troubleshooting | EN | Resolve API key, token, and authentication credential issues |
+| [Fix: Blueprint Generation Timeout](fix-blueprint-generation-timeout.md) | Troubleshooting | EN | Address blueprint generation delays and timeout errors |
+| [Fix: Webhook Delivery Failures](fix-webhook-delivery-failures.md) | Troubleshooting | EN | Troubleshoot webhook event delivery and retry logic |
+| [Fix: Intake Session Errors](fix-intake-session-errors.md) | Troubleshooting | EN, PM | Resolve intake form submission and session management errors |
+| [Fix: Agent Deployment Failures](fix-agent-deployment-failures.md) | Troubleshooting | EN | Debug agent deployment and runtime activation issues |
+| [Fix: Policy Evaluation Unexpected Results](fix-policy-evaluation-unexpected-results.md) | Troubleshooting | CO, EN | Investigate and resolve unexpected policy evaluation outcomes |
+| [Fix: User Permission Denied](fix-user-permission-denied.md) | Troubleshooting | EN | Resolve access control and RBAC permission issues |
+| [Fix: Blueprint Refinement Conflicts](fix-blueprint-refinement-conflicts.md) | Troubleshooting | EN | Handle concurrent edit conflicts and refinement workflow issues |
+| [Fix: Compliance Report Generation Errors](fix-compliance-report-generation-errors.md) | Troubleshooting | CO, EN | Resolve compliance report export and generation failures |
 
 ## Suggested Reading Order
 
@@ -47,7 +57,6 @@ tldr: >
 - **E** — Executive / Business stakeholder
 - **CO** — Compliance Officer
 - **EN** — Engineer
-- **AR** — Architect
 - **PM** — Product Manager
 - **All** — All roles
 

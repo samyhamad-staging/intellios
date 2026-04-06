@@ -22,7 +22,7 @@ tags:
   - "agent-blueprint-package"
   - "governance-validation"
   - "async"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: "REST API for generating, refining, and validating Agent Blueprint Packages (ABPs) from intake payloads. Trigger governance policy validation and monitor generation status asynchronously."
 ---
 

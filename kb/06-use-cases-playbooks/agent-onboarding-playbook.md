@@ -1,39 +1,46 @@
 ---
-id: "06-005"
-title: "Agent Onboarding Playbook"
-slug: "agent-onboarding-playbook"
-type: "task"
+id: 06-005
+title: Agent Onboarding Playbook
+slug: agent-onboarding-playbook
+type: task
 audiences:
-  - "product"
-  - "engineering"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- product
+- engineering
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "getting-started"
-  - "how-to"
-  - "agent-deployment"
-  - "governance"
-  - "workflow"
+- getting-started
+- how-to
+- agent-deployment
+- governance
+- workflow
 prerequisites:
-  - "What Is Intellios"
-  - "Agent Blueprint Package"
-  - "Agent Lifecycle"
+- 01-001
+- 03-001
+- 03-005
 related:
-  - "Financial Services Scenarios"
-  - "Governance-as-Code"
-  - "Blueprint Review UI"
+- 06-001
+- 03-002
+- 03-009
 next_steps:
-  - "Financial Services Scenarios"
-  - "Runtime Adapter Reference"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Deploy your first AI agent through Intellios in 5 steps: (1) Define agent concept and identify stakeholders, (2) Choose intake path (conversational 3-phase or express-lane template), (3) Complete intake to capture requirements, (4) Review generated Agent Blueprint Package and run governance validation, (5) Iterate on any violations, submit for human review, and approve for deployment. Typical timeline: 1-3 weeks from concept to approved production agent.
+- 06-001
+- 04-003
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Deploy your first AI agent through Intellios in 5 steps: (1) Define agent concept
+  and identify stakeholders, (2) Choose intake path (conversational 3-phase or express-lane
+  template), (3) Complete intake to capture requirements, (4) Review generated Agent
+  Blueprint Package and run governance validation, (5) Iterate on any violations,
+  submit for human review, and approve for deployment. Typical timeline: 1-3 weeks
+  from concept to approved production agent.
+
+  '
 ---
+
 
 # Agent Onboarding Playbook
 

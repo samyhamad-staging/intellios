@@ -1,46 +1,48 @@
 ---
-id: "04-001"
-title: "System Architecture"
-slug: "system-architecture"
-type: "reference"
+id: 04-001
+title: System Architecture
+slug: system-architecture
+type: reference
 audiences:
-  - "engineering"
-  - "architect"
-status: "published"
-version: "1.0.0"
-platform_version: "1.2.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- engineering
+- architect
+status: published
+version: 1.0.0
+platform_version: 1.2.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "architecture"
-  - "system-design"
-  - "subsystems"
-  - "infrastructure"
-  - "api-design"
-  - "database"
-  - "technology-stack"
+- architecture
+- system-design
+- subsystems
+- infrastructure
+- api-design
+- database
+- technology-stack
 prerequisites:
-  - "Architecture Overview"
-  - "Agent Blueprint Package"
+- 01-003
+- 03-001
 related:
-  - "Data Flow"
-  - "Runtime Adapter Pattern"
-  - "Database Schema"
-  - "API References"
+- 04-002
+- 04-003
+- 04-012
+- 04-006
 next_steps:
-  - "Data Flow"
-  - "API References"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Intellios is built on Next.js 16 and PostgreSQL, organized around five subsystems:
+- 04-002
+- 04-006
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Intellios is built on Next.js 16 and PostgreSQL, organized around five subsystems:
   Design Studio (Intake + Generation), Control Plane (Governance + Registry + Review),
   and Runtime Layer (adapters). All subsystems communicate via server-side API routes
   and PostgreSQL. The ABP is stored as JSONB in agent_blueprints; governance policies
   are stored in governance_policies. Streaming is used for AI interactions; structured
   generation via Zod for validation.
+
+  '
 ---
+
 
 # System Architecture
 

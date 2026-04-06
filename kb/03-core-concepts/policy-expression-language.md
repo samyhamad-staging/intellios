@@ -1,47 +1,50 @@
 ---
-id: "03-004"
-title: "Policy Expression Language — Operator Reference"
-slug: "policy-expression-language"
-type: "reference"
+id: 03-004
+title: 'Policy Expression Language: Syntax and Operator Reference'
+slug: policy-expression-language
+type: reference
 audiences:
-  - "engineering"
-  - "compliance"
-status: "published"
-version: "1.0.0"
-platform_version: "1.2.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- engineering
+- compliance
+status: published
+version: 1.0.0
+platform_version: 1.2.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "policy"
-  - "rules"
-  - "operators"
-  - "expression-language"
-  - "governance"
-  - "field-paths"
-  - "severity"
-  - "governance-as-code"
+- policy
+- rules
+- operators
+- expression-language
+- governance
+- field-paths
+- severity
+- governance-as-code
 prerequisites:
-  - "Agent Blueprint Package (ABP)"
-  - "Governance-as-Code"
+- 03-001
+- 03-002
 related:
-  - "Governance Validator"
-  - "Governance-as-Code"
-  - "Agent Blueprint Package"
+- 03-003
+- 03-002
+- 03-001
 next_steps:
-  - "Defining Enterprise Governance Policies"
-  - "Governance Validator Walkthrough"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  The Policy Expression Language is Intellios's structured rule system for expressing governance
-  constraints. It defines 11 deterministic operators (exists, equals, contains, matches, count_gte,
-  and more) that evaluate Agent Blueprint Package fields using dot-notation paths. Rules have severity
-  levels (error, warning) that determine lifecycle gates and reporting. No AI inference; purely
-  deterministic evaluation. Same ABP + same policies = same result, always.
+- 05-010
+- 03-003
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'The Policy Expression Language is Intellios''s structured rule system for expressing
+  governance constraints. It defines 11 deterministic operators (exists, equals, contains,
+  matches, count_gte, and more) that evaluate Agent Blueprint Package fields using
+  dot-notation paths. Rules have severity levels (error, warning) that determine lifecycle
+  gates and reporting. No AI inference; purely deterministic evaluation. Same ABP
+  + same policies = same result, always.
+
+  '
 ---
 
-# Policy Expression Language — Operator Reference
+
+# Policy Expression Language: Syntax and Operator Reference
 
 > **TL;DR:** The Policy Expression Language is Intellios's structured rule system for expressing governance constraints. It defines 11 deterministic operators (exists, equals, contains, matches, count_gte, and more) that evaluate Agent Blueprint Package fields using dot-notation paths. Rules have severity levels (error, warning) that determine lifecycle gates and reporting. No AI inference; purely deterministic evaluation.
 

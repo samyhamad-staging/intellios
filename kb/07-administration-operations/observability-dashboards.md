@@ -1,38 +1,45 @@
 ---
-id: "07-003"
-title: "Observability Dashboards: Monitoring Agent Performance"
-slug: "observability-dashboards"
-type: "task"
+id: 07-003
+title: 'Observability Dashboards: Monitoring Agent Performance'
+slug: observability-dashboards
+type: task
 audiences:
-  - "engineering"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- engineering
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "operations"
-  - "observability"
-  - "monitoring"
-  - "metrics"
-  - "dashboards"
+- operations
+- observability
+- monitoring
+- metrics
+- dashboards
 prerequisites:
-  - "Agent Blueprint Package"
-  - "Agent Lifecycle"
-  - "Compliance Evidence Chain"
+- 03-001
+- 03-005
+- 03-007
 related:
-  - "Alerting Configuration"
-  - "Agent Fleet Management"
-  - "Incident Response: Model Drift"
+- 07-004
+- 07-005
+- 06-006
 next_steps:
-  - "Setting Up Alerts for Agent Monitoring"
-  - "Fleet Health Dashboard"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Deployed agents must be continuously monitored for performance, accuracy, errors, fairness, and safety. Intellios provides a built-in observability platform that collects metrics from all deployed agents. This guide covers configuring observability for your agents, the key metrics to track, setting up dashboards in Intellios or bridging to external tools (CloudWatch, Datadog, Grafana), defining SLA baselines, and interpreting observability data to detect drift, bias, and operational issues.
+- 07-004
+- 07-003
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Deployed agents must be continuously monitored for performance, accuracy, errors,
+  fairness, and safety. Intellios provides a built-in observability platform that
+  collects metrics from all deployed agents. This guide covers configuring observability
+  for your agents, the key metrics to track, setting up dashboards in Intellios or
+  bridging to external tools (CloudWatch, Datadog, Grafana), defining SLA baselines,
+  and interpreting observability data to detect drift, bias, and operational issues.
+
+  '
 ---
+
 
 # Observability Dashboards: Monitoring Agent Performance
 

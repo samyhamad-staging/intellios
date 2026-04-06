@@ -1,40 +1,48 @@
 ---
-id: "06-006"
-title: "Incident Response: Model Drift Detection and Remediation"
-slug: "incident-response-model-drift"
-type: "task"
+id: 06-006
+title: 'Incident Response: Model Drift Detection and Remediation'
+slug: incident-response-model-drift
+type: task
 audiences:
-  - "compliance"
-  - "engineering"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+- engineering
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "incident-response"
-  - "observability"
-  - "operations"
-  - "compliance"
-  - "model-drift"
-  - "agent-management"
+- incident-response
+- observability
+- operations
+- compliance
+- model-drift
+- agent-management
 prerequisites:
-  - "Agent Blueprint Package"
-  - "Agent Lifecycle"
-  - "Observability Dashboards"
+- 03-001
+- 03-005
+- 07-003
 related:
-  - "Alerting Configuration"
-  - "Agent Fleet Management"
-  - "Compliance Evidence Chain"
+- 07-004
+- 07-005
+- 03-007
 next_steps:
-  - "Configuring Alerts for Drift Detection"
-  - "Setting Up Observability Dashboards"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  When an agent's deployed behavior diverges significantly from its registered Agent Blueprint Package (ABP)—due to model decay, data drift, or unintended behavior change—it must be detected, investigated, and remediated promptly. This playbook defines the incident response procedure: triage (severity assessment), investigation (compare deployed vs. registered ABP), containment (pause if critical), remediation (update ABP and re-validate), and post-incident review. Includes RACI matrix and target timelines.
+- 07-004
+- 07-003
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'When an agent''s deployed behavior diverges significantly from its registered
+  Agent Blueprint Package (ABP)—due to model decay, data drift, or unintended behavior
+  change—it must be detected, investigated, and remediated promptly. This playbook
+  defines the incident response procedure: triage (severity assessment), investigation
+  (compare deployed vs. registered ABP), containment (pause if critical), remediation
+  (update ABP and re-validate), and post-incident review. Includes RACI matrix and
+  target timelines.
+
+  '
 ---
+
 
 # Incident Response: Model Drift Detection and Remediation
 

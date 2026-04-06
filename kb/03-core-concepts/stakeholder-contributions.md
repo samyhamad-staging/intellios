@@ -1,40 +1,42 @@
 ---
-id: "03-010"
-title: "Stakeholder Contributions"
-slug: "stakeholder-contributions"
-type: "concept"
+id: 03-010
+title: Stakeholder Contributions
+slug: stakeholder-contributions
+type: concept
 audiences:
-  - "compliance"
-  - "product"
-status: "published"
-version: "1.0.0"
-platform_version: "1.2.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+- product
+status: published
+version: 1.0.0
+platform_version: 1.2.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "stakeholder-contributions"
-  - "intake-engine"
-  - "multi-stakeholder"
-  - "governance"
-  - "collaboration"
-  - "agent-design"
+- stakeholder-contributions
+- intake-engine
+- multi-stakeholder
+- governance
+- collaboration
+- agent-design
 prerequisites: []
 related:
-  - "Design Studio"
-  - "Governance-as-Code"
+- 03-008
+- 03-002
 next_steps:
-  - "Creating Your First Agent"
-  - "Stakeholder Intake Playbook"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Intellios supports direct input from seven domain stakeholders during agent
+- 03-011
+- 06-008
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Intellios supports direct input from seven domain stakeholders during agent
   creation: compliance, risk, legal, security, IT, operations, and business. Each
   stakeholder lane contributes requirements, constraints, and governance mandates
   that are merged into the intake payload. Stakeholder contributions are timestamped,
   attributed, and conflict-resolved during design.
+
+  '
 ---
+
 
 # Stakeholder Contributions
 

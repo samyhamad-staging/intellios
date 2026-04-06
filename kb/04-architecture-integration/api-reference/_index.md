@@ -22,7 +22,7 @@ related:
   - "04-002"
   - "04-003"
   - "08-003"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: "Complete reference documentation for all Intellios REST APIs: Intake Engine, Blueprint Generation, Agent Registry, Governance Validation, and Review Queue."
 ---
 

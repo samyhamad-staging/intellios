@@ -1,42 +1,44 @@
 ---
-id: "03-008"
-title: "Design Studio"
-slug: "design-studio"
-type: "concept"
+id: 03-008
+title: Design Studio
+slug: design-studio
+type: concept
 audiences:
-  - "engineering"
-  - "product"
-status: "published"
-version: "1.0.0"
-platform_version: "1.2.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- engineering
+- product
+status: published
+version: 1.0.0
+platform_version: 1.2.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "design-studio"
-  - "intake-engine"
-  - "generation-engine"
-  - "agent-creation"
-  - "agent-design"
-  - "subsystem"
-  - "abp-generation"
+- design-studio
+- intake-engine
+- generation-engine
+- agent-creation
+- agent-design
+- subsystem
+- abp-generation
 prerequisites: []
 related:
-  - "Agent Blueprint Package (ABP)"
-  - "Governance-as-Code"
-  - "Agent Registry"
+- 03-001
+- 03-002
+- 03-001
 next_steps:
-  - "Understanding the Control Plane"
-  - "Creating Your First Agent"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  The Design Studio is the subsystem where enterprises design and generate AI agents.
-  It comprises two components: the Intake Engine (which captures requirements through a
-  3-phase conversation-driven process with 7 stakeholder input lanes) and the Generation
-  Engine (which produces Agent Blueprint Packages from intake data using AI-powered
-  generation and policy-aware refinement).
+- 03-009
+- 03-011
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'The Design Studio is the subsystem where enterprises design and generate AI
+  agents. It comprises two components: the Intake Engine (which captures requirements
+  through a 3-phase conversation-driven process with 7 stakeholder input lanes) and
+  the Generation Engine (which produces Agent Blueprint Packages from intake data
+  using AI-powered generation and policy-aware refinement).
+
+  '
 ---
+
 
 # Design Studio
 

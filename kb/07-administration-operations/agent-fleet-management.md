@@ -1,39 +1,46 @@
 ---
-id: "07-005"
-title: "Agent Fleet Management: Operating Agents at Scale"
-slug: "agent-fleet-management"
-type: "task"
+id: 07-005
+title: 'Agent Fleet Management: Operating Agents at Scale'
+slug: agent-fleet-management
+type: task
 audiences:
-  - "engineering"
-  - "product"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- engineering
+- product
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "operations"
-  - "fleet-management"
-  - "scalability"
-  - "lifecycle"
-  - "governance"
+- operations
+- fleet-management
+- scalability
+- lifecycle
+- governance
 prerequisites:
-  - "Agent Blueprint Package"
-  - "Agent Lifecycle"
-  - "Agent Fleet Management"
+- 03-001
+- 03-005
+- 07-005
 related:
-  - "Observability Dashboards"
-  - "Alerting Configuration"
-  - "Incident Response: Model Drift"
+- 07-003
+- 07-004
+- 06-006
 next_steps:
-  - "Observability Dashboards"
-  - "Alerting Configuration"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Operating multiple agents across an organization requires fleet-level visibility, bulk operations, and coordinated lifecycle management. This guide covers the fleet overview dashboard, bulk operations (validation, deprecation, policy updates), fleet health metrics, capacity planning, lifecycle distribution analysis, tagging and grouping agents, and coordinated updates across fleets. Includes best practices for managing agent sprawl and keeping governance overhead manageable.
+- 07-003
+- 07-004
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Operating multiple agents across an organization requires fleet-level visibility,
+  bulk operations, and coordinated lifecycle management. This guide covers the fleet
+  overview dashboard, bulk operations (validation, deprecation, policy updates), fleet
+  health metrics, capacity planning, lifecycle distribution analysis, tagging and
+  grouping agents, and coordinated updates across fleets. Includes best practices
+  for managing agent sprawl and keeping governance overhead manageable.
+
+  '
 ---
+
 
 # Agent Fleet Management: Operating Agents at Scale
 

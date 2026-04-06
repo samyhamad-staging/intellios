@@ -1,40 +1,42 @@
 ---
-id: "01-004"
-title: "Key Capabilities"
-slug: "key-capabilities"
-type: "reference"
+id: 01-004
+title: 'Intellios Capabilities: What the Platform Does'
+slug: key-capabilities
+type: reference
 audiences:
-  - "executive"
-  - "product"
-  - "compliance"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- executive
+- product
+- compliance
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "capabilities"
-  - "features"
-  - "platform"
-  - "overview"
+- capabilities
+- features
+- platform
+- overview
 prerequisites: []
 related:
-  - "What Is Intellios"
-  - "Architecture Overview"
+- 01-001
+- 01-003
 next_steps:
-  - "Getting Started with Design Studio"
-  - "Understanding Governance Policies"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  A reference of all Intellios platform capabilities organized by category: agent design,
-  governance and compliance, lifecycle management, registry and inventory, runtime and
-  deployment, and security and operations. Each capability lists availability (GA/Preview/Planned)
-  and target audiences.
+- 03-008
+- 03-002
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'A reference of all Intellios platform capabilities organized by category: agent
+  design, governance and compliance, lifecycle management, registry and inventory,
+  runtime and deployment, and security and operations. Each capability lists availability
+  (GA/Preview/Planned) and target audiences.
+
+  '
 ---
 
-# Key Capabilities
+
+# Intellios Capabilities: What the Platform Does
 
 > **TL;DR:** Intellios provides a complete suite of capabilities for designing, governing, managing, and deploying enterprise AI agents. This reference organizes all platform features by category with availability status and audience relevance.
 

@@ -28,7 +28,7 @@ related:
 next_steps:
   - "07-001"
   - "10-002"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: >
   Configure outbound webhooks to receive HMAC-signed lifecycle events from Intellios
   (agent.created, agent.validated, agent.approved, policy.updated, etc.). Webhooks enable

@@ -24,7 +24,7 @@ tldr: >
 
 ## Overview
 
-**SR 11-7: Guidance on Model Risk Management** (November 2011) is the Federal Reserve's foundational framework for managing risk in models used by financial institutions. Originally issued to address the use of quantitative and statistical models in banking, SR 11-7's principles apply directly to artificial intelligence and machine learning systems deployed in regulated environments.
+**SR 11-7 (Guidance on Model Risk Management)** (November 2011) is the Federal Reserve's foundational framework for managing risk in models used by financial institutions. Originally issued to address the use of quantitative and statistical models in banking, SR 11-7's principles apply directly to artificial intelligence and machine learning systems deployed in regulated environments.
 
 This article maps the requirements of SR 11-7 to Intellios capabilities, demonstrating how Intellios — a governed control plane for enterprise AI agents — enables compliance teams to satisfy the Federal Reserve's core expectations for model development, validation, governance, monitoring, and documentation.
 

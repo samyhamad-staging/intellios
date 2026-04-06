@@ -29,7 +29,7 @@ related:
 next_steps:
   - "04-004"
   - "07-003"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: >
   Learn how Intellios runtime adapters translate governed Agent Blueprint Packages (ABPs) into cloud provider formats and execute agents at scale. This guide covers the adapter interface, AWS AgentCore integration, field mapping, deployment workflows, observability, and lifecycle management. Expected time: 60–90 minutes.
 ---

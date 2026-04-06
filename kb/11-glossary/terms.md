@@ -23,7 +23,7 @@ tags:
 prerequisites: []
 related: []
 next_steps: []
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: >
   Comprehensive reference for all Intellios terminology, organized alphabetically
   across five categories: Platform, Regulatory, Technical, Industry, and Core

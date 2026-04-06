@@ -27,7 +27,7 @@ tldr: >
 | Article | Type | Audiences | Description |
 |---|---|---|---|
 | [Three-Pillar ROI Framework](three-pillar-roi-framework.md) | Concept | E, CO, PM | Revenue acceleration, cost reduction, and risk mitigation as value drivers |
-| [Total Cost of Ownership (TCO) Comparison](tco-comparison.md) | Reference | E, FM | Build vs. buy analysis: engineering effort and operational cost savings |
+| [Total Cost of Ownership (TCO) Comparison](tco-comparison.md) | Reference | E | Build vs. buy analysis: engineering effort and operational cost savings |
 | [Regulatory Penalty Avoidance](regulatory-penalty-avoidance.md) | Concept | E, CO | Quantify avoided regulatory penalties through proactive governance and compliance |
 | [MRM Cost Reduction](mrm-cost-reduction.md) | Concept | E, CO | Calculate savings from automated model risk management and compliance documentation |
 | [Governed Deployment Velocity](governed-deployment-velocity.md) | Concept | E, PM | Measure time-to-deployment acceleration and governance overhead reduction |
@@ -46,8 +46,8 @@ tldr: >
 
 - **E** — Executive / Business stakeholder
 - **CO** — Compliance Officer
+- **EN** — Engineer
 - **PM** — Product Manager
-- **FM** — Finance / Budget owner
 
 ## Related Sections
 

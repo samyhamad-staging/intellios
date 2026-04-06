@@ -1,45 +1,48 @@
 ---
-id: "03-005"
-title: "Agent Lifecycle States"
-slug: "agent-lifecycle-states"
-type: "concept"
+id: 03-005
+title: Agent Lifecycle States
+slug: agent-lifecycle-states
+type: concept
 audiences:
-  - "compliance"
-  - "engineering"
-  - "product"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+- engineering
+- product
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "lifecycle"
-  - "states"
-  - "workflow"
-  - "approval"
-  - "review"
-  - "state-machine"
-  - "transitions"
-  - "audit-trail"
+- lifecycle
+- states
+- workflow
+- approval
+- review
+- state-machine
+- transitions
+- audit-trail
 prerequisites: []
 related:
-  - "Governance Validator"
-  - "Blueprint Review UI"
-  - "Agent Registry"
-  - "Compliance Evidence Chain"
+- 03-003
+- 03-009
+- 03-001
+- 03-007
 next_steps:
-  - "Understanding Governance Policies"
-  - "Compliance Evidence and Audit Trails"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Intellios manages agents through a five-state lifecycle: draft, in_review, approved, rejected,
-  and deprecated. Agents cannot reach production without passing governance validation (error-severity
-  violations block submission) and human review (mandatory approval with documented reasoning).
-  No deletion exists—only deprecation. Every state transition is recorded in an immutable audit trail
-  with timestamp, actor, and optional comment for full regulatory compliance and accountability.
+- 03-002
+- 03-007
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Intellios manages agents through a five-state lifecycle: draft, in_review,
+  approved, rejected, and deprecated. Agents cannot reach production without passing
+  governance validation (error-severity violations block submission) and human review
+  (mandatory approval with documented reasoning). No deletion exists—only deprecation.
+  Every state transition is recorded in an immutable audit trail with timestamp, actor,
+  and optional comment for full regulatory compliance and accountability.
+
+  '
 ---
+
 
 # Agent Lifecycle States
 

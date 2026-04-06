@@ -1,44 +1,46 @@
 ---
-id: "03-001"
-title: "Agent Blueprint Package (ABP)"
-slug: "agent-blueprint-package"
-type: "concept"
+id: 03-001
+title: Agent Blueprint Package (ABP)
+slug: agent-blueprint-package
+type: concept
 audiences:
-  - "engineering"
-  - "compliance"
-  - "product"
-status: "published"
-version: "1.2.0"
-platform_version: "1.2.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- engineering
+- compliance
+- product
+status: published
+version: 1.2.0
+platform_version: 1.2.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "abp"
-  - "blueprint"
-  - "agent-blueprint-package"
-  - "artifact"
-  - "schema"
-  - "agent-definition"
-  - "versioning"
-  - "core-artifact"
+- abp
+- blueprint
+- agent-blueprint-package
+- artifact
+- schema
+- agent-definition
+- versioning
+- core-artifact
 prerequisites: []
 related:
-  - "Governance-as-Code"
-  - "Agent Lifecycle"
-  - "Agent Registry"
-  - "Governance Validator"
+- 03-002
+- 03-005
+- 03-001
+- 03-003
 next_steps:
-  - "Understanding Governance Policies"
-  - "Deploying Agents with Runtime Adapters"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  The Agent Blueprint Package (ABP) is Intellios's central artifact—a structured,
-  versioned JSON package that fully describes an AI agent's identity, capabilities,
+- 03-002
+- 04-003
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'The Agent Blueprint Package (ABP) is Intellios''s central artifact—a structured,
+  versioned JSON package that fully describes an AI agent''s identity, capabilities,
   constraints, and governance policies. Every agent is represented as an ABP; every
   subsystem in Intellios (design, governance, registry, deployment) operates on ABPs.
+
+  '
 ---
+
 
 # Agent Blueprint Package (ABP)
 

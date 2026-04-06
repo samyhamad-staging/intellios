@@ -129,6 +129,59 @@ Every domain-specific term must either be defined inline on first use or linked 
 
 ---
 
+## Accessibility Standards
+
+All KB content must meet WCAG 2.1 AA guidelines for content accessibility.
+
+### Images and Diagrams
+
+- Every image must have descriptive alt text that conveys the same information a sighted user would get. Bad: `alt="diagram"`. Good: `alt="System architecture showing six subsystems: Intake Engine, Generation Engine, Governance Validator, Review UI, Agent Registry, and Deployment Manager"`.
+- Decorative images (logos, dividers) use empty alt text: `alt=""`.
+- Complex diagrams should include a text description below the image summarizing the key relationships or data shown.
+
+### Headings
+
+- Use headings in strict hierarchical order: H1 → H2 → H3. Never skip levels (e.g., H1 → H3).
+- Every article has exactly one H1 (the title). Sections use H2. Subsections use H3.
+- Headings must be descriptive — a user scanning only headings should understand the article structure.
+
+### Tables
+
+- Every data table must have a header row using Markdown table syntax.
+- Do not use tables for layout purposes — only for tabular data.
+- Keep tables under 6 columns. For wider data, use description lists or split into multiple tables.
+
+### Links
+
+- All link text must be descriptive. Never use "click here", "read more", or bare URLs.
+- Good: `[Policy Authoring Guide](../05-governance-compliance/policy-authoring-guide.md)`
+- Bad: `[Click here](../05-governance-compliance/policy-authoring-guide.md)` or `See https://...`
+
+### Color and Visual References
+
+- Never rely solely on color to convey information. "Fields marked in red" should also say "Fields marked with an error icon (⚠️)" or "Fields with an asterisk (*)".
+- Instructions referencing visual elements must include the element's label or position: "Click the **Save** button in the top-right corner" not "Click the blue button."
+
+### Acronyms
+
+- Expand every acronym on first use in every article. Do not assume the reader has read other articles.
+- Format: "Agent Blueprint Package (ABP)" on first use, then "ABP" thereafter.
+- Link to the glossary on first use where practical.
+
+### Readability
+
+- Target Flesch-Kincaid grade 6-8 for general documentation and troubleshooting.
+- Grade 8-12 is acceptable for technical/engineering content.
+- Keep sentences under 25 words for procedural content.
+- Use plain language: prefer common words over technical jargon when both are accurate.
+
+### Videos and Media
+
+- All videos must have captions or a text transcript.
+- Do not use video as the sole format for procedural content — always provide text-based steps alongside.
+
+---
+
 ## Placeholder Convention
 
 Where specific implementation details are not yet finalized, use:

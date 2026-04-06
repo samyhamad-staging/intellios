@@ -30,7 +30,7 @@ tldr: >
 |---|---|---|---|
 | [What Is Intellios](what-is-intellios.md) | Concept | E, CO | Overview of Intellios as a white-label agent factory and its role in enterprise AI deployment |
 | [Value Proposition](value-proposition.md) | Concept | E, CO, PM | Business and operational benefits: governance, speed, compliance, risk reduction |
-| [Architecture Overview](architecture-overview.md) | Concept | EN, AR | System subsystems, data flow, and key components at a glance |
+| [Architecture Overview](architecture-overview.md) | Concept | EN | System subsystems, data flow, and key components at a glance |
 | [Key Capabilities](key-capabilities.md) | Reference | All | Complete list of platform capabilities: intake, generation, governance, registry, deployment |
 | [How Intellios Differs](how-intellios-differs.md) | Concept | E, CO, PM | Competitive differentiation: what makes Intellios the enterprise-grade agent factory |
 
@@ -47,9 +47,7 @@ tldr: >
 - **E** — Executive / Business stakeholder
 - **CO** — Compliance Officer
 - **EN** — Engineer
-- **AR** — Architect
 - **PM** — Product Manager
-- **OPS** — Operations team
 
 ## Related Sections
 

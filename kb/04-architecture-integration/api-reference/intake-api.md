@@ -21,7 +21,7 @@ tags:
   - "intake-session"
   - "streaming"
   - "multi-turn"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: "REST API for creating intake sessions, capturing enterprise requirements through streaming multi-turn conversations, adding stakeholder contributions, and retrieving structured intake payloads for blueprint generation."
 ---
 

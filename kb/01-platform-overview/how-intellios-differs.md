@@ -1,37 +1,46 @@
 ---
-id: "01-005"
-title: "How Intellios Differs: Governance-First Architecture for Enterprise AI"
-slug: "how-intellios-differs"
-type: "concept"
+id: 01-005
+title: 'How Intellios Differs: Governance-First Architecture for Enterprise AI'
+slug: how-intellios-differs
+type: concept
 audiences:
-  - "executive"
-  - "product"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- executive
+- product
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "governance"
-  - "compliance"
-  - "platform-differentiation"
-  - "regulatory"
-  - "enterprise"
-  - "architecture"
+- governance
+- compliance
+- platform-differentiation
+- regulatory
+- enterprise
+- architecture
 prerequisites: []
 related:
-  - "What is Intellios"
-  - "Key Capabilities"
-  - "Value Proposition"
+- 01-001
+- 01-004
+- 01-002
 next_steps:
-  - "Executive Quick Start"
-  - "Architecture Overview"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Intellios is fundamentally different from other AI platforms because governance is the architecture, not an add-on. Unlike generic AI platforms (which lack governance), manual GRC tools (which cannot keep pace), cloud-native AI services (which lack cross-cloud governance), and homegrown solutions (which are incomplete), Intellios implements a governance-first design where policies gate the creation pipeline, validation is deterministic, and compliance evidence is generated automatically. This approach is essential for Fortune 500 financial services firms operating under SR 11-7, GDPR, EU AI Act, and other regulations.
+- 02-001
+- 01-003
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Intellios is fundamentally different from other AI platforms because governance
+  is the architecture, not an add-on. Unlike generic AI platforms (which lack governance),
+  manual GRC tools (which cannot keep pace), cloud-native AI services (which lack
+  cross-cloud governance), and homegrown solutions (which are incomplete), Intellios
+  implements a governance-first design where policies gate the creation pipeline,
+  validation is deterministic, and compliance evidence is generated automatically.
+  This approach is essential for Fortune 500 financial services firms operating under
+  SR 11-7, GDPR, EU AI Act, and other regulations.
+
+  '
 ---
+
 
 # How Intellios Differs: Governance-First Architecture for Enterprise AI
 

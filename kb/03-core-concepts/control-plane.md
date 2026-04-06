@@ -1,46 +1,48 @@
 ---
-id: "03-009"
-title: "Control Plane"
-slug: "control-plane"
-type: "concept"
+id: 03-009
+title: 'Control Plane: Orchestration, Validation, and Review'
+slug: control-plane
+type: concept
 audiences:
-  - "engineering"
-  - "compliance"
-status: "published"
-version: "1.0.0"
-platform_version: "1.2.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- engineering
+- compliance
+status: published
+version: 1.0.0
+platform_version: 1.2.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "control-plane"
-  - "governance-validator"
-  - "agent-registry"
-  - "blueprint-review-ui"
-  - "lifecycle-management"
-  - "policy-enforcement"
-  - "subsystem"
+- control-plane
+- governance-validator
+- agent-registry
+- blueprint-review-ui
+- lifecycle-management
+- policy-enforcement
+- subsystem
 prerequisites: []
 related:
-  - "Design Studio"
-  - "Governance-as-Code"
-  - "Agent Blueprint Package (ABP)"
-  - "Agent Lifecycle States"
+- 03-008
+- 03-002
+- 03-001
+- 03-005
 next_steps:
-  - "Writing Governance Policies"
-  - "Deploying Agents with Runtime Adapters"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  The Control Plane is the subsystem responsible for governance validation, lifecycle
+- 05-010
+- 04-003
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'The Control Plane is the subsystem responsible for governance validation, lifecycle
   management, and agent registry operations. It comprises three tightly integrated
-  components: the Governance Validator (which evaluates ABPs against enterprise
-  policies using a deterministic expression language), the Agent Registry (which
-  stores and versions ABPs with immutable audit trails), and the Blueprint Review UI
-  (which provides the human interface for approving or rejecting generated agents).
+  components: the Governance Validator (which evaluates ABPs against enterprise policies
+  using a deterministic expression language), the Agent Registry (which stores and
+  versions ABPs with immutable audit trails), and the Blueprint Review UI (which provides
+  the human interface for approving or rejecting generated agents).
+
+  '
 ---
 
-# Control Plane
+
+# Control Plane: Orchestration, Validation, and Review
 
 > **TL;DR:** The Control Plane is the subsystem responsible for governance validation, lifecycle management, and agent registry operations. It comprises three tightly integrated components: the Governance Validator (which evaluates ABPs against enterprise policies using a deterministic expression language), the Agent Registry (which stores and versions ABPs with immutable audit trails), and the Blueprint Review UI (which provides the human interface for approving or rejecting generated agents).
 

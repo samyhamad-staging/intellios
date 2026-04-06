@@ -22,7 +22,7 @@ tags:
   - "policy-validation"
   - "compliance"
   - "enterprise-controls"
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: "REST API for defining, managing, and applying enterprise governance policies. Create policy rules, validate blueprints, and retrieve detailed validation reports with violation details."
 ---
 

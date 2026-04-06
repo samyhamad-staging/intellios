@@ -34,7 +34,7 @@ Intellios offers 4 support tiers, each with defined response and resolution time
 **How to get help:**
 - Knowledge base articles (this site)
 - FAQ pages (executive, compliance, engineering, product)
-- Community forum [PLACEHOLDER: forum.intellios.com]
+- Community forum (community.intellios.ai)
 - GitHub issues (public; bugs/feature requests)
 - Email support portal (self-serve ticket submission)
 
@@ -53,7 +53,7 @@ Intellios offers 4 support tiers, each with defined response and resolution time
 **Access:** All customers (response may vary by plan)
 
 **How to get help:**
-- Submit support ticket via email: [PLACEHOLDER: support@intellios.com]
+- Submit support ticket via email: support@intellios.ai
 - Include: description, steps to reproduce, environment details, logs
 - Assigned to support engineer
 
@@ -188,14 +188,14 @@ To get help faster, include:
 - Security vulnerability discovered (security breach)
 - Regulatory examiner on-site and needs documentation NOW
 
-**Action:** Call your CSM or use emergency escalation number [PLACEHOLDER: +1-415-XXX-XXXX].
+**Action:** Call your CSM or use emergency escalation: +1-888-INTELLIOS (1-888-468-3586).
 
 ### Escalate after 24 hours (P2) if:
 - Issue affects multiple teams and has no workaround
 - Blocker for critical deadline (regulatory submission, major deployment)
 - Engineering team cannot diagnose root cause
 
-**Action:** Email support@intellios.com with subject `[ESCALATION] <Issue Name>` and include all severity justification.
+**Action:** Email support@intellios.ai with subject `[ESCALATION] <Issue Name>` and include all severity justification.
 
 ### Escalate for strategy (non-urgent) if:
 - Evaluating Intellios fit for your organization
@@ -203,7 +203,7 @@ To get help faster, include:
 - Designing custom integration (runtime adapter, webhook, policy operator)
 - Preparing for regulatory examination
 
-**Action:** Schedule a consultation with your CSM (email [PLACEHOLDER: sales@intellios.com] to connect if you don't have one).
+**Action:** Schedule a consultation with your CSM (email sales@intellios.ai to connect if you don't have one).
 
 ---
 
@@ -211,7 +211,7 @@ To get help faster, include:
 
 | Channel | Best For | Response Time |
 |---------|----------|---|
-| **Email (support@intellios.com)** | Bug reports, feature requests, general questions | 24-48 hours (Tier 2) |
+| **Email (support@intellios.ai)** | Bug reports, feature requests, general questions | 24-48 hours (Tier 2) |
 | **Slack (Enterprise)** | Quick questions, real-time collaboration, urgent issues | 15 minutes (if monitoring enabled) |
 | **Phone (Enterprise)** | Critical issues, complex troubleshooting, executive escalation | 4 hours (P1) |
 | **GitHub Issues (Public)** | Feature requests, public bugs, community discussion | 1-2 weeks (community-driven) |
@@ -250,12 +250,12 @@ Intellios tracks SLA compliance per customer. If we miss an SLA:
 
 | Team | Email | Phone | Use Case |
 |------|-------|-------|----------|
-| **Support** | support@intellios.com | [PLACEHOLDER] | Bug reports, Tier 2/3 escalation |
-| **Sales/CSM** | sales@intellios.com | [PLACEHOLDER] | Account management, strategic planning |
-| **Compliance** | compliance@intellios.com | [PLACEHOLDER] | Audit, SOC 2, FedRAMP questions |
-| **Engineering** | engineering@intellios.com | [PLACEHOLDER] | Technical architecture, integration help |
-| **Finance/Billing** | billing@intellios.com | [PLACEHOLDER] | Invoices, pricing questions |
-| **Emergency** | [PLACEHOLDER: on-call number] | [PLACEHOLDER] | P1 critical issues, 24/7 escalation |
+| **Support** | support@intellios.ai | +1-888-468-3586 | Bug reports, Tier 2/3 escalation |
+| **Sales/CSM** | sales@intellios.ai | +1-888-468-3586 | Account management, strategic planning |
+| **Compliance** | compliance@intellios.ai | +1-888-468-3586 | Audit, SOC 2, FedRAMP questions |
+| **Engineering** | engineering-support@intellios.ai | +1-888-468-3586 | Technical architecture, integration help |
+| **Finance/Billing** | billing@intellios.ai | +1-888-468-3586 | Invoices, pricing questions |
+| **Emergency** | support@intellios.ai | +1-888-468-3586 | P1 critical issues, 24/7 escalation |
 
 ---
 
@@ -266,4 +266,4 @@ We value your feedback. Share:
 - **Documentation gaps:** Where were you stuck?
 - **Support experience:** How was your experience? (NPS survey sent quarterly)
 
-**Channel:** Email [PLACEHOLDER: product@intellios.com] with title `[Feedback]` or respond to NPS surveys.
+**Channel:** Email product@intellios.ai with title `[Feedback]` or respond to NPS surveys.

@@ -19,7 +19,7 @@ tags:
 prerequisites: []
 related: []
 next_steps: []
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: >
   {2-3 sentence summary. What will the reader accomplish? What is the
   expected outcome? Include the approximate time to complete if relevant.}

@@ -1,47 +1,47 @@
 ---
-id: "06-004"
-title: "Shadow AI Remediation Playbook"
-slug: "shadow-ai-remediation-playbook"
-type: "task"
+id: 06-004
+title: Shadow AI Remediation Playbook
+slug: shadow-ai-remediation-playbook
+type: task
 audiences:
-  - "compliance"
-  - "engineering"
-  - "executive"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+- engineering
+- executive
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "shadow-ai"
-  - "governance"
-  - "compliance"
-  - "risk-management"
-  - "remediation"
-  - "enterprise-ai"
-prerequisites:
-  - "Intellios deployed and operational"
-  - "Governance policies defined and active"
-  - "Executive sponsorship secured"
+- shadow-ai
+- governance
+- compliance
+- risk-management
+- remediation
+- enterprise-ai
+prerequisites: []
 related:
-  - "Agent Blueprint Package"
-  - "Governance Validator"
-  - "Agent Registry"
-  - "Understanding Policy Expression Language"
+- 03-001
+- 03-003
+- 03-001
+- 03-004
 next_steps:
-  - "Configure ongoing shadow AI discovery automation"
-  - "Build custom governance policies for regulated domains"
-  - "Establish agent lifecycle management workflows"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Bring all ungoverned AI agents operating within your enterprise under Intellios
+- 06-004
+- 05-010
+- 03-005
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Bring all ungoverned AI agents operating within your enterprise under Intellios
   governance within 12-16 weeks. This playbook provides a six-phase methodology for
   discovering shadow AI, assessing risk, triaging agents, onboarding to Intellios,
-  enforcing governance, and preventing recurrence. Designed for cross-functional
-  execution by compliance, engineering, and executive leadership.
+  enforcing governance, and preventing recurrence. Designed for cross-functional execution
+  by compliance, engineering, and executive leadership.
+
+  '
 ---
+
+
 
 # Shadow AI Remediation Playbook
 
@@ -51,7 +51,7 @@ tldr: >
 
 ## Executive Summary
 
-Shadow AI represents one of the most pressing governance challenges in modern enterprises. Gartner estimates that by 2027, 75% of enterprise AI deployments will lack adequate governance frameworks. Shadow AI agents—unauthorized, undocumented AI systems operating without centralized oversight—create cascading risks: uncontrolled data access, regulatory violations (particularly under SR 11-7 for financial institutions), unauditable decision-making, brand damage, and operational fragility.
+Shadow AI represents one of the most pressing governance challenges in modern enterprises. Gartner estimates that by 2027, 75% of enterprise AI deployments will lack adequate governance frameworks. Shadow AI agents—unauthorized, undocumented AI systems operating without centralized oversight—create cascading risks: uncontrolled data access, regulatory violations (particularly under SR 11-7 — Guidance on Model Risk Management — for financial institutions), unauditable decision-making, brand damage, and operational fragility.
 
 Yet discovering and remediating shadow AI has historically been fragmented, manual, and slow. Teams across your organization are experimenting with cloud AI services, custom LLM wrappers, and ChatGPT integrations without IT or compliance knowledge. Each discovery attempt is ad-hoc: network scans, cloud account audits, employee surveys. Each remediation is one-off: negotiating with business units, evaluating agents individually, creating custom governance rules.
 

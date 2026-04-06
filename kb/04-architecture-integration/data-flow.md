@@ -1,45 +1,47 @@
 ---
-id: "04-002"
-title: "Data Flow"
-slug: "data-flow"
-type: "concept"
+id: 04-002
+title: Data Flow
+slug: data-flow
+type: concept
 audiences:
-  - "engineering"
-  - "architect"
-status: "published"
-version: "1.0.0"
-platform_version: "1.2.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- engineering
+- architect
+status: published
+version: 1.0.0
+platform_version: 1.2.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "architecture"
-  - "data-flow"
-  - "lifecycle"
-  - "workflow"
-  - "api"
-  - "state-management"
+- architecture
+- data-flow
+- lifecycle
+- workflow
+- api
+- state-management
 prerequisites:
-  - "Architecture Overview"
-  - "System Architecture"
-  - "Agent Blueprint Package"
+- 01-003
+- 04-001
+- 03-001
 related:
-  - "System Architecture"
-  - "Agent Lifecycle"
-  - "Runtime Adapter Pattern"
+- 04-001
+- 03-005
+- 04-003
 next_steps:
-  - "Database Schema"
-  - "API References"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Data flows through Intellios in six phases: Intake (user form + Claude interview),
+- 04-012
+- 04-006
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Data flows through Intellios in six phases: Intake (user form + Claude interview),
   Generation (intake_payload → ABP), Governance (ABP → validation report), Review
   (human approval/rejection), Versioning (immutable storage), and Deployment (ABP
   → cloud config). Each phase transforms data and stores it in PostgreSQL. Versioning
   is semantic; all historical versions retained. Deployment events webhook back for
   audit trail.
+
+  '
 ---
+
 
 # Data Flow
 

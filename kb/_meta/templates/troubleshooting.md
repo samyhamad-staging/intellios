@@ -20,7 +20,7 @@ tags:
 prerequisites: []
 related: []
 next_steps: []
-feedback_url: "[PLACEHOLDER]"
+feedback_url: "https://feedback.intellios.ai/kb"
 tldr: >
   {2-3 sentences. Describe the symptom, the most common cause, and the
   typical resolution path.}

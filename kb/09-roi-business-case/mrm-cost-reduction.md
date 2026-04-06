@@ -21,7 +21,7 @@ tldr: How Intellios reduces model risk management costs through automation and e
 
 # MRM Cost Reduction
 
-This article quantifies cost savings from automating model risk management (MRM) processes with Intellios.
+This article quantifies cost savings from automating Model Risk Management (MRM) processes with Intellios.
 
 ---
 

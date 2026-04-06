@@ -1,39 +1,45 @@
 ---
-id: "06-002"
-title: "Insurance Scenarios: Governance Patterns for Regulated Agents"
-slug: "insurance-scenarios"
-type: "concept"
+id: 06-002
+title: 'Insurance Scenarios: Governance Patterns for Regulated Agents'
+slug: insurance-scenarios
+type: concept
 audiences:
-  - "product"
-  - "compliance"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- product
+- compliance
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "insurance"
-  - "use-cases"
-  - "governance"
-  - "compliance"
-  - "regulations"
+- insurance
+- use-cases
+- governance
+- compliance
+- regulations
 prerequisites:
-  - "Agent Blueprint Package"
-  - "Governance-as-Code"
-  - "Agent Lifecycle"
+- 03-001
+- 03-002
+- 03-005
 related:
-  - "Healthcare Scenarios"
-  - "Governance Policy Guide"
-  - "Compliance Evidence Chain"
+- 06-003
+- 05-010
+- 03-007
 next_steps:
-  - "Building Your First Insurance Agent"
-  - "Configuring Governance Policies"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Insurance enterprises deploy AI agents for claims processing, underwriting, policy recommendations, fraud detection, and customer onboarding. Each agent must comply with state insurance regulations, NAIC guidelines, and insurer-specific governance policies. Intellios patterns ensure agents capture audit evidence, enforce approval workflows, and remain compliant throughout their lifecycle.
+- 06-002
+- 05-010
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Insurance enterprises deploy AI agents for claims processing, underwriting,
+  policy recommendations, fraud detection, and customer onboarding. Each agent must
+  comply with state insurance regulations, NAIC guidelines, and insurer-specific governance
+  policies. Intellios patterns ensure agents capture audit evidence, enforce approval
+  workflows, and remain compliant throughout their lifecycle.
+
+  '
 ---
+
 
 # Insurance Scenarios: Governance Patterns for Regulated Agents
 

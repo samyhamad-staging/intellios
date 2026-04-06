@@ -1,47 +1,50 @@
 ---
-id: "02-002"
-title: "Compliance Onboarding: 30-Minute Framework Setup"
-slug: "compliance-onboarding"
-type: "task"
+id: 02-002
+title: 'Compliance Onboarding: 30-Minute Framework Setup'
+slug: compliance-onboarding
+type: task
 audiences:
-  - "compliance"
-  - "risk"
-  - "governance"
-status: "published"
-version: "1.0.0"
-platform_version: "1.2.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+- risk
+- governance
+status: published
+version: 1.0.0
+platform_version: 1.2.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "quick-start"
-  - "compliance"
-  - "onboarding"
-  - "governance"
-  - "regulatory-framework"
-  - "policy-authoring"
-  - "sr-11-7"
+- quick-start
+- compliance
+- onboarding
+- governance
+- regulatory-framework
+- policy-authoring
+- sr-11-7
 prerequisites:
-  - "SR 11-7 Guidance on Model Risk Management"
-  - "OCC Guidance on AI in Banking"
-  - "EU AI Act (if applicable)"
+- 05-001
+- 05-002
+- 05-003
 related:
-  - "SR 11-7 Compliance Mapping"
-  - "Policy Expression Language"
-  - "Policy Authoring Guide"
-  - "Governance Validator"
+- 05-001
+- 03-004
+- 05-010
+- 03-003
 next_steps:
-  - "Advanced Policy Authoring"
-  - "Custom Governance Framework Configuration"
-  - "Compliance Evidence Chain Documentation"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Map your regulatory framework to Intellios, seed four baseline policies, create a custom policy using
-  the deterministic policy expression language, validate a sample blueprint, review the compliance
-  evidence chain, and set up your review workflow. 30 minutes. Outcome: Your governance posture is
-  configured, auditable, and compliant with SR 11-7, OCC, and EU AI Act requirements.
+- 05-010
+- 05-010
+- 05-008
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Map your regulatory framework to Intellios, seed four baseline policies, create
+  a custom policy using the deterministic policy expression language, validate a sample
+  blueprint, review the compliance evidence chain, and set up your review workflow.
+  30 minutes. Outcome: Your governance posture is configured, auditable, and compliant
+  with SR 11-7, OCC, and EU AI Act requirements.
+
+  '
 ---
+
 
 # Compliance Onboarding: 30-Minute Framework Setup
 
@@ -589,6 +592,20 @@ CSV, or PDF format.
 **Q: Can we integrate Intellios evidence chains with our existing compliance systems (COSO, audit tools)?**
 A: Yes. Intellios generates machine-readable evidence in JSON and CSV. Most firms integrate via API calls or
 scheduled exports. We have reference integrations available; ask your solutions architect.
+
+---
+
+## Verify Your Success
+
+After completing this guide, you should be able to confirm:
+
+1. **Governance policies are active** — Navigate to Governance > Policies and verify at least one policy is in "active" status
+2. **Audit trail is capturing events** — Check the audit log and confirm recent intake or validation events appear
+3. **You can locate** the SR 11-7 compliance mapping and understand how Intellios maps to each requirement
+4. **Evidence export works** — Generate a test compliance evidence package and verify it downloads successfully
+5. **You know your escalation path** — You can identify who to contact for governance questions and how to file a compliance concern
+
+If any verification step fails, see [Escalation Paths](../10-faq-troubleshooting/escalation-paths.md) for support contacts.
 
 ---
 

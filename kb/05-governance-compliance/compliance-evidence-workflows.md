@@ -1,40 +1,46 @@
 ---
-id: "05-009"
-title: "Compliance Evidence Workflows: Preparing for Regulatory Examination"
-slug: "compliance-evidence-workflows"
-type: "task"
+id: 05-009
+title: 'Compliance Evidence Workflows: Preparing for Regulatory Examination'
+slug: compliance-evidence-workflows
+type: task
 audiences:
-  - "compliance"
-status: "published"
-version: "1.0.0"
-platform_version: "1.0.0"
-created: "2026-04-05"
-updated: "2026-04-05"
-author: "Intellios"
+- compliance
+status: published
+version: 1.0.0
+platform_version: 1.0.0
+created: '2026-04-05'
+updated: '2026-04-05'
+author: Intellios
 reviewers: []
 tags:
-  - "compliance"
-  - "evidence"
-  - "regulatory-examination"
-  - "sr-11-7"
-  - "model-risk-assessment"
-  - "documentation"
-prerequisites:
-  - "Intellios deployed and operational"
-  - "At least one approved agent in the Registry"
-  - "Access to Intellios API or Admin Dashboard"
-  - "Compliance team role or Administrator access"
+- compliance
+- evidence
+- regulatory-examination
+- sr-11-7
+- model-risk-assessment
+- documentation
+prerequisites: []
 related:
-  - "Audit Trail Generation"
-  - "SR 11-7 Compliance Mapping"
-  - "Model Inventory Management"
+- 05-008
+- 05-001
+- 05-005
 next_steps:
-  - "Prepare for Regulatory Examination"
-  - "Schedule Automated Compliance Reports"
-feedback_url: "[PLACEHOLDER]"
-tldr: >
-  Regulatory examinations require comprehensive evidence packages demonstrating governance compliance. Intellios generates compliance evidence deterministically from stored artifacts: model inventory, technical documentation (ABP), governance validation reports, approval chains, and audit trails. This task walks compliance teams through assembling evidence packages for specific agents, generating model risk assessment reports, creating executive compliance dashboards, scheduling automated reports, and preparing examination response packages. Complete this task to have examination-ready compliance evidence for any agent.
+- 05-008
+- 05-008
+feedback_url: https://feedback.intellios.ai/kb
+tldr: 'Regulatory examinations require comprehensive evidence packages demonstrating
+  governance compliance. Intellios generates compliance evidence deterministically
+  from stored artifacts: model inventory, technical documentation (ABP), governance
+  validation reports, approval chains, and audit trails. This task walks compliance
+  teams through assembling evidence packages for specific agents, generating model
+  risk assessment reports, creating executive compliance dashboards, scheduling automated
+  reports, and preparing examination response packages. Complete this task to have
+  examination-ready compliance evidence for any agent.
+
+  '
 ---
+
+
 
 # Compliance Evidence Workflows: Preparing for Regulatory Examination
 
