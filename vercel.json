@@ -1,4 +1,6 @@
 {
+  "framework": "nextjs",
+  "rootDirectory": "src",
   "crons": [
     {
       "path": "/api/cron/review-reminders",
