@@ -13,7 +13,10 @@ import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tooltip } from "@/components/ui/tooltip";
 import { TableToolbar } from "@/components/ui/table-toolbar";
-import { Bot, ChevronRight, Copy, Inbox, GitBranch, Search } from "lucide-react";
+import { Button } from "@/components/catalyst/button";
+import { AgentComparison } from "@/components/registry/agent-comparison";
+import { WorkflowCreationWizard } from "@/components/workflow/creation-wizard";
+import { Bot, ChevronRight, Copy, Inbox, GitBranch, Search, CheckCircle2, AlertTriangle, XCircle, HelpCircle, Plus, Users, ArrowLeftRight } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,6 +31,7 @@ interface RegistryEntry {
 interface WorkflowEntry {
   id: string; workflowId: string; version: string; name: string;
   description: string; status: string; createdAt: string; updatedAt: string;
+  definition?: { agents?: { agentId: string; role: string; required: boolean }[] };
 }
 
 type ArtifactTab = "agents" | "workflows";
@@ -71,21 +75,31 @@ function healthLabel(color: HealthColor, violationCount: number | null, warningC
 }
 
 const HEALTH_CLASSES: Record<HealthColor, string> = {
-  green: "bg-emerald-500",
-  amber: "bg-amber-400",
-  red:   "bg-red-500",
-  gray:  "bg-text-tertiary",
+  green: "text-emerald-500",
+  amber: "text-amber-400",
+  red:   "text-red-500",
+  gray:  "text-text-tertiary",
+};
+
+const HEALTH_ICONS: Record<HealthColor, React.ComponentType<{ size?: number; className?: string }>> = {
+  green: CheckCircle2,
+  amber: AlertTriangle,
+  red: XCircle,
+  gray: HelpCircle,
 };
 
 function HealthPulse({ violationCount, warningCount }: { violationCount: number | null; warningCount: number | null }) {
   const color = deriveHealth(violationCount, warningCount);
   const label = healthLabel(color, violationCount, warningCount);
+  const IconComponent = HEALTH_ICONS[color];
   return (
     <span
       title={label}
       aria-label={label}
-      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${HEALTH_CLASSES[color]}`}
-    />
+      className="inline-flex items-center justify-center shrink-0"
+    >
+      <IconComponent size={14} className={HEALTH_CLASSES[color]} />
+    </span>
   );
 }
 
@@ -133,6 +147,38 @@ export default function RegistryPage() {
   const wflowsError = wflowsQueryError ? (wflowsQueryError as Error).message : null;
 
   const [cloningId, setCloningId] = useState<string | null>(null);
+
+  // ── Agent comparison mode ─────────────────────────────────────────────────
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedForCompare, setSelectedForCompare] = useState<Set<string>>(new Set());
+
+  const toggleCompareSelection = useCallback((agentId: string) => {
+    setSelectedForCompare((prev) => {
+      const next = new Set(prev);
+      if (next.has(agentId)) {
+        next.delete(agentId);
+      } else if (next.size < 3) {
+        next.add(agentId);
+      }
+      return next;
+    });
+  }, []);
+
+  const comparisonAgents = useMemo(() =>
+    agents.filter((a) => selectedForCompare.has(a.agentId)).map((a) => ({
+      agentId: a.agentId,
+      name: a.name,
+      status: a.status,
+      version: a.version,
+      tags: a.tags,
+      violationCount: a.violationCount,
+      warningCount: a.warningCount,
+    })),
+    [agents, selectedForCompare]
+  );
+
+  // ── New Orchestration wizard state ─────────────────────────────────────────
+  const [showNewOrchestration, setShowNewOrchestration] = useState(false);
 
   // ── Shared filter state — initialized from ?q= and ?status= URL params ──
   const [searchQuery, setSearchQueryState] = useState<string>(() => searchParams.get("q") ?? "");
@@ -218,17 +264,54 @@ export default function RegistryPage() {
       <div className="mb-6 flex items-start justify-between">
         <div>
           <Heading level={1}>Registry</Heading>
-          <p className="mt-0.5 text-sm text-text-secondary">Manage deployed agents and workflows</p>
+          <p className="mt-0.5 text-sm text-text-secondary">Manage deployed agents and orchestrations</p>
         </div>
+        {activeTab === "workflows" && (
+          <button
+            onClick={() => setShowNewOrchestration(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-xs font-medium text-white hover:bg-violet-700 transition-colors shadow-sm"
+          >
+            <Plus size={14} />
+            New Orchestration
+          </button>
+        )}
       </div>
 
       {/* Artifact-type tabs */}
       <Tabs value={activeTab} onValueChange={(v) => switchTab(v as ArtifactTab)} className="mb-5">
         <TabsList>
           <TabsTrigger value="agents"><Bot size={14} /> Agents</TabsTrigger>
-          <TabsTrigger value="workflows"><GitBranch size={14} /> Workflows</TabsTrigger>
+          <TabsTrigger value="workflows"><GitBranch size={14} /> Orchestrations</TabsTrigger>
         </TabsList>
       </Tabs>
+
+      {/* Compare mode toggle — agents tab only */}
+      {activeTab === "agents" && agents.length >= 2 && (
+        <div className="mb-3 flex items-center justify-end gap-2">
+          <button
+            onClick={() => {
+              setCompareMode(!compareMode);
+              if (compareMode) setSelectedForCompare(new Set());
+            }}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              compareMode
+                ? "bg-violet-100 text-violet-700 border border-violet-200"
+                : "border border-border text-text-secondary hover:bg-surface-raised hover:text-text"
+            }`}
+          >
+            <ArrowLeftRight size={12} />
+            {compareMode ? `Comparing (${selectedForCompare.size}/3)` : "Compare Agents"}
+          </button>
+          {compareMode && selectedForCompare.size > 0 && (
+            <button
+              onClick={() => setSelectedForCompare(new Set())}
+              className="text-xs text-text-tertiary hover:text-text"
+            >
+              Clear selection
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Search + filter toolbar */}
       <div className="mb-6">
@@ -246,7 +329,7 @@ export default function RegistryPage() {
           ]}
           onFilterClick={(key) => setStatusFilter(key === "_all_" ? "" : key)}
           resultCount={!loading && filtered.length > 0 ? filtered.length : undefined}
-          resultLabel={activeTab === "agents" ? "agent" : "workflow"}
+          resultLabel={activeTab === "agents" ? "agent" : "orchestration"}
         />
       </div>
 
@@ -267,7 +350,8 @@ export default function RegistryPage() {
           {agents.length === 0 && (
             <EmptyState
               icon={Inbox}
-              heading="No agents in the registry yet"
+              heading="No agents yet"
+              subtext="Deployed agents appear here once approved blueprints are pushed to production."
               action={
                 <div className="flex flex-col items-center gap-1">
                   <Link href="/intake" className="text-xs text-violet-600 hover:text-violet-700">Start an intake session →</Link>
@@ -293,10 +377,24 @@ export default function RegistryPage() {
             <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
               {filteredAgents.map((agent, i) => (
                 <div key={agent.agentId} className={`${i > 0 ? "border-t border-border" : ""}`}>
-                  <Link href={`/registry/${agent.agentId}`} className="flex items-center gap-4 px-5 py-4 interactive-row">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-text-tertiary">
-                      <Bot size={15} />
-                    </div>
+                  <Link href={compareMode ? "#" : `/registry/${agent.agentId}`} onClick={compareMode ? (e) => { e.preventDefault(); toggleCompareSelection(agent.agentId); } : undefined} className="flex items-center gap-4 px-5 py-4 interactive-row">
+                    {compareMode ? (
+                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                        selectedForCompare.has(agent.agentId)
+                          ? "bg-violet-100 text-violet-600 border-2 border-violet-400"
+                          : "bg-surface-muted text-text-tertiary border-2 border-transparent"
+                      }`}>
+                        {selectedForCompare.has(agent.agentId) ? (
+                          <CheckCircle2 size={15} />
+                        ) : (
+                          <Bot size={15} />
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-text-tertiary">
+                        <Bot size={15} />
+                      </div>
+                    )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
                         <HealthPulse violationCount={agent.violationCount} warningCount={agent.warningCount} />
@@ -347,15 +445,23 @@ export default function RegistryPage() {
           {wflows.length === 0 && (
             <EmptyState
               icon={Inbox}
-              heading="No workflows yet"
-              subtext="Create a workflow to orchestrate multiple agents into a pipeline."
+              heading="No orchestrations yet"
+              subtext="Create an orchestration to compose multiple agents into a coordinated pipeline."
+              action={
+                <button
+                  onClick={() => setShowNewOrchestration(true)}
+                  className="text-xs text-violet-600 hover:text-violet-700"
+                >
+                  Create your first orchestration →
+                </button>
+              }
             />
           )}
 
           {wflows.length > 0 && filteredWflows.length === 0 && (
             <EmptyState
               icon={Search}
-              heading="No workflows match your filters"
+              heading="No orchestrations match your filters"
               action={
                 <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="text-xs text-violet-600 hover:text-violet-700 underline">
                   Clear filters
@@ -388,6 +494,12 @@ export default function RegistryPage() {
                         <p className="mt-0.5 text-xs text-text-tertiary truncate">{wf.description}</p>
                       )}
                     </div>
+                    {wf.definition?.agents && wf.definition.agents.length > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-xs text-violet-700 shrink-0" title={`${wf.definition.agents.length} participating agent${wf.definition.agents.length !== 1 ? "s" : ""}`}>
+                        <Users size={11} />
+                        {wf.definition.agents.length}
+                      </span>
+                    )}
                     <ChevronRight size={14} className="text-text-disabled shrink-0" />
                   </Link>
                 </div>
@@ -398,6 +510,47 @@ export default function RegistryPage() {
       )}
 
       </div>{/* end aria-live region */}
+
+      {/* Agent Comparison Panel */}
+      {compareMode && comparisonAgents.length >= 2 && (
+        <AgentComparison
+          agents={comparisonAgents}
+          onClose={() => {
+            setCompareMode(false);
+            setSelectedForCompare(new Set());
+          }}
+          onRemoveAgent={(id) => {
+            setSelectedForCompare((prev) => {
+              const next = new Set(prev);
+              next.delete(id);
+              return next;
+            });
+          }}
+        />
+      )}
+
+      {/* Guided Workflow Creation Wizard */}
+      <WorkflowCreationWizard
+        open={showNewOrchestration}
+        onClose={() => setShowNewOrchestration(false)}
+        onComplete={async (definition) => {
+          const res = await fetch("/api/workflows", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: definition.name,
+              description: definition.description,
+              definition,
+            }),
+          });
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error ?? "Failed to create orchestration");
+          }
+          const { workflow } = await res.json();
+          router.push(`/registry/workflow/${workflow.id}`);
+        }}
+      />
     </div>
   );
 }

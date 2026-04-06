@@ -168,7 +168,7 @@ export default function ExecutiveDashboardPage() {
     <div className="max-w-screen-2xl mx-auto w-full px-6 py-6 space-y-6">
       {/* Page header */}
       <div>
-        <Heading level={1}>Dashboard</Heading>
+        <Heading level={1}>Analytics</Heading>
         <p className="mt-0.5 text-sm text-text-secondary">Platform analytics and performance metrics</p>
       </div>
 

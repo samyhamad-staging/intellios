@@ -2,7 +2,9 @@
 
 import { use, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { UIMessage } from "ai";
+import { toast } from "sonner";
 import { ChatContainer } from "@/components/chat/chat-container";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { IntakeProgress } from "@/components/intake/intake-progress";
@@ -14,7 +16,7 @@ import { computeDomainProgress } from "@/lib/intake/domains";
 import { computeReadinessScore } from "@/lib/intake/readiness";
 import { Heading } from "@/components/catalyst/heading";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
-import { ChevronRight, LayoutGrid } from "lucide-react";
+import { ChevronRight, LayoutGrid, Save } from "lucide-react";
 
 /** Format a relative time string from an ISO date */
 function formatRelativeTime(iso: string): string {
@@ -155,6 +157,10 @@ export default function IntakeSessionPage({
     const label = DOMAIN_NAV_LABELS[domainKey] ?? domainKey;
     setDomainNavMessage({ text: `Let's focus on ${label}.`, key: Date.now() });
     setPendingActiveDomain(domainKey); // Optimistically highlight the clicked chip immediately
+  }
+
+  function handleSaveAndContinueLater() {
+    toast.success("Session saved. You can continue anytime.");
   }
 
   // Load session status + message history + contributions on mount
@@ -511,14 +517,22 @@ export default function IntakeSessionPage({
 
   return (
     <div className="flex h-screen flex-col">
-      {/* Header — Breadcrumb */}
-      <header className="border-b border-border bg-surface px-4 py-2">
+      {/* Header — Breadcrumb + Save button */}
+      <header className="border-b border-border bg-surface px-4 py-2 flex items-center justify-between">
         <Breadcrumb
           items={[
             { label: "Intake Sessions", href: "/intake" },
             { label: agentDisplayName || "New session" },
           ]}
         />
+        <Link
+          href="/intake"
+          onClick={handleSaveAndContinueLater}
+          className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:border-border-strong hover:text-text transition-colors"
+        >
+          <Save className="h-3.5 w-3.5" />
+          <span>Save & Exit</span>
+        </Link>
       </header>
 
       {/* Subheader — Domain Progress Strip + Actions */}

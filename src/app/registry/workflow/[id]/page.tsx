@@ -8,7 +8,8 @@ import { queryKeys } from "@/lib/query/keys";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Heading, Subheading } from "@/components/catalyst/heading";
-import { ArrowLeft, GitBranch, Users, ArrowRight, Database, AlertTriangle } from "lucide-react";
+import { InlineAlert } from "@/components/catalyst/alert";
+import { ArrowLeft, GitBranch, Users, ArrowRight, Database, AlertTriangle, Download, Info } from "lucide-react";
 import type { WorkflowDefinition } from "@/lib/types/workflow";
 
 // ─── Workflow Flow Diagram ────────────────────────────────────────────────────
@@ -80,7 +81,7 @@ function WorkflowFlowDiagram({ definition }: { definition: WorkflowDefinition })
           <line x1="6" y1="12" x2="10" y2="12" /><line x1="14" y1="12" x2="18" y2="12" />
           <line x1="12" y1="7" x2="12" y2="10" /><line x1="12" y1="14" x2="12" y2="17" />
         </svg>
-        Flow
+        Orchestration Flow
       </Subheading>
       <div className="overflow-x-auto">
         <div className="flex items-start gap-0 min-w-max">
@@ -341,6 +342,15 @@ export default function WorkflowDetailPage() {
               {transitionMutation.isPending ? "Updating…" : "Reset to Draft"}
             </button>
           )}
+          {workflow.status === "approved" && (
+            <a
+              href={`/api/workflows/${id}/export/code`}
+              className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition-colors inline-flex items-center gap-1"
+            >
+              <Download size={11} />
+              Export Code
+            </a>
+          )}
           {workflow.status !== "deprecated" && (
             <button
               onClick={handleDeprecate}
@@ -353,13 +363,46 @@ export default function WorkflowDetailPage() {
         </div>
       </div>
 
-      {/* Flow Diagram */}
+      {/* Orchestration Definition Banner */}
+      <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+        <div className="flex items-start gap-2">
+          <Info size={14} className="mt-0.5 shrink-0 text-blue-600" />
+          <div className="text-sm text-blue-800">
+            <span className="font-medium">Orchestration Definition</span> — This workflow composes{" "}
+            <strong>{def.agents?.length ?? 0} agent{(def.agents?.length ?? 0) !== 1 ? "s" : ""}</strong>{" "}
+            with {def.handoffRules?.length ?? 0} handoff rule{(def.handoffRules?.length ?? 0) !== 1 ? "s" : ""}{" "}
+            and {def.sharedContext?.length ?? 0} shared context field{(def.sharedContext?.length ?? 0) !== 1 ? "s" : ""}.
+            Workflows are published definitions — they describe agent coordination but are not deployed to a runtime target.
+          </div>
+        </div>
+      </div>
+
+      {/* Export Definition Button */}
+      <div className="mb-6 flex justify-end">
+        <button
+          onClick={() => {
+            const blob = new Blob([JSON.stringify(def, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${workflow.name.replace(/\s+/g, "-").toLowerCase()}-v${workflow.version}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-raised hover:text-text transition-colors"
+        >
+          <Download size={12} />
+          Export Definition
+        </button>
+      </div>
+
+      {/* Orchestration Flow */}
       <WorkflowFlowDiagram definition={def} />
 
       {/* Participating Agents */}
       <section className="mb-6">
         <Subheading level={2} className="mb-3 flex items-center gap-2">
-          <Users size={14} /> Agents ({def.agents?.length ?? 0})
+          <Users size={14} /> Participating Agents ({def.agents?.length ?? 0})
         </Subheading>
         {(!def.agents || def.agents.length === 0) ? (
           <p className="text-sm text-text-tertiary">No agents defined.</p>
@@ -391,7 +434,7 @@ export default function WorkflowDetailPage() {
       {/* Handoff Rules */}
       <section className="mb-6">
         <Subheading level={2} className="mb-3 flex items-center gap-2">
-          <ArrowRight size={14} /> Handoff Rules ({def.handoffRules?.length ?? 0})
+          <ArrowRight size={14} /> Transition Rules ({def.handoffRules?.length ?? 0})
         </Subheading>
         {(!def.handoffRules || def.handoffRules.length === 0) ? (
           <p className="text-sm text-text-tertiary">No handoff rules defined.</p>
@@ -418,8 +461,13 @@ export default function WorkflowDetailPage() {
       {/* Shared Context */}
       <section>
         <Subheading level={2} className="mb-3 flex items-center gap-2">
-          <Database size={14} /> Shared Context Fields ({def.sharedContext?.length ?? 0})
+          <Database size={14} /> Shared Context ({def.sharedContext?.length ?? 0} field{(def.sharedContext?.length ?? 0) !== 1 ? "s" : ""})
         </Subheading>
+        {def.sharedContext && def.sharedContext.length > 0 && (
+          <p className="mb-3 text-xs text-text-tertiary">
+            These fields are accessible to all participating agents during orchestration, enabling data flow between pipeline stages.
+          </p>
+        )}
         {(!def.sharedContext || def.sharedContext.length === 0) ? (
           <p className="text-sm text-text-tertiary">No shared context fields.</p>
         ) : (

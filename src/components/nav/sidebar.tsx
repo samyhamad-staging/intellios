@@ -21,12 +21,13 @@ import {
   Webhook,
   LogOut,
   Search,
-  Building2,
   Globe,
   Package,
   Plug,
   Key,
   FileText,
+  Monitor,
+  Calendar,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import NotificationBell from "@/components/nav/notification-bell";
@@ -84,12 +85,12 @@ function getNavSections(role: string | null | undefined): NavSection[] {
 
   const sections: NavSection[] = [
     {
-      label: "Workspace",
+      label: "Build",
       items: [
         { label: "Overview", href: "/", icon: LayoutDashboard },
-        ...(isArchitect ? [{ label: "Design Studio", href: "/intake", icon: MessageSquare }] : []),
+        ...(isArchitect ? [{ label: "Create Agent", href: "/intake", icon: MessageSquare }] : []),
         ...(isArchitect ? [{ label: "Blueprints", href: "/blueprints", icon: FileText }] : []),
-        { label: "Pipeline", href: "/pipeline", icon: Kanban },
+        { label: "Agent Pipeline", href: "/pipeline", icon: Kanban },
         { label: "Registry", href: "/registry", icon: Library },
         { label: "Templates", href: "/templates", icon: Package },
       ],
@@ -103,7 +104,14 @@ function getNavSections(role: string | null | undefined): NavSection[] {
         ...(isReviewer ? [{ label: "Review Queue", href: "/review", icon: ClipboardList }] : []),
         ...(isCompliance || isViewer ? [{ label: "Policies", href: "/governance", icon: Shield }] : []),
         ...(isCompliance || isViewer ? [{ label: "Compliance", href: "/compliance", icon: CheckSquare }] : []),
-        ...(isReviewer ? [{ label: "Governor", href: "/governor", icon: Building2 }] : []),
+        // Governor sub-items (only for reviewer/compliance roles)
+        ...(isReviewer ? [{ label: "Approvals", href: "/governor/approvals", icon: ClipboardList }] : []),
+        ...(isReviewer ? [{ label: "Policies", href: "/governor/policies", icon: Shield }] : []),
+        ...(isReviewer ? [{ label: "Compliance", href: "/governor/compliance", icon: CheckSquare }] : []),
+        ...(isReviewer ? [{ label: "Calendar", href: "/governor/calendar", icon: Calendar }] : []),
+        ...(isReviewer ? [{ label: "Fleet", href: "/governor/fleet", icon: Monitor }] : []),
+        ...(isReviewer ? [{ label: "Audit", href: "/governor/audit", icon: ScrollText }] : []),
+        ...(isReviewer ? [{ label: "Executive", href: "/governor/executive", icon: BarChart3 }] : []),
       ],
     });
   }
@@ -115,7 +123,7 @@ function getNavSections(role: string | null | undefined): NavSection[] {
   if (isCompliance || isViewer) opsItems.push({ label: "Audit Trail", href: "/audit", icon: ScrollText });
 
   if (opsItems.length > 0) {
-    sections.push({ label: "Operations", items: opsItems });
+    sections.push({ label: "Operate", items: opsItems });
   }
 
   // Admin settings — collapsed into a single expandable group
@@ -174,6 +182,12 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
       className="flex h-screen w-60 shrink-0 flex-col overflow-hidden"
       style={{ backgroundColor: "var(--sidebar-bg)", borderRight: "1px solid var(--sidebar-border)" }}
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-1.5 focus:text-sm focus:text-primary-fg focus:outline-none"
+      >
+        Skip to content
+      </a>
       {/* Brand */}
       <div
         className="flex h-14 shrink-0 items-center gap-2.5 px-4"
@@ -209,15 +223,15 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
       <div className="px-3 pt-3 pb-1">
         <button
           onClick={() => setPaletteOpen(true)}
-          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors"
+          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors hover:opacity-100"
           style={{
             backgroundColor: "var(--sidebar-active-bg)",
             color: "var(--sidebar-text)",
-            opacity: 0.7,
+            opacity: 0.8,
           }}
         >
           <Search size={12} className="shrink-0" />
-          <span className="flex-1 text-left">Search…</span>
+          <span className="flex-1 text-left">Search actions, pages, agents…</span>
           <kbd className="rounded border px-1 py-0.5 text-2xs font-medium" style={{ borderColor: "var(--sidebar-border)", opacity: 0.6 }}>⌘K</kbd>
         </button>
       </div>

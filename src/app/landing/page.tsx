@@ -39,6 +39,12 @@ function useScrollReveal() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // Respect prefers-reduced-motion — skip animations for users who request it
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) {
+      el.querySelectorAll(".reveal").forEach((t) => t.classList.add("revealed"));
+      return;
+    }
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -97,17 +103,17 @@ const GOVERNANCE_GAP_STATS = [
 const PILLARS = [
   {
     icon: Settings,
-    title: "Design-Time Governance",
-    copy: "Author policies, configure guardrails, and enforce approval workflows before agents go live. Shift governance left — into the design phase where it's cheapest to get right and most expensive to miss.",
+    title: "Catch policy violations before agents go live",
+    copy: "Define your governance policies once. Intellios enforces them on every agent, automatically, before anything reaches production. Zero agents go live without passing your compliance checks.",
   },
   {
     icon: GitBranch,
-    title: "Lifecycle Management",
+    title: "Auto-generate your SR 11-7 audit trail",
     copy: "Version-control every agent configuration. Detect drift continuously. Generate compliance evidence automatically, mapped to SR 11-7 and MRM frameworks — so your audit trail writes itself.",
   },
   {
     icon: Activity,
-    title: "Observability & Audit",
+    title: "Be audit-ready before auditors arrive",
     copy: "Monitor every agent decision in real time. Trace the full chain from input to action. When auditors arrive, your MRM documentation is already generated, already current, already waiting.",
   },
 ];
@@ -185,7 +191,14 @@ const FOOTER_LINKS = {
     { label: "Why Intellios", href: "#why-intellios" },
   ],
   Company: [
+    { label: "About", href: "#" },
     { label: "Contact Sales", href: "mailto:sales@intellios.io" },
+    { label: "Careers", href: "#" },
+  ],
+  Legal: [
+    { label: "Privacy Policy", href: "#" },
+    { label: "Terms of Service", href: "#" },
+    { label: "Security", href: "#" },
   ],
 };
 
@@ -237,9 +250,10 @@ export default function LandingPage() {
               {(open) => (
                 <button
                   onClick={open}
-                  className="hidden sm:inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
+                  className="inline-flex rounded-lg bg-indigo-600 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
                 >
-                  Request Early Access
+                  <span className="sm:hidden">Get Access</span>
+                  <span className="hidden sm:inline">Request Early Access</span>
                 </button>
               )}
             </RequestAccessModal>
@@ -359,37 +373,42 @@ export default function LandingPage() {
           </div>
 
           <h1 className="reveal text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-6xl lg:text-7xl">
-            Don&apos;t just build AI agents.{" "}
+            Every AI agent in your enterprise&mdash;{" "}
             <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
-              Govern them.
+              governed, auditable, compliant.
             </span>
           </h1>
 
           <p className="reveal mt-6 text-lg leading-8 font-medium text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
-            The control plane that makes every AI agent policy-compliant from design through production.
+            Embed policy enforcement, automated audit trails, and continuous compliance into every AI agent&mdash;regardless of which cloud runs it.
           </p>
           <p className="reveal mt-3 text-base leading-7 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-            Runtime-agnostic. Audit-ready by default. Built for regulated industries.
+            Designed to reduce MRM audit preparation from 12 weeks to 2. Works with AWS, Azure, and whatever comes next.
           </p>
 
-          <div className="reveal mt-10 flex items-center justify-center gap-4 flex-wrap">
-            <RequestAccessModal>
-              {(open) => (
-                <button
-                  onClick={open}
-                  className="btn-primary rounded-xl px-7 py-3.5 text-sm font-semibold flex items-center gap-2"
-                >
-                  Request Early Access
-                  <ArrowRight size={16} />
-                </button>
-              )}
-            </RequestAccessModal>
-            <Link
-              href="#pillars"
-              className="rounded-xl border border-gray-300 dark:border-gray-700 px-7 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
-            >
-              See How It Works
-            </Link>
+          <div className="reveal mt-10 flex flex-col items-center gap-3">
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <RequestAccessModal>
+                {(open) => (
+                  <button
+                    onClick={open}
+                    className="btn-primary rounded-xl px-7 py-3.5 text-sm font-semibold flex items-center gap-2"
+                  >
+                    Request Early Access
+                    <ArrowRight size={16} />
+                  </button>
+                )}
+              </RequestAccessModal>
+              <Link
+                href="#pillars"
+                className="rounded-xl border border-gray-300 dark:border-gray-700 px-7 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
+              >
+                See How It Works
+              </Link>
+            </div>
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              We respond within one business day. No commitment required.
+            </p>
           </div>
 
           <div className="reveal mt-8 flex flex-wrap items-center justify-center gap-2">
@@ -776,23 +795,26 @@ export default function LandingPage() {
       <section className="reveal border-t border-indigo-100 dark:border-indigo-500/10 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-500/5 dark:to-violet-500/5 py-14 px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
-            Ready to see how it works for your team?
+            Your compliance team could stop scrambling.
           </p>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            We&apos;re onboarding design partners from regulated industries. Tell us about your use case.
+            Currently onboarding design partners from financial services, healthcare, and regulated enterprise.
           </p>
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col items-center gap-2">
             <RequestAccessModal>
               {(open) => (
                 <button
                   onClick={open}
                   className="btn-primary rounded-xl px-7 py-3 text-sm font-semibold inline-flex items-center gap-2"
                 >
-                  Request Early Access
+                  Tell Us Your Use Case
                   <ArrowRight size={16} />
                 </button>
               )}
             </RequestAccessModal>
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              Takes 30 seconds. We respond within one business day.
+            </p>
           </div>
         </div>
       </section>
@@ -919,27 +941,7 @@ export default function LandingPage() {
                 </span>
               ))}
             </div>
-            <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
-              Security Certifications — In Progress
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-2.5">
-              {[
-                { label: "SOC 2 Type II", target: "Q3 2026" },
-                { label: "ISO 27001", target: "Q4 2026" },
-                { label: "FedRAMP Ready", target: "2027" },
-              ].map((badge) => (
-                <span
-                  key={badge.label}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-700/50 border-dashed px-3.5 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400"
-                >
-                  <ShieldCheck size={12} className="text-gray-400 dark:text-gray-500" />
-                  {badge.label}
-                  <span className="text-[10px] font-normal text-gray-400 dark:text-gray-500">
-                    (Target: {badge.target})
-                  </span>
-                </span>
-              ))}
-            </div>
+            {/* Security certifications roadmap moved to FAQ — listing in-progress certs here inadvertently highlights gaps */}
           </div>
         </div>
       </section>
@@ -986,10 +988,17 @@ export default function LandingPage() {
           {/* Intellios-specific ROI argument */}
           <div className="reveal mt-8 rounded-xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/5 p-6 text-center">
             <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-relaxed">
-              At $670K additional breach cost per shadow AI incident, governance pays for itself on the first prevented event. Factor in regulatory penalties that routinely reach eight figures, and the question isn&apos;t whether you can afford governance — it&apos;s whether you can afford not to have it.
+              One shadow AI breach costs $670K more than a standard incident. One regulatory penalty can reach eight figures&mdash;Citibank paid $75M for <em>inadequate progress</em> on risk management. Intellios is designed to prevent both. The math isn&apos;t close.
             </p>
             <p className="mt-2 text-xs text-gray-400 dark:text-gray-500 italic">
               Derived from IBM Cost of a Data Breach Report 2025 and OCC enforcement action data cited above.
+            </p>
+          </div>
+
+          {/* Why Now — urgency trigger */}
+          <div className="reveal mt-6 text-center">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              The EU AI Act compliance deadlines aren&apos;t waiting for your governance roadmap. If you have more than 5 AI agents in production&mdash;or plan to by Q3&mdash;you&apos;re past the point where manual governance scales.
             </p>
           </div>
         </div>
@@ -1015,29 +1024,34 @@ export default function LandingPage() {
 
         <div className="reveal mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-            Govern your AI agents before your regulators do.
+            Your regulators are asking about your AI agents. Have answers ready.
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-300">
-            Every ungoverned agent is an audit finding waiting to happen, a breach vector waiting to be exploited, and a compliance gap waiting to be discovered. Close the gap now.
+            We&apos;re onboarding design partners from financial services, healthcare, and federal. If you&apos;re governing AI agents&mdash;or need to start&mdash;tell us about your use case.
           </p>
-          <div className="mt-10 flex items-center justify-center gap-4 flex-wrap">
-            <RequestAccessModal>
-              {(open) => (
-                <button
-                  onClick={open}
-                  className="rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50 transition-colors flex items-center gap-2"
-                >
-                  Request Early Access
-                  <ArrowRight size={16} />
-                </button>
-              )}
-            </RequestAccessModal>
-            <a
-              href="mailto:sales@intellios.io?subject=Intellios%20Sales%20Inquiry"
-              className="rounded-xl border border-white/20 px-7 py-3.5 text-sm font-semibold text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-colors"
-            >
-              Talk to Sales
-            </a>
+          <div className="mt-10 flex flex-col items-center gap-3">
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <RequestAccessModal>
+                {(open) => (
+                  <button
+                    onClick={open}
+                    className="rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50 transition-colors flex items-center gap-2"
+                  >
+                    Apply for Design Partnership
+                    <ArrowRight size={16} />
+                  </button>
+                )}
+              </RequestAccessModal>
+              <a
+                href="mailto:sales@intellios.io?subject=Intellios%20Sales%20Inquiry"
+                className="rounded-xl border border-white/20 px-7 py-3.5 text-sm font-semibold text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-colors"
+              >
+                Talk to Sales
+              </a>
+            </div>
+            <p className="text-xs text-gray-400/80">
+              No commitment required. We respond to every inquiry within one business day.
+            </p>
           </div>
 
           {/* Supporting context */}

@@ -93,7 +93,7 @@ export default async function IntakeSessionsPage() {
             <Inbox size={28} className="mb-3 text-text-tertiary" />
             <Subheading level={2} className="mb-1 text-text">No intake sessions yet</Subheading>
             <p className="mb-6 max-w-xs text-xs text-text-secondary">
-              Each agent starts with an intake conversation where you define its purpose, capabilities, and governance requirements.
+              Intake sessions capture your requirements for a new AI agent. Create one to start designing.
             </p>
             <NewIntakeButton className="inline-flex items-center gap-1.5 text-sm font-medium" />
           </div>

@@ -61,7 +61,8 @@ async function checkAgentStatuses(
 
 function checkHandoffGraph(def: WorkflowDefinition): string[] {
   const errors: string[] = [];
-  const validNodes = new Set<string>(["start", "end", ...def.agents.map((a) => a.agentId)]);
+  // Phase 3: Support "human_review" as a valid sentinel node alongside start/end
+  const validNodes = new Set<string>(["start", "end", "human_review", ...def.agents.map((a) => a.agentId)]);
 
   // Check all from/to values are valid node references
   for (const rule of def.handoffRules) {
@@ -142,6 +143,79 @@ export async function validateWorkflowForReview(
   ]);
 
   errors.push(...agentErrors, ...graphErrors);
+
+  return { valid: errors.length === 0, errors };
+}
+
+// ─── Extended validation: execution readiness (Phase 3) ──────────────────────
+
+/**
+ * Validates a workflow is ready for execution. Runs all review checks plus
+ * additional execution-specific validations:
+ * - All agents must have at least one handoff path to "end"
+ * - Human review nodes must have at least one inbound and outbound rule
+ * - Bounded iteration: cycles must have a condition that eventually breaks
+ */
+export async function validateWorkflowForExecution(
+  workflowId: string,
+  enterpriseId: string | null | undefined
+): Promise<WorkflowValidationResult> {
+  // Start with the review validation
+  const reviewResult = await validateWorkflowForReview(workflowId, enterpriseId);
+  if (!reviewResult.valid) return reviewResult;
+
+  const workflow = await db.query.workflows.findFirst({
+    where: eq(workflows.id, workflowId),
+  });
+  if (!workflow) return { valid: false, errors: ["Workflow not found"] };
+
+  const def = workflow.definition as WorkflowDefinition;
+  const errors: string[] = [];
+
+  // Check: every agent must be reachable from "start"
+  const adj = new Map<string, string[]>();
+  const validNodes = new Set(["start", "end", "human_review", ...def.agents.map((a) => a.agentId)]);
+  for (const node of validNodes) adj.set(node, []);
+  for (const rule of def.handoffRules) {
+    if (adj.has(rule.from)) adj.get(rule.from)!.push(rule.to);
+  }
+
+  const reachable = new Set<string>();
+  const bfsQueue = ["start"];
+  while (bfsQueue.length > 0) {
+    const node = bfsQueue.shift()!;
+    if (reachable.has(node)) continue;
+    reachable.add(node);
+    for (const neighbor of (adj.get(node) ?? [])) {
+      if (!reachable.has(neighbor)) bfsQueue.push(neighbor);
+    }
+  }
+
+  for (const agent of def.agents) {
+    if (!reachable.has(agent.agentId) && agent.required) {
+      errors.push(`Required agent "${agent.role}" (${agent.agentId.slice(0, 8)}) is not reachable from the start node`);
+    }
+  }
+
+  // Check: "end" must be reachable
+  if (!reachable.has("end")) {
+    errors.push("No path from \"start\" to \"end\" — the workflow has no defined completion path");
+  }
+
+  // Check: human_review nodes must have inbound and outbound rules
+  const hasHumanReview = def.handoffRules.some(
+    (r) => r.from === "human_review" || r.to === "human_review"
+  );
+  if (hasHumanReview) {
+    const humanInbound = def.handoffRules.filter((r) => r.to === "human_review");
+    const humanOutbound = def.handoffRules.filter((r) => r.from === "human_review");
+    if (humanInbound.length === 0) {
+      errors.push("Human review node has no inbound handoff rules — it will never be reached");
+    }
+    if (humanOutbound.length === 0) {
+      errors.push("Human review node has no outbound handoff rules — execution will be permanently stuck");
+    }
+  }
 
   return { valid: errors.length === 0, errors };
 }

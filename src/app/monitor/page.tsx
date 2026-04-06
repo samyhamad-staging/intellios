@@ -9,7 +9,7 @@ import { StatusBadge } from "@/components/registry/status-badge";
 import { TableToolbar, Pagination } from "@/components/ui/table-toolbar";
 import { Heading } from "@/components/catalyst/heading";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { Activity, RefreshCw, Cpu, CheckCircle2, SearchX } from "lucide-react";
+import { Activity, RefreshCw, Cpu, CheckCircle2, SearchX, Clock, AlertCircle } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
@@ -682,21 +682,24 @@ function BedrockStatusBadge({ status }: { status: BedrockAgentStatus }) {
   if (status === "PREPARED") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-        ● PREPARED
+        <CheckCircle2 size={14} />
+        PREPARED
       </span>
     );
   }
   if (status === "PREPARING" || status === "CREATING") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
-        ◌ {status}
+        <Clock size={14} />
+        {status}
       </span>
     );
   }
   if (status === "FAILED" || status === "UNREACHABLE") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
-        ✕ {status}
+        <AlertCircle size={14} />
+        {status}
       </span>
     );
   }

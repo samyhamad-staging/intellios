@@ -2,7 +2,58 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-04-04 (Session 126 — W3-01 Dark Mode) — **Wave 3 UX Audit 36/36 COMPLETE**
+**Last updated:** 2026-04-06 (Session 131 — Security Remediation Phase 2)
+
+---
+
+## ✓ Session 131 Complete (2026-04-06) — Security Remediation Phase 2 — Complete CC Resolution
+
+Completed comprehensive security remediation of all actionable cross-cutting concerns from the 7-phase code review. ~50 files modified, 5 new files created, 4 new test files.
+
+**Security Fixes:**
+- **CC-3 (Input Validation)**: ✅ All routes now use `parseBody` + Zod (last straggler: SSO PUT fixed)
+- **CC-4 (Audit Logging)**: ✅ 45+ mutation routes across 3 priority tiers now have audit logging
+- **CC-7 (Secrets at Rest)**: ✅ AES-256-GCM encryption for webhook secrets via `SECRETS_ENCRYPTION_KEY`
+- **CC-9 (RLS Context Leak)**: ✅ `withTenantScopeGuarded` with auto-cleanup, 9 routes migrated
+- **CC-6 (Event Reliability)**: 🔲 Post-MVP (requires durable queue infrastructure)
+
+**Test Coverage:**
+- `crypto-encrypt.test.ts` — 13 tests for AES-256-GCM module
+- `ssrf-validation.test.ts` — 20+ tests for PRIVATE_HOST_RE
+- `open-redirect.test.ts` — 15+ tests for callbackUrl sanitization
+- `rls-context-guard.test.ts` — 6 tests for withTenantScopeGuarded
+
+---
+
+## ✓ Session 128 Complete (2026-04-05) — Agent Team Formation Audit — Remaining Items
+
+Implemented the final outstanding items from the 12-pass audit. 4 files created, 4 modified. 0 deps, 0 migrations.
+
+- **Guided Workflow Creation Wizard** — 5-step dialog (basics+templates, agent selection, handoff rules with auto-scaffolding, shared context, review) replacing the simple creation dialog. Template selection pre-populates all steps.
+- **Inline ABP Field Editing** — Click-to-edit component (7 field types: text, textarea, number, boolean, select, tags, json) with PATCH API (`/api/blueprints/[id]/fields`). Draft-only gate preserves governance audit trail. Integrated into BlueprintView for identity, instructions, and constraints sections.
+
+**Component Status:**
+- Workflow Template Library: ✅ MVP (6 static templates + API)
+- Agent Comparison: ✅ MVP (multi-select, side-by-side panel)
+- Multi-Agent Code Export: ✅ MVP (TypeScript generation + API)
+- ABP v1.3.0 Interface: ✅ Schema + changelog
+- Execution Engine: 🔲 Schema + types + API surface (orchestrator TODO — H3 milestone)
+- Workflow Governance: ✅ MVP (5 policies + drift detection)
+- Visual Workflow Builder: ✅ MVP (pure React+CSS/SVG canvas, drag-and-drop, bezier edges)
+- Guided Creation Wizard: ✅ MVP (5-step dialog with template support)
+- Inline ABP Editing: ✅ MVP (7 field types, PATCH API, draft-only)
+
+---
+
+## ✓ Session 127 Complete (2026-04-05) — Agent Team Formation Audit — Full Implementation
+
+Full implementation of all recommendations from the 12-pass agent team capability audit. 10 files created, 12 modified. 0 deps, 0 migrations.
+
+**Phase 1 — Immediate Quick Wins (7 items):** Glossary (6 workflow terms), workflow detail page (Orchestration Definition banner, Export Definition, improved labels), registry (tab rename to "Orchestrations", New Orchestration dialog, agent count badges), agent detail (orchestration dependency strip), lifecycle controls (deprecation impact warning), dashboard (contextual orchestration prompt), help system (workflow FAQ + suggested questions).
+
+**Phase 2 — Short-term Features (4 items):** Workflow template library (6 enterprise patterns: Sequential Pipeline, Classifier-Router, Supervisor-Delegate, Parallel Analysis, Human-in-the-Loop, Escalation Chain), agent comparison mode (multi-select up to 3, side-by-side panel), multi-agent code export (TypeScript orchestration file via Anthropic SDK), ABP v1.3.0 I/O contracts (inputs, outputs, errors).
+
+**Phase 3 — Medium-term Capabilities (5 items):** Workflow execution DB schema (workflow_executions + workflow_execution_steps + workflow_templates tables), execution type system (statuses, events, extended node types, failure policies), execution API (POST start + GET list), workflow governance (5 built-in policies + drift detection), extended validation (human_review nodes, execution readiness checks).
 
 ---
 

@@ -2,6 +2,38 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 132 — 2026-04-06: Closing the Loop
+
+The remediation plan from the code review had 41 findings across three timeframes. Sessions 130-131 attacked the most critical ones — race conditions, encryption, SSRF, audit logging, RLS context leaks. Session 132 is the methodical verification pass: go through every single finding in the IMMEDIATE and SHORT-TERM buckets and confirm each one is actually fixed.
+
+Six of seven IMMEDIATE findings were already resolved. The seventh — P2-SEC-003 — turned out to be the blueprint fields route accepting raw `request.json()` with only manual string validation. The fix adds a Zod schema with a regex whitelist for field path characters and an explicit refine() rejecting `__proto__`, `constructor`, and `prototype` path segments. This is the kind of vulnerability that only matters in a platform where users can edit arbitrary nested JSON paths — which is exactly what the inline ABP field editor does.
+
+The SHORT-TERM sweep found three LLM-calling endpoints without rate limiting. The review-brief, suggest-fix, and stakeholder-chat routes all hit Claude for expensive inference. Without rate limiting, a bad actor (or a buggy client) could run up significant API costs. The fix is simple — 10 req/min for generation endpoints, 30 req/min for chat streaming — but the finding highlights a pattern: every time someone adds a new AI-powered endpoint, rate limiting should be part of the template, not an afterthought.
+
+The parseBody standardization (P2-SEC-007) is the most boring and most important change in this session. Seven routes still used raw `request.json()`. Four had Zod schemas but called `.parse()` manually instead of going through `parseBody()`. Three had no schema at all. After this session, every API route in the codebase uses the same input validation pipeline: `parseBody(request, ZodSchema)` returning a discriminated union. This means consistent error formatting, consistent type safety, and one place to add input-level concerns (size limits, logging, rate limiting by payload shape) in the future.
+
+The remediation plan's IMMEDIATE and SHORT-TERM sections are now complete, with two intentional deferrals: P1-SEC-009 (step-up authentication, which requires UX design work) and the durable webhook queue (which requires infrastructure that doesn't exist yet). The MEDIUM-TERM items — database schema hardening, CSP nonces, test coverage expansion, telemetry caching — remain as the next frontier, but none of them block deployment.
+
+---
+
+## Sessions 130–131 — 2026-04-05/06: The Security Reckoning
+
+Intellios had accumulated 130 sessions of feature work — intake engine, generation pipeline, governance validator, agent registry, monitoring, workflows, deployment. The codebase had grown to 110+ API routes, 27 UI components, a full design token system, and 3 waves of UX polish. But nobody had stepped back and asked: "if this shipped to a regulated enterprise tomorrow, what would break?"
+
+A 7-phase code review answered that question bluntly. 56+ findings across 5 severity levels. Race conditions in auth flows. Timing-safe comparisons missing on secret validation. SSRF validation on POST but not PATCH. Client-supplied security headers passing straight through middleware. Webhook secrets stored in plaintext while API keys were properly hashed. Audit logging on some mutation routes but not others. RLS context leaking across pooled database connections.
+
+The remediation was systematic. Phase 1 fixed the criticals: transaction wrapping for race conditions, header stripping in middleware, `timingSafeEqual` everywhere secrets are compared, rate limiting on public endpoints, SSRF validation on all webhook URL mutations. Phase 2 addressed the cross-cutting concerns — the ones that couldn't be fixed by patching individual routes.
+
+The most interesting architectural fix was `withTenantScopeGuarded`. The original `withTenantScope` set a PostgreSQL session variable (`set_config('app.current_enterprise_id', ...)`) for row-level security policies. Session-level means it persists on the database connection. With connection pooling, that means one request's tenant context could leak to the next request on the same connection. The fix wraps the handler in a try/finally that clears the context on exit. Simple, but the kind of thing that only matters when you have multiple tenants and a pool — which is exactly where Intellios is headed.
+
+The audit logging push was the largest single change: 45+ mutation routes now log who did what, when, to which entity, in which enterprise. The pattern is deliberately non-blocking (try/catch around each audit insert) so a logging failure never breaks the primary operation. For a governance platform, the audit trail isn't a nice-to-have — it's the product.
+
+The encryption module for webhook secrets (`src/lib/crypto/encrypt.ts`) uses AES-256-GCM with a storage format (`enc:v1:<iv>:<ciphertext>:<tag>`) that is version-prefixed for future algorithm migration. It transparently handles legacy plaintext values, so existing deployments don't need a migration script — new secrets are encrypted, old ones decrypt to themselves.
+
+After 131 sessions, Intellios has shifted from "does it work?" to "does it work safely?" That question will keep recurring. But the infrastructure for answering it — audit logging, input validation, tenant isolation, secret management, rate limiting — is now in place.
+
+---
+
 ## Session 126 — 2026-04-04: The Last Wave
 
 Dark mode has sat at the bottom of the Wave 3 tracker since the audit was created. It is the one item that touches everything — every surface, every border, every text colour, every semantic status signal — which is why it was deferred until the token system was stable. That stability has been earned over 36 sessions. Today it pays off.

@@ -29,3 +29,9 @@ Canonical definitions for all project terms. Use these exact terms in all docume
 | **Review Queue** | The list of ABPs currently in in_review status, accessible at /review. Entry point for human reviewers. |
 | **Studio** | Shorthand for the Blueprint Studio — the /blueprints/[id] page where designers preview and refine a generated ABP before submitting for review. |
 | **OQ** | Open Question. A tracked unresolved decision recorded in docs/open-questions.md with an OQ-NNN identifier. |
+| **Workflow** | An orchestration artifact that composes multiple agents into a coordinated pipeline with defined handoff rules and shared context. Workflows are published (not deployed to a runtime target). |
+| **Orchestration Definition** | The structured specification within a Workflow that declares which agents participate, their roles, handoff conditions, priority ordering, and shared context fields. |
+| **Handoff Rule** | A directed edge in a Workflow graph specifying a transition from one agent (or the "start" sentinel) to another, with a condition expression and numeric priority. |
+| **Shared Context** | A set of named, typed fields that are accessible to all agents within a Workflow, enabling data flow between pipeline stages. |
+| **Workflow Agent Role** | The role label assigned to an agent within a Workflow, describing its function in the orchestration (e.g., "Classifier", "Summarizer", "Reviewer"). |
+| **Orchestration Pattern** | A reusable topology for composing agents — e.g., sequential pipeline, fan-out/fan-in, human-in-the-loop, supervisor-delegate. |

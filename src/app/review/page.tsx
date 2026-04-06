@@ -310,11 +310,7 @@ export default function ReviewQueuePage() {
         <EmptyState
           icon={CheckCircle}
           heading="Review queue is clear"
-          subtext={
-            userRole === "admin"
-              ? "No blueprints are currently in review across the enterprise."
-              : "No blueprints are currently awaiting your review."
-          }
+          subtext="Blueprints submitted for review will appear here. Nothing needs your attention right now."
           action={
             <div className="flex flex-col items-center gap-2">
               {userRole === "admin" && (

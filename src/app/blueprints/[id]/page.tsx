@@ -2,6 +2,8 @@
 
 import { use, useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
+import { Wand2 } from "lucide-react";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
 import { CompanionChat } from "@/components/blueprint/companion-chat";
 import { Heading, Subheading } from "@/components/catalyst/heading";
@@ -185,6 +187,9 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
   // Quality gate — advisory warning when overall score < threshold
   const QUALITY_GATE_THRESHOLD = 3.0; // out of 5.0
   const [qualityScore, setQualityScore] = useState<number | null>(null);
+
+  // "Fix All Violations" state
+  const [fixingViolations, setFixingViolations] = useState(false);
   const [qualityGateLoaded, setQualityGateLoaded] = useState(false);
 
   const [ownershipOpen, setOwnershipOpen] = useState(false);
@@ -543,6 +548,34 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
     setAcknowledgedRuleIds((prev) => new Set([...prev, ruleId]));
   }, []);
 
+  const handleFixAllViolations = useCallback(async () => {
+    if (!validationReport || validationReport.violations.length < 2) return;
+    setFixingViolations(true);
+    try {
+      const violations = validationReport.violations;
+      for (const violation of violations) {
+        try {
+          await fetch(`/api/blueprints/${id}/suggest-fix`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ruleId: violation.ruleId,
+              policyId: violation.policyId,
+              field: violation.field,
+            }),
+          });
+        } catch {
+          // Continue with next violation even if one fails
+        }
+      }
+      toast.success(`Fixes generated for ${violations.length} violations`);
+    } catch (err) {
+      toast.error("Failed to generate fixes");
+    } finally {
+      setFixingViolations(false);
+    }
+  }, [validationReport, id]);
+
   // ── Derived state ──────────────────────────────────────────────────────────
   const sections = getSections(abp);
   const filledCount = sections.filter((s) => s.filled).length;
@@ -780,7 +813,13 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
           )}
           {abp && (
             <div id="blueprint-content">
-              <BlueprintView abp={abp} />
+              <BlueprintView
+                abp={abp}
+                blueprintId={id}
+                onFieldSaved={(fieldPath, value, updatedAbp) => {
+                  setAbp(updatedAbp);
+                }}
+              />
             </div>
           )}
         </main>
@@ -1001,6 +1040,29 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                   </span>
                 )}
               </div>
+              {/* Fix All Violations button — shown when there are 2+ violations */}
+              {validationReport.violations.length >= 2 && (
+                <button
+                  onClick={handleFixAllViolations}
+                  disabled={fixingViolations}
+                  className="mb-3 flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
+                >
+                  {fixingViolations ? (
+                    <>
+                      <svg className="h-3.5 w-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <span>Generating fixes…</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="h-3.5 w-3.5" />
+                      <span>Fix All Violations</span>
+                    </>
+                  )}
+                </button>
+              )}
               <div className="space-y-2">
                 {validationReport.violations.map((v, i) => {
                   const isAck = acknowledgedRuleIds.has(v.ruleId);

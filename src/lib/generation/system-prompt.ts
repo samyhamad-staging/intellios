@@ -88,15 +88,26 @@ function buildContextClassificationBlock(
 
   const dataClassification = dataSensitivityToDataClassification(context.dataSensitivity);
 
+  // P4-SEC-001 FIX: Sanitize user-supplied context values before interpolating
+  // into the LLM prompt to prevent prompt injection attacks.
+  const sanitize = (input: string): string =>
+    input
+      .replace(/[<>]/g, "") // Strip XML/HTML-like tags
+      .replace(/\n{3,}/g, "\n\n") // Collapse excessive newlines
+      .slice(0, 500); // Limit length
+
+  const sanitizeArray = (arr: string[]): string =>
+    arr.map((s) => sanitize(s)).join(", ") || "none";
+
   const lines: string[] = [
     "",
     "## Agent Design Context",
     "",
-    `Purpose: ${context.agentPurpose}`,
-    `Deployment: ${context.deploymentType}`,
-    `Data Sensitivity: ${context.dataSensitivity} → set ownership.dataClassification to "${dataClassification}"`,
-    `Regulatory Scope: ${context.regulatoryScope.join(", ") || "none"}`,
-    `Integrations: ${context.integrationTypes.join(", ") || "none"}`,
+    `Purpose: ${sanitize(context.agentPurpose)}`,
+    `Deployment: ${sanitize(context.deploymentType)}`,
+    `Data Sensitivity: ${sanitize(context.dataSensitivity)} → set ownership.dataClassification to "${dataClassification}"`,
+    `Regulatory Scope: ${sanitizeArray(context.regulatoryScope)}`,
+    `Integrations: ${sanitizeArray(context.integrationTypes)}`,
   ];
 
   if (classification) {

@@ -10,7 +10,11 @@ import { Heading, Subheading } from "@/components/catalyst";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  // P5-REDIRECT-001 FIX: Validate callbackUrl is a relative path to prevent open redirect
+  const rawCallbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const callbackUrl = rawCallbackUrl.startsWith("/") && !rawCallbackUrl.startsWith("//")
+    ? rawCallbackUrl
+    : "/";
   const justRegistered = searchParams.get("registered") === "1";
 
   const [email, setEmail] = useState("");

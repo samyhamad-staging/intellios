@@ -23,7 +23,7 @@ import { RegulatoryPanel } from "@/components/registry/regulatory-panel";
 import { VersionDiff } from "@/components/registry/version-diff";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, GitBranch } from "lucide-react";
 import type { ApprovalChainStep, ApprovalStepRecord, EnterpriseSettings } from "@/lib/settings/types";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
@@ -165,6 +165,8 @@ export default function AgentDetailPage({
   const [reviewCompleteError, setReviewCompleteError] = useState<string | null>(null);
   // Status context bar — inline transition loading state
   const [contextBarLoading, setContextBarLoading] = useState(false);
+  // Orchestration dependency tracking
+  const [referencingWorkflows, setReferencingWorkflows] = useState<{ id: string; name: string; status: string }[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -208,6 +210,16 @@ export default function AgentDetailPage({
 
   useEffect(() => {
     load();
+    // Fetch workflows that reference this agent (for dependency indicator)
+    fetch("/api/workflows")
+      .then((r) => r.json())
+      .then((data) => {
+        const refs = (data.workflows ?? []).filter((w: { definition?: { agents?: { agentId: string }[] } }) =>
+          w.definition?.agents?.some((a: { agentId: string }) => a.agentId === agentId)
+        ).map((w: { id: string; name: string; status: string }) => ({ id: w.id, name: w.name, status: w.status }));
+        setReferencingWorkflows(refs);
+      })
+      .catch(() => {});
     // Fetch current user for SOD check and role-gating
     fetch("/api/me")
       .then((r) => r.json())
@@ -639,6 +651,7 @@ export default function AgentDetailPage({
               agentId={latest.agentId}
               currentStatus={latest.status}
               onStatusChange={handleStatusChange}
+              referencingWorkflows={referencingWorkflows}
             />
           )}
 
@@ -717,6 +730,26 @@ export default function AgentDetailPage({
           { label: latest.name ?? `Agent ${latest.agentId.slice(0, 8)}` },
         ]} />
       </div>
+
+      {/* Orchestration Dependency Indicator */}
+      {referencingWorkflows.length > 0 && (
+        <div className="border-b border-violet-100 bg-violet-50 px-6 py-2.5">
+          <div className="flex items-center gap-2 text-xs text-violet-800">
+            <GitBranch size={12} className="shrink-0" />
+            <span>
+              <span className="font-medium">Referenced in {referencingWorkflows.length} orchestration{referencingWorkflows.length !== 1 ? "s" : ""}</span>
+              {" — "}
+              {referencingWorkflows.slice(0, 3).map((w, i) => (
+                <span key={w.id}>
+                  {i > 0 && ", "}
+                  <Link href={`/registry/workflow/${w.id}`} className="underline hover:text-violet-900">{w.name}</Link>
+                </span>
+              ))}
+              {referencingWorkflows.length > 3 && <span> and {referencingWorkflows.length - 3} more</span>}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* AgentCore Deployment Details Strip */}
       {latest.deploymentTarget === "agentcore" && latest.deploymentMetadata && (

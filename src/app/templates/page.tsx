@@ -82,7 +82,7 @@ export default function TemplateMarketplacePage() {
         <div>
           <div className="flex items-center gap-2">
             <Package className="h-5 w-5 text-primary" />
-            <Heading level={1}>Template Marketplace</Heading>
+            <Heading level={1}>Agent Templates</Heading>
           </div>
           <p className="mt-0.5 text-sm text-text-secondary">Pre-built agent templates for common use cases</p>
         </div>

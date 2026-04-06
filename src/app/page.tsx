@@ -177,7 +177,7 @@ export default async function Home() {
         {/* Header */}
         <div className="mb-6 flex items-start justify-between">
           <div>
-            <Heading level={1}>My Work</Heading>
+            <Heading level={1}>My Agents</Heading>
             <p className="mt-0.5 text-sm text-text-secondary">Design, refine, and submit agent blueprints for review.</p>
           </div>
           <NewIntakeButton className="inline-flex items-center gap-1.5" />
@@ -294,12 +294,10 @@ export default async function Home() {
         <div className="mb-6 flex items-start justify-between">
           <div>
             <Heading level={1}>
-              {role === "compliance_officer" ? "Governance & Compliance" : "Review Queue"}
+              {role === "compliance_officer" ? "Governance & Compliance" : "Review Overview"}
             </Heading>
             <p className="mt-0.5 text-sm text-text-secondary">
-              {inReviewAgents.length > 0
-                ? `${inReviewAgents.length} agent${inReviewAgents.length === 1 ? "" : "s"} pending review`
-                : "Queue is clear"}
+              Your review assignments and governance alerts.
             </p>
           </div>
           <Button href="/review" color="indigo">

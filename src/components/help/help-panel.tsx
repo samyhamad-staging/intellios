@@ -66,6 +66,14 @@ const SUGGESTED_QUESTIONS: Record<string, Record<string, string[]>> = {
       "What is the difference between designer and reviewer?",
     ],
   },
+  "/registry": {
+    architect: [
+      "How do I create a new orchestration?",
+      "What is the difference between an agent and an orchestration?",
+      "How do handoff rules work in orchestrations?",
+      "What agents need to be approved before I can orchestrate?",
+    ],
+  },
   "/": {
     architect: [
       "How do I start creating a new agent?",

@@ -79,11 +79,11 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
           className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 px-4 backdrop-blur-sm"
           onClick={(e) => { if (e.target === e.currentTarget) close(); }}
         >
-          <div className="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
+          <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-8 shadow-2xl">
             {/* Close button */}
             <button
               onClick={close}
-              className="absolute right-4 top-4 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+              className="absolute right-4 top-4 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
               aria-label="Close"
             >
               <X size={16} />
@@ -92,14 +92,14 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
             {submitted ? (
               /* ── Success state ── */
               <div className="flex flex-col items-center gap-4 py-6 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100">
-                  <CheckCircle size={32} className="text-indigo-600" />
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-500/15">
+                  <CheckCircle size={32} className="text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">You&apos;re on the list</h2>
-                  <p className="mt-2 text-sm text-gray-500">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">You&apos;re on the list</h2>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     We review each request and typically reach out within one business day. Watch
-                    your inbox at <span className="font-medium text-gray-700">{email}</span>.
+                    your inbox at <span className="font-medium text-gray-700 dark:text-gray-200">{email}</span>.
                   </p>
                 </div>
                 <button
@@ -113,8 +113,8 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
               /* ── Form state ── */
               <>
                 <div className="mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Request early access</h2>
-                  <p className="mt-1.5 text-sm text-gray-500">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Join the design partner program</h2>
+                  <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
                     We&apos;re onboarding design partners from financial services, healthcare, and
                     regulated enterprise. Tell us about your use case and we&apos;ll be in touch.
                   </p>
@@ -130,7 +130,7 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@company.com"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-colors"
+                      className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-indigo-400 dark:focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-500/30 transition-colors"
                     />
                   </FormField>
 
@@ -143,7 +143,7 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
                       value={company}
                       onChange={(e) => setCompany(e.target.value)}
                       placeholder="Acme Corp"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-colors"
+                      className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-indigo-400 dark:focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-500/30 transition-colors"
                     />
                   </FormField>
 
@@ -153,7 +153,7 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
                       id="ra-role"
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-colors"
+                      className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:border-indigo-400 dark:focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-500/30 transition-colors"
                     >
                       <option value="">Select…</option>
                       {ROLE_OPTIONS.map((o) => (
@@ -191,9 +191,9 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
                     )}
                   </button>
 
-                  <p className="text-center text-xs text-gray-400">
+                  <p className="text-center text-xs text-gray-400 dark:text-gray-500">
                     Already have an account?{" "}
-                    <a href="/login" className="text-indigo-600 hover:text-indigo-800 underline">
+                    <a href="/login" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 underline">
                       Sign in →
                     </a>
                   </p>

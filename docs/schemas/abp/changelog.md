@@ -1,5 +1,21 @@
 # ABP Schema Changelog
 
+## v1.3.0 — 2026-04-05
+
+**Adds agent I/O contract for orchestration interoperability.**
+
+New optional top-level `interface` block enabling formal input/output contracts for agents participating in multi-agent workflows:
+
+- `inputs` (array) — Declared input parameters the agent accepts from orchestration context. Each input has: name (string), type (enum: string/number/boolean/json/array), description, required (boolean), optional JSON Schema for complex validation.
+- `outputs` (array) — Declared output fields the agent produces, written back to shared context. Each output has: name, type, description, guaranteed (boolean — always produced vs. conditional), optional JSON Schema.
+- `errors` (array) — Error conditions the agent may raise. Each error has: code (machine-readable), description, recoverable (boolean — whether orchestrator can retry/reroute).
+
+The `interface` block is fully optional — agents without it remain valid and can participate in workflows without formal contract validation. When present, the workflow validation system can verify that producer outputs match consumer inputs across handoff rules.
+
+Backwards-compatible minor version bump. No migration required for existing ABPs.
+
+---
+
 ## v1.1.0 — 2026-03-19
 
 **Adds execution configuration and explicit version field.**

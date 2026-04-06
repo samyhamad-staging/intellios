@@ -237,7 +237,7 @@ export default function CompliancePage() {
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <CheckSquare size={20} className="text-violet-600" />
-            <Heading level={1}>Compliance Command Center</Heading>
+            <Heading level={1}>Compliance Dashboard</Heading>
           </div>
           <p className="mt-0.5 text-sm text-text-secondary">Compliance posture and regulatory evidence</p>
         </div>

@@ -30,6 +30,7 @@ export interface RegistryEntry {
 export interface WorkflowEntry {
   id: string; workflowId: string; version: string; name: string;
   description: string; status: string; createdAt: string; updatedAt: string;
+  definition?: { agents?: { agentId: string; role: string; required: boolean }[] };
 }
 
 export const fetchAgents = () =>

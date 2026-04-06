@@ -70,6 +70,7 @@ const DANGER_MESSAGES: Partial<Record<Status, { title: string; description: stri
       "Deprecating this blueprint marks it as no longer active. Agents running on it may need to be migrated. This action cannot be undone.",
     confirm: "Deprecate",
     confirmColor: "red",
+    // Note: workflow impact warning is dynamically appended in the dialog render
   },
   rejected: {
     title: "Reject this blueprint?",
@@ -100,6 +101,8 @@ interface LifecycleControlsProps {
   agentId: string;
   currentStatus: string;
   onStatusChange: (newStatus: Status) => void;
+  /** Orchestrations that reference this agent — used for deprecation impact warning */
+  referencingWorkflows?: { id: string; name: string; status: string }[];
 }
 
 export function LifecycleControls({
@@ -107,6 +110,7 @@ export function LifecycleControls({
   agentId,
   currentStatus,
   onStatusChange,
+  referencingWorkflows = [],
 }: LifecycleControlsProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -288,7 +292,19 @@ export function LifecycleControls({
       <Dialog open={pendingAction !== null} onClose={() => setPendingAction(null)}>
         <DialogTitle>{confirmMsg?.title}</DialogTitle>
         <DialogDescription>{confirmMsg?.description}</DialogDescription>
-        <DialogBody />
+        <DialogBody>
+          {pendingAction === "deprecated" && referencingWorkflows.length > 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+              <p className="font-medium">⚠ Orchestration Impact</p>
+              <p className="mt-1 text-xs">
+                This agent is referenced in {referencingWorkflows.length} orchestration{referencingWorkflows.length !== 1 ? "s" : ""}:{" "}
+                {referencingWorkflows.slice(0, 3).map((w) => w.name).join(", ")}
+                {referencingWorkflows.length > 3 ? ` and ${referencingWorkflows.length - 3} more` : ""}.
+                Those orchestrations may break or require updates after deprecation.
+              </p>
+            </div>
+          )}
+        </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setPendingAction(null)}>
             Cancel

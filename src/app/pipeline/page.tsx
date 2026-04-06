@@ -156,7 +156,7 @@ export default function PipelinePage() {
       <header className="shrink-0 border-b border-border bg-surface px-6 py-6">
         <div className="flex items-center justify-between">
           <div>
-            <Heading level={1}>Pipeline Board</Heading>
+            <Heading level={1}>Agent Pipeline</Heading>
             <p className="mt-0.5 text-sm text-text-secondary">Track agents through the lifecycle pipeline</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">

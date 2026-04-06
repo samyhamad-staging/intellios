@@ -189,7 +189,7 @@ export default function BlueprintsPage() {
           <EmptyState
             icon={FileText}
             heading="No blueprints yet"
-            subtext="Run an intake session to generate your first Agent Blueprint Package."
+            subtext="Agent blueprints are the complete specification for your AI agents. Run an intake session to generate your first one."
             action={
               <Button href="/intake" color="indigo">
                 <Plus size={14} />
