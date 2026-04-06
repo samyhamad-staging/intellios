@@ -83,8 +83,8 @@ export async function POST(
         metadata: {
           agentId: blueprint.agentId,
           agentName: blueprint.name ?? `Agent ${blueprintId.slice(0, 8)}`,
-          failuresFound: report.failureCount ?? 0,
-          passCount: report.passCount ?? 0,
+          failuresFound: report.attacks.filter(a => a.verdict === "FAIL").length,
+          passCount: report.score,
         },
       });
     } catch (auditErr) {
