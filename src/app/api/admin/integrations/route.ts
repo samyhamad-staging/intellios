@@ -39,7 +39,7 @@ export async function GET(_request: NextRequest) {
 
 const IntegrationConfigSchema = z.record(
   z.string(),
-  z.record(z.unknown())
+  z.record(z.string(), z.unknown())
 );
 
 const IntegrationPutSchema = z.object({
