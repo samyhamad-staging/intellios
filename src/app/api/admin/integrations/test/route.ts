@@ -6,7 +6,7 @@ import { getRequestId } from "@/lib/request-id";
 
 const TestIntegrationSchema = z.object({
   adapter: z.enum(["slack", "teams", "servicenow", "jira"]),
-  config: z.record(z.string()),
+  config: z.record(z.string(), z.string()),
 });
 
 /**
