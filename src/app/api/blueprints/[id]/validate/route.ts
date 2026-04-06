@@ -63,7 +63,7 @@ export async function POST(
         metadata: {
           totalViolations: report.violations?.length ?? 0,
           violatedPolicies: report.violations?.map((v) => v.policyId) ?? [],
-          passedPolicies: report.passedPolicies?.length ?? 0,
+          passedPolicies: report.policyCount - (report.violations?.length ?? 0),
         },
       });
     } catch (auditErr) {
