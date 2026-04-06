@@ -131,4 +131,5 @@ export async function PUT(request: NextRequest) {
     console.error(`[${requestId}] Failed to write audit log:`, auditErr);
   }
 
-  return NextResponse.json({ ok: t
+  return NextResponse.json({ ok: true });
+}

@@ -121,4 +121,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: false,
       error: err instanceof Error ? `Connection error: ${err.message}` : "Connection failed — check the URL and credentials.",
-  
+    });
+  }
+}
