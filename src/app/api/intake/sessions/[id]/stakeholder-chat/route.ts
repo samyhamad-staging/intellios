@@ -8,10 +8,14 @@ import { intakeSessions, intakeContributions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
+import { rateLimit } from "@/lib/rate-limit";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
 import { ContributionDomain, IntakePayload, IntakeContext } from "@/lib/types/intake";
+
+// Extend Vercel function timeout for AI generation (default 10s is too short)
+export const maxDuration = 60;
 
 const VALID_DOMAINS = ["compliance", "risk", "legal", "security", "it", "operations", "business"] as const;
 
@@ -60,6 +64,14 @@ export async function POST(
     "admin",
   ]);
   if (error) return error;
+
+  // P2-SEC-006 FIX: Rate limit expensive LLM streaming endpoint
+  const rateLimitResponse = await rateLimit(authSession.user.email!, {
+    endpoint: "stakeholder-chat",
+    max: 30,
+    windowMs: 60_000,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
 
   const requestId = getRequestId(request);
 

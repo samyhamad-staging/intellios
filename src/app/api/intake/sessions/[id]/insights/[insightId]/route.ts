@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { intakeSessions, intakeAIInsights, intakeInvitations } from "@/lib/db/schema";
+import { intakeSessions, intakeAIInsights, intakeInvitations, auditLog } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
@@ -119,6 +119,26 @@ export async function PATCH(
           enterpriseId: session.enterpriseId ?? null,
         });
       }
+    }
+
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "intake_insight.updated",
+        entityType: "intake_insight",
+        entityId: insightId,
+        enterpriseId: session.enterpriseId ?? null,
+        fromState: insight,
+        toState: updated,
+        metadata: {
+          sessionId,
+          status: body.status,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
     }
 
     return NextResponse.json({ insight: updated });

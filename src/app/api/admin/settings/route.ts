@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { enterpriseSettings } from "@/lib/db/schema";
+import { enterpriseSettings, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { parseBody } from "@/lib/parse-body";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
@@ -125,16 +126,8 @@ export async function PUT(request: NextRequest) {
       return apiError(ErrorCode.FORBIDDEN, "Enterprise ID required to update settings");
     }
 
-    let body: z.infer<typeof SettingsBody>;
-    try {
-      const raw = await request.json();
-      body = SettingsBody.parse(raw);
-    } catch (err) {
-      return apiError(ErrorCode.BAD_REQUEST, err instanceof z.ZodError
-        ? err.issues.map((e) => e.message).join("; ")
-        : "Invalid settings data"
-      );
-    }
+    const { data: body, error: bodyError } = await parseBody(request, SettingsBody);
+    if (bodyError) return bodyError;
 
     // Fetch existing row to merge
     const existing = await db.query.enterpriseSettings.findFirst({
@@ -189,6 +182,25 @@ export async function PUT(request: NextRequest) {
           updatedBy: authSession.user.email!,
         },
       });
+
+    // Audit log: settings update
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "settings.updated",
+        entityType: "enterprise_settings",
+        entityId: enterpriseId,
+        enterpriseId,
+        fromState: existingSettings,
+        toState: merged,
+        metadata: {
+          changedSections: Object.keys(body).filter(k => body[k as keyof typeof body] !== undefined),
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     // Audit
     await publishEvent({

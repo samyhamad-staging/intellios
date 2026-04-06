@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { governancePolicies } from "@/lib/db/schema";
+import { governancePolicies, auditLog } from "@/lib/db/schema";
 import { and, eq, inArray } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -139,6 +139,20 @@ export async function POST(
       });
 
       createdPolicies.push({ id: policy.id, name: policy.name, type: policy.type });
+    }
+
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "governance_template.applied",
+        entityType: "governance_policy",
+        entityId: pack.id,
+        enterpriseId: enterpriseId,
+        metadata: { packName: pack.name, policiesCreated: createdPolicies.length },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
     }
 
     return NextResponse.json(

@@ -10,12 +10,26 @@ import { getRequestId } from "@/lib/request-id";
 
 // ─── Zod schema ───────────────────────────────────────────────────────────────
 
+const PRIVATE_HOST_RE =
+  /^(localhost|127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|\[?::1\]?|0\.0\.0\.0)/;
+
 const PatchWebhookSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   url: z
     .string()
     .url()
     .refine((u) => u.startsWith("https://"), { message: "Webhook URL must use HTTPS" })
+    .refine(
+      (u) => {
+        try {
+          const host = new URL(u).hostname;
+          return !PRIVATE_HOST_RE.test(host);
+        } catch {
+          return false;
+        }
+      },
+      { message: "Webhook URL must point to a public host" }
+    )
     .optional(),
   events: z.array(z.string()).optional(),
   active: z.boolean().optional(),
@@ -155,6 +169,22 @@ export async function DELETE(
     }
 
     await db.delete(webhooks).where(eq(webhooks.id, id));
+
+    // P1-SEC-004 FIX: Audit log for webhook deletion
+    try {
+      const { auditLog } = await import("@/lib/db/schema");
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "webhook.deleted",
+        entityType: "webhook",
+        entityId: id,
+        enterpriseId,
+        metadata: { name: wh.name, url: wh.url },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log for webhook deletion:`, auditErr);
+    }
 
     return NextResponse.json({ deleted: true });
   } catch (err) {

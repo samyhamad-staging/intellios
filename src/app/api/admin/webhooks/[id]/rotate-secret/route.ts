@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db";
-import { webhooks } from "@/lib/db/schema";
+import { webhooks, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
+import { encryptSecret } from "@/lib/crypto/encrypt";
 
 /**
  * POST /api/admin/webhooks/[id]/rotate-secret
@@ -43,11 +44,29 @@ export async function POST(
     }
 
     const newSecret = randomBytes(32).toString("hex");
+    const encryptedSecret = encryptSecret(newSecret);
 
     await db
       .update(webhooks)
-      .set({ secret: newSecret, updatedAt: new Date() })
+      .set({ secret: encryptedSecret, updatedAt: new Date() })
       .where(eq(webhooks.id, id));
+
+    // Audit log: webhook secret rotation
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "webhook.secret_rotated",
+        entityType: "webhook",
+        entityId: id,
+        enterpriseId,
+        metadata: {
+          reason: "manual rotation",
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     // Return new secret — only time it's visible after rotation
     return NextResponse.json({ secret: newSecret });

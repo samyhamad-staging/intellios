@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { parseBody } from "@/lib/parse-body";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
+
+const ValidateDeploymentSchema = z.object({
+  region: z.string().min(1).max(50).optional(),
+  agentResourceRoleArn: z.string().min(1).max(300).optional(),
+  foundationModel: z.string().min(1).max(200).optional(),
+});
 
 /**
  * POST /api/admin/settings/validate-deployment
@@ -21,12 +29,8 @@ export async function POST(request: NextRequest) {
   void authSession;
   const requestId = getRequestId(request);
 
-  let body: { region?: string; agentResourceRoleArn?: string; foundationModel?: string };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 });
-  }
+  const { data: body, error: bodyError } = await parseBody(request, ValidateDeploymentSchema);
+  if (bodyError) return bodyError;
 
   const { region, agentResourceRoleArn, foundationModel } = body;
 

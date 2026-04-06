@@ -13,7 +13,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { db } from "@/lib/db";
-import { agentBlueprints } from "@/lib/db/schema";
+import { agentBlueprints, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { runRedTeam } from "@/lib/testing/red-team";
 import { requireAuth } from "@/lib/auth/require";
@@ -70,6 +70,26 @@ export async function POST(
       blueprint.name ?? `Agent ${blueprintId.slice(0, 8)}`,
       blueprint.version
     );
+
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "blueprint.red_team_simulated",
+        entityType: "blueprint",
+        entityId: blueprintId,
+        enterpriseId: blueprint.enterpriseId ?? null,
+        metadata: {
+          agentId: blueprint.agentId,
+          agentName: blueprint.name ?? `Agent ${blueprintId.slice(0, 8)}`,
+          failuresFound: report.failureCount ?? 0,
+          passCount: report.passCount ?? 0,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     // Audit trail
     void publishEvent({

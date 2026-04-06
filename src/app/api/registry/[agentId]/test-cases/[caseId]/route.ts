@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { blueprintTestCases, agentBlueprints } from "@/lib/db/schema";
+import { blueprintTestCases, agentBlueprints, auditLog } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -69,6 +69,26 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .where(eq(blueprintTestCases.id, caseId))
       .returning();
 
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "test_case.updated",
+        entityType: "test_case",
+        entityId: caseId,
+        enterpriseId: latest.enterpriseId ?? null,
+        fromState: testCase,
+        toState: updated,
+        metadata: {
+          agentId,
+          changedFields: Object.keys(updates),
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
+
     return NextResponse.json({ testCase: updated });
   } catch (err) {
     console.error(`[${requestId}] Failed to update test case:`, err);
@@ -111,6 +131,25 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     if (enterpriseError) return enterpriseError;
 
     await db.delete(blueprintTestCases).where(eq(blueprintTestCases.id, caseId));
+
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "test_case.deleted",
+        entityType: "test_case",
+        entityId: caseId,
+        enterpriseId: latest.enterpriseId ?? null,
+        fromState: testCase,
+        metadata: {
+          agentId,
+          name: testCase.name,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     return NextResponse.json({ deleted: true });
   } catch (err) {

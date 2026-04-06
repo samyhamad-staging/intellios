@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { agentBlueprints, blueprintTestRuns } from "@/lib/db/schema";
+import { agentBlueprints, blueprintTestRuns, auditLog } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -359,6 +359,20 @@ export async function PATCH(
       .set(updateFields)
       .where(eq(agentBlueprints.id, id))
       .returning();
+
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "blueprint.status_changed",
+        entityType: "blueprint",
+        entityId: id,
+        enterpriseId: blueprint.enterpriseId ?? null,
+        metadata: { fromStatus: currentStatus, toStatus: newStatus },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     // Extract agent name for notification routing (best-effort, falls back gracefully)
     const abp = blueprint.abp as Record<string, unknown> | null;

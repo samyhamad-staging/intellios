@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { workflows, agentBlueprints } from "@/lib/db/schema";
+import { workflows, agentBlueprints, auditLog } from "@/lib/db/schema";
 import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -127,6 +127,21 @@ export async function PATCH(
       .where(eq(workflows.id, id))
       .returning();
 
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "workflow.updated",
+        entityType: "workflow",
+        entityId: id,
+        enterpriseId: existing.enterpriseId ?? null,
+        metadata: { updatedFields: Object.keys(body) },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
+
     return NextResponse.json({ workflow: updated });
   } catch (err) {
     console.error(`[${requestId}] Failed to update workflow:`, err);
@@ -165,6 +180,21 @@ export async function DELETE(
       .set({ status: "deprecated", updatedAt: new Date() })
       .where(eq(workflows.id, id))
       .returning();
+
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "workflow.deleted",
+        entityType: "workflow",
+        entityId: id,
+        enterpriseId: existing.enterpriseId ?? null,
+        metadata: { note: "Soft delete - status set to deprecated" },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     return NextResponse.json({ workflow: deprecated });
   } catch (err) {

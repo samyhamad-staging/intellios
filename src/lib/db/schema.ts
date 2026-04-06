@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, jsonb, timestamp, boolean, integer, index, numeric, date, real, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, jsonb, timestamp, boolean, integer, index, numeric, date, real, uniqueIndex, unique } from "drizzle-orm/pg-core";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 // ─── Users ───────────────────────────────────────────────────────────────────
@@ -111,6 +111,8 @@ export const agentBlueprints = pgTable(
     index("idx_agent_blueprints_agent_id").on(table.agentId),
     index("idx_agent_blueprints_status").on(table.status),
     index("idx_agent_blueprints_enterprise").on(table.enterpriseId),
+    // P3-CONSTRAINT-001 FIX: Prevent duplicate (agentId, version) pairs
+    unique("uq_agent_blueprints_agent_version").on(table.agentId, table.version),
   ]
 );
 
@@ -713,5 +715,113 @@ export const apiKeys = pgTable(
   (table) => [
     index("idx_api_keys_enterprise").on(table.enterpriseId),
     index("idx_api_keys_prefix").on(table.keyPrefix),
+  ]
+);
+
+// ─── Workflow Executions (Phase 3 — Execution Engine) ────────────────────────
+// Tracks each run of a workflow orchestration.
+
+export const workflowExecutions = pgTable(
+  "workflow_executions",
+  {
+    id:            uuid("id").primaryKey().defaultRandom(),
+    workflowId:    uuid("workflow_id").notNull(),
+    /** Reference to the specific workflow record (version) used */
+    workflowRecordId: uuid("workflow_record_id").notNull(),
+    /** running | completed | failed | cancelled | paused (human-in-the-loop) */
+    status:        text("status").notNull().default("running"),
+    /** Shared context state — accumulated across steps */
+    context:       jsonb("context").notNull().default({}),
+    /** Initial input provided to start the orchestration */
+    input:         jsonb("input").notNull().default({}),
+    /** Final output after completion */
+    output:        jsonb("output"),
+    /** Error details if status=failed */
+    error:         jsonb("error"),
+    /** Total token usage across all agent invocations */
+    totalTokens:   integer("total_tokens").notNull().default(0),
+    /** Total cost in USD across all agent invocations */
+    totalCostUsd:  real("total_cost_usd").notNull().default(0),
+    /** Number of steps executed */
+    stepCount:     integer("step_count").notNull().default(0),
+    enterpriseId:  text("enterprise_id"),
+    triggeredBy:   text("triggered_by").notNull(),     // user email or "api"
+    startedAt:     timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    completedAt:   timestamp("completed_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("idx_wf_exec_workflow").on(t.workflowId, t.startedAt),
+    index("idx_wf_exec_enterprise").on(t.enterpriseId, t.status),
+    index("idx_wf_exec_status").on(t.status),
+  ]
+);
+
+// ─── Workflow Execution Steps ────────────────────────────────────────────────
+// Individual agent invocations within a workflow execution.
+
+export const workflowExecutionSteps = pgTable(
+  "workflow_execution_steps",
+  {
+    id:            uuid("id").primaryKey().defaultRandom(),
+    executionId:   uuid("execution_id").notNull(),
+    /** Step sequence number within the execution */
+    stepNumber:    integer("step_number").notNull(),
+    /** Agent ID that was invoked at this step */
+    agentId:       text("agent_id").notNull(),
+    /** Role of the agent as defined in the workflow definition */
+    agentRole:     text("agent_role").notNull(),
+    /** running | completed | failed | skipped */
+    status:        text("status").notNull().default("running"),
+    /** Input provided to this agent */
+    input:         jsonb("input").notNull().default({}),
+    /** Output produced by this agent */
+    output:        jsonb("output"),
+    /** Error details if step failed */
+    error:         jsonb("error"),
+    /** Handoff rule that triggered this step */
+    handoffRule:   jsonb("handoff_rule"),
+    /** Token usage for this agent invocation */
+    inputTokens:   integer("input_tokens").notNull().default(0),
+    outputTokens:  integer("output_tokens").notNull().default(0),
+    /** Cost in USD for this invocation */
+    costUsd:       real("cost_usd").notNull().default(0),
+    /** Duration in milliseconds */
+    durationMs:    integer("duration_ms"),
+    startedAt:     timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    completedAt:   timestamp("completed_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("idx_wf_exec_steps_execution").on(t.executionId, t.stepNumber),
+    index("idx_wf_exec_steps_agent").on(t.agentId),
+  ]
+);
+
+// ─── Workflow Templates (Phase 3 — Template Marketplace) ─────────────────────
+// Saved workflow patterns that can be instantiated as new workflows.
+
+export const workflowTemplates = pgTable(
+  "workflow_templates",
+  {
+    id:            uuid("id").primaryKey().defaultRandom(),
+    name:          text("name").notNull(),
+    description:   text("description").notNull().default(""),
+    category:      text("category").notNull(),
+    pattern:       text("pattern").notNull(),
+    tags:          jsonb("tags").notNull().default([]),
+    /** WorkflowDefinition skeleton with placeholder agent IDs */
+    definition:    jsonb("definition").notNull(),
+    /** Number of agents in the template */
+    agentCount:    integer("agent_count").notNull().default(0),
+    enterpriseId:  text("enterprise_id"),
+    /** built-in | community | enterprise */
+    source:        text("source").notNull().default("built-in"),
+    usageCount:    integer("usage_count").notNull().default(0),
+    createdBy:     text("created_by"),
+    createdAt:     timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt:     timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_wf_templates_category").on(t.category),
+    index("idx_wf_templates_enterprise").on(t.enterpriseId),
   ]
 );

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users, passwordResetTokens } from "@/lib/db/schema";
+import { users, passwordResetTokens, auditLog } from "@/lib/db/schema";
 import { eq, and, isNull, gt } from "drizzle-orm";
 import { parseBody } from "@/lib/parse-body";
 import { rateLimit } from "@/lib/rate-limit";
@@ -40,32 +40,65 @@ export async function POST(request: NextRequest) {
   try {
     const tokenHash = crypto.createHash("sha256").update(body.token).digest("hex");
 
-    const resetRecord = await db.query.passwordResetTokens.findFirst({
-      where: and(
-        eq(passwordResetTokens.tokenHash, tokenHash),
-        isNull(passwordResetTokens.usedAt),
-        gt(passwordResetTokens.expiresAt, new Date())
-      ),
+    // P1-SEC-001 FIX: Wrap in transaction to prevent race condition.
+    // Without a transaction, concurrent requests with the same token can both
+    // pass the isNull(usedAt) check before either marks the token as used.
+    const result = await db.transaction(async (tx) => {
+      const resetRecord = await tx.query.passwordResetTokens.findFirst({
+        where: and(
+          eq(passwordResetTokens.tokenHash, tokenHash),
+          isNull(passwordResetTokens.usedAt),
+          gt(passwordResetTokens.expiresAt, new Date())
+        ),
+      });
+
+      if (!resetRecord) return { ok: false as const };
+
+      // Mark token as used FIRST (within transaction) to prevent concurrent reuse
+      await tx
+        .update(passwordResetTokens)
+        .set({ usedAt: new Date() })
+        .where(eq(passwordResetTokens.id, resetRecord.id));
+
+      const passwordHash = await bcrypt.hash(body.password, 12);
+
+      const [updatedUser] = await tx
+        .update(users)
+        .set({ passwordHash })
+        .where(eq(users.id, resetRecord.userId))
+        .returning({
+          id: users.id,
+          email: users.email,
+          role: users.role,
+          enterpriseId: users.enterpriseId,
+        });
+
+      return { ok: true as const, user: updatedUser, resetTokenId: resetRecord.id };
     });
 
-    if (!resetRecord) {
+    if (!result.ok) {
       return NextResponse.json(
         { error: "Invalid or expired reset link." },
         { status: 400 }
       );
     }
 
-    const passwordHash = await bcrypt.hash(body.password, 12);
-
-    await db
-      .update(users)
-      .set({ passwordHash })
-      .where(eq(users.id, resetRecord.userId));
-
-    await db
-      .update(passwordResetTokens)
-      .set({ usedAt: new Date() })
-      .where(eq(passwordResetTokens.id, resetRecord.id));
+    // Audit log: password reset (actor is the user whose password was reset)
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: result.user.email,
+        actorRole: result.user.role,
+        action: "user.password_reset",
+        entityType: "user",
+        entityId: result.user.id,
+        enterpriseId: result.user.enterpriseId,
+        metadata: {
+          resetTokenId: result.resetTokenId,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     return NextResponse.json({ message: "Password updated successfully." });
   } catch (err) {

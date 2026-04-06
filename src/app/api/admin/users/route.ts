@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { users, auditLog } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { apiError, ErrorCode } from "@/lib/errors";
@@ -96,6 +96,24 @@ export async function POST(request: NextRequest) {
         enterpriseId: users.enterpriseId,
         createdAt: users.createdAt,
       });
+
+    // Audit log: user creation by admin
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "user.created_by_admin",
+        entityType: "user",
+        entityId: user.id,
+        enterpriseId: user.enterpriseId,
+        metadata: {
+          userEmail: user.email,
+          userRole: user.role,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     return NextResponse.json({ user }, { status: 201 });
   } catch (error) {

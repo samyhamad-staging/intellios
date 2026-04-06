@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { agentBlueprints } from "@/lib/db/schema";
+import { agentBlueprints, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { ABP } from "@/lib/types/abp";
 import { readABP } from "@/lib/abp/read";
@@ -50,6 +50,25 @@ export async function POST(
       .update(agentBlueprints)
       .set({ validationReport: report, updatedAt: new Date() })
       .where(eq(agentBlueprints.id, id));
+
+    // Audit log: governance validation performed
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "blueprint.validated",
+        entityType: "blueprint",
+        entityId: id,
+        enterpriseId,
+        metadata: {
+          totalViolations: report.violations?.length ?? 0,
+          violatedPolicies: report.violations?.map((v) => v.policyId) ?? [],
+          passedPolicies: report.passedPolicies?.length ?? 0,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     return NextResponse.json({ report });
   } catch (error) {

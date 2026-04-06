@@ -22,8 +22,17 @@ const ROUTE_ACCESS: Array<{ prefix: string; allowed: string[] }> = [
   // Review / governance — reviewer, compliance_officer, admin
   { prefix: "/review",      allowed: ["reviewer", "compliance_officer", "admin"] },
   { prefix: "/governor",    allowed: ["reviewer", "compliance_officer", "admin"] },
+  { prefix: "/governance",  allowed: ["reviewer", "compliance_officer", "admin"] },
+  // Compliance — compliance_officer, admin
+  { prefix: "/compliance",  allowed: ["compliance_officer", "admin"] },
+  // Monitoring & ops — reviewer, compliance_officer, admin
+  { prefix: "/monitor",     allowed: ["reviewer", "compliance_officer", "admin"] },
+  { prefix: "/pipeline",    allowed: ["reviewer", "compliance_officer", "admin"] },
+  { prefix: "/audit",       allowed: ["reviewer", "compliance_officer", "admin"] },
   // Deploy — reviewer, admin (not viewer)
   { prefix: "/deploy",      allowed: ["reviewer", "compliance_officer", "admin"] },
+  // Registry — all roles except viewer (read-only users shouldn't manage agents)
+  { prefix: "/registry",    allowed: ["architect", "designer", "reviewer", "compliance_officer", "admin"] },
   // Admin-only routes
   { prefix: "/admin",       allowed: ["admin"] },
 ];
@@ -81,6 +90,14 @@ export default auth((req) => {
   //
   // The "__null__" sentinel distinguishes "platform admin with no enterprise"
   // from "header was not injected" (empty string / missing).
+  // P1-SEC-008 FIX: Strip any client-supplied security headers before injecting
+  // authenticated values. Without this, an unauthenticated request (or a
+  // request to a public route) could spoof these headers to bypass tenant
+  // isolation and role checks in downstream route handlers.
+  requestHeaders.delete(ENTERPRISE_ID_HEADER);
+  requestHeaders.delete(ROLE_HEADER);
+  requestHeaders.delete(ACTOR_EMAIL_HEADER);
+
   if (isLoggedIn && req.auth?.user) {
     const user = req.auth.user;
     requestHeaders.set(

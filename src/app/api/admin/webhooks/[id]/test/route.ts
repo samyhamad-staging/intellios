@@ -6,6 +6,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
 import { deliverWebhookTest } from "@/lib/webhooks/deliver";
+import { decryptSecret } from "@/lib/crypto/encrypt";
 
 /**
  * POST /api/admin/webhooks/[id]/test
@@ -43,7 +44,8 @@ export async function POST(
       return apiError(ErrorCode.NOT_FOUND, "Webhook not found", undefined, requestId);
     }
 
-    const result = await deliverWebhookTest(id, wh.url, wh.secret, wh.enterpriseId);
+    // CC-7 FIX: Decrypt the stored secret before using it for HMAC signing
+    const result = await deliverWebhookTest(id, wh.url, decryptSecret(wh.secret), wh.enterpriseId);
 
     return NextResponse.json(result);
   } catch (err) {

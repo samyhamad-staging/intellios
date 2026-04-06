@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { agentBlueprints } from "@/lib/db/schema";
+import { agentBlueprints, auditLog } from "@/lib/db/schema";
 import { and, eq, ne } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import type { ABP } from "@/lib/types/abp";
@@ -119,6 +119,20 @@ export async function POST(
         governanceDiff,
       })
       .returning();
+
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "blueprint.new_version",
+        entityType: "blueprint",
+        entityId: newBlueprintId,
+        enterpriseId: source.enterpriseId ?? null,
+        metadata: { fromVersion: source.version, newVersion },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     await publishEvent({
       event: {

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { timingSafeEqual } from "node:crypto";
+import { parseBody } from "@/lib/parse-body";
 import { db } from "@/lib/db";
 import { agentBlueprints, agentTelemetry } from "@/lib/db/schema";
 import { and, eq, inArray } from "drizzle-orm";
@@ -35,31 +37,31 @@ const IngestBodySchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  // Bearer token auth — external agents push data without a session
+  // P2-SEC-001 FIX: Reject requests when TELEMETRY_API_KEY is not configured
+  // P2-SEC-002 FIX: Use timing-safe comparison to prevent timing attacks
   const telemetryKey = process.env.TELEMETRY_API_KEY;
-  if (telemetryKey) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${telemetryKey}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const parsed = IngestBodySchema.safeParse(body);
-  if (!parsed.success) {
+  if (!telemetryKey) {
+    console.error("[telemetry/ingest] TELEMETRY_API_KEY not set — rejecting request");
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.flatten() },
-      { status: 400 }
+      { error: "Telemetry authentication not configured." },
+      { status: 503 }
     );
   }
 
-  const { metrics } = parsed.data;
+  const authHeader = request.headers.get("authorization");
+  const expected = `Bearer ${telemetryKey}`;
+  if (
+    !authHeader ||
+    authHeader.length !== expected.length ||
+    !timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))
+  ) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { data: body, error: bodyError } = await parseBody(request, IngestBodySchema);
+  if (bodyError) return bodyError;
+
+  const { metrics } = body;
 
   // Validate that all referenced agentIds exist as deployed blueprints
   const uniqueAgentIds = [...new Set(metrics.map((m) => m.agentId))];

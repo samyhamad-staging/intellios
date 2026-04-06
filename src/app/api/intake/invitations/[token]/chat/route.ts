@@ -9,9 +9,13 @@ import { eq } from "drizzle-orm";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
+import { rateLimit } from "@/lib/rate-limit";
 import { publishEvent } from "@/lib/events/publish";
 import { runForSession, getLatestSynthesis } from "@/lib/intake/orchestrator";
 import type { IntakeContext, IntakePayload, ContributionDomain } from "@/lib/types/intake";
+
+// Extend Vercel function timeout for AI generation (default 10s is too short)
+export const maxDuration = 60;
 
 const ChatBody = z.object({
   messages: z.array(z.unknown()).min(1).max(50),
@@ -58,6 +62,15 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  // P2-SEC-005 FIX: Rate limit public invitation chat to prevent abuse
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  const rateLimitResponse = await rateLimit(ip, {
+    endpoint: "invitation-chat",
+    max: 30,
+    windowMs: 60 * 1000, // 30 messages per minute per IP
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   const requestId = getRequestId(request);
   const { data: body, error: bodyError } = await parseBody(request, ChatBody);
   if (bodyError) return bodyError;

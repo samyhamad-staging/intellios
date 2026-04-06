@@ -22,6 +22,9 @@ import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
 
+// Extend Vercel function timeout for AI generation (default 10s is too short)
+export const maxDuration = 60;
+
 const ChatBody = z.object({
   messages: z.array(z.unknown()).min(1).max(200),
   pathname: z.string().max(200),
@@ -130,6 +133,26 @@ Every blueprint version is tracked. On the **Overview tab** of a registry agent,
 
 ### Agent Search — Command Palette
 Press **Cmd+K** (Mac) or **Ctrl+K** (Windows) to open the command palette from anywhere in Intellios. Type an agent name to search the live registry. Matching agents appear in an "Agents" result group. Click to navigate directly to that agent's registry page. The command palette also provides quick navigation to Overview, Intake, Registry, Governance, and Compliance.
+
+### Agent Orchestrations (Workflows)
+Orchestrations let you compose multiple approved agents into a coordinated pipeline. An orchestration definition specifies which agents participate, their roles, handoff rules (transition conditions between agents), and shared context fields (data accessible to all agents during execution).
+
+**Key concepts:**
+- **Orchestration Definition**: The structured spec declaring agents, handoff rules, and shared context.
+- **Handoff Rule**: A directed transition from one agent to another, with a condition expression (e.g., "classification === 'urgent'") and priority.
+- **Shared Context**: Named, typed fields accessible to all participating agents — enables data flow between pipeline stages.
+- **Orchestration Lifecycle**: draft → in_review → approved → deprecated (no "deployed" — orchestrations are published definitions, not runtime deployments).
+
+**How to create an orchestration:**
+1. Navigate to Registry → Orchestrations tab.
+2. Click "New Orchestration" and provide a name and description.
+3. Add agents (must exist in the registry) and define handoff rules.
+4. Submit for review when ready.
+
+**Common orchestration patterns:**
+- Sequential pipeline: Agent A → Agent B → Agent C (each hands off to the next).
+- Classifier-router: A classifier agent routes to different specialist agents based on conditions.
+- Supervisor-delegate: A supervisor agent coordinates and reviews outputs from delegate agents.
 
 ### Viewer Role
 The viewer role provides read-only access to the full platform: registry, blueprints, governance policies, compliance dashboard, and reports. Viewers cannot create intake sessions, generate or modify blueprints, approve or deploy agents, manage users, or change settings. Useful for auditors, executives, or stakeholders who need visibility without write access. Admins assign the viewer role from Admin → Users.

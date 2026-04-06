@@ -19,6 +19,7 @@ import { registerHandler } from "@/lib/events/bus";
 import type { LifecycleEvent } from "@/lib/events/types";
 import { deliverWebhook } from "./deliver";
 import type { WebhookPayload } from "./types";
+import { decryptSecret } from "@/lib/crypto/encrypt";
 
 async function webhookDispatchHandler(event: LifecycleEvent): Promise<void> {
   try {
@@ -75,9 +76,11 @@ async function webhookDispatchHandler(event: LifecycleEvent): Promise<void> {
     };
 
     // ── Dispatch to all matched webhooks (fire-and-forget) ─────────────────────
+    // CC-7 FIX: Decrypt webhook secrets before passing to delivery.
+    // decryptSecret handles both encrypted (enc:v1:...) and legacy plaintext values.
     void Promise.allSettled(
       matched.map((wh) =>
-        deliverWebhook(wh.id, wh.url, wh.secret, payload, wh.enterpriseId)
+        deliverWebhook(wh.id, wh.url, decryptSecret(wh.secret), payload, wh.enterpriseId)
       )
     );
   } catch (err) {

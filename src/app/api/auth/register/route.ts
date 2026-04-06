@@ -18,7 +18,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users, enterpriseSettings, governancePolicies } from "@/lib/db/schema";
+import { users, enterpriseSettings, governancePolicies, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
@@ -73,12 +73,17 @@ export async function POST(request: NextRequest) {
     const passwordHash = await bcrypt.hash(body.password, 12);
 
     // 1. Create admin user
-    await db.insert(users).values({
+    const [newUser] = await db.insert(users).values({
       name: `${body.firstName} ${body.lastName}`,
       email,
       passwordHash,
       role: "admin",
       enterpriseId,
+    }).returning({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      role: users.role,
     });
 
     // 2. Seed initial enterprise settings
@@ -125,6 +130,25 @@ export async function POST(request: NextRequest) {
           enterpriseId,
         });
       }
+    }
+
+    // Audit log: new account registered
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: email,
+        actorRole: "admin",
+        action: "user.registered",
+        entityType: "user",
+        entityId: newUser.id,
+        enterpriseId,
+        metadata: {
+          userName: body.firstName + " " + body.lastName,
+          companyName: body.companyName,
+          policiesSeeded: pack ? pack.policies.length : 0,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
     }
 
     return NextResponse.json({ message: "Account created" }, { status: 201 });

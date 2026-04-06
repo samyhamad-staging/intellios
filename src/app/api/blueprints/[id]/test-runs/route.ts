@@ -131,7 +131,19 @@ export async function POST(
 
     // ── 4. Execute test suite ─────────────────────────────────────────────────
     const abp = blueprint.abp as ABP;
-    const { results, passedCases, failedCases, status } = await runTestSuite(abp, testCases);
+    let results, passedCases: number, failedCases: number, status: string;
+
+    try {
+      ({ results, passedCases, failedCases, status } = await runTestSuite(abp, testCases));
+    } catch (execErr) {
+      // P2-BUG-005 FIX: Handle test execution failure — update run record to "error"
+      console.error(`[${requestId}] Test suite execution failed:`, execErr);
+      await db
+        .update(blueprintTestRuns)
+        .set({ status: "error", completedAt: new Date() })
+        .where(eq(blueprintTestRuns.id, runRow.id));
+      return apiError(ErrorCode.INTERNAL_ERROR, "Test suite execution failed", undefined, requestId);
+    }
 
     // ── 5. Update run record with results ─────────────────────────────────────
     const completedAt = new Date();

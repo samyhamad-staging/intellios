@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { enterpriseSettings } from "@/lib/db/schema";
+import { enterpriseSettings, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { parseBody } from "@/lib/parse-body";
 import { requireAuth } from "@/lib/auth/require";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
+import { getRequestId } from "@/lib/request-id";
 
 /**
  * GET /api/admin/integrations
@@ -34,6 +37,15 @@ export async function GET(_request: NextRequest) {
   return NextResponse.json({ integrations: masked });
 }
 
+const IntegrationConfigSchema = z.record(
+  z.string(),
+  z.record(z.unknown())
+);
+
+const IntegrationPutSchema = z.object({
+  integrations: IntegrationConfigSchema,
+});
+
 /**
  * PUT /api/admin/integrations
  * Updates integration configs. Sensitive fields (password, apiToken) are only
@@ -43,17 +55,17 @@ export async function GET(_request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const { session, error } = await requireAuth(["admin"]);
   if (error) return error;
+  const requestId = getRequestId(request);
 
   const enterpriseId = session.user.enterpriseId ?? null;
   if (!enterpriseId) {
     return NextResponse.json({ error: "Enterprise ID required to update integrations" }, { status: 403 });
   }
 
-  const body = await request.json();
-  const incomingIntegrations = body.integrations as Record<string, Record<string, unknown>>;
-  if (!incomingIntegrations || typeof incomingIntegrations !== "object") {
-    return NextResponse.json({ error: "integrations object required" }, { status: 400 });
-  }
+  const { data: body, error: bodyError } = await parseBody(request, IntegrationPutSchema);
+  if (bodyError) return bodyError;
+
+  const incomingIntegrations = body.integrations;
 
   // Fetch existing settings to merge
   const existing = await db.query.enterpriseSettings.findFirst({
@@ -91,6 +103,33 @@ export async function PUT(request: NextRequest) {
         updatedBy: session.user.email!,
       },
     });
+
+  // Audit log: integration config changed
+  try {
+    await db.insert(auditLog).values({
+      actorEmail: session.user.email!,
+      actorRole: session.user.role!,
+      action: "integrations.configured",
+      entityType: "enterprise_settings",
+      entityId: enterpriseId,
+      enterpriseId,
+      metadata: {
+        adaptersUpdated: Object.keys(incomingIntegrations),
+        changedAdapters: Object.entries(incomingIntegrations).map(([adapter, config]) => ({
+          adapter,
+          fieldsUpdated: Object.keys(config as Record<string, unknown>).filter(
+            (k) => k !== "password" && k !== "apiToken"
+          ),
+          secretsChanged: {
+            password: (config as Record<string, unknown>).password !== "••••••••" && (config as Record<string, unknown>).password !== "",
+            apiToken: (config as Record<string, unknown>).apiToken !== "••••••••" && (config as Record<string, unknown>).apiToken !== "",
+          },
+        })),
+      },
+    });
+  } catch (auditErr) {
+    console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+  }
 
   return NextResponse.json({ ok: true });
 }

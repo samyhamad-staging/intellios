@@ -37,6 +37,9 @@ import type { ABP } from "@/lib/types/abp";
 import type { IntakePayload } from "@/lib/types/intake";
 import type { ValidationReport } from "@/lib/governance/types";
 
+// Extend Vercel function timeout for AI generation (default 10s is too short)
+export const maxDuration = 60;
+
 const ChatBody = z.object({
   messages: z.array(z.unknown()).min(1).max(200),
 });

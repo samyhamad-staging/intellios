@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { governancePolicies } from "@/lib/db/schema";
+import { governancePolicies, auditLog } from "@/lib/db/schema";
 import { or, isNull, eq, and } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
-import { getEnterpriseId, enterpriseScope } from "@/lib/auth/enterprise-scope";
+import { enterpriseScope } from "@/lib/auth/enterprise-scope";
+import { withTenantScopeGuarded } from "@/lib/auth/with-tenant-scope";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
 import { publishEvent } from "@/lib/events/publish";
@@ -60,31 +61,32 @@ export async function GET(request: NextRequest) {
   const { session: authSession, error: authError } = await requireAuth();
   if (authError) return authError;
   const requestId = getRequestId(request);
-  const ctx = getEnterpriseId(request);
 
-  try {
-    // Phase 22: only return active (non-superseded) policy versions
-    const activeOnly = isNull(governancePolicies.supersededAt);
+  return withTenantScopeGuarded(request, async (ctx) => {
+    try {
+      // Phase 22: only return active (non-superseded) policy versions
+      const activeOnly = isNull(governancePolicies.supersededAt);
 
-    // Policies are special: non-admins see global policies (null enterprise) + their own.
-    // enterpriseScope returns the caller's filter; combine with global inclusion.
-    const scope = enterpriseScope(governancePolicies.enterpriseId, ctx);
-    const enterpriseFilter = scope && ctx.enterpriseId
-      ? or(isNull(governancePolicies.enterpriseId), scope)
-      : scope;
+      // Policies are special: non-admins see global policies (null enterprise) + their own.
+      // enterpriseScope returns the caller's filter; combine with global inclusion.
+      const scope = enterpriseScope(governancePolicies.enterpriseId, ctx);
+      const enterpriseFilter = scope && ctx.enterpriseId
+        ? or(isNull(governancePolicies.enterpriseId), scope)
+        : scope;
 
-    const filter = enterpriseFilter ? and(activeOnly, enterpriseFilter) : activeOnly;
+      const filter = enterpriseFilter ? and(activeOnly, enterpriseFilter) : activeOnly;
 
-    const policies = await db
-      .select()
-      .from(governancePolicies)
-      .where(filter);
+      const policies = await db
+        .select()
+        .from(governancePolicies)
+        .where(filter);
 
-    return NextResponse.json({ policies });
-  } catch (error) {
-    console.error(`[${requestId}] Failed to list policies:`, error);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to list policies", undefined, requestId);
-  }
+      return NextResponse.json({ policies });
+    } catch (error) {
+      console.error(`[${requestId}] Failed to list policies:`, error);
+      return apiError(ErrorCode.INTERNAL_ERROR, "Failed to list policies", undefined, requestId);
+    }
+  });
 }
 
 /**
@@ -114,6 +116,20 @@ export async function POST(request: NextRequest) {
         scopedAgentIds: body.scopedAgentIds ?? null,
       })
       .returning();
+
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "governance_policy.created",
+        entityType: "governance_policy",
+        entityId: policy.id,
+        enterpriseId: policy.enterpriseId ?? null,
+        metadata: { policyName: policy.name, policyType: policy.type },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     void publishEvent({
       event: {

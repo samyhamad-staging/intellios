@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { agentBlueprints, intakeSessions } from "@/lib/db/schema";
+import { agentBlueprints, intakeSessions, auditLog } from "@/lib/db/schema";
 import { randomUUID } from "crypto";
 import type { ABP } from "@/lib/types/abp";
 import { apiError, ErrorCode } from "@/lib/errors";
@@ -94,6 +94,26 @@ export async function POST(
         createdBy: authSession.user.email!,
       });
     });
+
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "template.used",
+        entityType: "template",
+        entityId: templateId,
+        enterpriseId: enterpriseId ?? null,
+        metadata: {
+          blueprintId: newBlueprintId,
+          agentId: newAgentId,
+          blueprintName: template.abp.identity.name,
+          templateName: template.name,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     // Audit trail
     void publishEvent({

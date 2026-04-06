@@ -29,6 +29,9 @@ import { z } from "zod";
 import type { ABP } from "@/lib/types/abp";
 import { readABP } from "@/lib/abp/read";
 
+// Extend Vercel function timeout for AI generation (default 10s is too short)
+export const maxDuration = 60;
+
 const ChatBody = z.object({
   messages: z.array(z.unknown()).min(1).max(200),
   // firstMessage: true on the very first turn so we know to write the audit entry

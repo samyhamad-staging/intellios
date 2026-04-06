@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { agentBlueprints, intakeSessions } from "@/lib/db/schema";
+import { agentBlueprints, intakeSessions, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { refineBlueprint } from "@/lib/generation/generate";
 import { loadPolicies } from "@/lib/governance/load-policies";
@@ -90,6 +90,34 @@ export async function POST(
       .set({ abp: updatedAbp, name, tags, refinementCount: newCount, updatedAt: new Date() })
       .where(eq(agentBlueprints.id, id))
       .returning();
+
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "blueprint.refined",
+        entityType: "blueprint",
+        entityId: id,
+        enterpriseId: blueprint.enterpriseId ?? null,
+        fromState: {
+          abp: currentAbp,
+          refinementCount: blueprint.refinementCount,
+        },
+        toState: {
+          abp: updatedAbp,
+          refinementCount: newCount,
+        },
+        metadata: {
+          agentId: blueprint.agentId,
+          name: blueprint.name,
+          change: change.trim().slice(0, 200),
+          refinementCount: newCount,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     await publishEvent({
       event: {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { agentBlueprints } from "@/lib/db/schema";
+import { agentBlueprints, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -263,6 +263,20 @@ export async function POST(
         reviewComment: agentBlueprints.reviewComment,
         reviewedAt: agentBlueprints.reviewedAt,
       });
+
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "blueprint.reviewed",
+        entityType: "blueprint",
+        entityId: id,
+        enterpriseId: blueprint.enterpriseId ?? null,
+        metadata: { decision: action, notes: comment?.trim() || null },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     await publishEvent({
       event: {

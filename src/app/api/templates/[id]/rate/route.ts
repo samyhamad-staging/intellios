@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { templates, templateRatings } from "@/lib/db/schema";
 import { eq, avg } from "drizzle-orm";
+import { z } from "zod";
+import { parseBody } from "@/lib/parse-body";
 import { requireAuth } from "@/lib/auth/require";
+
+const TemplateRatingSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+});
 
 /** POST /api/templates/[id]/rate — submit or update a rating (1-5) */
 export async function POST(
@@ -13,12 +19,11 @@ export async function POST(
   if (error) return error;
 
   const { id } = await params;
-  const body = await request.json();
-  const rating = Number(body.rating);
-  if (!rating || rating < 1 || rating > 5) {
-    return NextResponse.json({ error: "Rating must be 1-5" }, { status: 400 });
-  }
 
+  const { data: body, error: bodyError } = await parseBody(request, TemplateRatingSchema);
+  if (bodyError) return bodyError;
+
+  const rating = body.rating;
   const userEmail = session.user.email!;
 
   // Upsert rating

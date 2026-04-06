@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { intakeSessions } from "@/lib/db/schema";
+import { intakeSessions, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -67,6 +67,26 @@ export async function PATCH(
     } catch (err) {
       console.error("[classify] Failed to classify intake:", err);
       // Non-fatal — intake continues without classification
+    }
+
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "intake_session.context_updated",
+        entityType: "intake_session",
+        entityId: sessionId,
+        enterpriseId: session.enterpriseId ?? null,
+        toState: {
+          intakeContext: context,
+        },
+        metadata: {
+          fields: Object.keys(context),
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
     }
 
     return NextResponse.json({ success: true, context });

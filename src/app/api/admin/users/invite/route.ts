@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users, userInvitations } from "@/lib/db/schema";
+import { users, userInvitations, auditLog } from "@/lib/db/schema";
 import { and, eq, isNull, gt } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -97,6 +97,25 @@ export async function POST(request: NextRequest) {
       subject: "[Intellios] You've been invited",
       html: buildNotificationEmail(title, message, invitePath),
     });
+
+    // Audit log: user invitation
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "user.invited",
+        entityType: "invitation",
+        entityId: invitation.id,
+        enterpriseId: invitation.enterpriseId,
+        metadata: {
+          inviteeEmail: email,
+          inviteeRole: body.role,
+          expiresAt: expiresAt.toISOString(),
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     return NextResponse.json(
       {

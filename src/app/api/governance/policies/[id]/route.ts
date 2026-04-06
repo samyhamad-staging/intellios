@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { governancePolicies } from "@/lib/db/schema";
+import { governancePolicies, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -154,6 +154,20 @@ export async function PATCH(
         .where(eq(governancePolicies.id, id));
     });
 
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "governance_policy.updated",
+        entityType: "governance_policy",
+        entityId: newId,
+        enterpriseId: policy.enterpriseId ?? null,
+        metadata: { policyName: newPolicy!.name },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
+
     void publishEvent({
       event: {
         type: "policy.updated",
@@ -214,6 +228,20 @@ export async function DELETE(
     }
 
     await db.delete(governancePolicies).where(eq(governancePolicies.id, id));
+
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "governance_policy.deleted",
+        entityType: "governance_policy",
+        entityId: id,
+        enterpriseId: policy.enterpriseId ?? null,
+        metadata: { policyName: policy.name },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     void publishEvent({
       event: {

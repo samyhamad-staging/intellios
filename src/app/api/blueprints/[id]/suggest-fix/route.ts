@@ -3,9 +3,13 @@ import { db } from "@/lib/db";
 import { agentBlueprints, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth/require";
+import { rateLimit } from "@/lib/rate-limit";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import type { ABP } from "@/lib/types/abp";
+
+// Extend Vercel function timeout for AI generation (default 10s is too short)
+export const maxDuration = 60;
 
 /**
  * POST /api/blueprints/[id]/suggest-fix
@@ -25,6 +29,14 @@ export async function POST(
 ) {
   const { session, error } = await requireAuth(["architect", "designer", "admin"]);
   if (error) return error;
+
+  // P2-SEC-006 FIX: Rate limit expensive LLM generation endpoint
+  const rateLimitResponse = await rateLimit(session.user.email!, {
+    endpoint: "suggest-fix",
+    max: 10,
+    windowMs: 60_000,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
 
   const { id } = await params;
 

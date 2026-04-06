@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { intakeSessions, agentBlueprints } from "@/lib/db/schema";
+import { intakeSessions, agentBlueprints, auditLog } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { generateBlueprint } from "@/lib/generation/generate";
 import { validateBlueprint } from "@/lib/governance/validator";
@@ -13,8 +13,13 @@ import { getRequestId } from "@/lib/request-id";
 import { publishEvent } from "@/lib/events/publish";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
-import { getEnterpriseId, enterpriseScope } from "@/lib/auth/enterprise-scope";
+import { enterpriseScope } from "@/lib/auth/enterprise-scope";
+import { withTenantScopeGuarded } from "@/lib/auth/with-tenant-scope";
 import { z } from "zod";
+
+// Vercel Hobby plan defaults to 10s — blueprint generation needs 30-60s for Claude to
+// produce a full ABP via generateObject. Without this, the function times out → 500.
+export const maxDuration = 60;
 
 /**
  * GET /api/blueprints
@@ -25,33 +30,34 @@ export async function GET(request: NextRequest) {
   const { error } = await requireAuth();
   if (error) return error;
   const requestId = getRequestId(request);
-  const ctx = getEnterpriseId(request);
 
-  try {
-    const filter = enterpriseScope(agentBlueprints.enterpriseId, ctx);
+  return withTenantScopeGuarded(request, async (ctx) => {
+    try {
+      const filter = enterpriseScope(agentBlueprints.enterpriseId, ctx);
 
-    const rows = await db
-      .select({
-        id: agentBlueprints.id,
-        agentId: agentBlueprints.agentId,
-        version: agentBlueprints.version,
-        name: agentBlueprints.name,
-        tags: agentBlueprints.tags,
-        status: agentBlueprints.status,
-        validationReport: agentBlueprints.validationReport,
-        createdBy: agentBlueprints.createdBy,
-        createdAt: agentBlueprints.createdAt,
-        updatedAt: agentBlueprints.updatedAt,
-      })
-      .from(agentBlueprints)
-      .where(filter ?? undefined)
-      .orderBy(desc(agentBlueprints.updatedAt));
+      const rows = await db
+        .select({
+          id: agentBlueprints.id,
+          agentId: agentBlueprints.agentId,
+          version: agentBlueprints.version,
+          name: agentBlueprints.name,
+          tags: agentBlueprints.tags,
+          status: agentBlueprints.status,
+          validationReport: agentBlueprints.validationReport,
+          createdBy: agentBlueprints.createdBy,
+          createdAt: agentBlueprints.createdAt,
+          updatedAt: agentBlueprints.updatedAt,
+        })
+        .from(agentBlueprints)
+        .where(filter ?? undefined)
+        .orderBy(desc(agentBlueprints.updatedAt));
 
-    return NextResponse.json({ blueprints: rows });
-  } catch (err) {
-    console.error(`[${requestId}] Failed to list blueprints:`, err);
-    return apiError(ErrorCode.INTERNAL_ERROR, "Failed to list blueprints", undefined, requestId);
-  }
+      return NextResponse.json({ blueprints: rows });
+    } catch (err) {
+      console.error(`[${requestId}] Failed to list blueprints:`, err);
+      return apiError(ErrorCode.INTERNAL_ERROR, "Failed to list blueprints", undefined, requestId);
+    }
+  });
 }
 
 const GenerateBody = z.object({
@@ -134,6 +140,21 @@ export async function POST(request: NextRequest) {
       .insert(agentBlueprints)
       .values({ sessionId, abp, name, tags, enterpriseId, validationReport, createdBy: authSession.user.email ?? null })
       .returning();
+
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "blueprint.created",
+        entityType: "blueprint",
+        entityId: blueprint.id,
+        enterpriseId,
+        metadata: { agentId: blueprint.agentId, name: blueprint.name },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     await publishEvent({
       event: {

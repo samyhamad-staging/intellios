@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { agentBlueprints } from "@/lib/db/schema";
+import { agentBlueprints, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import { parseBody } from "@/lib/parse-body";
 import type { ABP } from "@/lib/types/abp";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -36,14 +37,9 @@ export async function POST(
   try {
     const { id } = await params;
 
-    // Parse optional body
-    let body: z.infer<typeof CloneBody> = {};
-    try {
-      const raw = await request.json();
-      body = CloneBody.parse(raw);
-    } catch {
-      // body is optional — empty body is fine
-    }
+    // Parse optional body (empty body is fine)
+    const { data: body, error: bodyError } = await parseBody(request, CloneBody);
+    const parsedBody = bodyError ? {} : (body ?? {});
 
     // Fetch source blueprint
     const source = await db.query.agentBlueprints.findFirst({
@@ -58,7 +54,7 @@ export async function POST(
     // New IDs for the cloned agent
     const newBlueprintId = randomUUID();
     const newAgentId = randomUUID();
-    const cloneName = body.name ?? `${source.name ?? "Unnamed Agent"} (Clone)`;
+    const cloneName = parsedBody.name ?? `${source.name ?? "Unnamed Agent"} (Clone)`;
 
     // Insert the cloned blueprint — new logical agent, fresh lifecycle state
     const [cloned] = await db
@@ -87,6 +83,20 @@ export async function POST(
         createdBy: authSession.user.email!,
       })
       .returning();
+
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "blueprint.cloned",
+        entityType: "blueprint",
+        entityId: newBlueprintId,
+        enterpriseId: source.enterpriseId ?? null,
+        metadata: { sourceId: id, newId: newBlueprintId },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     // Audit — links clone to source for full traceability
     await publishEvent({

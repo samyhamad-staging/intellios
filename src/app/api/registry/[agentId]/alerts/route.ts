@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { alertThresholds, agentBlueprints } from "@/lib/db/schema";
+import { alertThresholds, agentBlueprints, auditLog } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -104,6 +104,27 @@ export async function POST(
         createdBy:     authSession.user.email!,
       })
       .returning();
+
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "alert.created",
+        entityType: "alert",
+        entityId: created.id,
+        enterpriseId: latest.enterpriseId ?? null,
+        metadata: {
+          agentId,
+          metric: created.metric,
+          operator: created.operator,
+          value: created.value,
+          windowMinutes: created.windowMinutes,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     return NextResponse.json({ threshold: created }, { status: 201 });
   } catch (err) {

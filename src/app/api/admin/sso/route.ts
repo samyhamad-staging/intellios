@@ -13,11 +13,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { enterpriseSettings } from "@/lib/db/schema";
+import { enterpriseSettings, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
+import { parseBody } from "@/lib/parse-body";
 import { getRequestId } from "@/lib/request-id";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import type { EnterpriseSettings } from "@/lib/settings/types";
@@ -101,18 +102,9 @@ export async function PUT(request: NextRequest) {
     return apiError(ErrorCode.FORBIDDEN, "Enterprise ID required to update SSO settings");
   }
 
-  let body: z.infer<typeof SsoBody>;
-  try {
-    const raw = await request.json();
-    body = SsoBody.parse(raw);
-  } catch (err) {
-    return apiError(
-      ErrorCode.BAD_REQUEST,
-      err instanceof z.ZodError
-        ? err.issues.map((e) => e.message).join("; ")
-        : "Invalid SSO settings"
-    );
-  }
+  // CC-3 FIX: Use parseBody for consistent validation and error responses
+  const { data: body, error: bodyError } = await parseBody(request, SsoBody);
+  if (bodyError) return bodyError;
 
   try {
     // Fetch existing row to preserve clientSecret when masked value is sent
@@ -151,6 +143,30 @@ export async function PUT(request: NextRequest) {
           updatedBy: authSession.user.email!,
         },
       });
+
+    // Audit log: SSO config changed
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "sso.configured",
+        entityType: "enterprise_settings",
+        entityId: enterpriseId,
+        enterpriseId,
+        metadata: {
+          enabled: body.enabled,
+          protocol: body.protocol,
+          issuer: body.issuer,
+          clientId: body.clientId,
+          emailDomain: body.emailDomain,
+          attributeMapping: body.attributeMapping,
+          defaultRole: body.defaultRole,
+          secretChanged: body.clientSecret !== SECRET_MASK,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     return NextResponse.json({ sso: maskSecret(newSso) });
   } catch (err) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { agentBlueprints } from "@/lib/db/schema";
+import { agentBlueprints, auditLog } from "@/lib/db/schema";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -191,6 +191,29 @@ export async function POST(request: NextRequest) {
 
     // ── 5. Audit log ───────────────────────────────────────────────────────
     const policyEntityId = existingPolicyId ?? crypto.randomUUID();
+
+    // Write audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "governance_policy.simulated",
+        entityType: "governance_policy",
+        entityId: policyEntityId,
+        enterpriseId: enterpriseId ?? null,
+        metadata: {
+          policyName: draftPolicyInput.name,
+          policyType: draftPolicyInput.type,
+          totalBlueprintsChecked: summary.total,
+          newViolationCount: summary.newViolations,
+          resolvedViolationCount: summary.resolvedViolations,
+          noChangeCount: summary.noChange,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
+
     void publishEvent({
       event: {
         type: "policy.simulated",

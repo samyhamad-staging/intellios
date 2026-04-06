@@ -21,6 +21,9 @@ import { parseBody } from "@/lib/parse-body";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { z } from "zod";
 
+// Extend Vercel function timeout for AI generation (default 10s is too short)
+export const maxDuration = 60;
+
 const QuickStartBody = z.object({
   purpose: z.string().min(10).max(2000),
 });

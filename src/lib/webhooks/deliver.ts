@@ -64,11 +64,15 @@ export async function deliverWebhook(
   let lastResponseBody: string | null = null;
   let succeeded = false;
 
+  let actualAttempts = 0;
+
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     // Wait before retry (first attempt: 0ms)
     if (RETRY_DELAYS_MS[attempt] > 0) {
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
     }
+
+    actualAttempts++;
 
     try {
       const response = await fetch(url, {
@@ -104,7 +108,7 @@ export async function deliverWebhook(
         status: succeeded ? "success" : "failed",
         responseStatus: lastResponseStatus,
         responseBody: lastResponseBody,
-        attempts: MAX_ATTEMPTS - (succeeded ? MAX_ATTEMPTS - 1 : 0), // approximate
+        attempts: actualAttempts,
         lastAttemptedAt: new Date(),
       })
       .where(eq(webhookDeliveries.id, deliveryId));
@@ -142,16 +146,19 @@ export async function deliverWebhookTest(
   const body = JSON.stringify(payload);
   const signature = computeSignature(secret, body);
 
-  // Insert delivery record
+  // P1-BUG-001 FIX: Capture the delivery record ID so we can update the
+  // correct record later (not all records for this webhook).
+  let dbDeliveryId: string | null = null;
   try {
-    await db.insert(webhookDeliveries).values({
+    const [row] = await db.insert(webhookDeliveries).values({
       webhookId,
       enterpriseId,
       eventType: "webhook.test",
       payload: payload as unknown as Record<string, unknown>,
       status: "pending",
       attempts: 0,
-    });
+    }).returning({ id: webhookDeliveries.id });
+    dbDeliveryId = row.id;
   } catch (err) {
     console.error("[webhooks/test] Failed to insert delivery log:", err);
   }
@@ -192,7 +199,7 @@ export async function deliverWebhookTest(
         attempts: 1,
         lastAttemptedAt: new Date(),
       })
-      .where(eq(webhookDeliveries.webhookId, webhookId));
+      .where(dbDeliveryId ? eq(webhookDeliveries.id, dbDeliveryId) : eq(webhookDeliveries.webhookId, webhookId));
   } catch (err) {
     console.error("[webhooks/test] Failed to update delivery record:", err);
   }

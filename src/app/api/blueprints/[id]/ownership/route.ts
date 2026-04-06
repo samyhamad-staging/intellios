@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { agentBlueprints } from "@/lib/db/schema";
+import { agentBlueprints, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import type { ABP } from "@/lib/types/abp";
@@ -8,6 +8,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
+import { parseBody } from "@/lib/parse-body";
 
 /**
  * PATCH /api/blueprints/[id]/ownership
@@ -38,13 +39,9 @@ export async function PATCH(
   try {
     const { id } = await params;
 
-    let body: z.infer<typeof OwnershipBody>;
-    try {
-      const raw = await request.json();
-      body = OwnershipBody.parse(raw);
-    } catch {
-      return apiError(ErrorCode.BAD_REQUEST, "Invalid ownership data");
-    }
+    // P2-SEC-007 FIX: Use parseBody for consistent validation and error responses
+    const { data: body, error: bodyError } = await parseBody(request, OwnershipBody);
+    if (bodyError) return bodyError;
 
     // Fetch blueprint
     const blueprint = await db.query.agentBlueprints.findFirst({
@@ -75,6 +72,29 @@ export async function PATCH(
       .update(agentBlueprints)
       .set({ abp: updatedAbp, updatedAt: new Date() })
       .where(eq(agentBlueprints.id, id));
+
+    // Audit log: blueprint ownership changed
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "blueprint.ownership_changed",
+        entityType: "blueprint",
+        entityId: id,
+        enterpriseId: blueprint.enterpriseId,
+        fromState: {
+          ownership: (blueprint.abp as ABP).ownership,
+        },
+        toState: {
+          ownership: updatedAbp.ownership,
+        },
+        metadata: {
+          changedFields: Object.keys(body).filter((k) => (body as any)[k] !== undefined),
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     return NextResponse.json({ ownership: updatedAbp.ownership ?? null });
   } catch (err) {

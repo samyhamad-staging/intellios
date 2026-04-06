@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { users, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -78,6 +78,31 @@ export async function PATCH(
         enterpriseId: users.enterpriseId,
         createdAt: users.createdAt,
       });
+
+    // Audit log: user update
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "user.updated",
+        entityType: "user",
+        entityId: id,
+        enterpriseId: user.enterpriseId,
+        fromState: {
+          name: user.name,
+          role: user.role,
+        },
+        toState: {
+          name: updated.name,
+          role: updated.role,
+        },
+        metadata: {
+          changedFields: Object.keys(updates),
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     return NextResponse.json({ user: updated });
   } catch (error) {

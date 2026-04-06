@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { intakeSessions, intakeInvitations } from "@/lib/db/schema";
+import { intakeSessions, intakeInvitations, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
@@ -119,7 +119,22 @@ export async function POST(
       ),
     });
 
-    // Audit log
+    // Audit log for database
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "intake_invitation.created",
+        entityType: "intake_invitation",
+        entityId: invitation.id,
+        enterpriseId: session.enterpriseId ?? null,
+        metadata: { inviteeEmail: body.inviteeEmail, domain: body.domain, raciRole: body.raciRole },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
+
+    // Event log for pub/sub
     void publishEvent({
       event: {
         type: "intake.invitation_sent",

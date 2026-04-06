@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { parseBody } from "@/lib/parse-body";
 
 /**
  * POST /api/waitlist
@@ -19,20 +20,10 @@ const WaitlistSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const { data: body, error: bodyError } = await parseBody(request, WaitlistSchema);
+  if (bodyError) return bodyError;
 
-  const result = WaitlistSchema.safeParse(body);
-  if (!result.success) {
-    const firstError = result.error.issues[0]?.message ?? "Validation failed";
-    return NextResponse.json({ error: firstError }, { status: 422 });
-  }
-
-  const { email, company, role, message } = result.data;
+  const { email, company, role, message } = body;
 
   // Structured log — captured by Vercel log drain / any aggregation service.
   // Replace with `db.insert(waitlistSubmissions).values(...)` when a table exists.

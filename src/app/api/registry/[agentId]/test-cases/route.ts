@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { blueprintTestCases, agentBlueprints } from "@/lib/db/schema";
+import { blueprintTestCases, agentBlueprints, auditLog } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -98,6 +98,25 @@ export async function POST(
         createdBy: authSession.user.email!,
       })
       .returning();
+
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "test_case.created",
+        entityType: "test_case",
+        entityId: created.id,
+        enterpriseId: latest.enterpriseId ?? null,
+        metadata: {
+          agentId,
+          name: created.name,
+          severity: created.severity,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     return NextResponse.json({ testCase: created }, { status: 201 });
   } catch (err) {

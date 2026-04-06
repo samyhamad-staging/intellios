@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { parseBody } from "@/lib/parse-body";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
+
+const TestIntegrationSchema = z.object({
+  adapter: z.enum(["slack", "teams", "servicenow", "jira"]),
+  config: z.record(z.string()),
+});
 
 /**
  * POST /api/admin/integrations/test
@@ -22,12 +29,8 @@ export async function POST(request: NextRequest) {
   void authSession;
 
   const requestId = getRequestId(request);
-  let body: { adapter: string; config: Record<string, string> };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 });
-  }
+  const { data: body, error: bodyError } = await parseBody(request, TestIntegrationSchema);
+  if (bodyError) return bodyError;
 
   const { adapter, config } = body;
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { workflows, agentBlueprints } from "@/lib/db/schema";
+import { workflows, agentBlueprints, auditLog } from "@/lib/db/schema";
 import { and, desc, eq, inArray, isNull, ilike, or } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -137,6 +137,21 @@ export async function POST(request: NextRequest) {
         createdBy:    authSession.user.email!,
       })
       .returning();
+
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "workflow.created",
+        entityType: "workflow",
+        entityId: workflow.id,
+        enterpriseId: authSession.user.enterpriseId ?? null,
+        metadata: { name: workflow.name },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     return NextResponse.json({ workflow }, { status: 201 });
   } catch (err) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { workflows } from "@/lib/db/schema";
+import { workflows, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -123,7 +123,22 @@ export async function PATCH(
       .where(eq(workflows.id, id))
       .returning();
 
-    // ── Audit event ─────────────────────────────────────────────────────────
+    // ── Audit log ───────────────────────────────────────────────────────────
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "workflow.status_changed",
+        entityType: "workflow",
+        entityId: id,
+        enterpriseId: workflow.enterpriseId ?? null,
+        metadata: { fromStatus: currentStatus, toStatus: newStatus },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
+
+    // ── Event ────────────────────────────────────────────────────────────────
     const userEmail = authSession.user.email!;
 
     const isReviewDecision = newStatus === "approved" || newStatus === "rejected";

@@ -21,6 +21,9 @@ import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
 
+// Extend Vercel function timeout for AI generation (default 10s is too short)
+export const maxDuration = 60;
+
 // Validate outer shape only — inner message structure is owned by the AI SDK.
 const ChatBody = z.object({
   messages: z.array(z.unknown()).min(1).max(200),

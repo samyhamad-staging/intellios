@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { intakeSessions } from "@/lib/db/schema";
+import { intakeSessions, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -53,6 +53,24 @@ export async function POST(
         expertiseLevel: source.expertiseLevel ?? null,
       })
       .returning();
+
+    // Audit log
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: authSession.user.email!,
+        actorRole: authSession.user.role!,
+        action: "intake_session.duplicated",
+        entityType: "intake_session",
+        entityId: newSession.id,
+        enterpriseId: source.enterpriseId ?? null,
+        metadata: {
+          sourceSessionId: id,
+          newSessionId: newSession.id,
+        },
+      });
+    } catch (auditErr) {
+      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+    }
 
     return NextResponse.json({ sessionId: newSession.id });
   } catch (err) {

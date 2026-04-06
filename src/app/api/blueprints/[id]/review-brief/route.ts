@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { agentBlueprints } from "@/lib/db/schema";
+import { agentBlueprints, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
+import { rateLimit } from "@/lib/rate-limit";
 import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import type { ValidationReport } from "@/lib/governance/types";
+
+// Extend Vercel function timeout for AI generation (default 10s is too short)
+export const maxDuration = 60;
 
 const riskBriefSchema = z.object({
   riskLevel: z.enum(["low", "medium", "high"]).describe("Overall risk level of this blueprint"),
@@ -30,6 +34,14 @@ export async function POST(
 ) {
   const { session, error } = await requireAuth(["reviewer", "compliance_officer", "admin"]);
   if (error) return error;
+
+  // P2-SEC-006 FIX: Rate limit expensive LLM generation endpoint
+  const rateLimitResponse = await rateLimit(session.user.email!, {
+    endpoint: "review-brief",
+    max: 10,
+    windowMs: 60_000,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
 
   const { id } = await params;
 
@@ -71,6 +83,21 @@ Provide a concise risk brief for the reviewer. Focus on: governance gaps, tool r
       prompt,
       temperature: 0.1,
     });
+
+    // P2-BUG-004 FIX: Add audit logging for review brief generation
+    try {
+      await db.insert(auditLog).values({
+        actorEmail: session.user.email!,
+        actorRole: session.user.role!,
+        action: "blueprint.review_brief_generated",
+        entityType: "blueprint",
+        entityId: id,
+        enterpriseId: blueprint.enterpriseId ?? null,
+        metadata: { riskLevel: object.riskLevel, recommendation: object.recommendation },
+      });
+    } catch (auditErr) {
+      console.error("[review-brief] Failed to write audit log:", auditErr);
+    }
 
     return NextResponse.json({ brief: object });
   } catch (err) {
