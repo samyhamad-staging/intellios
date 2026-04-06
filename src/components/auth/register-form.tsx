@@ -16,6 +16,7 @@ export function RegisterForm() {
     password: "",
     confirmPassword: "",
   });
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -75,8 +76,8 @@ export function RegisterForm() {
   const stepValid = useMemo(() => [
     form.companyName.trim().length > 0,
     form.firstName.trim().length > 0 && form.lastName.trim().length > 0 && form.email.trim().length > 0,
-    form.password.length >= 8 && form.password === form.confirmPassword,
-  ], [form]);
+    form.password.length >= 8 && form.password === form.confirmPassword && agreedToTerms,
+  ], [form, agreedToTerms]);
 
   // Legacy progress indicator alias (for the stepper dots)
   const signupStep = currentStep + (stepValid[currentStep] ? 1 : 0);
@@ -226,6 +227,28 @@ export function RegisterForm() {
               />
             </FormField>
 
+            {/* P2-2: Password validation checklist */}
+            <div className="space-y-1.5 mb-2">
+              <div className="flex items-center gap-2 text-xs">
+                <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" className={form.password.length >= 8 ? "text-emerald-400" : "text-white/30"} />
+                  {form.password.length >= 8 && (
+                    <path d="M5 8L7 10L11 6" stroke="currentColor" strokeWidth="1.5" className="text-emerald-400" strokeLinecap="round" strokeLinejoin="round" />
+                  )}
+                </svg>
+                <span className={form.password.length >= 8 ? "text-emerald-400" : "text-white/30"}>At least 8 characters</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" className={form.password === form.confirmPassword && form.password.length > 0 ? "text-emerald-400" : "text-white/30"} />
+                  {form.password === form.confirmPassword && form.password.length > 0 && (
+                    <path d="M5 8L7 10L11 6" stroke="currentColor" strokeWidth="1.5" className="text-emerald-400" strokeLinecap="round" strokeLinejoin="round" />
+                  )}
+                </svg>
+                <span className={form.password === form.confirmPassword && form.password.length > 0 ? "text-emerald-400" : "text-white/30"}>Passwords match</span>
+              </div>
+            </div>
+
             <FormField label="Confirm password" htmlFor="confirmPassword" required>
               <input
                 id="confirmPassword"
@@ -237,6 +260,28 @@ export function RegisterForm() {
                 className={inputCls}
               />
             </FormField>
+
+            {/* P0-4: Terms acceptance checkbox */}
+            <div className="flex items-start gap-2.5 pt-2">
+              <input
+                id="agreedToTerms"
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border border-white/20 bg-white/5 checked:border-indigo-500 checked:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:ring-offset-0 cursor-pointer transition-all"
+                required
+              />
+              <label htmlFor="agreedToTerms" className="text-xs text-white/70 leading-relaxed cursor-pointer">
+                I agree to the{" "}
+                <Link href="/landing/terms" className="text-indigo-400 hover:text-indigo-300 underline-offset-2 hover:underline transition-colors">
+                  Terms of Service
+                </Link>
+                {" "}and{" "}
+                <Link href="/landing/privacy" className="text-indigo-400 hover:text-indigo-300 underline-offset-2 hover:underline transition-colors">
+                  Privacy Policy
+                </Link>
+              </label>
+            </div>
           </>
         )}
 
@@ -275,13 +320,19 @@ export function RegisterForm() {
             <button
               type="submit"
               disabled={loading || !stepValid[2]}
-              className="flex-1 rounded-lg py-2.5 text-sm font-semibold text-white disabled:opacity-40 transition-all"
+              className="flex-1 rounded-lg py-2.5 text-sm font-semibold text-white disabled:opacity-40 transition-all flex items-center justify-center gap-2"
               style={{
                 background: "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)",
                 boxShadow: loading ? "none" : "0 0 20px rgba(99,102,241,0.35)",
               }}
             >
-              {loading ? "Creating account…" : "Create account →"}
+              {loading && (
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                  <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
+                </svg>
+              )}
+              <span>{loading ? "Creating account…" : "Create account →"}</span>
             </button>
           )}
         </div>

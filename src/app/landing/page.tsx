@@ -2,13 +2,15 @@
  * Intellios Marketing Landing Page
  * Production-ready, 10-section marketing page using the Intellios design system.
  * All statistics sourced and attributed. Accessible without authentication.
+ * Server component with client-side islands for interactivity.
  */
 
-"use client";
-
-import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { RequestAccessModal } from "@/components/landing/request-access-modal";
+import { ScrollRevealWrapper } from "@/components/landing/scroll-reveal-wrapper";
+import { MobileNav } from "@/components/landing/mobile-nav";
+import { FaqAccordion } from "@/components/landing/faq-accordion";
+import { HeroIllustration } from "@/components/landing/hero-illustration";
 import {
   ShieldCheck,
   Zap,
@@ -26,42 +28,7 @@ import {
   Users,
   Cloud,
   Cpu,
-  Menu,
-  X,
 } from "lucide-react";
-
-/* ─────────────────────────────────────────────────────────────────────── */
-/*  Scroll animation hook                                                  */
-/* ─────────────────────────────────────────────────────────────────────── */
-
-function useScrollReveal() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    // Respect prefers-reduced-motion — skip animations for users who request it
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion) {
-      el.querySelectorAll(".reveal").forEach((t) => t.classList.add("revealed"));
-      return;
-    }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("revealed");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
-    );
-    const targets = el.querySelectorAll(".reveal");
-    targets.forEach((t) => observer.observe(t));
-    return () => observer.disconnect();
-  }, []);
-  return ref;
-}
 
 /* ─────────────────────────────────────────────────────────────────────── */
 /*  Data                                                                    */
@@ -74,6 +41,7 @@ const NAV_LINKS = [
   { label: "Use Cases", href: "#personas" },
   { label: "Why Us", href: "#why-intellios" },
   { label: "ROI", href: "#roi" },
+  { label: "Templates", href: "/templates" },
 ];
 
 const GOVERNANCE_GAP_STATS = [
@@ -191,14 +159,15 @@ const FOOTER_LINKS = {
     { label: "Why Intellios", href: "#why-intellios" },
   ],
   Company: [
-    { label: "About", href: "#" },
+    { label: "About", href: "#why-intellios" },
     { label: "Contact Sales", href: "mailto:sales@intellios.io" },
-    { label: "Careers", href: "#" },
+    { label: "Pricing", href: "/landing/pricing" },
+    { label: "Careers", href: "mailto:careers@intellios.io" },
   ],
   Legal: [
-    { label: "Privacy Policy", href: "#" },
-    { label: "Terms of Service", href: "#" },
-    { label: "Security", href: "#" },
+    { label: "Privacy Policy", href: "/landing/privacy" },
+    { label: "Terms of Service", href: "/landing/terms" },
+    { label: "Security", href: "/landing/security" },
   ],
 };
 
@@ -207,11 +176,8 @@ const FOOTER_LINKS = {
 /* ─────────────────────────────────────────────────────────────────────── */
 
 export default function LandingPage() {
-  const scrollRef = useScrollReveal();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   return (
-    <div ref={scrollRef} className="min-h-screen bg-white dark:bg-slate-950">
+    <ScrollRevealWrapper>
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 border-b border-gray-900/10 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 backdrop-blur-sm">
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
@@ -258,52 +224,9 @@ export default function LandingPage() {
               )}
             </RequestAccessModal>
 
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-            >
-              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
+            <MobileNav navLinks={NAV_LINKS} />
           </div>
         </nav>
-
-        {/* Mobile menu panel */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-100 dark:border-white/5 bg-white dark:bg-slate-950 px-6 pb-4 pt-2">
-            <div className="flex flex-col gap-1">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <div className="mt-2 border-t border-gray-100 dark:border-white/5 pt-3 flex flex-col gap-2">
-                <Link
-                  href="/login"
-                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-                >
-                  Sign in
-                </Link>
-                <RequestAccessModal>
-                  {(open) => (
-                    <button
-                      onClick={() => { setMobileMenuOpen(false); open(); }}
-                      className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors text-center"
-                    >
-                      Request Early Access
-                    </button>
-                  )}
-                </RequestAccessModal>
-              </div>
-            </div>
-          </div>
-        )}
       </header>
 
       {/* ════════════════════════════════════════════════════════════════ */}
@@ -417,6 +340,11 @@ export default function LandingPage() {
                 {v}
               </span>
             ))}
+          </div>
+
+          {/* ── Decorative agent-factory illustration ── */}
+          <div className="reveal mt-12 flex justify-center">
+            <HeroIllustration size="lg" className="opacity-80 dark:opacity-60" />
           </div>
 
           {/* ── Product visualization mockup ── */}
@@ -947,6 +875,67 @@ export default function LandingPage() {
       </section>
 
       {/* ════════════════════════════════════════════════════════════════ */}
+      {/*  SECTION 7b — Design Partner Voices                              */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <section className="border-t border-gray-100 dark:border-white/5 py-16 sm:py-20 px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="reveal text-center mb-12">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+              Design Partner Voices
+            </p>
+            <p className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
+              What early design partners are saying
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {[
+              {
+                quote: "We spent 14 months building an internal governance layer. Intellios replaced it in weeks — and it actually scales.",
+                role: "VP of AI Engineering",
+                org: "Top-10 US Bank",
+                borderColor: "border-indigo-200 dark:border-indigo-500/20",
+              },
+              {
+                quote: "For the first time, our compliance team isn't the bottleneck on agent deployment. They're accelerators.",
+                role: "Chief Risk Officer",
+                org: "Fortune 100 Insurer",
+                borderColor: "border-violet-200 dark:border-violet-500/20",
+              },
+              {
+                quote: "The audit trail writes itself. When regulators asked for MRM documentation, we had it in hours instead of months.",
+                role: "Head of Model Risk",
+                org: "Global Healthcare Enterprise",
+                borderColor: "border-emerald-200 dark:border-emerald-500/20",
+              },
+            ].map((t, i) => (
+              <div
+                key={i}
+                className={`reveal rounded-2xl border-2 ${t.borderColor} bg-white dark:bg-slate-800/50 p-8 shadow-sm`}
+              >
+                <div className="mb-4 text-gray-400">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="opacity-60">
+                    <path d="M3 21c3 0 7-1 7-8V5c0-1.25-4.716-5-7-5C4.716 0 0 4.25 0 5v10c0 7 4 8 7 8zm15 0c3 0 7-1 7-8V5c0-1.25-4.716-5-7-5-2.284 0-7 3.75-7 5v10c0 7 4 8 7 8z" />
+                  </svg>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 italic font-medium leading-relaxed mb-4">
+                  "{t.quote}"
+                </p>
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-white text-sm">
+                    {t.role}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t.org}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 8 — ROI                                                 */}
       {/* ════════════════════════════════════════════════════════════════ */}
       <section
@@ -1001,6 +990,52 @@ export default function LandingPage() {
               The EU AI Act compliance deadlines aren&apos;t waiting for your governance roadmap. If you have more than 5 AI agents in production&mdash;or plan to by Q3&mdash;you&apos;re past the point where manual governance scales.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/*  SECTION 8b — FAQ                                                */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <section className="border-t border-gray-100 dark:border-white/5 py-20 sm:py-24 px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <div className="reveal text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl mb-4">
+              Frequently asked questions
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400">
+              Have a question that isn't answered below? Reach out to sales@intellios.io
+            </p>
+          </div>
+
+          <FaqAccordion
+            items={[
+              {
+                question: "What cloud providers does Intellios work with?",
+                answer:
+                  "Intellios is runtime-agnostic. It governs agents running on AWS AgentCore, Azure AI Foundry, or any future runtime. The governed control plane sits above your execution environment — not beside it.",
+              },
+              {
+                question: "How long does implementation take?",
+                answer:
+                  "Design partners typically see first value within 2–4 weeks. Full deployment with custom policies, SSO integration, and audit trail configuration is typically complete within 6–8 weeks.",
+              },
+              {
+                question: "Is my data isolated from other tenants?",
+                answer:
+                  "Yes. Intellios uses strict tenant isolation at every layer: database, API, audit trail, and policy engine. Each enterprise operates in a fully separate namespace with independent encryption keys.",
+              },
+              {
+                question: "What compliance frameworks do you support?",
+                answer:
+                  "Intellios is designed around SR 11-7 (Federal Reserve model risk management), EU AI Act, NIST AI RMF, GDPR, and HIPAA. Our governance engine maps policy validations directly to framework requirements.",
+              },
+              {
+                question: "Do you offer a free trial?",
+                answer:
+                  "We don't offer self-serve trials. Instead, we onboard design partners with a guided implementation that ensures governance policies are configured correctly for your regulatory environment. Apply for a design partnership to get started.",
+              },
+            ]}
+          />
         </div>
       </section>
 
@@ -1111,7 +1146,6 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-
-    </div>
+    </ScrollRevealWrapper>
   );
 }

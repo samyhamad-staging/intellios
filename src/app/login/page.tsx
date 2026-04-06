@@ -169,6 +169,7 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
                 placeholder="you@intellios.dev"
+                aria-describedby={error ? "login-error" : undefined}
               />
             </FormField>
 
@@ -203,31 +204,27 @@ function LoginForm() {
               </FormField>
             )}
 
-            {/* P2-57: Remember this device */}
+            {/* P2-57: Remember this device — P2-1 a11y: native checkbox */}
             {!ssoEnabled && (
               <label className="flex cursor-pointer items-center gap-2.5 select-none">
-                <div
-                  onClick={() => setRememberDevice((v) => !v)}
-                  className={`relative flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
-                    rememberDevice
-                      ? "border-indigo-500 bg-indigo-500"
-                      : "border-white/20 bg-white/5 hover:border-white/35"
-                  }`}
-                >
-                  {rememberDevice && (
-                    <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 10 10" fill="none">
-                      <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                </div>
-                <span className="font-mono text-2xs text-white/40 hover:text-white/60 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={rememberDevice}
+                  onChange={(e) => setRememberDevice(e.target.checked)}
+                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-white/5 text-indigo-500 focus:ring-indigo-500/30 focus:ring-offset-0 accent-indigo-500"
+                />
+                <span className="font-mono text-2xs text-white/60 hover:text-white/80 transition-colors">
                   Remember this device for 30 days
                 </span>
               </label>
             )}
 
             {error && (
-              <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+              <p
+                id="login-error"
+                role="alert"
+                className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400"
+              >
                 {error}
               </p>
             )}
@@ -244,7 +241,7 @@ function LoginForm() {
 
             {/* M-02: Add create account link + improve forgot-password contrast */}
             <div className="flex items-center justify-between">
-              <a href="/auth/forgot-password" className="text-xs text-white/40 hover:text-white/70 transition-colors">
+              <a href="/auth/forgot-password" className="text-xs text-white/60 hover:text-white/80 transition-colors">
                 Forgot your password?
               </a>
               <a href="/register" className="text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors">
