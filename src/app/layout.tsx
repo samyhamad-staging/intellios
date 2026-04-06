@@ -32,10 +32,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await auth().catch(() => null);
 
   const branding = session?.user?.enterpriseId
-    ? (await getEnterpriseSettings(session.user.enterpriseId)).branding
+    ? await getEnterpriseSettings(session.user.enterpriseId).then(s => s.branding).catch(() => null)
     : null;
 
   async function handleSignOut() {
