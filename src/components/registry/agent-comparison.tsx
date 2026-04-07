@@ -182,11 +182,11 @@ export function AgentComparison({ agents, onClose, onRemoveAgent }: AgentCompari
               {/* Quality */}
               <ComparisonCell
                 label="Governance Health"
-                values={details.map((a) => {
+                values={details.map((a, i) => {
                   if (a.violationCount === null || a.violationCount === undefined) return "Not validated";
-                  if (a.violationCount > 0) return <span className="text-red-600 dark:text-red-400">{a.violationCount} error{a.violationCount !== 1 ? "s" : ""}</span>;
-                  if (a.warningCount && a.warningCount > 0) return <span className="text-amber-600 dark:text-amber-400">{a.warningCount} warning{a.warningCount !== 1 ? "s" : ""}</span>;
-                  return <span className="text-emerald-600">Passing</span>;
+                  if (a.violationCount > 0) return <span key={i} className="text-red-600 dark:text-red-400">{a.violationCount} error{a.violationCount !== 1 ? "s" : ""}</span>;
+                  if (a.warningCount && a.warningCount > 0) return <span key={i} className="text-amber-600 dark:text-amber-400">{a.warningCount} warning{a.warningCount !== 1 ? "s" : ""}</span>;
+                  return <span key={i} className="text-emerald-600">Passing</span>;
                 })}
               />
               <ComparisonCell

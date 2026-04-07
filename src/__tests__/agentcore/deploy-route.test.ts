@@ -20,11 +20,11 @@ const mockSend = vi.fn();
 vi.mock("@aws-sdk/client-bedrock-agent", () => {
   return {
     BedrockAgentClient: vi.fn(function () { return { send: mockSend }; }),
-    CreateAgentCommand: vi.fn((input) => ({ _type: "CreateAgent", input })),
-    CreateAgentActionGroupCommand: vi.fn((input) => ({ _type: "CreateAgentActionGroup", input })),
-    PrepareAgentCommand: vi.fn((input) => ({ _type: "PrepareAgent", input })),
-    GetAgentCommand: vi.fn((input) => ({ _type: "GetAgent", input })),
-    DeleteAgentCommand: vi.fn((input) => ({ _type: "DeleteAgent", input })),
+    CreateAgentCommand: vi.fn(function (input) { return { _type: "CreateAgent", input }; }),
+    CreateAgentActionGroupCommand: vi.fn(function (input) { return { _type: "CreateAgentActionGroup", input }; }),
+    PrepareAgentCommand: vi.fn(function (input) { return { _type: "PrepareAgent", input }; }),
+    GetAgentCommand: vi.fn(function (input) { return { _type: "GetAgent", input }; }),
+    DeleteAgentCommand: vi.fn(function (input) { return { _type: "DeleteAgent", input }; }),
   };
 });
 

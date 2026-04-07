@@ -124,9 +124,8 @@ export function LifecycleControls({
   const primaryActions = actions.filter((a) => a.variant === "primary" || a.variant === "secondary");
   const dangerActions = actions.filter((a) => a.variant === "destructive");
 
-  if (actions.length === 0 && !canCreateNewVersion) return null;
-
   // ── Optimistic status transition ──────────────────────────────────────────
+  // Hook must be declared before any early returns (Rules of Hooks)
   const statusMutation = useMutation({
     mutationFn: async (next: Status) => {
       const res = await fetch(`/api/blueprints/${blueprintId}/status`, {
@@ -175,6 +174,8 @@ export function LifecycleControls({
       void queryClient.invalidateQueries({ queryKey: queryKeys.registry.agents() });
     },
   });
+
+  if (actions.length === 0 && !canCreateNewVersion) return null;
 
   const handleTransition = (next: Status) => {
     if (next === "deployed") {
