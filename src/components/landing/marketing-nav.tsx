@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
+import { useState, useEffect } from "react";
 import { MobileNav } from "@/components/landing/mobile-nav";
 import { RequestAccessButton } from "@/components/landing/request-access-button";
 
@@ -27,9 +28,22 @@ interface MarketingNavProps {
 }
 
 export function MarketingNav({ transparent = false }: MarketingNavProps) {
-  const bgClass = transparent
-    ? "bg-transparent"
-    : "bg-white/80 dark:bg-slate-950/80 backdrop-blur-lg border-b border-gray-100 dark:border-white/5";
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handler, { passive: true });
+    handler(); // sync on mount in case page loads mid-scroll
+    return () => window.removeEventListener("scroll", handler);
+  }, []);
+
+  // Transparent only when prop is set AND user is at the top of the page.
+  // Once scrolled, always show the frosted background so content behind
+  // the sticky nav is hidden.
+  const bgClass =
+    transparent && !scrolled
+      ? "bg-transparent"
+      : "bg-white/90 dark:bg-slate-950/90 backdrop-blur-lg border-b border-gray-100 dark:border-white/5 shadow-sm";
 
   return (
     <nav className={`sticky top-0 z-50 ${bgClass}`}>

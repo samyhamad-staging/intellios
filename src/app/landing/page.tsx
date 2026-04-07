@@ -155,7 +155,7 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 1 — Hero                                               */}
       {/* ════════════════════════════════════════════════════════════════ */}
-      <section className="relative isolate overflow-hidden px-6 pt-14 lg:px-8">
+      <section className="relative isolate overflow-hidden px-6 pt-20 lg:px-8">
         {/* Background gradient blobs */}
         <div
           className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
@@ -265,7 +265,7 @@ export default function LandingPage() {
           </div>
 
           {/* ── Product visualization mockup ── */}
-          <div className="reveal mt-14 mx-auto max-w-4xl">
+          <div className="reveal mt-6 mx-auto max-w-4xl">
             <div className="rounded-xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 shadow-xl overflow-hidden">
               {/* Browser chrome */}
               <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-gray-700/50">
