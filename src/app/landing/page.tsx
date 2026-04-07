@@ -371,7 +371,7 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       <section
         id="governance-gap"
-        className="relative border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8"
+        className="relative border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8 scroll-mt-20"
       >
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14 reveal">
@@ -413,7 +413,7 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 3 — Three Governance Pillars                            */}
       {/* ════════════════════════════════════════════════════════════════ */}
-      <section id="pillars" className="py-20 sm:py-24 px-6 lg:px-8">
+      <section id="pillars" className="py-20 sm:py-24 px-6 lg:px-8 scroll-mt-20">
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14 reveal">
             <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
@@ -466,7 +466,7 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       <section
         id="architecture"
-        className="relative border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8"
+        className="relative border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8 scroll-mt-20"
       >
         <div className="mx-auto max-w-5xl">
           <div className="text-center mb-14 reveal">
@@ -591,7 +591,7 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 5 — Personas / Use Cases                                */}
       {/* ════════════════════════════════════════════════════════════════ */}
-      <section id="personas" className="py-20 sm:py-24 px-6 lg:px-8">
+      <section id="personas" className="py-20 sm:py-24 px-6 lg:px-8 scroll-mt-20">
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14 reveal">
             <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
@@ -678,7 +678,7 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 6 — Differentiation                                     */}
       {/* ════════════════════════════════════════════════════════════════ */}
-      <section id="why-intellios" className="border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8">
+      <section id="why-intellios" className="border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8 scroll-mt-20">
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14 reveal">
             <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
@@ -810,7 +810,7 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       <section
         id="roi"
-        className="border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8"
+        className="border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8 scroll-mt-20"
       >
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14 reveal">

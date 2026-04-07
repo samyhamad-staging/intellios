@@ -52,7 +52,7 @@ export function MarketingFooter() {
                 Intellios
               </span>
             </Link>
-            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs">
+            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
               The governed control plane for enterprise AI agents. Design, generate, govern, and deploy AI agents under your brand and policies.
             </p>
           </div>
