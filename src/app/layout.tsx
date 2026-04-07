@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { auth, signOut } from "@/auth";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = localFont({
   src: "../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2",
@@ -109,6 +110,7 @@ export default async function RootLayout({
             <main id="main-content">{children}</main>
           )}
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
