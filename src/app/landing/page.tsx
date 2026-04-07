@@ -590,128 +590,153 @@ export default function LandingPage() {
       </section>
 
       {/* ════════════════════════════════════════════════════════════════ */}
-      {/*  SECTION 4 — Architecture Diagram                                */}
+      {/*  SECTION 4 — How It Works                                        */}
       {/* ════════════════════════════════════════════════════════════════ */}
       <section
         id="architecture"
-        className="relative border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8 scroll-mt-20"
+        className="relative border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-28 px-6 lg:px-8 scroll-mt-20"
       >
-        <div className="mx-auto max-w-5xl">
-          <div className="text-center mb-14 reveal">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center mb-16 reveal">
             <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
-              Architecture
+              How It Works
             </h2>
             <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
-              Runtime-agnostic by design
+              Every agent passes through governance.<br className="hidden sm:block" /> Nothing slips through.
             </p>
             <p className="mt-4 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-              Intellios doesn&apos;t replace your cloud. It governs what runs on it. A single control plane above any execution runtime.
+              Intellios sits between your teams and your cloud. Agents are designed, validated, approved, and monitored — before and after deployment — regardless of which runtime executes them.
             </p>
           </div>
 
-          {/* Architecture diagram */}
-          <div className="reveal mx-auto max-w-3xl">
-            {/* Top Layer — Enterprise Systems */}
-            <div className="rounded-xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 p-5 mb-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
-                Enterprise Systems
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { label: "Identity Providers", icon: Users },
-                  { label: "Data Sources", icon: Layers },
-                  { label: "Policy Engines", icon: ShieldCheck },
-                  { label: "CI/CD Pipelines", icon: GitBranch },
-                ].map((sys) => (
-                  <div
-                    key={sys.label}
-                    className="flex items-center gap-1.5 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-slate-700/50 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300"
-                  >
-                    <sys.icon size={12} />
-                    {sys.label}
+          {/* ── WITH Intellios flow ── */}
+          <div className="reveal">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-400">
+                <Check size={10} /> With Intellios
+              </span>
+            </div>
+
+            {/* Flow steps */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-2">
+              {[
+                {
+                  step: "01",
+                  label: "Author",
+                  title: "Agent designed in Intellios",
+                  desc: "Your team defines the agent's identity, capabilities, and constraints using guided templates.",
+                  icon: Users,
+                  color: "border-slate-700 bg-slate-800/60",
+                  stepColor: "text-slate-400",
+                },
+                {
+                  step: "02",
+                  label: "Validate",
+                  title: "Policy gate enforced",
+                  desc: "Every policy — SR 11-7, GDPR, HIPAA, your custom rules — runs automatically. Failures block deployment.",
+                  icon: ShieldCheck,
+                  color: "border-indigo-500/40 bg-indigo-500/10",
+                  stepColor: "text-indigo-400",
+                },
+                {
+                  step: "03",
+                  label: "Approve",
+                  title: "Signed off and versioned",
+                  desc: "Risk and compliance teams approve via role-based workflows. Every decision is logged with a cryptographic audit trail.",
+                  icon: GitBranch,
+                  color: "border-violet-500/40 bg-violet-500/10",
+                  stepColor: "text-violet-400",
+                },
+                {
+                  step: "04",
+                  label: "Deploy & Monitor",
+                  title: "Live on your cloud, governed by Intellios",
+                  desc: "Agent runs on AWS AgentCore, Azure AI Foundry, or any future runtime. Every decision traced. Drift detected.",
+                  icon: Activity,
+                  color: "border-emerald-500/40 bg-emerald-500/10",
+                  stepColor: "text-emerald-400",
+                },
+              ].map((s, i) => (
+                <div key={i} className="relative">
+                  <div className={`rounded-xl border p-5 h-full ${s.color}`}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className={`text-xs font-bold font-mono ${s.stepColor}`}>{s.step}</span>
+                      <span className={`text-xs font-semibold uppercase tracking-widest ${s.stepColor}`}>{s.label}</span>
+                    </div>
+                    <s.icon size={20} className={`mb-3 ${s.stepColor}`} />
+                    <p className="text-sm font-semibold text-white mb-1.5">{s.title}</p>
+                    <p className="text-xs text-gray-400 leading-relaxed">{s.desc}</p>
                   </div>
-                ))}
-              </div>
+                  {/* Arrow connector */}
+                  {i < 3 && (
+                    <div className="hidden lg:flex absolute -right-1.5 top-1/2 -translate-y-1/2 z-10 items-center justify-center w-3">
+                      <ArrowRight size={12} className="text-gray-600" />
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
 
-            {/* Connector arrows */}
-            <div className="flex justify-center py-1">
-              <div className="flex flex-col items-center">
-                <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
-                <div className="h-0 w-0 border-x-4 border-x-transparent border-t-4 border-t-gray-300 dark:border-t-gray-600" />
-              </div>
-            </div>
-
-            {/* Center Layer — Intellios (highlighted) */}
-            <div className="rounded-xl border-2 border-indigo-400 dark:border-indigo-500/60 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-500/10 dark:to-violet-500/10 p-6 mb-3 shadow-lg relative">
-              <div className="absolute -top-3 left-6">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-600 px-3 py-0.5 text-xs font-bold text-white shadow-sm">
-                  <Zap size={10} />
-                  INTELLIOS
+            {/* Outcome bar */}
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-3 flex flex-wrap items-center gap-4 sm:gap-8">
+              <span className="text-xs font-semibold uppercase tracking-widest text-emerald-400">Result</span>
+              {[
+                "Full audit trail from design to retirement",
+                "Zero ungoverned agents in production",
+                "Works on AWS, Azure, or any runtime",
+              ].map((r) => (
+                <span key={r} className="flex items-center gap-1.5 text-xs text-emerald-300">
+                  <Check size={10} className="text-emerald-400 shrink-0" /> {r}
                 </span>
-              </div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-4 mt-2">
-                Governed Control Plane
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {PILLARS.map((p, i) => (
-                  <div
-                    key={i}
-                    className="rounded-lg border border-indigo-200 dark:border-indigo-500/30 bg-white/80 dark:bg-slate-800/60 p-3 text-center"
-                  >
-                    <p.icon size={20} className="mx-auto text-indigo-600 dark:text-indigo-400 mb-1.5" />
-                    <p className="text-xs font-semibold text-gray-900 dark:text-white">
-                      {p.title}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
+          </div>
 
-            {/* Connector arrows */}
-            <div className="flex justify-center py-1">
-              <div className="flex flex-col items-center">
-                <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
-                <div className="h-0 w-0 border-x-4 border-x-transparent border-t-4 border-t-gray-300 dark:border-t-gray-600" />
+          {/* ── WITHOUT Intellios contrast ── */}
+          <div className="reveal mt-6">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/20 px-3 py-1 text-xs font-semibold text-red-400">
+                <AlertTriangle size={10} /> Without Intellios
+              </span>
+            </div>
+            <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-5 py-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-0">
+                {/* Team → direct to cloud */}
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span className="rounded-lg border border-gray-700 bg-slate-800 px-3 py-1.5 text-gray-400">Your teams build agents</span>
+                  <ArrowRight size={12} className="text-red-500/60 shrink-0" />
+                  <span className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-red-400 font-medium">Deployed directly to cloud</span>
+                  <ArrowRight size={12} className="text-gray-600 shrink-0" />
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
+                  {[
+                    "No policy checks",
+                    "No audit trail",
+                    "Shadow AI proliferates",
+                    "Regulators flag it",
+                  ].map((r) => (
+                    <span key={r} className="flex items-center gap-1 text-xs text-red-400/80 bg-red-500/10 border border-red-500/20 rounded-full px-2.5 py-1">
+                      <AlertTriangle size={9} className="shrink-0" /> {r}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
+          </div>
 
-            {/* Middle Layer — Runtime Adapter */}
-            <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800/30 p-3 mb-3 text-center">
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                Runtime Adapter Interface
-              </p>
+          {/* Runtime compatibility note */}
+          <div className="reveal mt-10 text-center">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-3">Works with your existing cloud</p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {["AWS AgentCore", "Azure AI Foundry", "Future Runtimes"].map((r) => (
+                <span key={r} className="flex items-center gap-1.5 rounded-full border border-gray-700 bg-slate-800/50 px-4 py-1.5 text-xs font-medium text-gray-400">
+                  <Cloud size={11} /> {r}
+                </span>
+              ))}
             </div>
-
-            {/* Connector arrows */}
-            <div className="flex justify-center py-1">
-              <div className="flex flex-col items-center">
-                <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
-                <div className="h-0 w-0 border-x-4 border-x-transparent border-t-4 border-t-gray-300 dark:border-t-gray-600" />
-              </div>
-            </div>
-
-            {/* Bottom Layer — Cloud Runtimes */}
-            <div className="rounded-xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 p-5">
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
-                Cloud Runtimes
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { label: "AWS AgentCore", icon: Cloud },
-                  { label: "Azure AI Foundry", icon: Cloud },
-                  { label: "Future Runtimes", icon: Cloud },
-                ].map((rt) => (
-                  <div
-                    key={rt.label}
-                    className="flex items-center gap-1.5 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-slate-700/50 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300"
-                  >
-                    <rt.icon size={12} />
-                    {rt.label}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <p className="mt-3 text-xs text-gray-500">
+              Intellios doesn&apos;t replace your cloud. It governs what runs on it.
+            </p>
           </div>
         </div>
       </section>
