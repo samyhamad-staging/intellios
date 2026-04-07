@@ -157,7 +157,7 @@ describe("P1-SEC-001: Password Reset Race Condition", () => {
     mockDb.query.users.update.mockResolvedValue({ id: "user-001" });
 
     // Call the mocked transaction
-    await mockDb.transaction(async (tx) => {
+    await mockDb.transaction(async (tx: any) => {
       // Verify token is marked as used BEFORE password update
       await tx.query.passwordResets.update.mockResolvedValue({ used: true });
       await tx.query.users.update.mockResolvedValue({ passwordHash: "hashed_new_password" });
@@ -188,7 +188,7 @@ describe("P1-SEC-001: Password Reset Race Condition", () => {
     });
 
     // Simulate password reset flow
-    await mockDb.transaction(async (tx) => {
+    await mockDb.transaction(async (tx: any) => {
       await tx.query.passwordResets.update({});
       await tx.query.users.update({});
     });
@@ -260,7 +260,7 @@ describe("P1-SEC-002: Invite Accept Race Condition", () => {
       accepted: false,
     });
 
-    await mockDb.transaction(async (tx) => {
+    await mockDb.transaction(async (tx: any) => {
       await tx.query.invitations.update({ accepted: true });
       await tx.query.users.create({ email: "newuser@example.com" });
     });
@@ -289,7 +289,7 @@ describe("P1-SEC-002: Invite Accept Race Condition", () => {
       await fn(txDb);
     });
 
-    await mockDb.transaction(async (tx) => {
+    await mockDb.transaction(async (tx: any) => {
       await tx.query.invitations.update({ accepted: true });
       await tx.query.users.create({ email: "test@example.com" });
     });
@@ -350,7 +350,7 @@ describe("P1-SEC-002: Invite Accept Race Condition", () => {
 
     mockDb.query.users.create.mockRejectedValueOnce(rollbackError);
 
-    const result = mockDb.transaction(async (tx) => {
+    const result = mockDb.transaction(async (tx: any) => {
       await tx.query.invitations.update({ accepted: true });
       await tx.query.users.create({ email: "test@example.com" });
     });

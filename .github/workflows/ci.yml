@@ -51,7 +51,7 @@ jobs:
           cache-dependency-path: src/package-lock.json
 
       - run: npm ci
-      - run: npx next lint --dir .
+      - run: npx next lint
 
   # ─── Unit Tests ───────────────────────────────────────────────────────
   test:
