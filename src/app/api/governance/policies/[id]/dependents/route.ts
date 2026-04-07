@@ -12,6 +12,7 @@ import { eq, isNull, or, and, inArray } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
+import { ALL_POLICY_COLUMNS } from "@/lib/db/safe-columns";
 
 const TERMINAL_STATUSES = ["deprecated", "rejected"];
 const ACTIVE_STATUSES = ["draft", "in_review", "approved", "deployed", "suspended"];
@@ -27,9 +28,11 @@ export async function GET(
   const { id } = await params;
 
   try {
-    const policy = await db.query.governancePolicies.findFirst({
-      where: eq(governancePolicies.id, id),
-    });
+    const [policy] = await db
+      .select(ALL_POLICY_COLUMNS)
+      .from(governancePolicies)
+      .where(eq(governancePolicies.id, id))
+      .limit(1);
 
     if (!policy) {
       return apiError(ErrorCode.NOT_FOUND, "Policy not found", undefined, requestId);

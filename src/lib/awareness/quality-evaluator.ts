@@ -26,6 +26,7 @@ import {
   intakeQualityScores,
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 // ── Blueprint scoring ─────────────────────────────────────────────────────────
 
@@ -39,9 +40,11 @@ export async function runBlueprintQualityScoreForId(
   enterpriseId: string | null
 ): Promise<void> {
   try {
-    const blueprint = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, blueprintId),
-    });
+    const [blueprint] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, blueprintId))
+      .limit(1);
     if (!blueprint) return;
 
     const session = blueprint.sessionId

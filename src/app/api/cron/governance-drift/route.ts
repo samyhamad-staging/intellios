@@ -7,6 +7,7 @@ import { validateBlueprint } from "@/lib/governance/validator";
 import { getAdminEmails, getComplianceOfficerEmails } from "@/lib/notifications/recipients";
 import { sendEmail, buildNotificationEmail } from "@/lib/notifications/email";
 import { publishEvent } from "@/lib/events/publish";
+import { ALL_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import type { ABP } from "@/lib/types/abp";
 
 /**
@@ -32,9 +33,10 @@ export async function GET(request: NextRequest) {
   // Load all deployed blueprints
   let deployed;
   try {
-    deployed = await db.query.agentBlueprints.findMany({
-      where: eq(agentBlueprints.status, "deployed"),
-    });
+    deployed = await db
+      .select(ALL_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.status, "deployed"));
   } catch (err) {
     console.error("[cron/governance-drift] DB query failed:", err);
     return NextResponse.json({ error: "Database error" }, { status: 500 });

@@ -14,6 +14,7 @@
 import { db } from "@/lib/db";
 import { agentBlueprints, deploymentHealth, agentTelemetry } from "@/lib/db/schema";
 import { and, eq, gt, isNull, sql } from "drizzle-orm";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import { loadPolicies } from "@/lib/governance/load-policies";
 import { evaluatePolicies } from "@/lib/governance/evaluate";
 import type { ABP } from "@/lib/types/abp";
@@ -48,9 +49,11 @@ export async function checkDeploymentHealth(
   deployedAt: Date
 ): Promise<HealthCheckResult | null> {
   // 1. Fetch the blueprint
-  const blueprint = await db.query.agentBlueprints.findFirst({
-    where: eq(agentBlueprints.id, blueprintId),
-  });
+  const [blueprint] = await db
+    .select(SAFE_BLUEPRINT_COLUMNS)
+    .from(agentBlueprints)
+    .where(eq(agentBlueprints.id, blueprintId))
+    .limit(1);
   if (!blueprint) return null;
 
   // 2. Load current enterprise policies (same or(isNull, eq) query used everywhere)
@@ -181,9 +184,10 @@ export async function checkAllDeployedAgents(
     ? eq(agentBlueprints.enterpriseId, enterpriseId)
     : isNull(agentBlueprints.enterpriseId);
 
-  const deployed = await db.query.agentBlueprints.findMany({
-    where: (t, { and }) => and(eq(t.status, "deployed"), enterpriseFilter),
-  });
+  const deployed = await db
+    .select(SAFE_BLUEPRINT_COLUMNS)
+    .from(agentBlueprints)
+    .where(and(eq(agentBlueprints.status, "deployed"), enterpriseFilter));
 
   const results: HealthCheckResult[] = [];
   for (const bp of deployed) {

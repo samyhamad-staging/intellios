@@ -10,6 +10,7 @@ import { publishEvent } from "@/lib/events/publish";
 import { assembleMRMReport } from "@/lib/mrm/report";
 import { artifactExists, getSignedUrl, uploadArtifact } from "@/lib/storage/s3";
 import type { ApprovalStepRecord } from "@/lib/settings/types";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 /**
  * GET /api/blueprints/[id]/evidence-package
@@ -49,9 +50,11 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const blueprint = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, id),
-    });
+    const [blueprint] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, id))
+      .limit(1);
     if (!blueprint) {
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }

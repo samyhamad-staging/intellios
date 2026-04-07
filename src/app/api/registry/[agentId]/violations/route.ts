@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { runtimeViolations, agentBlueprints } from "@/lib/db/schema";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import { and, desc, eq, gte } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -19,10 +20,13 @@ import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 
 async function resolveAgent(agentId: string) {
-  return db.query.agentBlueprints.findFirst({
-    where: eq(agentBlueprints.agentId, agentId),
-    orderBy: [desc(agentBlueprints.createdAt)],
-  });
+  const [result] = await db
+    .select(SAFE_BLUEPRINT_COLUMNS)
+    .from(agentBlueprints)
+    .where(eq(agentBlueprints.agentId, agentId))
+    .orderBy(desc(agentBlueprints.createdAt))
+    .limit(1);
+  return result;
 }
 
 export async function GET(

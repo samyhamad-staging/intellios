@@ -19,6 +19,7 @@ import { generateAgentCode } from "@/lib/export/code-generator";
 import { artifactExists, getSignedUrl, uploadArtifact } from "@/lib/storage/s3";
 import type { ABP } from "@/lib/types/abp";
 import { readABP } from "@/lib/abp/read";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 export async function GET(
   request: NextRequest,
@@ -36,9 +37,11 @@ export async function GET(
   try {
     const { id: blueprintId } = await params;
 
-    const blueprint = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, blueprintId),
-    });
+    const [blueprint] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, blueprintId))
+      .limit(1);
     if (!blueprint) {
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }

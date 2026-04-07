@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { agentBlueprints, templates, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth/require";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import type { ABP } from "@/lib/types/abp";
 
 const PublishTemplateSchema = z.object({
@@ -32,9 +33,11 @@ export async function POST(
   const parsed = bodyError ? {} : body;
   const { name, description, category, tags } = parsed;
 
-  const blueprint = await db.query.agentBlueprints.findFirst({
-    where: eq(agentBlueprints.id, id),
-  });
+  const [blueprint] = await db
+    .select(SAFE_BLUEPRINT_COLUMNS)
+    .from(agentBlueprints)
+    .where(eq(agentBlueprints.id, id))
+    .limit(1);
   if (!blueprint) {
     return NextResponse.json({ error: "Blueprint not found" }, { status: 404 });
   }

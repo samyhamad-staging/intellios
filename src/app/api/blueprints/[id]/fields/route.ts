@@ -19,6 +19,7 @@ import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { parseBody } from "@/lib/parse-body";
 import { getRequestId } from "@/lib/request-id";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 // ─── Zod schema ───────────────────────────────────────────────────────────────
 
@@ -118,9 +119,11 @@ export async function PATCH(
     }
 
     // Load blueprint
-    const blueprint = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, id),
-    });
+    const [blueprint] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, id))
+      .limit(1);
 
     if (!blueprint) {
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found", undefined, requestId);

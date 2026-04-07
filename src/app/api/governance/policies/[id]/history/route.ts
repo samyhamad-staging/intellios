@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
+import { ALL_POLICY_COLUMNS } from "@/lib/db/safe-columns";
 
 /**
  * GET /api/governance/policies/[id]/history
@@ -31,9 +32,11 @@ export async function GET(
 
   try {
     // Fetch the requested version to validate access
-    const startPolicy = await db.query.governancePolicies.findFirst({
-      where: eq(governancePolicies.id, id),
-    });
+    const [startPolicy] = await db
+      .select(ALL_POLICY_COLUMNS)
+      .from(governancePolicies)
+      .where(eq(governancePolicies.id, id))
+      .limit(1);
 
     if (!startPolicy) {
       return apiError(ErrorCode.NOT_FOUND, "Policy not found", undefined, requestId);
@@ -62,9 +65,11 @@ export async function GET(
     let current = startPolicy;
 
     for (let i = 0; i < 20 && current.previousVersionId; i++) {
-      const prev = await db.query.governancePolicies.findFirst({
-        where: eq(governancePolicies.id, current.previousVersionId),
-      });
+      const [prev] = await db
+        .select(ALL_POLICY_COLUMNS)
+        .from(governancePolicies)
+        .where(eq(governancePolicies.id, current.previousVersionId))
+        .limit(1);
       if (!prev || seen.has(prev.id)) break;
       chain.push(prev);
       seen.add(prev.id);

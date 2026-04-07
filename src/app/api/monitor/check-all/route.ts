@@ -7,6 +7,7 @@ import { checkAllDeployedAgents } from "@/lib/monitoring/health";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { inArray } from "drizzle-orm";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 /**
  * POST /api/monitor/check-all
@@ -28,10 +29,14 @@ export async function POST(request: NextRequest) {
     // Batch-fetch all blueprint names in one query (prevents N+1)
     const bpIds = results.map((r) => r.blueprintId);
     const bpRows = bpIds.length > 0
-      ? await db.query.agentBlueprints.findMany({
-          where: inArray(agentBlueprints.id, bpIds),
-          columns: { id: true, name: true, abp: true },
-        })
+      ? await db
+          .select({
+            id: agentBlueprints.id,
+            name: agentBlueprints.name,
+            abp: agentBlueprints.abp,
+          })
+          .from(agentBlueprints)
+          .where(inArray(agentBlueprints.id, bpIds))
       : [];
     const bpMap = new Map(bpRows.map((bp) => [bp.id, bp]));
 

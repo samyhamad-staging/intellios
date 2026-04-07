@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agentBlueprints, governancePolicies } from "@/lib/db/schema";
+import { ALL_BLUEPRINT_COLUMNS, ALL_POLICY_COLUMNS } from "@/lib/db/safe-columns";
 import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth/require";
 
@@ -22,21 +23,27 @@ export async function GET(request: NextRequest) {
     : (session.user.enterpriseId ?? null);
 
   // Load deployed blueprints with review dates
-  const blueprintsWithDates = await db.query.agentBlueprints.findMany({
-    where: and(
-      eq(agentBlueprints.status, "deployed"),
-      isNotNull(agentBlueprints.nextReviewDue),
-      ...(enterpriseId ? [eq(agentBlueprints.enterpriseId, enterpriseId)] : []),
-    ),
-  });
+  const blueprintsWithDates = await db
+    .select(ALL_BLUEPRINT_COLUMNS)
+    .from(agentBlueprints)
+    .where(
+      and(
+        eq(agentBlueprints.status, "deployed"),
+        isNotNull(agentBlueprints.nextReviewDue),
+        ...(enterpriseId ? [eq(agentBlueprints.enterpriseId, enterpriseId)] : []),
+      )
+    );
 
   // Load active policies
-  const policies = await db.query.governancePolicies.findMany({
-    where: and(
-      isNull(governancePolicies.supersededAt),
-      ...(enterpriseId ? [eq(governancePolicies.enterpriseId, enterpriseId)] : []),
-    ),
-  });
+  const policies = await db
+    .select(ALL_POLICY_COLUMNS)
+    .from(governancePolicies)
+    .where(
+      and(
+        isNull(governancePolicies.supersededAt),
+        ...(enterpriseId ? [eq(governancePolicies.enterpriseId, enterpriseId)] : []),
+      )
+    );
 
   const now = new Date();
   const lines: string[] = [

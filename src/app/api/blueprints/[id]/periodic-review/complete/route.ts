@@ -9,6 +9,7 @@ import { parseBody } from "@/lib/parse-body";
 import { publishEvent } from "@/lib/events/publish";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import { z } from "zod";
+import { ALL_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 const CompleteReviewBody = z.object({
   notes: z.string().max(1000).optional(),
@@ -41,9 +42,11 @@ export async function POST(
 
   try {
     // Load blueprint with enterprise scope
-    const blueprint = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, id),
-    });
+    const [blueprint] = await db
+      .select(ALL_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, id))
+      .limit(1);
 
     if (!blueprint) {
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found", undefined, requestId);

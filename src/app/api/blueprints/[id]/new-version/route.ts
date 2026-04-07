@@ -10,6 +10,7 @@ import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 import { publishEvent } from "@/lib/events/publish";
 import { diffABP } from "@/lib/diff/abp-diff";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 /**
  * POST /api/blueprints/[id]/new-version
@@ -33,9 +34,11 @@ export async function POST(
     const { id } = await params;
 
     // Fetch source blueprint
-    const source = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, id),
-    });
+    const [source] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, id))
+      .limit(1);
     if (!source) return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
 
     // Enterprise access check
@@ -56,13 +59,17 @@ export async function POST(
     const newVersion = `${major + 1}.0.0`;
 
     // Prevent duplicates — reject if an active (non-deprecated) blueprint already exists at this version
-    const existing = await db.query.agentBlueprints.findFirst({
-      where: and(
-        eq(agentBlueprints.agentId, source.agentId),
-        eq(agentBlueprints.version, newVersion),
-        ne(agentBlueprints.status, "deprecated")
-      ),
-    });
+    const [existing] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(
+        and(
+          eq(agentBlueprints.agentId, source.agentId),
+          eq(agentBlueprints.version, newVersion),
+          ne(agentBlueprints.status, "deprecated")
+        )
+      )
+      .limit(1);
     if (existing) {
       return apiError(
         ErrorCode.CONFLICT,

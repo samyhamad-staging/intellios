@@ -17,6 +17,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 export async function GET(
   request: NextRequest,
@@ -32,11 +33,12 @@ export async function GET(
     const weeks = Math.min(52, Math.max(1, parseInt(searchParams.get("weeks") ?? "12", 10) || 12));
 
     // Verify agent exists + enterprise access
-    const latest = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.agentId, agentId),
-      orderBy: [desc(agentBlueprints.createdAt)],
-      columns: { id: true, enterpriseId: true },
-    });
+    const [latest] = await db
+      .select({ id: agentBlueprints.id, enterpriseId: agentBlueprints.enterpriseId })
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.agentId, agentId))
+      .orderBy(desc(agentBlueprints.createdAt))
+      .limit(1);
 
     if (!latest) {
       return apiError(ErrorCode.NOT_FOUND, "Agent not found", undefined, requestId);

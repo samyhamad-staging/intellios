@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agentBlueprints, intakeSessions, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { ALL_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import { refineBlueprint } from "@/lib/generation/generate";
 import { loadPolicies } from "@/lib/governance/load-policies";
 import { ABP } from "@/lib/types/abp";
@@ -42,9 +43,11 @@ export async function POST(
     const { id } = await params;
     const { change } = body;
 
-    const blueprint = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, id),
-    });
+    const [blueprint] = await db
+      .select(ALL_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, id))
+      .limit(1);
 
     if (!blueprint) {
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");

@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { db } from "@/lib/db";
 import { agentBlueprints, auditLog } from "@/lib/db/schema";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import { eq } from "drizzle-orm";
 import { runRedTeam } from "@/lib/testing/red-team";
 import { requireAuth } from "@/lib/auth/require";
@@ -51,9 +52,11 @@ export async function POST(
   try {
     const { id: blueprintId } = await params;
 
-    const blueprint = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, blueprintId),
-    });
+    const [blueprint] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, blueprintId))
+      .limit(1);
     if (!blueprint) {
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }

@@ -10,6 +10,7 @@ import { getRequestId } from "@/lib/request-id";
 import { runTestSuite } from "@/lib/testing/executor";
 import type { TestCase } from "@/lib/testing/types";
 import type { ABP } from "@/lib/types/abp";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 /**
  * GET /api/blueprints/[id]/test-runs
@@ -28,9 +29,11 @@ export async function GET(
     const { id } = await params;
 
     // Verify blueprint exists and resolve enterprise access
-    const blueprint = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, id),
-    });
+    const [blueprint] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, id))
+      .limit(1);
     if (!blueprint) {
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }
@@ -76,9 +79,11 @@ export async function POST(
     const { id } = await params;
 
     // ── 1. Load blueprint ─────────────────────────────────────────────────────
-    const blueprint = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, id),
-    });
+    const [blueprint] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, id))
+      .limit(1);
     if (!blueprint) {
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }

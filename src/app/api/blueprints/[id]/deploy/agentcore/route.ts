@@ -12,6 +12,7 @@ import { ABP } from "@/lib/types/abp";
 import { readABP } from "@/lib/abp/read";
 import { deployToAgentCore } from "@/lib/agentcore/deploy";
 import type { AgentCoreDeploymentRecord } from "@/lib/agentcore/types";
+import { ALL_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 /**
  * POST /api/blueprints/[id]/deploy/agentcore
@@ -42,9 +43,11 @@ export async function POST(
   try {
     const { id } = await params;
 
-    const blueprint = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, id),
-    });
+    const [blueprint] = await db
+      .select(ALL_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, id))
+      .limit(1);
 
     if (!blueprint) {
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");

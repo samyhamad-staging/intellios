@@ -17,6 +17,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import { eq } from "drizzle-orm";
 import { buildSimulationSystemPrompt } from "@/lib/testing/executor";
 import { requireAuth } from "@/lib/auth/require";
@@ -66,9 +67,11 @@ export async function POST(
     const messages = body.messages as UIMessage[];
 
     // Fetch blueprint
-    const blueprint = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, blueprintId),
-    });
+    const [blueprint] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, blueprintId))
+      .limit(1);
     if (!blueprint) {
       return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
     }

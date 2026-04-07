@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { agentBlueprints, auditLog, intakeSessions, intakeContributions, workflows } from "@/lib/db/schema";
 import { eq, and, asc, inArray, or, isNull } from "drizzle-orm";
+import { ALL_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import type { WorkflowDefinition } from "@/lib/types/workflow";
 import { ABP } from "@/lib/types/abp";
 import { readABP } from "@/lib/abp/read";
@@ -27,9 +28,11 @@ export async function assembleMRMReport(
   requestedBy: string
 ): Promise<MRMReport | null> {
   // ── 1. Fetch the blueprint ───────────────────────────────────────────────
-  const blueprint = await db.query.agentBlueprints.findFirst({
-    where: eq(agentBlueprints.id, blueprintId),
-  });
+  const [blueprint] = await db
+    .select(ALL_BLUEPRINT_COLUMNS)
+    .from(agentBlueprints)
+    .where(eq(agentBlueprints.id, blueprintId))
+    .limit(1);
   if (!blueprint) return null;
 
   // ── 2. Fetch all versions of this logical agent ──────────────────────────

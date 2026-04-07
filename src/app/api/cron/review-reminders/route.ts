@@ -6,6 +6,7 @@ import { and, eq, isNotNull, lte } from "drizzle-orm";
 import { getComplianceOfficerEmails } from "@/lib/notifications/recipients";
 import { sendEmail, buildNotificationEmail } from "@/lib/notifications/email";
 import { publishEvent } from "@/lib/events/publish";
+import { ALL_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 /**
  * GET /api/cron/review-reminders
@@ -36,13 +37,16 @@ export async function GET(request: NextRequest) {
 
   let candidates;
   try {
-    candidates = await db.query.agentBlueprints.findMany({
-      where: and(
-        eq(agentBlueprints.status, "deployed"),
-        isNotNull(agentBlueprints.nextReviewDue),
-        lte(agentBlueprints.nextReviewDue, thirtyFiveDaysFromNow)
-      ),
-    });
+    candidates = await db
+      .select(ALL_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(
+        and(
+          eq(agentBlueprints.status, "deployed"),
+          isNotNull(agentBlueprints.nextReviewDue),
+          lte(agentBlueprints.nextReviewDue, thirtyFiveDaysFromNow)
+        )
+      );
   } catch (err) {
     console.error("[cron/review-reminders] DB query failed:", err);
     return NextResponse.json({ error: "Database error" }, { status: 500 });

@@ -31,6 +31,7 @@ import { parseBody } from "@/lib/parse-body";
 import { db } from "@/lib/db";
 import { agentBlueprints, intakeSessions } from "@/lib/db/schema";
 import { loadPolicies } from "@/lib/governance/load-policies";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import type { ABP } from "@/lib/types/abp";
@@ -182,9 +183,11 @@ export async function POST(
     const { id } = await params;
 
     // Load blueprint
-    const blueprint = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, id),
-    });
+    const [blueprint] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, id))
+      .limit(1);
     if (!blueprint) {
       return new Response("Blueprint not found", { status: 404 });
     }

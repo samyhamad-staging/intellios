@@ -8,6 +8,7 @@ import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { parseBody } from "@/lib/parse-body";
 import { getRequestId } from "@/lib/request-id";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 const CreateTestCaseSchema = z.object({
   name: z.string().min(1).max(200),
@@ -33,10 +34,12 @@ export async function GET(
     const { agentId } = await params;
 
     // Resolve enterpriseId from the agent's latest blueprint for access check
-    const latest = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.agentId, agentId),
-      orderBy: [desc(agentBlueprints.createdAt)],
-    });
+    const [latest] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.agentId, agentId))
+      .orderBy(desc(agentBlueprints.createdAt))
+      .limit(1);
     if (!latest) {
       return apiError(ErrorCode.NOT_FOUND, "Agent not found");
     }
@@ -75,10 +78,12 @@ export async function POST(
     const { agentId } = await params;
 
     // Resolve enterpriseId from the agent's latest blueprint
-    const latest = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.agentId, agentId),
-      orderBy: [desc(agentBlueprints.createdAt)],
-    });
+    const [latest] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.agentId, agentId))
+      .orderBy(desc(agentBlueprints.createdAt))
+      .limit(1);
     if (!latest) {
       return apiError(ErrorCode.NOT_FOUND, "Agent not found");
     }

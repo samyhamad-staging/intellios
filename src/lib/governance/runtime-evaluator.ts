@@ -21,6 +21,7 @@
 import { db } from "@/lib/db";
 import { governancePolicies, agentTelemetry, runtimeViolations, agentBlueprints, users } from "@/lib/db/schema";
 import { and, desc, eq, gte, inArray, isNull, or, sql } from "drizzle-orm";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import type { ABP } from "@/lib/types/abp";
 import type {
   RuntimeGovernancePolicy,
@@ -273,12 +274,12 @@ export async function evaluateRuntimePolicies(
       void (async () => {
         try {
           // Resolve blueprint ID + agent name for event/notification payloads
-          const blueprint = await db.query.agentBlueprints.findFirst({
-            where: (t, { and: _and, eq: _eq }) =>
-              _and(_eq(t.agentId, agentId), _eq(t.status, "deployed")),
-            orderBy: (t, { desc: d }) => [d(t.createdAt)],
-            columns: { id: true, name: true },
-          });
+          const [blueprint] = await db
+            .select({ id: SAFE_BLUEPRINT_COLUMNS.id, name: SAFE_BLUEPRINT_COLUMNS.name })
+            .from(agentBlueprints)
+            .where(and(eq(agentBlueprints.agentId, agentId), eq(agentBlueprints.status, "deployed")))
+            .orderBy(desc(agentBlueprints.createdAt))
+            .limit(1);
 
           const blueprintId = blueprint?.id ?? agentId;
           const agentName   = blueprint?.name ?? agentId;
@@ -357,12 +358,16 @@ export async function evaluateRuntimePolicies(
           if (errorViolations.length >= cb.errorViolationThreshold) {
             if (cb.action === "auto_suspend") {
               // Find the currently deployed blueprint for this agent
-              const deployedBlueprint = await db.query.agentBlueprints.findFirst({
-                where: (t, { and: _and, eq: _eq }) =>
-                  _and(_eq(t.agentId, agentId), _eq(t.status, "deployed")),
-                orderBy: (t, { desc: d }) => [d(t.createdAt)],
-                columns: { id: true, name: true, enterpriseId: true },
-              });
+              const [deployedBlueprint] = await db
+                .select({
+                  id: SAFE_BLUEPRINT_COLUMNS.id,
+                  name: SAFE_BLUEPRINT_COLUMNS.name,
+                  enterpriseId: SAFE_BLUEPRINT_COLUMNS.enterpriseId,
+                })
+                .from(agentBlueprints)
+                .where(and(eq(agentBlueprints.agentId, agentId), eq(agentBlueprints.status, "deployed")))
+                .orderBy(desc(agentBlueprints.createdAt))
+                .limit(1);
 
               if (!deployedBlueprint) return; // already suspended or not deployed
 

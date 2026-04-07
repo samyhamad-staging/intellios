@@ -28,6 +28,7 @@ import {
 import { and, desc, eq, gte, inArray, isNull, or, sql } from "drizzle-orm";
 import { createNotification } from "@/lib/notifications/store";
 import { publishEvent } from "@/lib/events/publish";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 const WINDOW_DAYS  = 7;   // one week
 const REGRESSION_THRESHOLD = 15; // points below design score to trigger alert
@@ -102,21 +103,22 @@ export async function POST(request: NextRequest) {
     const weekStart = currentWeekStart();
 
     // Load all deployed (+ suspended) agents in scope
-    const deployed = await db.query.agentBlueprints.findMany({
-      where: (t, { and: _and, inArray: _inArray, eq: _eq, or: _or, isNull: _isNull }) =>
-        _and(
-          _inArray(t.status, ["deployed", "suspended"]),
+    const deployed = await db
+      .select({
+        id: agentBlueprints.id,
+        agentId: agentBlueprints.agentId,
+        name: agentBlueprints.name,
+        enterpriseId: agentBlueprints.enterpriseId,
+      })
+      .from(agentBlueprints)
+      .where(
+        and(
+          inArray(agentBlueprints.status, ["deployed", "suspended"]),
           filterEnterprise
-            ? _eq(t.enterpriseId, filterEnterprise)
+            ? eq(agentBlueprints.enterpriseId, filterEnterprise)
             : undefined
-        ),
-      columns: {
-        id:           true,
-        agentId:      true,
-        name:         true,
-        enterpriseId: true,
-      },
-    });
+        )
+      );
 
     let snapshots = 0;
     let regressions = 0;

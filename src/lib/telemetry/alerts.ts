@@ -10,7 +10,8 @@
 
 import { db } from "@/lib/db";
 import { agentBlueprints, agentTelemetry, alertThresholds, users } from "@/lib/db/schema";
-import { and, eq, gt, sql } from "drizzle-orm";
+import { and, eq, gt, sql, isNull } from "drizzle-orm";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import { publishEvent } from "@/lib/events/publish";
 import { createNotification } from "@/lib/notifications/store";
 
@@ -124,15 +125,13 @@ export async function checkAndFireAlerts(enterpriseId: string | null): Promise<{
   breached: number;
 }> {
   // Load all deployed agents for the enterprise
-  const deployed = await db.query.agentBlueprints.findMany({
-    where: (t, { and, eq, isNull, or }) =>
-      and(
-        eq(t.status, "deployed"),
-        enterpriseId
-          ? eq(t.enterpriseId, enterpriseId)
-          : isNull(t.enterpriseId)
-      ),
-  });
+  const deployedFilter = enterpriseId
+    ? eq(agentBlueprints.enterpriseId, enterpriseId)
+    : isNull(agentBlueprints.enterpriseId);
+  const deployed = await db
+    .select(SAFE_BLUEPRINT_COLUMNS)
+    .from(agentBlueprints)
+    .where(and(eq(agentBlueprints.status, "deployed"), deployedFilter));
 
   let checked = 0;
   let breached = 0;

@@ -9,6 +9,7 @@ import { parseBody } from "@/lib/parse-body";
 import { z } from "zod";
 import { publishEvent } from "@/lib/events/publish";
 import { randomUUID } from "crypto";
+import { ALL_POLICY_COLUMNS } from "@/lib/db/safe-columns";
 
 const ALL_POLICY_TYPES = ["safety", "compliance", "data_handling", "access_control", "audit", "runtime"] as const;
 
@@ -23,9 +24,12 @@ const UpdatePolicyBody = z.object({
 
 /** Fetch a policy by id. Returns undefined if not found. */
 async function fetchPolicy(id: string) {
-  return db.query.governancePolicies.findFirst({
-    where: eq(governancePolicies.id, id),
-  });
+  const [policy] = await db
+    .select(ALL_POLICY_COLUMNS)
+    .from(governancePolicies)
+    .where(eq(governancePolicies.id, id))
+    .limit(1);
+  return policy;
 }
 
 /**

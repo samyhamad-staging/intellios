@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { alertThresholds, agentBlueprints, auditLog } from "@/lib/db/schema";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import { eq, desc } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
@@ -27,10 +28,13 @@ const CreateAlertSchema = z.object({
 });
 
 async function resolveAgent(agentId: string) {
-  return db.query.agentBlueprints.findFirst({
-    where: eq(agentBlueprints.agentId, agentId),
-    orderBy: [desc(agentBlueprints.createdAt)],
-  });
+  const [result] = await db
+    .select(SAFE_BLUEPRINT_COLUMNS)
+    .from(agentBlueprints)
+    .where(eq(agentBlueprints.agentId, agentId))
+    .orderBy(desc(agentBlueprints.createdAt))
+    .limit(1);
+  return result;
 }
 
 /**

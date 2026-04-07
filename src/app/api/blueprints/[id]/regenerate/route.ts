@@ -12,6 +12,7 @@ import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 import { publishEvent } from "@/lib/events/publish";
 import { rateLimit } from "@/lib/rate-limit";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 /**
  * POST /api/blueprints/[id]/regenerate
@@ -44,9 +45,11 @@ export async function POST(
     const { id } = await params;
 
     // Fetch source blueprint
-    const source = await db.query.agentBlueprints.findFirst({
-      where: eq(agentBlueprints.id, id),
-    });
+    const [source] = await db
+      .select(SAFE_BLUEPRINT_COLUMNS)
+      .from(agentBlueprints)
+      .where(eq(agentBlueprints.id, id))
+      .limit(1);
     if (!source) return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
 
     // Enterprise access check

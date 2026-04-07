@@ -8,6 +8,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 /**
  * GET /api/blueprints/[id]/diff?compareWith={blueprintId}
@@ -37,8 +38,18 @@ export async function GET(
     }
 
     const [blueprintTo, blueprintFrom] = await Promise.all([
-      db.query.agentBlueprints.findFirst({ where: eq(agentBlueprints.id, id) }),
-      db.query.agentBlueprints.findFirst({ where: eq(agentBlueprints.id, compareWithId) }),
+      db
+        .select(SAFE_BLUEPRINT_COLUMNS)
+        .from(agentBlueprints)
+        .where(eq(agentBlueprints.id, id))
+        .limit(1)
+        .then((rows) => rows[0] ?? null),
+      db
+        .select(SAFE_BLUEPRINT_COLUMNS)
+        .from(agentBlueprints)
+        .where(eq(agentBlueprints.id, compareWithId))
+        .limit(1)
+        .then((rows) => rows[0] ?? null),
     ]);
 
     if (!blueprintTo) return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");

@@ -4,6 +4,7 @@ import { agentTelemetry, agentBlueprints } from "@/lib/db/schema";
 import { and, eq, gte, lte, desc } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth/require";
 import { apiError, ErrorCode } from "@/lib/errors";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 /**
  * GET /api/telemetry/[agentId]?since=<ISO>&until=<ISO>&granularity=<hour|day|week>
@@ -38,15 +39,22 @@ export async function GET(
   }
 
   // Verify the agent exists and belongs to the user's enterprise
-  const blueprint = await db.query.agentBlueprints.findFirst({
-    where: and(
-      eq(agentBlueprints.agentId, agentId),
-      session.user.enterpriseId
-        ? eq(agentBlueprints.enterpriseId, session.user.enterpriseId)
-        : undefined
-    ),
-    columns: { agentId: true, enterpriseId: true, status: true },
-  });
+  const [blueprint] = await db
+    .select({
+      agentId: agentBlueprints.agentId,
+      enterpriseId: agentBlueprints.enterpriseId,
+      status: agentBlueprints.status,
+    })
+    .from(agentBlueprints)
+    .where(
+      and(
+        eq(agentBlueprints.agentId, agentId),
+        session.user.enterpriseId
+          ? eq(agentBlueprints.enterpriseId, session.user.enterpriseId)
+          : undefined
+      )
+    )
+    .limit(1);
 
   if (!blueprint) {
     return apiError(ErrorCode.NOT_FOUND, "Agent not found");

@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { agentBlueprints, governancePolicies, intakeSessions, blueprintTestRuns } from "@/lib/db/schema";
 import { eq, inArray, desc } from "drizzle-orm";
+import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { assembleMRMReport } from "@/lib/mrm/report";
 import { writeAuditLog } from "@/lib/audit/log";
@@ -81,9 +82,11 @@ export default async function MRMReportPage({
   const { id } = await params;
 
   // Access guard: verify enterprise scope before assembling (assembly is expensive)
-  const blueprint = await db.query.agentBlueprints.findFirst({
-    where: eq(agentBlueprints.id, id),
-  });
+  const [blueprint] = await db
+    .select(SAFE_BLUEPRINT_COLUMNS)
+    .from(agentBlueprints)
+    .where(eq(agentBlueprints.id, id))
+    .limit(1);
   if (!blueprint) notFound();
 
   const enterpriseError = assertEnterpriseAccess(blueprint.enterpriseId, session.user);

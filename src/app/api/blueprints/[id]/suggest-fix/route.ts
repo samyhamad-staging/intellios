@@ -7,6 +7,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import type { ABP } from "@/lib/types/abp";
+import { ALL_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 
 // Extend Vercel function timeout for AI generation (default 10s is too short)
 export const maxDuration = 60;
@@ -40,9 +41,11 @@ export async function POST(
 
   const { id } = await params;
 
-  const blueprint = await db.query.agentBlueprints.findFirst({
-    where: eq(agentBlueprints.id, id),
-  });
+  const [blueprint] = await db
+    .select(ALL_BLUEPRINT_COLUMNS)
+    .from(agentBlueprints)
+    .where(eq(agentBlueprints.id, id))
+    .limit(1);
   if (!blueprint) {
     return NextResponse.json({ error: "Blueprint not found" }, { status: 404 });
   }
