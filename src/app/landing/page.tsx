@@ -29,6 +29,7 @@ import {
   Users,
   Cloud,
   Cpu,
+  Check,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────────────────────── */
@@ -61,19 +62,49 @@ const GOVERNANCE_GAP_STATS = [
 
 const PILLARS = [
   {
-    icon: Settings,
-    title: "Catch policy violations before agents go live",
-    copy: "Define your governance policies once. Intellios enforces them on every agent, automatically, before anything reaches production. Zero agents go live without passing your compliance checks.",
+    icon: ShieldCheck,
+    label: "Design-Time Governance",
+    title: "Policy violations caught before agents reach production",
+    copy: "Define your governance policies once as code. Intellios enforces them deterministically on every agent during design — before deployment, before risk, before exposure.",
+    capabilities: [
+      "Policy-as-code authoring with SR 11-7, EU AI Act, and NIST AI RMF templates",
+      "Automated compliance gate blocks deployment on any policy failure",
+      "Side-by-side agent comparison and version diff across every change",
+      "Role-based approval workflows with cryptographic sign-off",
+    ],
+    metric: "Zero agents reach production without passing every compliance check",
+    metricLabel: "Design-Time Guarantee",
+    accent: "indigo",
   },
   {
     icon: GitBranch,
-    title: "Auto-generate your SR 11-7 audit trail",
-    copy: "Version-control every agent configuration. Detect drift continuously. Generate compliance evidence automatically, mapped to SR 11-7 and MRM frameworks — so your audit trail writes itself.",
+    label: "Lifecycle Management",
+    title: "Every agent version tracked, validated, and audit-ready",
+    copy: "Version-control every agent configuration end-to-end. Detect drift continuously. Generate compliance evidence automatically, mapped to your regulatory frameworks — so your audit trail writes itself.",
+    capabilities: [
+      "Immutable version history with full configuration snapshots",
+      "Continuous drift detection flags unauthorized changes in production",
+      "Auto-generated SR 11-7 MRM documentation per agent version",
+      "Status lifecycle (Draft → Review → Approved → Deployed → Retired) with full event log",
+    ],
+    metric: "Audit prep reduced from 12 weeks to 2",
+    metricLabel: "Design Partner Benchmark",
+    accent: "violet",
   },
   {
-    icon: Activity,
-    title: "Be audit-ready before auditors arrive",
-    copy: "Monitor every agent decision in real time. Trace the full chain from input to action. When auditors arrive, your MRM documentation is already generated, already current, already waiting.",
+    icon: Eye,
+    label: "Production Observability",
+    title: "Full visibility from agent decision to audit evidence",
+    copy: "Monitor every agent decision in real time. Trace the complete chain from input to action. When auditors arrive, your MRM documentation is already generated, already current, already waiting.",
+    capabilities: [
+      "Real-time decision tracing with input→action→outcome audit logs",
+      "Anomaly detection and automated alerting on behavioral drift",
+      "Cross-agent fleet dashboard with compliance health scoring",
+      "One-click audit package export mapped to specific regulatory asks",
+    ],
+    metric: "Every agent decision traceable to a policy and a person",
+    metricLabel: "Full Accountability Chain",
+    accent: "emerald",
   },
 ];
 
@@ -413,41 +444,138 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 3 — Three Governance Pillars                            */}
       {/* ════════════════════════════════════════════════════════════════ */}
-      <section id="pillars" className="py-20 sm:py-24 px-6 lg:px-8 scroll-mt-20">
+      <section id="pillars" className="py-20 sm:py-28 px-6 lg:px-8 scroll-mt-20">
         <div className="mx-auto max-w-7xl">
-          <div className="text-center mb-14 reveal">
+
+          {/* Section header */}
+          <div className="text-center mb-16 reveal">
             <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
               The Platform
             </h2>
-            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl max-w-3xl mx-auto">
-              Three pillars of governed AI agent delivery
+            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl max-w-3xl mx-auto leading-tight">
+              Three pillars of governed<br className="hidden sm:block" /> AI agent delivery
             </p>
-            <p className="mt-4 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-              Intellios embeds policy enforcement, audit readiness, and fleet visibility across the full agent lifecycle. Not bolted on. Built in.
+            <p className="mt-5 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
+              Intellios embeds policy enforcement, lifecycle management, and production observability across every agent. Not bolted on. Built in.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {PILLARS.map((pillar, i) => (
-              <div
-                key={i}
-                className="reveal group relative rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 p-8 shadow-sm hover:shadow-lg hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all"
-              >
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 mb-6 shadow-md group-hover:shadow-lg transition-shadow">
-                  <pillar.icon size={26} className="text-white" />
+          {/* Pillar overview strip */}
+          <div className="reveal mb-16 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {PILLARS.map((pillar, i) => {
+              const accentMap: Record<string, string> = {
+                indigo: "border-indigo-500/40 bg-indigo-500/10 text-indigo-400",
+                violet: "border-violet-500/40 bg-violet-500/10 text-violet-400",
+                emerald: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400",
+              };
+              return (
+                <div key={i} className={`flex items-center gap-3 rounded-xl border px-5 py-3.5 ${accentMap[pillar.accent]}`}>
+                  <pillar.icon size={18} className="shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest opacity-70">{String(i + 1).padStart(2, "0")}</p>
+                    <p className="text-sm font-semibold">{pillar.label}</p>
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                  {pillar.title}
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                  {pillar.copy}
-                </p>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+
+          {/* Detailed pillar cards */}
+          <div className="space-y-8">
+            {PILLARS.map((pillar, i) => {
+              const accentBorder: Record<string, string> = {
+                indigo: "border-indigo-500/30 hover:border-indigo-500/50",
+                violet: "border-violet-500/30 hover:border-violet-500/50",
+                emerald: "border-emerald-500/30 hover:border-emerald-500/50",
+              };
+              const accentIcon: Record<string, string> = {
+                indigo: "bg-indigo-600",
+                violet: "bg-violet-600",
+                emerald: "bg-emerald-600",
+              };
+              const accentLabel: Record<string, string> = {
+                indigo: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
+                violet: "text-violet-400 bg-violet-500/10 border-violet-500/20",
+                emerald: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+              };
+              const accentCheck: Record<string, string> = {
+                indigo: "text-indigo-400",
+                violet: "text-violet-400",
+                emerald: "text-emerald-400",
+              };
+              const accentMetric: Record<string, string> = {
+                indigo: "border-indigo-500/20 bg-indigo-500/5",
+                violet: "border-violet-500/20 bg-violet-500/5",
+                emerald: "border-emerald-500/20 bg-emerald-500/5",
+              };
+              return (
+                <div
+                  key={i}
+                  className={`reveal group relative rounded-2xl border dark:bg-slate-800/40 bg-white shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden ${accentBorder[pillar.accent]}`}
+                >
+                  {/* Subtle top gradient accent */}
+                  <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-current to-transparent opacity-30 ${accentCheck[pillar.accent]}`} />
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                    {/* Left — content */}
+                    <div className="p-8 lg:p-10 lg:border-r border-gray-100 dark:border-white/5">
+                      {/* Pillar label + number */}
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${accentIcon[pillar.accent]} shadow-lg`}>
+                          <pillar.icon size={22} className="text-white" />
+                        </div>
+                        <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${accentLabel[pillar.accent]}`}>
+                          {String(i + 1).padStart(2, "0")} — {pillar.label}
+                        </span>
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 leading-snug">
+                        {pillar.title}
+                      </h3>
+
+                      {/* Description */}
+                      <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
+                        {pillar.copy}
+                      </p>
+
+                      {/* Outcome metric */}
+                      <div className={`rounded-xl border px-4 py-3 ${accentMetric[pillar.accent]}`}>
+                        <p className={`text-xs font-semibold uppercase tracking-widest mb-0.5 ${accentCheck[pillar.accent]}`}>
+                          {pillar.metricLabel}
+                        </p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {pillar.metric}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Right — capabilities */}
+                    <div className="p-8 lg:p-10 bg-gray-50/50 dark:bg-slate-900/30">
+                      <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-5">
+                        Key Capabilities
+                      </p>
+                      <ul className="space-y-4">
+                        {pillar.capabilities.map((cap, j) => (
+                          <li key={j} className="flex items-start gap-3">
+                            <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 shadow-sm`}>
+                              <Check size={10} className={accentCheck[pillar.accent]} />
+                            </div>
+                            <span className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                              {cap}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Positioning line */}
-          <div className="reveal mt-14 text-center">
+          <div className="reveal mt-16 text-center">
             <p className="text-xl font-bold text-gray-900 dark:text-white">
               Intellios governs. Your cloud runs. Your agents perform.
             </p>
