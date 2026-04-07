@@ -806,67 +806,6 @@ export default function LandingPage() {
       </section>
 
       {/* ════════════════════════════════════════════════════════════════ */}
-      {/*  SECTION 7b — Design Partner Voices                              */}
-      {/* ════════════════════════════════════════════════════════════════ */}
-      <section className="border-t border-gray-100 dark:border-white/5 py-16 sm:py-20 px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="reveal text-center mb-12">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
-              Design Partner Voices
-            </p>
-            <p className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
-              What early design partners are saying
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {[
-              {
-                quote: "We spent 14 months building an internal governance layer. Intellios replaced it in weeks — and it actually scales.",
-                role: "VP of AI Engineering",
-                org: "Top-10 US Bank",
-                borderColor: "border-indigo-200 dark:border-indigo-500/20",
-              },
-              {
-                quote: "For the first time, our compliance team isn't the bottleneck on agent deployment. They're accelerators.",
-                role: "Chief Risk Officer",
-                org: "Fortune 100 Insurer",
-                borderColor: "border-violet-200 dark:border-violet-500/20",
-              },
-              {
-                quote: "The audit trail writes itself. When regulators asked for MRM documentation, we had it in hours instead of months.",
-                role: "Head of Model Risk",
-                org: "Global Healthcare Enterprise",
-                borderColor: "border-emerald-200 dark:border-emerald-500/20",
-              },
-            ].map((t, i) => (
-              <div
-                key={i}
-                className={`reveal rounded-2xl border-2 ${t.borderColor} bg-white dark:bg-slate-800/50 p-8 shadow-sm`}
-              >
-                <div className="mb-4 text-gray-400">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="opacity-60">
-                    <path d="M3 21c3 0 7-1 7-8V5c0-1.25-4.716-5-7-5C4.716 0 0 4.25 0 5v10c0 7 4 8 7 8zm15 0c3 0 7-1 7-8V5c0-1.25-4.716-5-7-5-2.284 0-7 3.75-7 5v10c0 7 4 8 7 8z" />
-                  </svg>
-                </div>
-                <p className="text-gray-700 dark:text-gray-300 italic font-medium leading-relaxed mb-4">
-                  "{t.quote}"
-                </p>
-                <div>
-                  <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                    {t.role}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {t.org}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 8 — ROI                                                 */}
       {/* ════════════════════════════════════════════════════════════════ */}
       <section
