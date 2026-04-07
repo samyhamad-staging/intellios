@@ -84,6 +84,6 @@ export async function loadPolicies(
       type: row.type,
       description: row.description,
       rules: (row.rules ?? []) as PolicyRule[],
-      scopedAgentIds: ((row.scopedAgentIds ?? null) as string[] | null) ?? null,
+      scopedAgentIds: (row.scopedAgentIds as string[] | null | undefined) ?? null,
     }));
 }
