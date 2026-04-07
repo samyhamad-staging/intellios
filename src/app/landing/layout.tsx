@@ -129,8 +129,10 @@ export default function LandingLayout({
           })
         }}
       />
-      {/* Nav and footer are rendered by page.tsx via MarketingNav / MarketingFooter */}
-      {children}
+      {/* Force dark mode for all marketing/landing pages regardless of user OS preference */}
+      <div className="dark">
+        {children}
+      </div>
     </>
   );
 }
