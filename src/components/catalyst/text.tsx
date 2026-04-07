@@ -6,7 +6,7 @@ export function Text({ className, ...props }: React.ComponentPropsWithoutRef<'p'
     <p
       data-slot="text"
       {...props}
-      className={clsx(className, 'text-base/6 text-zinc-500 sm:text-sm/6 dark:text-zinc-400')}
+      className={clsx(className, 'text-base/6 text-text-secondary sm:text-sm/6')}
     />
   )
 }
@@ -33,7 +33,7 @@ export function Code({ className, ...props }: React.ComponentPropsWithoutRef<'co
       {...props}
       className={clsx(
         className,
-        'rounded-sm border border-zinc-950/10 bg-zinc-950/2.5 px-0.5 text-sm font-medium text-text sm:text-[0.8125rem] dark:border-white/20 dark:bg-white/5'
+        'rounded-sm border border-border bg-surface-muted px-0.5 text-sm font-medium text-text sm:text-[0.8125rem]'
       )}
     />
   )

@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { CheckSquare, AlertTriangle, Download, ClipboardList, FileCheck } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Heading, Subheading } from "@/components/catalyst/heading";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/catalyst/dialog";
+import { Button } from "@/components/catalyst/button";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 import { TableToolbar, Pagination } from "@/components/ui/table-toolbar";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -789,55 +791,52 @@ export default function CompliancePage() {
       </div>
 
       {/* ── Complete Review Modal ──────────────────────────────────────────── */}
-      {completeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-xl">
-            <Subheading level={3} className="mb-1 text-text">Mark periodic review complete</Subheading>
-            <p className="mb-4 text-sm text-text-secondary">
-              This will record completion for{" "}
-              <span className="font-medium text-text">{completeModal.agentName}</span>{" "}
-              and schedule the next review based on the configured cadence.
-            </p>
+      <Dialog open={completeModal !== null} onClose={() => { setCompleteModal(null); setReviewNotes(""); setCompleteError(null); }}>
+        <DialogTitle>Mark periodic review complete</DialogTitle>
+        <DialogBody>
+          <p className="mb-4 text-sm text-text-secondary">
+            This will record completion for{" "}
+            <span className="font-medium text-text">{completeModal?.agentName}</span>{" "}
+            and schedule the next review based on the configured cadence.
+          </p>
 
-            <div className="mb-4">
-              <FormField label="Review notes" htmlFor="compliance-review-notes" optional>
-                <textarea
-                  id="compliance-review-notes"
-                  value={reviewNotes}
-                  onChange={(e) => setReviewNotes(e.target.value)}
-                  rows={3}
-                  maxLength={1000}
-                  placeholder="Findings, actions taken, or conclusions from the review…"
-                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-text focus:outline-none focus:ring-1 focus:ring-text resize-none"
-                />
-              </FormField>
-            </div>
-
-            {completeError && (
-              <p className="mb-3 rounded-lg bg-red-50 dark:bg-red-950/30 px-3 py-2 text-sm text-red-700 dark:text-red-300">
-                {completeError}
-              </p>
-            )}
-
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => { setCompleteModal(null); setReviewNotes(""); setCompleteError(null); }}
-                disabled={!!completingId}
-                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text hover:bg-surface-raised disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCompleteReview}
-                disabled={!!completingId}
-                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-              >
-                {completingId ? "Completing…" : "Confirm"}
-              </button>
-            </div>
+          <div className="mb-4">
+            <FormField label="Review notes" htmlFor="compliance-review-notes" optional>
+              <textarea
+                id="compliance-review-notes"
+                value={reviewNotes}
+                onChange={(e) => setReviewNotes(e.target.value)}
+                rows={3}
+                maxLength={1000}
+                placeholder="Findings, actions taken, or conclusions from the review…"
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-text focus:outline-none focus:ring-1 focus:ring-text resize-none"
+              />
+            </FormField>
           </div>
-        </div>
-      )}
+
+          {completeError && (
+            <p className="mb-3 rounded-lg bg-red-50 dark:bg-red-950/30 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+              {completeError}
+            </p>
+          )}
+        </DialogBody>
+        <DialogActions>
+          <Button
+            plain
+            onClick={() => { setCompleteModal(null); setReviewNotes(""); setCompleteError(null); }}
+            disabled={!!completingId}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="violet"
+            onClick={handleCompleteReview}
+            disabled={!!completingId}
+          >
+            {completingId ? "Completing…" : "Confirm"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

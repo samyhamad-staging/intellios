@@ -7,6 +7,9 @@ import { Cpu, Shield, GitBranch, Activity, Zap } from "lucide-react";
 import Link from "next/link";
 import { FormField } from "@/components/ui/form-field";
 import { Heading, Subheading } from "@/components/catalyst";
+import { Input } from "@/components/catalyst/input";
+import { Button } from "@/components/catalyst/button";
+import { Checkbox, CheckboxField } from "@/components/catalyst/checkbox";
 
 function LoginForm() {
   const router = useRouter();
@@ -224,14 +227,14 @@ function LoginForm() {
           {/* M-01: Use [&_label]:text-white to override FormField label color on dark bg */}
           <form onSubmit={handleSubmit} className="space-y-4 [&_label]:text-white/80">
             <FormField label="Email address" htmlFor="email">
-              <input
+              <Input
                 id="email"
                 type="email"
                 autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                className="border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-indigo-500/50 [&_input]:bg-transparent"
                 placeholder="you@intellios.dev"
                 aria-describedby={error ? "login-error" : undefined}
               />
@@ -241,13 +244,14 @@ function LoginForm() {
             {ssoEnabled && (
               <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/10 p-3 space-y-2">
                 <p className="text-xs font-mono text-indigo-300">Your organization uses Single Sign-On.</p>
-                <button
+                <Button
                   type="button"
+                  outline
                   onClick={handleSsoSignIn}
-                  className="w-full rounded-lg border border-indigo-500/40 bg-white/5 py-2 text-sm font-medium text-indigo-300 hover:bg-indigo-500/10 transition-colors"
+                  className="w-full border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/10"
                 >
                   Continue with SSO →
-                </button>
+                </Button>
                 <p className="text-center font-mono text-2xs text-indigo-400/50">
                   You will be redirected to your identity provider.
                 </p>
@@ -256,31 +260,31 @@ function LoginForm() {
 
             {!ssoEnabled && (
               <FormField label="Password" htmlFor="password">
-                <input
+                <Input
                   id="password"
                   type="password"
                   autoComplete="current-password"
                   required={!ssoEnabled}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-text-tertiary focus:border-indigo-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                  className="border-white/10 bg-white/5 text-white placeholder:text-text-tertiary focus:border-indigo-500/50 [&_input]:bg-transparent"
                 />
               </FormField>
             )}
 
             {/* P2-57: Remember this device — P2-1 a11y: native checkbox */}
             {!ssoEnabled && (
-              <label className="flex cursor-pointer items-center gap-2.5 select-none">
-                <input
-                  type="checkbox"
+              <CheckboxField className="flex items-center gap-2.5">
+                <Checkbox
+                  color="indigo"
                   checked={rememberDevice}
-                  onChange={(e) => setRememberDevice(e.target.checked)}
-                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-white/5 text-indigo-500 dark:text-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 accent-indigo-500"
+                  onChange={(checked) => setRememberDevice(checked)}
+                  className="border-white/20 bg-white/5"
                 />
-                <span className="font-mono text-2xs text-white/80 hover:text-white/90 transition-colors">
+                <span className="font-mono text-2xs text-white/80 hover:text-white/90 transition-colors select-none cursor-pointer">
                   Remember this device for 30 days
                 </span>
-              </label>
+              </CheckboxField>
             )}
 
             {error && (
@@ -294,23 +298,24 @@ function LoginForm() {
             )}
 
             {!ssoEnabled && (
-              <button
+              <Button
                 type="submit"
+                color="indigo"
                 disabled={loading || ssoLoading}
-                className="w-full rounded-lg btn-primary py-2.5 text-sm font-medium disabled:opacity-50"
+                className="w-full py-2.5"
               >
-                {loading ? "Signing in..." : "Sign in"}
-              </button>
+                {loading ? "Signing in…" : "Sign in"}
+              </Button>
             )}
 
             {/* M-02: Add create account link + improve forgot-password contrast */}
             <div className="flex items-center justify-between">
-              <a href="/auth/forgot-password" className="text-xs text-white/80 hover:text-white/90 transition-colors">
+              <Link href="/auth/forgot-password" className="text-xs text-white/80 hover:text-white/90 transition-colors">
                 Forgot your password?
-              </a>
-              <a href="/register" className="text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors">
+              </Link>
+              <Link href="/register" className="text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors">
                 Create account →
-              </a>
+              </Link>
             </div>
           </form>
         </div>

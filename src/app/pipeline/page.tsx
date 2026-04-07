@@ -3,10 +3,11 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { getSlaStatus } from "@/lib/sla/config";
-import { Search, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Search, ShieldCheck, ShieldAlert, AlertCircle } from "lucide-react";
 import { Heading, Subheading } from "@/components/catalyst/heading";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { InlineAlert } from "@/components/catalyst/alert";
 
 interface Agent {
   id: string;
@@ -248,13 +249,36 @@ export default function PipelinePage() {
       {/* ── Board ────────────────────────────────────────────────────────── */}
       {/* C-12: data-kanban ensures the board scrolls horizontally on narrow viewports */}
       <div data-kanban className="flex flex-1 gap-0 overflow-x-auto bg-surface-muted/30">
-        {error && (
-          <div className="m-6 w-full rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-300">
-            {error}
+        {loading && (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="grid grid-cols-6 gap-4 p-6 w-full max-w-7xl">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="space-y-3">
+                  <div className="h-4 w-20 animate-pulse rounded bg-surface-muted" />
+                  <div className="space-y-2">
+                    {Array.from({ length: 3 }).map((_, j) => (
+                      <div key={j} className="h-[156px] animate-pulse rounded-lg bg-surface-muted" />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {!error && (
+        {error && !loading && (
+          <div className="flex-1 flex items-center justify-center p-6">
+            <InlineAlert variant="error" className="flex items-center gap-2 max-w-md">
+              <AlertCircle size={16} className="shrink-0" />
+              <div>
+                <p className="font-medium">{error}</p>
+                <p className="text-sm mt-1">Please refresh the page and try again.</p>
+              </div>
+            </InlineAlert>
+          </div>
+        )}
+
+        {!loading && !error && (
           <div className="flex gap-4 p-6 items-start min-h-full">
             {/* Active pipeline columns */}
             {activeColumns.map(({ status, label, colBg, dotColor, badgeCls }) => (

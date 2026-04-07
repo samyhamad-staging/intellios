@@ -9,6 +9,7 @@ import { ValidationReport } from "@/lib/governance/types";
 import type { ApprovalStepRecord, ApprovalChainStep, EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 import { Heading, Subheading } from "@/components/catalyst/heading";
+import { InlineAlert } from "@/components/catalyst/alert";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   ClipboardList,
@@ -301,9 +302,11 @@ export default function ReviewQueuePage() {
 
       {/* ── Error ────────────────────────────────────────────────────────── */}
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-300">
-          <AlertCircle size={15} /> {error}
-        </div>
+        <InlineAlert variant="error">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={15} /> {error}
+          </div>
+        </InlineAlert>
       )}
 
       {/* ── Empty ────────────────────────────────────────────────────────── */}

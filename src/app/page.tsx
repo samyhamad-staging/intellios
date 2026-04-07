@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
@@ -8,6 +9,8 @@ import { Heading, Subheading } from "@/components/catalyst/heading";
 import { NewIntakeButton } from "@/components/intake/new-intake-button";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { InlineAlert } from "@/components/catalyst/alert";
+import { Skeleton, SkeletonList } from "@/components/ui/skeleton";
 import {
   Plus,
   Kanban,
@@ -40,6 +43,32 @@ function timeAgo(dateStr: string | Date): string {
   if (diffDays === 1) return "1d ago";
   if (diffDays < 30) return `${diffDays}d ago`;
   return `${Math.floor(diffDays / 7)}w ago`;
+}
+
+// Fallback skeleton for governance dashboard loading state
+function FleetGovernanceDashboardFallback() {
+  return (
+    <div className="rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="h-16 animate-pulse rounded bg-surface-muted" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Fallback skeleton for activity feed loading state
+function ActivityFeedFallback() {
+  return (
+    <div className="rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
+      <div className="space-y-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-12 animate-pulse rounded bg-surface-muted" />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // Aligned with Badge design system variants:
@@ -616,7 +645,9 @@ export default async function Home() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3">
           <SectionHeading className="mb-3">Governance Health</SectionHeading>
-          <FleetGovernanceDashboard enterpriseId={user.enterpriseId} userRole={role} compact />
+          <Suspense fallback={<FleetGovernanceDashboardFallback />}>
+            <FleetGovernanceDashboard enterpriseId={user.enterpriseId} userRole={role} compact />
+          </Suspense>
         </div>
         <section className="lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
@@ -625,9 +656,11 @@ export default async function Home() {
               Audit trail →
             </Link>
           </div>
-          <div className="rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
-            <ActivityFeed compact />
-          </div>
+          <Suspense fallback={<ActivityFeedFallback />}>
+            <div className="rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
+              <ActivityFeed compact />
+            </div>
+          </Suspense>
         </section>
       </div>
     </div>
