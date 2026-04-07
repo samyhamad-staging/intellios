@@ -99,7 +99,7 @@ function LoginForm() {
 
   return (
     <div
-      className="relative flex min-h-screen overflow-hidden"
+      className="dark relative flex min-h-screen overflow-hidden"
       style={{ background: "linear-gradient(135deg, #07071a 0%, #0d0d2b 50%, #07071a 100%)" }}
     >
       {/* Dot-grid overlay */}
@@ -121,7 +121,7 @@ function LoginForm() {
       />
 
       {/* ── Left Panel — Marketing Content (desktop only) ────────────── */}
-      <div className="hidden lg:flex lg:w-[55%] flex-col justify-center px-8 py-12">
+      <div className="hidden lg:flex lg:w-[55%] flex-col justify-between px-8 py-16">
         <div className="relative z-10 max-w-xl">
           {/* Logo & name */}
           <div className="mb-12 flex items-center gap-3">
@@ -173,6 +173,27 @@ function LoginForm() {
               VP Engineering, Top-10 US Bank (Design Partner)
             </p>
           </div>
+        </div>
+
+        {/* Bottom CTA */}
+        <div className="relative z-10 max-w-xl">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/landing"
+              className="inline-flex items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-4 py-2 text-sm font-medium text-indigo-300 transition-all hover:bg-indigo-500/20 hover:text-indigo-200"
+            >
+              Request access →
+            </Link>
+            <Link
+              href="/landing"
+              className="text-sm text-white/40 hover:text-white/60 transition-colors"
+            >
+              Learn more about Intellios
+            </Link>
+          </div>
+          <p className="mt-4 text-xs text-white/25">
+            Enterprise deployments · SOC 2 Type II · HIPAA · SR 11-7 compliant
+          </p>
         </div>
       </div>
 
@@ -317,6 +338,21 @@ function LoginForm() {
                 Create account →
               </Link>
             </div>
+
+            {/* Trust badges — anchored inside card footer */}
+            <div className="pt-4 border-t border-white/8">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {["SOC 2", "GDPR", "HIPAA", "SR 11-7"].map((badge) => (
+                  <div
+                    key={badge}
+                    className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1"
+                  >
+                    <Shield size={10} className="text-indigo-400" />
+                    <span className="font-mono text-2xs text-white/50">{badge}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </form>
         </div>
 
@@ -355,20 +391,6 @@ function LoginForm() {
           </div>
           )}
 
-          {/* P1-4: Trust signals — compliance badges visible on all screen sizes */}
-          <div className="mt-6">
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              {["SOC 2", "GDPR", "HIPAA", "SR 11-7"].map((badge) => (
-                <div
-                  key={badge}
-                  className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1"
-                >
-                  <Shield size={10} className="text-indigo-400" />
-                  <span className="font-mono text-2xs text-white/60">{badge}</span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>
