@@ -19,20 +19,60 @@ export async function loadPolicies(
   enterpriseId: string | null,
   agentId?: string | null
 ): Promise<GovernancePolicy[]> {
-  const rows = await db
-    .select()
-    .from(governancePolicies)
-    .where(
-      enterpriseId
-        ? or(isNull(governancePolicies.enterpriseId), eq(governancePolicies.enterpriseId, enterpriseId))
-        : isNull(governancePolicies.enterpriseId)
-    );
+  // Attempt to load with all columns including scoped_agent_ids (migration 0035).
+  // Falls back to core columns if newer columns haven't been migrated yet.
+  let rows: Array<{
+    id: string;
+    enterpriseId: string | null;
+    name: string;
+    type: string;
+    description: string | null;
+    rules: unknown;
+    scopedAgentIds?: unknown;
+  }>;
+
+  try {
+    rows = await db
+      .select({
+        id: governancePolicies.id,
+        enterpriseId: governancePolicies.enterpriseId,
+        name: governancePolicies.name,
+        type: governancePolicies.type,
+        description: governancePolicies.description,
+        rules: governancePolicies.rules,
+        scopedAgentIds: governancePolicies.scopedAgentIds,
+      })
+      .from(governancePolicies)
+      .where(
+        enterpriseId
+          ? or(isNull(governancePolicies.enterpriseId), eq(governancePolicies.enterpriseId, enterpriseId))
+          : isNull(governancePolicies.enterpriseId)
+      );
+  } catch {
+    // Fallback: core columns only (migration 0000). Handles case where
+    // scoped_agent_ids (migration 0035) hasn't been applied to the database yet.
+    rows = await db
+      .select({
+        id: governancePolicies.id,
+        enterpriseId: governancePolicies.enterpriseId,
+        name: governancePolicies.name,
+        type: governancePolicies.type,
+        description: governancePolicies.description,
+        rules: governancePolicies.rules,
+      })
+      .from(governancePolicies)
+      .where(
+        enterpriseId
+          ? or(isNull(governancePolicies.enterpriseId), eq(governancePolicies.enterpriseId, enterpriseId))
+          : isNull(governancePolicies.enterpriseId)
+      );
+  }
 
   return rows
     .filter((row) => {
       // W3-03: filter by agent scope if an agentId is provided
       if (!agentId) return true;
-      const scoped = row.scopedAgentIds as string[] | null;
+      const scoped = (row.scopedAgentIds ?? null) as string[] | null;
       // null = global scope (applies to all agents)
       if (scoped === null || !Array.isArray(scoped) || scoped.length === 0) return true;
       return scoped.includes(agentId);
@@ -44,6 +84,6 @@ export async function loadPolicies(
       type: row.type,
       description: row.description,
       rules: (row.rules ?? []) as PolicyRule[],
-      scopedAgentIds: (row.scopedAgentIds as string[] | null) ?? null,
+      scopedAgentIds: ((row.scopedAgentIds ?? null) as string[] | null) ?? null,
     }));
 }

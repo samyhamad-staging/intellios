@@ -1,4 +1,5 @@
-import { Cpu } from "lucide-react";
+import Link from "next/link";
+import { Cpu, Shield } from "lucide-react";
 import { Heading } from "@/components/catalyst";
 
 /**
@@ -73,16 +74,34 @@ export function AuthShell({
             />
           </div>
           <div className="text-center">
-            <Heading level={1} className="tracking-tight text-white">
-              Intellios
-            </Heading>
+            <Link href="/landing" className="hover:opacity-80 transition-opacity">
+              <Heading level={1} className="tracking-tight text-white">
+                Intellios
+              </Heading>
+            </Link>
             <p className="mt-0.5 font-mono text-2xs tracking-widest text-indigo-400/60 uppercase">
               Enterprise Agent Factory
             </p>
+            <Link href="/landing" className="mt-2 inline-block text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors">
+              Learn what Intellios does &rarr;
+            </Link>
           </div>
         </div>
 
         {children}
+
+        {/* P1-7: Trust badges — compliance signals on auth pages */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          {["SOC 2", "GDPR", "HIPAA", "SR 11-7"].map((badge) => (
+            <div
+              key={badge}
+              className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1"
+            >
+              <Shield size={10} className="text-indigo-400" />
+              <span className="font-mono text-2xs text-white/60">{badge}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

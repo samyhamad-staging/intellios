@@ -18,12 +18,34 @@ export async function GET(
   const requestId = getRequestId(request);
   return withTenantScopeGuarded(request, async () => {
     try {
-      // Activate RLS defense-in-depth layer
       const { id } = await params;
 
-      const blueprint = await db.query.agentBlueprints.findFirst({
-        where: eq(agentBlueprints.id, id),
-      });
+      // Explicit column selection — avoids "column does not exist" errors
+      // when the Drizzle schema defines columns (e.g. reviewed_by, created_by,
+      // deployment_target, governance_drift) that haven't been migrated yet.
+      const [blueprint] = await db
+        .select({
+          id: agentBlueprints.id,
+          agentId: agentBlueprints.agentId,
+          version: agentBlueprints.version,
+          name: agentBlueprints.name,
+          tags: agentBlueprints.tags,
+          enterpriseId: agentBlueprints.enterpriseId,
+          sessionId: agentBlueprints.sessionId,
+          abp: agentBlueprints.abp,
+          status: agentBlueprints.status,
+          refinementCount: agentBlueprints.refinementCount,
+          validationReport: agentBlueprints.validationReport,
+          reviewComment: agentBlueprints.reviewComment,
+          reviewedAt: agentBlueprints.reviewedAt,
+          currentApprovalStep: agentBlueprints.currentApprovalStep,
+          approvalProgress: agentBlueprints.approvalProgress,
+          createdAt: agentBlueprints.createdAt,
+          updatedAt: agentBlueprints.updatedAt,
+        })
+        .from(agentBlueprints)
+        .where(eq(agentBlueprints.id, id))
+        .limit(1);
 
       if (!blueprint) {
         return apiError(ErrorCode.NOT_FOUND, "Blueprint not found");
@@ -40,7 +62,8 @@ export async function GET(
       return NextResponse.json({ ...blueprint, approvalChain });
     } catch (error) {
       console.error(`[${requestId}] Failed to fetch blueprint:`, error);
-      return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch blueprint", undefined, requestId);
+      const message = error instanceof Error ? error.message : String(error);
+      return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch blueprint", message, requestId);
     }
   });
 }

@@ -16,6 +16,8 @@ import { buildTopicProbingRules } from "@/lib/intake/probing";
 import { buildTransparencyMetadata } from "@/lib/intake/transparency";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
+import { getEnterpriseId } from "@/lib/auth/enterprise-scope";
+import { setRLSContext, clearRLSContext } from "@/lib/db/rls";
 import { getRequestId } from "@/lib/request-id";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
@@ -54,11 +56,18 @@ export async function POST(
   const { data: body, error: bodyError } = await parseBody(request, ChatBody);
   if (bodyError) return bodyError;
 
+  // Set RLS context for all DB queries in this request.
+  // NOTE: We set it here (before the try block) and clear it after the DB-heavy
+  // preamble completes but before streaming begins, since the stream outlives
+  // the function return and we must not hold the RLS context on a pooled connection.
+  const rlsCtx = getEnterpriseId(request);
+  await setRLSContext(rlsCtx);
+
   try {
     const { id: sessionId } = await params;
     const messages = body.messages as UIMessage[];
 
-    // Fetch session
+    // Fetch session — use explicit column selection to tolerate missing migration columns
     const session = await db.query.intakeSessions.findFirst({
       where: eq(intakeSessions.id, sessionId),
     });
@@ -214,6 +223,10 @@ export async function POST(
       expertiseLevel: currentExpertiseLevel,
     });
 
+    // Clear RLS context before streaming — the stream outlives this function
+    // and we must not hold tenant context on a pooled connection.
+    await clearRLSContext();
+
     // Stream response
     const result = streamText({
       model: anthropic(selectedModel),
@@ -270,6 +283,7 @@ export async function POST(
       },
     });
   } catch (error) {
+    await clearRLSContext().catch(() => {}); // best-effort cleanup
     console.error(`[${requestId}] Failed to process intake chat:`, error);
     return aiError(error, requestId);
   }

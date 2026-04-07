@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Package, Search, Star, TrendingUp, Zap, Shield, ArrowRight } from "lucide-react";
+import { MarketingNav } from "@/components/landing/marketing-nav";
+import { MarketingFooter } from "@/components/landing/marketing-footer";
 import { Heading, Subheading } from "@/components/catalyst/heading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SkeletonList } from "@/components/ui/skeleton";
@@ -77,6 +79,28 @@ export default function TemplateMarketplacePage() {
   };
 
   return (
+    <>
+    <MarketingNav />
+    {/* P1-5: Marketing context banner for unauthenticated visitors landing on /templates */}
+    <div className="border-b border-border bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30">
+      <div className="mx-auto max-w-6xl px-6 py-8 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex-1">
+          <p className="text-lg font-semibold text-text">
+            Enterprise-grade AI agent templates, governed by default
+          </p>
+          <p className="mt-1 text-sm text-text-secondary">
+            Every template ships with built-in compliance controls for SR 11-7, GDPR, and your enterprise policies.
+            Pick one to generate a governed agent blueprint in under 2 minutes.
+          </p>
+        </div>
+        <a
+          href="/landing"
+          className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
+        >
+          Learn about Intellios
+        </a>
+      </div>
+    </div>
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -264,5 +288,7 @@ export default function TemplateMarketplacePage() {
         </div>
       )}
     </div>
+    <MarketingFooter />
+    </>
   );
 }

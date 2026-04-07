@@ -10,6 +10,8 @@ import { RequestAccessButton } from "@/components/landing/request-access-button"
 import { ScrollRevealWrapper } from "@/components/landing/scroll-reveal-wrapper";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { HeroIllustration } from "@/components/landing/hero-illustration";
+import { MarketingNav } from "@/components/landing/marketing-nav";
+import { MarketingFooter } from "@/components/landing/marketing-footer";
 import {
   ShieldCheck,
   Zap,
@@ -146,6 +148,8 @@ const ROI_STATS = [
 
 export default function LandingPage() {
   return (
+    <>
+    <MarketingNav transparent />
     <ScrollRevealWrapper>
 
       {/* ════════════════════════════════════════════════════════════════ */}
@@ -1018,5 +1022,7 @@ export default function LandingPage() {
         </div>
       </section>
     </ScrollRevealWrapper>
+    <MarketingFooter />
+    </>
   );
 }
