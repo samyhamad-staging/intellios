@@ -170,12 +170,12 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
                       onChange={(e) => setMessage(e.target.value)}
                       rows={3}
                       placeholder="e.g. Automated underwriting agents with SR 11-7 compliance…"
-                      className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-colors"
+                      className="w-full resize-none rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-indigo-400 dark:focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-500/30 transition-colors"
                     />
                   </FormField>
 
                   {error && (
-                    <p className="text-xs text-red-600">{error}</p>
+                    <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
                   )}
 
                   <button

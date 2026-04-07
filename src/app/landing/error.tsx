@@ -34,7 +34,7 @@ export default function LandingError({
 
         {/* Error Icon */}
         <div className="mb-6">
-          <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto opacity-80" strokeWidth={1.5} />
+          <AlertTriangle className="w-12 h-12 text-amber-500 dark:text-amber-400 mx-auto opacity-80" strokeWidth={1.5} />
         </div>
 
         {/* Headline */}

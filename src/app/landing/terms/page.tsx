@@ -46,19 +46,19 @@ export default function TermsPage() {
             </p>
             <ul className="space-y-2 text-gray-600 dark:text-gray-400 mb-4">
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Design and configure AI agents under their own brand</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Apply governance policies and compliance controls</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Manage agent blueprints and versions</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Deploy agents while maintaining security and compliance posture</span>
               </li>
             </ul>
@@ -77,19 +77,19 @@ export default function TermsPage() {
             </p>
             <ul className="space-y-2 text-gray-600 dark:text-gray-400 mb-4">
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Providing accurate, complete, and current information</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Maintaining the confidentiality of your account credentials</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Notifying us immediately of unauthorized access to your account</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>All activity conducted under your account</span>
               </li>
             </ul>
@@ -108,27 +108,27 @@ export default function TermsPage() {
             </p>
             <ul className="space-y-2 text-gray-600 dark:text-gray-400 mb-4">
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Violate any applicable laws or regulations</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Infringe on intellectual property rights of others</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Transmit malware, viruses, or harmful code</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Attempt to gain unauthorized access to our systems</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Harass, threaten, or abuse other users</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Interfere with the normal operation of the Services</span>
               </li>
             </ul>
@@ -160,15 +160,15 @@ export default function TermsPage() {
             </p>
             <ul className="space-y-2 text-gray-600 dark:text-gray-400 mb-4">
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Intellios shall not be liable for any indirect, incidental, special, consequential, or punitive damages</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Our total liability shall not exceed the amount paid by you in the past 12 months</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>We are not liable for any failure or delay due to circumstances beyond our reasonable control</span>
               </li>
             </ul>
@@ -206,7 +206,7 @@ export default function TermsPage() {
                 Email:{" "}
                 <a
                   href="mailto:legal@intellios.io"
-                  className="text-indigo-600 hover:text-indigo-500 font-medium"
+                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 font-medium"
                 >
                   legal@intellios.io
                 </a>

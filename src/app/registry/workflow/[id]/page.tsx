@@ -104,8 +104,8 @@ function WorkflowFlowDiagram({ definition }: { definition: WorkflowDefinition })
                           isSentinel
                             ? "border-border bg-surface-muted text-text-secondary"
                             : isAgent
-                            ? "border-violet-200 bg-violet-50 text-violet-800"
-                            : "border-blue-200 bg-blue-50 text-blue-700"
+                            ? "border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 text-violet-800 dark:text-violet-200"
+                            : "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300"
                         }`}
                       >
                         <span className={`text-xs font-semibold leading-tight ${isSentinel ? "uppercase tracking-wide text-[10px]" : ""}`}>
@@ -113,7 +113,7 @@ function WorkflowFlowDiagram({ definition }: { definition: WorkflowDefinition })
                         </span>
                         {sub && <span className="mt-0.5 font-mono text-[9px] text-text-tertiary leading-none">{sub}</span>}
                         {!allConditionsTrue && outgoing.length > 1 && (
-                          <span className="mt-1 rounded-full bg-amber-100 px-1.5 text-[9px] text-amber-700 font-medium">
+                          <span className="mt-1 rounded-full bg-amber-100 dark:bg-amber-900/40 px-1.5 text-[9px] text-amber-700 dark:text-amber-300 font-medium">
                             {outgoing.length} branches
                           </span>
                         )}
@@ -243,11 +243,11 @@ export default function WorkflowDetailPage() {
   if (error || !workflow) {
     return (
       <div className="px-6 py-6">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center gap-2">
+        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-300 flex items-center gap-2">
           <AlertTriangle size={14} />
           {error ?? "Workflow not found"}
         </div>
-        <button onClick={() => router.back()} className="mt-4 text-sm text-violet-600 hover:text-violet-700">← Back</button>
+        <button onClick={() => router.back()} className="mt-4 text-sm text-violet-600 dark:text-violet-400 hover:text-violet-700">← Back</button>
       </div>
     );
   }
@@ -268,7 +268,7 @@ export default function WorkflowDetailPage() {
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-500">
+          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/30 text-violet-500">
             <GitBranch size={18} />
           </div>
           <div>
@@ -293,7 +293,7 @@ export default function WorkflowDetailPage() {
 
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
           {transitionMutation.error && (
-            <span className="text-xs text-red-600 max-w-xs">
+            <span className="text-xs text-red-600 dark:text-red-400 max-w-xs">
               {transitionMutation.error instanceof Error
                 ? transitionMutation.error.message
                 : "Failed to update status"}
@@ -303,7 +303,7 @@ export default function WorkflowDetailPage() {
             <button
               onClick={() => transitionMutation.mutate({ newStatus: "in_review" })}
               disabled={transitionMutation.isPending}
-              className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors"
+              className="rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-100 disabled:opacity-50 transition-colors"
             >
               {transitionMutation.isPending ? "Updating…" : "Submit for Review"}
             </button>
@@ -313,14 +313,14 @@ export default function WorkflowDetailPage() {
               <button
                 onClick={() => transitionMutation.mutate({ newStatus: "approved" })}
                 disabled={transitionMutation.isPending}
-                className="rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100 disabled:opacity-50 transition-colors"
+                className="rounded-lg border border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 px-3 py-1.5 text-xs font-medium text-green-700 dark:text-emerald-300 hover:bg-green-100 dark:hover:bg-emerald-900/40 disabled:opacity-50 transition-colors"
               >
                 {transitionMutation.isPending ? "Updating…" : "Approve"}
               </button>
               <button
                 onClick={() => transitionMutation.mutate({ newStatus: "rejected" })}
                 disabled={transitionMutation.isPending}
-                className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                className="rounded-lg border border-red-200 dark:border-red-800 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50 transition-colors"
               >
                 Reject
               </button>
@@ -345,7 +345,7 @@ export default function WorkflowDetailPage() {
           {workflow.status === "approved" && (
             <a
               href={`/api/workflows/${id}/export/code`}
-              className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition-colors inline-flex items-center gap-1"
+              className="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors inline-flex items-center gap-1"
             >
               <Download size={11} />
               Export Code
@@ -355,7 +355,7 @@ export default function WorkflowDetailPage() {
             <button
               onClick={handleDeprecate}
               disabled={transitionMutation.isPending}
-              className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+              className="rounded-lg border border-red-200 dark:border-red-800 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50 transition-colors"
             >
               Deprecate
             </button>
@@ -364,9 +364,9 @@ export default function WorkflowDetailPage() {
       </div>
 
       {/* Orchestration Definition Banner */}
-      <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+      <div className="mb-6 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 px-4 py-3">
         <div className="flex items-start gap-2">
-          <Info size={14} className="mt-0.5 shrink-0 text-blue-600" />
+          <Info size={14} className="mt-0.5 shrink-0 text-blue-600 dark:text-blue-400" />
           <div className="text-sm text-blue-800">
             <span className="font-medium">Orchestration Definition</span> — This workflow composes{" "}
             <strong>{def.agents?.length ?? 0} agent{(def.agents?.length ?? 0) !== 1 ? "s" : ""}</strong>{" "}
@@ -416,11 +416,11 @@ export default function WorkflowDetailPage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {agent.required && (
-                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs-tight font-medium text-amber-700 border border-amber-200">Required</span>
+                    <span className="rounded-full bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 text-xs-tight font-medium text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">Required</span>
                   )}
                   <Link
                     href={`/registry/${agent.agentId}`}
-                    className="text-xs text-violet-600 hover:text-violet-700"
+                    className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700"
                   >
                     View →
                   </Link>

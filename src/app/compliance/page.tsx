@@ -236,7 +236,7 @@ export default function CompliancePage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <CheckSquare size={20} className="text-violet-600" />
+            <CheckSquare size={20} className="text-violet-600 dark:text-violet-400" />
             <Heading level={1}>Compliance Dashboard</Heading>
           </div>
           <p className="mt-0.5 text-sm text-text-secondary">Compliance posture and regulatory evidence</p>
@@ -246,7 +246,7 @@ export default function CompliancePage() {
             <button
               onClick={handleDownloadReport}
               disabled={downloading}
-              className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm text-violet-700 hover:bg-violet-100 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-3 py-1.5 text-sm text-violet-700 dark:text-violet-300 hover:bg-violet-100 transition-colors disabled:opacity-50"
             >
               <Download size={14} />
               {downloading ? "Generating…" : "Download Report"}
@@ -377,7 +377,7 @@ export default function CompliancePage() {
                     </>
                   );
                   return anchor ? (
-                    <a key={label} href={anchor} className={`block rounded-xl border p-4 hover:shadow-sm hover:border-violet-200 transition-all ${color}`}>
+                    <a key={label} href={anchor} className={`block rounded-xl border p-4 hover:shadow-sm hover:border-violet-200 dark:hover:border-violet-800 transition-all ${color}`}>
                       {inner}
                     </a>
                   ) : (
@@ -402,7 +402,7 @@ export default function CompliancePage() {
               ) : (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 rounded-lg border border-danger-muted bg-danger-muted px-4 py-2.5">
-                    <AlertTriangle size={14} className="text-red-600 shrink-0" />
+                    <AlertTriangle size={14} className="text-red-600 dark:text-red-400 shrink-0" />
                     <span className="text-sm font-medium text-danger-text">
                       {posture.overdueReviews.length} agent{posture.overdueReviews.length !== 1 ? "s" : ""} with overdue periodic review
                     </span>
@@ -445,7 +445,7 @@ export default function CompliancePage() {
                                   <Link href={`/registry/${item.agentId}`} className="text-xs text-primary hover:underline">View →</Link>
                                   <button
                                     onClick={() => { setCompleteModal(item); setReviewNotes(""); setCompleteError(null); }}
-                                    className="text-xs text-violet-700 hover:text-violet-900 font-medium"
+                                    className="text-xs text-violet-700 dark:text-violet-300 hover:text-violet-900 font-medium"
                                   >
                                     Complete Review
                                   </button>
@@ -689,7 +689,7 @@ export default function CompliancePage() {
                             {policy.affectedAgentCount > 0 ? (
                               <Link
                                 href="/registry"
-                                className="text-xs font-medium text-violet-600 hover:text-violet-700"
+                                className="text-xs font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700"
                               >
                                 {policy.affectedAgentCount} agent{policy.affectedAgentCount !== 1 ? "s" : ""}
                               </Link>
@@ -704,7 +704,7 @@ export default function CompliancePage() {
                   {posture.policyCoverage.every(
                     (p) => p.violationCount === 0
                   ) && (
-                    <div className="border-t border-border-subtle bg-green-50 px-4 py-3 text-xs text-green-700 text-center">
+                    <div className="border-t border-border-subtle bg-green-50 dark:bg-emerald-950/30 px-4 py-3 text-xs text-green-700 dark:text-emerald-300 text-center">
                       ✓ No active policy violations across all deployed blueprints
                     </div>
                   )}
@@ -760,11 +760,11 @@ export default function CompliancePage() {
                               <span className="text-xs text-text-tertiary text-right whitespace-nowrap">{label}</span>
                               <div className="relative h-5 rounded bg-surface-raised overflow-hidden">
                                 <div
-                                  className="absolute inset-y-0 left-0 rounded bg-blue-100 transition-all"
+                                  className="absolute inset-y-0 left-0 rounded bg-blue-100 dark:bg-blue-900/40 transition-all"
                                   style={{ width: `${subPct}%` }}
                                 />
                                 <div
-                                  className="absolute inset-y-0 left-0 rounded bg-green-400/70 transition-all"
+                                  className="absolute inset-y-0 left-0 rounded bg-green-400/70 dark:bg-green-500/50 transition-all"
                                   style={{ width: `${apprPct}%` }}
                                 />
                               </div>
@@ -814,7 +814,7 @@ export default function CompliancePage() {
             </div>
 
             {completeError && (
-              <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="mb-3 rounded-lg bg-red-50 dark:bg-red-950/30 px-3 py-2 text-sm text-red-700 dark:text-red-300">
                 {completeError}
               </p>
             )}

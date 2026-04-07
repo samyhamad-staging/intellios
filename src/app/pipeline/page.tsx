@@ -36,10 +36,10 @@ const COLUMNS: {
   group: "active" | "terminal";
 }[] = [
   { status: "draft",      label: "Draft",      colBg: "bg-surface-raised border-border",     dotColor: "bg-text-tertiary",   badgeCls: "bg-surface-muted text-text-secondary",     group: "active"   },
-  { status: "in_review",  label: "In Review",  colBg: "bg-blue-50 border-blue-200",     dotColor: "bg-blue-500",   badgeCls: "bg-blue-100 text-blue-700",     group: "active"   },
-  { status: "approved",   label: "Approved",   colBg: "bg-green-50 border-green-200",   dotColor: "bg-green-500",  badgeCls: "bg-green-100 text-green-700",   group: "active"   },
-  { status: "deployed",   label: "Deployed",   colBg: "bg-indigo-50 border-indigo-200", dotColor: "bg-indigo-500", badgeCls: "bg-indigo-100 text-indigo-700", group: "active"   },
-  { status: "rejected",   label: "Rejected",   colBg: "bg-red-50 border-red-200",       dotColor: "bg-red-500",    badgeCls: "bg-red-100 text-red-700",       group: "terminal" },
+  { status: "in_review",  label: "In Review",  colBg: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800",     dotColor: "bg-blue-500",   badgeCls: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",     group: "active"   },
+  { status: "approved",   label: "Approved",   colBg: "bg-green-50 dark:bg-emerald-950/30 border-green-200 dark:border-emerald-800",   dotColor: "bg-green-500",  badgeCls: "bg-green-100 dark:bg-emerald-900/40 text-green-700 dark:text-emerald-300",   group: "active"   },
+  { status: "deployed",   label: "Deployed",   colBg: "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800", dotColor: "bg-indigo-500", badgeCls: "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300", group: "active"   },
+  { status: "rejected",   label: "Rejected",   colBg: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800",       dotColor: "bg-red-500",    badgeCls: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300",       group: "terminal" },
   { status: "deprecated", label: "Deprecated", colBg: "bg-surface-raised/80 border-border",  dotColor: "bg-text-tertiary",   badgeCls: "bg-surface-muted text-text-secondary",     group: "terminal" },
 ];
 
@@ -69,7 +69,7 @@ function ageClass(dateStr: string, status: string): string {
   const isActive = ["draft", "in_review", "approved"].includes(status);
   if (!isActive) return "text-text-tertiary";
   const diffDays = Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
-  if (diffDays > 30) return "text-red-500";
+  if (diffDays > 30) return "text-red-500 dark:text-red-400";
   if (diffDays > 14) return "text-amber-500";
   return "text-text-tertiary";
 }
@@ -249,7 +249,7 @@ export default function PipelinePage() {
       {/* C-12: data-kanban ensures the board scrolls horizontally on narrow viewports */}
       <div data-kanban className="flex flex-1 gap-0 overflow-x-auto bg-surface-muted/30">
         {error && (
-          <div className="m-6 w-full rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="m-6 w-full rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-300">
             {error}
           </div>
         )}
@@ -429,8 +429,8 @@ function InsightsStrip({ agents }: { agents: Agent[] }) {
   if (insights.length === 0) return null;
 
   const STYLES: Record<Insight["type"], string> = {
-    alert: "text-red-600",
-    warn:  "text-amber-600",
+    alert: "text-red-600 dark:text-red-400",
+    warn:  "text-amber-600 dark:text-amber-400",
     info:  "text-text-secondary",
   };
   const DOTS: Record<Insight["type"], string> = {
@@ -479,13 +479,13 @@ function AgentCard({ agent }: { agent: Agent }) {
   const hiddenTags = agent.tags?.slice(2) ?? [];
 
   const borderCls =
-    sla === "alert" ? "border-red-300 border-t-2 border-t-red-400" :
-    sla === "warn"  ? "border-amber-300 border-t-2 border-t-amber-400" :
+    sla === "alert" ? "border-red-300 dark:border-red-700 border-t-2 border-t-red-400" :
+    sla === "warn"  ? "border-amber-300 dark:border-amber-700 border-t-2 border-t-amber-400" :
     "border-border hover:border-primary/40";
 
   const shadowCls =
-    sla === "alert" ? "shadow-sm hover:shadow-red-100" :
-    sla === "warn"  ? "shadow-sm hover:shadow-amber-100" :
+    sla === "alert" ? "shadow-sm hover:shadow-md" :
+    sla === "warn"  ? "shadow-sm hover:shadow-md" :
     "shadow-sm hover:shadow-md hover:shadow-primary/5";
 
   return (

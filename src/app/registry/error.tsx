@@ -20,7 +20,7 @@ export default function RegistryError({
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-6">
       <div className="w-full max-w-sm text-center">
-        <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-500">
+        <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400">
           <AlertTriangle className="h-6 w-6" />
         </div>
         <Heading level={2} className="mb-2">Registry error</Heading>

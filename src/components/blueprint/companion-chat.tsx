@@ -65,17 +65,17 @@ function SuggestChangeCard({
   const [copied, setCopied] = useState(false);
   const priorityColor =
     change.priority === "high"
-      ? "border-red-200 bg-red-50"
+      ? "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30"
       : change.priority === "medium"
-        ? "border-amber-200 bg-amber-50"
-        : "border-blue-200 bg-blue-50";
+        ? "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30"
+        : "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30";
 
   const priorityLabel =
     change.priority === "high"
-      ? "text-red-700"
+      ? "text-red-700 dark:text-red-300"
       : change.priority === "medium"
-        ? "text-amber-700"
-        : "text-blue-700";
+        ? "text-amber-700 dark:text-amber-300"
+        : "text-blue-700 dark:text-blue-300";
 
   function handleCopy() {
     navigator.clipboard.writeText(change.refinementPrompt);
@@ -89,7 +89,7 @@ function SuggestChangeCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Sparkles size={12} className="text-violet-500 shrink-0 mt-0.5" />
+          <Sparkles size={12} className="text-violet-500 dark:text-violet-400 shrink-0 mt-0.5" />
           <span className="font-medium text-text">{change.summary}</span>
         </div>
         <span
@@ -149,6 +149,7 @@ export function CompanionChat({
 
   // P1-30: Load persisted conversation on mount so returning architects keep context
   const [initialMsgs] = useState<UIMessage[]>(() => {
+    if (typeof window === "undefined") return [];
     try {
       const raw = localStorage.getItem(`companion-history-${blueprintId}`);
       return raw ? (JSON.parse(raw) as UIMessage[]) : [];
@@ -213,6 +214,7 @@ export function CompanionChat({
             <button
               onClick={handleClearHistory}
               title="Clear conversation history"
+              aria-label="Clear conversation history"
               className="ml-auto text-text-disabled hover:text-text-tertiary transition-colors"
             >
               <Trash2 size={12} />
@@ -227,7 +229,7 @@ export function CompanionChat({
           <div className="flex h-full flex-col items-center justify-center gap-4 px-2">
             <div className="text-center">
               <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-violet-100">
-                <Sparkles size={14} className="text-violet-600" />
+                <Sparkles size={14} className="text-violet-600 dark:text-violet-400" />
               </div>
               <p className="text-sm font-medium text-text">
                 Ask me about this blueprint
@@ -237,12 +239,12 @@ export function CompanionChat({
               </p>
             </div>
             {violationCount !== null && violationCount > 0 && (
-              <p className="text-2xs text-red-600 font-medium mb-1">
+              <p className="text-2xs text-red-600 dark:text-red-400 font-medium mb-1">
                 {violationCount} governance violation{violationCount !== 1 ? "s" : ""} detected — governance prompts ranked first
               </p>
             )}
             {(violationCount === null || violationCount === 0) && qualityScore !== null && qualityScore < 3.0 && (
-              <p className="text-2xs text-amber-600 font-medium mb-1">
+              <p className="text-2xs text-amber-600 dark:text-amber-400 font-medium mb-1">
                 Quality score {qualityScore.toFixed(1)}/5.0 — quality prompts ranked first
               </p>
             )}
@@ -251,7 +253,7 @@ export function CompanionChat({
                 <button
                   key={prompt}
                   onClick={() => handleSend(prompt)}
-                  className="flex w-full items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-left text-xs text-text-secondary hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 transition-colors"
+                  className="flex w-full items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-left text-xs text-text-secondary hover:border-violet-300 dark:hover:border-violet-700 hover:bg-violet-50 dark:hover:bg-violet-950/30 hover:text-violet-700 dark:hover:text-violet-300 transition-colors"
                 >
                   <span>{prompt}</span>
                   <ArrowRight

@@ -20,6 +20,7 @@ import { SkeletonList } from "@/components/ui/skeleton";
 import { Tooltip } from "@/components/ui/tooltip";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { FormField, FormSection } from "@/components/ui/form-field";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import type { EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 
@@ -53,10 +54,11 @@ export default function AdminSsoPage() {
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [testStatus, setTestStatus] = useState<"idle" | "waiting" | "success" | "error">("idle");
   const [testMessage, setTestMessage] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/sso")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error("Failed"); return r.json(); })
       .then((data) => {
         if (data.sso) {
           setSso(data.sso);
@@ -70,7 +72,7 @@ export default function AdminSsoPage() {
         setPlatformConfigured(!!data.platformOidcConfigured);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => { setFetchError(true); setLoading(false); });
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -103,9 +105,23 @@ export default function AdminSsoPage() {
     );
   }
 
+  if (fetchError) {
+    return (
+      <div className="min-h-screen bg-surface-raised p-6">
+        <div className="max-w-2xl mx-auto">
+          <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-6 text-center">
+            <p className="text-sm font-medium text-red-700 dark:text-red-300">Unable to load SSO configuration</p>
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">Please try again later.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-surface-raised p-6">
       <div className="max-w-2xl mx-auto space-y-6">
+        <Breadcrumb items={[{ label: "Admin", href: "/admin" }, { label: "SSO" }]} />
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -124,13 +140,13 @@ export default function AdminSsoPage() {
 
         {/* Platform status banner */}
         {!platformConfigured && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
             <p className="font-semibold">Platform-level OIDC not configured</p>
-            <p className="mt-1 text-xs text-amber-700">
+            <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
               The platform operator must set{" "}
-              <code className="rounded bg-amber-100 px-1 font-mono">SSO_ISSUER</code>,{" "}
-              <code className="rounded bg-amber-100 px-1 font-mono">SSO_CLIENT_ID</code>, and{" "}
-              <code className="rounded bg-amber-100 px-1 font-mono">SSO_CLIENT_SECRET</code>{" "}
+              <code className="rounded bg-amber-100 dark:bg-amber-900/40 px-1 font-mono">SSO_ISSUER</code>,{" "}
+              <code className="rounded bg-amber-100 dark:bg-amber-900/40 px-1 font-mono">SSO_CLIENT_ID</code>, and{" "}
+              <code className="rounded bg-amber-100 dark:bg-amber-900/40 px-1 font-mono">SSO_CLIENT_SECRET</code>{" "}
               environment variables to activate the OIDC provider. Enterprise-level settings
               below are saved but SSO login will not function until those vars are set.
             </p>
@@ -138,7 +154,7 @@ export default function AdminSsoPage() {
         )}
 
         {platformConfigured && (
-          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          <div className="rounded-xl border border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 px-4 py-3 text-sm text-green-800 dark:text-emerald-200">
             Platform OIDC provider is configured. Enable SSO below to activate login for your
             enterprise.
           </div>
@@ -308,7 +324,7 @@ export default function AdminSsoPage() {
                 <Tooltip content="Remove mapping">
                   <button
                     onClick={() => setGroupRows((rows) => rows.filter((_, j) => j !== i))}
-                    className="text-text-tertiary hover:text-red-500 text-lg leading-none px-1"
+                    className="text-text-tertiary hover:text-red-500 dark:hover:text-red-400 text-lg leading-none px-1"
                     title="Remove"
                     aria-label="Remove group mapping"
                   >
@@ -321,7 +337,7 @@ export default function AdminSsoPage() {
 
           <button
             onClick={() => setGroupRows((rows) => [...rows, { group: "", role: "viewer" }])}
-            className="text-xs text-violet-600 hover:text-violet-700 font-medium"
+            className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-medium"
           >
             + Add mapping
           </button>
@@ -349,7 +365,7 @@ export default function AdminSsoPage() {
             onClick={() => { setTestStatus("idle"); setTestMessage(null); setTestModalOpen(true); }}
             disabled={!sso.issuer || !platformConfigured}
             title={!platformConfigured ? "Platform OIDC not configured" : !sso.issuer ? "Enter an issuer URL first" : ""}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/30 px-4 py-2 text-sm font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Test SSO Configuration
           </button>
@@ -413,7 +429,7 @@ export default function AdminSsoPage() {
               </div>
               <div className="flex justify-between gap-2">
                 <SectionHeading className="text-xs">Status</SectionHeading>
-                <span className={`font-medium ${sso.enabled ? "text-green-600" : "text-amber-600"}`}>
+                <span className={`font-medium ${sso.enabled ? "text-green-600 dark:text-emerald-400" : "text-amber-600"}`}>
                   {sso.enabled ? "Enabled" : "Disabled (save settings first)"}
                 </span>
               </div>
@@ -421,25 +437,25 @@ export default function AdminSsoPage() {
 
             {/* Status feedback */}
             {testStatus === "waiting" && (
-              <div className="mb-4 flex items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2.5 text-sm text-indigo-700">
+              <div className="mb-4 flex items-center gap-2 rounded-lg border border-indigo-100 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/30 px-3 py-2.5 text-sm text-indigo-700">
                 <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
                 Waiting for login window to complete…
               </div>
             )}
             {testStatus === "success" && (
-              <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5 text-sm text-green-700">
+              <div className="mb-4 rounded-lg border border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 px-3 py-2.5 text-sm text-green-700 dark:text-emerald-300">
                 ✓ {testMessage ?? "SSO login completed successfully."}
               </div>
             )}
             {testStatus === "error" && (
-              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+              <div className="mb-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2.5 text-sm text-red-700 dark:text-red-300">
                 ✗ {testMessage ?? "SSO login failed or was cancelled."}
               </div>
             )}
 
             {/* How it works note */}
             {testStatus === "idle" && (
-              <div className="mb-4 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2.5 text-xs text-amber-700">
+              <div className="mb-4 rounded-lg border border-amber-100 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-3 py-2.5 text-xs text-amber-700 dark:text-amber-300">
                 A popup will open to your IdP&rsquo;s login page. Complete the login to verify the
                 configuration. Make sure pop-ups are not blocked by your browser.
               </div>

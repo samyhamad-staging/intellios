@@ -216,18 +216,18 @@ function ReportDocument({
 
   const riskColor =
     r.riskClassification.riskTier === "High"
-      ? "bg-red-100 text-red-800 border-red-200"
+      ? "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800"
       : r.riskClassification.riskTier === "Medium"
-      ? "bg-amber-100 text-amber-800 border-amber-200"
-      : "bg-green-100 text-green-800 border-green-200";
+      ? "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-800"
+      : "bg-green-100 dark:bg-emerald-900/40 text-green-800 dark:text-emerald-200 border-green-200 dark:border-emerald-800";
 
   const outcomeColor =
     r.reviewDecision.outcome === "approved"
-      ? "bg-green-100 text-green-800 border-green-200"
+      ? "bg-green-100 dark:bg-emerald-900/40 text-green-800 dark:text-emerald-200 border-green-200 dark:border-emerald-800"
       : r.reviewDecision.outcome === "rejected"
-      ? "bg-red-100 text-red-800 border-red-200"
+      ? "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800"
       : r.reviewDecision.outcome === "changes_requested"
-      ? "bg-amber-100 text-amber-800 border-amber-200"
+      ? "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-800"
       : "bg-surface-muted text-text-secondary border-border";
 
   return (
@@ -284,12 +284,12 @@ function ReportDocument({
             />
             <Chip
               label={`Version ${r.cover.currentVersion}`}
-              color="bg-blue-50 text-blue-700 border border-blue-200"
+              color="bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
             />
             {r.cover.enterpriseId && (
               <Chip
                 label={`Enterprise: ${r.cover.enterpriseId}`}
-                color="bg-purple-50 text-purple-700 border border-purple-200"
+                color="bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
               />
             )}
           </div>
@@ -381,7 +381,7 @@ function ReportDocument({
                 <p className="text-xs text-text-secondary">Knowledge Sources</p>
               </div>
               <div className="text-center">
-                <p className={`text-3xl font-bold ${r.capabilities.instructionsConfigured ? "text-green-700" : "text-text-tertiary"}`}>
+                <p className={`text-3xl font-bold ${r.capabilities.instructionsConfigured ? "text-green-700 dark:text-emerald-300" : "text-text-tertiary"}`}>
                   {r.capabilities.instructionsConfigured ? "✓" : "✗"}
                 </p>
                 <p className="text-xs text-text-secondary">Instructions</p>
@@ -441,12 +441,12 @@ function ReportDocument({
           <SectionHeader number={5} title="Governance Validation" />
           <div className="rounded-xl border border-border bg-surface p-6 space-y-5">
             {!r.governanceValidation.validated ? (
-              <p className="text-sm text-amber-700">No validation has been run for this blueprint version.</p>
+              <p className="text-sm text-amber-700 dark:text-amber-300">No validation has been run for this blueprint version.</p>
             ) : (
               <>
                 <div className="flex flex-wrap gap-4">
                   <div className="text-center">
-                    <p className={`text-3xl font-bold ${r.governanceValidation.valid ? "text-green-700" : "text-red-700"}`}>
+                    <p className={`text-3xl font-bold ${r.governanceValidation.valid ? "text-green-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}>
                       {r.governanceValidation.valid ? "✓" : "✗"}
                     </p>
                     <p className="text-xs text-text-secondary">{r.governanceValidation.valid ? "Valid" : "Invalid"}</p>
@@ -456,13 +456,13 @@ function ReportDocument({
                     <p className="text-xs text-text-secondary">Policies Evaluated</p>
                   </div>
                   <div className="text-center">
-                    <p className={`text-3xl font-bold ${r.governanceValidation.errorCount > 0 ? "text-red-700" : "text-text"}`}>
+                    <p className={`text-3xl font-bold ${r.governanceValidation.errorCount > 0 ? "text-red-700 dark:text-red-300" : "text-text"}`}>
                       {r.governanceValidation.errorCount}
                     </p>
                     <p className="text-xs text-text-secondary">Errors</p>
                   </div>
                   <div className="text-center">
-                    <p className={`text-3xl font-bold ${r.governanceValidation.warningCount > 0 ? "text-amber-600" : "text-text"}`}>
+                    <p className={`text-3xl font-bold ${r.governanceValidation.warningCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-text"}`}>
                       {r.governanceValidation.warningCount}
                     </p>
                     <p className="text-xs text-text-secondary">Warnings</p>
@@ -481,16 +481,16 @@ function ReportDocument({
                           key={i}
                           className={`rounded-lg border p-3 text-xs ${
                             v.severity === "error"
-                              ? "border-red-200 bg-red-50"
-                              : "border-amber-200 bg-amber-50"
+                              ? "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30"
+                              : "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30"
                           }`}
                         >
                           <div className="flex items-start gap-2">
                             <span
                               className={`shrink-0 rounded px-1 py-0.5 text-xs font-semibold ${
                                 v.severity === "error"
-                                  ? "bg-red-100 text-red-700"
-                                  : "bg-amber-100 text-amber-700"
+                                  ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
+                                  : "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
                               }`}
                             >
                               {v.severity.toUpperCase()}
@@ -510,7 +510,7 @@ function ReportDocument({
                 )}
 
                 {r.governanceValidation.violations.length === 0 && (
-                  <p className="text-sm text-green-700">No violations found — blueprint passes all applicable governance policies.</p>
+                  <p className="text-sm text-green-700 dark:text-emerald-300">No violations found — blueprint passes all applicable governance policies.</p>
                 )}
 
                 {/* Policy Version Evidence (Phase 22) */}
@@ -537,12 +537,12 @@ function ReportDocument({
                             <TableCell className="text-text-secondary font-mono">v{p.policyVersion}</TableCell>
                             <TableCell>
                               {p.supersededAt ? (
-                                <span className="inline-flex items-center gap-1 text-amber-700">
+                                <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300">
                                   <span>⚠</span>
                                   <span>Policy revised since approval</span>
                                 </span>
                               ) : (
-                                <span className="text-green-700">✓ Current version</span>
+                                <span className="text-green-700 dark:text-emerald-300">✓ Current version</span>
                               )}
                             </TableCell>
                           </TableRow>
@@ -594,7 +594,7 @@ function ReportDocument({
                         <TableCell className="text-text-secondary capitalize">{step.role.replace("_", " ")}</TableCell>
                         <TableCell className="text-text font-medium">{step.label}</TableCell>
                         <TableCell className="text-text">{step.approvedBy}</TableCell>
-                        <TableCell className={`font-semibold ${step.decision === "approved" ? "text-green-700" : "text-red-700"}`}>
+                        <TableCell className={`font-semibold ${step.decision === "approved" ? "text-green-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}>
                           {step.decision === "approved" ? "✓ Approved" : "✗ Rejected"}
                         </TableCell>
                         <TableCell className="text-text-secondary whitespace-nowrap">{fmt(step.approvedAt)}</TableCell>
@@ -626,7 +626,7 @@ function ReportDocument({
             <div className="mb-4 flex items-center gap-2">
               <span
                 className={`text-sm font-semibold ${
-                  r.sodEvidence.sodSatisfied ? "text-green-700" : "text-red-700"
+                  r.sodEvidence.sodSatisfied ? "text-green-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"
                 }`}
               >
                 {r.sodEvidence.sodSatisfied
@@ -650,14 +650,14 @@ function ReportDocument({
               <span
                 className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
                   r.deploymentRecord.deployed
-                    ? "bg-green-100 text-green-700"
+                    ? "bg-green-100 dark:bg-emerald-900/40 text-green-700 dark:text-emerald-300"
                     : "bg-surface-muted text-text-secondary"
                 }`}
               >
                 {r.deploymentRecord.deployed ? "Deployed to Production" : "Not Deployed"}
               </span>
               {r.deploymentRecord.deploymentTarget === "agentcore" && (
-                <span className="inline-block rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700 border border-orange-200">
+                <span className="inline-block rounded-full bg-orange-100 dark:bg-orange-900/40 px-2 py-0.5 text-xs font-semibold text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800">
                   Amazon Bedrock AgentCore
                 </span>
               )}
@@ -672,7 +672,7 @@ function ReportDocument({
 
             {/* AgentCore deployment details */}
             {r.deploymentRecord.agentcoreRecord && (
-              <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
+              <div className="rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 p-4">
                 <SectionHeading style={{ color: "#92400e" }} className="mb-3">
                   Amazon Bedrock AgentCore — AWS Resource Details
                 </SectionHeading>
@@ -706,7 +706,7 @@ function ReportDocument({
                       href={`https://${r.deploymentRecord.agentcoreRecord.region}.console.aws.amazon.com/bedrock/home?region=${r.deploymentRecord.agentcoreRecord.region}#/agents/${r.deploymentRecord.agentcoreRecord.agentId}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs font-medium text-orange-700 underline hover:text-orange-900 print:hidden"
+                      className="text-xs font-medium text-orange-700 dark:text-orange-300 underline hover:text-orange-900 dark:hover:text-orange-200 print:hidden"
                     >
                       View in AWS Console ↗
                     </a>
@@ -827,7 +827,7 @@ function ReportDocument({
 
             {/* Coverage gaps callout */}
             {r.stakeholderCoverageGaps && r.stakeholderCoverageGaps.length > 0 && (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <div className="flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
                 <span className="shrink-0">⚠</span>
                 <span>
                   Expected input missing from:{" "}
@@ -877,7 +877,7 @@ function ReportDocument({
           <SectionHeader number={12} title="Regulatory Framework Assessment" />
           {!regulatoryAssessment ? (
             <div className="rounded-xl border border-border bg-surface p-6">
-              <p className="text-sm text-amber-700">
+              <p className="text-sm text-amber-700 dark:text-amber-300">
                 Not available — this report was generated before Phase 20 (Regulatory Intelligence)
                 was introduced. Re-generate the report to include the regulatory framework assessment.
               </p>
@@ -897,17 +897,17 @@ function ReportDocument({
 
                 const overallColor =
                   fw.overallStatus === "compliant"
-                    ? "bg-green-100 text-green-700 border-green-200"
+                    ? "bg-green-100 dark:bg-emerald-900/40 text-green-700 dark:text-emerald-300 border-green-200 dark:border-emerald-800"
                     : fw.overallStatus === "gaps_identified"
-                    ? "bg-red-100 text-red-700 border-red-200"
-                    : "bg-amber-100 text-amber-700 border-amber-200";
+                    ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
+                    : "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800";
 
                 const tierColor =
                   fw.euAiActRiskTier === "high-risk" || fw.euAiActRiskTier === "review-required"
-                    ? "bg-red-100 text-red-700 border-red-200"
+                    ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
                     : fw.euAiActRiskTier === "limited-risk"
-                    ? "bg-amber-100 text-amber-700 border-amber-200"
-                    : "bg-green-100 text-green-700 border-green-200";
+                    ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                    : "bg-green-100 dark:bg-emerald-900/40 text-green-700 dark:text-emerald-300 border-green-200 dark:border-emerald-800";
 
                 // NIST: group requirements by function prefix
                 const isNist = fw.frameworkId === "nist-rmf";
@@ -927,10 +927,10 @@ function ReportDocument({
                           : "Weak";
                       const strengthColor =
                         strength === "Strong"
-                          ? "text-green-700"
+                          ? "text-green-700 dark:text-emerald-300"
                           : strength === "Partial"
-                          ? "text-amber-600"
-                          : "text-red-700";
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-red-700 dark:text-red-300";
                       return { fn: fn.toUpperCase(), reqs, satisfiedCount, strength, strengthColor };
                     })
                   : [];
@@ -1030,11 +1030,11 @@ function ReportDocument({
                               : "—";
                           const statusColor =
                             req.evidenceStatus === "satisfied"
-                              ? "text-green-700"
+                              ? "text-green-700 dark:text-emerald-300"
                               : req.evidenceStatus === "partial"
-                              ? "text-amber-600"
+                              ? "text-amber-600 dark:text-amber-400"
                               : req.evidenceStatus === "missing"
-                              ? "text-red-700"
+                              ? "text-red-700 dark:text-red-300"
                               : "text-text-tertiary";
                           return (
                             <TableRow
@@ -1092,10 +1092,10 @@ function ReportDocument({
                     <span
                       className={`font-semibold ${
                         latestTestRun.status === "passed"
-                          ? "text-green-700"
+                          ? "text-green-700 dark:text-emerald-300"
                           : latestTestRun.status === "failed"
-                          ? "text-red-700"
-                          : "text-amber-700"
+                          ? "text-red-700 dark:text-red-300"
+                          : "text-amber-700 dark:text-amber-300"
                       }`}
                     >
                       {latestTestRun.status === "passed"
@@ -1128,10 +1128,10 @@ function ReportDocument({
                           <TableCell
                             className={`font-semibold ${
                               result.status === "passed"
-                                ? "text-green-700"
+                                ? "text-green-700 dark:text-emerald-300"
                                 : result.status === "failed"
-                                ? "text-red-700"
-                                : "text-amber-700"
+                                ? "text-red-700 dark:text-red-300"
+                                : "text-amber-700 dark:text-amber-300"
                             }`}
                           >
                             {result.status === "passed" ? "✓ Passed" : result.status === "failed" ? "✗ Failed" : "⚠ Error"}
@@ -1177,10 +1177,10 @@ function ReportDocument({
                     label="Next Review Due"
                     value={
                       r.periodicReviewSchedule.nextReviewDueAt ? (
-                        <span className={`inline-flex items-center gap-2 ${r.periodicReviewSchedule.isOverdue ? "text-red-700" : "text-text"}`}>
+                        <span className={`inline-flex items-center gap-2 ${r.periodicReviewSchedule.isOverdue ? "text-red-700 dark:text-red-300" : "text-text"}`}>
                           {fmtDate(r.periodicReviewSchedule.nextReviewDueAt)}
                           {r.periodicReviewSchedule.isOverdue && (
-                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">OVERDUE</span>
+                            <span className="rounded-full bg-red-100 dark:bg-red-900/40 px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-300">OVERDUE</span>
                           )}
                         </span>
                       ) : "Not yet scheduled"
@@ -1196,9 +1196,9 @@ function ReportDocument({
                     label="SR 11-7 Compliance Status"
                     value={
                       r.periodicReviewSchedule.isOverdue ? (
-                        <Chip label="Review Overdue" color="bg-red-100 text-red-800 border border-red-200" />
+                        <Chip label="Review Overdue" color="bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800" />
                       ) : r.periodicReviewSchedule.nextReviewDueAt ? (
-                        <Chip label="On Schedule" color="bg-green-100 text-green-800 border border-green-200" />
+                        <Chip label="On Schedule" color="bg-green-100 dark:bg-emerald-900/40 text-green-800 dark:text-emerald-200 border border-green-200 dark:border-emerald-800" />
                       ) : (
                         <Chip label="Not Deployed" color="bg-surface-muted text-text-secondary border border-border" />
                       )

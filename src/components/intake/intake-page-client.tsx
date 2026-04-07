@@ -109,9 +109,9 @@ function DuplicateSessionButton({ sessionId }: { sessionId: string }) {
   return (
     <button
       onClick={handleDuplicate}
-      title="Duplicate session"
+      title="Duplicate session" aria-label="Duplicate session"
       disabled={state === "loading"}
-      className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-surface text-text-tertiary hover:border-violet-300 hover:text-violet-600 disabled:opacity-50 transition-colors shadow-sm"
+      className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-surface text-text-tertiary hover:border-violet-300 dark:hover:border-violet-700 hover:text-violet-600 dark:hover:text-violet-400 disabled:opacity-50 transition-colors shadow-sm"
     >
       {state === "loading" ? (
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
@@ -312,7 +312,7 @@ function GhostSessionsSection({ ghosts }: { ghosts: SerializedSessionData[] }) {
         <button
           onClick={handleCleanUp}
           disabled={cleaning || isPending}
-          className="flex items-center gap-1 text-2xs font-mono text-text-tertiary hover:text-red-500 transition-colors disabled:opacity-40"
+          className="flex items-center gap-1 text-2xs font-mono text-text-tertiary hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-40"
         >
           <Trash2 size={10} />
           {cleaning || isPending ? "Cleaning…" : `Clean up ${ghosts.length}`}

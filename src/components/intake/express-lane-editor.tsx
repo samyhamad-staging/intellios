@@ -42,9 +42,9 @@ type EditingSection = "identity" | "capabilities" | "constraints" | "governance"
 // ── Tier/category styling ────────────────────────────────────────────────────
 
 const TIER_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  standard: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Standard Governance" },
-  enhanced: { bg: "bg-amber-50", text: "text-amber-700", label: "Enhanced Governance" },
-  critical: { bg: "bg-red-50", text: "text-red-700", label: "Critical Governance" },
+  standard: { bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-700 dark:text-emerald-300", label: "Standard Governance" },
+  enhanced: { bg: "bg-amber-50 dark:bg-amber-950/30", text: "text-amber-700 dark:text-amber-300", label: "Enhanced Governance" },
+  critical: { bg: "bg-red-50 dark:bg-red-950/30", text: "text-red-700 dark:text-red-300", label: "Critical Governance" },
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -199,8 +199,8 @@ export function ExpressLaneEditor({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-surface-muted px-4">
         <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-8 text-center shadow-lg">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
-            <CheckCircle2 size={28} className="text-emerald-600" />
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/30">
+            <CheckCircle2 size={28} className="text-emerald-600 dark:text-emerald-400" />
           </div>
           <h2 className="text-lg font-semibold text-text">Blueprint Generated</h2>
           <p className="mt-1 text-sm text-text-secondary">
@@ -208,9 +208,9 @@ export function ExpressLaneEditor({
           </p>
 
           {result.violations > 0 && (
-            <div className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-amber-50 px-3 py-2">
-              <AlertTriangle size={14} className="text-amber-600" />
-              <span className="text-xs text-amber-700">
+            <div className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
+              <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400" />
+              <span className="text-xs text-amber-700 dark:text-amber-300">
                 {result.violations} governance {result.violations === 1 ? "finding" : "findings"} to review
               </span>
             </div>
@@ -277,7 +277,7 @@ export function ExpressLaneEditor({
                     <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ${sec.done ? "bg-emerald-500 text-white" : expandedSection === sec.id ? "bg-primary text-white" : "bg-surface-raised text-text-tertiary"}`}>
                       {sec.done ? <Check size={8} /> : i + 1}
                     </span>
-                    <span className={`hidden sm:inline ${sec.done ? "text-emerald-600" : expandedSection === sec.id ? "text-primary" : "text-text-tertiary"}`}>
+                    <span className={`hidden sm:inline ${sec.done ? "text-emerald-600 dark:text-emerald-400" : expandedSection === sec.id ? "text-primary" : "text-text-tertiary"}`}>
                       {sec.label}
                     </span>
                     {i < 3 && <span className="text-text-tertiary">·</span>}
@@ -331,7 +331,7 @@ export function ExpressLaneEditor({
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="flex items-center gap-2 rounded-lg bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300">
               <AlertTriangle size={14} />
               {error}
             </div>
@@ -360,7 +360,7 @@ export function ExpressLaneEditor({
                   aria-invalid={!!nameError}
                 />
                 {nameError && (
-                  <p className="mt-1 flex items-center gap-1 text-xs text-red-600">
+                  <p className="mt-1 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
                     <AlertTriangle size={11} /> {nameError}
                   </p>
                 )}
@@ -433,7 +433,7 @@ export function ExpressLaneEditor({
                             placeholder="tool_name"
                           />
                           {toolNameErrors[i] && (
-                            <p className="mt-0.5 text-[10px] text-red-600">{toolNameErrors[i]}</p>
+                            <p className="mt-0.5 text-[10px] text-red-600 dark:text-red-400">{toolNameErrors[i]}</p>
                           )}
                           </div>
                           <select
@@ -469,7 +469,7 @@ export function ExpressLaneEditor({
                             const updated = capabilities.tools.filter((_, j) => j !== i);
                             setCapabilities({ ...capabilities, tools: updated });
                           }}
-                          className="shrink-0 rounded-lg p-1.5 text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition-all"
+                          className="shrink-0 rounded-lg p-1.5 text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 transition-all"
                           aria-label="Remove tool"
                         >
                           <Trash2 size={13} />
@@ -631,7 +631,7 @@ export function ExpressLaneEditor({
                               const updated = governance.policies.filter((_, j) => j !== i);
                               setGovernance({ ...governance, policies: updated });
                             }}
-                            className="shrink-0 rounded-lg p-1.5 text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition-all"
+                            className="shrink-0 rounded-lg p-1.5 text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 transition-all"
                             aria-label="Remove policy"
                           >
                             <Trash2 size={13} />
@@ -664,7 +664,7 @@ export function ExpressLaneEditor({
                                   updatedPolicies[i] = { ...policy, rules: updatedRules };
                                   setGovernance({ ...governance, policies: updatedPolicies });
                                 }}
-                                className="rounded p-0.5 text-text-tertiary hover:text-red-500 transition-colors"
+                                className="rounded p-0.5 text-text-tertiary hover:text-red-500 dark:hover:text-red-400 transition-colors"
                               >
                                 <X size={11} />
                               </button>
@@ -741,7 +741,7 @@ export function ExpressLaneEditor({
                       className={`input-field-sm w-20 ${retentionError ? "border-red-400" : ""}`}
                     />
                     {retentionError && (
-                      <p className="mt-0.5 text-[10px] text-red-600">{retentionError}</p>
+                      <p className="mt-0.5 text-[10px] text-red-600 dark:text-red-400">{retentionError}</p>
                     )}
                     </div>
                     <span className="text-xs text-text-tertiary">days</span>
@@ -834,7 +834,7 @@ function Field({
     <div>
       <label className="mb-1.5 block text-xs font-medium text-text-secondary">
         {label}
-        {required && <span className="ml-0.5 text-red-500">*</span>}
+        {required && <span className="ml-0.5 text-red-500 dark:text-red-400">*</span>}
       </label>
       {children}
     </div>
@@ -881,7 +881,7 @@ function EditableList({
             <Tooltip content="Remove">
               <button
                 onClick={() => onChange(items.filter((_, j) => j !== i))}
-                className="rounded-lg p-1 text-text-tertiary hover:bg-red-50 hover:text-red-500 transition-colors"
+                className="rounded-lg p-1 text-text-tertiary hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-500 dark:hover:text-red-400 transition-colors"
               >
                 <X size={13} />
               </button>

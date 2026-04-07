@@ -16,8 +16,8 @@ interface VersionDiffProps {
 
 function significanceBadge(sig: DiffSignificance) {
   const cfg: Record<DiffSignificance, { label: string; classes: string }> = {
-    major: { label: "Major Change", classes: "bg-red-100 text-red-700" },
-    minor: { label: "Minor Change", classes: "bg-amber-100 text-amber-700" },
+    major: { label: "Major Change", classes: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300" },
+    minor: { label: "Minor Change", classes: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300" },
     patch: { label: "Patch Change", classes: "bg-surface-muted text-text-secondary" },
   };
   const { label, classes } = cfg[sig];
@@ -29,15 +29,15 @@ function significanceBadge(sig: DiffSignificance) {
 }
 
 function changeIcon(type: FieldChange["changeType"]) {
-  if (type === "added")   return <span className="text-green-600 font-bold text-sm w-4 flex-shrink-0">+</span>;
-  if (type === "removed") return <span className="text-red-600 font-bold text-sm w-4 flex-shrink-0">−</span>;
-  return <span className="text-amber-600 font-bold text-sm w-4 flex-shrink-0">~</span>;
+  if (type === "added")   return <span className="text-green-600 dark:text-emerald-400 font-bold text-sm w-4 flex-shrink-0">+</span>;
+  if (type === "removed") return <span className="text-red-600 dark:text-red-400 font-bold text-sm w-4 flex-shrink-0">−</span>;
+  return <span className="text-amber-600 dark:text-amber-400 font-bold text-sm w-4 flex-shrink-0">~</span>;
 }
 
 function changeBg(type: FieldChange["changeType"]) {
-  if (type === "added")   return "bg-green-50 border-l-2 border-green-400";
-  if (type === "removed") return "bg-red-50 border-l-2 border-red-400";
-  return "bg-amber-50 border-l-2 border-amber-400";
+  if (type === "added")   return "bg-green-50 dark:bg-emerald-950/30 border-l-2 border-green-400";
+  if (type === "removed") return "bg-red-50 dark:bg-red-950/30 border-l-2 border-red-400 dark:border-red-600";
+  return "bg-amber-50 dark:bg-amber-950/30 border-l-2 border-amber-400";
 }
 
 function renderValue(v: unknown): string {
@@ -63,8 +63,8 @@ function ChangeRow({ change }: { change: FieldChange }) {
         <span className="text-sm text-text">{change.label}</span>
         {isModified && (
           <div className="mt-1 space-y-0.5 text-xs">
-            <div className="text-red-600 line-through opacity-75 truncate">{renderValue(change.from)}</div>
-            <div className="text-green-700 truncate">{renderValue(change.to)}</div>
+            <div className="text-red-600 dark:text-red-400 line-through opacity-75 truncate">{renderValue(change.from)}</div>
+            <div className="text-green-700 dark:text-emerald-300 truncate">{renderValue(change.to)}</div>
           </div>
         )}
       </div>
@@ -138,7 +138,7 @@ export function VersionDiff({ blueprintId, compareWithId, diff: prefetched, defa
 
   if (error || !diff) {
     return (
-      <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+      <div className="rounded border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2 text-sm text-red-700 dark:text-red-300">
         {error ?? "Failed to load diff."}
       </div>
     );

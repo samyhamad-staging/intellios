@@ -29,10 +29,10 @@ const DEPTH_LABELS: Record<string, string> = {
 };
 
 const TIER_COLORS: Record<string, string> = {
-  low:      "bg-emerald-100 text-emerald-700",
-  medium:   "bg-amber-100   text-amber-700",
-  high:     "bg-orange-100  text-orange-700",
-  critical: "bg-red-100     text-red-700",
+  low:      "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300",
+  medium:   "bg-amber-100 dark:bg-amber-900/40   text-amber-700 dark:text-amber-300",
+  high:     "bg-orange-100 dark:bg-orange-900/40  text-orange-700 dark:text-orange-300",
+  critical: "bg-red-100 dark:bg-red-900/40     text-red-700 dark:text-red-300",
 };
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -160,7 +160,7 @@ function GovernanceChecklistSection({
       badge={
         <span className={`text-2xs font-mono font-medium tabular-nums ${
           satisfied === total ? "text-emerald-600"
-          : satisfied > 0    ? "text-amber-600"
+          : satisfied > 0    ? "text-amber-600 dark:text-amber-400"
           :                    "text-text-tertiary"
         }`}>
           {satisfied}/{total}
@@ -171,7 +171,7 @@ function GovernanceChecklistSection({
         {/* Satisfied items first */}
         {satisfiedItems.map((item, i) => (
           <li key={`sat-${i}`} className="flex items-start gap-2">
-            <CheckCircle2 size={14} className="mt-0.5 text-emerald-500 shrink-0" />
+            <CheckCircle2 size={14} className="mt-0.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
             <div className="min-w-0">
               <span className="text-xs text-text-secondary">{item.type}</span>
               <p className="text-2xs text-text-tertiary truncate" title={item.reason}>{item.reason}</p>
@@ -419,7 +419,7 @@ export function IntakeProgress({
                   {fallbackSections.map(section => (
                     <li key={section.key} className="flex items-start gap-2">
                       {section.filled
-                        ? <CheckCircle2 size={14} className="mt-0.5 text-emerald-500 shrink-0" />
+                        ? <CheckCircle2 size={14} className="mt-0.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
                         : <Circle size={14} className="mt-0.5 text-border-strong shrink-0" />
                       }
                       <div className="min-w-0">
@@ -449,7 +449,7 @@ export function IntakeProgress({
                     <span className="text-2xs font-mono text-text-tertiary uppercase tracking-wide">Readiness</span>
                     <span className={`text-sm font-bold font-mono tabular-nums ${
                       fallbackReadiness.score >= 80 ? "text-emerald-600"
-                      : fallbackReadiness.score >= 50 ? "text-amber-600"
+                      : fallbackReadiness.score >= 50 ? "text-amber-600 dark:text-amber-400"
                       : "text-text-tertiary"
                     }`}>
                       {fallbackReadiness.score}%

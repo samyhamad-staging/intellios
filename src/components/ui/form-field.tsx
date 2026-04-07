@@ -76,6 +76,10 @@ export const FormField = React.forwardRef<
     const nearLimit = maxLength && charCount >= maxLength * 0.85;
     const overLimit = maxLength && charCount > maxLength;
 
+    // Derive an error ID for aria-describedby linkage
+    const errorId = htmlFor ? `${htmlFor}-error` : undefined;
+    const descId = htmlFor && description ? `${htmlFor}-desc` : undefined;
+
     return (
       <div ref={ref} className={cn('flex flex-col', className)}>
         {/* Label row — label + optional character counter */}
@@ -110,7 +114,7 @@ export const FormField = React.forwardRef<
 
         {/* Description text below label */}
         {description && (
-          <p className="text-xs text-text-tertiary mt-0.5">
+          <p id={descId} className="text-xs text-text-tertiary mt-0.5">
             {description}
           </p>
         )}
@@ -122,8 +126,8 @@ export const FormField = React.forwardRef<
 
         {/* Error message with icon — only shown after touch */}
         {showError && (
-          <div className="flex items-start gap-1.5 mt-1 text-xs text-danger-text">
-            <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+          <div id={errorId} role="alert" className="flex items-start gap-1.5 mt-1 text-xs text-danger-text">
+            <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" aria-hidden="true" />
             <span>{error}</span>
           </div>
         )}

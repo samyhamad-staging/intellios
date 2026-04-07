@@ -275,7 +275,7 @@ function LoginForm() {
                   type="checkbox"
                   checked={rememberDevice}
                   onChange={(e) => setRememberDevice(e.target.checked)}
-                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-white/5 text-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 accent-indigo-500"
+                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-white/5 text-indigo-500 dark:text-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 accent-indigo-500"
                 />
                 <span className="font-mono text-2xs text-white/80 hover:text-white/90 transition-colors">
                   Remember this device for 30 days

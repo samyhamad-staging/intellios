@@ -32,9 +32,9 @@ const AGENT_TYPE_LABELS: Record<AgentType, string> = {
 
 const RISK_TIER_BORDER: Record<IntakeRiskTier, string> = {
   low:      "text-emerald-700",
-  medium:   "text-amber-700",
-  high:     "text-orange-700",
-  critical: "text-red-700",
+  medium:   "text-amber-700 dark:text-amber-300",
+  high:     "text-orange-700 dark:text-orange-300",
+  critical: "text-red-700 dark:text-red-300",
 };
 
 // ── Fill bar color by level ────────────────────────────────────────────────────
@@ -151,6 +151,7 @@ function DomainChip({
       className={`
         relative flex h-9 items-center gap-1.5 rounded-lg px-2.5 shrink-0
         transition-all duration-300 cursor-pointer select-none overflow-hidden
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent
         ${isActive
           ? "bg-primary/12 border border-primary/50"
           : "bg-transparent border border-transparent hover:border-primary/30 hover:bg-primary/5"
@@ -305,9 +306,12 @@ export function DomainProgressStrip({
           <>
             {/* Agent type */}
             <div
-              className="flex items-center gap-1 cursor-pointer group"
+              className="flex items-center gap-1 cursor-pointer group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               title={`Agent type: ${AGENT_TYPE_LABELS[classification.agentType]} (click to override)`}
               onClick={onOverrideClick}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOverrideClick?.(); } }}
             >
               <span className="text-2xs font-mono text-text-tertiary uppercase tracking-wide">type</span>
               <span className="text-2xs font-mono text-text-secondary group-hover:text-text transition-colors">
@@ -317,9 +321,12 @@ export function DomainProgressStrip({
             <div className="h-3 w-px bg-border shrink-0" />
             {/* Risk tier */}
             <div
-              className={`flex items-center gap-1 cursor-pointer group`}
+              className={`flex items-center gap-1 cursor-pointer group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50`}
               title={`Risk tier: ${classification.riskTier.toUpperCase()} (click to override)`}
               onClick={onOverrideClick}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOverrideClick?.(); } }}
             >
               <span className="text-2xs font-mono text-text-tertiary uppercase tracking-wide">risk</span>
               <span className={`text-2xs font-mono font-semibold ${RISK_TIER_BORDER[classification.riskTier]} border-0 pl-0`}>
@@ -479,8 +486,8 @@ function InviteStakeholderChip({ sessionId }: { sessionId: string }) {
         onClick={() => { setOpen((v) => !v); if (!open) reset(); }}
         className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-2xs font-medium transition-colors ${
           open
-            ? "border-indigo-300 bg-indigo-50 text-indigo-700"
-            : "border-border bg-surface text-text-tertiary hover:border-indigo-200 hover:text-indigo-600 hover:bg-indigo-50/50"
+            ? "border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300"
+            : "border-border bg-surface text-text-tertiary hover:border-indigo-200 dark:hover:border-indigo-800 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
         }`}
         title="Invite a stakeholder to contribute to this intake session"
       >
@@ -493,8 +500,8 @@ function InviteStakeholderChip({ sessionId }: { sessionId: string }) {
         <div className="absolute left-0 top-full mt-2 z-50 w-72 rounded-xl border border-border bg-surface shadow-[var(--shadow-raised)]">
           {status === "sent" ? (
             <div className="flex flex-col items-center gap-2 py-6 px-4 text-center">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100">
-                <Check size={16} className="text-green-600" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 dark:bg-emerald-900/40">
+                <Check size={16} className="text-green-600 dark:text-emerald-400" />
               </div>
               <p className="text-xs font-semibold text-text">Invitation sent!</p>
               <p className="text-2xs text-text-tertiary">{email}</p>
@@ -553,7 +560,7 @@ function InviteStakeholderChip({ sessionId }: { sessionId: string }) {
                 </FormField>
               </div>
 
-              {errorMsg && <p className="text-2xs text-red-600">{errorMsg}</p>}
+              {errorMsg && <p className="text-2xs text-red-600 dark:text-red-400">{errorMsg}</p>}
 
               <button
                 type="submit"

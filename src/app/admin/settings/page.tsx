@@ -33,18 +33,20 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<EnterpriseSettings>(DEFAULT_ENTERPRISE_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   // C-02: moved activeSection useState above the early return to satisfy Rules of Hooks.
   // Previously declared after `if (loading) return ...` which caused React to throw.
   const [activeSection, setActiveSection] = useState<SectionId>("branding");
 
   useEffect(() => {
     fetch("/api/admin/settings")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error("Failed"); return r.json(); })
       .then((data) => {
         setSettings(data.settings ?? DEFAULT_ENTERPRISE_SETTINGS);
         setLoading(false);
       })
       .catch(() => {
+        setFetchError(true);
         setLoading(false);
       });
   }, []);
@@ -96,6 +98,17 @@ export default function AdminSettingsPage() {
     return (
       <div className="px-6 py-6 space-y-6">
         <SkeletonList rows={5} height="h-16" />
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="px-6 py-6">
+        <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-6 text-center">
+          <p className="text-sm font-medium text-red-700 dark:text-red-300">Unable to load settings</p>
+          <p className="mt-1 text-xs text-red-600 dark:text-red-400">Please try again later or contact your administrator.</p>
+        </div>
       </div>
     );
   }
@@ -191,7 +204,7 @@ export default function AdminSettingsPage() {
                       branding: { ...s.branding, primaryColor: e.target.value },
                     }))
                   }
-                  className="h-9 w-12 cursor-pointer rounded border border-border p-0.5"
+                  className="h-9 w-12 cursor-pointer rounded border border-border p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 />
                 <code className="text-sm text-text-secondary">{settings.branding?.primaryColor ?? "#7c3aed"}</code>
               </div>
@@ -313,7 +326,7 @@ export default function AdminSettingsPage() {
               </FormField>
             </div>
             {settings.sla.warnHours >= settings.sla.breachHours && (
-              <p className="mt-3 text-xs text-red-600">
+              <p className="mt-3 text-xs text-red-600 dark:text-red-400">
                 Warning threshold must be less than breach threshold.
               </p>
             )}
@@ -575,7 +588,7 @@ export default function AdminSettingsPage() {
                 />
               </FormField>
               {settings.notifications.slackWebhookUrl && (
-                <p className="mt-1 text-xs text-emerald-600">✓ Slack notifications active</p>
+                <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">✓ Slack notifications active</p>
               )}
             </div>
 
@@ -601,7 +614,7 @@ export default function AdminSettingsPage() {
                 />
               </FormField>
               {settings.notifications.pagerdutyKey && (
-                <p className="mt-1 text-xs text-emerald-600">✓ PagerDuty alerting active</p>
+                <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">✓ PagerDuty alerting active</p>
               )}
             </div>
 
@@ -665,7 +678,7 @@ export default function AdminSettingsPage() {
                       return { ...s, approvalChain: chain };
                     })
                   }
-                  className="text-xs text-red-500 hover:text-red-700"
+                  className="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                 >
                   Remove
                 </button>
@@ -698,10 +711,10 @@ export default function AdminSettingsPage() {
           </p>
 
           {/* AgentCore block */}
-          <div className="mt-5 rounded-lg border border-orange-100 bg-orange-50 p-5">
+          <div className="mt-5 rounded-lg border border-orange-100 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 p-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-orange-100 text-sm font-semibold text-orange-700">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-orange-100 dark:bg-orange-900/40 text-sm font-semibold text-orange-700 dark:text-orange-300">
                   AC
                 </span>
                 <div>
@@ -922,15 +935,15 @@ function ValidateDeploymentTargetButton({ config }: {
             <div
               key={c.label}
               className={`flex items-start gap-3 px-4 py-3 border-b border-border-subtle last:border-b-0 ${
-                c.ok ? "bg-surface" : "bg-red-50/40"
+                c.ok ? "bg-surface" : "bg-red-50 dark:bg-red-950/30"
               }`}
             >
-              <span className={`mt-0.5 shrink-0 text-base leading-none ${c.ok ? "text-green-500" : "text-red-500"}`}>
+              <span className={`mt-0.5 shrink-0 text-base leading-none ${c.ok ? "text-green-500" : "text-red-500 dark:text-red-400"}`}>
                 {c.ok ? "✓" : "✗"}
               </span>
               <div className="min-w-0">
-                <p className={`text-xs font-semibold ${c.ok ? "text-text" : "text-red-700"}`}>{c.label}</p>
-                <p className={`text-xs mt-0.5 ${c.ok ? "text-text-secondary" : "text-red-600"}`}>{c.detail}</p>
+                <p className={`text-xs font-semibold ${c.ok ? "text-text" : "text-red-700 dark:text-red-300"}`}>{c.label}</p>
+                <p className={`text-xs mt-0.5 ${c.ok ? "text-text-secondary" : "text-red-600 dark:text-red-400"}`}>{c.detail}</p>
               </div>
             </div>
           ))}

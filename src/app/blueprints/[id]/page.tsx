@@ -2,11 +2,17 @@
 
 import { use, useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { Wand2 } from "lucide-react";
 import { BlueprintView } from "@/components/blueprint/blueprint-view";
-import { CompanionChat } from "@/components/blueprint/companion-chat";
 import { Heading, Subheading } from "@/components/catalyst/heading";
+
+/* ── Lazy-loaded panels (only loaded when user switches to their tab) ── */
+const CompanionChat = dynamic(
+  () => import("@/components/blueprint/companion-chat").then(m => ({ default: m.CompanionChat })),
+  { ssr: false, loading: () => <div className="flex items-center justify-center h-32 text-text-tertiary text-sm">Loading chat…</div> }
+);
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ValidationReportView } from "@/components/governance/validation-report";
@@ -635,13 +641,13 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
         <div className="flex items-center gap-2 shrink-0">
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
             blueprintStatus === "rejected"
-              ? "bg-red-100 text-red-700"
+              ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
               : blueprintStatus === "in_review"
-              ? "bg-amber-100 text-amber-700"
+              ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
               : blueprintStatus === "approved"
-              ? "bg-green-100 text-green-700"
+              ? "bg-green-100 dark:bg-emerald-900/40 text-green-700 dark:text-emerald-300"
               : blueprintStatus === "deployed"
-              ? "bg-blue-100 text-blue-700"
+              ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300"
               : "bg-surface-muted text-text-secondary"
           }`}>
             {STATUS_LABELS[blueprintStatus as keyof typeof STATUS_LABELS] ?? blueprintStatus.replace("_", " ")}
@@ -678,16 +684,16 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
       {reviewComment && (
         <div className={`shrink-0 border-b px-6 py-3 flex items-start gap-3 ${
           blueprintStatus === "rejected"
-            ? "bg-red-50 border-red-200"
-            : "bg-amber-50 border-amber-200"
+            ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800"
+            : "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800"
         }`}>
           <span className={`shrink-0 text-sm font-semibold ${
-            blueprintStatus === "rejected" ? "text-red-700" : "text-amber-700"
+            blueprintStatus === "rejected" ? "text-red-700 dark:text-red-300" : "text-amber-700 dark:text-amber-300"
           }`}>
             {blueprintStatus === "rejected" ? "Rejected:" : "Changes requested:"}
           </span>
           <span className={`text-sm ${
-            blueprintStatus === "rejected" ? "text-red-700" : "text-amber-700"
+            blueprintStatus === "rejected" ? "text-red-700 dark:text-red-300" : "text-amber-700 dark:text-amber-300"
           }`}>
             {reviewComment}
           </span>
@@ -712,9 +718,9 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                     title={completed ? `Approved by ${completed.approvedBy} · ${new Date(completed.approvedAt).toLocaleDateString()}` : chainStep.label}
                     className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
                       completed
-                        ? "bg-green-50 border-green-200 text-green-700"
+                        ? "bg-green-50 dark:bg-emerald-950/30 border-green-200 dark:border-emerald-800 text-green-700 dark:text-emerald-300"
                         : isCurrent
-                        ? "bg-amber-50 border-amber-300 text-amber-700"
+                        ? "bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300"
                         : "bg-surface border-border text-text-tertiary"
                     }`}
                   >
@@ -776,7 +782,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                 <span
                   className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-xs ${
                     section.filled
-                      ? "bg-green-100 text-green-700"
+                      ? "bg-green-100 dark:bg-emerald-900/40 text-green-700 dark:text-emerald-300"
                       : "bg-surface-muted text-text-tertiary"
                   }`}
                 >
@@ -807,7 +813,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             </div>
           )}
           {error && !abp && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+            <div className="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4 text-sm text-red-700 dark:text-red-300">
               {error}
             </div>
           )}
@@ -889,14 +895,14 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               <Subheading level={2} className="text-sm">Submit for Review</Subheading>
 
               {submitted ? (
-                <div className="mt-3 rounded-lg bg-green-50 border border-green-200 px-4 py-3">
-                  <p className="text-sm font-medium text-green-800">✓ Submitted for review</p>
-                  <p className="mt-0.5 text-xs text-green-700">
+                <div className="mt-3 rounded-lg bg-green-50 dark:bg-emerald-950/30 border border-green-200 dark:border-emerald-800 px-4 py-3">
+                  <p className="text-sm font-medium text-green-800 dark:text-emerald-200">✓ Submitted for review</p>
+                  <p className="mt-0.5 text-xs text-green-700 dark:text-emerald-300">
                     This blueprint is now in the reviewer queue.
                   </p>
                   <Link
                     href={`/registry/${agentIdState}`}
-                    className="mt-2 inline-block text-xs text-green-700 underline hover:text-green-900"
+                    className="mt-2 inline-block text-xs text-green-700 dark:text-emerald-300 underline hover:text-green-900 dark:hover:text-emerald-200"
                   >
                     View in Registry →
                   </Link>
@@ -925,10 +931,10 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                         <div
                           className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs ${
                             validationReport.valid
-                              ? "bg-green-50 text-green-700"
+                              ? "bg-green-50 dark:bg-emerald-950/30 text-green-700 dark:text-emerald-300"
                               : blockerCount! > 0
-                              ? "bg-red-50 text-red-700"
-                              : "bg-yellow-50 text-yellow-700"
+                              ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300"
+                              : "bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-300"
                           }`}
                         >
                           <span>
@@ -947,7 +953,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                         </div>
                         {/* Staleness warning: report loaded from DB, policies may have changed */}
                         {!reportIsFresh && (
-                          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                          <div className="flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
                             <span className="shrink-0 mt-0.5">⚠</span>
                             <span>
                               Saved from a previous session — re-validate to check against current policies before submitting.
@@ -960,13 +966,13 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
 
                   {/* Quality gate advisory — shown when score is below threshold */}
                   {qualityScore !== null && qualityScore < QUALITY_GATE_THRESHOLD && (
-                    <div className="mb-2 flex items-start gap-2 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-800">
+                    <div className="mb-2 flex items-start gap-2 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 px-3 py-2 text-xs text-orange-800 dark:text-orange-200">
                       <span className="shrink-0 mt-0.5">⚠</span>
                       <span>
                         Quality score is <strong>{qualityScore.toFixed(1)}/5.0</strong> — below the recommended threshold of {QUALITY_GATE_THRESHOLD.toFixed(1)}.
                         Consider addressing quality issues before submitting.{" "}
                         {agentIdState && (
-                          <a href={`/registry/${agentIdState}?tab=quality`} className="underline hover:text-orange-900">
+                          <a href={`/registry/${agentIdState}?tab=quality`} className="underline hover:text-orange-900 dark:hover:text-orange-100">
                             View details →
                           </a>
                         )}
@@ -979,7 +985,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                     disabled={loading || validating || (!!validationReport && !canSubmit)}
                     className={`w-full rounded-lg py-2.5 text-sm font-medium transition-colors ${
                       !loading && !validating && (canSubmit || !validationReport)
-                        ? "bg-yellow-600 text-white hover:bg-yellow-700"
+                        ? "bg-yellow-600 text-white hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-800"
                         : "bg-surface-muted text-text-tertiary cursor-not-allowed"
                     }`}
                   >
@@ -1001,9 +1007,9 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                           Regenerate Blueprint
                         </button>
                       ) : (
-                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                        <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-3 text-xs text-amber-800 dark:text-amber-200">
                           <p className="mb-2 font-medium">Replace this blueprint with a fresh generation?</p>
-                          <p className="mb-3 text-amber-700">All refinements will be lost. The new blueprint will be generated from your original intake session.</p>
+                          <p className="mb-3 text-amber-700 dark:text-amber-300">All refinements will be lost. The new blueprint will be generated from your original intake session.</p>
                           <div className="flex gap-2">
                             <button
                               onClick={handleRegenerate}
@@ -1072,20 +1078,20 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                       key={v.ruleId || i}
                       className={`rounded-lg border p-3 text-xs transition-all ${
                         isAck
-                          ? "border-green-200 bg-green-50 opacity-60"
+                          ? "border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 opacity-60"
                           : isError
-                          ? "border-red-200 bg-red-50"
-                          : "border-yellow-200 bg-yellow-50"
+                          ? "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30"
+                          : "border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950/30"
                       }`}
                     >
                       <div className="flex items-start gap-2">
                         <span
                           className={`shrink-0 rounded px-1 py-0.5 text-xs font-medium ${
                             isAck
-                              ? "bg-green-100 text-green-700"
+                              ? "bg-green-100 dark:bg-emerald-900/40 text-green-700 dark:text-emerald-300"
                               : isError
-                              ? "bg-red-100 text-red-700"
-                              : "bg-yellow-100 text-yellow-700"
+                              ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
+                              : "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300"
                           }`}
                         >
                           {isAck ? "✓ ack" : v.severity}
@@ -1093,9 +1099,9 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-text">{v.message}</p>
                           {v.suggestion && !isAck && (
-                            <div className="mt-1.5 border-l-2 border-blue-300 bg-blue-50 rounded px-2 py-1">
-                              <p className="text-blue-600 text-xs font-medium mb-0.5">✦ Suggested fix</p>
-                              <p className="text-blue-800 text-xs">{v.suggestion}</p>
+                            <div className="mt-1.5 border-l-2 border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/30 rounded px-2 py-1">
+                              <p className="text-blue-600 dark:text-blue-400 text-xs font-medium mb-0.5">✦ Suggested fix</p>
+                              <p className="text-blue-800 dark:text-blue-200 text-xs">{v.suggestion}</p>
                             </div>
                           )}
                           <p className="mt-0.5 font-mono text-text-tertiary">{v.field}</p>
@@ -1103,7 +1109,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                         {!isError && !isAck && (
                           <button
                             onClick={() => handleAcknowledge(v.ruleId)}
-                            className="shrink-0 rounded-md border border-yellow-300 bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 hover:bg-yellow-200 transition-colors"
+                            className="shrink-0 rounded-md border border-yellow-300 dark:border-yellow-700 bg-yellow-100 dark:bg-yellow-900/40 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:text-yellow-200 hover:bg-yellow-200 dark:hover:bg-yellow-900 transition-colors"
                           >
                             Acknowledge
                           </button>
@@ -1115,9 +1121,9 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
               </div>
               {/* Summary: all warnings reviewed, no errors — ready to submit */}
               {allWarningsAcknowledged && warningViolations.length > 0 && blockerCount === 0 && (
-                <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
+                <div className="mt-3 rounded-lg border border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 px-3 py-2 text-xs text-green-800 dark:text-emerald-200">
                   <p className="font-semibold">✓ All warnings reviewed</p>
-                  <p className="mt-0.5 text-green-700">
+                  <p className="mt-0.5 text-green-700 dark:text-emerald-300">
                     You&apos;ve acknowledged every warning — this blueprint is ready to submit.
                   </p>
                 </div>
@@ -1191,7 +1197,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                       <> · Last run:{" "}
                         <button
                           onClick={() => setTestRunExpanded((e) => !e)}
-                          className={`font-medium underline decoration-dotted ${latestTestRun.status === "passed" ? "text-green-700" : "text-red-700"}`}
+                          className={`font-medium underline decoration-dotted ${latestTestRun.status === "passed" ? "text-green-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}
                         >
                           {latestTestRun.passedCases}/{latestTestRun.totalCases} passed
                         </button>
@@ -1203,10 +1209,10 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                   {testRunExpanded && latestTestRun?.testResults && latestTestRun.testResults.length > 0 && (
                     <div className="mt-2 space-y-1.5">
                       {latestTestRun.testResults.map((tr) => (
-                        <div key={tr.testCaseId} className={`rounded-md border px-2.5 py-2 text-xs ${tr.status === "passed" ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
+                        <div key={tr.testCaseId} className={`rounded-md border px-2.5 py-2 text-xs ${tr.status === "passed" ? "border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30" : "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30"}`}>
                           <div className="flex items-center gap-1.5">
                             <span>{tr.status === "passed" ? "✓" : "✗"}</span>
-                            <span className={`font-medium ${tr.status === "passed" ? "text-green-800" : "text-red-800"}`}>{tr.name}</span>
+                            <span className={`font-medium ${tr.status === "passed" ? "text-green-800 dark:text-emerald-200" : "text-red-800 dark:text-red-200"}`}>{tr.name}</span>
                           </div>
                           {tr.status !== "passed" && tr.evaluationRationale && (
                             <p className="mt-1 text-text-secondary italic">Judge: {tr.evaluationRationale}</p>
@@ -1217,7 +1223,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                   )}
                   {/* Amber strip: test cases exist but no passing run */}
                   {(!latestTestRun || latestTestRun.status !== "passed") && (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                    <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
                       ⚠ Run tests before submitting for review
                     </div>
                   )}
@@ -1312,7 +1318,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
             <div className="border-b border-border px-5 py-4">
               <div className="flex items-center gap-2 mb-2">
                 <Subheading level={2} className="text-sm">Audit Evidence</Subheading>
-                <span className="rounded-full bg-green-100 px-2 py-0.5 text-2xs font-semibold text-green-700 uppercase tracking-wide">
+                <span className="rounded-full bg-green-100 dark:bg-emerald-900/40 px-2 py-0.5 text-2xs font-semibold text-green-700 dark:text-emerald-300 uppercase tracking-wide">
                   Exam-Ready
                 </span>
               </div>
@@ -1332,7 +1338,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                 <button
                   onClick={handleExportEvidence}
                   disabled={exportingEvidence}
-                  className="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 transition-colors text-left"
+                  className="w-full rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/30 px-3 py-2 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 disabled:opacity-50 transition-colors text-left"
                 >
                   {exportingEvidence ? "Exporting…" : "↓ Export Evidence Package"}
                 </button>
@@ -1401,7 +1407,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                     </div>
                   )}
                   {checkpointResult && (
-                    <div className="mb-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
+                    <div className="mb-3 rounded-lg border border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 px-3 py-2 text-xs text-green-700 dark:text-emerald-300">
                       ✓ Checkpoint saved as &ldquo;{checkpointResult.name}&rdquo;.{" "}
                       <a href={`/blueprints/${checkpointResult.id}`} className="underline hover:no-underline">
                         View →
@@ -1433,7 +1439,7 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                     msg.role === "user"
                       ? "bg-primary text-primary-fg"
                       : msg.content.startsWith("Error:")
-                      ? "bg-red-50 text-red-700 border border-red-200"
+                      ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
                       : "bg-surface-raised text-text border border-border"
                   }`}>
                     <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -1457,10 +1463,10 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
 
             {/* P1-226: Companion AI suggestion — confirm before applying */}
             {pendingApplyPrompt && (
-              <div className="border-t border-amber-200 bg-amber-50 p-3 space-y-2">
-                <p className="text-xs font-semibold text-amber-800">Apply this suggestion to your blueprint?</p>
-                <p className="text-xs text-amber-700 line-clamp-3 italic">&ldquo;{pendingApplyPrompt}&rdquo;</p>
-                <p className="text-2xs text-amber-600">This will modify your blueprint. Consider saving a checkpoint first if you haven&apos;t already.</p>
+              <div className="border-t border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-3 space-y-2">
+                <p className="text-xs font-semibold text-amber-800 dark:text-amber-200">Apply this suggestion to your blueprint?</p>
+                <p className="text-xs text-amber-700 dark:text-amber-300 line-clamp-3 italic">&ldquo;{pendingApplyPrompt}&rdquo;</p>
+                <p className="text-2xs text-amber-600 dark:text-amber-400">This will modify your blueprint. Consider saving a checkpoint first if you haven&apos;t already.</p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
@@ -1469,14 +1475,14 @@ export default function BlueprintPage({ params, searchParams }: BlueprintPagePro
                       handleRefine(prompt);
                     }}
                     disabled={refining}
-                    className="rounded-lg bg-amber-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-800 disabled:opacity-50"
+                    className="rounded-lg bg-amber-700 dark:bg-amber-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-800 dark:hover:bg-amber-900 disabled:opacity-50"
                   >
                     {refining ? "Applying…" : "Confirm — Apply Changes"}
                   </button>
                   <button
                     onClick={() => setPendingApplyPrompt(null)}
                     disabled={refining}
-                    className="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100"
+                    className="rounded-lg border border-amber-300 dark:border-amber-700 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40"
                   >
                     Cancel
                   </button>

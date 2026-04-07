@@ -36,7 +36,7 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
-      className="rounded p-1 transition-colors hover:bg-white/10"
+      className="rounded p-1 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent"
       style={{ color: "var(--sidebar-text)" }}
     >
       {dark ? <Sun size={13} /> : <Moon size={13} />}

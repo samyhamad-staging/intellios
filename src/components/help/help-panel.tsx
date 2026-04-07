@@ -342,10 +342,10 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
               </div>
               {/* P2-595: Live context strip — shown when a page provides context */}
               {pageContext && (pageContext.agentName || pageContext.blueprintStatus) && (
-                <div className="flex items-center gap-1.5 flex-wrap px-4 py-1.5 bg-violet-50 border-t border-violet-100">
+                <div className="flex items-center gap-1.5 flex-wrap px-4 py-1.5 bg-violet-50 dark:bg-violet-950/30 border-t border-violet-100 dark:border-violet-800">
                   <span className="text-2xs text-violet-400 font-medium">Context:</span>
                   {pageContext.agentName && (
-                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-2xs text-violet-700 font-medium">
+                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-2xs text-violet-700 dark:text-violet-300 font-medium">
                       {pageContext.agentName}
                     </span>
                   )}
@@ -355,7 +355,7 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
                     </span>
                   )}
                   {pageContext.violationCount !== undefined && pageContext.violationCount > 0 && (
-                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-2xs text-red-700 font-medium">
+                    <span className="rounded-full bg-red-100 dark:bg-red-900/40 px-2 py-0.5 text-2xs text-red-700 dark:text-red-300 font-medium">
                       {pageContext.violationCount} violation{pageContext.violationCount !== 1 ? "s" : ""}
                     </span>
                   )}
@@ -374,7 +374,7 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
                     <button
                       key={q}
                       onClick={() => handleSend(q)}
-                      className="text-left text-sm text-text bg-surface-raised hover:bg-violet-50 hover:text-violet-700 rounded-lg px-3 py-2.5 border border-border hover:border-violet-200 transition-colors"
+                      className="text-left text-sm text-text bg-surface-raised hover:bg-violet-50 dark:hover:bg-violet-950/30 hover:text-violet-700 dark:hover:text-violet-300 rounded-lg px-3 py-2.5 border border-border hover:border-violet-200 dark:hover:border-violet-800 transition-colors"
                     >
                       {q}
                     </button>
@@ -405,13 +405,13 @@ export function HelpPanel({ role, variant = "icon" }: HelpPanelProps) {
                                 router.push(action.href);
                                 setOpen(false);
                               }}
-                              className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-left hover:bg-violet-100 hover:border-violet-300 transition-colors"
+                              className="flex items-center gap-2 rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-4 py-2.5 text-left hover:bg-violet-100 hover:border-violet-300 dark:hover:border-violet-700 transition-colors"
                             >
                               <div className="flex-1">
-                                <p className="text-sm font-medium text-violet-700">
+                                <p className="text-sm font-medium text-violet-700 dark:text-violet-300">
                                   {action.label}
                                 </p>
-                                <p className="text-xs text-violet-500 mt-0.5">
+                                <p className="text-xs text-violet-500 dark:text-violet-400 mt-0.5">
                                   {action.description}
                                 </p>
                               </div>

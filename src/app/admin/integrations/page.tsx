@@ -20,12 +20,13 @@ export default function IntegrationsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/integrations")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error("Failed"); return r.json(); })
       .then((d) => { setData(d.integrations ?? {}); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(() => { setFetchError(true); setLoading(false); });
   }, []);
 
   function update(adapter: keyof IntegrationsData, field: string, value: unknown) {
@@ -61,7 +62,7 @@ export default function IntegrationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <Heading level={1} className="flex items-center gap-2">
-            <Plug className="h-6 w-6 text-violet-600" />
+            <Plug className="h-6 w-6 text-violet-600 dark:text-violet-400" />
             Enterprise Integrations
           </Heading>
           <p className="text-sm text-text-secondary mt-1">
@@ -80,7 +81,14 @@ export default function IntegrationsPage() {
 
       {loading && <SkeletonList rows={4} height="h-24" />}
 
-      {!loading && (
+      {!loading && fetchError && (
+        <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-6 text-center">
+          <p className="text-sm font-medium text-red-700 dark:text-red-300">Unable to load integrations</p>
+          <p className="mt-1 text-xs text-red-600 dark:text-red-400">Please try again later.</p>
+        </div>
+      )}
+
+      {!loading && !fetchError && (
         <div className="space-y-6">
           {/* ServiceNow */}
           <section className="rounded-xl border border-border bg-surface p-6 space-y-4">
@@ -187,8 +195,8 @@ export default function IntegrationsPage() {
   );
 }
 
-function InputField({ label, value, onChange, placeholder, type = "text" }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
+function InputField({ label, value, onChange, placeholder, type = "text", autoComplete }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; autoComplete?: string;
 }) {
   const id = `input-${label.toLowerCase().replace(/\s+/g, '-')}`;
   return (
@@ -199,6 +207,7 @@ function InputField({ label, value, onChange, placeholder, type = "text" }: {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        autoComplete={autoComplete ?? (type === "password" ? "new-password" : undefined)}
         className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
       />
     </FormField>
@@ -244,8 +253,8 @@ function TestConnectionButton({ adapter, config }: {
         onClick={handleTest}
         disabled={status === "testing"}
         className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
-          status === "ok" ? "bg-green-50 text-green-700 border border-green-200"
-          : status === "fail" ? "bg-red-50 text-red-600 border border-red-200"
+          status === "ok" ? "bg-green-50 dark:bg-emerald-950/30 text-green-700 dark:text-emerald-300 border border-green-200 dark:border-emerald-800"
+          : status === "fail" ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
           : "bg-surface-muted text-text-secondary border border-border hover:bg-surface-raised"
         }`}
       >
@@ -255,7 +264,7 @@ function TestConnectionButton({ adapter, config }: {
          : "Test Connection"}
       </button>
       {message && (
-        <p className={`text-xs ${status === "ok" ? "text-green-700" : "text-red-600"}`}>
+        <p className={`text-xs ${status === "ok" ? "text-green-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
           {message}
         </p>
       )}

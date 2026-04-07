@@ -26,15 +26,16 @@ interface Template {
 }
 
 const TIER_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  standard:  { bg: "bg-emerald-50", text: "text-emerald-700", label: "Standard" },
-  enhanced:  { bg: "bg-amber-50",   text: "text-amber-700",   label: "Enhanced" },
-  critical:  { bg: "bg-red-50",     text: "text-red-700",     label: "Critical" },
+  standard:  { bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-700 dark:text-emerald-300", label: "Standard" },
+  enhanced:  { bg: "bg-amber-50 dark:bg-amber-950/30",   text: "text-amber-700 dark:text-amber-300",   label: "Enhanced" },
+  critical:  { bg: "bg-red-50 dark:bg-red-950/30",     text: "text-red-700 dark:text-red-300",     label: "Critical" },
 };
 
 export default function TemplateMarketplacePage() {
   const router = useRouter();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
   const [ratingFilter, setRatingFilter] = useState<Record<string, number>>({});
@@ -45,10 +46,11 @@ export default function TemplateMarketplacePage() {
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     if (sourceFilter) params.set("source", sourceFilter);
+    setFetchError(false);
     fetch(`/api/templates?${params}`)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error("Failed"); return r.json(); })
       .then((d) => { setTemplates(d.templates ?? []); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(() => { setFetchError(true); setLoading(false); });
   }, [search, sourceFilter]);
 
   async function handleRate(templateId: string, rating: number) {
@@ -72,10 +74,10 @@ export default function TemplateMarketplacePage() {
   };
 
   const riskColor: Record<string, string> = {
-    low: "bg-emerald-100 text-emerald-700",
-    medium: "bg-yellow-100 text-yellow-700",
-    high: "bg-orange-100 text-orange-700",
-    critical: "bg-red-100 text-red-700",
+    low: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300",
+    medium: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300",
+    high: "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300",
+    critical: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300",
   };
 
   return (
@@ -178,7 +180,14 @@ export default function TemplateMarketplacePage() {
         </div>
       )}
 
-      {!loading && templates.length === 0 && (
+      {!loading && fetchError && (
+        <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-6 text-center">
+          <p className="text-sm font-medium text-red-700 dark:text-red-300">Unable to load templates</p>
+          <p className="mt-1 text-xs text-red-600 dark:text-red-400">Please try again later or check your connection.</p>
+        </div>
+      )}
+
+      {!loading && !fetchError && templates.length === 0 && (
         <EmptyState icon={Package} heading="No templates found" subtext="Try adjusting your search or filters." />
       )}
 
@@ -199,14 +208,21 @@ export default function TemplateMarketplacePage() {
             return (
               <div
                 key={t.id}
+                role={isBuiltIn ? "button" : undefined}
                 onClick={() => {
                   if (isBuiltIn) {
                     router.push(`/intake/express/${t.id}`);
                   }
                 }}
+                onKeyDown={(e) => {
+                  if (isBuiltIn && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    router.push(`/intake/express/${t.id}`);
+                  }
+                }}
                 className={`group rounded-xl border border-border bg-surface p-5 transition-all space-y-3 ${
                   isBuiltIn
-                    ? "cursor-pointer interactive-row"
+                    ? "cursor-pointer interactive-row focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
                     : ""
                 }`}
                 tabIndex={isBuiltIn ? 0 : undefined}
@@ -223,7 +239,7 @@ export default function TemplateMarketplacePage() {
                       </span>
                     )}
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      t.source === "community" ? "bg-violet-100 text-violet-700" : "bg-surface-muted text-text-secondary"
+                      t.source === "community" ? "bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300" : "bg-surface-muted text-text-secondary"
                     }`}>
                       {sourceLabel[t.source] ?? t.source}
                     </span>
@@ -253,7 +269,8 @@ export default function TemplateMarketplacePage() {
                         <button
                           key={star}
                           onClick={(e) => { e.stopPropagation(); handleRate(t.id, star); }}
-                          className="focus:outline-none"
+                          className="focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-sm"
+                          aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
                           title={`Rate ${star} stars`}
                         >
                           <Star

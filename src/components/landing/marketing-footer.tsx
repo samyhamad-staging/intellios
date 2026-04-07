@@ -30,9 +30,9 @@ const FOOTER_LINKS = {
     { label: "Design Partnership", href: "/landing#final-cta" },
   ],
   Legal: [
-    { label: "Privacy Policy", href: "/landing" },
-    { label: "Terms of Service", href: "/landing" },
-    { label: "Security", href: "/landing#why-intellios" },
+    { label: "Privacy Policy", href: "/landing/privacy" },
+    { label: "Terms of Service", href: "/landing/terms" },
+    { label: "Security", href: "/landing/security" },
   ],
 };
 

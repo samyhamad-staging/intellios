@@ -41,8 +41,8 @@ export function DeleteSessionButton({ sessionId }: { sessionId: string }) {
       title={isConfirm ? "Click again to confirm" : "Delete session"}
       className={`flex h-7 items-center justify-center rounded-md px-2 text-2xs font-mono transition-all disabled:opacity-40 ${
         isConfirm
-          ? "bg-red-50 text-red-500 border border-red-200 gap-1 w-auto"
-          : "w-7 text-text-tertiary hover:bg-red-50 hover:text-red-400"
+          ? "bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400 border border-red-200 dark:border-red-800 gap-1 w-auto"
+          : "w-7 text-text-tertiary hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-400"
       }`}
     >
       {isConfirm ? (

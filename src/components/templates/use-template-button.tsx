@@ -48,7 +48,7 @@ export function UseTemplateButton({ templateId, className }: UseTemplateButtonPr
         )}
       </button>
       {error && (
-        <p className="mt-1.5 text-xs text-red-600">{error}</p>
+        <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{error}</p>
       )}
     </div>
   );

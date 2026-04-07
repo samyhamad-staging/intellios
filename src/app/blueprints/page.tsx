@@ -56,9 +56,9 @@ const STATUS_BADGE: Record<
   { bg: string; text: string; dot: string }
 > = {
   draft:      { bg: "bg-surface-raised",   text: "text-text-secondary",  dot: "bg-text-tertiary" },
-  in_review:  { bg: "bg-amber-50",          text: "text-amber-700",        dot: "bg-amber-400" },
-  approved:   { bg: "bg-emerald-50",        text: "text-emerald-700",      dot: "bg-emerald-500" },
-  rejected:   { bg: "bg-red-50",            text: "text-red-700",          dot: "bg-red-500" },
+  in_review:  { bg: "bg-amber-50 dark:bg-amber-950/40",   text: "text-amber-700 dark:text-amber-300",   dot: "bg-amber-400" },
+  approved:   { bg: "bg-emerald-50 dark:bg-emerald-950/40", text: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
+  rejected:   { bg: "bg-red-50 dark:bg-red-950/40",       text: "text-red-700 dark:text-red-300",       dot: "bg-red-500" },
   deprecated: { bg: "bg-surface-raised",   text: "text-text-tertiary",    dot: "bg-text-tertiary" },
 };
 
@@ -68,10 +68,10 @@ function govBadge(report: ValidationReport | null) {
   if (!report) return { label: "Not validated", color: "text-text-tertiary", Icon: AlertCircle };
   const errors = report.violations?.filter((v) => v.severity === "error").length ?? 0;
   if (report.valid)
-    return { label: "Passes governance", color: "text-emerald-700", Icon: ShieldCheck };
+    return { label: "Passes governance", color: "text-emerald-700 dark:text-emerald-300", Icon: ShieldCheck };
   return {
     label: `${errors} governance error${errors !== 1 ? "s" : ""}`,
-    color: "text-red-700",
+    color: "text-red-700 dark:text-red-300",
     Icon: ShieldAlert,
   };
 }

@@ -32,11 +32,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Pill({ children, color = "gray" }: { children: React.ReactNode; color?: string }) {
   const styles: Record<string, string> = {
     gray:   "bg-surface-muted text-text-secondary",
-    blue:   "bg-blue-50 text-blue-700",
-    purple: "bg-purple-50 text-purple-700",
-    red:    "bg-red-50 text-red-700",
-    green:  "bg-green-50 text-green-700",
-    amber:  "bg-amber-50 text-amber-700",
+    blue:   "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300",
+    purple: "bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300",
+    red:    "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300",
+    green:  "bg-green-50 dark:bg-emerald-950/30 text-green-700 dark:text-emerald-300",
+    amber:  "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300",
   };
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[color] ?? styles.gray}`}>

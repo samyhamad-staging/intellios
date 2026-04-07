@@ -8,10 +8,10 @@
  * and whether the domain was required by context signals or is optional.
  *
  * Domain states:
- *   required + filled   → green (bg-green-50, border-green-200)
- *   required + empty    → red   (bg-red-50, border-red-200) — hard-block on generate
- *   optional + filled   → blue  (bg-blue-50, border-blue-200) — depth bonus
- *   optional + sparse   → amber (bg-amber-50, border-amber-200) — has items but below typical depth
+ *   required + filled   → green (bg-green-50 dark:bg-emerald-950/30, border-green-200 dark:border-emerald-800)
+ *   required + empty    → red   (bg-red-50 dark:bg-red-950/30, border-red-200 dark:border-red-800) — hard-block on generate
+ *   optional + filled   → blue  (bg-blue-50 dark:bg-blue-950/30, border-blue-200 dark:border-blue-800) — depth bonus
+ *   optional + sparse   → amber (bg-amber-50 dark:bg-amber-950/30, border-amber-200 dark:border-amber-800) — has items but below typical depth
  *   optional + empty    → gray  (bg-gray-50, border-gray-100) — not captured, not required
  *
  * A domain is "sparse" when it is filled but the item count is below the
@@ -203,10 +203,10 @@ interface CompletenessMapProps {
 
 function statusColors(status: DomainStatus["status"]): string {
   switch (status) {
-    case "required-filled":   return "border-green-200 bg-green-50";
-    case "required-empty":    return "border-red-200 bg-red-50";
-    case "optional-filled":   return "border-blue-200 bg-blue-50";
-    case "optional-sparse":   return "border-amber-200 bg-amber-50";
+    case "required-filled":   return "border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30";
+    case "required-empty":    return "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30";
+    case "optional-filled":   return "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30";
+    case "optional-sparse":   return "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30";
     case "optional-empty":    return "border-border-subtle bg-surface-raised opacity-75";
   }
 }
@@ -334,13 +334,13 @@ export function CompletenessMap({
         const missingDomains = Array.from(expectedDomains).filter((d) => !contributionDomains.has(d));
         if (missingDomains.length === 0) return null;
         return (
-          <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs">
+          <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-xs">
             <span className="mt-0.5 shrink-0 text-amber-500">⚠</span>
             <div>
-              <p className="font-semibold text-amber-800">
+              <p className="font-semibold text-amber-800 dark:text-amber-200">
                 Stakeholder input required for {tier} risk — {missingDomains.length} domain{missingDomains.length > 1 ? "s" : ""} pending
               </p>
-              <p className="mt-0.5 text-amber-700">
+              <p className="mt-0.5 text-amber-700 dark:text-amber-300">
                 Missing input from: {missingDomains.join(", ")}. Reviewers will flag this absence.
               </p>
             </div>
@@ -358,7 +358,7 @@ export function CompletenessMap({
               key={domain.key}
               href={anchorId ? `#${anchorId}` : undefined}
               title={tooltip}
-              className={`block rounded-lg border px-3 py-2.5 transition-colors ${statusColors(domain.status)} ${anchorId ? "cursor-pointer hover:brightness-95" : ""}`}
+              className={`block rounded-lg border px-3 py-2.5 transition-colors ${statusColors(domain.status)} ${anchorId ? "cursor-pointer hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" : ""}`}
             >
               <div className="flex items-center gap-2 mb-1">
                 {/* Status icon */}
@@ -384,9 +384,9 @@ export function CompletenessMap({
               <div
                 className={`text-xs-tight leading-tight ${
                   domain.status === "required-empty"
-                    ? "text-red-600"
+                    ? "text-red-600 dark:text-red-400"
                     : domain.status === "optional-sparse"
-                    ? "text-amber-700"
+                    ? "text-amber-700 dark:text-amber-300"
                     : domain.status === "optional-empty"
                     ? "text-text-tertiary"
                     : "text-text-secondary"
@@ -407,10 +407,10 @@ export function CompletenessMap({
       {/* Stakeholder domain coverage footnote — shown for non-high/critical or when all domains covered */}
       {expectedDomains.size > 0 && !(tier === "high" || tier === "critical") && (
         <div className="mt-3 text-xs text-text-tertiary border-t border-border-subtle pt-2">
-          <span className="text-violet-600">★</span>{" "}
+          <span className="text-violet-600 dark:text-violet-400">★</span>{" "}
           Stakeholder input received for a domain.{" "}
           {Array.from(expectedDomains).filter((d) => !contributionDomains.has(d)).length > 0 && (
-            <span className="text-amber-600">
+            <span className="text-amber-600 dark:text-amber-400">
               Missing input from:{" "}
               {Array.from(expectedDomains)
                 .filter((d) => !contributionDomains.has(d))

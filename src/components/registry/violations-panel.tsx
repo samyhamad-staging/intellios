@@ -208,19 +208,19 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
         {!loading && violations.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap">
             {errorCount > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 border border-red-200">
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 dark:bg-red-950/30 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
                 <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
                 {errorCount} error{errorCount !== 1 ? "s" : ""}
               </span>
             )}
             {warningCount > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 border border-amber-200">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/30 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                 {warningCount} warning{warningCount !== 1 ? "s" : ""}
               </span>
             )}
             {acknowledgedIds.size > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700 border border-green-200">
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 dark:bg-emerald-950/30 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:text-emerald-300 border border-green-200 dark:border-emerald-800">
                 <CheckCircle2 className="h-3 w-3" />
                 {acknowledgedIds.size} acknowledged
               </span>
@@ -310,10 +310,10 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
               key={v.id}
               className={`rounded-lg border p-4 transition-opacity ${
                 isAcked
-                  ? "border-green-200 bg-green-50 opacity-60"
+                  ? "border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 opacity-60"
                   : v.severity === "error"
-                  ? "border-red-200 bg-red-50"
-                  : "border-amber-200 bg-amber-50"
+                  ? "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30"
+                  : "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -321,7 +321,7 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
                   {/* Row 1: severity + policy name + ack badge */}
                   <div className="flex items-center gap-2 flex-wrap">
                     {isAcked ? (
-                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wide bg-green-100 text-green-700">
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wide bg-green-100 dark:bg-emerald-900/40 text-green-700 dark:text-emerald-300">
                         <CheckCircle2 className="h-2.5 w-2.5" />
                         acknowledged
                       </span>
@@ -329,8 +329,8 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wide ${
                           v.severity === "error"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-amber-100 text-amber-700"
+                            ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
+                            : "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
                         }`}
                       >
                         <span
@@ -359,7 +359,7 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
                       <span className="font-medium text-text">Observed:</span>{" "}
                       <span
                         className={
-                          isAcked ? "text-text-secondary" : v.severity === "error" ? "text-red-700 font-semibold" : "text-amber-700 font-semibold"
+                          isAcked ? "text-text-secondary" : v.severity === "error" ? "text-red-700 dark:text-red-300 font-semibold" : "text-amber-700 dark:text-amber-300 font-semibold"
                         }
                       >
                         {formatObservedValue(v.metric, v.observedValue)}
@@ -388,8 +388,8 @@ export function ViolationsPanel({ agentId }: ViolationsPanelProps) {
                     onClick={() => toggleAck(v.id)}
                     className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-2xs font-medium transition-colors ${
                       isAcked
-                        ? "border-green-200 bg-surface text-green-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
-                        : "border-border bg-surface text-text-secondary hover:border-green-300 hover:text-green-700"
+                        ? "border-green-200 dark:border-emerald-800 bg-surface text-green-700 dark:text-emerald-300 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-200 dark:hover:border-red-800 hover:text-red-600 dark:text-red-400"
+                        : "border-border bg-surface text-text-secondary hover:border-green-300 dark:hover:border-emerald-700 hover:text-green-700 dark:hover:text-emerald-300"
                     }`}
                     title={isAcked ? "Un-acknowledge" : "Acknowledge — mark as known/accepted"}
                   >

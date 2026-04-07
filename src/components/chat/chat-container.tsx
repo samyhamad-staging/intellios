@@ -230,7 +230,7 @@ export function ChatContainer({
               <button
                 onClick={() => setShowRecap(false)}
                 className="absolute top-2 right-2 p-1 rounded hover:bg-primary/10 text-text-tertiary hover:text-text-secondary transition-colors"
-                title="Dismiss"
+                title="Dismiss" aria-label="Dismiss"
               >
                 <X size={14} />
               </button>
@@ -298,7 +298,7 @@ export function ChatContainer({
         })}
 
         {error && !isStreaming && (
-          <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <div className="flex items-center gap-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2 text-xs text-red-700 dark:text-red-300">
             <span>Something went wrong. Check your connection and try again.</span>
           </div>
         )}

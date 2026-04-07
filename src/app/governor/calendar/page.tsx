@@ -64,9 +64,9 @@ export default function ComplianceCalendarPage() {
   }
 
   const urgencyColor: Record<string, string> = {
-    overdue: "bg-red-100 text-red-700 border-red-200",
-    urgent:  "bg-amber-100 text-amber-700 border-amber-200",
-    upcoming:"bg-yellow-50 text-yellow-700 border-yellow-200",
+    overdue: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800",
+    urgent:  "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+    upcoming:"bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700",
     future:  "bg-surface-muted text-text-secondary border-border",
   };
 
@@ -83,7 +83,7 @@ export default function ComplianceCalendarPage() {
       <div className="flex items-center justify-between">
         <div>
           <Heading level={1} className="flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-violet-600" />
+            <Calendar className="h-6 w-6 text-violet-600 dark:text-violet-400" />
             Compliance Calendar
           </Heading>
           <p className="text-sm text-text-secondary mt-1">
@@ -93,7 +93,7 @@ export default function ComplianceCalendarPage() {
         <button
           onClick={handleDownload}
           disabled={downloading}
-          className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors"
+          className="flex items-center gap-2 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-4 py-2 text-sm font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-100 disabled:opacity-50 transition-colors"
         >
           <Download className="h-4 w-4" />
           {downloading ? "Downloading…" : "Export to Calendar (.ics)"}
@@ -151,7 +151,7 @@ export default function ComplianceCalendarPage() {
                     </span>
                     <a
                       href={`/registry/${ev.agentId}`}
-                      className="text-violet-600 hover:text-violet-800 transition-colors"
+                      className="text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-200 transition-colors"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </a>

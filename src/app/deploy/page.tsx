@@ -79,6 +79,7 @@ interface AgentCoreModalState {
 // Red-team run history is written by red-team-panel.tsx under the key
 // `redteam-history-${blueprintId}` as an array of RunHistoryEntry objects.
 function getLatestRedTeamTier(blueprintId: string): "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | null {
+  if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(`redteam-history-${blueprintId}`);
     if (!raw) return null;
@@ -142,7 +143,7 @@ function DeployConfirmModal({
         {/* Modal header */}
         <div className="border-b border-border-subtle px-6 py-4">
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
               <Rocket size={16} />
             </span>
             <div>
@@ -156,13 +157,13 @@ function DeployConfirmModal({
 
         {/* P1-43: Red-team risk warning — intake risk tier */}
         {(modal.agent.riskTier === "high" || modal.agent.riskTier === "critical") && (
-          <div className="mx-6 mt-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-            <span className="mt-0.5 shrink-0 text-red-500">⚠</span>
+          <div className="mx-6 mt-4 flex items-start gap-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3">
+            <span className="mt-0.5 shrink-0 text-red-500 dark:text-red-400">⚠</span>
             <div>
-              <p className="text-xs font-semibold text-red-800 capitalize">
+              <p className="text-xs font-semibold text-red-800 dark:text-red-200 capitalize">
                 {modal.agent.riskTier} risk tier
               </p>
-              <p className="text-xs text-red-700 mt-0.5">
+              <p className="text-xs text-red-700 dark:text-red-300 mt-0.5">
                 This agent has been classified as <strong>{modal.agent.riskTier} risk</strong>.
                 Ensure your change reference covers a completed security review and that all red-team findings have been remediated before deploying to production.
               </p>
@@ -171,13 +172,13 @@ function DeployConfirmModal({
         )}
         {/* P1-239: Red-team simulation result warning — blocks if HIGH or CRITICAL */}
         {(redTeamTier === "HIGH" || redTeamTier === "CRITICAL") && (
-          <div className="mx-6 mt-3 flex items-start gap-3 rounded-lg border border-orange-300 bg-orange-50 px-4 py-3">
-            <span className="mt-0.5 shrink-0 text-orange-600">🛡</span>
+          <div className="mx-6 mt-3 flex items-start gap-3 rounded-lg border border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950/30 px-4 py-3">
+            <span className="mt-0.5 shrink-0 text-orange-600 dark:text-orange-400">🛡</span>
             <div>
-              <p className="text-xs font-semibold text-orange-900">
+              <p className="text-xs font-semibold text-orange-900 dark:text-orange-100">
                 Red Team: {redTeamTier} risk findings unresolved
               </p>
-              <p className="text-xs text-orange-800 mt-0.5">
+              <p className="text-xs text-orange-800 dark:text-orange-200 mt-0.5">
                 The most recent adversarial simulation returned{" "}
                 <strong>{redTeamTier}</strong> risk. Review and remediate red-team
                 findings in the Blueprint Studio before deploying to production.
@@ -198,7 +199,7 @@ function DeployConfirmModal({
               onChange={(e) => onChange({ changeRef: e.target.value })}
               placeholder="e.g. CHG0012345"
               maxLength={100}
-              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30"
             />
           </FormField>
 
@@ -211,7 +212,7 @@ function DeployConfirmModal({
               placeholder="Environment, rollout plan, stakeholder sign-offs, or other relevant context…"
               maxLength={1000}
               rows={3}
-              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 resize-none"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 resize-none"
             />
           </FormField>
 
@@ -221,7 +222,7 @@ function DeployConfirmModal({
               type="checkbox"
               checked={modal.authorized}
               onChange={(e) => onChange({ authorized: e.target.checked })}
-              className="mt-0.5 h-4 w-4 cursor-pointer rounded border-border text-indigo-600 focus:ring-indigo-500"
+              className="mt-0.5 h-4 w-4 cursor-pointer rounded border-border text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500"
             />
             <span className="text-xs text-text leading-relaxed">
               I confirm that this deployment is authorized, the change reference
@@ -231,7 +232,7 @@ function DeployConfirmModal({
           </label>
 
           {modal.error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-3 text-xs text-red-700 dark:text-red-300">
               {modal.error}
             </div>
           )}
@@ -282,9 +283,9 @@ function AgentCoreDeployModal({
     >
       <div className="w-full max-w-lg rounded-2xl border border-border bg-surface shadow-2xl">
         {/* Header */}
-        <div className="border-b border-orange-100 px-6 py-4">
+        <div className="border-b border-orange-100 dark:border-orange-800 px-6 py-4">
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-orange-700 text-xs font-bold">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 text-xs font-bold">
               AC
             </span>
             <div>
@@ -299,13 +300,13 @@ function AgentCoreDeployModal({
         <div className="px-6 py-5">
           {/* P1-43: Red-team risk warning for AgentCore modal — intake risk tier */}
           {agcModal.phase === "confirm" && (agcModal.agent.riskTier === "high" || agcModal.agent.riskTier === "critical") && (
-            <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-              <span className="mt-0.5 shrink-0 text-red-500">⚠</span>
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3">
+              <span className="mt-0.5 shrink-0 text-red-500 dark:text-red-400">⚠</span>
               <div>
-                <p className="text-xs font-semibold text-red-800 capitalize">
+                <p className="text-xs font-semibold text-red-800 dark:text-red-200 capitalize">
                   {agcModal.agent.riskTier} risk tier
                 </p>
-                <p className="text-xs text-red-700 mt-0.5">
+                <p className="text-xs text-red-700 dark:text-red-300 mt-0.5">
                   This agent is classified as <strong>{agcModal.agent.riskTier} risk</strong>.
                   Confirm all red-team findings are remediated before deploying to AgentCore.
                 </p>
@@ -316,13 +317,13 @@ function AgentCoreDeployModal({
           {agcModal.phase === "confirm" && (() => {
             const tier = getLatestRedTeamTier(agcModal.agent.id);
             return (tier === "HIGH" || tier === "CRITICAL") ? (
-              <div className="mb-4 flex items-start gap-3 rounded-lg border border-orange-300 bg-orange-50 px-4 py-3">
-                <span className="mt-0.5 shrink-0 text-orange-600">🛡</span>
+              <div className="mb-4 flex items-start gap-3 rounded-lg border border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950/30 px-4 py-3">
+                <span className="mt-0.5 shrink-0 text-orange-600 dark:text-orange-400">🛡</span>
                 <div>
-                  <p className="text-xs font-semibold text-orange-900">
+                  <p className="text-xs font-semibold text-orange-900 dark:text-orange-100">
                     Red Team: {tier} risk findings unresolved
                   </p>
-                  <p className="text-xs text-orange-800 mt-0.5">
+                  <p className="text-xs text-orange-800 dark:text-orange-200 mt-0.5">
                     Adversarial simulation returned <strong>{tier}</strong> risk. Remediate red-team findings before deploying to AgentCore.
                   </p>
                 </div>
@@ -349,7 +350,7 @@ function AgentCoreDeployModal({
                   .
                 </p>
               </div>
-              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
                 The deployment may take up to 90 seconds while Bedrock prepares the agent.
                 Do not close this window during deployment.
               </p>
@@ -359,7 +360,7 @@ function AgentCoreDeployModal({
           {/* Deploying phase */}
           {agcModal.phase === "deploying" && (
             <div className="flex flex-col items-center py-6 gap-4">
-              <div className="h-10 w-10 animate-spin rounded-full border-4 border-orange-200 border-t-orange-500" />
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-orange-200 dark:border-orange-800 border-t-orange-500 dark:border-t-orange-400" />
               <p className="text-sm font-medium text-text">{agcModal.progressLabel}</p>
               <p className="text-xs text-text-tertiary">Communicating with Amazon Bedrock…</p>
             </div>
@@ -368,11 +369,11 @@ function AgentCoreDeployModal({
           {/* Success phase */}
           {agcModal.phase === "success" && agcModal.deploymentRecord && (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-green-700">
+              <div className="flex items-center gap-2 text-green-700 dark:text-emerald-300">
                 <span className="text-lg">✓</span>
                 <p className="text-sm font-semibold">Agent deployed to AgentCore</p>
               </div>
-              <div className="rounded-lg border border-green-100 bg-green-50 p-4 text-xs font-mono">
+              <div className="rounded-lg border border-green-100 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 p-4 text-xs font-mono">
                 <DescriptionList>
                   <DescriptionTerm className="text-text-tertiary font-mono text-xs">Agent ID</DescriptionTerm>
                   <DescriptionDetails className="text-text font-mono text-xs">{agcModal.deploymentRecord.agentId}</DescriptionDetails>
@@ -388,7 +389,7 @@ function AgentCoreDeployModal({
                 href={`https://console.aws.amazon.com/bedrock/home?region=${agcModal.deploymentRecord.region}#/agents/${agcModal.deploymentRecord.agentId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-center text-xs text-orange-700 underline hover:text-orange-900"
+                className="block text-center text-xs text-orange-700 dark:text-orange-300 underline hover:text-orange-900 dark:hover:text-orange-100"
               >
                 Open in AWS Console →
               </a>
@@ -397,9 +398,9 @@ function AgentCoreDeployModal({
 
           {/* Error phase */}
           {agcModal.phase === "error" && agcModal.error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-              <p className="text-sm font-medium text-red-800 mb-1">Deployment failed</p>
-              <p className="text-xs text-red-700">{agcModal.error}</p>
+            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4">
+              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">Deployment failed</p>
+              <p className="text-xs text-red-700 dark:text-red-300">{agcModal.error}</p>
             </div>
           )}
         </div>
@@ -625,19 +626,19 @@ export default function DeploymentConsolePage() {
 
       <div className="space-y-6">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-300">
             {error}
           </div>
         )}
 
         {/* ── Summary stats ───────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
             {
               label: "Deployed",
               value: loading ? "–" : deployed.length,
               sub: "live in production",
-              color: "bg-indigo-50 border-indigo-200 text-indigo-900",
+              color: "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800 text-indigo-900",
               subColor: "text-indigo-600",
             },
             {
@@ -645,9 +646,9 @@ export default function DeploymentConsolePage() {
               value: loading ? "–" : readyToDeploy.length,
               sub: readyToDeploy.length > 0 ? "approved, awaiting deployment" : "none pending",
               color: readyToDeploy.length > 0
-                ? "bg-green-50 border-green-200 text-green-900"
+                ? "bg-green-50 dark:bg-emerald-950/30 border-green-200 dark:border-emerald-800 text-green-900"
                 : "bg-surface border-border text-text",
-              subColor: readyToDeploy.length > 0 ? "text-green-600" : "text-text-tertiary",
+              subColor: readyToDeploy.length > 0 ? "text-green-600 dark:text-emerald-400" : "text-text-tertiary",
             },
           ].map(({ label, value, sub, color, subColor }) => (
             <div key={label} className={`rounded-card border p-5 ${color}`}>
@@ -679,7 +680,7 @@ export default function DeploymentConsolePage() {
               {readyToDeploy.map((agent) => (
                 <div
                   key={agent.agentId}
-                  className="flex flex-wrap items-center gap-y-3 rounded-xl border border-green-200 bg-surface px-5 py-4"
+                  className="flex flex-wrap items-center gap-y-3 rounded-xl border border-green-200 dark:border-emerald-800 bg-surface px-5 py-4"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -705,7 +706,7 @@ export default function DeploymentConsolePage() {
                       )}
                     </div>
                     {agent.violationCount !== null && agent.violationCount > 0 && (
-                      <p className="mt-1 text-xs text-amber-600">
+                      <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                         ⚠ {agent.violationCount} governance issue{agent.violationCount !== 1 ? "s" : ""} — review before deploying
                       </p>
                     )}
@@ -721,8 +722,8 @@ export default function DeploymentConsolePage() {
                     </a>
                     <button
                       onClick={() => openAgcModal(agent)}
-                      className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-medium text-orange-700 hover:border-orange-400 hover:bg-orange-100 transition-colors"
-                      title="Deploy directly to Amazon Bedrock AgentCore"
+                      className="rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 px-3 py-2 text-sm font-medium text-orange-700 dark:text-orange-300 hover:border-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors"
+                      title="Deploy directly to Amazon Bedrock AgentCore" aria-label="Deploy directly to Amazon Bedrock AgentCore"
                     >
                       Deploy to AgentCore…
                     </button>
@@ -802,10 +803,10 @@ export default function DeploymentConsolePage() {
                       <TableCell className="text-text-tertiary text-xs">{timeAgo(agent.updatedAt)}</TableCell>
                       <TableCell>
                         {agent.violationCount === 0 && (
-                          <span className="text-xs font-medium text-green-600">✓ Clean</span>
+                          <span className="text-xs font-medium text-green-600 dark:text-emerald-400">✓ Clean</span>
                         )}
                         {agent.violationCount !== null && agent.violationCount > 0 && (
-                          <span className="text-xs font-medium text-red-600">
+                          <span className="text-xs font-medium text-red-600 dark:text-red-400">
                             {agent.violationCount} error{agent.violationCount !== 1 ? "s" : ""}
                           </span>
                         )}

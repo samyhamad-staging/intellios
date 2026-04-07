@@ -51,19 +51,19 @@ export default function PrivacyPage() {
                 </p>
                 <ul className="mt-2 space-y-2 text-gray-600 dark:text-gray-400">
                   <li className="flex gap-3">
-                    <span className="text-indigo-600">•</span>
+                    <span className="text-indigo-600 dark:text-indigo-400">•</span>
                     <span>Account registration information (name, email, company details)</span>
                   </li>
                   <li className="flex gap-3">
-                    <span className="text-indigo-600">•</span>
+                    <span className="text-indigo-600 dark:text-indigo-400">•</span>
                     <span>Communication preferences and support requests</span>
                   </li>
                   <li className="flex gap-3">
-                    <span className="text-indigo-600">•</span>
+                    <span className="text-indigo-600 dark:text-indigo-400">•</span>
                     <span>Agent configuration data and governance policies you create</span>
                   </li>
                   <li className="flex gap-3">
-                    <span className="text-indigo-600">•</span>
+                    <span className="text-indigo-600 dark:text-indigo-400">•</span>
                     <span>Billing and payment information</span>
                   </li>
                 </ul>
@@ -78,19 +78,19 @@ export default function PrivacyPage() {
                 </p>
                 <ul className="mt-2 space-y-2 text-gray-600 dark:text-gray-400">
                   <li className="flex gap-3">
-                    <span className="text-indigo-600">•</span>
+                    <span className="text-indigo-600 dark:text-indigo-400">•</span>
                     <span>Log data (IP address, browser type, pages visited, timestamps)</span>
                   </li>
                   <li className="flex gap-3">
-                    <span className="text-indigo-600">•</span>
+                    <span className="text-indigo-600 dark:text-indigo-400">•</span>
                     <span>Device information and operating system details</span>
                   </li>
                   <li className="flex gap-3">
-                    <span className="text-indigo-600">•</span>
+                    <span className="text-indigo-600 dark:text-indigo-400">•</span>
                     <span>Usage analytics and feature interaction patterns</span>
                   </li>
                   <li className="flex gap-3">
-                    <span className="text-indigo-600">•</span>
+                    <span className="text-indigo-600 dark:text-indigo-400">•</span>
                     <span>Cookies and similar tracking technologies</span>
                   </li>
                 </ul>
@@ -108,31 +108,31 @@ export default function PrivacyPage() {
             </p>
             <ul className="space-y-2 text-gray-600 dark:text-gray-400">
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Providing and maintaining the Intellios platform</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Processing transactions and sending related information</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Improving and personalizing your user experience</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Sending technical notices, updates, and support messages</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Responding to your comments, questions, and requests</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Monitoring and analyzing trends, usage, and activities for security purposes</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Detecting, preventing, and addressing fraud and security incidents</span>
               </li>
             </ul>
@@ -161,27 +161,27 @@ export default function PrivacyPage() {
             </p>
             <ul className="space-y-2 text-gray-600 dark:text-gray-400">
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Right to access your personal data</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Right to correct inaccurate data</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Right to delete your data</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Right to restrict processing of your data</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Right to data portability</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-indigo-600">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">•</span>
                 <span>Right to opt-out of marketing communications</span>
               </li>
             </ul>
@@ -189,7 +189,7 @@ export default function PrivacyPage() {
               To exercise these rights, please contact us at{" "}
               <a
                 href="mailto:privacy@intellios.io"
-                className="text-indigo-600 hover:text-indigo-500 font-medium"
+                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 font-medium"
               >
                 privacy@intellios.io
               </a>
@@ -213,7 +213,7 @@ export default function PrivacyPage() {
                 Email:{" "}
                 <a
                   href="mailto:privacy@intellios.io"
-                  className="text-indigo-600 hover:text-indigo-500 font-medium"
+                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 font-medium"
                 >
                   privacy@intellios.io
                 </a>

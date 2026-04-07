@@ -14,7 +14,7 @@ export default function NotFound() {
         </div>
 
         {/* Status */}
-        <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-violet-600">
+        <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-violet-600 dark:text-violet-400">
           404
         </p>
 

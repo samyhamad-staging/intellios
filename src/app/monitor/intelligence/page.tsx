@@ -18,9 +18,9 @@ function num(v: number | null, decimals = 1): string {
 }
 
 function healthColor(status: string): { bg: string; text: string; dot: string } {
-  if (status === "nominal") return { bg: "bg-green-100", text: "text-green-700", dot: "●" };
-  if (status === "attention") return { bg: "bg-amber-100", text: "text-amber-700", dot: "⚠" };
-  return { bg: "bg-red-100", text: "text-red-700", dot: "🔴" };
+  if (status === "nominal") return { bg: "bg-green-100 dark:bg-emerald-900/40", text: "text-green-700 dark:text-emerald-300", dot: "●" };
+  if (status === "attention") return { bg: "bg-amber-100 dark:bg-amber-900/40", text: "text-amber-700 dark:text-amber-300", dot: "⚠" };
+  return { bg: "bg-red-100 dark:bg-red-900/40", text: "text-red-700 dark:text-red-300", dot: "🔴" };
 }
 
 function HealthBadge({ status }: { status: string }) {
@@ -46,7 +46,7 @@ function KpiCard({
       {delta != null && <div className={`mt-0.5 text-sm font-medium ${deltaColor}`}>{delta}</div>}
       <div className="mt-1 text-sm font-semibold">{label}</div>
       {sub && <div className="mt-0.5 text-xs text-text-tertiary">{sub}</div>}
-      {href && <div className="mt-1.5 text-xs font-medium text-blue-600">View →</div>}
+      {href && <div className="mt-1.5 text-xs font-medium text-blue-600 dark:text-blue-400">View →</div>}
     </div>
   );
   return href ? <Link href={href}>{inner}</Link> : inner;
@@ -331,7 +331,7 @@ export default function IntelligencePage() {
               <button
                 onClick={handleBackfill}
                 disabled={backfillLoading || loading}
-                className="rounded-lg border border-indigo-200 px-3 py-2 text-sm font-medium text-indigo-700 hover:border-indigo-400 disabled:opacity-50 transition-colors"
+                className="rounded-lg border border-indigo-200 dark:border-indigo-800 px-3 py-2 text-sm font-medium text-indigo-700 dark:text-indigo-300 hover:border-indigo-400 disabled:opacity-50 transition-colors"
               >
                 {backfillLoading ? "Scoring…" : "⟳ Score Existing"}
               </button>
@@ -377,12 +377,12 @@ export default function IntelligencePage() {
               sub="0–100 composite"
               color={
                 (kpis?.qualityIndex ?? 0) >= 70
-                  ? "bg-green-50 border border-green-200 text-green-900"
+                  ? "bg-green-50 dark:bg-emerald-950/30 border border-green-200 dark:border-emerald-800 text-green-900"
                   : (kpis?.qualityIndex ?? 0) >= 50
-                  ? "bg-amber-50 border border-amber-200 text-amber-900"
-                  : "bg-red-50 border border-red-200 text-red-900"
+                  ? "bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-900"
+                  : "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-900"
               }
-              deltaColor={(kpis?.qualityIndexDelta ?? 0) >= 0 ? "text-green-600" : "text-red-600"}
+              deltaColor={(kpis?.qualityIndexDelta ?? 0) >= 0 ? "text-green-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}
               href={(kpis?.qualityIndex ?? 100) < 70 ? "/pipeline" : undefined}
             />
             <KpiCard
@@ -392,7 +392,7 @@ export default function IntelligencePage() {
               color={
                 (kpis?.blueprintValidityRate ?? 1) >= 0.70
                   ? "bg-surface border border-border text-text"
-                  : "bg-amber-50 border border-amber-200 text-amber-900"
+                  : "bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-900"
               }
               href={(kpis?.blueprintValidityRate ?? 1) < 0.70 ? "/pipeline" : undefined}
             />
@@ -402,7 +402,7 @@ export default function IntelligencePage() {
               sub="items in in_review"
               color={
                 (kpis?.reviewQueueDepth ?? 0) > 10
-                  ? "bg-amber-50 border border-amber-200 text-amber-900"
+                  ? "bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-900"
                   : "bg-surface border border-border text-text"
               }
               href={(kpis?.reviewQueueDepth ?? 0) > 10 ? "/review" : undefined}
@@ -414,7 +414,7 @@ export default function IntelligencePage() {
               color={
                 kpis?.webhookSuccessRate == null || kpis.webhookSuccessRate >= 0.80
                   ? "bg-surface border border-border text-text"
-                  : "bg-amber-50 border border-amber-200 text-amber-900"
+                  : "bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-900"
               }
               href={kpis?.webhookSuccessRate != null && kpis.webhookSuccessRate < 0.80 ? "/admin/webhooks" : undefined}
             />
@@ -422,23 +422,23 @@ export default function IntelligencePage() {
 
           {/* Anomaly action strip */}
           {kpiLinks.length > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">
+            <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-5 py-3">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300">
                 Action Required
               </div>
               <div className="space-y-1.5">
                 {kpiLinks.map((link) => (
                   <div key={link.href + link.label} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm text-amber-800">
+                    <div className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
                       <span className="font-medium">{link.label}</span>
                       <span className="rounded-full bg-amber-200 px-1.5 py-0.5 text-xs font-semibold tabular-nums">
                         {link.value}
                       </span>
-                      <span className="text-xs text-amber-600">— {link.reason}</span>
+                      <span className="text-xs text-amber-600 dark:text-amber-400">— {link.reason}</span>
                     </div>
                     <Link
                       href={link.href}
-                      className="rounded text-xs font-medium text-amber-700 underline underline-offset-2 hover:text-amber-900"
+                      className="rounded text-xs font-medium text-amber-700 dark:text-amber-300 underline underline-offset-2 hover:text-amber-900"
                     >
                       Go →
                     </Link>
@@ -508,9 +508,9 @@ export default function IntelligencePage() {
                 /* Structured section cards — new briefings with generateObject() */
                 <div className="space-y-3 px-5 py-4">
                   {([
-                    { key: "generationQuality" as const, label: "Generation Quality", icon: "✦", badge: "bg-indigo-100 text-indigo-700" },
-                    { key: "lifecycle" as const, label: "Lifecycle", icon: "↻", badge: "bg-blue-100 text-blue-700" },
-                    { key: "governance" as const, label: "Governance", icon: "⚖", badge: "bg-purple-100 text-purple-700" },
+                    { key: "generationQuality" as const, label: "Generation Quality", icon: "✦", badge: "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300" },
+                    { key: "lifecycle" as const, label: "Lifecycle", icon: "↻", badge: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300" },
+                    { key: "governance" as const, label: "Governance", icon: "⚖", badge: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300" },
                     { key: "system" as const, label: "System", icon: "⚙", badge: "bg-surface-muted text-text" },
                   ] as { key: keyof typeof selectedBriefing.sections; label: string; icon: string; badge: string }[]).map(({ key, label, icon, badge }) => (
                     selectedBriefing.sections![key] ? (
@@ -523,20 +523,20 @@ export default function IntelligencePage() {
                     ) : null
                   ))}
                   {selectedBriefing.sections.attentionRequired.length > 0 && (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4">
                       <div className="mb-2 flex items-center gap-2">
-                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">⚠ Attention Required</span>
+                        <span className="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">⚠ Attention Required</span>
                       </div>
                       <div className="space-y-1.5">
                         {selectedBriefing.sections.attentionRequired.map((bullet, i) => (
-                          <div key={i} className="rounded-md border border-amber-200 bg-surface px-3 py-1.5 text-sm text-amber-800">{bullet}</div>
+                          <div key={i} className="rounded-md border border-amber-200 dark:border-amber-800 bg-surface px-3 py-1.5 text-sm text-amber-800 dark:text-amber-200">{bullet}</div>
                         ))}
                       </div>
                     </div>
                   )}
                   {selectedBriefing.sections.attentionRequired.length === 0 && (
-                    <div className="rounded-lg border border-green-100 bg-green-50 px-4 py-2.5">
-                      <p className="text-sm text-green-700">✓ No attention items. All metrics within thresholds.</p>
+                    <div className="rounded-lg border border-green-100 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 px-4 py-2.5">
+                      <p className="text-sm text-green-700 dark:text-emerald-300">✓ No attention items. All metrics within thresholds.</p>
                     </div>
                   )}
                 </div>
@@ -620,7 +620,7 @@ export default function IntelligencePage() {
                 <button
                   onClick={handleBackfill}
                   disabled={backfillLoading}
-                  className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                  className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800"
                 >
                   {backfillLoading ? "Scoring…" : "Score existing blueprints →"}
                 </button>
@@ -660,9 +660,9 @@ export default function IntelligencePage() {
                     {paginatedScores.map((score) => {
                     const overall = score.overallScore ?? 0;
                     const scoreColor =
-                      overall >= 70 ? "text-green-700 bg-green-50" :
-                      overall >= 50 ? "text-amber-700 bg-amber-50" :
-                      "text-red-700 bg-red-50";
+                      overall >= 70 ? "text-green-700 dark:text-emerald-300 bg-green-50 dark:bg-emerald-950/30" :
+                      overall >= 50 ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30" :
+                      "text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/30";
                     const isExpanded = expandedScoreId === score.id;
                     const dims: { label: string; value: number | null }[] = [
                       { label: "Intent", value: score.intentAlignment },
@@ -676,6 +676,8 @@ export default function IntelligencePage() {
                         <TableRow
                           className="cursor-pointer interactive-row"
                           onClick={() => setExpandedScoreId(isExpanded ? null : score.id)}
+                          tabIndex={0}
+                          onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedScoreId(isExpanded ? null : score.id); } }}
                         >
                           <TableCell>
                             <span className="font-mono text-xs text-text-secondary">
@@ -699,7 +701,7 @@ export default function IntelligencePage() {
                           <TableCell>
                             {score.flags.length > 0 ? (
                               <span
-                                className="block max-w-48 truncate text-xs text-amber-600"
+                                className="block max-w-48 truncate text-xs text-amber-600 dark:text-amber-400"
                                 title={score.flags.join("; ")}
                               >
                                 {score.flags[0]}
@@ -731,7 +733,7 @@ export default function IntelligencePage() {
                                           style={{ width: `${pctFill}%` }}
                                         />
                                       </div>
-                                      <span className={`w-10 shrink-0 text-right text-xs font-medium ${below ? "text-amber-600" : "text-text"}`}>
+                                      <span className={`w-10 shrink-0 text-right text-xs font-medium ${below ? "text-amber-600 dark:text-amber-400" : "text-text"}`}>
                                         {d.value != null ? `${d.value.toFixed(1)}/5` : "—"}
                                       </span>
                                       {below && <span className="text-xs text-amber-500">⚠ below threshold</span>}
@@ -741,7 +743,7 @@ export default function IntelligencePage() {
                                 {score.flags.length > 0 && (
                                   <div className="mt-2 flex flex-wrap gap-1.5">
                                     {score.flags.map((f, fi) => (
-                                      <span key={fi} className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">{f}</span>
+                                      <span key={fi} className="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-300">{f}</span>
                                     ))}
                                   </div>
                                 )}
@@ -807,15 +809,15 @@ export default function IntelligencePage() {
                     {paginatedIntakeScores.map((score) => {
                     const overall = score.overallScore ?? 0;
                     const scoreColor =
-                      overall >= 70 ? "text-green-700 bg-green-50" :
-                      overall >= 50 ? "text-amber-700 bg-amber-50" :
-                      "text-red-700 bg-red-50";
+                      overall >= 70 ? "text-green-700 dark:text-emerald-300 bg-green-50 dark:bg-emerald-950/30" :
+                      overall >= 50 ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30" :
+                      "text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/30";
                     return (
                       <TableRow key={score.id} className="interactive-row">
                         <TableCell>
                           <Link
                             href={`/intake/${score.sessionId}`}
-                            className="font-mono text-xs text-indigo-600 hover:text-indigo-800"
+                            className="font-mono text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800"
                           >
                             {score.sessionId.slice(0, 8)}
                           </Link>

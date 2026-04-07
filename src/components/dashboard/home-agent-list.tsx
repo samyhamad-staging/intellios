@@ -157,19 +157,19 @@ export function HomeAgentList({ agents }: HomeAgentListProps) {
       )}
       {/* Contextual orchestration prompt — shown when 2+ agents are approved/deployed */}
       {agents.filter((a) => a.status === "approved" || a.status === "deployed").length >= 2 && (
-        <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3">
+        <div className="mt-4 rounded-xl border border-violet-100 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-4 py-3">
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400">
               <GitBranch size={14} />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-violet-900">Ready to orchestrate?</p>
-              <p className="mt-0.5 text-xs text-violet-700">
+              <p className="text-sm font-medium text-violet-900 dark:text-violet-100">Ready to orchestrate?</p>
+              <p className="mt-0.5 text-xs text-violet-700 dark:text-violet-300">
                 You have {agents.filter((a) => a.status === "approved" || a.status === "deployed").length} approved agents that can be composed into an orchestration pipeline.
               </p>
               <Link
                 href="/registry?tab=workflows"
-                className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-violet-700 hover:text-violet-900"
+                className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-violet-700 dark:text-violet-300 hover:text-violet-900 dark:hover:text-violet-200"
               >
                 Create an orchestration <ChevronRight size={11} />
               </Link>

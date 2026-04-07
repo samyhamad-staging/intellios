@@ -33,19 +33,19 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-red-200 bg-red-50 p-8 text-center">
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-            <span className="text-red-600 text-lg">!</span>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-8 text-center">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40">
+            <span className="text-red-600 dark:text-red-400 text-lg">!</span>
           </div>
-          <h3 className="text-sm font-semibold text-red-800">
+          <h3 className="text-sm font-semibold text-red-800 dark:text-red-200">
             {this.props.fallbackTitle ?? "Something went wrong"}
           </h3>
-          <p className="mt-1 text-xs text-red-600 max-w-md">
+          <p className="mt-1 text-xs text-red-600 dark:text-red-400 max-w-md">
             {this.state.error?.message ?? "An unexpected error occurred."}
           </p>
           <button
             onClick={this.handleRetry}
-            className="mt-4 rounded-lg border border-red-300 bg-surface px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 transition-colors"
+            className="mt-4 rounded-lg border border-red-300 dark:border-red-700 bg-surface px-4 py-2 text-sm font-medium text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
           >
             Try again
           </button>

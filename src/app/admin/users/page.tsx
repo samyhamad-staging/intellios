@@ -6,6 +6,7 @@ import { Heading, Subheading } from "@/components/catalyst/heading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip } from "@/components/ui/tooltip";
 import { FormField, FormSection } from "@/components/ui/form-field";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,11 +49,11 @@ const ROLE_DISPLAY_LABELS: Record<string, string> = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  architect:         "bg-blue-50 text-blue-700 border-blue-200",
-  designer:          "bg-blue-50 text-blue-700 border-blue-200",
-  reviewer:          "bg-amber-50 text-amber-700 border-amber-200",
-  compliance_officer: "bg-green-50 text-green-700 border-green-200",
-  admin:             "bg-purple-50 text-purple-700 border-purple-200",
+  architect:         "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+  designer:          "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+  reviewer:          "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+  compliance_officer: "bg-green-50 dark:bg-emerald-950/30 text-green-700 dark:text-emerald-300 border-green-200 dark:border-emerald-800",
+  admin:             "bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800",
   viewer:            "bg-surface-muted text-text-secondary border-border",
 };
 
@@ -129,11 +130,11 @@ function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-blue-200 bg-blue-50 px-6 py-5 space-y-4">
+    <form onSubmit={handleSubmit} className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 px-6 py-5 space-y-4">
       <Heading level={3} className="text-sm">New User</Heading>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2 text-xs text-red-700 dark:text-red-300">
           {error}
         </div>
       )}
@@ -195,6 +196,7 @@ function CreateUserForm({ onCreated, onCancel }: CreateFormProps) {
             <input
               id="create-user-password"
               type="password"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -286,7 +288,7 @@ function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-violet-200 bg-violet-50 px-6 py-5 space-y-4">
+    <form onSubmit={handleSubmit} className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-6 py-5 space-y-4">
       <div>
         <Heading level={3} className="text-sm">Invite User</Heading>
         <p className="mt-0.5 text-xs text-text-secondary">
@@ -295,7 +297,7 @@ function InviteUserForm({ onInvited, onCancel }: InviteFormProps) {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2 text-xs text-red-700 dark:text-red-300">
           {error}
         </div>
       )}
@@ -438,7 +440,7 @@ function BulkInviteForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
   const errorCount = rows.filter((r) => r.status === "error").length;
 
   return (
-    <div className="rounded-xl border border-violet-200 bg-violet-50 px-6 py-5 space-y-4">
+    <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-6 py-5 space-y-4">
       <div>
         <Heading level={3} className="text-sm">Bulk Invite via CSV</Heading>
         <p className="mt-0.5 text-xs text-text-secondary">
@@ -448,7 +450,7 @@ function BulkInviteForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
       </div>
 
       {parseError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{parseError}</div>
+        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2 text-xs text-red-700 dark:text-red-300">{parseError}</div>
       )}
 
       {rows.length === 0 ? (
@@ -458,7 +460,7 @@ function BulkInviteForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
             type="file"
             accept=".csv,text/csv"
             onChange={handleFile}
-            className="block text-sm text-text-secondary file:mr-3 file:rounded-lg file:border-0 file:bg-violet-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-violet-700 hover:file:bg-violet-200"
+            className="block text-sm text-text-secondary file:mr-3 file:rounded-lg file:border-0 file:bg-violet-100 dark:file:bg-violet-900/40 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-violet-700 dark:file:text-violet-300 hover:file:bg-violet-200 dark:hover:file:bg-violet-800/40"
           />
         </div>
       ) : (
@@ -480,9 +482,9 @@ function BulkInviteForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
                   </td>
                   <td className="px-3 py-1.5">
                     {row.status === "pending" && <span className="text-text-tertiary">Pending</span>}
-                    {row.status === "sending" && <span className="text-violet-600 animate-pulse">Sending…</span>}
-                    {row.status === "ok" && <span className="text-green-700 font-semibold">✓ Sent</span>}
-                    {row.status === "error" && <span className="text-red-600">✗ {row.message}</span>}
+                    {row.status === "sending" && <span className="text-violet-600 dark:text-violet-400 animate-pulse">Sending…</span>}
+                    {row.status === "ok" && <span className="text-green-700 dark:text-emerald-300 font-semibold">✓ Sent</span>}
+                    {row.status === "error" && <span className="text-red-600 dark:text-red-400">✗ {row.message}</span>}
                   </td>
                 </tr>
               ))}
@@ -613,7 +615,7 @@ function InlineRoleEditor({ user, currentUserId, onUpdated }: RoleEditorProps) {
       <button
         onClick={saveRole}
         disabled={saving}
-        className="text-xs font-medium text-blue-600 hover:text-blue-800 disabled:opacity-50 transition-colors"
+        className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 disabled:opacity-50 transition-colors"
       >
         {saving ? "…" : "Save"}
       </button>
@@ -714,10 +716,12 @@ export default function AdminUsersPage() {
     <div className="px-6 py-6 space-y-6">
       {/* Success toast */}
       {inviteSuccessToast && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800 shadow-lg">
+        <div className="fixed bottom-6 right-6 z-50 rounded-lg border border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 px-4 py-3 text-sm font-medium text-green-800 dark:text-emerald-200 shadow-lg">
           ✓ {inviteSuccessToast}
         </div>
       )}
+
+      <Breadcrumb items={[{ label: "Admin", href: "/admin" }, { label: "Users" }]} />
 
       {/* Page header */}
       <div className="flex items-center justify-between">
@@ -731,7 +735,7 @@ export default function AdminUsersPage() {
             <button
               onClick={() => setShowBulkInvite(true)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-raised transition-colors"
-              title="Bulk invite via CSV"
+              title="Bulk invite via CSV" aria-label="Bulk invite via CSV"
             >
               <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -740,7 +744,7 @@ export default function AdminUsersPage() {
             </button>
             <button
               onClick={() => setShowInvite(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-surface px-4 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-50 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-800 bg-surface px-4 py-1.5 text-sm font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-colors"
             >
               <Mail size={13} />
               Invite User
@@ -757,7 +761,7 @@ export default function AdminUsersPage() {
 
       <div className="space-y-6">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300">
             {error}
           </div>
         )}
@@ -850,13 +854,13 @@ export default function AdminUsersPage() {
                 <div className="mt-3 flex justify-center gap-4">
                   <button
                     onClick={() => setShowInvite(true)}
-                    className="text-sm text-violet-600 hover:text-violet-800 transition-colors"
+                    className="text-sm text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-200 transition-colors"
                   >
                     Invite a user →
                   </button>
                   <button
                     onClick={() => setShowCreate(true)}
-                    className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
                   >
                     Create the first user →
                   </button>
@@ -880,7 +884,7 @@ export default function AdminUsersPage() {
                   <p className="text-sm text-text-tertiary">No users match your search.</p>
                   <button
                     onClick={() => setUserSearch("")}
-                    className="mt-2 text-sm text-violet-600 hover:text-violet-800 transition-colors"
+                    className="mt-2 text-sm text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-200 transition-colors"
                   >
                     Clear search
                   </button>
@@ -893,7 +897,7 @@ export default function AdminUsersPage() {
                   return (
                     <div
                       key={user.id}
-                      className={`grid grid-cols-[3fr_2fr_1fr] gap-4 items-center px-6 py-3.5 transition-colors ${isSelf ? "bg-violet-50/40 hover:bg-violet-50" : "hover:bg-surface-raised"}`}
+                      className={`grid grid-cols-[3fr_2fr_1fr] gap-4 items-center px-6 py-3.5 transition-colors ${isSelf ? "bg-violet-50 dark:bg-violet-950/30 hover:bg-violet-50 dark:hover:bg-violet-950/30" : "hover:bg-surface-raised"}`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-muted text-xs font-medium text-text-secondary">
@@ -962,7 +966,7 @@ export default function AdminUsersPage() {
                     <span className="truncate text-xs text-text-secondary">
                       {inv.invitedBy?.name || inv.invitedBy?.email || "You"}
                     </span>
-                    <span className="text-right text-xs text-amber-600 font-medium">
+                    <span className="text-right text-xs text-amber-600 dark:text-amber-400 font-medium">
                       {timeUntil(inv.expiresAt)}
                     </span>
                   </div>

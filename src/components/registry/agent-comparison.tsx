@@ -47,7 +47,7 @@ function ComparisonCell({ label, values }: { label: string; values: (string | Re
         <td
           key={i}
           className={`px-4 py-2.5 text-xs text-text ${
-            !allSame && typeof v === "string" ? "font-medium text-amber-700 bg-amber-50/50" : ""
+            !allSame && typeof v === "string" ? "font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30" : ""
           }`}
         >
           {v || <span className="text-text-tertiary">—</span>}
@@ -89,7 +89,7 @@ export function AgentComparison({ agents, onClose, onRemoveAgent }: AgentCompari
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-5 py-3">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-text">Compare Agents</span>
-          <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+          <span className="rounded-full bg-violet-100 dark:bg-violet-900/40 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">
             {agents.length} selected
           </span>
         </div>
@@ -101,7 +101,7 @@ export function AgentComparison({ agents, onClose, onRemoveAgent }: AgentCompari
       {/* Comparison Table */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-violet-300 border-t-violet-600" />
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-violet-300 dark:border-violet-700 border-t-violet-600" />
           <span className="ml-2 text-sm text-text-secondary">Loading comparison data…</span>
         </div>
       ) : (
@@ -114,7 +114,7 @@ export function AgentComparison({ agents, onClose, onRemoveAgent }: AgentCompari
                   <th key={a.agentId} className="px-4 py-3 min-w-[200px]">
                     <div className="flex items-center justify-between gap-2">
                       <div>
-                        <Link href={`/registry/${a.agentId}`} className="text-sm font-medium text-text hover:text-violet-600">
+                        <Link href={`/registry/${a.agentId}`} className="text-sm font-medium text-text hover:text-violet-600 dark:text-violet-400">
                           {a.name ?? "Unnamed Agent"}
                         </Link>
                         <div className="mt-0.5 flex items-center gap-1.5">
@@ -124,8 +124,8 @@ export function AgentComparison({ agents, onClose, onRemoveAgent }: AgentCompari
                       </div>
                       <button
                         onClick={() => onRemoveAgent(a.agentId)}
-                        className="rounded p-0.5 text-text-tertiary hover:text-red-500"
-                        title="Remove from comparison"
+                        className="rounded p-0.5 text-text-tertiary hover:text-red-500 dark:text-red-400"
+                        title="Remove from comparison" aria-label="Remove from comparison"
                       >
                         <X size={12} />
                       </button>
@@ -184,8 +184,8 @@ export function AgentComparison({ agents, onClose, onRemoveAgent }: AgentCompari
                 label="Governance Health"
                 values={details.map((a) => {
                   if (a.violationCount === null || a.violationCount === undefined) return "Not validated";
-                  if (a.violationCount > 0) return <span className="text-red-600">{a.violationCount} error{a.violationCount !== 1 ? "s" : ""}</span>;
-                  if (a.warningCount && a.warningCount > 0) return <span className="text-amber-600">{a.warningCount} warning{a.warningCount !== 1 ? "s" : ""}</span>;
+                  if (a.violationCount > 0) return <span className="text-red-600 dark:text-red-400">{a.violationCount} error{a.violationCount !== 1 ? "s" : ""}</span>;
+                  if (a.warningCount && a.warningCount > 0) return <span className="text-amber-600 dark:text-amber-400">{a.warningCount} warning{a.warningCount !== 1 ? "s" : ""}</span>;
                   return <span className="text-emerald-600">Passing</span>;
                 })}
               />

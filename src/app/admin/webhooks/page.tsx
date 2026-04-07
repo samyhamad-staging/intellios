@@ -95,17 +95,17 @@ function formatRelative(iso: string) {
 function DeliveryRow({ d }: { d: DeliveryRecord }) {
   const statusBadge =
     d.status === "success" ? (
-      <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-50 dark:bg-emerald-950/30 px-2 py-0.5 text-xs font-semibold text-green-700 dark:text-emerald-300">
         <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
         success
       </span>
     ) : d.status === "failed" ? (
-      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 dark:bg-red-950/30 px-2 py-0.5 text-xs font-semibold text-red-700 dark:text-red-300">
         <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
         failed
       </span>
     ) : (
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
         <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
         pending
       </span>
@@ -113,12 +113,12 @@ function DeliveryRow({ d }: { d: DeliveryRecord }) {
 
   const httpColor =
     d.responseStatus === null ? "text-text-tertiary"
-    : d.responseStatus >= 200 && d.responseStatus < 300 ? "text-green-700 font-medium"
-    : d.responseStatus >= 400 ? "text-red-600 font-medium"
+    : d.responseStatus >= 200 && d.responseStatus < 300 ? "text-green-700 dark:text-emerald-300 font-medium"
+    : d.responseStatus >= 400 ? "text-red-600 dark:text-red-400 font-medium"
     : "text-text-secondary";
 
   return (
-    <TableRow className={d.status === "failed" ? "bg-red-50/30" : undefined}>
+    <TableRow className={d.status === "failed" ? "bg-red-50 dark:bg-red-950/30" : undefined}>
       <TableCell className="text-text-secondary whitespace-nowrap" title={formatDate(d.createdAt)}>
         {formatRelative(d.createdAt)}
       </TableCell>
@@ -177,9 +177,9 @@ function DeliveryLogHeader({ deliveries, onRefresh, loading }: {
     <div className="mb-2 flex items-center justify-between">
       <div className="flex items-center gap-3 text-xs">
         <span className="text-text-secondary">{deliveries.length} deliveries</span>
-        {success > 0 && <span className="text-green-700 font-medium">✓ {success} success</span>}
-        {failed > 0 && <span className="text-red-600 font-medium">✗ {failed} failed</span>}
-        {pending > 0 && <span className="text-amber-600">{pending} pending</span>}
+        {success > 0 && <span className="text-green-700 dark:text-emerald-300 font-medium">✓ {success} success</span>}
+        {failed > 0 && <span className="text-red-600 dark:text-red-400 font-medium">✗ {failed} failed</span>}
+        {pending > 0 && <span className="text-amber-600 dark:text-amber-400">{pending} pending</span>}
       </div>
       <div className="flex items-center gap-2">
         {deliveries.length > 0 && (
@@ -190,7 +190,7 @@ function DeliveryLogHeader({ deliveries, onRefresh, loading }: {
         <button
           onClick={onRefresh}
           disabled={loading}
-          className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-40"
+          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 disabled:opacity-40"
         >
           {loading ? "Refreshing…" : "↻ Refresh"}
         </button>
@@ -259,7 +259,7 @@ function WebhookCard({
             onClick={() => onToggleActive(wh.id, !wh.active)}
             className={`text-xs px-2 py-1 rounded ${
               wh.active
-                ? "bg-green-50 text-green-700 hover:bg-green-100"
+                ? "bg-green-50 dark:bg-emerald-950/30 text-green-700 dark:text-emerald-300 hover:bg-green-100 dark:hover:bg-emerald-900/40"
                 : "bg-surface-muted text-text-secondary hover:bg-surface-muted"
             }`}
           >
@@ -267,7 +267,7 @@ function WebhookCard({
           </button>
           <button
             onClick={() => onTest(wh.id)}
-            className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100"
+            className="text-xs px-2 py-1 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40"
           >
             Test
           </button>
@@ -279,7 +279,7 @@ function WebhookCard({
           </button>
           <button
             onClick={() => setShowDeleteDialog(true)}
-            className="text-xs px-2 py-1 rounded text-red-500 hover:bg-red-50"
+            className="text-xs px-2 py-1 rounded text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
           >
             Delete
           </button>
@@ -290,7 +290,7 @@ function WebhookCard({
       <div className="border-t border-border-subtle px-4 py-2 flex flex-wrap gap-1 items-center">
         <span className="text-xs text-text-tertiary mr-1">Events:</span>
         {wh.events.length === 0 ? (
-          <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">
+          <span className="text-xs bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full">
             All events
           </span>
         ) : (
@@ -305,7 +305,7 @@ function WebhookCard({
         )}
         <button
           onClick={() => onRotateSecret(wh.id)}
-          className="ml-auto text-xs text-amber-600 hover:text-amber-700 hover:underline"
+          className="ml-auto text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:underline"
         >
           Rotate secret
         </button>
@@ -562,24 +562,24 @@ export default function AdminWebhooksPage() {
 
         {/* Secret reveal banner */}
         {revealedSecret && (
-          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-4">
+          <div className="mb-6 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-4">
             <div className="flex items-start justify-between">
-              <div className="text-sm font-medium text-amber-800">
+              <div className="text-sm font-medium text-amber-800 dark:text-amber-200">
                 {revealedSecret.type === "new" ? "Webhook registered" : "Secret rotated"} —{" "}
                 <strong>{revealedSecret.name}</strong>
               </div>
               <button
                 onClick={() => setRevealedSecret(null)}
-                className="text-amber-400 hover:text-amber-600 text-lg leading-none"
+                className="text-amber-400 hover:text-amber-600 dark:hover:text-amber-400 text-lg leading-none"
               >
                 ×
               </button>
             </div>
-            <p className="mt-1 text-xs text-amber-700">
+            <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
               Copy this signing secret now. It will <strong>not</strong> be shown again.
             </p>
             <div className="mt-2 flex items-center gap-2">
-              <code className="flex-1 rounded bg-amber-100 px-3 py-1.5 text-xs font-mono text-amber-900 break-all">
+              <code className="flex-1 rounded bg-amber-100 dark:bg-amber-900/40 px-3 py-1.5 text-xs font-mono text-amber-900 break-all">
                 {revealedSecret.secret}
               </code>
               <button
@@ -587,7 +587,7 @@ export default function AdminWebhooksPage() {
                   void navigator.clipboard.writeText(revealedSecret.secret);
                   toast.success("Secret copied to clipboard.");
                 }}
-                className="flex-shrink-0 rounded bg-amber-200 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-300"
+                className="flex-shrink-0 rounded bg-amber-200 dark:bg-amber-800/60 px-3 py-1.5 text-xs font-medium text-amber-800 dark:text-amber-200 hover:bg-amber-300 dark:hover:bg-amber-700/60"
               >
                 Copy
               </button>
@@ -600,8 +600,8 @@ export default function AdminWebhooksPage() {
           <div
             className={`mb-6 rounded-lg border px-4 py-3 text-sm ${
               testResult.status === "success"
-                ? "border-green-200 bg-green-50 text-green-800"
-                : "border-red-200 bg-red-50 text-red-800"
+                ? "border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 text-green-800 dark:text-emerald-200"
+                : "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-200"
             }`}
           >
             <strong>Test delivery {testResult.status}</strong> — HTTP{" "}
@@ -615,7 +615,7 @@ export default function AdminWebhooksPage() {
             <Heading level={2} className="mb-4 text-sm">Register New Webhook</Heading>
 
             {formError && (
-              <div className="mb-3 rounded bg-red-50 px-3 py-2 text-xs text-red-700">
+              <div className="mb-3 rounded bg-red-50 dark:bg-red-950/30 px-3 py-2 text-xs text-red-700 dark:text-red-300">
                 {formError}
               </div>
             )}

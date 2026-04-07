@@ -97,10 +97,10 @@ function govBadge(report: ValidationReport | null) {
   if (!report) return { label: "Not validated", color: "text-text-tertiary bg-surface-raised border-border", icon: AlertCircle };
   const errors = report.violations?.filter((v) => v.severity === "error").length ?? 0;
   if (report.valid)
-    return { label: "Passes governance", color: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: ShieldCheck };
+    return { label: "Passes governance", color: "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800", icon: ShieldCheck };
   return {
     label: `${errors} governance error${errors !== 1 ? "s" : ""}`,
-    color: "text-red-700 bg-red-50 border-red-200",
+    color: "text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800",
     icon: ShieldAlert,
   };
 }
@@ -166,6 +166,7 @@ export default function ReviewQueuePage() {
   // Key: "review-assignments" → JSON object mapping blueprintId → assignee email
   const ASSIGN_KEY = "review-assignments";
   const [assignments, setAssignments] = useState<Record<string, string>>(() => {
+    if (typeof window === "undefined") return {};
     try { return JSON.parse(localStorage.getItem("review-assignments") ?? "{}"); }
     catch { return {}; }
   });
@@ -230,7 +231,7 @@ export default function ReviewQueuePage() {
           <div className="flex items-center gap-2.5">
             <Heading level={1}>Review Queue</Heading>
             {!loading && blueprints.length > 0 && (
-              <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+              <span className="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
                 {blueprints.length}
               </span>
             )}
@@ -250,7 +251,7 @@ export default function ReviewQueuePage() {
             {(["CRITICAL", "HIGH", "MEDIUM", "LOW"] as ReviewRiskTier[]).map((tier) => {
               const tierLower = tier.toLowerCase() as RiskTier;
               const theme = getRiskTheme(tierLower);
-              // Extract color from bg class for dot (e.g., "bg-red-50" → red-400)
+              // Extract color from bg class for dot (e.g., "bg-red-50 dark:bg-red-950/30" → red-400)
               const colorMap: Record<ReviewRiskTier, string> = {
                 CRITICAL: "bg-red-400",
                 HIGH: "bg-orange-400",
@@ -300,7 +301,7 @@ export default function ReviewQueuePage() {
 
       {/* ── Error ────────────────────────────────────────────────────────── */}
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-300">
           <AlertCircle size={15} /> {error}
         </div>
       )}
@@ -335,7 +336,7 @@ export default function ReviewQueuePage() {
               const anyAssigned = sorted.some((bp) => assignments[bp.id] === userEmail);
               if (!anyAssigned) return;
             }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700"
+            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300"
           >
             ✓ {Object.values(assignments).filter(v => v === userEmail).length} assigned to you
           </button>
@@ -357,9 +358,11 @@ export default function ReviewQueuePage() {
       {filtered.length > 0 && (
         <div className="mb-3 flex items-center gap-3">
           {/* Select-all checkbox */}
-          <div
+          <label
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelectAll(filtered.map((b) => b.id)); }}
-            className="flex items-center gap-2 cursor-pointer select-none"
+            className="flex items-center gap-2 cursor-pointer select-none rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            tabIndex={0}
+            onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleSelectAll(filtered.map((b) => b.id)); } }}
           >
             <Checkbox
               checked={selectedIds.size > 0 && selectedIds.size === filtered.length}
@@ -372,14 +375,14 @@ export default function ReviewQueuePage() {
                 ? "Select all"
                 : `${selectedIds.size} of ${filtered.length} selected`}
             </span>
-          </div>
+          </label>
 
           {selectedIds.size > 0 && userEmail && (
             <>
               <div className="h-3.5 w-px bg-border" />
               <button
                 onClick={() => bulkAssignToMe([...selectedIds])}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
               >
                 <UserCheck size={12} />
                 Assign to me
@@ -457,9 +460,9 @@ export default function ReviewQueuePage() {
                       <span
                         className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium ${
                           sla.overdue
-                            ? "bg-red-100 text-red-700"
+                            ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
                             : sla.urgent
-                            ? "bg-amber-100 text-amber-700"
+                            ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
                             : "bg-surface-raised text-text-secondary"
                         }`}
                       >
@@ -484,9 +487,9 @@ export default function ReviewQueuePage() {
                               <span
                                 className={`rounded px-1.5 py-0.5 text-xs font-medium ${
                                   completed
-                                    ? "bg-emerald-100 text-emerald-700"
+                                    ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
                                     : isActive
-                                    ? "bg-amber-100 text-amber-700 ring-1 ring-amber-300"
+                                    ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 ring-1 ring-amber-300 dark:ring-amber-700"
                                     : "bg-surface-raised text-text-tertiary"
                                 }`}
                               >
@@ -518,14 +521,14 @@ export default function ReviewQueuePage() {
                           className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${
                             isYourStep
                               ? "border-primary/20 bg-primary-muted text-primary"
-                              : "border-amber-200 bg-amber-50 text-amber-700"
+                              : "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300"
                           }`}
                         >
                           {isYourStep ? `Your step: ${activeStep.label}` : `Waiting: ${activeStep.label}`}
                         </span>
                       );
                     })() : (
-                      <span className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                      <span className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
                         Pending
                       </span>
                     )}
@@ -542,7 +545,7 @@ export default function ReviewQueuePage() {
                           }}
                           className={`rounded-lg border px-2 py-1 text-xs font-medium transition-colors ${
                             isAssignedToMe
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                              ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
                               : "border-border bg-surface text-text-secondary hover:bg-surface-raised hover:text-text"
                           }`}
                           title={isAssignedToMe ? "Unassign" : "Assign to me"}

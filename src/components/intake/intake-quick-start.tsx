@@ -109,7 +109,7 @@ export function IntakeQuickStart({
         {/* Header */}
         <div className="text-center">
           <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-violet-100">
-            <Sparkles size={18} className="text-violet-600" />
+            <Sparkles size={18} className="text-violet-600 dark:text-violet-400" />
           </div>
           <h1 className="text-xl font-semibold text-text">
             What agent do you want to build?
@@ -139,7 +139,7 @@ export function IntakeQuickStart({
                 ? `${10 - purpose.trim().length} more characters needed`
                 : "↵ Enter to start"  /* M-12: was Mac-only ⌘, use generic Enter symbol */}
             </p>
-            {error && <p className="text-xs text-red-600">{error}</p>}
+            {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
           </div>
         </div>
 
@@ -170,7 +170,7 @@ export function IntakeQuickStart({
                 <button
                   key={idea.label}
                   onClick={() => handleStarterClick(idea.purpose)}
-                  className="rounded-lg border border-border bg-surface px-3 py-2.5 text-left text-xs text-text-secondary transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700"
+                  className="rounded-lg border border-border bg-surface px-3 py-2.5 text-left text-xs text-text-secondary transition-colors hover:border-violet-300 dark:hover:border-violet-700 hover:bg-violet-50 dark:hover:bg-violet-950/30 hover:text-violet-700 dark:hover:text-violet-300"
                 >
                   {idea.label}
                 </button>

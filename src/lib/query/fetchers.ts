@@ -106,6 +106,43 @@ export const fetchAuditLog = (params: Record<string, string>) => {
   return apiFetch<unknown>(`/api/audit${qs ? `?${qs}` : ""}`);
 };
 
+// ── Dashboard ────────────────────────────────────────────────────────────────
+
+export interface DashboardSummary {
+  counts: {
+    total: number; deployed: number; approved: number;
+    inReview: number; draft: number; rejected: number; deprecated: number;
+  };
+  governance: {
+    clean: number; withErrors: number; notValidated: number;
+    complianceRate: number | null;
+  };
+  policyCount: number;
+  recentDeployed: {
+    id: string; agentId: string; name: string | null;
+    version: string; tags: string[]; status: string; updatedAt: string;
+  }[];
+  needingAttention: {
+    id: string; agentId: string; name: string | null;
+    violationCount: number | null;
+  }[];
+}
+
+export interface BriefingSummary {
+  id: string;
+  briefingDate: string;
+  content: string;
+  healthStatus: "healthy" | "degraded" | "critical" | "unknown";
+  generatedAt: string;
+}
+
+export const fetchDashboardSummary = () =>
+  apiFetch<DashboardSummary>("/api/dashboard/summary");
+
+export const fetchDashboardBriefing = () =>
+  apiFetch<{ briefings: BriefingSummary[] }>("/api/monitor/intelligence/briefing")
+    .then((d) => d.briefings?.[0] ?? null);
+
 // ── Current user ─────────────────────────────────────────────────────────────
 
 export const fetchMe = () =>

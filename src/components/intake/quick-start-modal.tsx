@@ -49,9 +49,9 @@ import type { BlueprintTemplate } from "@/lib/templates/blueprint-templates";
 // ── Governance tier styling ──────────────────────────────────────────────────
 
 const TIER_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  standard:  { bg: "bg-emerald-50", text: "text-emerald-700", label: "Standard" },
-  enhanced:  { bg: "bg-amber-50",   text: "text-amber-700",   label: "Enhanced" },
-  critical:  { bg: "bg-red-50",     text: "text-red-700",     label: "Critical" },
+  standard:  { bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-700 dark:text-emerald-300", label: "Standard" },
+  enhanced:  { bg: "bg-amber-50 dark:bg-amber-950/30",   text: "text-amber-700 dark:text-amber-300",   label: "Enhanced" },
+  critical:  { bg: "bg-red-50 dark:bg-red-950/30",     text: "text-red-700 dark:text-red-300",     label: "Critical" },
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -283,7 +283,7 @@ export function QuickStartModal({ onClose }: QuickStartModalProps) {
                     ? `${10 - purposeTrimmed.length} more characters needed`
                     : "\u2318 Enter to start"}
                 </p>
-                {error && <p className="text-[11px] text-red-600">{error}</p>}
+                {error && <p className="text-[11px] text-red-600 dark:text-red-400">{error}</p>}
               </div>
 
               {!purpose && (
@@ -442,7 +442,7 @@ export function QuickStartModal({ onClose }: QuickStartModalProps) {
                     placeholder="Name for the cloned agent"
                     className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-text placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"
                   />
-                  {cloneError && <p className="text-xs text-red-600">{cloneError}</p>}
+                  {cloneError && <p className="text-xs text-red-600 dark:text-red-400">{cloneError}</p>}
                   <button
                     onClick={handleClone}
                     disabled={!cloneName.trim() || cloning}

@@ -9,10 +9,10 @@ import { SectionHeading } from "@/components/ui/section-heading";
 // ─── Risk tier badge ──────────────────────────────────────────────────────────
 
 const TIER_STYLES: Record<RedTeamReport["riskTier"], string> = {
-  LOW: "bg-green-100 text-green-800",
-  MEDIUM: "bg-amber-100 text-amber-800",
-  HIGH: "bg-orange-100 text-orange-800",
-  CRITICAL: "bg-red-100 text-red-800",
+  LOW: "bg-green-100 dark:bg-emerald-900/40 text-green-800 dark:text-emerald-200",
+  MEDIUM: "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200",
+  HIGH: "bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200",
+  CRITICAL: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200",
 };
 
 function RiskBadge({ tier }: { tier: RedTeamReport["riskTier"] }) {
@@ -38,14 +38,14 @@ function AttackRow({ attack }: { attack: Attack }) {
         {passed ? (
           <ShieldCheck className="h-4 w-4 shrink-0 text-green-500" />
         ) : (
-          <ShieldAlert className="h-4 w-4 shrink-0 text-red-500" />
+          <ShieldAlert className="h-4 w-4 shrink-0 text-red-500 dark:text-red-400" />
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-text-tertiary">
               {ATTACK_CATEGORY_LABELS[attack.category]}
             </span>
-            <span className={`text-xs font-semibold ${passed ? "text-green-600" : "text-red-600"}`}>
+            <span className={`text-xs font-semibold ${passed ? "text-green-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
               {attack.verdict}
             </span>
           </div>
@@ -112,15 +112,16 @@ interface RunHistoryEntry {
 }
 
 const RISK_TIER_COLORS: Record<RedTeamReport["riskTier"], string> = {
-  LOW: "bg-green-100 text-green-800 border-green-200",
-  MEDIUM: "bg-amber-100 text-amber-800 border-amber-200",
-  HIGH: "bg-orange-100 text-orange-800 border-orange-200",
-  CRITICAL: "bg-red-100 text-red-800 border-red-200",
+  LOW: "bg-green-100 dark:bg-emerald-900/40 text-green-800 dark:text-emerald-200 border-green-200 dark:border-emerald-800",
+  MEDIUM: "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-800",
+  HIGH: "bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 border-orange-200 dark:border-orange-800",
+  CRITICAL: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800",
 };
 
 function useRunHistory(blueprintId: string) {
   const KEY = `redteam-history-${blueprintId}`;
   const [history, setHistory] = useState<RunHistoryEntry[]>(() => {
+    if (typeof window === "undefined") return [];
     try {
       const raw = localStorage.getItem(KEY);
       return raw ? (JSON.parse(raw) as RunHistoryEntry[]) : [];
@@ -185,12 +186,12 @@ function ComparisonStrip({ current, previous }: ComparisonStripProps) {
 
         {/* Delta */}
         {!same && (
-          <span className={`text-xs font-semibold ${improved ? "text-green-600" : "text-red-500"}`}>
+          <span className={`text-xs font-semibold ${improved ? "text-green-600 dark:text-emerald-400" : "text-red-500"}`}>
             {improved ? `↑ +${scoreDiff}` : `↓ ${scoreDiff}`} attacks resisted
           </span>
         )}
         {!tierSame && (
-          <span className={`text-xs font-medium ${tierImproved ? "text-green-600" : "text-orange-600"}`}>
+          <span className={`text-xs font-medium ${tierImproved ? "text-green-600 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}>
             · risk {tierImproved ? "improved" : "increased"}
           </span>
         )}
@@ -312,8 +313,8 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
           </div>
         )}
         <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-50">
-            <ShieldAlert className="h-7 w-7 text-orange-500" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-50 dark:bg-orange-950/30">
+            <ShieldAlert className="h-7 w-7 text-orange-500 dark:text-orange-400" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-text">Adversarial Red-Team</h3>
@@ -331,7 +332,7 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
             {history.some((h) => h.version === version) ? "Re-run" : "Run Red-Team"}
           </button>
           {error && (
-            <p className="text-sm text-red-600 max-w-xs">{error}</p>
+            <p className="text-sm text-red-600 dark:text-red-400 max-w-xs">{error}</p>
           )}
         </div>
       </div>
@@ -347,18 +348,18 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
 
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-5 text-center px-6">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-50">
-          <RefreshCw className="h-7 w-7 text-orange-500 animate-spin" />
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-50 dark:bg-orange-950/30">
+          <RefreshCw className="h-7 w-7 text-orange-500 dark:text-orange-400 animate-spin" />
         </div>
         <div className="w-full max-w-xs">
           <h3 className="text-sm font-semibold text-text">Running red-team evaluation…</h3>
           {/* Live progress label */}
-          <p className="mt-2 text-sm font-medium text-orange-600 tabular-nums">
+          <p className="mt-2 text-sm font-medium text-orange-600 dark:text-orange-400 tabular-nums">
             Running attack {displayAttack} of {TOTAL_ATTACKS}
             <span className="text-text-tertiary font-normal"> · ~{remainingSec}s remaining</span>
           </p>
           {/* Progress bar */}
-          <div className="mt-3 h-1.5 w-full rounded-full bg-orange-100 overflow-hidden">
+          <div className="mt-3 h-1.5 w-full rounded-full bg-orange-100 dark:bg-orange-900/40 overflow-hidden">
             <div
               className="h-full rounded-full bg-orange-400 transition-all duration-[2400ms] ease-linear"
               style={{ width: `${progressPct}%` }}
@@ -407,7 +408,7 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
           <p className="text-sm text-text-secondary">
             Resisted {passed} of {report.attacks.length} attacks
             {failed > 0 && (
-              <span className="ml-1 text-red-500 font-medium">
+              <span className="ml-1 text-red-500 dark:text-red-400 font-medium">
                 ({failed} failure{failed !== 1 ? "s" : ""})
               </span>
             )}
@@ -420,7 +421,7 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
           <button
             onClick={handleExport}
             className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-surface-raised transition-colors"
-            title="Download red team report as JSON"
+            title="Download red team report as JSON" aria-label="Download red team report as JSON"
           >
             <Download className="h-3.5 w-3.5" />
             Export
@@ -445,9 +446,9 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
 
       {/* Risk guidance */}
       {report.riskTier === "CRITICAL" || report.riskTier === "HIGH" ? (
-        <div className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
-          <p className="text-sm text-orange-800">
+        <div className="flex items-start gap-3 rounded-xl border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 p-4">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-orange-600 dark:text-orange-400" />
+          <p className="text-sm text-orange-800 dark:text-orange-200">
             <span className="font-semibold">{report.riskTier} risk — </span>
             {report.riskTier === "CRITICAL"
               ? "This agent failed 6 or more attacks. Review failures and strengthen constraints before production deployment."
@@ -467,7 +468,7 @@ export function RedTeamPanel({ blueprintId, agentName, version }: RedTeamPanelPr
       </div>
 
       {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+        <p className="rounded-lg bg-red-50 dark:bg-red-950/30 px-3 py-2 text-sm text-red-600 dark:text-red-400">{error}</p>
       )}
     </div>
   );

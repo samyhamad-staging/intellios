@@ -132,7 +132,7 @@ export default function EditPolicyPage({
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="text-center">
-          <p className="text-sm text-red-600 mb-3">{fetchError ?? "Policy not found"}</p>
+          <p className="text-sm text-red-600 dark:text-red-400 mb-3">{fetchError ?? "Policy not found"}</p>
           <Link href="/governance" className="text-sm text-text-secondary hover:text-text">
             ← Back to Governance
           </Link>
@@ -189,8 +189,8 @@ export default function EditPolicyPage({
 
         {/* Delete section — only shown for non-global policies */}
         {policy.enterpriseId !== null && (
-          <div className="mt-10 rounded-xl border border-red-200 bg-surface px-6 py-5">
-            <Subheading level={3} className="text-red-700 mb-1">Delete Policy</Subheading>
+          <div className="mt-10 rounded-xl border border-red-200 dark:border-red-800 bg-surface px-6 py-5">
+            <Subheading level={3} className="text-red-700 dark:text-red-300 mb-1">Delete Policy</Subheading>
             <p className="text-xs text-text-secondary mb-4">
               Permanently remove this policy. Existing validation reports are not affected, but
               future validations will no longer evaluate against it.
@@ -199,14 +199,14 @@ export default function EditPolicyPage({
             {!confirmDelete ? (
               <button
                 onClick={() => { setConfirmDelete(true); fetchDependentCount(); }}
-                className="rounded-lg border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                className="rounded-lg border border-red-300 dark:border-red-700 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
               >
                 Delete Policy
               </button>
             ) : (
               <div className="space-y-3">
                 {/* W3-05: cascade impact warning */}
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+                <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-3 py-2.5 text-sm text-amber-800 dark:text-amber-200">
                   {dependentCountLoading ? (
                     "Checking impact…"
                   ) : dependentCount !== null && dependentCount > 0 ? (

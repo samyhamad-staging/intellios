@@ -66,7 +66,7 @@ function formatDelta(current: number, previous: number): { label: string; classe
   const diff = current - previous;
   if (Math.abs(diff) < 0.05) return null; // suppress noise < 0.05
   const sign = diff > 0 ? "↑" : "↓";
-  const classes = diff > 0 ? "text-green-600" : "text-red-500";
+  const classes = diff > 0 ? "text-green-600 dark:text-emerald-400" : "text-red-500";
   return { label: `${sign} ${Math.abs(diff).toFixed(1)}`, classes };
 }
 
@@ -110,15 +110,15 @@ function scoreColor(val: number): string {
 }
 
 function scoreTextColor(val: number): string {
-  if (val >= 4) return "text-green-700";
-  if (val >= 3) return "text-amber-700";
-  return "text-red-600";
+  if (val >= 4) return "text-green-700 dark:text-emerald-300";
+  if (val >= 3) return "text-amber-700 dark:text-amber-300";
+  return "text-red-600 dark:text-red-400";
 }
 
 function overallColor(val: number): string {
-  if (val >= 80) return "text-green-600";
-  if (val >= 60) return "text-amber-600";
-  return "text-red-600";
+  if (val >= 80) return "text-green-600 dark:text-emerald-400";
+  if (val >= 60) return "text-amber-600 dark:text-amber-400";
+  return "text-red-600 dark:text-red-400";
 }
 
 function timeAgo(dateStr: string): string {
@@ -133,9 +133,9 @@ function timeAgo(dateStr: string): string {
 }
 
 function pctColor(pct: number): string {
-  if (pct >= 0.8) return "text-green-600";
-  if (pct >= 0.5) return "text-amber-600";
-  return "text-red-600";
+  if (pct >= 0.8) return "text-green-600 dark:text-emerald-400";
+  if (pct >= 0.5) return "text-amber-600 dark:text-amber-400";
+  return "text-red-600 dark:text-red-400";
 }
 
 function pctBar(pct: number): string {
@@ -145,10 +145,10 @@ function pctBar(pct: number): string {
 }
 
 function scoreGrade(score: number): { label: string; color: string } {
-  if (score >= 80) return { label: "Excellent", color: "text-green-600" };
-  if (score >= 60) return { label: "Good",      color: "text-amber-600" };
-  if (score >= 40) return { label: "Fair",       color: "text-orange-600" };
-  return           { label: "Poor",       color: "text-red-600" };
+  if (score >= 80) return { label: "Excellent", color: "text-green-600 dark:text-emerald-400" };
+  if (score >= 60) return { label: "Good",      color: "text-amber-600 dark:text-amber-400" };
+  if (score >= 40) return { label: "Fair",       color: "text-orange-600 dark:text-orange-400" };
+  return           { label: "Poor",       color: "text-red-600 dark:text-red-400" };
 }
 
 // ─── Rubric tooltip ───────────────────────────────────────────────────────────
@@ -320,13 +320,13 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
 
       {/* Flags */}
       {score.flags && score.flags.length > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <div className="text-amber-700 mb-2">
+        <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4">
+          <div className="text-amber-700 dark:text-amber-300 mb-2">
           <SectionHeading>Quality Flags</SectionHeading>
         </div>
           <div className="space-y-1.5">
             {score.flags.map((flag, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm text-amber-800">
+              <div key={i} className="flex items-start gap-2 text-sm text-amber-800 dark:text-amber-200">
                 <span className="mt-0.5 shrink-0 text-amber-500">⚠</span>
                 <span>{flag}</span>
               </div>
@@ -337,9 +337,9 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
 
       {/* H2-2.1: Production Quality section */}
       {showProduction && (
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50 overflow-hidden">
-          <div className="border-b border-indigo-100 bg-indigo-100/60 px-4 py-2.5 flex items-center justify-between">
-            <div className="text-indigo-700">
+        <div className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/30 overflow-hidden">
+          <div className="border-b border-indigo-100 dark:border-indigo-800 bg-indigo-100/60 px-4 py-2.5 flex items-center justify-between">
+            <div className="text-indigo-700 dark:text-indigo-300">
               <SectionHeading>Production Quality (Last {prodQuality?.windowDays ?? 30} Days)</SectionHeading>
             </div>
             {prodQuality && (
@@ -351,7 +351,7 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
 
           {prodLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-300 border-t-indigo-700" />
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-300 dark:border-indigo-700 border-t-indigo-700" />
               <span className="ml-2 text-xs text-indigo-500">Loading production metrics…</span>
             </div>
           ) : prodQuality === null ? (
@@ -362,14 +362,14 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
             <div className="p-4 space-y-4">
               {/* Composite score + design score side-by-side */}
               <div className="flex items-center gap-4">
-                <div className="text-center flex-1 rounded-lg bg-surface border border-indigo-100 py-3">
+                <div className="text-center flex-1 rounded-lg bg-surface border border-indigo-100 dark:border-indigo-800 py-3">
                   <p className={`text-3xl font-bold tabular-nums ${overallColor(parseFloat(score.overallScore ?? "0"))}`}>
                     {Math.round(parseFloat(score.overallScore ?? "0"))}
                   </p>
                   <p className="mt-0.5 text-2xs text-text-secondary">Design / 100</p>
                 </div>
                 <div className="text-lg font-light text-indigo-300 shrink-0">vs</div>
-                <div className="text-center flex-1 rounded-lg bg-surface border border-indigo-100 py-3">
+                <div className="text-center flex-1 rounded-lg bg-surface border border-indigo-100 dark:border-indigo-800 py-3">
                   <p className={`text-3xl font-bold tabular-nums ${overallColor(prodQuality.productionScore)}`}>
                     {prodQuality.productionScore}
                   </p>
@@ -418,7 +418,7 @@ export function QualityDashboard({ score, loading, agentId, agentStatus, previou
               ))}
 
               {/* Summary row */}
-              <div className="flex flex-wrap gap-3 pt-1 text-xs text-indigo-700">
+              <div className="flex flex-wrap gap-3 pt-1 text-xs text-indigo-700 dark:text-indigo-300">
                 <span>
                   <span className="font-medium">{prodQuality.totalInvocations.toLocaleString()}</span> invocations
                 </span>

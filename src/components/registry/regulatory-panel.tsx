@@ -166,33 +166,33 @@ function statusIcon(status: EvidenceStatus): string {
 }
 
 function statusColor(status: EvidenceStatus): string {
-  if (status === "satisfied") return "text-green-700";
-  if (status === "partial") return "text-amber-600";
-  if (status === "missing") return "text-red-600";
+  if (status === "satisfied") return "text-green-700 dark:text-emerald-300";
+  if (status === "partial") return "text-amber-600 dark:text-amber-400";
+  if (status === "missing") return "text-red-600 dark:text-red-400";
   return "text-text-tertiary";
 }
 
 function statusBg(status: EvidenceStatus): string {
-  if (status === "satisfied") return "bg-green-50 border-green-100";
-  if (status === "partial") return "bg-amber-50 border-amber-100";
-  if (status === "missing") return "bg-red-50 border-red-100";
+  if (status === "satisfied") return "bg-green-50 dark:bg-emerald-950/30 border-green-100 dark:border-emerald-800";
+  if (status === "partial") return "bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-800";
+  if (status === "missing") return "bg-red-50 dark:bg-red-950/30 border-red-100 dark:border-red-800";
   return "bg-surface-raised border-border-subtle";
 }
 
 function overallBadge(status: "compliant" | "partial" | "gaps_identified") {
   if (status === "compliant")
-    return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700">Compliant</span>;
+    return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-emerald-900/40 text-green-700 dark:text-emerald-300">Compliant</span>;
   if (status === "partial")
-    return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700">Partial</span>;
-  return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700">Gaps Identified</span>;
+    return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">Partial</span>;
+  return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">Gaps Identified</span>;
 }
 
 function euAiActTierBadge(tier: EUAIActRiskTier) {
   const cfg: Record<EUAIActRiskTier, { label: string; classes: string }> = {
-    "review-required": { label: "Review Required", classes: "bg-orange-100 text-orange-700 border border-orange-200" },
-    "high-risk":       { label: "High-Risk AI",    classes: "bg-red-100 text-red-700 border border-red-200" },
-    "limited-risk":    { label: "Limited-Risk AI", classes: "bg-amber-100 text-amber-700 border border-amber-200" },
-    "minimal-risk":    { label: "Minimal-Risk AI", classes: "bg-green-100 text-green-700 border border-green-200" },
+    "review-required": { label: "Review Required", classes: "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800" },
+    "high-risk":       { label: "High-Risk AI",    classes: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800" },
+    "limited-risk":    { label: "Limited-Risk AI", classes: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800" },
+    "minimal-risk":    { label: "Minimal-Risk AI", classes: "bg-green-100 dark:bg-emerald-900/40 text-green-700 dark:text-emerald-300 border border-green-200 dark:border-emerald-800" },
   };
   const { label, classes } = cfg[tier];
   return (
@@ -218,7 +218,7 @@ function NISTStrengthDots({ requirements }: { requirements: FrameworkAssessment[
         const total = reqs.length;
         const pct = total > 0 ? satisfied / total : 0;
         const strength = pct >= 1 ? "Strong" : pct >= 0.5 ? "Partial" : "Weak";
-        const color = pct >= 1 ? "text-green-700" : pct >= 0.5 ? "text-amber-600" : "text-red-600";
+        const color = pct >= 1 ? "text-green-700 dark:text-emerald-300" : pct >= 0.5 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
         return (
           <div key={prefix} className="flex flex-col items-center gap-1">
             <span className="text-xs font-semibold text-text-secondary">{label}</span>
@@ -246,10 +246,10 @@ function FixGuidanceBox({ reqId }: { reqId: string }) {
   if (!guidance) return null;
 
   return (
-    <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2">
+    <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 px-3 py-2">
       {/* Wrench icon (SVG inline — no new dep) */}
       <svg
-        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600"
+        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400"
         viewBox="0 0 20 20"
         fill="currentColor"
         aria-hidden="true"
@@ -262,11 +262,11 @@ function FixGuidanceBox({ reqId }: { reqId: string }) {
         <path d="M17.657 5.657a1 1 0 00-1.414-1.414L15 5.486l1.414 1.414 1.243-1.243z" />
       </svg>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-blue-800 mb-0.5">How to fix</p>
-        <p className="text-xs text-blue-700 leading-relaxed">{guidance.text}</p>
+        <p className="text-xs font-semibold text-blue-800 dark:text-blue-200 mb-0.5">How to fix</p>
+        <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">{guidance.text}</p>
         <Link
           href={guidance.href}
-          className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-900"
+          className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-700 dark:text-blue-300 underline underline-offset-2 hover:text-blue-900"
         >
           {guidance.cta} →
         </Link>
@@ -295,7 +295,7 @@ function FrameworkSection({ framework }: { framework: FrameworkAssessment }) {
           {overallBadge(framework.overallStatus)}
           {framework.euAiActRiskTier && euAiActTierBadge(framework.euAiActRiskTier)}
           {missingCount > 0 && (
-            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700">
+            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">
               {missingCount} gap{missingCount !== 1 ? "s" : ""}
             </span>
           )}
@@ -385,7 +385,7 @@ export function RegulatoryPanel({ blueprintId }: RegulatoryPanelProps) {
 
   if (error || !assessment) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300">
         {error ?? "Failed to load regulatory assessment."}
       </div>
     );
@@ -404,7 +404,7 @@ export function RegulatoryPanel({ blueprintId }: RegulatoryPanelProps) {
           <p className="text-xs text-text-secondary mt-0.5">
             Deterministic assessment against EU AI Act, SR 11-7, and NIST AI RMF. Assessed {assessedAt}.
             {totalGaps > 0 && (
-              <span className="ml-1 font-medium text-blue-700">
+              <span className="ml-1 font-medium text-blue-700 dark:text-blue-300">
                 {totalGaps} gap{totalGaps !== 1 ? "s" : ""} with fix guidance below.
               </span>
             )}

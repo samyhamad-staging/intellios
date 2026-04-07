@@ -392,6 +392,12 @@ samp {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+:is(.dark) ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+:is(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
 
 /* Sidebar scrollbar — darker */
 .sidebar-scroll::-webkit-scrollbar-thumb {
@@ -530,6 +536,50 @@ samp {
 [data-kanban] > * {
   min-width: min(calc(100vw - 2rem), 280px);
 }
+
+/* ── Semantic status classes ─────────────────────────────────────────────── */
+/* These utility classes provide consistent light/dark mode styling for     */
+/* status badges, banners, and cards. Use these instead of inline           */
+/* bg-red-50/border-red-200/text-red-700 to get automatic dark mode.       */
+
+/* Error / Critical / Rejected */
+.status-error     { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.status-error-alt { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
+:is(.dark, .dark *) .status-error     { background: rgba(127, 29, 29, 0.2); border-color: #7f1d1d; color: #fca5a5; }
+:is(.dark, .dark *) .status-error-alt { background: rgba(127, 29, 29, 0.3); border-color: #991b1b; color: #fecaca; }
+
+/* Warning / Attention / In Review */
+.status-warning     { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.status-warning-alt { background: #fef3c7; border-color: #fde68a; color: #b45309; }
+:is(.dark, .dark *) .status-warning     { background: rgba(120, 53, 15, 0.2); border-color: #78350f; color: #fcd34d; }
+:is(.dark, .dark *) .status-warning-alt { background: rgba(120, 53, 15, 0.3); border-color: #92400e; color: #fde68a; }
+
+/* Success / Approved / Passing */
+.status-success     { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+.status-success-alt { background: #d1fae5; border-color: #a7f3d0; color: #047857; }
+:is(.dark, .dark *) .status-success     { background: rgba(6, 78, 59, 0.2); border-color: #064e3b; color: #6ee7b7; }
+:is(.dark, .dark *) .status-success-alt { background: rgba(6, 78, 59, 0.3); border-color: #065f46; color: #a7f3d0; }
+
+/* Info / Deployed / Active */
+.status-info     { background: #eef2ff; border-color: #c7d2fe; color: #3730a3; }
+.status-info-alt { background: #e0e7ff; border-color: #c7d2fe; color: #4338ca; }
+:is(.dark, .dark *) .status-info     { background: rgba(49, 46, 129, 0.2); border-color: #312e81; color: #a5b4fc; }
+:is(.dark, .dark *) .status-info-alt { background: rgba(49, 46, 129, 0.3); border-color: #3730a3; color: #c7d2fe; }
+
+/* Neutral / Draft / Muted */
+.status-neutral     { background: var(--color-surface-raised); border-color: var(--color-border); color: var(--color-text-secondary); }
+
+/* Governance badges — used on dashboard */
+.badge-gov-pass  { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+.badge-gov-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+:is(.dark, .dark *) .badge-gov-pass  { background: rgba(6, 78, 59, 0.2); border-color: #064e3b; color: #6ee7b7; }
+:is(.dark, .dark *) .badge-gov-error { background: rgba(127, 29, 29, 0.2); border-color: #7f1d1d; color: #fca5a5; }
+
+/* Status dot colors — used on pipeline funnel bars */
+.dot-draft    { background-color: var(--color-text-tertiary); }
+.dot-review   { background-color: #f59e0b; }
+.dot-approved { background-color: #10b981; }
+.dot-deployed { background-color: #8b5cf6; }
 
 /* ── Respect prefers-reduced-motion ──────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {

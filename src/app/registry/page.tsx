@@ -77,7 +77,7 @@ function healthLabel(color: HealthColor, violationCount: number | null, warningC
 const HEALTH_CLASSES: Record<HealthColor, string> = {
   green: "text-emerald-500",
   amber: "text-amber-400",
-  red:   "text-red-500",
+  red:   "text-red-500 dark:text-red-400",
   gray:  "text-text-tertiary",
 };
 
@@ -295,7 +295,7 @@ export default function RegistryPage() {
             }}
             className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               compareMode
-                ? "bg-violet-100 text-violet-700 border border-violet-200"
+                ? "bg-violet-100 text-violet-700 dark:text-violet-300 border border-violet-200"
                 : "border border-border text-text-secondary hover:bg-surface-raised hover:text-text"
             }`}
           >
@@ -341,7 +341,7 @@ export default function RegistryPage() {
 
       {/* Error */}
       {error && (
-        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <div role="alert" className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-300">{error}</div>
       )}
 
       {/* ── Agent list ────────────────────────────────────────────────────── */}
@@ -354,8 +354,8 @@ export default function RegistryPage() {
               subtext="Deployed agents appear here once approved blueprints are pushed to production."
               action={
                 <div className="flex flex-col items-center gap-1">
-                  <Link href="/intake" className="text-xs text-violet-600 hover:text-violet-700">Start an intake session →</Link>
-                  <Link href="/templates" className="text-xs text-violet-600 hover:text-violet-700">Browse templates →</Link>
+                  <Link href="/intake" className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700">Start an intake session →</Link>
+                  <Link href="/templates" className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700">Browse templates →</Link>
                 </div>
               }
             />
@@ -366,7 +366,7 @@ export default function RegistryPage() {
               icon={Search}
               heading="No agents match your filters"
               action={
-                <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="text-xs text-violet-600 hover:text-violet-700 underline">
+                <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 underline">
                   Clear filters
                 </button>
               }
@@ -381,7 +381,7 @@ export default function RegistryPage() {
                     {compareMode ? (
                       <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
                         selectedForCompare.has(agent.agentId)
-                          ? "bg-violet-100 text-violet-600 border-2 border-violet-400"
+                          ? "bg-violet-100 text-violet-600 dark:text-violet-400 border-2 border-violet-400"
                           : "bg-surface-muted text-text-tertiary border-2 border-transparent"
                       }`}>
                         {selectedForCompare.has(agent.agentId) ? (
@@ -450,7 +450,7 @@ export default function RegistryPage() {
               action={
                 <button
                   onClick={() => setShowNewOrchestration(true)}
-                  className="text-xs text-violet-600 hover:text-violet-700"
+                  className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700"
                 >
                   Create your first orchestration →
                 </button>
@@ -463,7 +463,7 @@ export default function RegistryPage() {
               icon={Search}
               heading="No orchestrations match your filters"
               action={
-                <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="text-xs text-violet-600 hover:text-violet-700 underline">
+                <button onClick={() => { setSearchQuery(""); setStatusFilter(""); }} className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 underline">
                   Clear filters
                 </button>
               }
@@ -475,7 +475,7 @@ export default function RegistryPage() {
               {filteredWflows.map((wf, i) => (
                 <div key={wf.id} className={`${i > 0 ? "border-t border-border-subtle" : ""}`}>
                   <Link href={`/registry/workflow/${wf.id}`} className="flex items-center gap-4 px-5 py-4 interactive-row">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-500">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/30 text-violet-500">
                       <GitBranch size={15} />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -495,7 +495,7 @@ export default function RegistryPage() {
                       )}
                     </div>
                     {wf.definition?.agents && wf.definition.agents.length > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-xs text-violet-700 shrink-0" title={`${wf.definition.agents.length} participating agent${wf.definition.agents.length !== 1 ? "s" : ""}`}>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 dark:bg-violet-950/30 px-2 py-0.5 text-xs text-violet-700 dark:text-violet-300 shrink-0" title={`${wf.definition.agents.length} participating agent${wf.definition.agents.length !== 1 ? "s" : ""}`}>
                         <Users size={11} />
                         {wf.definition.agents.length}
                       </span>

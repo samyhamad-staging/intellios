@@ -65,12 +65,12 @@ export function ValidationReportView({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {report.valid ? (
-            <span className="flex items-center gap-1.5 text-sm font-medium text-green-700">
+            <span className="flex items-center gap-1.5 text-sm font-medium text-green-700 dark:text-emerald-300">
               <span className="text-green-500">✓</span> Passes governance
             </span>
           ) : (
-            <span className="flex items-center gap-1.5 text-sm font-medium text-red-700">
-              <span className="text-red-500">✗</span>
+            <span className="flex items-center gap-1.5 text-sm font-medium text-red-700 dark:text-red-300">
+              <span className="text-red-500 dark:text-red-400">✗</span>
               {errorViolations.length} error{errorViolations.length !== 1 ? "s" : ""}
               {warnViolations.length > 0 && `, ${warnViolations.length} warning${warnViolations.length !== 1 ? "s" : ""}`}
             </span>
@@ -90,9 +90,9 @@ export function ValidationReportView({
 
       {/* Staleness warning */}
       {isStale && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-          <span className="text-amber-600 text-sm">⚠</span>
-          <p className="text-xs text-amber-800">
+        <div className="flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
+          <span className="text-amber-600 dark:text-amber-400 text-sm">⚠</span>
+          <p className="text-xs text-amber-800 dark:text-amber-200">
             <span className="font-medium">Validation may be outdated</span> — the blueprint was modified since the last check.
             Re-validate before submitting for review.
           </p>
@@ -106,7 +106,7 @@ export function ValidationReportView({
         </p>
       )}
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
 
       {/* Violations */}
       {report.violations.length > 0 && (
@@ -144,7 +144,7 @@ function ViolationCard({ violation }: { violation: Violation }) {
         <span
           className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-xs font-medium ${
             violation.severity === "error"
-              ? "bg-red-100 text-red-700"
+              ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
               : "bg-yellow-100 text-yellow-700"
           }`}
         >

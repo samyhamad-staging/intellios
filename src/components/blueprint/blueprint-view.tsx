@@ -127,7 +127,7 @@ export function BlueprintView({ abp, blueprintId, onFieldSaved }: BlueprintViewP
               <div key={i} className="rounded-lg border border-border bg-surface-raised p-3">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-sm">{tool.name}</span>
-                  <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
+                  <span className="rounded-full bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 text-xs text-blue-700 dark:text-blue-300">
                     {tool.type}
                   </span>
                 </div>
@@ -199,7 +199,7 @@ export function BlueprintView({ abp, blueprintId, onFieldSaved }: BlueprintViewP
               <Row label="Allowed domains">
                 <div className="flex flex-wrap gap-1">
                   {abp.constraints.allowed_domains.map((d, i) => (
-                    <span key={i} className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700">
+                    <span key={i} className="rounded-full bg-green-100 dark:bg-emerald-900/40 px-2 py-0.5 text-xs text-green-700 dark:text-emerald-300">
                       {d}
                     </span>
                   ))}
@@ -210,7 +210,7 @@ export function BlueprintView({ abp, blueprintId, onFieldSaved }: BlueprintViewP
               <Row label="Denied actions">
                 <div className="flex flex-wrap gap-1">
                   {abp.constraints.denied_actions.map((a, i) => (
-                    <span key={i} className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700">
+                    <span key={i} className="rounded-full bg-red-100 dark:bg-red-900/40 px-2 py-0.5 text-xs text-red-700 dark:text-red-300">
                       {a}
                     </span>
                   ))}
@@ -251,7 +251,7 @@ export function BlueprintView({ abp, blueprintId, onFieldSaved }: BlueprintViewP
               <div key={i} className="rounded-lg border border-border p-3">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-sm">{policy.name}</span>
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
+                  <span className="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-300">
                     {policy.type}
                   </span>
                 </div>
@@ -332,7 +332,7 @@ export function BlueprintView({ abp, blueprintId, onFieldSaved }: BlueprintViewP
           </div>
           <div className="flex items-center gap-2">
             {canEdit && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-xs text-violet-600 border border-violet-200">
+              <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 dark:bg-violet-950/30 px-2 py-0.5 text-xs text-violet-600 dark:text-violet-400 border border-violet-200">
                 <Pencil size={10} />
                 Inline editing enabled
               </span>
@@ -440,8 +440,8 @@ function SummaryStatItem({
 }) {
   const colorMap = {
     default: "text-text",
-    success: "text-green-600",
-    warning: "text-amber-600",
+    success: "text-green-600 dark:text-emerald-400",
+    warning: "text-amber-600 dark:text-amber-400",
   };
   return (
     <div className="text-center">

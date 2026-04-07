@@ -48,26 +48,26 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 const ACTION_COLORS: Record<string, string> = {
-  "blueprint.created":             "bg-blue-50 text-blue-700",
-  "blueprint.refined":             "bg-purple-50 text-purple-700",
-  "blueprint.status_changed":      "bg-amber-50 text-amber-700",
-  "blueprint.reviewed":            "bg-green-50 text-green-700",
-  "blueprint.report_exported":     "bg-teal-50 text-teal-700",
-  "blueprint.health_checked":      "bg-cyan-50 text-cyan-700",
-  "blueprint.cloned":              "bg-indigo-50 text-indigo-700",
-  "blueprint.approval_step_completed": "bg-emerald-50 text-emerald-700",
-  "blueprint.test_run_completed":  "bg-violet-50 text-violet-700",
-  "blueprint.agentcore_exported":  "bg-orange-50 text-orange-600",
-  "blueprint.agentcore_deployed":  "bg-orange-100 text-orange-800",
+  "blueprint.created":             "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300",
+  "blueprint.refined":             "bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300",
+  "blueprint.status_changed":      "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300",
+  "blueprint.reviewed":            "bg-green-50 dark:bg-emerald-950/30 text-green-700 dark:text-emerald-300",
+  "blueprint.report_exported":     "bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300",
+  "blueprint.health_checked":      "bg-cyan-50 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-300",
+  "blueprint.cloned":              "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300",
+  "blueprint.approval_step_completed": "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300",
+  "blueprint.test_run_completed":  "bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300",
+  "blueprint.agentcore_exported":  "bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400",
+  "blueprint.agentcore_deployed":  "bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200",
   "intake.finalized":              "bg-surface-muted text-text-secondary",
-  "intake.contribution_submitted": "bg-sky-50 text-sky-700",
-  "policy.created":                "bg-red-50 text-red-700",
-  "policy.updated":                "bg-orange-50 text-orange-700",
-  "policy.deleted":                "bg-rose-100 text-rose-800",
-  "policy.simulated":              "bg-yellow-50 text-yellow-700",
+  "intake.contribution_submitted": "bg-sky-50 dark:bg-sky-950/30 text-sky-700 dark:text-sky-300",
+  "policy.created":                "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300",
+  "policy.updated":                "bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300",
+  "policy.deleted":                "bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-200",
+  "policy.simulated":              "bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-300",
   "settings.updated":              "bg-surface-muted text-text-secondary",
-  "blueprint.periodic_review_scheduled": "bg-teal-50 text-teal-700",
-  "blueprint.periodic_review_completed": "bg-teal-100 text-teal-800",
+  "blueprint.periodic_review_scheduled": "bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300",
+  "blueprint.periodic_review_completed": "bg-teal-100 dark:bg-teal-900/40 text-teal-800 dark:text-teal-200",
 };
 
 function formatDate(iso: string): string {
@@ -108,7 +108,7 @@ function AgentCoreInlineSummary({ metadata }: { metadata: Record<string, unknown
   const agentArn = typeof metadata.agentArn === "string" ? metadata.agentArn : null;
   if (!agentId && !region) return null;
   return (
-    <div className="mt-2 flex flex-wrap gap-3 text-xs text-orange-700">
+    <div className="mt-2 flex flex-wrap gap-3 text-xs text-orange-700 dark:text-orange-300">
       {agentId && (
         <span>
           <span className="font-medium">Agent ID:</span>{" "}
@@ -217,7 +217,7 @@ export default function AuditTrailPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <ScrollText size={20} className="text-violet-600" />
+            <ScrollText size={20} className="text-violet-600 dark:text-violet-400" />
             <Heading level={1}>Audit Trail</Heading>
           </div>
           <p className="mt-0.5 text-sm text-text-secondary">Complete audit trail of platform activity</p>
@@ -319,7 +319,7 @@ export default function AuditTrailPage() {
 
         {/* Error */}
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-300">
             {error}
           </div>
         )}

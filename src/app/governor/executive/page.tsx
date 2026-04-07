@@ -139,7 +139,7 @@ export default function ExecutiveDashboardPage() {
                 <Shield size={14} className="text-text-tertiary" />
                 <SectionHeading className="text-xs">Compliance</SectionHeading>
               </div>
-              <p className={`text-3xl font-bold ${(posture?.complianceRate ?? 0) >= 80 ? "text-green-700" : (posture?.complianceRate ?? 0) >= 60 ? "text-amber-600" : "text-red-600"}`}>
+              <p className={`text-3xl font-bold ${(posture?.complianceRate ?? 0) >= 80 ? "text-green-700 dark:text-emerald-300" : (posture?.complianceRate ?? 0) >= 60 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>
                 {posture?.complianceRate !== null && posture?.complianceRate !== undefined
                   ? `${posture.complianceRate.toFixed(0)}%`
                   : "–"}
@@ -171,7 +171,7 @@ export default function ExecutiveDashboardPage() {
                 <AlertTriangle size={14} className="text-text-tertiary" />
                 <SectionHeading className="text-xs">At-Risk Agents</SectionHeading>
               </div>
-              <p className={`text-3xl font-bold ${(posture?.atRiskCount ?? 0) > 0 ? "text-red-600" : "text-green-700"}`}>
+              <p className={`text-3xl font-bold ${(posture?.atRiskCount ?? 0) > 0 ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-emerald-300"}`}>
                 {posture?.atRiskCount ?? "–"}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">governance violations or health issues</p>
@@ -183,7 +183,7 @@ export default function ExecutiveDashboardPage() {
                 <TrendingUp size={14} className="text-text-tertiary" />
                 <SectionHeading className="text-xs">Avg Quality</SectionHeading>
               </div>
-              <p className={`text-3xl font-bold ${(latest?.avgQualityScore ?? 0) >= 80 ? "text-green-700" : (latest?.avgQualityScore ?? 0) >= 60 ? "text-amber-600" : "text-text-tertiary"}`}>
+              <p className={`text-3xl font-bold ${(latest?.avgQualityScore ?? 0) >= 80 ? "text-green-700 dark:text-emerald-300" : (latest?.avgQualityScore ?? 0) >= 60 ? "text-amber-600 dark:text-amber-400" : "text-text-tertiary"}`}>
                 {latest?.avgQualityScore !== null && latest?.avgQualityScore !== undefined ? `${Math.round(latest.avgQualityScore)}/100` : "–"}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">design-time score · {latest?.weekStart ?? "no data"}</p>
@@ -279,7 +279,7 @@ export default function ExecutiveDashboardPage() {
           <div className="rounded-xl border border-border bg-surface p-5">
             <div className="flex items-center justify-between mb-3">
               <SectionHeading>Recent Alerts</SectionHeading>
-              <Link href="/governor/audit" className="text-xs text-violet-600 hover:underline print:hidden">View audit log →</Link>
+              <Link href="/governor/audit" className="text-xs text-violet-600 dark:text-violet-400 hover:underline print:hidden">View audit log →</Link>
             </div>
             {alerts.length === 0 ? (
               <EmptyState

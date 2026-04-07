@@ -82,21 +82,21 @@ function timeAgo(dateStr: string): string {
 function HealthBadge({ status, errorCount }: { status: "clean" | "degraded" | "critical" | "unknown"; errorCount: number }) {
   if (status === "clean") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-emerald-900/40 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-emerald-300">
         ✓ Clean
       </span>
     );
   }
   if (status === "degraded") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
         ⚠ Degraded
       </span>
     );
   }
   if (status === "critical") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 dark:bg-red-900/40 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:text-red-300">
         ! {errorCount} Error{errorCount === 1 ? "" : "s"}
       </span>
     );
@@ -161,6 +161,7 @@ export default function MonitorPage() {
   // P1-33: Per-agent alert acknowledgement — client-side, browser-local
   const ACK_KEY = "monitor-ack";
   const [acknowledgedAgentIds, setAcknowledgedAgentIds] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set<string>();
     try {
       const raw = localStorage.getItem("monitor-ack");
       return raw ? new Set<string>(JSON.parse(raw) as string[]) : new Set<string>();
@@ -279,7 +280,7 @@ export default function MonitorPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <Activity size={20} className="text-violet-600" />
+            <Activity size={20} className="text-violet-600 dark:text-violet-400" />
             <Heading level={1}>Deployment Monitor</Heading>
           </div>
           <p className="mt-0.5 text-sm text-text-secondary">Real-time agent health and performance</p>
@@ -323,22 +324,22 @@ export default function MonitorPage() {
           label="Clean"
           value={summary.clean}
           sub="passing all policies"
-          color="bg-green-50 border border-green-200 text-green-900"
-          subColor="text-green-600"
+          color="bg-green-50 dark:bg-emerald-950/30 border border-green-200 dark:border-emerald-800 text-green-900 dark:text-emerald-100"
+          subColor="text-green-600 dark:text-emerald-400"
         />
         <KpiCard
           label="Degraded"
           value={summary.degraded}
           sub="production issues detected"
-          color={summary.degraded > 0 ? "bg-amber-50 border border-amber-200 text-amber-900" : "bg-surface border border-border text-text"}
-          subColor={summary.degraded > 0 ? "text-amber-600" : "text-text-secondary"}
+          color={summary.degraded > 0 ? "bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-100" : "bg-surface border border-border text-text"}
+          subColor={summary.degraded > 0 ? "text-amber-600 dark:text-amber-400" : "text-text-secondary"}
         />
         <KpiCard
           label="Critical"
           value={summary.critical}
           sub="governance errors found"
-          color={summary.critical > 0 ? "bg-red-50 border border-red-200 text-red-900" : "bg-surface border border-border text-text"}
-          subColor={summary.critical > 0 ? "text-red-600" : "text-text-secondary"}
+          color={summary.critical > 0 ? "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-900 dark:text-red-100" : "bg-surface border border-border text-text"}
+          subColor={summary.critical > 0 ? "text-red-600 dark:text-red-400" : "text-text-secondary"}
         />
         <KpiCard
           label="Not Checked"
@@ -400,7 +401,7 @@ export default function MonitorPage() {
               {filtered.length !== agents.length && ` (filtered from ${agents.length})`}
             </span>
             {acknowledgedAgentIds.size > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-xs font-medium text-green-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 dark:bg-emerald-950/30 border border-green-200 dark:border-emerald-800 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-emerald-300">
                 <CheckCircle2 className="h-3 w-3" />
                 {acknowledgedAgentIds.size} acknowledged
               </span>
@@ -476,7 +477,7 @@ export default function MonitorPage() {
                         <div className="flex flex-wrap gap-1">
                           <HealthBadge status={agent.healthStatus} errorCount={agent.errorCount} />
                           {agent.governanceDrift?.status === "drifted" && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
                               ⚠ Drifted
                             </span>
                           )}
@@ -484,14 +485,14 @@ export default function MonitorPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         {agent.errorCount > 0 ? (
-                          <span className="font-semibold text-red-600">{agent.errorCount}</span>
+                          <span className="font-semibold text-red-600 dark:text-red-400">{agent.errorCount}</span>
                         ) : (
                           <span className="text-text-tertiary">—</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
                         {agent.warningCount > 0 ? (
-                          <span className="text-amber-600">{agent.warningCount}</span>
+                          <span className="text-amber-600 dark:text-amber-400">{agent.warningCount}</span>
                         ) : (
                           <span className="text-text-tertiary">—</span>
                         )}
@@ -524,8 +525,8 @@ export default function MonitorPage() {
                               onClick={() => toggleAckAgent(agent.agentId)}
                               className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors ${
                                 isAcked
-                                  ? "border-green-200 bg-surface text-green-700 hover:border-red-200 hover:text-red-600"
-                                  : "border-border bg-surface text-text-secondary hover:border-green-300 hover:text-green-700"
+                                  ? "border-green-200 dark:border-emerald-800 bg-surface text-green-700 dark:text-emerald-300 hover:border-red-200 dark:hover:border-red-800 hover:text-red-600 dark:hover:text-red-400"
+                                  : "border-border bg-surface text-text-secondary hover:border-green-300 dark:hover:border-emerald-700 hover:text-green-700 dark:hover:text-emerald-300"
                               }`}
                               title={isAcked ? "Un-acknowledge alert" : "Acknowledge — mark as known/accepted"}
                             >
@@ -537,7 +538,7 @@ export default function MonitorPage() {
                             <button
                               onClick={() => checkOneMutation.mutate(agent.agentId)}
                               disabled={isChecking || checkingAll}
-                              className="text-xs text-blue-600 hover:underline disabled:opacity-40"
+                              className="text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-40"
                             >
                               {isChecking ? (
                                 <span className="inline-flex items-center gap-1">
@@ -578,9 +579,9 @@ export default function MonitorPage() {
         <div className="mt-8">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Cpu size={18} className="text-violet-600" />
+              <Cpu size={18} className="text-violet-600 dark:text-violet-400" />
               <SectionHeading className="text-base">AgentCore Live Status</SectionHeading>
-              <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+              <span className="rounded-full bg-violet-100 dark:bg-violet-900/40 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">
                 AWS Bedrock
               </span>
             </div>
@@ -588,7 +589,7 @@ export default function MonitorPage() {
               <button
                 onClick={handleCheckAgcHealth}
                 disabled={checkingAgc}
-                className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-3 py-2 text-sm font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-100 disabled:opacity-50 transition-colors"
               >
                 {checkingAgc ? (
                   <>
@@ -603,7 +604,7 @@ export default function MonitorPage() {
           </div>
 
           {agcError && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mb-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300">
               {agcError}
             </div>
           )}
@@ -625,12 +626,12 @@ export default function MonitorPage() {
                   <div className="text-2xl font-bold text-text">{agcSummary.total}</div>
                   <div className="mt-0.5 text-xs text-text-secondary">AgentCore agents</div>
                 </div>
-                <div className={`rounded-xl border p-4 ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "border-green-200 bg-green-50" : "border-border bg-surface"}`}>
-                  <div className={`text-2xl font-bold ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "text-green-700" : "text-text"}`}>{agcSummary.prepared}</div>
+                <div className={`rounded-xl border p-4 ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30" : "border-border bg-surface"}`}>
+                  <div className={`text-2xl font-bold ${agcSummary.prepared === agcSummary.total && agcSummary.total > 0 ? "text-green-700 dark:text-emerald-300" : "text-text"}`}>{agcSummary.prepared}</div>
                   <div className="mt-0.5 text-xs text-text-secondary">PREPARED (callable)</div>
                 </div>
-                <div className={`rounded-xl border p-4 ${agcSummary.unreachable > 0 ? "border-red-200 bg-red-50" : "border-border bg-surface"}`}>
-                  <div className={`text-2xl font-bold ${agcSummary.unreachable > 0 ? "text-red-700" : "text-text"}`}>{agcSummary.unreachable}</div>
+                <div className={`rounded-xl border p-4 ${agcSummary.unreachable > 0 ? "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30" : "border-border bg-surface"}`}>
+                  <div className={`text-2xl font-bold ${agcSummary.unreachable > 0 ? "text-red-700 dark:text-red-300" : "text-text"}`}>{agcSummary.unreachable}</div>
                   <div className="mt-0.5 text-xs text-text-secondary">Unreachable</div>
                 </div>
               </div>
@@ -681,7 +682,7 @@ export default function MonitorPage() {
 function BedrockStatusBadge({ status }: { status: BedrockAgentStatus }) {
   if (status === "PREPARED") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-emerald-900/40 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-emerald-300">
         <CheckCircle2 size={14} />
         PREPARED
       </span>
@@ -689,7 +690,7 @@ function BedrockStatusBadge({ status }: { status: BedrockAgentStatus }) {
   }
   if (status === "PREPARING" || status === "CREATING") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
         <Clock size={14} />
         {status}
       </span>
@@ -697,7 +698,7 @@ function BedrockStatusBadge({ status }: { status: BedrockAgentStatus }) {
   }
   if (status === "FAILED" || status === "UNREACHABLE") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 dark:bg-red-900/40 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:text-red-300">
         <AlertCircle size={14} />
         {status}
       </span>

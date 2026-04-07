@@ -53,12 +53,12 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
+  dividerBefore?: boolean; // Adds a subtle divider before this item
 }
 
 interface NavSection {
   label?: string;
   items: NavItem[];
-  roles?: string[];
 }
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
@@ -97,21 +97,35 @@ function getNavSections(role: string | null | undefined): NavSection[] {
     },
   ];
 
-  if (isReviewer || isViewer) {
+  // Governance section: reviewers and compliance officers see the full governor
+  // suite; viewers see a simplified read-only set. Previously this showed both
+  // the simple /governance pages AND the /governor/* pages for compliance
+  // officers, creating duplicate "Policies" and "Compliance" entries.
+  //
+  // For reviewers, items are visually grouped with subtle dividers:
+  //   Review: Review Queue, Approvals
+  //   Policy: Policies, Compliance
+  //   Oversight: Fleet, Calendar, Audit, Executive
+  if (isReviewer) {
     sections.push({
       label: "Governance",
       items: [
-        ...(isReviewer ? [{ label: "Review Queue", href: "/review", icon: ClipboardList }] : []),
-        ...(isCompliance || isViewer ? [{ label: "Policies", href: "/governance", icon: Shield }] : []),
-        ...(isCompliance || isViewer ? [{ label: "Compliance", href: "/compliance", icon: CheckSquare }] : []),
-        // Governor sub-items (only for reviewer/compliance roles)
-        ...(isReviewer ? [{ label: "Approvals", href: "/governor/approvals", icon: ClipboardList }] : []),
-        ...(isReviewer ? [{ label: "Policies", href: "/governor/policies", icon: Shield }] : []),
-        ...(isReviewer ? [{ label: "Compliance", href: "/governor/compliance", icon: CheckSquare }] : []),
-        ...(isReviewer ? [{ label: "Calendar", href: "/governor/calendar", icon: Calendar }] : []),
-        ...(isReviewer ? [{ label: "Fleet", href: "/governor/fleet", icon: Monitor }] : []),
-        ...(isReviewer ? [{ label: "Audit", href: "/governor/audit", icon: ScrollText }] : []),
-        ...(isReviewer ? [{ label: "Executive", href: "/governor/executive", icon: BarChart3 }] : []),
+        { label: "Review Queue", href: "/review", icon: ClipboardList },
+        { label: "Approvals", href: "/governor/approvals", icon: ClipboardList },
+        { label: "Policies", href: "/governor/policies", icon: Shield, dividerBefore: true },
+        { label: "Compliance", href: "/governor/compliance", icon: CheckSquare },
+        { label: "Fleet", href: "/governor/fleet", icon: Monitor, dividerBefore: true },
+        { label: "Calendar", href: "/governor/calendar", icon: Calendar },
+        { label: "Audit", href: "/governor/audit", icon: ScrollText },
+        { label: "Executive", href: "/governor/executive", icon: BarChart3 },
+      ],
+    });
+  } else if (isViewer) {
+    sections.push({
+      label: "Governance",
+      items: [
+        { label: "Policies", href: "/governance", icon: Shield },
+        { label: "Compliance", href: "/compliance", icon: CheckSquare },
       ],
     });
   }
@@ -120,7 +134,6 @@ function getNavSections(role: string | null | undefined): NavSection[] {
   if (isReviewer) opsItems.push({ label: "Deploy", href: "/deploy", icon: Rocket });
   if (isReviewer || isViewer) opsItems.push({ label: "Monitor", href: "/monitor", icon: Activity });
   if (isCompliance || isViewer) opsItems.push({ label: "Analytics", href: "/dashboard", icon: BarChart3 });
-  if (isCompliance || isViewer) opsItems.push({ label: "Audit Trail", href: "/audit", icon: ScrollText });
 
   if (opsItems.length > 0) {
     sections.push({ label: "Operate", items: opsItems });
@@ -255,6 +268,9 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
                 const Icon = item.icon;
                 return (
                   <li key={item.href}>
+                    {item.dividerBefore && (
+                      <div className="my-1.5 mx-2 h-px" style={{ backgroundColor: "var(--sidebar-border)", opacity: 0.4 }} />
+                    )}
                     <Link
                       href={item.href}
                       aria-current={active ? "page" : undefined}

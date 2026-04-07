@@ -34,12 +34,13 @@ export default function ApiKeysPage() {
   const [form, setForm] = useState({ name: "", scopes: [] as string[] });
   const [revokeTarget, setRevokeTarget] = useState<ApiKey | null>(null);
   const [revoking, setRevoking] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/api-keys")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error("Failed"); return r.json(); })
       .then((d) => { setKeys(d.keys ?? []); setValidScopes(d.validScopes ?? []); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(() => { setFetchError(true); setLoading(false); });
   }, []);
 
   async function handleCreate() {
@@ -95,7 +96,7 @@ export default function ApiKeysPage() {
 
       <div>
         <Heading level={1} className="flex items-center gap-2">
-          <Key className="h-6 w-6 text-violet-600" />
+          <Key className="h-6 w-6 text-violet-600 dark:text-violet-400" />
           API Keys
         </Heading>
         <p className="text-sm text-text-secondary mt-1">
@@ -105,20 +106,20 @@ export default function ApiKeysPage() {
 
       {/* New key reveal */}
       {newKey && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 space-y-3">
-          <div className="flex items-center gap-2 text-amber-700 font-medium">
+        <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-5 space-y-3">
+          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-medium">
             <AlertTriangle className="h-4 w-4" />
             Copy your new API key — it will not be shown again
           </div>
-          <div className="flex items-center gap-2 font-mono text-sm bg-surface border border-amber-200 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 font-mono text-sm bg-surface border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
             <span className="flex-1 text-text truncate">{newKey.key}</span>
             <Tooltip content={copied ? "Copied" : "Copy to clipboard"}>
-              <button onClick={handleCopy} className="text-amber-600 hover:text-amber-800 transition-colors">
+              <button onClick={handleCopy} className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 rounded">
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </button>
             </Tooltip>
           </div>
-          <button onClick={() => setNewKey(null)} className="text-sm text-amber-700 underline">
+          <button onClick={() => setNewKey(null)} className="text-sm text-amber-700 dark:text-amber-300 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 rounded">
             {"I've copied my key"}
           </button>
         </div>
@@ -147,9 +148,9 @@ export default function ApiKeysPage() {
                   <button
                     key={scope}
                     onClick={() => toggleScope(scope)}
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 ${
                       form.scopes.includes(scope)
-                        ? "bg-violet-100 text-violet-700 border border-violet-300"
+                        ? "bg-violet-100 text-violet-700 dark:text-violet-300 border border-violet-300"
                         : "bg-surface-muted text-text-secondary border border-border hover:border-violet-300"
                     }`}
                   >
@@ -174,7 +175,13 @@ export default function ApiKeysPage() {
       <section className="space-y-2">
         <Heading level={2} className="font-medium">Active Keys</Heading>
         {loading && <SkeletonList rows={3} height="h-14" />}
-        {!loading && keys.length === 0 && (
+        {!loading && fetchError && (
+          <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-6 text-center">
+            <p className="text-sm font-medium text-red-700 dark:text-red-300">Unable to load API keys</p>
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">Please try again later.</p>
+          </div>
+        )}
+        {!loading && !fetchError && keys.length === 0 && (
           <EmptyState icon={Key} heading="No API keys yet" subtext="Create one above to start using the Intellios API." />
         )}
         {keys.map((k) => (
@@ -204,7 +211,7 @@ export default function ApiKeysPage() {
             <Tooltip content="Revoke key">
               <button
                 onClick={() => setRevokeTarget(k)}
-                className="text-text-tertiary hover:text-red-500 transition-colors"
+                className="text-text-tertiary hover:text-red-500 dark:hover:text-red-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 rounded"
                 title="Revoke key"
                 aria-label="Revoke key"
               >

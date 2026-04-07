@@ -241,7 +241,7 @@ function RuleRow({
           <button
             type="button"
             onClick={onRemove}
-            className="text-xs text-text-tertiary hover:text-red-500 transition-colors"
+            className="text-xs text-text-tertiary hover:text-red-500 dark:hover:text-red-400 transition-colors"
           >
             Remove
           </button>
@@ -384,16 +384,16 @@ function RuntimeRuleRow({
   const opDef = RUNTIME_OPERATORS.find((o) => o.value === rule.operator);
 
   return (
-    <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 space-y-3">
+    <div className="rounded-lg border border-blue-100 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 px-4 py-3 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-blue-500 uppercase tracking-wider">
+        <span className="text-xs font-medium text-blue-500 dark:text-blue-400 uppercase tracking-wider">
           Runtime Rule {index + 1}
         </span>
         {!readOnly && (
           <button
             type="button"
             onClick={onRemove}
-            className="text-xs text-text-tertiary hover:text-red-500 transition-colors"
+            className="text-xs text-text-tertiary hover:text-red-500 dark:hover:text-red-400 transition-colors"
           >
             Remove
           </button>
@@ -853,7 +853,7 @@ export default function PolicyForm({
                     return (
                       <span
                         key={id}
-                        className="inline-flex items-center rounded-full bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700"
+                        className="inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:text-indigo-300"
                       >
                         {agent?.name ?? id.slice(0, 8) + "…"}
                       </span>
@@ -928,7 +928,7 @@ export default function PolicyForm({
                           key={agent.agentId}
                           className={`flex items-center gap-3 rounded-lg border px-3 py-2 cursor-pointer transition-colors ${
                             selected
-                              ? "border-indigo-200 bg-indigo-50"
+                              ? "border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/30"
                               : "border-transparent hover:border-border hover:bg-surface"
                           }`}
                         >
@@ -1071,7 +1071,7 @@ export default function PolicyForm({
                 type="button"
                 onClick={handleSimulate}
                 disabled={simulating || rules.length === 0}
-                className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700 hover:bg-purple-100 disabled:opacity-50 transition-colors"
+                className="rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/30 px-3 py-1.5 text-sm font-medium text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 disabled:opacity-50 transition-colors"
               >
                 {simulating ? "Analyzing…" : "Preview Impact"}
               </button>

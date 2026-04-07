@@ -27,7 +27,7 @@ export default function GlobalError({ error, reset }: ErrorPageProps) {
         </div>
 
         {/* Status */}
-        <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-red-500">
+        <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-red-500 dark:text-red-400">
           Error
         </p>
 

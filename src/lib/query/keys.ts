@@ -57,6 +57,12 @@ export const queryKeys = {
     board: () => ["pipeline", "board"] as const,
   },
 
+  // ── Dashboard ─────────────────────────────────────────────────────────────────
+  dashboard: {
+    summary: () => ["dashboard", "summary"] as const,
+    briefing: () => ["dashboard", "briefing"] as const,
+  },
+
   // ── Current user ─────────────────────────────────────────────────────────────
   me: () => ["me"] as const,
 } as const;

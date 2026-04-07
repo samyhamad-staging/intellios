@@ -96,8 +96,8 @@ function InvitePage() {
 
           {status === "invalid" && (
             <div className="text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 mx-auto">
-                <svg className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/30 mx-auto">
+                <svg className="h-6 w-6 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
@@ -116,8 +116,8 @@ function InvitePage() {
 
           {status === "success" && (
             <div className="text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-50 mx-auto">
-                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-50 dark:bg-emerald-950/30 mx-auto">
+                <svg className="h-6 w-6 text-green-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
@@ -138,7 +138,7 @@ function InvitePage() {
             <>
               {/* P2-91: Trust banner — inviter name + enterprise name */}
               {(inviterName || enterpriseName) && (
-                <div className="mb-5 rounded-lg bg-indigo-50 border border-indigo-100 px-4 py-3">
+                <div className="mb-5 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800 px-4 py-3">
                   <p className="text-sm text-indigo-800">
                     {inviterName && enterpriseName ? (
                       <>
@@ -226,7 +226,7 @@ function InvitePage() {
                 </FormField>
 
                 {formError && (
-                  <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>
+                  <p className="rounded-lg bg-red-50 dark:bg-red-950/30 px-3 py-2 text-sm text-red-700 dark:text-red-300">{formError}</p>
                 )}
 
                 <button

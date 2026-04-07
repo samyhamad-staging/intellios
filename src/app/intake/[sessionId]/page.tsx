@@ -399,9 +399,9 @@ export default function IntakeSessionPage({
   if (phase === "review") {
     const scoreColor =
       intakeScore?.overallScore == null ? "text-text-tertiary"
-      : intakeScore.overallScore >= 70 ? "text-green-700"
-      : intakeScore.overallScore >= 50 ? "text-amber-700"
-      : "text-red-700";
+      : intakeScore.overallScore >= 70 ? "text-green-700 dark:text-emerald-300"
+      : intakeScore.overallScore >= 50 ? "text-amber-700 dark:text-amber-300"
+      : "text-red-700 dark:text-red-300";
 
     return (
       <div className="flex h-screen flex-col">
@@ -473,7 +473,7 @@ export default function IntakeSessionPage({
                                   style={{ width: `${(val / 5) * 100}%` }}
                                 />
                               </div>
-                              <span className={`w-8 shrink-0 text-right text-xs font-medium ${below ? "text-amber-600" : "text-text"}`}>
+                              <span className={`w-8 shrink-0 text-right text-xs font-medium ${below ? "text-amber-600 dark:text-amber-400" : "text-text"}`}>
                                 {d.value != null ? `${d.value.toFixed(1)}` : "—"}
                               </span>
                             </div>
@@ -482,7 +482,7 @@ export default function IntakeSessionPage({
                         );
                       })}
                       {hasLowScore && (
-                        <p className="mt-1 text-xs text-amber-600 border-t border-border pt-2">
+                        <p className="mt-1 text-xs text-amber-600 dark:text-amber-400 border-t border-border pt-2">
                           Some areas need more depth — continue the conversation to strengthen coverage.
                         </p>
                       )}
@@ -491,7 +491,7 @@ export default function IntakeSessionPage({
                 })()}
               </div>
             ) : null}
-            <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+            <span className="rounded-full bg-green-100 dark:bg-emerald-900/40 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-emerald-300">
               Complete
             </span>
             </div>

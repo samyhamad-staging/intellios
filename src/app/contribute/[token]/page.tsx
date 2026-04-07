@@ -160,8 +160,8 @@ function CompletedPage({
     completed: "bg-green-500", pending: "bg-amber-400", expired: "bg-text-tertiary",
   };
   const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-    completed: { label: "Contributed", color: "text-green-600" },
-    pending: { label: "Pending", color: "text-amber-600" },
+    completed: { label: "Contributed", color: "text-green-600 dark:text-emerald-400" },
+    pending: { label: "Pending", color: "text-amber-600 dark:text-amber-400" },
     expired: { label: "Expired", color: "text-text-tertiary" },
   };
 
@@ -176,7 +176,7 @@ function CompletedPage({
       </header>
 
       <div className="mx-auto max-w-2xl w-full px-6 py-12 text-center">
-        <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl">
+        <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-emerald-900/40 text-3xl">
           ✓
         </div>
         <Heading level={1} className="mb-2">

@@ -50,6 +50,7 @@ function SimulatePanelInner({
   // P1-32: Saved scenario library — browser-local, keyed by blueprintId
   const SCENARIOS_KEY = `sim-scenarios-${blueprintId}`;
   const [scenarios, setScenarios] = useState<SavedScenario[]>(() => {
+    if (typeof window === "undefined") return [];
     try {
       const raw = localStorage.getItem(`sim-scenarios-${blueprintId}`);
       return raw ? (JSON.parse(raw) as SavedScenario[]) : [];
@@ -130,7 +131,7 @@ function SimulatePanelInner({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-text">
-              Simulating: <span className="text-violet-700">{displayName}</span>
+              Simulating: <span className="text-violet-700 dark:text-violet-300">{displayName}</span>
               <span className="ml-1.5 text-xs font-normal text-text-tertiary">v{version}</span>
             </p>
             <p className="mt-0.5 text-xs text-text-tertiary">
@@ -157,7 +158,7 @@ function SimulatePanelInner({
         {scenarios.length === 0 && !addingScenario ? (
           <button
             onClick={() => setAddingScenario(true)}
-            className="text-xs text-text-tertiary hover:text-violet-600 transition-colors"
+            className="text-xs text-text-tertiary hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
           >
             + Save a test scenario
           </button>
@@ -166,19 +167,19 @@ function SimulatePanelInner({
             {scenarios.map((s) => (
               <div
                 key={s.id}
-                className="group flex items-center gap-0.5 rounded-full border border-violet-200 bg-violet-50 pl-2.5 pr-1.5 py-0.5"
+                className="group flex items-center gap-0.5 rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 pl-2.5 pr-1.5 py-0.5"
               >
                 <button
                   onClick={() => handleSend(s.text)}
-                  className="max-w-32 truncate text-xs font-medium text-violet-700 hover:text-violet-900 transition-colors"
+                  className="max-w-32 truncate text-xs font-medium text-violet-700 dark:text-violet-300 hover:text-violet-900 transition-colors"
                   title={s.text}
                 >
                   {s.label}
                 </button>
                 <button
                   onClick={() => deleteScenario(s.id)}
-                  className="ml-0.5 shrink-0 text-violet-300 opacity-0 hover:text-red-500 group-hover:opacity-100 transition-opacity"
-                  title="Remove scenario"
+                  className="ml-0.5 shrink-0 text-violet-300 opacity-0 hover:text-red-500 dark:hover:text-red-400 group-hover:opacity-100 transition-opacity"
+                  title="Remove scenario" aria-label="Remove scenario"
                 >
                   <X size={10} />
                 </button>
@@ -187,7 +188,7 @@ function SimulatePanelInner({
             {!addingScenario && (
               <button
                 onClick={() => setAddingScenario(true)}
-                className="rounded-full border border-dashed border-border px-2.5 py-0.5 text-xs text-text-tertiary hover:border-violet-300 hover:text-violet-600 transition-colors"
+                className="rounded-full border border-dashed border-border px-2.5 py-0.5 text-xs text-text-tertiary hover:border-violet-300 dark:hover:border-violet-700 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
               >
                 + Add
               </button>
@@ -236,7 +237,7 @@ function SimulatePanelInner({
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
-            <div className="rounded-full bg-violet-50 p-4 mb-3">
+            <div className="rounded-full bg-violet-50 dark:bg-violet-950/30 p-4 mb-3">
               <svg className="h-6 w-6 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
@@ -317,7 +318,7 @@ export function SimulatePanel(props: SimulatePanelProps) {
               onClick={() => switchVersion(v)}
               className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
                 v.id === activeVersionId
-                  ? "bg-violet-100 text-violet-700 ring-1 ring-violet-300"
+                  ? "bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 ring-1 ring-violet-300 dark:ring-violet-700"
                   : "text-text-secondary hover:text-text hover:bg-surface-raised border border-border"
               }`}
             >
@@ -333,7 +334,7 @@ export function SimulatePanel(props: SimulatePanelProps) {
           onClick={() => setMode("chat")}
           className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
             mode === "chat"
-              ? "bg-violet-100 text-violet-700"
+              ? "bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300"
               : "text-text-secondary hover:text-text hover:bg-surface-raised"
           }`}
         >
@@ -343,7 +344,7 @@ export function SimulatePanel(props: SimulatePanelProps) {
           onClick={() => setMode("red-team")}
           className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
             mode === "red-team"
-              ? "bg-orange-100 text-orange-700"
+              ? "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300"
               : "text-text-secondary hover:text-text hover:bg-surface-raised"
           }`}
         >

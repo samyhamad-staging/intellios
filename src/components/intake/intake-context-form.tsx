@@ -117,7 +117,7 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
       <div className="mx-auto w-full max-w-2xl px-6 py-10">
         {/* Header */}
         <div className="mb-8">
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
             Step 1 of 3 — Context
           </div>
           <h2 className="text-2xl font-semibold text-text">Tell us about the agent you need</h2>
@@ -168,8 +168,8 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
                     onClick={() => setDeploymentType(opt.value)}
                     className={`rounded-lg border p-3 text-left transition-colors ${
                       deploymentType === opt.value
-                        ? "border-blue-500 bg-blue-50 text-blue-900"
-                        : "border-border bg-surface hover:border-border text-text-secondary"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-100"
+                        : "border-border bg-surface hover:border-primary-subtle text-text-secondary"
                     }`}
                   >
                     <div className="text-sm font-medium">{opt.label}</div>
@@ -197,8 +197,8 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
                     onClick={() => setDataSensitivity(opt.value)}
                     className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                       dataSensitivity === opt.value
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-border bg-surface hover:border-border"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                        : "border-border bg-surface hover:border-primary-subtle"
                     }`}
                   >
                     <div
@@ -237,7 +237,7 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
                       onClick={() => setRegulatoryScope((prev) => toggleArrayItem(prev, opt.value))}
                       className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                         selected
-                          ? "border-blue-500 bg-blue-50 text-blue-900"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-100"
                           : "border-border bg-surface text-text-secondary hover:border-border"
                       }`}
                     >
@@ -268,8 +268,8 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
                       onClick={() => setIntegrationTypes((prev) => toggleArrayItem(prev, opt.value))}
                       className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                         selected
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-border bg-surface hover:border-border"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                          : "border-border bg-surface hover:border-primary-subtle"
                       }`}
                     >
                       <div
@@ -310,7 +310,7 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
                       onClick={() => setStakeholdersConsulted((prev) => toggleArrayItem(prev, opt.value))}
                       className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                         selected
-                          ? "border-blue-500 bg-blue-50 text-blue-900"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-100"
                           : "border-border bg-surface text-text-secondary hover:border-border"
                       }`}
                     >
@@ -324,7 +324,7 @@ export function IntakeContextForm({ sessionId, onComplete }: IntakeContextFormPr
 
           {/* Error */}
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300">
               {error}
             </div>
           )}

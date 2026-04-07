@@ -95,10 +95,10 @@ function SLARemaining({ updatedAt }: { updatedAt: string }) {
   const slaDays = 3; // 3-day SLA
   const hoursRemaining = slaDays * 24 - hoursElapsed;
   if (hoursRemaining <= 0) {
-    return <span className="text-xs font-medium text-red-600">Overdue</span>;
+    return <span className="text-xs font-medium text-red-600 dark:text-red-400">Overdue</span>;
   }
   if (hoursRemaining < 24) {
-    return <span className="text-xs font-medium text-amber-600">{Math.round(hoursRemaining)}h left</span>;
+    return <span className="text-xs font-medium text-amber-600 dark:text-amber-400">{Math.round(hoursRemaining)}h left</span>;
   }
   return <span className="text-xs text-text-tertiary">{Math.round(hoursRemaining / 24)}d left</span>;
 }
@@ -149,14 +149,14 @@ export default function GovernorHomePage() {
           <div className="mb-1">
             <Link
               href={`/registry/${queue[0].agentId}?tab=review`}
-              className="flex items-center justify-between rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 hover:bg-violet-100 transition-colors group"
+              className="flex items-center justify-between rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-4 py-3 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors group"
             >
               <div>
-                <p className="text-xs font-semibold text-violet-700">Review next critical</p>
-                <p className="mt-0.5 text-sm font-medium text-violet-900 truncate max-w-xs">
+                <p className="text-xs font-semibold text-violet-700 dark:text-violet-300">Review next critical</p>
+                <p className="mt-0.5 text-sm font-medium text-violet-900 dark:text-violet-100 truncate max-w-xs">
                   {queue[0].name ?? `Agent ${queue[0].agentId.slice(0, 8)}`}
                 </p>
-                <p className="text-xs text-violet-500 mt-0.5">
+                <p className="text-xs text-violet-500 dark:text-violet-400 mt-0.5">
                   {(() => {
                     const h = Math.round((Date.now() - new Date(queue[0].updatedAt).getTime()) / 3_600_000);
                     const waited = h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`;
@@ -165,7 +165,7 @@ export default function GovernorHomePage() {
                   {queue.length > 1 && ` · ${queue.length - 1} more in queue`}
                 </p>
               </div>
-              <ArrowRight className="h-5 w-5 text-violet-400 group-hover:text-violet-600 shrink-0 transition-colors" />
+              <ArrowRight className="h-5 w-5 text-violet-400 group-hover:text-violet-600 dark:hover:text-violet-400 shrink-0 transition-colors" />
             </Link>
           </div>
         )}
@@ -176,7 +176,7 @@ export default function GovernorHomePage() {
           <div className="rounded-xl border border-border bg-surface p-5">
             <div className="flex items-center justify-between mb-4">
               <SectionHeading>Pending Approvals</SectionHeading>
-              <Link href="/governor/approvals" className="text-xs text-violet-600 hover:underline">View all →</Link>
+              <Link href="/governor/approvals" className="text-xs text-violet-600 dark:text-violet-400 hover:underline">View all →</Link>
             </div>
             {queue.length === 0 ? (
               <p className="text-sm text-text-tertiary">No blueprints awaiting review.</p>
@@ -186,7 +186,7 @@ export default function GovernorHomePage() {
                   <li key={bp.id} className="flex items-center justify-between">
                     <Link
                       href={`/registry/${bp.agentId}?tab=review`}
-                      className="text-sm font-medium text-text hover:text-violet-700 truncate max-w-[200px]"
+                      className="text-sm font-medium text-text hover:text-violet-700 dark:hover:text-violet-300 truncate max-w-[200px]"
                     >
                       {bp.name ?? `Agent ${bp.agentId.slice(0, 8)}`}
                     </Link>
@@ -208,7 +208,7 @@ export default function GovernorHomePage() {
           <div className="rounded-xl border border-border bg-surface p-5">
             <div className="flex items-center justify-between mb-4">
               <SectionHeading>Policy Health</SectionHeading>
-              <Link href="/governor/policies" className="text-xs text-violet-600 hover:underline">View all →</Link>
+              <Link href="/governor/policies" className="text-xs text-violet-600 dark:text-violet-400 hover:underline">View all →</Link>
             </div>
             {analytics === null ? (
               <p className="text-sm text-text-tertiary">Policy data unavailable.</p>
@@ -230,9 +230,9 @@ export default function GovernorHomePage() {
                 return (
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { label: "Active", value: activePolicies, color: "text-green-700" },
-                      { label: "Violated", value: recentViolations, color: recentViolations > 0 ? "text-red-600" : "text-text-secondary" },
-                      { label: "Stale", value: stalePolicies, color: stalePolicies > 0 ? "text-amber-600" : "text-text-secondary" },
+                      { label: "Active", value: activePolicies, color: "text-green-700 dark:text-emerald-300" },
+                      { label: "Violated", value: recentViolations, color: recentViolations > 0 ? "text-red-600 dark:text-red-400" : "text-text-secondary" },
+                      { label: "Stale", value: stalePolicies, color: stalePolicies > 0 ? "text-amber-600 dark:text-amber-400" : "text-text-secondary" },
                     ].map((kpi) => (
                       <div key={kpi.label} className="text-center">
                         <p className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</p>
@@ -249,7 +249,7 @@ export default function GovernorHomePage() {
           <div className="rounded-xl border border-border bg-surface p-5">
             <div className="flex items-center justify-between mb-4">
               <SectionHeading>Compliance KPIs</SectionHeading>
-              <Link href="/governor/compliance" className="text-xs text-violet-600 hover:underline">Details →</Link>
+              <Link href="/governor/compliance" className="text-xs text-violet-600 dark:text-violet-400 hover:underline">Details →</Link>
             </div>
             {posture === null ? (
               <p className="text-sm text-text-tertiary">Compliance data unavailable.</p>
@@ -266,9 +266,9 @@ export default function GovernorHomePage() {
                       <span className="text-sm text-text-secondary">Compliance rate</span>
                       <span className={`text-sm font-semibold ${
                         rate === null ? "text-text-tertiary"
-                        : rate >= 80 ? "text-green-700"
-                        : rate >= 60 ? "text-amber-600"
-                        : "text-red-600"
+                        : rate >= 80 ? "text-green-700 dark:text-emerald-300"
+                        : rate >= 60 ? "text-amber-600 dark:text-amber-400"
+                        : "text-red-600 dark:text-red-400"
                       }`}>
                         {rate !== null ? `${rate.toFixed(0)}%` : "—"}
                       </span>
@@ -279,7 +279,7 @@ export default function GovernorHomePage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-text-secondary">Critical</span>
-                      <span className={`text-sm font-semibold ${critical > 0 ? "text-red-600" : "text-text-tertiary"}`}>{critical}</span>
+                      <span className={`text-sm font-semibold ${critical > 0 ? "text-red-600 dark:text-red-400" : "text-text-tertiary"}`}>{critical}</span>
                     </div>
                   </div>
                 );
@@ -291,7 +291,7 @@ export default function GovernorHomePage() {
           <div className="rounded-xl border border-border bg-surface p-5">
             <div className="flex items-center justify-between mb-4">
               <SectionHeading>Audit Activity (24h)</SectionHeading>
-              <Link href="/governor/audit" className="text-xs text-violet-600 hover:underline">Full log →</Link>
+              <Link href="/governor/audit" className="text-xs text-violet-600 dark:text-violet-400 hover:underline">Full log →</Link>
             </div>
             {auditEntries.length === 0 ? (
               <p className="text-sm text-text-tertiary">No audit activity in the past 24 hours.</p>
@@ -324,7 +324,7 @@ export default function GovernorHomePage() {
               <SectionHeading className="flex items-center gap-1.5">
                 <TrendingUp size={12} /> Portfolio Trends (12 weeks)
               </SectionHeading>
-              <Link href="/governor/executive" className="text-xs text-violet-600 hover:underline">Executive view →</Link>
+              <Link href="/governor/executive" className="text-xs text-violet-600 dark:text-violet-400 hover:underline">Executive view →</Link>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {/* Compliance rate sparkline */}
@@ -381,7 +381,7 @@ export default function GovernorHomePage() {
                 <p className="mt-1 text-xs font-semibold text-text">
                   {trends[trends.length - 1]?.totalAgents ?? 0}
                   <span className="ml-1 font-normal text-text-tertiary">agents</span>
-                  <span className="ml-1 text-violet-600">
+                  <span className="ml-1 text-violet-600 dark:text-violet-400">
                     ({trends[trends.length - 1]?.deployedAgents ?? 0} deployed)
                   </span>
                 </p>

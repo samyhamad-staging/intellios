@@ -253,13 +253,13 @@ export function StakeholderContributionForm({ sessionId, onSubmitted, onCancel }
                 onChange={(e) => handleFieldChange(field.key, e.target.value)}
                 placeholder={field.placeholder}
                 rows={2}
-                className="w-full text-xs border border-border rounded px-2.5 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-violet-400 focus:border-violet-300 placeholder:text-text-disabled"
+                className="w-full text-xs border border-border rounded px-2.5 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-violet-400 focus:border-violet-300 dark:border-violet-700 placeholder:text-text-disabled"
               />
             </FormField>
           ))}
 
           {error && (
-            <p className="text-xs text-red-600">{error}</p>
+            <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
           )}
 
           <div className="flex gap-2">

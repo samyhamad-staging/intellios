@@ -29,9 +29,9 @@ const RACI_OPTIONS = [
 ] as const;
 
 const RACI_COLORS: Record<string, string> = {
-  accountable: "bg-violet-100 text-violet-700 border-violet-200",
-  responsible: "bg-blue-50 text-blue-700 border-blue-200",
-  consulted: "bg-green-50 text-green-700 border-green-200",
+  accountable: "bg-violet-100 text-violet-700 dark:text-violet-300 border-violet-200",
+  responsible: "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+  consulted: "bg-green-50 dark:bg-emerald-950/30 text-green-700 dark:text-emerald-300 border-green-200 dark:border-emerald-800",
   informed: "bg-surface-raised text-text-secondary border-border",
 };
 
@@ -180,7 +180,7 @@ export function StakeholderContributionsPanel({
 
       {/* AI Interview panel (designer-side) */}
       {aiInterviewDomain && (
-        <div className="mb-3 rounded-lg border border-violet-100 bg-violet-50/30 p-3">
+        <div className="mb-3 rounded-lg border border-violet-100 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 p-3">
           <StakeholderAIChat
             sessionId={sessionId}
             domain={aiInterviewDomain}
@@ -325,11 +325,11 @@ function DomainRow({
         <div className="flex items-center gap-1.5 shrink-0">
           {isCompleted && (
             <>
-              <span className="text-2xs text-green-600 font-medium">✓</span>
+              <span className="text-2xs text-green-600 dark:text-emerald-400 font-medium">✓</span>
               {contribution && (
                 <button
                   onClick={() => onExpandContribution(contribution.id)}
-                  className="text-2xs text-violet-500 hover:text-violet-700"
+                  className="text-2xs text-violet-500 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
                 >
                   {isExpanded ? "▲" : "View"}
                 </button>
@@ -338,7 +338,7 @@ function DomainRow({
           )}
           {isInvited && (
             <>
-              <span className="text-2xs text-amber-600">↻</span>
+              <span className="text-2xs text-amber-600 dark:text-amber-400">↻</span>
               <button
                 onClick={onOpenInviteForm}
                 className="rounded bg-surface-raised px-1.5 py-0.5 text-2xs text-text-secondary hover:bg-surface-muted transition-colors"
@@ -351,7 +351,7 @@ function DomainRow({
             <>
               <button
                 onClick={onOpenInviteForm}
-                className="rounded bg-violet-50 px-1.5 py-0.5 text-2xs font-medium text-violet-600 hover:bg-violet-100 transition-colors"
+                className="rounded bg-violet-50 dark:bg-violet-950/30 px-1.5 py-0.5 text-2xs font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-100 transition-colors"
               >
                 Invite
               </button>
@@ -455,7 +455,7 @@ function InviteForm({ domain, sessionId, existingEmail, onCreated, onClose }: In
   return (
     <form
       onSubmit={handleSubmit}
-      className="ml-2.5 mr-2 mb-2 rounded-lg border border-violet-100 bg-violet-50/40 p-3 space-y-2"
+      className="ml-2.5 mr-2 mb-2 rounded-lg border border-violet-100 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 p-3 space-y-2"
     >
       <p className="text-2xs font-semibold uppercase tracking-wider text-text-tertiary">
         Invite for {DOMAIN_LABELS[domain]}
@@ -467,7 +467,7 @@ function InviteForm({ domain, sessionId, existingEmail, onCreated, onClose }: In
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Email address *"
         required
-        className="w-full rounded border border-border bg-surface px-2.5 py-1.5 text-xs placeholder-text-tertiary focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-400"
+        className="w-full rounded border border-border bg-surface px-2.5 py-1.5 text-xs placeholder-text-tertiary focus:border-violet-300 dark:border-violet-700 focus:outline-none focus:ring-1 focus:ring-violet-400"
       />
 
       <div className="grid grid-cols-2 gap-1.5">
@@ -476,14 +476,14 @@ function InviteForm({ domain, sessionId, existingEmail, onCreated, onClose }: In
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name (optional)"
-          className="rounded border border-border bg-surface px-2.5 py-1.5 text-xs placeholder-text-tertiary focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-400"
+          className="rounded border border-border bg-surface px-2.5 py-1.5 text-xs placeholder-text-tertiary focus:border-violet-300 dark:border-violet-700 focus:outline-none focus:ring-1 focus:ring-violet-400"
         />
         <input
           type="text"
           value={roleTitle}
           onChange={(e) => setRoleTitle(e.target.value)}
           placeholder="Role title"
-          className="rounded border border-border bg-surface px-2.5 py-1.5 text-xs placeholder-text-tertiary focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-400"
+          className="rounded border border-border bg-surface px-2.5 py-1.5 text-xs placeholder-text-tertiary focus:border-violet-300 dark:border-violet-700 focus:outline-none focus:ring-1 focus:ring-violet-400"
         />
       </div>
 
@@ -505,7 +505,7 @@ function InviteForm({ domain, sessionId, existingEmail, onCreated, onClose }: In
         ))}
       </div>
 
-      {error && <p className="text-2xs text-red-500">{error}</p>}
+      {error && <p className="text-2xs text-red-500 dark:text-red-400">{error}</p>}
 
       <div className="flex items-center justify-between pt-0.5">
         <button
@@ -537,10 +537,10 @@ const INSIGHT_ICONS: Record<string, string> = {
 };
 
 const INSIGHT_COLORS: Record<string, string> = {
-  synthesis: "text-violet-600",
-  conflict: "text-amber-600",
-  gap: "text-orange-500",
-  suggestion: "text-blue-600",
+  synthesis: "text-violet-600 dark:text-violet-400",
+  conflict: "text-amber-600 dark:text-amber-400",
+  gap: "text-orange-500 dark:text-orange-400",
+  suggestion: "text-blue-600 dark:text-blue-400",
 };
 
 function InsightCard({
@@ -583,14 +583,14 @@ function InsightCard({
         {isSuggestInvite && onInvite ? (
           <button
             onClick={onInvite}
-            className="rounded bg-violet-50 px-2 py-0.5 text-2xs font-medium text-violet-600 hover:bg-violet-100 transition-colors"
+            className="rounded bg-violet-50 dark:bg-violet-950/30 px-2 py-0.5 text-2xs font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-100 transition-colors"
           >
             Invite
           </button>
         ) : insight.type === "suggestion" ? (
           <button
             onClick={onApprove}
-            className="rounded bg-violet-50 px-2 py-0.5 text-2xs font-medium text-violet-600 hover:bg-violet-100 transition-colors"
+            className="rounded bg-violet-50 dark:bg-violet-950/30 px-2 py-0.5 text-2xs font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-100 transition-colors"
           >
             Approve
           </button>

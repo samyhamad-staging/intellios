@@ -144,7 +144,7 @@ export function StakeholderAIChat({
                 ) : (
                   <>
                     <span className="text-2xs text-green-500">✓</span>
-                    <p className="text-2xs font-medium text-green-600">
+                    <p className="text-2xs font-medium text-green-600 dark:text-emerald-400">
                       Requirements captured
                     </p>
                   </>
@@ -208,7 +208,7 @@ export function StakeholderAIChat({
             onChange={(e) => setLocalInput(e.target.value)}
             placeholder="Type your response…"
             disabled={isLoading}
-            className="flex-1 rounded-lg border border-border px-2.5 py-1.5 text-xs placeholder-text-tertiary focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-400 disabled:opacity-50"
+            className="flex-1 rounded-lg border border-border px-2.5 py-1.5 text-xs placeholder-text-tertiary focus:border-violet-300 dark:border-violet-700 focus:outline-none focus:ring-1 focus:ring-violet-400 disabled:opacity-50"
           />
           <button
             type="submit"

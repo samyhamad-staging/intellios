@@ -36,9 +36,9 @@ const RACI_LABELS: Record<string, string> = {
 };
 
 const RACI_COLORS: Record<string, string> = {
-  accountable: "bg-violet-100 text-violet-700 border-violet-200",
-  responsible: "bg-blue-50 text-blue-700 border-blue-200",
-  consulted: "bg-green-50 text-green-700 border-green-200",
+  accountable: "bg-violet-100 text-violet-700 dark:text-violet-300 border-violet-200",
+  responsible: "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+  consulted: "bg-green-50 dark:bg-emerald-950/30 text-green-700 dark:text-emerald-300 border-green-200 dark:border-emerald-800",
   informed: "bg-surface-raised text-text-secondary border-border",
 };
 
@@ -53,8 +53,8 @@ const DOMAIN_LABELS: Record<string, string> = {
 };
 
 const STATUS_DISPLAY: Record<string, { label: string; color: string; dot: string }> = {
-  completed: { label: "Contributed", color: "text-green-600", dot: "bg-green-500" },
-  pending: { label: "Pending", color: "text-amber-600", dot: "bg-amber-400" },
+  completed: { label: "Contributed", color: "text-green-600 dark:text-emerald-400", dot: "bg-green-500" },
+  pending: { label: "Pending", color: "text-amber-600 dark:text-amber-400", dot: "bg-amber-400" },
   expired: { label: "Expired", color: "text-text-tertiary", dot: "bg-text-disabled" },
 };
 
@@ -142,7 +142,7 @@ export function StakeholderWorkspace({
             {/* AI Interview — takes 3/5 width */}
             <div className="lg:col-span-3">
               {/* P1-39: Stakeholder orientation banner */}
-              <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
+              <div className="mb-4 rounded-xl border border-blue-100 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 px-4 py-3">
                 <p className="text-sm font-medium text-blue-900">
                   You&apos;ve been invited to help design{" "}
                   <span className="font-semibold">{sessionContext.name}</span>
@@ -150,7 +150,7 @@ export function StakeholderWorkspace({
                     <> as the <span className="font-semibold">{roleTitle ?? domain}</span> expert</>
                   )}.
                 </p>
-                <p className="mt-1 text-xs text-blue-700">
+                <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
                   Your input on requirements, constraints, and policies will directly shape how this AI agent behaves in production.
                   This interview takes approximately 10 minutes.
                 </p>
@@ -249,13 +249,13 @@ function SubmittedState({
       {/* Success icon + header */}
       <div className="mb-8 text-center">
         <div className="relative inline-flex justify-center mb-5">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-emerald-900/40">
             <svg className="h-7 w-7 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
           {/* Subtle pulse ring */}
-          <div className="absolute inset-0 h-14 w-14 rounded-full border-2 border-green-300/50 animate-ping" />
+          <div className="absolute inset-0 h-14 w-14 rounded-full border-2 border-green-300 dark:border-emerald-700/50 animate-ping" />
         </div>
         <h2 className="text-xl font-semibold text-text">
           {inviteeName ? `Thanks, ${inviteeName}!` : "Contribution recorded"}
@@ -288,7 +288,7 @@ function SubmittedState({
             },
           ].map(({ step, title, detail }) => (
             <div key={step} className="flex gap-3">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-bold text-green-700">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-emerald-900/40 text-xs font-bold text-green-700 dark:text-emerald-300">
                 {step}
               </span>
               <div>

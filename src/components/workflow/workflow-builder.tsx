@@ -62,10 +62,10 @@ const NODE_HEIGHT = 56;
 const CANVAS_PADDING = 40;
 
 const NODE_STYLES: Record<CanvasNode["type"], { bg: string; border: string; text: string }> = {
-  start: { bg: "bg-slate-100", border: "border-slate-300", text: "text-slate-600" },
-  end: { bg: "bg-slate-100", border: "border-slate-300", text: "text-slate-600" },
-  agent: { bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-800" },
-  human_review: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-800" },
+  start: { bg: "bg-slate-100 dark:bg-slate-800/40", border: "border-slate-300 dark:border-slate-600", text: "text-slate-600 dark:text-slate-300" },
+  end: { bg: "bg-slate-100 dark:bg-slate-800/40", border: "border-slate-300 dark:border-slate-600", text: "text-slate-600 dark:text-slate-300" },
+  agent: { bg: "bg-violet-50 dark:bg-violet-950/30", border: "border-violet-200 dark:border-violet-800", text: "text-violet-800 dark:text-violet-200" },
+  human_review: { bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-800", text: "text-amber-800 dark:text-amber-200" },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -168,7 +168,7 @@ function EdgePath({ from, to, selected, onClick }: {
   const arrowY2 = endY - arrowSize * Math.sin(angle + Math.PI / 6);
 
   return (
-    <g onClick={onClick} className="cursor-pointer">
+    <g onClick={onClick} className="cursor-pointer" tabIndex={0} role="button" aria-label="Select edge" onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } }} style={{ outline: "none" }} focusable="true">
       {/* Invisible wider path for easier clicking */}
       <path d={path} fill="none" stroke="transparent" strokeWidth={12} />
       <path
@@ -395,13 +395,13 @@ export function WorkflowBuilder({
         <div className="flex items-center gap-2">
           <Subheading level={3} className="text-sm">Workflow Builder</Subheading>
           {validation.length > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-300">
               <AlertTriangle size={10} />
               {validation.length} issue{validation.length !== 1 ? "s" : ""}
             </span>
           )}
           {validation.length === 0 && nodes.filter((n) => n.type === "agent").length > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 text-xs text-emerald-700 dark:text-emerald-300">
               <CheckCircle2 size={10} />
               Valid
             </span>
@@ -412,14 +412,14 @@ export function WorkflowBuilder({
             <>
               <button
                 onClick={() => setShowAgentPicker(true)}
-                className="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 transition-colors"
+                className="inline-flex items-center gap-1 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-2.5 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-100 transition-colors"
               >
                 <Plus size={12} /> Agent
               </button>
               <button
                 onClick={addHumanReviewNode}
                 disabled={nodes.some((n) => n.type === "human_review")}
-                className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100 disabled:opacity-40 transition-colors"
+                className="inline-flex items-center gap-1 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 disabled:opacity-40 transition-colors"
               >
                 <Plus size={12} /> Review Gate
               </button>
@@ -427,7 +427,7 @@ export function WorkflowBuilder({
                 onClick={() => setShowContextEditor(!showContextEditor)}
                 className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   showContextEditor
-                    ? "border-blue-200 bg-blue-50 text-blue-700"
+                    ? "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300"
                     : "border-border text-text-secondary hover:bg-surface-raised"
                 }`}
               >
@@ -436,14 +436,14 @@ export function WorkflowBuilder({
             </>
           )}
           <div className="ml-2 flex items-center gap-0.5 border-l border-border pl-2">
-            <button onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))} className="rounded p-1 text-text-tertiary hover:text-text hover:bg-surface-muted" title="Zoom out">
+            <button onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))} className="rounded p-1 text-text-tertiary hover:text-text hover:bg-surface-muted" title="Zoom out" aria-label="Zoom out">
               <ZoomOut size={14} />
             </button>
             <span className="text-xs text-text-tertiary w-10 text-center">{Math.round(zoom * 100)}%</span>
-            <button onClick={() => setZoom((z) => Math.min(2, z + 0.1))} className="rounded p-1 text-text-tertiary hover:text-text hover:bg-surface-muted" title="Zoom in">
+            <button onClick={() => setZoom((z) => Math.min(2, z + 0.1))} className="rounded p-1 text-text-tertiary hover:text-text hover:bg-surface-muted" title="Zoom in" aria-label="Zoom in">
               <ZoomIn size={14} />
             </button>
-            <button onClick={() => setZoom(1)} className="rounded p-1 text-text-tertiary hover:text-text hover:bg-surface-muted" title="Reset zoom">
+            <button onClick={() => setZoom(1)} className="rounded p-1 text-text-tertiary hover:text-text hover:bg-surface-muted" title="Reset zoom" aria-label="Reset zoom">
               <Maximize2 size={14} />
             </button>
           </div>
@@ -552,8 +552,8 @@ export function WorkflowBuilder({
                   {/* Connect handle (right side) */}
                   {!readOnly && node.id !== "end" && (
                     <button
-                      className="absolute -right-2 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-white border-2 border-violet-300 hover:border-violet-500 hover:bg-violet-50 transition-colors z-20"
-                      title="Connect to another node"
+                      className="absolute -right-2 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-white dark:bg-slate-800 border-2 border-violet-300 dark:border-violet-700 hover:border-violet-500 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-colors z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+                      title="Connect to another node" aria-label="Connect to another node"
                       onMouseDown={(e) => { e.stopPropagation(); startConnect(node.id); }}
                     />
                   )}
@@ -561,9 +561,9 @@ export function WorkflowBuilder({
                   {/* Delete button */}
                   {!readOnly && isSelected && node.type !== "start" && node.type !== "end" && (
                     <button
-                      className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 z-20"
+                      className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 flex items-center justify-center hover:bg-red-200 z-20"
                       onClick={(e) => { e.stopPropagation(); removeNode(node.id); }}
-                      title="Remove node"
+                      title="Remove node" aria-label="Remove node"
                     >
                       <Trash2 size={10} />
                     </button>
@@ -590,7 +590,7 @@ export function WorkflowBuilder({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-text">Handoff Rule</span>
                   {!readOnly && (
-                    <button onClick={() => removeEdge(selectedEdgeData.id)} className="text-xs text-red-500 hover:text-red-700">
+                    <button onClick={() => removeEdge(selectedEdgeData.id)} className="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
                       Remove
                     </button>
                   )}
@@ -685,7 +685,7 @@ export function WorkflowBuilder({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-text">Shared Context</span>
                   {!readOnly && (
-                    <button onClick={addContextField} className="text-xs text-violet-600 hover:text-violet-700">
+                    <button onClick={addContextField} className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300">
                       + Add Field
                     </button>
                   )}
@@ -706,7 +706,7 @@ export function WorkflowBuilder({
                         className="flex-1 rounded border-none bg-transparent px-0 text-xs font-mono text-text focus:outline-none disabled:opacity-50"
                       />
                       {!readOnly && (
-                        <button onClick={() => removeContextField(i)} className="text-text-tertiary hover:text-red-500">
+                        <button onClick={() => removeContextField(i)} className="text-text-tertiary hover:text-red-500 dark:text-red-400">
                           <Trash2 size={10} />
                         </button>
                       )}
@@ -757,7 +757,7 @@ export function WorkflowBuilder({
                       onClick={() => addAgentNode(agent)}
                       className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-surface-muted transition-colors"
                     >
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-violet-50 text-violet-500">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-violet-50 dark:bg-violet-950/30 text-violet-500">
                         <Users size={12} />
                       </div>
                       <div>
@@ -780,10 +780,10 @@ export function WorkflowBuilder({
 
       {/* Validation errors */}
       {validation.length > 0 && (
-        <div className="border-t border-amber-200 bg-amber-50 px-4 py-2">
+        <div className="border-t border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-2">
           <div className="flex items-start gap-2">
-            <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber-600" />
-            <div className="text-xs text-amber-800">
+            <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="text-xs text-amber-800 dark:text-amber-200">
               {validation.map((err, i) => (
                 <span key={i}>{i > 0 ? " · " : ""}{err}</span>
               ))}

@@ -2,6 +2,7 @@
 
 import { use, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import {
@@ -18,8 +19,6 @@ import { BlueprintSummary } from "@/components/blueprint/blueprint-summary";
 import { StatusBadge } from "@/components/registry/status-badge";
 import { LifecycleControls } from "@/components/registry/lifecycle-controls";
 import { ValidationReportView } from "@/components/governance/validation-report";
-import { ReviewPanel } from "@/components/review/review-panel";
-import { RegulatoryPanel } from "@/components/registry/regulatory-panel";
 import { VersionDiff } from "@/components/registry/version-diff";
 import { ABP } from "@/lib/types/abp";
 import { ValidationReport } from "@/lib/governance/types";
@@ -28,13 +27,29 @@ import type { ApprovalChainStep, ApprovalStepRecord, EnterpriseSettings } from "
 import { SkeletonList } from "@/components/ui/skeleton";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 import type { TestCase, TestRun } from "@/lib/testing/types";
-import { SimulatePanel } from "@/components/registry/simulate-panel";
-import { QualityDashboard } from "@/components/blueprint/quality-dashboard";
 import DownloadEvidenceButton from "@/components/mrm/download-evidence-button";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 import { FormField } from "@/components/ui/form-field";
 import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/catalyst/description-list";
 import { InlineAlert } from "@/components/catalyst/alert";
+
+/* ── Lazy-loaded tab panels (only loaded when user navigates to the tab) ── */
+const ReviewPanel = dynamic(
+  () => import("@/components/review/review-panel").then(m => ({ default: m.ReviewPanel })),
+  { loading: () => <SkeletonList rows={4} height="h-12" /> }
+);
+const RegulatoryPanel = dynamic(
+  () => import("@/components/registry/regulatory-panel").then(m => ({ default: m.RegulatoryPanel })),
+  { loading: () => <SkeletonList rows={4} height="h-12" /> }
+);
+const SimulatePanel = dynamic(
+  () => import("@/components/registry/simulate-panel").then(m => ({ default: m.SimulatePanel })),
+  { loading: () => <SkeletonList rows={4} height="h-12" /> }
+);
+const QualityDashboard = dynamic(
+  () => import("@/components/blueprint/quality-dashboard").then(m => ({ default: m.QualityDashboard })),
+  { loading: () => <SkeletonList rows={4} height="h-12" /> }
+);
 
 interface CurrentUser {
   email: string;
@@ -586,8 +601,8 @@ export default function AgentDetailPage({
                   }
                   className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-2xs font-medium ${
                     healthData.healthStatus === "clean"
-                      ? "border-green-200 bg-green-50 text-green-700"
-                      : "border-red-200 bg-red-50 text-red-700"
+                      ? "border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 text-green-700 dark:text-emerald-300"
+                      : "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300"
                   }`}
                 >
                   <span
@@ -603,7 +618,7 @@ export default function AgentDetailPage({
                   href={`https://console.aws.amazon.com/bedrock/home?region=${latest.deploymentMetadata.region}#/agents/${latest.deploymentMetadata.agentId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-2xs font-semibold text-orange-700 hover:bg-orange-100 transition-colors"
+                  className="flex items-center gap-1 rounded-full border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 text-2xs font-semibold text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors"
                   title={`Deployed to Amazon Bedrock AgentCore in ${latest.deploymentMetadata.region}`}
                 >
                   AgentCore ↗
@@ -620,7 +635,7 @@ export default function AgentDetailPage({
                 return (
                   <>
                     {isOverdue ? (
-                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-2xs font-medium text-red-700">
+                      <span className="rounded-full bg-red-100 dark:bg-red-900/40 px-2 py-0.5 text-2xs font-medium text-red-700 dark:text-red-300">
                         Review Overdue
                       </span>
                     ) : (
@@ -733,8 +748,8 @@ export default function AgentDetailPage({
 
       {/* Orchestration Dependency Indicator */}
       {referencingWorkflows.length > 0 && (
-        <div className="border-b border-violet-100 bg-violet-50 px-6 py-2.5">
-          <div className="flex items-center gap-2 text-xs text-violet-800">
+        <div className="border-b border-violet-100 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-6 py-2.5">
+          <div className="flex items-center gap-2 text-xs text-violet-800 dark:text-violet-200">
             <GitBranch size={12} className="shrink-0" />
             <span>
               <span className="font-medium">Referenced in {referencingWorkflows.length} orchestration{referencingWorkflows.length !== 1 ? "s" : ""}</span>
@@ -742,7 +757,7 @@ export default function AgentDetailPage({
               {referencingWorkflows.slice(0, 3).map((w, i) => (
                 <span key={w.id}>
                   {i > 0 && ", "}
-                  <Link href={`/registry/workflow/${w.id}`} className="underline hover:text-violet-900">{w.name}</Link>
+                  <Link href={`/registry/workflow/${w.id}`} className="underline hover:text-violet-900 dark:hover:text-violet-100">{w.name}</Link>
                 </span>
               ))}
               {referencingWorkflows.length > 3 && <span> and {referencingWorkflows.length - 3} more</span>}
@@ -753,34 +768,34 @@ export default function AgentDetailPage({
 
       {/* AgentCore Deployment Details Strip */}
       {latest.deploymentTarget === "agentcore" && latest.deploymentMetadata && (
-        <div className="border-b border-orange-100 bg-orange-50 px-6 py-2.5">
-          <div className="mx-auto flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-orange-800">
+        <div className="border-b border-orange-100 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 px-6 py-2.5">
+          <div className="mx-auto flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-orange-800 dark:text-orange-200">
             <span className="font-semibold">Amazon Bedrock AgentCore</span>
-            <span className="text-orange-500">·</span>
+            <span className="text-orange-500 dark:text-orange-400">·</span>
             <span>
-              <span className="text-orange-600 font-medium">Agent ID</span>{" "}
+              <span className="text-orange-600 dark:text-orange-400 font-medium">Agent ID</span>{" "}
               <span className="font-mono">{latest.deploymentMetadata.agentId}</span>
             </span>
-            <span className="text-orange-500">·</span>
+            <span className="text-orange-500 dark:text-orange-400">·</span>
             <span>
-              <span className="text-orange-600 font-medium">Region</span>{" "}
+              <span className="text-orange-600 dark:text-orange-400 font-medium">Region</span>{" "}
               {latest.deploymentMetadata.region}
             </span>
-            <span className="text-orange-500">·</span>
+            <span className="text-orange-500 dark:text-orange-400">·</span>
             <span>
-              <span className="text-orange-600 font-medium">Model</span>{" "}
+              <span className="text-orange-600 dark:text-orange-400 font-medium">Model</span>{" "}
               <span className="font-mono">{latest.deploymentMetadata.foundationModel}</span>
             </span>
-            <span className="text-orange-500">·</span>
+            <span className="text-orange-500 dark:text-orange-400">·</span>
             <span>
-              <span className="text-orange-600 font-medium">Deployed</span>{" "}
+              <span className="text-orange-600 dark:text-orange-400 font-medium">Deployed</span>{" "}
               {new Date(latest.deploymentMetadata.deployedAt).toLocaleString()} by {latest.deploymentMetadata.deployedBy}
             </span>
             <a
               href={`https://console.aws.amazon.com/bedrock/home?region=${latest.deploymentMetadata.region}#/agents/${latest.deploymentMetadata.agentId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-auto underline hover:text-orange-900"
+              className="ml-auto underline hover:text-orange-900 dark:hover:text-orange-100"
             >
               Open in AWS Console →
             </a>
@@ -834,15 +849,15 @@ export default function AgentDetailPage({
         const { healthStatus, errorCount, warningCount, lastCheckedAt } = healthData;
         if (healthStatus === "critical") {
           return (
-            <div className="shrink-0 border-b border-red-200 bg-red-50 px-6 py-3">
+            <div className="shrink-0 border-b border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-6 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-start gap-2">
                   <span className="shrink-0 text-base">⚠</span>
                   <div>
-                    <p className="text-sm font-semibold text-red-800">
+                    <p className="text-sm font-semibold text-red-800 dark:text-red-200">
                       Governance Drift Detected — {errorCount} error violation{errorCount === 1 ? "" : "s"} since deployment
                     </p>
-                    <p className="text-xs text-red-700">
+                    <p className="text-xs text-red-700 dark:text-red-300">
                       Policy changes have introduced governance errors. Open the Governance tab to review.
                       {lastCheckedAt && ` Last checked ${timeAgoShort(lastCheckedAt)}.`}
                     </p>
@@ -852,7 +867,7 @@ export default function AgentDetailPage({
                   <button
                     onClick={handleCheckHealth}
                     disabled={checkingHealth}
-                    className="ml-4 shrink-0 rounded-lg border border-red-300 bg-surface px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                    className="ml-4 shrink-0 rounded-lg border border-red-300 dark:border-red-700 bg-surface px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50"
                   >
                     {checkingHealth ? "Checking…" : "↻ Check Now"}
                   </button>
@@ -863,9 +878,9 @@ export default function AgentDetailPage({
         }
         if (healthStatus === "clean") {
           return (
-            <div className="shrink-0 border-b border-green-200 bg-green-50 px-6 py-3">
+            <div className="shrink-0 border-b border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 px-6 py-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-green-800">
+                <p className="text-sm text-green-800 dark:text-emerald-200">
                   <span className="font-semibold">✓ Governance posture is clean.</span>
                   {warningCount > 0 && ` ${warningCount} warning${warningCount === 1 ? "" : "s"}.`}
                   {lastCheckedAt && ` Last checked ${timeAgoShort(lastCheckedAt)}.`}
@@ -874,7 +889,7 @@ export default function AgentDetailPage({
                   <button
                     onClick={handleCheckHealth}
                     disabled={checkingHealth}
-                    className="ml-4 shrink-0 rounded-lg border border-green-300 bg-surface px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50 disabled:opacity-50"
+                    className="ml-4 shrink-0 rounded-lg border border-green-300 dark:border-emerald-700 bg-surface px-3 py-1.5 text-xs font-medium text-green-700 dark:text-emerald-300 hover:bg-green-50 dark:hover:bg-emerald-950/30 disabled:opacity-50"
                   >
                     {checkingHealth ? "Checking…" : "↻ Re-check"}
                   </button>
@@ -885,16 +900,16 @@ export default function AgentDetailPage({
         }
         // unknown
         return (
-          <div className="shrink-0 border-b border-amber-200 bg-amber-50 px-6 py-3">
+          <div className="shrink-0 border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-6 py-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
                 Governance health not yet checked against current policies.
               </p>
               {canCheck && (
                 <button
                   onClick={handleCheckHealth}
                   disabled={checkingHealth}
-                  className="ml-4 shrink-0 rounded-lg border border-amber-300 bg-surface px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                  className="ml-4 shrink-0 rounded-lg border border-amber-300 dark:border-amber-700 bg-surface px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 disabled:opacity-50"
                 >
                   {checkingHealth ? "Checking…" : "↻ Run First Check"}
                 </button>
@@ -907,7 +922,7 @@ export default function AgentDetailPage({
       {/* Suspended Agent Banner — H2-1.4: Shown when the agent has been suspended.
            Provides investigation context and admin-only Resume / Deprecate actions. */}
       {latest.status === "suspended" && (
-        <div className="shrink-0 border-b border-amber-300 bg-amber-50 px-6 py-4">
+        <div className="shrink-0 border-b border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-6 py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-3">
               <span className="mt-0.5 text-xl shrink-0">⏸</span>
@@ -915,11 +930,11 @@ export default function AgentDetailPage({
                 <p className="text-sm font-semibold text-amber-900">
                   Agent Suspended — No New Requests Are Being Processed
                 </p>
-                <p className="mt-0.5 text-xs text-amber-800">
+                <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-200">
                   This agent was suspended by the governance circuit breaker or by an administrator.
                   All runtime invocations are paused until an administrator resumes the agent.
                 </p>
-                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-amber-700">
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-amber-700 dark:text-amber-300">
                   <span className="font-medium">Investigation steps:</span>
                   <span>1. Review runtime violations below</span>
                   <span>·</span>
@@ -932,19 +947,19 @@ export default function AgentDetailPage({
                 <div className="mt-2 flex gap-3">
                   <a
                     href="/monitor"
-                    className="text-xs font-medium text-amber-800 underline hover:text-amber-900"
+                    className="text-xs font-medium text-amber-800 dark:text-amber-200 underline hover:text-amber-900"
                   >
                     View Monitor →
                   </a>
                   <a
                     href="/governance"
-                    className="text-xs font-medium text-amber-800 underline hover:text-amber-900"
+                    className="text-xs font-medium text-amber-800 dark:text-amber-200 underline hover:text-amber-900"
                   >
                     View Runtime Violations →
                   </a>
                   <a
                     href="/audit"
-                    className="text-xs font-medium text-amber-800 underline hover:text-amber-900"
+                    className="text-xs font-medium text-amber-800 dark:text-amber-200 underline hover:text-amber-900"
                   >
                     View Audit Log →
                   </a>
@@ -973,9 +988,9 @@ export default function AgentDetailPage({
         const priorApprovals = (latest.approvalProgress ?? []) as ApprovalStepRecord[];
         const activeStepIdx = latest.currentApprovalStep ?? 0;
         return (
-          <div className="shrink-0 border-b border-blue-100 bg-blue-50 px-6 py-2.5">
+          <div className="shrink-0 border-b border-blue-100 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 px-6 py-2.5">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-medium text-blue-700 mr-1">Approval:</span>
+              <span className="text-xs font-medium text-blue-700 dark:text-blue-300 mr-1">Approval:</span>
               {chain.map((step, idx) => {
                 const completed = priorApprovals.find(
                   (p) => p.step === idx && p.decision === "approved"
@@ -987,9 +1002,9 @@ export default function AgentDetailPage({
                     <span
                       className={`rounded px-2 py-0.5 text-xs font-medium ${
                         completed
-                          ? "bg-green-100 text-green-700"
+                          ? "bg-green-100 dark:bg-emerald-900/40 text-green-700 dark:text-emerald-300"
                           : isActive
-                          ? "bg-amber-100 text-amber-700 ring-1 ring-amber-300"
+                          ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 ring-1 ring-amber-300"
                           : "bg-surface-muted text-text-tertiary"
                       }`}
                       title={completed ? `Approved by ${completed.approvedBy}` : isActive ? `Awaiting ${step.role}` : "Pending"}
@@ -1018,21 +1033,21 @@ export default function AgentDetailPage({
         };
         const bars: Partial<Record<Status, BarConfig>> = {
           draft: {
-            bg: "bg-indigo-50", border: "border-indigo-100",
+            bg: "bg-indigo-50 dark:bg-indigo-950/30", border: "border-indigo-100 dark:border-indigo-800",
             icon: "✏️",
             message: "This agent is a draft. Submit it for review to start the governance approval workflow.",
             action: "Submit for Review",
             onClick: () => handleContextBarTransition("in_review"),
           },
           approved: {
-            bg: "bg-emerald-50", border: "border-emerald-100",
+            bg: "bg-emerald-50 dark:bg-emerald-950/30", border: "border-emerald-100 dark:border-emerald-800",
             icon: "✅",
             message: "This agent has passed all governance checks and is approved for deployment.",
             action: "Deploy to Production",
             href: "/deploy",
           },
           rejected: {
-            bg: "bg-red-50", border: "border-red-100",
+            bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-100 dark:border-red-800",
             icon: "✗",
             message: "This agent was rejected. Review the feedback in the Review tab, address the issues, and create a new version.",
             action: "Create New Version",
@@ -1106,10 +1121,10 @@ export default function AgentDetailPage({
         <div
           className={`shrink-0 border-b px-6 py-3 ${
             reviewOutcome === "approved"
-              ? "border-green-200 bg-green-50"
+              ? "border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30"
               : reviewOutcome === "rejected"
-              ? "border-red-200 bg-red-50"
-              : "border-amber-200 bg-amber-50"
+              ? "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30"
+              : "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30"
           }`}
         >
           <div className="flex items-start gap-3 max-w-4xl">
@@ -1122,10 +1137,10 @@ export default function AgentDetailPage({
               {/* Headline */}
               <p className={`text-sm font-semibold ${
                 reviewOutcome === "approved"
-                  ? "text-green-800"
+                  ? "text-green-800 dark:text-emerald-200"
                   : reviewOutcome === "rejected"
-                  ? "text-red-800"
-                  : "text-amber-800"
+                  ? "text-red-800 dark:text-red-200"
+                  : "text-amber-800 dark:text-amber-200"
               }`}>
                 {reviewOutcome === "approved" && "Approved for deployment"}
                 {reviewOutcome === "rejected" && "Rejected — not approved for deployment"}
@@ -1135,10 +1150,10 @@ export default function AgentDetailPage({
               {/* Reviewer + timestamp */}
               <p className={`mt-0.5 text-xs ${
                 reviewOutcome === "approved"
-                  ? "text-green-700"
+                  ? "text-green-700 dark:text-emerald-300"
                   : reviewOutcome === "rejected"
-                  ? "text-red-700"
-                  : "text-amber-700"
+                  ? "text-red-700 dark:text-red-300"
+                  : "text-amber-700 dark:text-amber-300"
               }`}>
                 Reviewed by{" "}
                 <span className="font-medium">{latest.reviewedBy}</span>
@@ -1157,10 +1172,10 @@ export default function AgentDetailPage({
               {latest.reviewComment && (
                 <p className={`mt-1.5 text-sm italic leading-relaxed ${
                   reviewOutcome === "approved"
-                    ? "text-green-800"
+                    ? "text-green-800 dark:text-emerald-200"
                     : reviewOutcome === "rejected"
-                    ? "text-red-800"
-                    : "text-amber-800"
+                    ? "text-red-800 dark:text-red-200"
+                    : "text-amber-800 dark:text-amber-200"
                 }`}>
                   &ldquo;{latest.reviewComment}&rdquo;
                 </p>
@@ -1230,10 +1245,10 @@ export default function AgentDetailPage({
         {activeTab === "regulatory" && (
           <div className="p-6 max-w-3xl">
             {/* W3-02: MRM Report access — prominent link to formatted inline report (was buried in Actions dropdown) */}
-            <div className="mb-4 flex items-center justify-between rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3.5">
+            <div className="mb-4 flex items-center justify-between rounded-xl border border-indigo-100 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/30 px-4 py-3.5">
               <div>
                 <p className="text-sm font-semibold text-indigo-900">Model Risk Management (MRM) Report</p>
-                <p className="text-xs text-indigo-700 mt-0.5">
+                <p className="text-xs text-indigo-700 dark:text-indigo-300 mt-0.5">
                   14-section formatted compliance report covering governance validation, approval chain, SOD
                   evidence, regulatory framework assessment, and SR 11-7 periodic review schedule.
                 </p>
@@ -1289,8 +1304,8 @@ export default function AgentDetailPage({
                             parseFloat(qualityScore.overallScore) >= 0.8
                               ? "text-emerald-700"
                               : parseFloat(qualityScore.overallScore) >= 0.6
-                              ? "text-amber-700"
-                              : "text-red-700"
+                              ? "text-amber-700 dark:text-amber-300"
+                              : "text-red-700 dark:text-red-300"
                           }`}>
                             {Math.round(parseFloat(qualityScore.overallScore) * 100)}%
                           </span>
@@ -1359,10 +1374,10 @@ export default function AgentDetailPage({
                         <div className="mb-3 flex items-center gap-3">
                           <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                             latestRun.status === "passed"
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              ? "bg-emerald-50 text-emerald-700 dark:text-emerald-300 border border-emerald-200"
                               : latestRun.status === "failed"
-                              ? "bg-red-50 text-red-700 border border-red-200"
-                              : "bg-amber-50 text-amber-700 border border-amber-200"
+                              ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
+                              : "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
                           }`}>
                             {latestRun.status === "passed" ? "✓" : latestRun.status === "failed" ? "✗" : "!"}{" "}
                             {latestRun.status.charAt(0).toUpperCase() + latestRun.status.slice(1)}
@@ -1396,8 +1411,8 @@ export default function AgentDetailPage({
                                 <TableCell>
                                   <span className={`text-xs font-medium ${
                                     run.status === "passed" ? "text-emerald-700"
-                                    : run.status === "failed" ? "text-red-700"
-                                    : "text-amber-700"
+                                    : run.status === "failed" ? "text-red-700 dark:text-red-300"
+                                    : "text-amber-700 dark:text-amber-300"
                                   }`}>
                                     {run.status.charAt(0).toUpperCase() + run.status.slice(1)}
                                   </span>
@@ -1470,11 +1485,11 @@ export default function AgentDetailPage({
 
               {/* Step context header for multi-step mode */}
               {activeStep && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-                  <p className="text-sm font-semibold text-amber-800">
+                <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3">
+                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
                     Step {activeStepIdx + 1} of {chain.length}: {activeStep.label}
                   </p>
-                  <p className="text-xs text-amber-700 mt-0.5">
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
                     Requires: <span className="font-medium">{activeStep.role}</span> role
                     {isMyTurn
                       ? " — your turn to review"
@@ -1600,12 +1615,12 @@ export default function AgentDetailPage({
                           }}
                           className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors hover:border-primary/40 hover:bg-primary/5 ${
                             tpl.tier === "critical"
-                              ? "border-red-200 bg-red-50 text-red-700 hover:border-red-400"
+                              ? "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 hover:border-red-400 dark:hover:border-red-600"
                               : "border-border bg-surface text-text-secondary"
                           }`}
                           title={tpl.description}
                         >
-                          {tpl.tier === "critical" && <span className="text-red-500 mr-0.5">●</span>}
+                          {tpl.tier === "critical" && <span className="text-red-500 dark:text-red-400 mr-0.5">●</span>}
                           {tpl.name}
                         </button>
                       ))}
@@ -1618,7 +1633,7 @@ export default function AgentDetailPage({
 
                 {/* Add Test Case form */}
                 {showTestForm && (
-                  <div className="border-b border-border px-5 py-4 space-y-3 bg-blue-50">
+                  <div className="border-b border-border px-5 py-4 space-y-3 bg-blue-50 dark:bg-blue-950/30">
                     <SectionHeading style={{ color: "#1d4ed8" }}>New Test Case</SectionHeading>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="col-span-2">
@@ -1714,7 +1729,7 @@ export default function AgentDetailPage({
                             <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${
                               tc.severity === "required"
                                 ? "bg-surface-muted text-text-secondary"
-                                : "bg-blue-50 text-blue-600"
+                                : "bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
                             }`}>
                               {tc.severity}
                             </span>
@@ -1726,7 +1741,7 @@ export default function AgentDetailPage({
                         {canManage && (
                           <button
                             onClick={() => handleDeleteTestCase(tc.id)}
-                            className="shrink-0 text-xs text-red-400 hover:text-red-600"
+                            className="shrink-0 text-xs text-red-400 hover:text-red-600 dark:text-red-400"
                           >
                             Remove
                           </button>
@@ -1779,8 +1794,8 @@ export default function AgentDetailPage({
                 </div>
 
                 {testRunError && (
-                  <div className="border-b border-red-100 bg-red-50 px-5 py-3">
-                    <p className="text-sm text-red-700">{testRunError}</p>
+                  <div className="border-b border-red-100 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-5 py-3">
+                    <p className="text-sm text-red-700 dark:text-red-300">{testRunError}</p>
                   </div>
                 )}
 
@@ -1788,19 +1803,19 @@ export default function AgentDetailPage({
                 {latestRun && (
                   <div className={`border-b px-5 py-3 ${
                     latestRun.status === "passed"
-                      ? "border-green-100 bg-green-50"
+                      ? "border-green-100 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30"
                       : latestRun.status === "failed"
-                      ? "border-red-100 bg-red-50"
-                      : "border-amber-100 bg-amber-50"
+                      ? "border-red-100 dark:border-red-800 bg-red-50 dark:bg-red-950/30"
+                      : "border-amber-100 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30"
                   }`}>
                     <div className="flex items-center gap-2">
                       <span className="text-base">
                         {latestRun.status === "passed" ? "✓" : latestRun.status === "failed" ? "✗" : "⚠"}
                       </span>
                       <span className={`text-sm font-semibold ${
-                        latestRun.status === "passed" ? "text-green-800"
-                          : latestRun.status === "failed" ? "text-red-800"
-                          : "text-amber-800"
+                        latestRun.status === "passed" ? "text-green-800 dark:text-emerald-200"
+                          : latestRun.status === "failed" ? "text-red-800 dark:text-red-200"
+                          : "text-amber-800 dark:text-amber-200"
                       }`}>
                         {latestRun.passedCases}/{latestRun.totalCases} passed
                         {latestRun.status === "error" && " (some cases errored)"}
@@ -1819,7 +1834,7 @@ export default function AgentDetailPage({
                       <div key={result.testCaseId} className="px-5 py-3">
                         <div className="flex items-center gap-2">
                           <span className={`text-sm ${
-                            result.status === "passed" ? "text-green-600" : "text-red-600"
+                            result.status === "passed" ? "text-green-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
                           }`}>
                             {result.status === "passed" ? "✓" : "✗"}
                           </span>
@@ -1866,7 +1881,7 @@ export default function AgentDetailPage({
                     <div className="space-y-1">
                       {testRuns.slice(1).map((run) => (
                         <div key={run.id} className="flex items-center gap-2 text-xs text-text-secondary">
-                          <span className={run.status === "passed" ? "text-green-600" : "text-red-600"}>
+                          <span className={run.status === "passed" ? "text-green-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
                             {run.status === "passed" ? "✓" : "✗"}
                           </span>
                           <span>{run.passedCases}/{run.totalCases} passed</span>
@@ -1931,7 +1946,7 @@ export default function AgentDetailPage({
                               <div className="flex items-center gap-0 w-full mt-1">
                                 <div className={`h-3 w-3 shrink-0 rounded-full border-2 ${
                                   isLatest
-                                    ? "border-green-500 bg-green-100"
+                                    ? "border-green-500 bg-green-100 dark:bg-emerald-900/40"
                                     : "border-border bg-surface"
                                 }`} />
                                 {!isLatest && (
@@ -1940,9 +1955,9 @@ export default function AgentDetailPage({
                               </div>
                               {/* Version label */}
                               <div className="mt-2 space-y-0.5">
-                                <span className={`font-mono text-xs font-semibold ${isLatest ? "text-green-700" : "text-text"}`}>
+                                <span className={`font-mono text-xs font-semibold ${isLatest ? "text-green-700 dark:text-emerald-300" : "text-text"}`}>
                                   v{v.version}
-                                  {isLatest ? <span className="ml-1 text-[10px] text-green-600 font-medium">(current)</span> : null}
+                                  {isLatest ? <span className="ml-1 text-[10px] text-green-600 dark:text-emerald-400 font-medium">(current)</span> : null}
                                 </span>
                                 <p className="text-2xs text-text-tertiary leading-tight">
                                   {deployedDate.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
@@ -2003,21 +2018,21 @@ export default function AgentDetailPage({
                         return (
                           <div className="flex items-center gap-1.5">
                             {v.validationReport.valid ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 dark:bg-emerald-950/30 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-emerald-300">
                                 <CheckCircle size={10} />Pass
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 dark:bg-red-950/30 px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-300">
                                 <XCircle size={10} />Fail
                               </span>
                             )}
                             {errorCount > 0 && (
-                              <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
+                              <span className="rounded-full bg-red-100 dark:bg-red-900/40 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:text-red-300">
                                 {errorCount}E
                               </span>
                             )}
                             {warnCount > 0 && (
-                              <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700">
+                              <span className="rounded-full bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
                                 {warnCount}W
                               </span>
                             )}
@@ -2061,9 +2076,9 @@ export default function AgentDetailPage({
                       const isExpanded = expandedDiffId === v.id;
                       const sigColor =
                         diff.significance === "major"
-                          ? "bg-red-50 text-red-700 border-red-200"
+                          ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
                           : diff.significance === "minor"
-                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          ? "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
                           : "bg-surface-raised text-text-secondary border-border";
                       const sigLabel =
                         diff.significance === "major"
@@ -2113,10 +2128,10 @@ export default function AgentDetailPage({
                                         <li key={ci} className="flex items-start gap-2 text-xs">
                                           <span className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 font-medium ${
                                             change.changeType === "added"
-                                              ? "bg-green-100 text-green-700"
+                                              ? "bg-green-100 dark:bg-emerald-900/40 text-green-700 dark:text-emerald-300"
                                               : change.changeType === "removed"
-                                              ? "bg-red-100 text-red-700"
-                                              : "bg-amber-100 text-amber-700"
+                                              ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
+                                              : "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
                                           }`}>
                                             {change.changeType === "added" ? "+" : change.changeType === "removed" ? "−" : "~"}
                                           </span>
@@ -2126,17 +2141,17 @@ export default function AgentDetailPage({
                                     </ul>
                                     {/* Governance implication for major changes */}
                                     {section.section === "governance" && section.changes.length > 0 && (
-                                      <p className="mt-2 text-xs text-red-600 font-medium">
+                                      <p className="mt-2 text-xs text-red-600 dark:text-red-400 font-medium">
                                         ⚠ Compliance posture changed — re-validation required before approval.
                                       </p>
                                     )}
                                     {section.section === "capabilities" && section.changes.some(c => c.path === "capabilities.instructions") && (
-                                      <p className="mt-2 text-xs text-amber-600 font-medium">
+                                      <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 font-medium">
                                         ⚠ System prompt changed — safety policy review triggered.
                                       </p>
                                     )}
                                     {section.section === "capabilities" && section.changes.some(c => c.path === "capabilities.tools") && (
-                                      <p className="mt-2 text-xs text-amber-600 font-medium">
+                                      <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 font-medium">
                                         ⚠ Tool set changed — constraint re-validation recommended.
                                       </p>
                                     )}
@@ -2169,7 +2184,7 @@ export default function AgentDetailPage({
                         }`} />
                         <span className="capitalize font-medium">{step.role ?? `Step ${i + 1}`}</span>
                         <span className="text-text-tertiary">—</span>
-                        <span className={`capitalize ${step.decision === "approved" ? "text-green-700" : step.decision === "rejected" ? "text-red-700" : "text-text-secondary"}`}>
+                        <span className={`capitalize ${step.decision === "approved" ? "text-green-700 dark:text-emerald-300" : step.decision === "rejected" ? "text-red-700 dark:text-red-300" : "text-text-secondary"}`}>
                           {step.decision ?? "pending"}
                         </span>
                         {step.approvedAt && (
@@ -2247,7 +2262,7 @@ export default function AgentDetailPage({
             </div>
 
             {reviewCompleteError && (
-              <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="mb-3 rounded-lg bg-red-50 dark:bg-red-950/30 px-3 py-2 text-sm text-red-700 dark:text-red-300">
                 {reviewCompleteError}
               </p>
             )}

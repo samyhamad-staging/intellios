@@ -30,7 +30,7 @@ export default function SecurityPage() {
           {/* Security Overview */}
           <section>
             <div className="flex items-start gap-3 mb-4">
-              <ShieldCheck size={28} className="text-indigo-600 flex-shrink-0 mt-0.5" />
+              <ShieldCheck size={28} className="text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Security Overview
@@ -73,7 +73,7 @@ export default function SecurityPage() {
           {/* Access Controls */}
           <section>
             <div className="flex items-start gap-3 mb-4">
-              <Lock size={28} className="text-indigo-600 flex-shrink-0 mt-0.5" />
+              <Lock size={28} className="text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Access Controls
@@ -124,7 +124,7 @@ export default function SecurityPage() {
           {/* Data Protection */}
           <section>
             <div className="flex items-start gap-3 mb-4">
-              <Eye size={28} className="text-indigo-600 flex-shrink-0 mt-0.5" />
+              <Eye size={28} className="text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Data Protection
@@ -175,7 +175,7 @@ export default function SecurityPage() {
           {/* Compliance Framework Alignment */}
           <section>
             <div className="flex items-start gap-3 mb-4">
-              <CheckCircle size={28} className="text-indigo-600 flex-shrink-0 mt-0.5" />
+              <CheckCircle size={28} className="text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Compliance Framework Alignment
@@ -234,7 +234,7 @@ export default function SecurityPage() {
           {/* Audit & Monitoring */}
           <section>
             <div className="flex items-start gap-3 mb-4">
-              <Server size={28} className="text-indigo-600 flex-shrink-0 mt-0.5" />
+              <Server size={28} className="text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Audit & Monitoring
@@ -356,7 +356,7 @@ export default function SecurityPage() {
                 Email:{" "}
                 <a
                   href="mailto:security@intellios.io"
-                  className="text-indigo-600 hover:text-indigo-500 font-medium"
+                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 font-medium"
                 >
                   security@intellios.io
                 </a>

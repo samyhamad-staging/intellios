@@ -87,10 +87,10 @@ const TIER_VARIANT: Record<RiskTier, BadgeVariant> = {
 };
 
 const TIER_TEXT_COLOR: Record<RiskTier, string> = {
-  critical: "text-red-700",
-  high: "text-red-700",
-  medium: "text-amber-700",
-  low: "text-emerald-700",
+  critical: "text-red-700 dark:text-red-300",
+  high: "text-red-700 dark:text-red-300",
+  medium: "text-amber-700 dark:text-amber-300",
+  low: "text-emerald-700 dark:text-emerald-300",
 };
 
 const TIERS: RiskTier[] = ["critical", "high", "medium", "low"];
@@ -292,7 +292,7 @@ export async function FleetGovernanceDashboard({
                     <div className="mt-0.5 flex items-center gap-1.5 text-xs text-text-tertiary">
                       <span>v{agent.version}</span>
                       <span>·</span>
-                      <span className={`font-medium ${agent.status === "deployed" ? "text-violet-600" : "text-emerald-600"}`}>
+                      <span className={`font-medium ${agent.status === "deployed" ? "text-violet-600 dark:text-violet-400" : "text-emerald-600"}`}>
                         {agent.status}
                       </span>
                       <span>·</span>

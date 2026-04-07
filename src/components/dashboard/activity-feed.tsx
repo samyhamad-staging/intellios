@@ -19,11 +19,11 @@ interface ActivityItem {
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
 const AVATAR_COLORS = [
-  "bg-violet-200 text-violet-800",
-  "bg-blue-200 text-blue-800",
-  "bg-emerald-200 text-emerald-800",
-  "bg-amber-200 text-amber-800",
-  "bg-rose-200 text-rose-800",
+  "bg-violet-200 dark:bg-violet-800/40 text-violet-800 dark:text-violet-200",
+  "bg-blue-200 dark:bg-blue-800/40 text-blue-800 dark:text-blue-200",
+  "bg-emerald-200 dark:bg-emerald-800/40 text-emerald-800 dark:text-emerald-200",
+  "bg-amber-200 dark:bg-amber-800/40 text-amber-800 dark:text-amber-200",
+  "bg-rose-200 dark:bg-rose-800/40 text-rose-800 dark:text-rose-200",
 ];
 
 function avatarColor(name: string): string {

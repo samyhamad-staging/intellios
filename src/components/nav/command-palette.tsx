@@ -73,6 +73,24 @@ const ALL_ENTRIES: NavEntry[] = [
     keywords: ["registry", "agents", "blueprints", "library"],
   },
   {
+    label: "Blueprints",
+    description: "All Agent Blueprint Packages across your enterprise",
+    href: "/blueprints",
+    section: "Navigate",
+    icon: Library,
+    roles: ["architect", "admin"],
+    keywords: ["blueprints", "packages", "abp", "studio"],
+  },
+  {
+    label: "Templates",
+    description: "Blueprint templates for common agent patterns",
+    href: "/templates",
+    section: "Navigate",
+    icon: Library,
+    roles: ["all"],
+    keywords: ["templates", "patterns", "starter", "orchestration"],
+  },
+  {
     label: "Review Queue",
     description: "Pending blueprints awaiting human review",
     href: "/review",
@@ -333,13 +351,13 @@ export function CommandPalette({ role, onClose }: Props) {
                       key={entry.href}
                       value={searchValue}
                       onSelect={() => navigate(entry.href)}
-                      className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 hover:bg-surface-raised"
+                      className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 dark:aria-selected:bg-violet-950/40 hover:bg-surface-raised"
                     >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-raised text-text-secondary group-aria-selected:border-violet-200 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-raised text-text-secondary group-aria-selected:border-violet-200 dark:border-violet-800 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600 dark:text-violet-400 dark:group-aria-selected:border-violet-700 dark:group-aria-selected:bg-violet-900/50 dark:group-aria-selected:text-violet-300">
                         <Icon size={14} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-text group-aria-selected:text-violet-700">
+                        <p className="text-sm font-medium text-text group-aria-selected:text-violet-700 dark:text-violet-300 dark:group-aria-selected:text-violet-200">
                           {entry.label}
                         </p>
                         <p className="truncate text-xs text-text-tertiary">{entry.description}</p>
@@ -357,9 +375,9 @@ export function CommandPalette({ role, onClose }: Props) {
                     key={agent.agentId}
                     value={[agent.name ?? "", agent.agentId, ...(agent.tags ?? [])].join(" ")}
                     onSelect={() => navigate(`/registry/${agent.agentId}`)}
-                    className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 hover:bg-surface-raised"
+                    className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 dark:aria-selected:bg-violet-950/40 hover:bg-surface-raised"
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-raised text-text-secondary group-aria-selected:border-violet-200 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-raised text-text-secondary group-aria-selected:border-violet-200 dark:border-violet-800 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600 dark:text-violet-400 dark:group-aria-selected:border-violet-700 dark:group-aria-selected:bg-violet-900/50 dark:group-aria-selected:text-violet-300">
                       <Bot size={14} />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -385,13 +403,13 @@ export function CommandPalette({ role, onClose }: Props) {
                     key={policy.id}
                     value={[policy.name, policy.type, policy.description ?? ""].join(" ")}
                     onSelect={() => navigate(`/governance?policy=${policy.id}`)}
-                    className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 hover:bg-surface-raised"
+                    className="group flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors aria-selected:bg-violet-50 dark:aria-selected:bg-violet-950/40 hover:bg-surface-raised"
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-raised text-text-secondary group-aria-selected:border-violet-200 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-raised text-text-secondary group-aria-selected:border-violet-200 dark:border-violet-800 group-aria-selected:bg-violet-100 group-aria-selected:text-violet-600 dark:text-violet-400 dark:group-aria-selected:border-violet-700 dark:group-aria-selected:bg-violet-900/50 dark:group-aria-selected:text-violet-300">
                       <ShieldCheck size={14} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-text group-aria-selected:text-violet-700">
+                      <p className="text-sm font-medium text-text group-aria-selected:text-violet-700 dark:text-violet-300 dark:group-aria-selected:text-violet-200">
                         {policy.name}
                       </p>
                       <p className="truncate text-xs text-text-tertiary">

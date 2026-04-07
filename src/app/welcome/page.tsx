@@ -172,7 +172,9 @@ export default function WelcomePage() {
   const hero = HERO_BY_ROLE[roleKey] ?? HERO_BY_ROLE.architect;
 
   // P1-80: Persist checklist completion state — localStorage, browser-local
+  // Lazy initializer is SSR-safe: guard against missing window/localStorage
   const [visitedSteps, setVisitedSteps] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
     try {
       const raw = localStorage.getItem(STEPS_KEY);
       return new Set(raw ? (JSON.parse(raw) as string[]) : []);
@@ -196,7 +198,7 @@ export default function WelcomePage() {
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
       {/* ── Role-aware hero ────────────────────────────────────────────── */}
-      <div className="mb-8 overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-600 to-violet-800 p-8 text-center shadow-lg">
+      <div className="mb-8 overflow-hidden rounded-2xl border border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-600 to-violet-800 p-8 text-center shadow-lg">
         <SectionHeading style={{ color: "#ddd6fe" }} className="mb-2">
           {hero.eyebrow}
         </SectionHeading>
@@ -208,7 +210,7 @@ export default function WelcomePage() {
             onClick={() => markVisited(hero.href)}
             className="inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3 text-sm font-semibold text-violet-700 shadow transition-opacity hover:opacity-90"
           >
-            <Zap size={16} className="text-violet-600" />
+            <Zap size={16} className="text-violet-600 dark:text-violet-400" />
             {hero.cta}
             <ArrowRight size={15} />
           </button>
@@ -236,7 +238,7 @@ export default function WelcomePage() {
         </div>
         {/* P1-80: Progress indicator */}
         {completedCount > 0 && (
-          <span className={`shrink-0 ml-4 text-xs font-medium ${allDone ? "text-emerald-600" : "text-text-tertiary"}`}>
+          <span className={`shrink-0 ml-4 text-xs font-medium ${allDone ? "text-emerald-600 dark:text-emerald-400" : "text-text-tertiary"}`}>
             {allDone ? "✓ All done" : `${completedCount}/${steps.length} visited`}
           </span>
         )}
@@ -251,19 +253,19 @@ export default function WelcomePage() {
               key={step.href}
               className={`flex items-center gap-4 rounded-xl border px-5 py-4 transition-colors ${
                 visited
-                  ? "border-emerald-100 bg-emerald-50/50"
+                  ? "border-emerald-100 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/30"
                   : "border-border bg-surface"
               }`}
             >
-              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${visited ? "bg-emerald-100" : "bg-surface-muted"}`}>
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${visited ? "bg-emerald-100 dark:bg-emerald-900/40" : "bg-surface-muted"}`}>
                 {visited ? (
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 ) : (
                   <Icon className="h-4 w-4 text-text-tertiary" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <Subheading level={3} className={visited ? "text-emerald-700" : "text-text"}>
+                <Subheading level={3} className={visited ? "text-emerald-700 dark:text-emerald-300" : "text-text"}>
                   {step.title}
                 </Subheading>
                 <p className="mt-0.5 text-xs text-text-secondary">{step.description}</p>
@@ -272,8 +274,8 @@ export default function WelcomePage() {
                 onClick={() => markVisited(step.href)}
                 className={`shrink-0 text-xs font-medium transition-colors ${
                   visited
-                    ? "text-emerald-600 hover:text-emerald-700"
-                    : "text-violet-600 hover:text-violet-700 hover:underline underline-offset-2"
+                    ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300"
+                    : "text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline underline-offset-2"
                 }`}
               >
                 {visited ? "Revisit →" : `${step.cta} →`}
@@ -288,7 +290,7 @@ export default function WelcomePage() {
         Already set up?{" "}
         <Link
           href="/"
-          className="text-violet-600 hover:text-violet-700 hover:underline underline-offset-2"
+          className="text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline underline-offset-2"
         >
           Go to your dashboard
         </Link>

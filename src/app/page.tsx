@@ -46,10 +46,10 @@ function timeAgo(dateStr: string | Date): string {
 // neutral=gray, info=blue, success=emerald, warning=amber, danger=red, accent=violet, muted=gray-50
 const STATUS_CONFIG = {
   draft:      { label: "Draft",      text: "text-text-secondary"    },
-  in_review:  { label: "In Review",  text: "text-blue-700"    },
-  approved:   { label: "Approved",   text: "text-emerald-700" },
-  deployed:   { label: "Deployed",   text: "text-violet-700"  },
-  rejected:   { label: "Rejected",   text: "text-red-700"     },
+  in_review:  { label: "In Review",  text: "text-blue-700 dark:text-blue-300"       },
+  approved:   { label: "Approved",   text: "text-emerald-700 dark:text-emerald-300" },
+  deployed:   { label: "Deployed",   text: "text-violet-700 dark:text-violet-300"   },
+  rejected:   { label: "Rejected",   text: "text-red-700 dark:text-red-300"     },
   deprecated: { label: "Deprecated", text: "text-text-secondary"    },
 } as const;
 
@@ -66,8 +66,8 @@ const STAT_HINTS: Record<string, string> = {
 };
 
 const STAT_TINTS: Record<string, string> = {
-  in_review: "bg-amber-50/60",
-  approved:  "bg-emerald-50/60",
+  in_review: "bg-amber-50/60 dark:bg-amber-950/20",
+  approved:  "bg-emerald-50/60 dark:bg-emerald-950/20",
 };
 
 function QualityRing({ score, delta }: { score: number; delta: number | null }) {
@@ -97,7 +97,7 @@ function QualityRing({ score, delta }: { score: number; delta: number | null }) 
       <div>
         <p className="text-2xs font-mono text-text-tertiary uppercase tracking-wide">Quality Index</p>
         {delta != null && (
-          <p className={`text-xs font-mono font-medium ${delta >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+          <p className={`text-xs font-mono font-medium ${delta >= 0 ? "text-emerald-600" : "text-red-500 dark:text-red-400"}`}>
             {delta >= 0 ? "+" : ""}{delta} pts
           </p>
         )}
@@ -186,10 +186,10 @@ export default async function Home() {
         {/* Quick action cards */}
         <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { href: "/intake",      icon: Plus,      label: "New Intake",      sub: "Start from scratch",           color: "text-green-600" },
-            { href: "/blueprints",  icon: FileText,  label: "Blueprints",      sub: `${allAgents.length} packages`, color: "text-violet-600" },
+            { href: "/intake",      icon: Plus,      label: "New Intake",      sub: "Start from scratch",           color: "text-green-600 dark:text-emerald-400" },
+            { href: "/blueprints",  icon: FileText,  label: "Blueprints",      sub: `${allAgents.length} packages`, color: "text-violet-600 dark:text-violet-400" },
             { href: "/pipeline",    icon: Kanban,    label: "Pipeline",        sub: "Track progress",               color: "text-primary" },
-            { href: "/registry",    icon: Library,   label: "Registry",        sub: "Deployed agents",              color: "text-blue-600" },
+            { href: "/registry",    icon: Library,   label: "Registry",        sub: "Deployed agents",              color: "text-blue-600 dark:text-blue-400" },
           ].map(({ href, icon: Icon, label, sub, color }) => (
             <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] hover:border-primary-subtle hover:shadow-[var(--shadow-raised)] transition-all min-w-0">
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-raised group-hover:bg-primary-muted transition-colors ${color}`}>
@@ -223,7 +223,7 @@ export default async function Home() {
               label: `${first.name ?? "Unnamed"} has ${errorCount} governance violation${errorCount === 1 ? "" : "s"}`,
               sub: "Fix violations before submitting for review",
               href: `/registry/${first.agentId}?tab=governance`,
-              color: "text-red-700", bgColor: "bg-red-50 border-red-200",
+              color: "text-red-700 dark:text-red-300", bgColor: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800",
             });
           }
 
@@ -235,7 +235,7 @@ export default async function Home() {
               label: `${approvedAgents[0].name ?? "Agent"} is approved — ready to deploy`,
               sub: `${approvedAgents.length} approved agent${approvedAgents.length === 1 ? "" : "s"} awaiting deployment`,
               href: "/deploy",
-              color: "text-green-700", bgColor: "bg-green-50 border-green-200",
+              color: "text-green-700 dark:text-emerald-300", bgColor: "bg-green-50 dark:bg-emerald-950/30 border-green-200 dark:border-emerald-800",
             });
           }
 
@@ -251,7 +251,7 @@ export default async function Home() {
               label: `${cleanDrafts.length} draft${cleanDrafts.length === 1 ? "" : "s"} ready to submit for review`,
               sub: "Governance checks pass — submit when ready",
               href: "/pipeline",
-              color: "text-amber-700", bgColor: "bg-amber-50 border-amber-200",
+              color: "text-amber-700 dark:text-amber-300", bgColor: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800",
             });
           }
 
@@ -310,14 +310,14 @@ export default async function Home() {
         {urgentItem && (
           <Link
             href={`/registry/${urgentItem.agentId}?tab=review`}
-            className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 transition-colors hover:bg-red-100"
+            className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3 transition-colors hover:bg-red-100 dark:hover:bg-red-900/40"
           >
-            <Flame size={16} className="shrink-0 text-red-600" />
+            <Flame size={16} className="shrink-0 text-red-600 dark:text-red-400" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-red-700">
+              <p className="text-sm font-semibold text-red-700 dark:text-red-300">
                 {urgentItem.name ?? "Unnamed Agent"} has governance violations — needs your review
               </p>
-              <p className="mt-0.5 text-xs text-red-500">
+              <p className="mt-0.5 text-xs text-red-500 dark:text-red-400">
                 {criticalItems.length > 1 ? `+${criticalItems.length - 1} more high-risk items in queue` : "Review to approve, reject, or request changes"}
               </p>
             </div>
@@ -328,15 +328,15 @@ export default async function Home() {
         <div className={`mb-6 grid grid-cols-1 gap-4 ${role === "compliance_officer" ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
           {(role === "compliance_officer"
             ? [
-                { href: "/review",      icon: ClipboardList, label: "Review Queue",      sub: `${inReviewAgents.length} pending`,  color: "text-amber-600"  },
-                { href: "/governance",  icon: Shield,        label: "Governance Hub",    sub: "Policies & violations",             color: "text-violet-600" },
+                { href: "/review",      icon: ClipboardList, label: "Review Queue",      sub: `${inReviewAgents.length} pending`,  color: "text-amber-600 dark:text-amber-400"  },
+                { href: "/governance",  icon: Shield,        label: "Governance Hub",    sub: "Policies & violations",             color: "text-violet-600 dark:text-violet-400" },
                 { href: "/governance",  icon: BarChart2,     label: "Compliance Posture",sub: "Fleet health at a glance",          color: "text-emerald-600"},
-                { href: "/registry",    icon: Library,       label: "Agent Registry",    sub: "All versions",                      color: "text-blue-600"   },
+                { href: "/registry",    icon: Library,       label: "Agent Registry",    sub: "All versions",                      color: "text-blue-600 dark:text-blue-400"   },
               ]
             : [
-                { href: "/review",   icon: ClipboardList, label: "Review Queue",   sub: `${inReviewAgents.length} pending`, color: "text-amber-600" },
+                { href: "/review",   icon: ClipboardList, label: "Review Queue",   sub: `${inReviewAgents.length} pending`, color: "text-amber-600 dark:text-amber-400" },
                 { href: "/pipeline", icon: Kanban,        label: "Pipeline Board", sub: `${allAgents.length} total`,        color: "text-primary"   },
-                { href: "/registry", icon: Library,       label: "Agent Registry", sub: "All versions",                    color: "text-blue-600"  },
+                { href: "/registry", icon: Library,       label: "Agent Registry", sub: "All versions",                    color: "text-blue-600 dark:text-blue-400"  },
               ]
           ).map(({ href, icon: Icon, label, sub, color }) => (
             <Link key={`${href}-${label}`} href={href} className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] hover:border-primary-subtle hover:shadow-[var(--shadow-raised)] transition-all min-w-0">
@@ -368,7 +368,7 @@ export default async function Home() {
                   <>
                     <Link
                       href="/governance"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors"
                     >
                       <Shield size={12} /> Review Governance Hub
                     </Link>
@@ -409,14 +409,14 @@ export default async function Home() {
                       className={`flex items-center gap-3 px-5 py-3.5 hover:bg-surface-raised transition-colors ${i > 0 ? "border-t border-border" : ""}`}
                     >
                       {hasErrors
-                        ? <Flame size={15} className="shrink-0 text-red-500" />
+                        ? <Flame size={15} className="shrink-0 text-red-500 dark:text-red-400" />
                         : <Bot size={15} className="shrink-0 text-text-tertiary" />
                       }
                       <span className="flex-1 truncate text-sm font-medium text-text">{agent.name ?? "Unnamed Agent"}</span>
                       <StatusBadge status={agent.status} />
                       {hasErrors
-                        ? <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">Violations</span>
-                        : <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Review</span>
+                        ? <span className="rounded-full bg-red-100 dark:bg-red-900/40 px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-300">Violations</span>
+                        : <span className="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">Review</span>
                       }
                       <span className="text-xs text-text-tertiary">{timeAgo(agent.updatedAt)}</span>
                       <ChevronRight size={13} className="text-text-tertiary" />
@@ -522,10 +522,10 @@ export default async function Home() {
           <SectionHeading className="mb-3">Explore</SectionHeading>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { href: "/registry",   icon: Search,    label: "Agent Registry",   sub: "Browse deployed agents",   color: "text-blue-600"   },
+              { href: "/registry",   icon: Search,    label: "Agent Registry",   sub: "Browse deployed agents",   color: "text-blue-600 dark:text-blue-400"   },
               { href: "/pipeline",   icon: Kanban,    label: "Pipeline Board",   sub: "See active work",          color: "text-primary"    },
-              { href: "/governance", icon: Shield,    label: "Governance Hub",   sub: "Policies & compliance",    color: "text-violet-600" },
-              { href: "/blueprints", icon: FileText,  label: "Blueprints",       sub: "Review specifications",    color: "text-amber-600"  },
+              { href: "/governance", icon: Shield,    label: "Governance Hub",   sub: "Policies & compliance",    color: "text-violet-600 dark:text-violet-400" },
+              { href: "/blueprints", icon: FileText,  label: "Blueprints",       sub: "Review specifications",    color: "text-amber-600 dark:text-amber-400"  },
             ].map(({ href, icon: Icon, label, sub, color }) => (
               <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] hover:border-primary-subtle hover:shadow-[var(--shadow-raised)] transition-all min-w-0">
                 <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-raised group-hover:bg-primary-muted transition-colors ${color}`}>
@@ -560,7 +560,7 @@ export default async function Home() {
             label: `${govErrors.length} deployed agent${govErrors.length === 1 ? "" : "s"} with governance errors`,
             sub: "Errors in approved or deployed agents require immediate resolution",
             href: "/registry",
-            color: "text-red-700", bgColor: "bg-red-50 border-red-200",
+            color: "text-red-700 dark:text-red-300", bgColor: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800",
           });
         }
 
@@ -574,7 +574,7 @@ export default async function Home() {
             label: `${overdue.length} agent${overdue.length === 1 ? "" : "s"} overdue for periodic review`,
             sub: "Scheduled reviews are past their due date",
             href: "/registry",
-            color: "text-amber-700", bgColor: "bg-amber-50 border-amber-200",
+            color: "text-amber-700 dark:text-amber-300", bgColor: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800",
           });
         }
 
@@ -585,7 +585,7 @@ export default async function Home() {
             label: `${counts.in_review} agent${counts.in_review === 1 ? "" : "s"} awaiting review approval`,
             sub: "Review queue has pending submissions",
             href: "/review",
-            color: "text-blue-700", bgColor: "bg-blue-50 border-blue-200",
+            color: "text-blue-700 dark:text-blue-300", bgColor: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800",
           });
         }
 

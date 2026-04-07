@@ -388,9 +388,9 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                   disabled={s > step}
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                     active
-                      ? "bg-violet-100 text-violet-700 border border-violet-200"
+                      ? "bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800"
                       : done
-                      ? "bg-violet-50 text-violet-600 cursor-pointer hover:bg-violet-100"
+                      ? "bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 cursor-pointer hover:bg-violet-100"
                       : "bg-surface-muted text-text-tertiary"
                   }`}
                 >
@@ -414,7 +414,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
             <div className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-text mb-1">
-                  Name <span className="text-red-500">*</span>
+                  Name <span className="text-red-500 dark:text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -469,12 +469,12 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                         onClick={() => applyTemplate(tpl.id)}
                         className={`text-left rounded-lg border p-2.5 transition-colors ${
                           selectedTemplate === tpl.id
-                            ? "border-violet-400 bg-violet-50"
-                            : "border-border hover:border-violet-200 hover:bg-surface-raised"
+                            ? "border-violet-400 bg-violet-50 dark:bg-violet-950/30"
+                            : "border-border hover:border-violet-200 dark:hover:border-violet-800 hover:bg-surface-raised"
                         }`}
                       >
                         <div className="flex items-center gap-1.5 mb-0.5">
-                          <GitBranch size={10} className="text-violet-500 shrink-0" />
+                          <GitBranch size={10} className="text-violet-500 dark:text-violet-400 shrink-0" />
                           <span className="text-xs font-medium text-text truncate">
                             {tpl.name}
                           </span>
@@ -508,9 +508,9 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                     {selectedAgents.map((agent) => (
                       <div
                         key={agent.agentId}
-                        className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50/50 px-3 py-2"
+                        className="flex items-center gap-2 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-3 py-2"
                       >
-                        <Bot size={12} className="text-violet-500 shrink-0" />
+                        <Bot size={12} className="text-violet-500 dark:text-violet-400 shrink-0" />
                         <input
                           type="text"
                           value={agent.role}
@@ -524,7 +524,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                           onClick={() => toggleRequired(agent.agentId)}
                           className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
                             agent.required
-                              ? "bg-violet-200 text-violet-700"
+                              ? "bg-violet-200 dark:bg-violet-800/40 text-violet-700 dark:text-violet-200"
                               : "bg-surface-muted text-text-tertiary"
                           }`}
                           title={agent.required ? "Required" : "Optional"}
@@ -533,7 +533,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                         </button>
                         <button
                           onClick={() => removeAgent(agent.agentId)}
-                          className="text-text-tertiary hover:text-red-500 transition-colors"
+                          className="text-text-tertiary hover:text-red-500 dark:hover:text-red-400 transition-colors"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -577,7 +577,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                       <button
                         key={agent.agentId}
                         onClick={() => addAgent(agent)}
-                        className="w-full flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-left hover:border-violet-200 hover:bg-surface-raised transition-colors"
+                        className="w-full flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-left hover:border-violet-200 dark:hover:border-violet-800 hover:bg-surface-raised transition-colors"
                       >
                         <Bot size={12} className="text-text-tertiary shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -588,7 +588,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                             {agent.agentId.slice(0, 8)}
                           </span>
                         </div>
-                        <Plus size={12} className="text-violet-500 shrink-0" />
+                        <Plus size={12} className="text-violet-500 dark:text-violet-400 shrink-0" />
                       </button>
                     ))}
                   </div>
@@ -668,7 +668,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                     </div>
                     <button
                       onClick={() => removeRule(i)}
-                      className="text-text-tertiary hover:text-red-500 transition-colors mt-1"
+                      className="text-text-tertiary hover:text-red-500 dark:hover:text-red-400 transition-colors mt-1"
                     >
                       <Trash2 size={12} />
                     </button>
@@ -678,7 +678,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
 
               <button
                 onClick={addHandoffRule}
-                className="inline-flex items-center gap-1 text-xs text-violet-600 hover:text-violet-700 font-medium"
+                className="inline-flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-medium"
               >
                 <Plus size={12} />
                 Add Handoff Rule
@@ -745,7 +745,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                     </div>
                     <button
                       onClick={() => removeContextField(i)}
-                      className="text-text-tertiary hover:text-red-500 transition-colors mt-1"
+                      className="text-text-tertiary hover:text-red-500 dark:hover:text-red-400 transition-colors mt-1"
                     >
                       <Trash2 size={12} />
                     </button>
@@ -755,7 +755,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
 
               <button
                 onClick={addContextField}
-                className="inline-flex items-center gap-1 text-xs text-violet-600 hover:text-violet-700 font-medium"
+                className="inline-flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-medium"
               >
                 <Plus size={12} />
                 Add Context Field
@@ -767,7 +767,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
           {step === 5 && (
             <div className="space-y-4">
               {/* Summary */}
-              <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-3 space-y-2">
+              <div className="rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 p-3 space-y-2">
                 <div>
                   <span className="text-xs text-text-tertiary">Name</span>
                   <p className="text-sm font-medium text-text">{name}</p>
@@ -794,7 +794,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                       <Bot size={10} className="text-violet-500" />
                       <span className="text-text">{a.role}</span>
                       {a.required && (
-                        <span className="text-xs text-violet-600">(required)</span>
+                        <span className="text-xs text-violet-600 dark:text-violet-400">(required)</span>
                       )}
                     </div>
                   ))}
@@ -817,11 +817,11 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                         key={i}
                         className="flex items-center gap-1.5 text-xs text-text"
                       >
-                        <span className="font-mono text-violet-600">
+                        <span className="font-mono text-violet-600 dark:text-violet-400">
                           {fromLabel}
                         </span>
                         <ArrowRight size={10} className="text-text-tertiary" />
-                        <span className="font-mono text-violet-600">
+                        <span className="font-mono text-violet-600 dark:text-violet-400">
                           {toLabel}
                         </span>
                         <span className="text-text-tertiary ml-1">
@@ -844,7 +844,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                       .filter((f) => f.field.trim())
                       .map((f, i) => (
                         <div key={i} className="text-xs text-text">
-                          <span className="font-mono text-violet-600">
+                          <span className="font-mono text-violet-600 dark:text-violet-400">
                             {f.field}
                           </span>
                           <span className="text-text-tertiary ml-1">
@@ -861,7 +861,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                 (r) => r.condition === "always" || r.condition === "true"
               ) &&
                 selectedAgents.length > 2 && (
-                  <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+                  <div className="flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-2.5 text-xs text-amber-800 dark:text-amber-200">
                     <AlertTriangle size={12} className="shrink-0 mt-0.5" />
                     <span>
                       All handoff rules use unconditional transitions. Consider
@@ -871,7 +871,7 @@ export function WorkflowCreationWizard({ open, onClose, onComplete }: WizardProp
                 )}
 
               {error && (
-                <p className="text-xs text-red-600">{error}</p>
+                <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
               )}
             </div>
           )}

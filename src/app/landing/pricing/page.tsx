@@ -113,7 +113,7 @@ export default function PricingPage() {
               key={tier.name}
               className={`relative rounded-xl border transition-all duration-200 ${
                 tier.highlighted
-                  ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 ring-2 ring-indigo-600/20 md:scale-105"
+                  ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950/20 ring-2 ring-indigo-600/20 md:scale-105"
                   : "border-gray-900/10 dark:border-white/10 bg-white dark:bg-white/5"
               }`}
             >
@@ -138,7 +138,7 @@ export default function PricingPage() {
                     <div key={feature} className="flex items-start gap-3">
                       <Check
                         size={20}
-                        className="text-indigo-600 flex-shrink-0 mt-0.5"
+                        className="text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5"
                       />
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {feature}

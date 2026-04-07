@@ -86,7 +86,7 @@ const PERSONA_CARDS = [
       "Intellios auto-generates SR 11-7 documentation, maintains continuous compliance evidence, and eliminates the audit scramble. You're audit-ready before the auditor arrives.",
     fact: "SR 11-7, issued by the Federal Reserve and OCC in 2011, remains the cornerstone framework for model risk management at U.S. banking organizations. It requires model validation, governance, documentation, and ongoing monitoring across the full model lifecycle.",
     factSource: "Federal Reserve, SR 11-7, April 2011",
-    color: "bg-indigo-50 text-indigo-600 border-indigo-100",
+    color: "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800",
     darkColor: "dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20",
   },
   {
@@ -98,7 +98,7 @@ const PERSONA_CARDS = [
     fact: "Fewer than 10% of AI use cases make it past pilot stage, according to McKinsey research. Governance bottlenecks are a key contributor to stalled initiatives.",
     factSource:
       'McKinsey, "Seizing the Agentic AI Advantage," June 2025',
-    color: "bg-violet-50 text-violet-600 border-violet-100",
+    color: "bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 border-violet-100 dark:border-violet-800",
     darkColor: "dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/20",
   },
   {
@@ -109,7 +109,7 @@ const PERSONA_CARDS = [
       "Single pane of glass across every AI agent in your organization. Full visibility. Full control. No blind spots. Every agent governed from design through retirement.",
     fact: "88% of organizations now deploy AI in at least one business function, yet only ~31% report scaling AI enterprise-wide. Visibility and governance are the barriers to scale.",
     factSource: 'McKinsey, "The State of AI," March 2025',
-    color: "bg-emerald-50 text-emerald-600 border-emerald-100",
+    color: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800",
     darkColor: "dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20",
   },
 ];
@@ -1001,7 +1001,7 @@ export default function LandingPage() {
                 label="Apply for Design Partnership"
                 mobileLabel="Apply for Design Partnership"
                 variant="large"
-                className="!bg-white !text-indigo-600 hover:!bg-indigo-50"
+                className="!bg-white !text-indigo-600 dark:text-indigo-400 hover:!bg-indigo-50 dark:bg-indigo-950/30"
               />
               <a
                 href="mailto:sales@intellios.io?subject=Intellios%20Sales%20Inquiry"

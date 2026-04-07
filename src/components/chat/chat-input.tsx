@@ -135,7 +135,7 @@ export function ChatInput({
                 <span className="mx-1 opacity-40">·</span>
                 ~{estimatedTokens.toLocaleString()} tokens
                 {attachment.truncated && (
-                  <span className="ml-1.5 font-medium text-amber-600">
+                  <span className="ml-1.5 font-medium text-amber-600 dark:text-amber-400">
                     · truncated to {MAX_EMBED_CHARS.toLocaleString()} chars
                   </span>
                 )}
@@ -145,6 +145,7 @@ export function ChatInput({
               onClick={() => setAttachment(null)}
               className="shrink-0 rounded p-0.5 text-text-tertiary hover:bg-surface-muted hover:text-text transition-colors"
               title="Remove attachment"
+              aria-label="Remove attachment"
             >
               <X size={13} />
             </button>
@@ -155,9 +156,9 @@ export function ChatInput({
       {/* ── File error ────────────────────────────────────────────────────── */}
       {fileError && (
         <div className="flex items-start gap-2 px-4 pt-2">
-          <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber-600" />
-          <p className="flex-1 text-2xs text-amber-700">{fileError}</p>
-          <button onClick={() => setFileError(null)}>
+          <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p className="flex-1 text-2xs text-amber-700 dark:text-amber-300">{fileError}</p>
+          <button onClick={() => setFileError(null)} aria-label="Dismiss error">
             <X size={11} className="text-text-tertiary" />
           </button>
         </div>
@@ -180,6 +181,13 @@ export function ChatInput({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={!canAttach || !!disabled}
+            aria-label={
+              filesRemaining <= 0
+                ? `Session upload limit reached (${maxFilesPerSession} files max)`
+                : attachment
+                ? "Remove current attachment to add another"
+                : `Attach a file — ${filesRemaining} of ${maxFilesPerSession} remaining`
+            }
             title={
               filesRemaining <= 0
                 ? `Session upload limit reached (${maxFilesPerSession} files max)`

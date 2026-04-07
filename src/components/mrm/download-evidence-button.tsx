@@ -49,7 +49,7 @@ export default function DownloadEvidenceButton({ blueprintId, enabled }: Props) 
     <button
       onClick={handleDownload}
       disabled={loading}
-      className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 transition-colors print:hidden"
+      className="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/30 px-4 py-2 text-sm font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 disabled:opacity-50 transition-colors print:hidden"
     >
       {loading ? "Exporting…" : "↓ Download Evidence Package"}
     </button>

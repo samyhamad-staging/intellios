@@ -83,11 +83,11 @@ function computeHealth(data: TelemetryRow[]): {
   if (!hasRecentData && last6h.length > 0)
     return { label: "Offline", color: "text-text-secondary", bg: "bg-surface-muted" };
   if (errorRate > 0.2)
-    return { label: "Degraded", color: "text-amber-700", bg: "bg-amber-100" };
+    return { label: "Degraded", color: "text-amber-700 dark:text-amber-300", bg: "bg-amber-100 dark:bg-amber-900/40" };
   if (errorRate > 0.05)
-    return { label: "Degraded", color: "text-amber-700", bg: "bg-amber-100" };
+    return { label: "Degraded", color: "text-amber-700 dark:text-amber-300", bg: "bg-amber-100 dark:bg-amber-900/40" };
 
-  return { label: "Healthy", color: "text-green-700", bg: "bg-green-100" };
+  return { label: "Healthy", color: "text-green-700 dark:text-emerald-300", bg: "bg-green-100 dark:bg-emerald-900/40" };
 }
 
 /**
@@ -107,7 +107,7 @@ function formatDelta(
   const sign = pct > 0 ? "+" : "";
   return {
     label: `${sign}${Math.round(pct)}% vs prior 7d`,
-    color: improved ? "text-green-600" : "text-red-500",
+    color: improved ? "text-green-600 dark:text-emerald-400" : "text-red-500",
   };
 }
 
@@ -169,6 +169,7 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
   // P1-37: Notification channel config — browser-local
   const NOTIFY_KEY = `notify-channel-${agentId}`;
   const [notifyChannel, setNotifyChannel] = useState<NotifyChannel>(() => {
+    if (typeof window === "undefined") return { email: "", slackWebhook: "" };
     try {
       const raw = localStorage.getItem(`notify-channel-${agentId}`);
       return raw ? (JSON.parse(raw) as NotifyChannel) : { email: "", slackWebhook: "" };
@@ -261,7 +262,7 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
           <div className="flex items-center gap-2">
             <p className="text-xs font-medium text-text-secondary">Notify when triggered</p>
             {hasNotifyConfig && !editingNotify && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-xs text-green-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 dark:bg-emerald-950/30 border border-green-200 dark:border-emerald-800 px-2 py-0.5 text-xs text-green-700 dark:text-emerald-300">
                 ● Active
               </span>
             )}
@@ -269,7 +270,7 @@ function AlertThresholdsPanel({ agentId, canManage }: { agentId: string; canMana
           {canManage && !editingNotify && (
             <button
               onClick={() => { setNotifyDraft(notifyChannel); setEditingNotify(true); }}
-              className="text-xs text-blue-600 hover:underline"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
             >
               {hasNotifyConfig ? "Edit" : "Configure"}
             </button>
@@ -459,7 +460,7 @@ function TelemetrySnippetPanel({ snippetPython, snippetCurl }: { snippetPython: 
           {/* Copy button */}
           <button
             onClick={handleCopy}
-            title="Copy to clipboard"
+            title="Copy to clipboard" aria-label="Copy to clipboard"
             className="flex items-center gap-1 rounded border border-border px-2.5 py-1 text-xs text-text-secondary hover:bg-surface-raised transition-colors"
           >
             {copied ? (
@@ -663,7 +664,7 @@ requests.post(
             <p className="text-xs text-text-secondary">{kpi.label}</p>
             <p
               className={`mt-1 text-lg font-semibold ${
-                kpi.highlight ? "text-amber-600" : "text-text"
+                kpi.highlight ? "text-amber-600 dark:text-amber-400" : "text-text"
               }`}
             >
               {kpi.value}
@@ -705,7 +706,7 @@ requests.post(
                   {day.invocations.toLocaleString()}
                 </span>
                 {day.errors > 0 && (
-                  <span className="w-12 text-right text-red-500">
+                  <span className="w-12 text-right text-red-500 dark:text-red-400">
                     {day.errors} err
                   </span>
                 )}

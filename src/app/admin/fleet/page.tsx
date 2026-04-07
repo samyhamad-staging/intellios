@@ -44,10 +44,10 @@ interface FleetData {
 
 // P2-562: Agent-type → department label + estimated monthly cost per deployed agent
 const AGENT_TYPE_META: Record<string, { label: string; dept: string; costPerAgent: number; color: string }> = {
-  automation:       { label: "Automation",       dept: "IT / Operations",  costPerAgent: 120, color: "bg-blue-50 text-blue-700 border-blue-100"     },
-  "decision-support": { label: "Decision Support", dept: "Risk / Compliance", costPerAgent: 180, color: "bg-violet-50 text-violet-700 border-violet-100" },
-  autonomous:       { label: "Autonomous",       dept: "Advanced Ops",     costPerAgent: 250, color: "bg-amber-50 text-amber-700 border-amber-100"   },
-  "data-access":    { label: "Data Access",      dept: "Analytics / BI",   costPerAgent: 140, color: "bg-emerald-50 text-emerald-700 border-emerald-100" },
+  automation:       { label: "Automation",       dept: "IT / Operations",  costPerAgent: 120, color: "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-800"     },
+  "decision-support": { label: "Decision Support", dept: "Risk / Compliance", costPerAgent: 180, color: "bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 border-violet-100 dark:border-violet-800" },
+  autonomous:       { label: "Autonomous",       dept: "Advanced Ops",     costPerAgent: 250, color: "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-800"   },
+  "data-access":    { label: "Data Access",      dept: "Analytics / BI",   costPerAgent: 140, color: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-800" },
   unclassified:     { label: "Unclassified",     dept: "—",                costPerAgent: 150, color: "bg-surface-raised text-text-secondary border-border-subtle"     },
 };
 
@@ -65,9 +65,9 @@ function formatCost(n: number) {
 function ComplianceBadge({ rate }: { rate: number | null }) {
   if (rate === null) return <span className="text-xs text-text-tertiary">—</span>;
   const color =
-    rate >= 90 ? "text-green-600 bg-green-50" :
-    rate >= 70 ? "text-amber-600 bg-amber-50" :
-    "text-red-600 bg-red-50";
+    rate >= 90 ? "text-green-600 dark:text-emerald-400 bg-green-50 dark:bg-emerald-950/30" :
+    rate >= 70 ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30" :
+    "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30";
   return (
     <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${color}`}>
       {rate}%
@@ -141,7 +141,7 @@ export default function AdminFleetPage() {
             </p>
             <Link
               href="/registry"
-              className="mt-4 inline-flex items-center text-sm text-violet-600 hover:text-violet-800 hover:underline"
+              className="mt-4 inline-flex items-center text-sm text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-200 hover:underline"
             >
               View your enterprise agents →
             </Link>
@@ -151,7 +151,7 @@ export default function AdminFleetPage() {
     }
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-sm text-red-600">{error}</p>
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
       </div>
     );
   }
@@ -185,7 +185,7 @@ export default function AdminFleetPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <Globe size={20} className="text-violet-600" />
+            <Globe size={20} className="text-violet-600 dark:text-violet-400" />
             <Heading level={1}>Platform Fleet Overview</Heading>
           </div>
           <p className="text-sm text-text-secondary pl-7">
@@ -228,10 +228,10 @@ export default function AdminFleetPage() {
             color:
               totals.avgComplianceRate !== null
                 ? totals.avgComplianceRate >= 90
-                  ? "text-green-700"
+                  ? "text-green-700 dark:text-emerald-300"
                   : totals.avgComplianceRate >= 70
-                  ? "text-amber-700"
-                  : "text-red-700"
+                  ? "text-amber-700 dark:text-amber-300"
+                  : "text-red-700 dark:text-red-300"
                 : "text-text-secondary",
           },
         ].map((card) => (
@@ -253,10 +253,10 @@ export default function AdminFleetPage() {
       </div>
 
       {/* P2-562: Platform cost summary card */}
-      <div className="rounded-xl border border-violet-100 bg-violet-50 p-5">
+      <div className="rounded-xl border border-violet-100 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 p-5">
         <div className="flex items-center gap-2 mb-1">
-          <DollarSign size={16} className="text-violet-600" />
-          <span className="text-sm font-semibold text-violet-800">Estimated Platform Cost</span>
+          <DollarSign size={16} className="text-violet-600 dark:text-violet-400" />
+          <span className="text-sm font-semibold text-violet-800 dark:text-violet-200">Estimated Platform Cost</span>
           <span className="ml-auto text-2xs text-violet-400 font-mono">blended avg $150/deployed agent/mo</span>
         </div>
         <p className="text-3xl font-bold text-violet-700">
@@ -313,10 +313,10 @@ export default function AdminFleetPage() {
                   <TableCell className="text-right font-semibold text-text">
                     {e.totalAgents}
                   </TableCell>
-                  <TableCell className="text-right text-green-700">
+                  <TableCell className="text-right text-green-700 dark:text-emerald-300">
                     {e.deployedAgents}
                   </TableCell>
-                  <TableCell className="text-right text-amber-600">
+                  <TableCell className="text-right text-amber-600 dark:text-amber-400">
                     {e.statusCounts["in_review"] ?? 0}
                   </TableCell>
                   <TableCell className="text-right text-text-secondary">
@@ -332,7 +332,7 @@ export default function AdminFleetPage() {
                   <TableCell className="text-right">
                     <Link
                       href={`/registry?enterprise=${e.enterpriseId ?? ""}`}
-                      className="text-xs text-violet-600 hover:text-violet-800 hover:underline"
+                      className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-200 hover:underline"
                     >
                       View agents →
                     </Link>
@@ -347,8 +347,8 @@ export default function AdminFleetPage() {
                   Platform Total
                 </td>
                 <td className="px-4 py-3 text-right text-text">{totals.totalAgents}</td>
-                <td className="px-4 py-3 text-right text-green-700">{totals.deployedAgents}</td>
-                <td className="px-4 py-3 text-right text-amber-600">
+                <td className="px-4 py-3 text-right text-green-700 dark:text-emerald-300">{totals.deployedAgents}</td>
+                <td className="px-4 py-3 text-right text-amber-600 dark:text-amber-400">
                   {enterprises.reduce((s, e) => s + (e.statusCounts["in_review"] ?? 0), 0)}
                 </td>
                 <td className="px-4 py-3 text-right text-text-secondary">
@@ -399,7 +399,7 @@ export default function AdminFleetPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-text-secondary">Deployed</span>
-                      <span className="text-sm font-semibold text-green-700">{row.deployed}</span>
+                      <span className="text-sm font-semibold text-green-700 dark:text-emerald-300">{row.deployed}</span>
                     </div>
                     {/* Deploy rate bar */}
                     <div className="h-1.5 rounded-full bg-surface-muted mt-2">

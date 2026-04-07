@@ -26,7 +26,7 @@ function ReviewSlaBadge({ submittedAt }: { submittedAt: string }) {
   if (slaRemainingDays <= 0) {
     const overdueDays = Math.abs(Math.floor(slaRemainingDays));
     return (
-      <div className="flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs text-red-700">
+      <div className="flex items-center gap-1.5 rounded-md border status-error px-2.5 py-1.5 text-xs">
         <Clock className="h-3 w-3 shrink-0" />
         <span>
           <span className="font-semibold">Overdue {overdueDays > 0 ? `${overdueDays}d` : "< 1d"}</span>
@@ -45,7 +45,7 @@ function ReviewSlaBadge({ submittedAt }: { submittedAt: string }) {
   return (
     <div className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs ${
       isUrgent
-        ? "border-amber-200 bg-amber-50 text-amber-700"
+        ? "status-warning"
         : "border-border-subtle bg-surface-raised text-text-secondary"
     }`}>
       <Clock className="h-3 w-3 shrink-0" />
@@ -108,21 +108,21 @@ const ACTIONS: {
     id: "approve",
     label: "Approve",
     description: "Blueprint passes review — moves to Approved",
-    buttonStyle: "border-green-300 bg-green-50 text-green-800 hover:bg-green-100",
+    buttonStyle: "status-success border hover:opacity-90",
     resultLabel: "Approved",
   },
   {
     id: "request_changes",
     label: "Request Changes",
     description: "Return to designer with feedback — moves back to Draft",
-    buttonStyle: "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100",
+    buttonStyle: "status-warning border hover:opacity-90",
     resultLabel: "Changes Requested",
   },
   {
     id: "reject",
     label: "Reject",
     description: "Permanently reject this blueprint — moves to Rejected",
-    buttonStyle: "border-red-200 bg-red-50 text-red-800 hover:bg-red-100",
+    buttonStyle: "status-error border hover:opacity-90",
     resultLabel: "Rejected",
   },
 ];
@@ -234,23 +234,23 @@ export function ReviewPanel({
   // Risk level configuration for AI brief display
   const riskLevelConfig = {
     low: { badge: "bg-emerald-100 text-emerald-700", label: "Low Risk" },
-    medium: { badge: "bg-amber-100 text-amber-700", label: "Medium Risk" },
-    high: { badge: "bg-red-100 text-red-700", label: "High Risk" },
+    medium: { badge: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300", label: "Medium Risk" },
+    high: { badge: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300", label: "High Risk" },
   };
 
   // Recommendation configuration
   const recConfig = {
     approve: { badge: "bg-emerald-100 text-emerald-700", label: "Approve" },
-    request_changes: { badge: "bg-amber-100 text-amber-700", label: "Request Changes" },
-    reject: { badge: "bg-red-100 text-red-700", label: "Reject" },
+    request_changes: { badge: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300", label: "Request Changes" },
+    reject: { badge: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300", label: "Reject" },
   };
 
   return (
     <div className="space-y-5">
       {/* P2-573: Re-review banner — shown when a prior version exists */}
       {previousBlueprintId && (
-        <div className="flex items-center justify-between rounded-lg border border-violet-200 bg-violet-50 px-4 py-2.5">
-          <div className="flex items-center gap-2 text-sm text-violet-800">
+        <div className="flex items-center justify-between rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-4 py-2.5">
+          <div className="flex items-center gap-2 text-sm text-violet-800 dark:text-violet-200">
             <span className="text-violet-500">↔</span>
             <span>
               Re-review: <span className="font-semibold">v{previousVersion}</span>
@@ -260,7 +260,7 @@ export function ReviewPanel({
           </div>
           <button
             onClick={handleExpandDiff}
-            className="text-xs font-medium text-violet-700 hover:text-violet-900 underline underline-offset-2"
+            className="text-xs font-medium text-violet-700 dark:text-violet-300 hover:text-violet-900 underline underline-offset-2"
           >
             See what changed ↓
           </button>
@@ -271,13 +271,13 @@ export function ReviewPanel({
       <ReviewSlaBadge submittedAt={submittedAt} />
 
       {/* AI Risk Brief */}
-      <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
+      <div className="rounded-lg border border-indigo-100 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/30 p-4">
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700"><Sparkles size={12} />AI Risk Brief</span>
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300"><Sparkles size={12} />AI Risk Brief</span>
           {aiBrief === null && (
             <button
               onClick={generateAiBrief}
-              className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 transition-colors"
+              className="inline-flex items-center gap-1 rounded-md border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-surface px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors"
             >
               <Sparkles size={11} />Generate Brief
             </button>
@@ -317,7 +317,7 @@ export function ReviewPanel({
                 ))}
               </ul>
             )}
-            <div className="flex items-center gap-2 rounded-md border border-indigo-100 bg-white px-3 py-2">
+            <div className="flex items-center gap-2 rounded-md border border-indigo-100 dark:border-indigo-800 bg-white px-3 py-2">
               <span className="text-xs text-text-secondary">Suggested action:</span>
               <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${recConfig[aiBrief.recommendation].badge}`}>
                 {recConfig[aiBrief.recommendation].label}
@@ -329,22 +329,22 @@ export function ReviewPanel({
               <span className="text-xs text-indigo-400">Was this brief accurate?</span>
               <button
                 onClick={() => setBriefFeedback(briefFeedback === "up" ? null : "up")}
-                title="Accurate assessment"
+                title="Accurate assessment" aria-label="Accurate assessment"
                 className={`rounded p-1 transition-colors ${
                   briefFeedback === "up"
-                    ? "bg-green-100 text-green-700"
-                    : "text-indigo-300 hover:text-green-600 hover:bg-green-50"
+                    ? "bg-green-100 dark:bg-emerald-900/40 text-green-700 dark:text-emerald-300"
+                    : "text-indigo-300 hover:text-green-600 dark:hover:text-emerald-400 hover:bg-green-50 dark:hover:bg-emerald-950/30"
                 }`}
               >
                 <ThumbsUp size={13} />
               </button>
               <button
                 onClick={() => setBriefFeedback(briefFeedback === "down" ? null : "down")}
-                title="Inaccurate assessment"
+                title="Inaccurate assessment" aria-label="Inaccurate assessment"
                 className={`rounded p-1 transition-colors ${
                   briefFeedback === "down"
-                    ? "bg-red-100 text-red-700"
-                    : "text-indigo-300 hover:text-red-500 hover:bg-red-50"
+                    ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
+                    : "text-indigo-300 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
                 }`}
               >
                 <ThumbsDown size={13} />
@@ -400,11 +400,11 @@ export function ReviewPanel({
 
       {/* SOD warning */}
       {isSodViolation && (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
-          <span className="shrink-0 text-amber-600">⚠</span>
+        <div className="flex items-start gap-3 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-4 py-3">
+          <span className="shrink-0 text-amber-600 dark:text-amber-400">⚠</span>
           <div>
-            <p className="text-sm font-medium text-amber-800">Separation of Duties Notice</p>
-            <p className="mt-0.5 text-xs text-amber-700">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Separation of Duties Notice</p>
+            <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-300">
               You designed this agent ({createdBy}). Enterprise policy requires a different reviewer
               to approve it. Proceed only if no other reviewer is available and document the exception in your rationale.
             </p>
@@ -422,14 +422,14 @@ export function ReviewPanel({
             Not yet validated. Run validation in the Blueprint Workbench or Governance tab before approving.
           </div>
         ) : validationReport.valid ? (
-          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-            <p className="text-sm font-medium text-green-800">
+          <div className="rounded-lg border border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 px-4 py-3">
+            <p className="text-sm font-medium text-green-800 dark:text-emerald-200">
               ✓ Passes governance — {validationReport.policyCount} polic{validationReport.policyCount === 1 ? "y" : "ies"} checked
             </p>
           </div>
         ) : (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-            <p className="text-sm font-medium text-red-800">
+          <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3">
+            <p className="text-sm font-medium text-red-800 dark:text-red-200">
               ✗ {errorCount} error{errorCount !== 1 ? "s" : ""}
               {warnCount > 0 && `, ${warnCount} warning${warnCount !== 1 ? "s" : ""}`}
             </p>
@@ -439,18 +439,18 @@ export function ReviewPanel({
                   <span
                     className={`shrink-0 rounded px-1.5 py-0.5 font-medium ${
                       v.severity === "error"
-                        ? "bg-red-100 text-red-700"
+                        ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
                         : "bg-yellow-100 text-yellow-700"
                     }`}
                   >
                     {v.severity}
                   </span>
-                  <span className="text-red-800">{v.message}</span>
+                  <span className="text-red-800 dark:text-red-200">{v.message}</span>
                 </div>
               ))}
             </div>
-            <div className="mt-3 border-t border-red-100 pt-2">
-              <Link href="/compliance" className="text-xs text-violet-600 hover:text-violet-700">
+            <div className="mt-3 border-t border-red-100 dark:border-red-800 pt-2">
+              <Link href="/compliance" className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300">
                 View policies in Governance Hub →
               </Link>
             </div>
@@ -585,15 +585,15 @@ export function ReviewPanel({
 
       {/* Step advancement toast */}
       {stepToast && (
-        <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800 flex items-center gap-2">
-          <CheckCircle size={14} className="shrink-0 text-green-600" />
+        <div className="rounded-lg bg-green-50 dark:bg-emerald-950/30 border border-green-200 dark:border-emerald-800 px-4 py-3 text-sm text-green-800 dark:text-emerald-200 flex items-center gap-2">
+          <CheckCircle size={14} className="shrink-0 text-green-600 dark:text-emerald-400" />
           {stepToast}
         </div>
       )}
 
       {/* Error */}
       {error && (
-        <p className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 px-3 py-2 text-sm text-red-700 dark:text-red-300">
           {error}
         </p>
       )}

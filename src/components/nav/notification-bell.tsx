@@ -196,6 +196,8 @@ export default function NotificationBell() {
           onClick={handleOpen}
           className="relative p-1.5 rounded-md text-text-tertiary hover:text-text-secondary hover:bg-surface-raised transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
           aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+          aria-haspopup="dialog"
+          aria-expanded={open}
         >
           <svg
             className="w-5 h-5"
@@ -226,7 +228,7 @@ export default function NotificationBell() {
             <span className="text-sm font-semibold text-text">
               Notifications
               {unreadCount > 0 && (
-                <span className="ml-1.5 rounded-full bg-indigo-100 px-1.5 py-0.5 text-xs font-medium text-indigo-700">
+                <span className="ml-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 px-1.5 py-0.5 text-xs font-medium text-indigo-700 dark:text-indigo-300">
                   {unreadCount}
                 </span>
               )}
@@ -236,7 +238,7 @@ export default function NotificationBell() {
             ) : unreadCount > 0 ? (
               <button
                 onClick={handleMarkAllRead}
-                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 font-medium transition-colors"
               >
                 Mark all as read
               </button>
@@ -258,7 +260,7 @@ export default function NotificationBell() {
                       key={n.id}
                       onClick={() => handleNotificationClick(n)}
                       className={`w-full text-left px-4 py-3 hover:bg-surface-raised transition-colors ${
-                        !n.read ? "bg-indigo-50/50" : ""
+                        !n.read ? "bg-indigo-50 dark:bg-indigo-950/30" : ""
                       }`}
                     >
                       <div className="flex items-start gap-2.5">
@@ -285,7 +287,7 @@ export default function NotificationBell() {
                       if (d.link) router.push(d.link);
                     }}
                     className={`w-full text-left px-4 py-3 hover:bg-surface-raised transition-colors ${
-                      d.hasUnread ? "bg-indigo-50/50" : ""
+                      d.hasUnread ? "bg-indigo-50 dark:bg-indigo-950/30" : ""
                     }`}
                   >
                     <div className="flex items-start gap-2.5">
@@ -295,7 +297,7 @@ export default function NotificationBell() {
                           <p className="text-xs font-semibold text-text truncate">{d.label}</p>
                           <span className="text-2xs text-text-tertiary shrink-0">{formatRelative(d.latestAt)}</span>
                         </div>
-                        <p className="text-xs text-indigo-600 mt-0.5">View all {d.count} →</p>
+                        <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">View all {d.count} →</p>
                       </div>
                       {d.hasUnread && <span className="mt-1.5 shrink-0 w-2 h-2 rounded-full bg-indigo-500" />}
                     </div>

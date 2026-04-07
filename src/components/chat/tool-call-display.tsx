@@ -114,7 +114,7 @@ export function ToolCallDisplay({ toolName, args, state, output, errorText }: To
     <div className="flex justify-start">
       <button
         onClick={() => setExpanded((e) => !e)}
-        className="flex items-start gap-2 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-xs text-blue-700 max-w-[80%] text-left hover:bg-blue-100 transition-colors"
+        className="flex items-start gap-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-800 px-3 py-2 text-xs text-blue-700 dark:text-blue-300 max-w-[80%] text-left hover:bg-blue-100 transition-colors"
         title={expanded ? "Click to collapse" : "Click to expand captured values"}
         aria-label={expanded ? "Collapse captured values" : "Expand captured values"}
       >
@@ -122,25 +122,25 @@ export function ToolCallDisplay({ toolName, args, state, output, errorText }: To
         <span className="flex-1 min-w-0">
           <span className="font-medium">{label}</span>
           {/* Result status badge */}
-          {isSuccess && <span className="ml-1.5 text-2xs font-medium text-green-600 bg-green-50 rounded-full px-1.5 py-0.5">Captured</span>}
-          {isError && <span className="ml-1.5 text-2xs font-medium text-red-600 bg-red-50 rounded-full px-1.5 py-0.5">Failed</span>}
+          {isSuccess && <span className="ml-1.5 text-2xs font-medium text-green-600 dark:text-emerald-400 bg-green-50 dark:bg-emerald-950/30 rounded-full px-1.5 py-0.5">Captured</span>}
+          {isError && <span className="ml-1.5 text-2xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded-full px-1.5 py-0.5">Failed</span>}
           {isPending && <span className="ml-1.5 text-2xs font-medium text-text-tertiary bg-surface-raised rounded-full px-1.5 py-0.5">…</span>}
           {summary && (
-            <span className="text-blue-500 ml-1">— {summary}</span>
+            <span className="text-blue-500 dark:text-blue-400 ml-1">— {summary}</span>
           )}
           {expanded && (
             <div className="mt-2 flex flex-col gap-1.5">
-              <pre className="text-2xs text-blue-600 whitespace-pre-wrap break-all font-mono bg-white rounded p-1.5 border border-blue-100">
+              <pre className="text-2xs text-blue-600 dark:text-blue-400 whitespace-pre-wrap break-all font-mono bg-white rounded p-1.5 border border-blue-100 dark:border-blue-800">
                 {JSON.stringify(args, null, 2)}
               </pre>
               {/* Tool result */}
               {state === "output-available" && output != null && (
-                <pre className={`text-2xs whitespace-pre-wrap break-all font-mono rounded p-1.5 border ${isSuccess ? "text-green-700 bg-green-50 border-green-100" : "text-red-700 bg-red-50 border-red-100"}`}>
+                <pre className={`text-2xs whitespace-pre-wrap break-all font-mono rounded p-1.5 border ${isSuccess ? "text-green-700 dark:text-emerald-300 bg-green-50 dark:bg-emerald-950/30 border-green-100 dark:border-emerald-800" : "text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/30 border-red-100 dark:border-red-800"}`}>
                   {JSON.stringify(output as Record<string, unknown>, null, 2)}
                 </pre>
               )}
               {state === "output-error" && errorText && (
-                <pre className="text-2xs text-red-700 whitespace-pre-wrap break-all font-mono bg-red-50 rounded p-1.5 border border-red-100">
+                <pre className="text-2xs text-red-700 dark:text-red-300 whitespace-pre-wrap break-all font-mono bg-red-50 dark:bg-red-950/30 rounded p-1.5 border border-red-100 dark:border-red-800">
                   {errorText}
                 </pre>
               )}

@@ -125,9 +125,10 @@ export function InlineFieldEditor({
   if (!editing) {
     return (
       <div
-        className={`group relative ${disabled ? "" : "cursor-pointer"}`}
+        className={`group relative ${disabled ? "" : "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:rounded-md"}`}
         onClick={startEditing}
         role={disabled ? undefined : "button"}
+        aria-label={disabled ? undefined : `Edit ${label ?? "field"}`}
         tabIndex={disabled ? undefined : 0}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") startEditing();
@@ -162,7 +163,7 @@ export function InlineFieldEditor({
           value={(draft as string) ?? ""}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={placeholder}
-          className="w-full rounded-md border border-violet-300 bg-white px-2.5 py-1.5 text-sm text-text focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500/20"
+          className="w-full rounded-md border border-violet-300 dark:border-violet-700 bg-white px-2.5 py-1.5 text-sm text-text focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500/20"
           disabled={saving}
         />
       )}
@@ -174,7 +175,7 @@ export function InlineFieldEditor({
           onChange={(e) => setDraft(e.target.value)}
           placeholder={placeholder}
           rows={4}
-          className="w-full rounded-md border border-violet-300 bg-white px-2.5 py-1.5 text-sm text-text font-mono leading-relaxed focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500/20 resize-y"
+          className="w-full rounded-md border border-violet-300 dark:border-violet-700 bg-white px-2.5 py-1.5 text-sm text-text font-mono leading-relaxed focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500/20 resize-y"
           disabled={saving}
         />
       )}
@@ -186,7 +187,7 @@ export function InlineFieldEditor({
           value={(draft as number) ?? ""}
           onChange={(e) => setDraft(e.target.value ? Number(e.target.value) : null)}
           placeholder={placeholder}
-          className="w-full rounded-md border border-violet-300 bg-white px-2.5 py-1.5 text-sm text-text focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500/20"
+          className="w-full rounded-md border border-violet-300 dark:border-violet-700 bg-white px-2.5 py-1.5 text-sm text-text focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500/20"
           disabled={saving}
         />
       )}
@@ -197,7 +198,7 @@ export function InlineFieldEditor({
             type="checkbox"
             checked={(draft as boolean) ?? false}
             onChange={(e) => setDraft(e.target.checked)}
-            className="rounded border-border text-violet-600 focus:ring-violet-500/20"
+            className="rounded border-border text-violet-600 dark:text-violet-400 focus:ring-violet-500/20"
             disabled={saving}
           />
           <span className="text-sm text-text">{(draft as boolean) ? "Enabled" : "Disabled"}</span>
@@ -209,7 +210,7 @@ export function InlineFieldEditor({
           ref={inputRef as React.RefObject<HTMLSelectElement>}
           value={(draft as string) ?? ""}
           onChange={(e) => setDraft(e.target.value)}
-          className="w-full rounded-md border border-violet-300 bg-white px-2.5 py-1.5 text-sm text-text focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500/20"
+          className="w-full rounded-md border border-violet-300 dark:border-violet-700 bg-white px-2.5 py-1.5 text-sm text-text focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500/20"
           disabled={saving}
         >
           <option value="">Select…</option>
@@ -256,7 +257,7 @@ export function InlineFieldEditor({
           Cancel
         </button>
         {error && (
-          <span className="text-xs text-red-600">{error}</span>
+          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
         )}
       </div>
     </div>
@@ -300,7 +301,7 @@ function DisplayValue({
 
     case "boolean":
       return (
-        <span className={`text-sm ${value ? "text-green-600" : "text-text-secondary"}`}>
+        <span className={`text-sm ${value ? "text-green-600 dark:text-emerald-400" : "text-text-secondary"}`}>
           {value ? "Enabled" : "Disabled"}
         </span>
       );
@@ -369,13 +370,13 @@ function TagEditor({
         {tags.map((tag, i) => (
           <span
             key={i}
-            className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-700"
+            className="inline-flex items-center gap-1 rounded-full bg-violet-100 dark:bg-violet-900/40 px-2 py-0.5 text-xs text-violet-700 dark:text-violet-300"
           >
             {tag}
             <button
               onClick={() => removeTag(i)}
               disabled={disabled}
-              className="hover:text-red-500 transition-colors"
+              className="hover:text-red-500 dark:hover:text-red-400 transition-colors"
             >
               <X size={10} />
             </button>
@@ -394,13 +395,13 @@ function TagEditor({
             }
           }}
           placeholder="Add tag…"
-          className="flex-1 rounded-md border border-violet-300 bg-white px-2 py-1 text-xs text-text placeholder-text-tertiary focus:border-violet-500 focus:outline-none"
+          className="flex-1 rounded-md border border-violet-300 dark:border-violet-700 bg-white px-2 py-1 text-xs text-text placeholder-text-tertiary focus:border-violet-500 focus:outline-none"
           disabled={disabled}
         />
         <button
           onClick={addTag}
           disabled={disabled || !input.trim()}
-          className="inline-flex items-center gap-0.5 rounded-md bg-violet-100 px-1.5 py-1 text-xs text-violet-700 hover:bg-violet-200 disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-0.5 rounded-md bg-violet-100 px-1.5 py-1 text-xs text-violet-700 dark:text-violet-300 hover:bg-violet-200 disabled:opacity-50 transition-colors"
         >
           <Plus size={10} />
         </button>
@@ -444,13 +445,13 @@ function JsonEditor({
         rows={6}
         className={`w-full rounded-md border bg-white px-2.5 py-1.5 text-xs font-mono text-text leading-relaxed focus:outline-none resize-y ${
           parseError
-            ? "border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500/20"
-            : "border-violet-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20"
+            ? "border-red-300 dark:border-red-700 focus:border-red-500 focus:ring-1 focus:ring-red-500/20"
+            : "border-violet-300 dark:border-violet-700 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20"
         }`}
         disabled={disabled}
       />
       {parseError && (
-        <p className="text-xs text-red-600 mt-0.5">{parseError}</p>
+        <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{parseError}</p>
       )}
     </div>
   );

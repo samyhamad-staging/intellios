@@ -206,7 +206,7 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
               <div className="text-xs font-medium text-text-secondary uppercase tracking-wider mb-1">Allowed domains</div>
               <div className="flex flex-wrap gap-1">
                 {c.allowed_domains.map((d) => (
-                  <span key={d} className="rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-xs text-green-700">{d}</span>
+                  <span key={d} className="rounded-full bg-green-50 dark:bg-emerald-950/30 border border-green-200 dark:border-emerald-800 px-2 py-0.5 text-xs text-green-700 dark:text-emerald-300">{d}</span>
                 ))}
               </div>
             </div>
@@ -215,11 +215,11 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
           {c.denied_actions && c.denied_actions.length > 0 && (
             <div>
               <div className="text-xs font-medium text-text-secondary uppercase tracking-wider mb-1.5">Denied actions</div>
-              <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 space-y-1">
+              <div className="rounded-lg border border-red-100 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2 space-y-1">
                 {c.denied_actions.map((a) => (
                   <div key={a} className="flex items-center gap-2 text-xs">
-                    <span className="shrink-0 h-4 w-4 flex items-center justify-center rounded-full bg-red-200 text-red-700 font-bold text-2xs">✕</span>
-                    <span className="text-red-800 font-medium">{a}</span>
+                    <span className="shrink-0 h-4 w-4 flex items-center justify-center rounded-full bg-red-200 text-red-700 dark:text-red-300 font-bold text-2xs">✕</span>
+                    <span className="text-red-800 dark:text-red-200 font-medium">{a}</span>
                   </div>
                 ))}
               </div>
@@ -255,7 +255,7 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
       return (
         <div className="flex flex-wrap gap-3 text-sm">
           {a.log_interactions !== undefined && (
-            <span className={`flex items-center gap-1 ${a.log_interactions ? "text-green-700" : "text-text-secondary"}`}>
+            <span className={`flex items-center gap-1 ${a.log_interactions ? "text-green-700 dark:text-emerald-300" : "text-text-secondary"}`}>
               {a.log_interactions ? "✓" : "✗"} Interaction logging
             </span>
           )}
@@ -264,7 +264,7 @@ function getSectionContent(section: SectionKey, payload: IntakePayload): React.R
             <span className="text-text-secondary">{formatRetentionDays(a.retention_days)}</span>
           )}
           {a.pii_redaction !== undefined && (
-            <span className={`flex items-center gap-1 ${a.pii_redaction ? "text-green-700" : "text-text-secondary"}`}>
+            <span className={`flex items-center gap-1 ${a.pii_redaction ? "text-green-700 dark:text-emerald-300" : "text-text-secondary"}`}>
               {a.pii_redaction ? "✓" : "✗"} PII redaction
             </span>
           )}
@@ -368,15 +368,15 @@ export function IntakeReview({
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">✓</div>
               <span className="text-sm text-text-tertiary">Context</span>
             </div>
-            <div className="mx-2.5 h-px w-8 bg-blue-300 shrink-0" />
+            <div className="mx-2.5 h-px w-8 bg-blue-300 dark:bg-blue-700 shrink-0" />
             <div className="flex items-center gap-1.5">
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">✓</div>
               <span className="text-sm text-text-tertiary">Intake</span>
             </div>
-            <div className="mx-2.5 h-px w-8 bg-blue-400 shrink-0" />
+            <div className="mx-2.5 h-px w-8 bg-blue-400 dark:bg-blue-600 shrink-0" />
             <div className="flex items-center gap-1.5">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold ring-4 ring-blue-100">3</div>
-              <span className="text-sm font-semibold text-blue-700">Review</span>
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold ring-4 ring-blue-100 dark:ring-blue-900/50">3</div>
+              <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Review</span>
             </div>
           </div>
           <h2 className="text-2xl font-semibold text-text">Review captured requirements</h2>
@@ -402,9 +402,9 @@ export function IntakeReview({
                       key={key}
                       className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
                         acked
-                          ? "border-green-300 bg-green-50 text-green-700"
+                          ? "border-green-300 dark:border-emerald-700 bg-green-50 dark:bg-emerald-950/30 text-green-700 dark:text-emerald-300"
                           : filled
-                          ? "border-blue-200 bg-blue-50 text-blue-700"
+                          ? "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300"
                           : "border-border bg-surface-raised text-text-tertiary"
                       }`}
                     >
@@ -476,17 +476,17 @@ export function IntakeReview({
 
         {/* Ambiguity flags */}
         {unresolvedFlags.length > 0 && (
-          <div className="mb-6 rounded-card border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-card border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-5 py-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-amber-600">⚠</span>
-                <span className="text-sm font-medium text-amber-800">
+                <span className="text-amber-600 dark:text-amber-400">⚠</span>
+                <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
                   {unresolvedFlags.length} ambiguous requirement{unresolvedFlags.length > 1 ? "s" : ""} flagged during intake
                 </span>
               </div>
               <button
                 onClick={() => setExpandedFlags((v) => !v)}
-                className="text-xs text-amber-700 hover:text-amber-900 underline"
+                className="text-xs text-amber-700 dark:text-amber-300 hover:text-amber-900 underline"
               >
                 {expandedFlags ? "Hide" : "Show details"}
               </button>
@@ -502,8 +502,8 @@ export function IntakeReview({
                       key={f.id}
                       className={`rounded-lg border px-4 py-3 transition-colors ${
                         addressed
-                          ? "border-green-200 bg-green-50"
-                          : "border-amber-200 bg-surface"
+                          ? "border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30"
+                          : "border-amber-200 dark:border-amber-800 bg-surface"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -512,7 +512,7 @@ export function IntakeReview({
                             <span className="text-xs font-medium text-text-secondary">{f.field}</span>
                             {/* P2-146: Impact badge */}
                             {flagImpact(f.field) === "high" ? (
-                              <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-2xs font-semibold text-red-700 uppercase tracking-wide">
+                              <span className="rounded-full bg-red-100 dark:bg-red-900/40 px-1.5 py-0.5 text-2xs font-semibold text-red-700 dark:text-red-300 uppercase tracking-wide">
                                 High impact
                               </span>
                             ) : (
@@ -525,8 +525,8 @@ export function IntakeReview({
                           <div className="mt-1 text-xs text-text-tertiary italic">"{f.userStatement}"</div>
                           {/* P1-35: saved clarification */}
                           {clarification && (
-                            <div className="mt-2 flex items-start gap-1.5 rounded-md bg-surface border border-green-200 px-2.5 py-1.5">
-                              <span className="mt-0.5 text-green-500 shrink-0 text-xs">✓</span>
+                            <div className="mt-2 flex items-start gap-1.5 rounded-md bg-surface border border-green-200 dark:border-emerald-800 px-2.5 py-1.5">
+                              <span className="mt-0.5 text-green-500 dark:text-emerald-400 shrink-0 text-xs">✓</span>
                               <span className="text-xs text-text">{clarification}</span>
                               <button
                                 onClick={() => {
@@ -552,7 +552,7 @@ export function IntakeReview({
                                 onChange={(e) =>
                                   setFlagClarificationDraft((prev) => ({ ...prev, [f.id]: e.target.value }))
                                 }
-                                className="w-full resize-none rounded-md border border-amber-200 px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                className="w-full resize-none rounded-md border border-amber-200 dark:border-amber-800 px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-amber-400"
                               />
                               <div className="flex gap-1.5">
                                 <button
@@ -576,7 +576,7 @@ export function IntakeReview({
                         {!isAddressing && !addressed && (
                           <button
                             onClick={() => setFlagAddressingId(f.id)}
-                            className="shrink-0 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100 transition-colors"
+                            className="shrink-0 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
                           >
                             + Clarify
                           </button>
@@ -587,7 +587,7 @@ export function IntakeReview({
                 })}
               </ul>
             )}
-            <p className="mt-2 text-xs text-amber-700">
+            <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
               {Object.keys(flagClarifications).length > 0
                 ? `${Object.keys(flagClarifications).length} of ${unresolvedFlags.length} flag${unresolvedFlags.length > 1 ? "s" : ""} addressed. Reviewers will see your clarifications.`
                 : "These items were flagged for human review. You may proceed, but reviewers will see these flags in the governance report."
@@ -649,11 +649,11 @@ export function IntakeReview({
               const missing = getMissingContributionDomains(context, contributions, riskTier);
               if (missing.length === 0) return null;
               return (
-                <div className={`rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs ${contributions.length > 0 ? "mt-4" : ""}`}>
+                <div className={`rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-xs ${contributions.length > 0 ? "mt-4" : ""}`}>
                   <div className="flex items-start gap-2">
-                    <span className="text-amber-600 mt-0.5">⚠</span>
+                    <span className="text-amber-600 dark:text-amber-400 mt-0.5">⚠</span>
                     <div>
-                      <p className="font-medium text-amber-800 mb-1.5">
+                      <p className="font-medium text-amber-800 dark:text-amber-200 mb-1.5">
                         No input received from:{" "}
                         {missing.map((domain, i) => (
                           <span key={domain}>
@@ -664,7 +664,7 @@ export function IntakeReview({
                           </span>
                         ))}
                       </p>
-                      <p className="text-amber-700">
+                      <p className="text-amber-700 dark:text-amber-300">
                         These domains were implicated by your intake context. You may proceed, but reviewers will note the absence.
                       </p>
                     </div>
@@ -714,9 +714,9 @@ export function IntakeReview({
                         <TableCell className="text-text-secondary">{item.mentioned}</TableCell>
                         <TableCell>
                           {item.capturedAs ? (
-                            <span className="font-mono text-green-700">{item.capturedAs}</span>
+                            <span className="font-mono text-green-700 dark:text-emerald-300">{item.capturedAs}</span>
                           ) : (
-                            <span className="text-red-500 font-medium">Not captured</span>
+                            <span className="text-red-500 dark:text-red-400 font-medium">Not captured</span>
                           )}
                         </TableCell>
                       </TableRow>
@@ -730,24 +730,24 @@ export function IntakeReview({
 
         {/* Policy quality warnings — only shown when inadequate policies exist */}
         {inadequatePolicies.length > 0 && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-5 py-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-amber-600">⚠</span>
-              <div className="text-amber-700">
+              <span className="text-amber-600 dark:text-amber-400">⚠</span>
+              <div className="text-amber-700 dark:text-amber-300">
                 <SectionHeading>
                   Policy Quality Warnings
                 </SectionHeading>
               </div>
-              <span className="rounded-full bg-amber-100 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">
+              <span className="rounded-full bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-300">
                 {inadequatePolicies.length} polic{inadequatePolicies.length !== 1 ? "ies" : "y"}
               </span>
             </div>
-            <p className="text-xs text-amber-700 mb-3">
+            <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
               The following policies were assessed as too abstract to be operationally enforceable. You may proceed, but reviewers will see these warnings.
             </p>
             <ul className="space-y-2">
               {inadequatePolicies.map((item, i) => (
-                <li key={i} className="rounded-lg border border-amber-200 bg-surface px-4 py-3">
+                <li key={i} className="rounded-lg border border-amber-200 dark:border-amber-800 bg-surface px-4 py-3">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-red-400">✗</span>
                     <span className="text-sm font-medium text-text">{item.policyName}</span>
@@ -775,9 +775,9 @@ export function IntakeReview({
                 id={`rv-section-${key}`}
                 className={`rounded-card border bg-surface shadow-sm transition-colors scroll-mt-4 ${
                   !filled
-                    ? "border-red-200 bg-red-50/30"
+                    ? "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30"
                     : isAcknowledged
-                    ? "border-blue-300 bg-blue-50/30"
+                    ? "border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/30"
                     : "border-border"
                 }`}
               >
@@ -793,6 +793,7 @@ export function IntakeReview({
                             ? "border-blue-500 bg-blue-500"
                             : "border-border hover:border-blue-400"
                         }`}
+                        aria-label={isAcknowledged ? `Unmark ${SECTION_LABELS[key]} as reviewed` : `Mark ${SECTION_LABELS[key]} as reviewed`}
                         title={isAcknowledged ? "Unmark as reviewed" : "Mark as reviewed"}
                       >
                         {isAcknowledged && (
@@ -802,7 +803,7 @@ export function IntakeReview({
                         )}
                       </button>
                     ) : (
-                      <div className="h-5 w-5 rounded border-2 border-red-300" />
+                      <div className="h-5 w-5 rounded border-2 border-red-300 dark:border-red-700" />
                     )}
                   </div>
 
@@ -811,7 +812,7 @@ export function IntakeReview({
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="text-sm font-semibold text-text">{SECTION_LABELS[key]}</h3>
                       {isRequired && !filled && (
-                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-2xs font-medium text-red-600">required</span>
+                        <span className="rounded-full bg-red-100 dark:bg-red-900/40 px-2 py-0.5 text-2xs font-medium text-red-600 dark:text-red-400">required</span>
                       )}
                       {!filled && (
                         <span className="text-xs text-text-tertiary">Not captured</span>
@@ -864,9 +865,9 @@ export function IntakeReview({
         {/* RV-006: Confirmation counter */}
         <div className="flex-1 min-w-0">
           {!allRequiredFilled && (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-red-600 dark:text-red-400">
               Required sections (Identity, Capabilities) not complete —{" "}
-              <a href={`/intake/${sessionId}`} className="underline hover:no-underline">return to intake</a>.
+              <a href={`/intake/${sessionId}`} className="underline hover:no-underline font-medium">return to intake</a>.
             </p>
           )}
           {allRequiredFilled && !allFilled && (
@@ -883,20 +884,20 @@ export function IntakeReview({
             </div>
           )}
           {canGenerate && (
-            <p className="text-sm font-medium text-green-700">✓ All {filledSections.length} sections confirmed</p>
+            <p className="text-sm font-medium text-green-700 dark:text-emerald-300">✓ All {filledSections.length} sections confirmed</p>
           )}
         </div>
 
         {/* Soft warning for unresolved flags */}
         {canGenerate && unresolvedFlags.length > 0 && (
-          <div className="hidden sm:flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 max-w-xs">
+          <div className="hidden sm:flex items-center gap-1.5 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-700 dark:text-amber-300 max-w-xs">
             <span className="shrink-0">⚠</span>
             <span>{unresolvedFlags.length} requirement{unresolvedFlags.length > 1 ? "s" : ""} flagged — reviewers will see these.</span>
           </div>
         )}
 
         {generateError && (
-          <p className="text-sm text-red-600 shrink-0">{generateError}</p>
+          <p className="text-sm text-red-600 dark:text-red-400 shrink-0">{generateError}</p>
         )}
 
         {/* P1-157: Preview ABP button — read-only preview panel */}
@@ -1049,7 +1050,7 @@ export function IntakeReview({
                   <div key={i} className="rounded-lg border border-border-subtle bg-surface-raised px-3 py-2 mb-1.5">
                     <div className="flex items-center gap-2">
                       <p className="text-xs font-medium text-text flex-1">{pol?.name}</p>
-                      <span className="rounded bg-blue-100 px-1.5 py-0.5 text-2xs text-blue-700">{pol?.type}</span>
+                      <span className="rounded bg-blue-100 dark:bg-blue-900/40 px-1.5 py-0.5 text-2xs text-blue-700 dark:text-blue-300">{pol?.type}</span>
                     </div>
                     {pol.description && <p className="text-xs text-text-secondary mt-0.5">{pol.description}</p>}
                   </div>

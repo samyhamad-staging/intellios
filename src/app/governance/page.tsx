@@ -400,7 +400,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <Shield size={20} className="text-violet-600" />
+            <Shield size={20} className="text-violet-600 dark:text-violet-400" />
             <Heading level={1}>Governance Hub</Heading>
           </div>
           <p className="mt-0.5 text-sm text-text-secondary">Define and manage governance policies</p>
@@ -422,7 +422,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
           {canManagePolicies && (
             <Link
               href="/governance/policies/new"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-100 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-3 py-1.5 text-sm font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors"
             >
               <Plus size={13} />
               New Policy
@@ -463,7 +463,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
           {canViewAnalytics && analytics && (
             <button
               onClick={exportComplianceReport}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
             >
               <Download size={13} />
               Export Compliance Report
@@ -541,7 +541,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                   className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                     analyticsDays === d
                       ? "bg-indigo-600 text-white"
-                      : "border border-border bg-surface text-text-secondary hover:border-indigo-300 hover:text-indigo-700"
+                      : "border border-border bg-surface text-text-secondary hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-300"
                   }`}
                 >
                   {d === 365 ? "Last 365 days" : `Last ${d} days`}
@@ -564,9 +564,9 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                 : ", no violations detected";
               const deployedPhrase = deployed > 0 ? ` and ${deployed} agent${deployed !== 1 ? "s" : ""} running in production` : "";
               return (
-                <div className="mb-5 rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-3">
-                  <p className="text-xs font-semibold text-indigo-700 mb-0.5">Summary</p>
-                  <p className="text-sm text-indigo-900">
+                <div className="mb-5 rounded-lg border border-indigo-100 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/30 px-4 py-3">
+                  <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 mb-0.5">Summary</p>
+                  <p className="text-sm text-indigo-900 dark:text-indigo-100">
                     {periodLabel}: <span className="font-semibold">{approved} agent{approved !== 1 ? "s" : ""} approved</span>
                     {passPhrase}{violationPhrase}{deployedPhrase}.
                   </p>
@@ -701,7 +701,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                             className="flex items-center justify-between text-sm"
                           >
                             <span className="truncate text-text text-xs">{p.policyName}</span>
-                            <span className="ml-3 shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                            <span className="ml-3 shrink-0 rounded-full bg-red-50 dark:bg-red-950/30 px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-300">
                               {p.count} error{p.count === 1 ? "" : "s"}
                             </span>
                           </div>
@@ -721,13 +721,13 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                       </p>
                       <div className="space-y-2">
                         {analytics.topViolatedRules.map((rule, idx) => (
-                          <div key={idx} className="rounded-lg border border-red-100 bg-red-50/50 p-3">
+                          <div key={idx} className="rounded-lg border border-red-100 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-3">
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0 flex-1">
                                 <p className="text-xs font-medium text-text">{rule.policyName}</p>
                                 <p className="mt-0.5 text-xs text-text-secondary font-mono">{rule.field}</p>
                               </div>
-                              <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                              <span className="shrink-0 rounded-full bg-red-100 dark:bg-red-900/40 px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-300">
                                 {rule.affectedCount} agent{rule.affectedCount === 1 ? "" : "s"}
                               </span>
                             </div>
@@ -894,7 +894,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                 <Link
                   key={agent.agentId}
                   href={`/registry/${agent.agentId}?tab=governance`}
-                  className="flex items-center justify-between rounded-lg border border-red-200 bg-surface px-5 py-3 hover:border-red-400 transition-colors"
+                  className="flex items-center justify-between rounded-lg border border-red-200 dark:border-red-800 bg-surface px-5 py-3 hover:border-red-400 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="truncate font-medium text-sm text-text">
@@ -995,20 +995,20 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                           {policy.type.replace("_", " ")}
                         </span>
                         {policy.policyVersion > 1 && (
-                          <span className="shrink-0 rounded-full bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                          <span className="shrink-0 rounded-full bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:text-indigo-300">
                             v{policy.policyVersion}
                           </span>
                         )}
                         {Array.isArray(policy.scopedAgentIds) && policy.scopedAgentIds.length > 0 && (
                           <span
-                            className="shrink-0 rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs font-medium text-amber-700"
+                            className="shrink-0 rounded-full bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300"
                             title={`Scoped to ${policy.scopedAgentIds.length} agent${policy.scopedAgentIds.length !== 1 ? "s" : ""}`}
                           >
                             {policy.scopedAgentIds.length} agent{policy.scopedAgentIds.length !== 1 ? "s" : ""}
                           </span>
                         )}
                         {!policy.enterpriseId && (
-                          <span className="shrink-0 rounded-full bg-purple-50 border border-purple-200 px-2 py-0.5 text-xs text-purple-700">
+                          <span className="shrink-0 rounded-full bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 px-2 py-0.5 text-xs text-purple-700 dark:text-purple-300">
                             platform
                           </span>
                         )}
@@ -1029,8 +1029,8 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                           <button
                             onClick={() => handlePreviewImpact(policy)}
                             disabled={simulatingId === policy.id}
-                            className="text-xs text-violet-600 hover:text-violet-800 disabled:text-text-tertiary transition-colors"
-                            title="Simulate impact on approved/deployed agents"
+                            className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-200 disabled:text-text-tertiary transition-colors"
+                            title="Simulate impact on approved/deployed agents" aria-label="Simulate impact on approved/deployed agents"
                           >
                             {simulatingId === policy.id
                               ? "Simulating…"
@@ -1064,7 +1064,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                     const sim = simResults[policy.id];
                     const affected = sim.blueprints.filter((b) => b.status !== "no_change");
                     return (
-                      <div className="border-t border-violet-100 bg-violet-50 px-5 py-4">
+                      <div className="border-t border-violet-100 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 px-5 py-4">
                         <SectionHeading className="mb-3" style={{ color: "#6d28d9" }}>
                           Impact Preview — {sim.summary.total} agent{sim.summary.total !== 1 ? "s" : ""} checked
                         </SectionHeading>
@@ -1090,7 +1090,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                         </div>
                         {/* Affected agents list */}
                         {affected.length === 0 ? (
-                          <p className="text-xs text-violet-600">No agents affected — all pass or fail with no change.</p>
+                          <p className="text-xs text-violet-600 dark:text-violet-400">No agents affected — all pass or fail with no change.</p>
                         ) : (
                           <div className="space-y-1">
                             {affected.slice(0, 5).map((b) => (
@@ -1151,7 +1151,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                                 </TableCell>
                                 <TableCell>
                                   {entry.isActive ? (
-                                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700 font-medium">
+                                    <span className="rounded-full bg-green-100 dark:bg-emerald-900/40 px-2 py-0.5 text-green-700 dark:text-emerald-300 font-medium">
                                       Active
                                     </span>
                                   ) : (
@@ -1228,13 +1228,13 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
 
             {/* Duplicate conflict prompt */}
             {duplicatePrompt && (
-              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
-                <p className="text-sm font-medium text-amber-800 mb-1">
+              <div className="mt-4 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-5 py-4">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">
                   {duplicatePrompt.duplicates.length} existing polic{duplicatePrompt.duplicates.length === 1 ? "y" : "ies"} would be replaced:
                 </p>
                 <ul className="mb-3 space-y-0.5">
                   {duplicatePrompt.duplicates.map((name) => (
-                    <li key={name} className="text-xs text-amber-700">• {name}</li>
+                    <li key={name} className="text-xs text-amber-700 dark:text-amber-300">• {name}</li>
                   ))}
                 </ul>
                 <div className="flex items-center gap-3">
@@ -1247,7 +1247,7 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                   </button>
                   <button
                     onClick={() => setDuplicatePrompt(null)}
-                    className="text-sm text-amber-700 hover:text-amber-900"
+                    className="text-sm text-amber-700 dark:text-amber-300 hover:text-amber-900"
                   >
                     Cancel
                   </button>
@@ -1260,8 +1260,8 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
               <div
                 className={`mt-4 rounded-lg border px-4 py-3 text-sm font-medium ${
                   importToast.type === "success"
-                    ? "border-green-200 bg-green-50 text-green-800"
-                    : "border-red-200 bg-red-50 text-red-700"
+                    ? "border-green-200 dark:border-emerald-800 bg-green-50 dark:bg-emerald-950/30 text-green-800 dark:text-emerald-200"
+                    : "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300"
                 }`}
               >
                 {importToast.message}
@@ -1295,13 +1295,13 @@ ${agentViolationRows ? `<h2>Agents Requiring Attention (${agentsWithViolations.l
                       <TableCell className="text-right text-text-secondary">{count}</TableCell>
                       <TableCell className="text-right">
                         {we > 0 ? (
-                          <span className="font-medium text-red-600">{we}</span>
+                          <span className="font-medium text-red-600 dark:text-red-400">{we}</span>
                         ) : (
                           <span className="text-text-tertiary">—</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <span className={count - we > 0 ? "text-green-600 font-medium" : "text-text-tertiary"}>
+                        <span className={count - we > 0 ? "text-green-600 dark:text-emerald-400 font-medium" : "text-text-tertiary"}>
                           {count - we}
                         </span>
                       </TableCell>
