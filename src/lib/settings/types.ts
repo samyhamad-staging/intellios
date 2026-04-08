@@ -324,7 +324,7 @@ export const DEFAULT_ENTERPRISE_SETTINGS: EnterpriseSettings = {
   branding: {
     companyName: "Intellios",
     logoUrl: null,
-    primaryColor: "#7c3aed",
+    primaryColor: "#6366f1", // indigo-500 — canonical brand primary (matches --color-primary)
   },
   periodicReview: {
     enabled: true,

@@ -197,7 +197,7 @@ export default function AdminSettingsPage() {
                 <input
                   id="brand-color"
                   type="color"
-                  value={settings.branding?.primaryColor ?? "#7c3aed"}
+                  value={settings.branding?.primaryColor ?? "#6366f1"}
                   onChange={(e) =>
                     setSettings((s) => ({
                       ...s,
@@ -206,14 +206,14 @@ export default function AdminSettingsPage() {
                   }
                   className="h-9 w-12 cursor-pointer rounded border border-border p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 />
-                <code className="text-sm text-text-secondary">{settings.branding?.primaryColor ?? "#7c3aed"}</code>
+                <code className="text-sm text-text-secondary">{settings.branding?.primaryColor ?? "#6366f1"}</code>
               </div>
             </FormField>
             {/* Live preview */}
             <div className="mt-3 flex items-center gap-3 rounded-lg border border-border-subtle bg-surface-raised px-4 py-3">
               <div
                 className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
-                style={{ backgroundColor: settings.branding?.primaryColor ?? "#7c3aed" }}
+                style={{ backgroundColor: settings.branding?.primaryColor ?? "#6366f1" }}
               >
                 {(settings.branding?.companyName ?? "Intellios").charAt(0).toUpperCase()}
               </div>

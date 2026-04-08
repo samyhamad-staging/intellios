@@ -34,7 +34,7 @@ export function InteliosLogo({
         <defs>
           <linearGradient id={`${id}-bg`} x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#6366f1" />
-            <stop offset="100%" stopColor="#7c3aed" />
+            <stop offset="100%" stopColor="#4f46e5" />
           </linearGradient>
           <linearGradient id={`${id}-shine`} x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="white" stopOpacity="0.12" />

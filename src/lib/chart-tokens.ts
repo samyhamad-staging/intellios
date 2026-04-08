@@ -5,7 +5,7 @@
  */
 
 export const chartColors = {
-  primary:   "#4f46e5", // indigo-600 — --color-primary
+  primary:   "#6366f1", // indigo-500 — --color-primary (canonical brand primary)
   success:   "#059669", // emerald-600 — --color-success
   warning:   "#d97706", // amber-600 — --color-warning
   danger:    "#dc2626", // red-600 — --color-danger

@@ -115,7 +115,7 @@ export function buildInvitationEmail(
     for the agent design project: <strong>${escapeHtml(sessionName)}</strong>.
   </p>
   <p style="margin: 0 0 24px; font-size: 14px; color: #666; line-height: 1.5;">${escapeHtml(authority)}</p>
-  <a href="${escapeHtml(contributionUrl)}" style="display: inline-block; background: #7c3aed; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500;">Add My Input →</a>
+  <a href="${escapeHtml(contributionUrl)}" style="display: inline-block; background: #6366f1; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500;">Add My Input →</a>
   <p style="margin: 24px 0 0; font-size: 12px; color: #9ca3af;">
     This link expires on ${escapeHtml(expiryDisplay)}. No Intellios account required.
   </p>

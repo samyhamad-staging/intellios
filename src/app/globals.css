@@ -16,9 +16,11 @@
   --text-2xs: 0.6875rem;     /* 11px — micro labels, section headers (UX audit: raised from 10px for readability) */
   --text-xs-tight: 0.75rem;  /* 12px — compact tags, metadata (UX audit: raised from 11px for readability) */
 
-  /* ── Brand — indigo-violet (cool, AI-native) ───────────────────────── */
-  --color-primary:        #4f46e5; /* indigo-600 */
-  --color-primary-hover:  #4338ca; /* indigo-700 */
+  /* ── Brand — indigo (cool, AI-native) ──────────────────────────────── */
+  /* Canonical primary: #6366f1 (indigo-500). Matches settings default,    */
+  /* sidebar fallback, logo mark, chart tokens, and email CTA.             */
+  --color-primary:        #6366f1; /* indigo-500 — CANONICAL brand primary */
+  --color-primary-hover:  #4f46e5; /* indigo-600 */
   --color-primary-subtle: #e0e7ff; /* indigo-100 */
   --color-primary-muted:  #eef2ff; /* indigo-50  */
   --color-primary-fg:     #ffffff;

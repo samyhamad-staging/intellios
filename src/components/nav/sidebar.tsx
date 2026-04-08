@@ -216,7 +216,7 @@ export default function Sidebar({ user, branding, signOutAction }: SidebarProps)
         ) : (
           <div
             className="flex h-7 w-7 items-center justify-center rounded-lg shrink-0"
-            style={{ backgroundColor: branding?.primaryColor ?? "#4f46e5" }}
+            style={{ backgroundColor: branding?.primaryColor ?? "var(--color-primary)" }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M2 11L7 3L12 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

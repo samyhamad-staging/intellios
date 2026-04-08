@@ -174,13 +174,13 @@ function EdgePath({ from, to, selected, onClick }: {
       <path
         d={path}
         fill="none"
-        stroke={selected ? "#7c3aed" : "#d1d5db"}
+        stroke={selected ? "#6366f1" : "#d1d5db"}
         strokeWidth={selected ? 2 : 1.5}
         strokeDasharray={selected ? "none" : "none"}
       />
       <polygon
         points={`${endX},${endY} ${arrowX1},${arrowY1} ${arrowX2},${arrowY2}`}
-        fill={selected ? "#7c3aed" : "#d1d5db"}
+        fill={selected ? "#6366f1" : "#d1d5db"}
       />
     </g>
   );
