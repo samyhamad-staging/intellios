@@ -40,8 +40,11 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // outputFileTracingRoot and turbopack.root must match — set both to the
+  // monorepo root so Vercel's file tracing captures all dependencies correctly.
+  outputFileTracingRoot: path.resolve(__dirname, ".."),
   turbopack: {
-    root: path.resolve(__dirname),
+    root: path.resolve(__dirname, ".."),
   },
   async headers() {
     return [
