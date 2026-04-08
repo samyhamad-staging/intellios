@@ -159,7 +159,7 @@ export interface EnterpriseSettings {
     companyName: string;
     /** Optional logo URL. If set, shown in sidebar instead of the default SVG. */
     logoUrl: string | null;
-    /** Hex color for sidebar logo background. Default: "#7c3aed" (violet-600) */
+    /** Hex color for sidebar logo background. Default: "#6366f1" (indigo-500 — canonical --color-primary) */
     primaryColor: string;
   };
   /** SR 11-7 periodic model review scheduling. */
