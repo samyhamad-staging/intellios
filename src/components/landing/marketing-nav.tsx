@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MobileNav } from "@/components/landing/mobile-nav";
 import { RequestAccessButton } from "@/components/landing/request-access-button";
+import { InteliosLogo } from "@/components/landing/intellios-logo";
 
 /**
  * MarketingNav — Global navigation bar for all public/marketing pages.
@@ -50,13 +50,8 @@ export function MarketingNav({ transparent = false }: MarketingNavProps) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* ── Logo ── */}
-          <Link href="/landing" className="flex items-center gap-2.5 group">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 shadow-sm group-hover:bg-indigo-500 transition-colors">
-              <ShieldCheck size={16} className="text-white" />
-            </div>
-            <span className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-              Intellios
-            </span>
+          <Link href="/landing" className="group">
+            <InteliosLogo markSize={32} className="opacity-95 group-hover:opacity-100 transition-opacity" />
           </Link>
 
           {/* ── Desktop nav links ── */}

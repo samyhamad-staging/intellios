@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
+import { InteliosLogo } from "@/components/landing/intellios-logo";
 
 /**
  * MarketingFooter — Shared footer for all public/marketing pages.
@@ -44,13 +45,8 @@ export function MarketingFooter() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
           {/* Brand column */}
           <div className="lg:col-span-1">
-            <Link href="/landing" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
-                <ShieldCheck size={16} className="text-white" />
-              </div>
-              <span className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-                Intellios
-              </span>
+            <Link href="/landing">
+              <InteliosLogo markSize={32} />
             </Link>
             <p className="mt-3 text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
               The governed control plane for enterprise AI agents. Design, generate, govern, and deploy AI agents under your brand and policies.
