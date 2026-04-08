@@ -9,6 +9,7 @@
 @theme {
   /* Fonts */
   --font-family-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-family-display: var(--font-display), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-family-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* ── Type scale — micro sizes (tokenized from arbitrary text-[Npx]) ── */
@@ -580,6 +581,114 @@ samp {
 .dot-review   { background-color: #f59e0b; }
 .dot-approved { background-color: #10b981; }
 .dot-deployed { background-color: #8b5cf6; }
+
+/* ── Display font for marketing headings ────────────────────────────────── */
+.font-display {
+  font-family: var(--font-family-display);
+}
+
+/* ── Gradient mesh backgrounds for visual depth ────────────────────────── */
+.gradient-mesh-hero {
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(99, 102, 241, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(139, 92, 246, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 60% at 50% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 50%);
+}
+
+.gradient-mesh-section {
+  background:
+    radial-gradient(ellipse 70% 50% at 0% 50%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 30%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+}
+
+/* ── Noise texture overlay ─────────────────────────────────────────────── */
+.noise-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.025;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+}
+
+/* ── Glassmorphism card treatment ──────────────────────────────────────── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+/* ── Animated gradient border ──────────────────────────────────────────── */
+@keyframes gradient-rotate {
+  0%   { --gradient-angle: 0deg; }
+  100% { --gradient-angle: 360deg; }
+}
+
+@property --gradient-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.gradient-border {
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--gradient-angle), #6366f1, #8b5cf6, #10b981, #6366f1);
+  animation: gradient-rotate 6s linear infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}
+
+/* ── Glow effect for key elements ──────────────────────────────────────── */
+.glow-indigo {
+  box-shadow: 0 0 40px rgba(99, 102, 241, 0.15), 0 0 80px rgba(99, 102, 241, 0.05);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 40px rgba(16, 185, 129, 0.15), 0 0 80px rgba(16, 185, 129, 0.05);
+}
+
+/* ── Typing cursor animation ───────────────────────────────────────────── */
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* ── Governance check animation ────────────────────────────────────────── */
+@keyframes check-in {
+  0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+  60% { transform: scale(1.2) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes score-fill {
+  from { width: 0%; }
+  to { width: var(--score-width, 98%); }
+}
+
+@keyframes fade-slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ── Respect prefers-reduced-motion ──────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {

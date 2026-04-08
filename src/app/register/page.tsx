@@ -7,7 +7,7 @@ import { Heading } from "@/components/catalyst";
 export const metadata = {
   title: "Create Account — Intellios",
   description:
-    "Create your Intellios account to start designing, governing, and deploying enterprise AI agents with built-in compliance for SR 11-7, GDPR, and HIPAA.",
+    "Create your Intellios account to start designing, governing, and deploying enterprise AI agents with governance designed around SR 11-7, EU AI Act, and NIST AI RMF.",
   openGraph: {
     title: "Create Account — Intellios",
     description:
@@ -74,9 +74,9 @@ export default function RegisterPage() {
           <RegisterForm />
         </Suspense>
 
-        {/* P1-7: Trust badges — compliance signals */}
+        {/* P1-7: Framework badges — target frameworks, not certifications */}
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-          {["SOC 2", "GDPR", "HIPAA", "SR 11-7"].map((badge) => (
+          {["SR 11-7", "EU AI Act", "NIST AI RMF", "GDPR"].map((badge) => (
             <div
               key={badge}
               className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1"

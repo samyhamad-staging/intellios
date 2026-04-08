@@ -1,6 +1,7 @@
 "use client";
 
 import { RequestAccessModal } from "@/components/landing/request-access-modal";
+import type { RequestAccessContext } from "@/components/landing/request-access-modal";
 
 /**
  * RequestAccessButton — Client Component wrapper for the RequestAccessModal
@@ -22,6 +23,8 @@ interface RequestAccessButtonProps {
   className?: string;
   /** Visual variant */
   variant?: "primary" | "large";
+  /** Optional context for tier-specific modal messaging */
+  context?: RequestAccessContext;
 }
 
 export function RequestAccessButton({
@@ -29,6 +32,7 @@ export function RequestAccessButton({
   mobileLabel = "Get Access",
   className = "",
   variant = "primary",
+  context,
 }: RequestAccessButtonProps) {
   const baseStyles =
     variant === "large"
@@ -36,7 +40,7 @@ export function RequestAccessButton({
       : "inline-flex rounded-lg bg-indigo-600 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors";
 
   return (
-    <RequestAccessModal>
+    <RequestAccessModal context={context}>
       {(open) => (
         <button onClick={open} className={`${baseStyles} ${className}`}>
           {mobileLabel !== label && (

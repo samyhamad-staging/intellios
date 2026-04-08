@@ -90,9 +90,9 @@ export function AuthShell({
 
         {children}
 
-        {/* P1-7: Trust badges — compliance signals on auth pages */}
+        {/* P1-7: Framework badges — target frameworks, not certifications */}
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-          {["SOC 2", "GDPR", "HIPAA", "SR 11-7"].map((badge) => (
+          {["SR 11-7", "EU AI Act", "NIST AI RMF", "GDPR"].map((badge) => (
             <div
               key={badge}
               className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1"

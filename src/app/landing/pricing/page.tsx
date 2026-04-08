@@ -1,10 +1,12 @@
 /**
  * Pricing — Intellios
- * Server component. Enterprise pricing tiers and contact information.
+ * Enterprise pricing tiers with integrated contact modal.
+ * Uses RequestAccessButton for all CTAs — no more mailto links.
  */
 
 import { Metadata } from "next";
 import { Check, ArrowRight } from "lucide-react";
+import { RequestAccessButton } from "@/components/landing/request-access-button";
 
 export const metadata: Metadata = {
   title: "Pricing — Intellios",
@@ -17,7 +19,6 @@ interface PricingTier {
   features: string[];
   cta: {
     text: string;
-    href: string;
   };
   highlighted?: boolean;
 }
@@ -34,7 +35,6 @@ const tiers: PricingTier[] = [
     ],
     cta: {
       text: "Apply for Design Partnership",
-      href: "mailto:sales@intellios.io",
     },
   },
   {
@@ -50,7 +50,6 @@ const tiers: PricingTier[] = [
     ],
     cta: {
       text: "Contact Sales",
-      href: "mailto:sales@intellios.io",
     },
     highlighted: true,
   },
@@ -66,7 +65,6 @@ const tiers: PricingTier[] = [
     ],
     cta: {
       text: "Talk to Sales",
-      href: "mailto:sales@intellios.io",
     },
   },
 ];
@@ -75,7 +73,7 @@ const faqs = [
   {
     question: "Can I start with Design Partner and upgrade later?",
     answer:
-      "Absolutely. Many of our customers begin as Design Partners and migrate to Enterprise or White-Label as their needs evolve. We'll help you with the transition at any time.",
+      "Absolutely. The Design Partner tier is designed as the entry point. As your needs grow, we\u2019ll help you transition to Enterprise or White-Label at any time \u2014 with full data continuity and no re-onboarding.",
   },
   {
     question: "What's included in custom integrations?",
@@ -94,11 +92,33 @@ const faqs = [
   },
 ];
 
+/** Map tier names to modal context for personalized messaging */
+function tierContext(tierName: string) {
+  const contexts: Record<string, { tier: string; heading: string; subheading: string }> = {
+    "Design Partner": {
+      tier: "Design Partner",
+      heading: "Apply for the Design Partner program",
+      subheading: "Get full platform access, dedicated onboarding, and direct influence on our roadmap. We're looking for 3\u20135 enterprises in regulated industries.",
+    },
+    "Enterprise": {
+      tier: "Enterprise",
+      heading: "Get Enterprise pricing",
+      subheading: "Custom policy templates, SSO/SAML, SLA guarantees, and a dedicated success manager. Tell us about your organization and we'll put together a proposal.",
+    },
+    "White-Label": {
+      tier: "White-Label",
+      heading: "Explore White-Label partnership",
+      subheading: "Deploy Intellios under your brand with full multi-tenant isolation and API-first architecture. Let's discuss your partner ecosystem needs.",
+    },
+  };
+  return contexts[tierName];
+}
+
 export default function PricingPage() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-16 lg:px-8">
         <div className="mb-16">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-4">
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-4 font-display">
             Pricing
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400">
@@ -147,18 +167,20 @@ export default function PricingPage() {
                   ))}
                 </div>
 
-                {/* CTA Button */}
-                <a
-                  href={tier.cta.href}
-                  className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 w-full justify-center ${
-                    tier.highlighted
-                      ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                      : "bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20"
-                  }`}
-                >
-                  {tier.cta.text}
-                  <ArrowRight size={16} />
-                </a>
+                {/* CTA Button — opens modal with tier-specific context */}
+                <div className="w-full">
+                  <RequestAccessButton
+                    label={tier.cta.text}
+                    mobileLabel={tier.cta.text}
+                    variant="large"
+                    context={tierContext(tier.name)}
+                    className={`w-full justify-center ${
+                      tier.highlighted
+                        ? ""
+                        : "!bg-gray-100 dark:!bg-white/10 !text-gray-900 dark:!text-white hover:!bg-gray-200 dark:hover:!bg-white/20"
+                    }`}
+                  />
+                </div>
               </div>
             </div>
           ))}
@@ -189,15 +211,20 @@ export default function PricingPage() {
             Not sure which plan is right?
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Let's talk about your requirements and find the perfect fit.
+            Tell us about your requirements and we&apos;ll recommend the right fit.
           </p>
-          <a
-            href="mailto:sales@intellios.io"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-          >
-            Get in Touch
-            <ArrowRight size={16} />
-          </a>
+          <RequestAccessButton
+            label="Get in Touch"
+            mobileLabel="Get in Touch"
+            variant="large"
+            context={{
+              heading: "Let\u2019s find the right plan",
+              subheading: "Tell us about your organization, use case, and scale requirements. We\u2019ll recommend the best tier and put together a proposal.",
+            }}
+          />
+          <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
+            We respond within one business day. No commitment required.
+          </p>
         </section>
     </div>
   );

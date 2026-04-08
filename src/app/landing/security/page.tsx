@@ -60,10 +60,10 @@ export default function SecurityPage() {
                 </div>
                 <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-4">
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                    SOC 2 Type II Certification
+                    SOC 2 Type II — Planned
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 text-sm">
-                    Intellios is undergoing SOC 2 Type II audit to demonstrate controls around security, availability, and confidentiality of customer data.
+                    SOC 2 Type II certification is on our compliance roadmap. Our security architecture is designed to meet SOC 2 trust service criteria for security, availability, and confidentiality. We will pursue formal audit engagement as part of our design partner onboarding phase.
                   </p>
                 </div>
               </div>

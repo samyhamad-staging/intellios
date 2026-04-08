@@ -13,8 +13,19 @@ const ROLE_OPTIONS = [
   { value: "other",            label: "Other" },
 ];
 
+export interface RequestAccessContext {
+  /** Which pricing tier or CTA triggered the modal */
+  tier?: string;
+  /** Custom heading override */
+  heading?: string;
+  /** Custom subheading override */
+  subheading?: string;
+}
+
 interface RequestAccessModalProps {
   children: (open: () => void) => React.ReactNode;
+  /** Optional context passed from pricing tiers or other CTAs */
+  context?: RequestAccessContext;
 }
 
 /**
@@ -27,7 +38,7 @@ interface RequestAccessModalProps {
  *     {(open) => <button onClick={open}>Request access</button>}
  *   </RequestAccessModal>
  */
-export function RequestAccessModal({ children }: RequestAccessModalProps) {
+export function RequestAccessModal({ children, context }: RequestAccessModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
@@ -59,6 +70,7 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
           company: company.trim(),
           role: role || null,
           message: message.trim() || null,
+          ...(context?.tier ? { tier: context.tier } : {}),
         }),
       });
       if (!res.ok) throw new Error("Submission failed");
@@ -113,11 +125,17 @@ export function RequestAccessModal({ children }: RequestAccessModalProps) {
               /* ── Form state ── */
               <>
                 <div className="mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Join the design partner program</h2>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    {context?.heading || "Join the design partner program"}
+                  </h2>
                   <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
-                    We&apos;re onboarding design partners from financial services, healthcare, and
-                    regulated enterprise. Tell us about your use case and we&apos;ll be in touch.
+                    {context?.subheading || "We're onboarding design partners from financial services, healthcare, and regulated enterprise. Tell us about your use case and we'll be in touch."}
                   </p>
+                  {context?.tier && (
+                    <div className="mt-3 inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 px-3 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-400">
+                      {context.tier} tier
+                    </div>
+                  )}
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">

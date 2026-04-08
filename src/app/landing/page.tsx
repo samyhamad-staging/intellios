@@ -10,6 +10,9 @@ import { RequestAccessButton } from "@/components/landing/request-access-button"
 import { ScrollRevealWrapper } from "@/components/landing/scroll-reveal-wrapper";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { HeroIllustration } from "@/components/landing/hero-illustration";
+import { AnimatedProductShowcase } from "@/components/landing/animated-product-showcase";
+import { GovernanceFlowSVG } from "@/components/landing/governance-flow-svg";
+import { GatedContentCTA } from "@/components/landing/gated-content-cta";
 import { MarketingNav } from "@/components/landing/marketing-nav";
 import { MarketingFooter } from "@/components/landing/marketing-footer";
 import {
@@ -87,8 +90,8 @@ const PILLARS = [
       "Auto-generated SR 11-7 MRM documentation per agent version",
       "Status lifecycle (Draft → Review → Approved → Deployed → Retired) with full event log",
     ],
-    metric: "Audit prep reduced from 12 weeks to 2",
-    metricLabel: "Design Partner Benchmark",
+    metric: "Designed to reduce audit prep from 12 weeks to 2",
+    metricLabel: "Engineering Target",
     accent: "violet",
   },
   {
@@ -186,7 +189,7 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 1 — Hero                                               */}
       {/* ════════════════════════════════════════════════════════════════ */}
-      <section className="relative isolate overflow-hidden px-6 pt-20 lg:px-8">
+      <section className="relative isolate overflow-hidden px-6 pt-20 lg:px-8 noise-overlay gradient-mesh-hero">
         {/* Background gradient blobs */}
         <div
           className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
@@ -249,7 +252,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <h1 className="reveal text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-6xl lg:text-7xl">
+          <h1 className="reveal text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-6xl lg:text-7xl font-display">
             Every AI agent in your enterprise&mdash;{" "}
             <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
               governed, auditable, compliant.
@@ -260,7 +263,7 @@ export default function LandingPage() {
             Embed policy enforcement, automated audit trails, and continuous compliance into every AI agent&mdash;regardless of which cloud runs it.
           </p>
           <p className="reveal mt-3 text-base leading-7 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-            Designed to reduce MRM audit preparation from 12 weeks to 2. Works with AWS, Azure, and whatever comes next.
+            Engineered to collapse MRM audit preparation from months to weeks. Works with AWS, Azure, and whatever comes next.
           </p>
 
           <div className="reveal mt-10 flex flex-col items-center gap-3">
@@ -295,80 +298,9 @@ export default function LandingPage() {
             <HeroIllustration size="lg" className="opacity-80 dark:opacity-60" />
           </div>
 
-          {/* ── Product visualization mockup ── */}
-          <div className="reveal mt-6 mx-auto max-w-4xl">
-            <div className="rounded-xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 shadow-xl overflow-hidden">
-              {/* Browser chrome */}
-              <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-gray-700/50">
-                <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/80" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-400/80" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/80" />
-                </div>
-                <div className="flex-1 mx-8">
-                  <div className="rounded-md bg-white dark:bg-slate-600/50 border border-gray-200 dark:border-gray-600 px-3 py-1 text-xs text-gray-400 dark:text-gray-500 text-center">
-                    app.intellios.io/blueprints/review
-                  </div>
-                </div>
-              </div>
-              {/* App UI mockup */}
-              <div className="p-5 sm:p-6 bg-gray-50 dark:bg-slate-900/50">
-                <div className="grid grid-cols-12 gap-4">
-                  {/* Sidebar hint */}
-                  <div className="col-span-3 hidden sm:block space-y-2">
-                    <div className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white flex items-center gap-1.5">
-                      <ShieldCheck size={12} />
-                      Governance
-                    </div>
-                    {["Blueprints", "Registry", "Policies", "Audit Trail"].map((item) => (
-                      <div key={item} className="rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                  {/* Main content area */}
-                  <div className="col-span-12 sm:col-span-9 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">Blueprint Review: Claims-Triage-Agent v2.1</div>
-                      <div className="flex gap-1.5">
-                        <span className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
-                          4/4 Policies Passed
-                        </span>
-                        <span className="inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:text-indigo-400">
-                          Ready for Approval
-                        </span>
-                      </div>
-                    </div>
-                    {/* Validation results */}
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { label: "Safety Baseline", status: "passed" },
-                        { label: "SR 11-7 Compliance", status: "passed" },
-                        { label: "Access Control", status: "passed" },
-                        { label: "Audit Standards", status: "passed" },
-                      ].map((check) => (
-                        <div key={check.label} className="flex items-center gap-2 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 px-3 py-2">
-                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-500/15">
-                            <ShieldCheck size={10} className="text-emerald-600 dark:text-emerald-400" />
-                          </div>
-                          <span className="text-xs text-gray-700 dark:text-gray-300">{check.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Governance score bar */}
-                    <div className="rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 p-3">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Governance Score</span>
-                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">98/100</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
-                        <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-emerald-500" style={{ width: "98%" }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {/* ── Animated product showcase ── */}
+          <div className="reveal mt-6">
+            <AnimatedProductShowcase />
           </div>
         </div>
 
@@ -381,18 +313,25 @@ export default function LandingPage() {
       </section>
 
       {/* ════════════════════════════════════════════════════════════════ */}
-      {/*  SECTION 1b — Trusted By (Design Partners)                       */}
+      {/*  SECTION 1b — Built For (Target Industries)                      */}
       {/* ════════════════════════════════════════════════════════════════ */}
       <section className="py-8 border-b border-gray-100 dark:border-white/5">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <p className="text-center text-xs font-medium uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-6">
-            Design partners from regulated enterprise
+            Purpose-built for regulated industries
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
-            <span className="text-sm font-semibold text-gray-300 dark:text-gray-600">Top-10 US Bank</span>
-            <span className="text-sm font-semibold text-gray-300 dark:text-gray-600">Fortune 100 Insurer</span>
-            <span className="text-sm font-semibold text-gray-300 dark:text-gray-600">Global Healthcare System</span>
-            <span className="text-sm font-semibold text-gray-300 dark:text-gray-600">Federal Agency</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+            {[
+              { label: "Financial Services", icon: Building2 },
+              { label: "Healthcare", icon: ShieldCheck },
+              { label: "Insurance", icon: Scale },
+              { label: "Federal & Defense", icon: Eye },
+            ].map((industry) => (
+              <div key={industry.label} className="flex items-center gap-2">
+                <industry.icon size={14} className="text-indigo-500 dark:text-indigo-400" />
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{industry.label}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -402,14 +341,14 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       <section
         id="governance-gap"
-        className="relative border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8 scroll-mt-20"
+        className="relative border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8 scroll-mt-20 noise-overlay gradient-mesh-section"
       >
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14 reveal">
             <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
               The Governance Gap
             </h2>
-            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl max-w-3xl mx-auto">
+            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl max-w-3xl mx-auto font-display">
               AI agents are scaling. Governance isn&apos;t.
             </p>
             <p className="mt-4 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
@@ -421,7 +360,7 @@ export default function LandingPage() {
             {GOVERNANCE_GAP_STATS.map((item, i) => (
               <div
                 key={i}
-                className="reveal relative rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 p-8 shadow-sm hover:shadow-md transition-shadow"
+                className="reveal relative rounded-2xl border border-gray-200 dark:border-white/5 bg-white dark:bg-slate-800/30 dark:backdrop-blur-sm p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
               >
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 mb-5">
                   <item.icon size={24} className="text-indigo-600 dark:text-indigo-400" />
@@ -452,7 +391,7 @@ export default function LandingPage() {
             <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
               The Platform
             </h2>
-            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl max-w-3xl mx-auto leading-tight">
+            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl max-w-3xl mx-auto leading-tight font-display">
               Three pillars of governed<br className="hidden sm:block" /> AI agent delivery
             </p>
             <p className="mt-5 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
@@ -594,19 +533,24 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       <section
         id="architecture"
-        className="relative border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-28 px-6 lg:px-8 scroll-mt-20"
+        className="relative border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-28 px-6 lg:px-8 scroll-mt-20 gradient-mesh-section noise-overlay"
       >
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16 reveal">
             <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
               How It Works
             </h2>
-            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl font-display">
               Every agent passes through governance.<br className="hidden sm:block" /> Nothing slips through.
             </p>
             <p className="mt-4 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
               Intellios sits between your teams and your cloud. Agents are designed, validated, approved, and monitored — before and after deployment — regardless of which runtime executes them.
             </p>
+          </div>
+
+          {/* ── Governance flow illustration ── */}
+          <div className="reveal mb-10 hidden lg:block">
+            <GovernanceFlowSVG className="opacity-70" />
           </div>
 
           {/* ── WITH Intellios flow ── */}
@@ -750,7 +694,7 @@ export default function LandingPage() {
             <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
               Use Cases
             </h2>
-            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl font-display">
               Built for the people who own the risk
             </p>
             <p className="mt-4 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
@@ -813,7 +757,7 @@ export default function LandingPage() {
             Your compliance team could stop scrambling.
           </p>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Currently onboarding design partners from financial services, healthcare, and regulated enterprise.
+            Now accepting design partners from financial services, healthcare, and regulated enterprise.
           </p>
           <div className="mt-6 flex flex-col items-center gap-2">
             <RequestAccessButton
@@ -831,50 +775,72 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 6 — Differentiation                                     */}
       {/* ════════════════════════════════════════════════════════════════ */}
-      <section id="why-intellios" className="border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8 scroll-mt-20">
+      <section id="why-intellios" className="border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-slate-900/50 py-20 sm:py-24 px-6 lg:px-8 scroll-mt-20 noise-overlay">
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14 reveal">
             <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
               Why Intellios
             </h2>
-            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl font-display">
               The governance layer your stack is missing
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {/* vs. Building from Scratch */}
-            <div className="reveal rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 p-8 shadow-sm">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-500/10 mb-4">
-                <Building2 size={20} className="text-amber-600 dark:text-amber-400" />
+          {/* Bento grid layout — asymmetric for visual interest */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2">
+            {/* vs. Building from Scratch — spans 2 rows on large */}
+            <div className="reveal rounded-2xl border border-gray-200 dark:border-white/5 bg-white dark:bg-slate-800/30 dark:backdrop-blur-sm p-8 shadow-sm hover:shadow-xl transition-all duration-300 lg:row-span-2 flex flex-col">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20 mb-5">
+                <Building2 size={22} className="text-amber-500" />
               </div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 font-display">
                 vs. Building from Scratch
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
                 18+ months, $2&ndash;5M, and ongoing maintenance to build what Intellios delivers out of the box. Intellios deploys in weeks and stays current with evolving regulations — so your team focuses on agents, not infrastructure.
               </p>
+              {/* Visual comparison element */}
+              <div className="mt-auto space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 mb-1">DIY build</p>
+                    <div className="h-2 rounded-full bg-red-500/20 overflow-hidden">
+                      <div className="h-full w-full rounded-full bg-gradient-to-r from-red-500/40 to-red-500/60" />
+                    </div>
+                    <p className="text-[10px] text-gray-500 mt-0.5">18+ months</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-indigo-400 mb-1">Intellios</p>
+                    <div className="h-2 rounded-full bg-indigo-500/20 overflow-hidden">
+                      <div className="h-full w-[15%] rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" />
+                    </div>
+                    <p className="text-[10px] text-indigo-400 mt-0.5">Weeks</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* vs. Cloud-Native Tools Alone */}
-            <div className="reveal rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 p-8 shadow-sm">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-50 dark:bg-sky-500/10 mb-4">
-                <Cloud size={20} className="text-sky-600 dark:text-sky-400" />
+            {/* vs. Cloud-Native Tools */}
+            <div className="reveal rounded-2xl border border-gray-200 dark:border-white/5 bg-white dark:bg-slate-800/30 dark:backdrop-blur-sm p-8 shadow-sm hover:shadow-xl transition-all duration-300">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/10 border border-sky-500/20 mb-5">
+                <Cloud size={22} className="text-sky-500" />
               </div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3 font-display">
                 vs. Cloud-Native Tools Alone
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                AWS AgentCore and Azure AI Foundry are powerful execution runtimes — but they handle execution, not governance. Intellios fills the governance gap above the runtime, ensuring compliance regardless of where your agents run.
+                AWS AgentCore and Azure AI Foundry are powerful execution runtimes — but they handle execution, not governance. Intellios fills the governance gap above the runtime.
               </p>
             </div>
 
             {/* vs. Point Solutions */}
-            <div className="reveal rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 p-8 shadow-sm">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-500/10 mb-4">
-                <Layers size={20} className="text-violet-600 dark:text-violet-400" />
+            <div className="reveal rounded-2xl border border-gray-200 dark:border-white/5 bg-white dark:bg-slate-800/30 dark:backdrop-blur-sm p-8 shadow-sm hover:shadow-xl transition-all duration-300">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/20 to-violet-600/10 border border-violet-500/20 mb-5">
+                <Layers size={22} className="text-violet-500" />
               </div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3 font-display">
                 vs. Point Solutions
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
@@ -882,78 +848,108 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* White-Label Ready */}
-            <div className="reveal rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 p-8 shadow-sm">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-500/10 mb-4">
-                <Zap size={20} className="text-indigo-600 dark:text-indigo-400" />
+            {/* White-Label Ready — spans 2 columns */}
+            <div className="reveal rounded-2xl border border-indigo-200 dark:border-indigo-500/20 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-500/5 dark:to-violet-500/5 p-8 shadow-sm hover:shadow-xl transition-all duration-300 sm:col-span-2">
+              <div className="flex items-start gap-6">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/20">
+                  <Zap size={22} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 font-display">
+                    White-Label Ready
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                    Deploy under your brand, inside your compliance posture. Multi-tenant by design, Intellios powers your agent platform without exposing ours — ideal for partner ecosystems and managed services.
+                  </p>
+                </div>
               </div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
-                White-Label Ready
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                Deploy under your brand, inside your compliance posture. Multi-tenant by design, Intellios powers your agent platform without exposing ours — ideal for partner ecosystems and managed services.
-              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* ════════════════════════════════════════════════════════════════ */}
-      {/*  SECTION 7 — Social Proof / Trust Signals                        */}
+      {/*  SECTION 7 — Where We Are (Transparent Status)                   */}
       {/* ════════════════════════════════════════════════════════════════ */}
       <section className="py-20 sm:py-24 px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          {/* Design partner signal */}
+          {/* Section header */}
           <div className="reveal text-center mb-14">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
-              Designed with input from teams in
+            <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
+              Where We Are
+            </h2>
+            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl font-display">
+              Building in the open. Shipping with conviction.
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              {["Financial Services", "Healthcare", "Insurance", "Federal & Defense"].map((vertical) => (
-                <span
-                  key={vertical}
-                  className="inline-flex items-center rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-4 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400"
-                >
-                  <Building2 size={14} className="mr-1.5 text-gray-400 dark:text-gray-500" />
-                  {vertical}
+            <p className="mt-4 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
+              Intellios is an early-stage platform built by people who&apos;ve lived the AI governance problem inside regulated enterprises. Here&apos;s exactly where we stand.
+            </p>
+          </div>
+
+          {/* Status grid */}
+          <div className="reveal grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-14">
+            {[
+              {
+                status: "Live",
+                statusColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+                title: "Core Governance Engine",
+                desc: "Policy-as-code authoring, deterministic validation, blueprint generation, and lifecycle management are built and functional. The product works.",
+              },
+              {
+                status: "Now accepting",
+                statusColor: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
+                title: "Design Partners",
+                desc: "We\u2019re looking for 3\u20135 enterprises in financial services, healthcare, or insurance to co-develop the platform. You get early access and direct influence on the roadmap. We get real-world validation.",
+              },
+              {
+                status: "Planned",
+                statusColor: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+                title: "SOC 2 Type II",
+                desc: "On our compliance roadmap. We\u2019ll pursue formal certification once design partner onboarding validates our security architecture in production environments.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="reveal rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 p-8 shadow-sm">
+                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold mb-4 ${item.statusColor}`}>
+                  {item.status}
                 </span>
-              ))}
-            </div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">{item.title}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
           </div>
 
-          {/* Data-driven value callout */}
+          {/* Why build in the open */}
           <div className="reveal mx-auto max-w-3xl rounded-2xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/5 p-8 sm:p-10 text-center mb-14">
-            <p className="text-4xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400 mb-3">
-              12 weeks &rarr; 2 weeks
+            <p className="text-lg font-medium text-gray-800 dark:text-gray-200 leading-relaxed mb-3">
+              We sell governance and trust. Our marketing should reflect both.
             </p>
-            <p className="text-lg font-medium text-gray-800 dark:text-gray-200 leading-relaxed mb-2">
-              The MRM documentation reduction our governance engine is designed to deliver.
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Policy-as-code and automated compliance evidence generation collapse audit preparation from months to days.
+            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+              Every claim on this site is either a verifiable product capability, a sourced third-party statistic, or clearly labeled as a goal. We think enterprises deserve that standard from their vendors &mdash; especially from a vendor asking them to trust it with AI governance.
             </p>
           </div>
 
-          {/* Compliance badges — industry standards */}
+          {/* Compliance frameworks — target standards, not certifications */}
           <div className="reveal mt-12">
-            <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-6">
-              Built for Regulated Enterprise
+            <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
+              Governance Architecture Designed Around
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               {[
-                { label: "SOC 2 Type II" },
-                { label: "GDPR" },
-                { label: "HIPAA" },
                 { label: "SR 11-7 / MRM" },
                 { label: "EU AI Act" },
                 { label: "NIST AI RMF" },
+                { label: "GDPR" },
+                { label: "HIPAA" },
               ].map((badge) => (
                 <div key={badge.label} className="flex items-center gap-2 rounded-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-4 py-2">
-                  <ShieldCheck size={14} className="text-indigo-600 dark:text-indigo-400" />
+                  <Settings size={14} className="text-indigo-600 dark:text-indigo-400" />
                   <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{badge.label}</span>
                 </div>
               ))}
             </div>
+            <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-3">
+              Policy templates and validation rules map directly to these frameworks. SOC 2 Type II certification is on our roadmap.
+            </p>
           </div>
         </div>
       </section>
@@ -970,7 +966,7 @@ export default function LandingPage() {
             <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
               ROI
             </h2>
-            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl font-display">
               Governance that pays for itself
             </p>
             <p className="mt-4 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
@@ -1017,12 +1013,17 @@ export default function LandingPage() {
       </section>
 
       {/* ════════════════════════════════════════════════════════════════ */}
+      {/*  SECTION 8a — Gated Content (secondary conversion path)          */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <GatedContentCTA className="border-t border-gray-100 dark:border-white/5" />
+
+      {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 8b — FAQ                                                */}
       {/* ════════════════════════════════════════════════════════════════ */}
       <section className="border-t border-gray-100 dark:border-white/5 py-20 sm:py-24 px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
           <div className="reveal text-center mb-16">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl mb-4">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl mb-4 font-display">
               Frequently asked questions
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400">
@@ -1035,12 +1036,12 @@ export default function LandingPage() {
               {
                 question: "What cloud providers does Intellios work with?",
                 answer:
-                  "Intellios is runtime-agnostic. It governs agents running on AWS AgentCore, Azure AI Foundry, or any future runtime. The governed control plane sits above your execution environment — not beside it.",
+                  "Intellios is runtime-agnostic. It governs agents running on AWS AgentCore, Azure AI Foundry, or any future runtime. The governed control plane sits above your execution environment \u2014 not beside it.",
               },
               {
                 question: "How long does implementation take?",
                 answer:
-                  "Design partners typically see first value within 2–4 weeks. Full deployment with custom policies, SSO integration, and audit trail configuration is typically complete within 6–8 weeks.",
+                  "Design partners typically see first value within 2\u20134 weeks. Full deployment with custom policies, SSO integration, and audit trail configuration is typically complete within 6\u20138 weeks.",
               },
               {
                 question: "Is my data isolated from other tenants?",
@@ -1055,17 +1056,17 @@ export default function LandingPage() {
               {
                 question: "Do you offer a free trial?",
                 answer:
-                  "We don't offer self-serve trials. Instead, we onboard design partners with a guided implementation that ensures governance policies are configured correctly for your regulatory environment. Apply for a design partnership to get started.",
+                  "We don\u2019t offer self-serve trials. Instead, we onboard design partners with a guided implementation that ensures governance policies are configured correctly for your regulatory environment. Apply for a design partnership to get started.",
               },
             ]}
           />
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════════════════════ */}
-      {/*  SECTION 9 — Final CTA                                           */}
-      {/* ════════════════════════════════════════════════════════════════ */}
-      <section className="relative isolate overflow-hidden bg-gray-900 dark:bg-slate-950 py-24 sm:py-28 px-6 lg:px-8">
+      {/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */}
+      {/*  SECTION 9 \u2014 Final CTA                                           */}
+      {/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */}
+      <section id="final-cta" className="relative isolate overflow-hidden bg-gray-900 dark:bg-slate-950 py-24 sm:py-28 px-6 lg:px-8 noise-overlay">
         {/* Background gradients */}
         <div
           className="absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 transform-gpu overflow-hidden opacity-30 dark:opacity-40 blur-3xl"
@@ -1081,11 +1082,11 @@ export default function LandingPage() {
         </div>
 
         <div className="reveal mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl font-display">
             Your regulators are asking about your AI agents. Have answers ready.
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-300">
-            We&apos;re onboarding design partners from financial services, healthcare, and federal. If you&apos;re governing AI agents&mdash;or need to start&mdash;tell us about your use case.
+            Now accepting design partners from financial services, healthcare, and federal. If you&apos;re governing AI agents&mdash;or need to start&mdash;tell us about your use case.
           </p>
           <div className="mt-10 flex flex-col items-center gap-3">
             <div className="flex items-center justify-center gap-4 flex-wrap">
@@ -1118,3 +1119,4 @@ export default function LandingPage() {
     </>
   );
 }
+

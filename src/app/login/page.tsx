@@ -164,13 +164,13 @@ function LoginForm() {
             </div>
           </div>
 
-          {/* Testimonial */}
+          {/* Value proposition callout */}
           <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6">
-            <p className="text-sm italic text-gray-300 mb-3">
-              "Intellios reduced our agent governance overhead by 80% while actually improving our compliance posture."
+            <p className="text-sm text-gray-300 mb-2">
+              <span className="font-semibold text-white">The governed control plane for AI agents.</span>
             </p>
-            <p className="text-xs font-semibold text-indigo-300">
-              VP Engineering, Top-10 US Bank (Design Partner)
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Design-time governance, lifecycle management, and production observability — purpose-built for regulated industries deploying AI agents at scale.
             </p>
           </div>
         </div>
@@ -192,7 +192,7 @@ function LoginForm() {
             </Link>
           </div>
           <p className="mt-4 text-xs text-white/25">
-            Enterprise deployments · SOC 2 Type II · HIPAA · SR 11-7 compliant
+            Governance for SR 11-7 · EU AI Act · NIST AI RMF · GDPR · HIPAA
           </p>
         </div>
       </div>
@@ -339,10 +339,10 @@ function LoginForm() {
               </Link>
             </div>
 
-            {/* Trust badges — anchored inside card footer */}
+            {/* Framework badges — these are target frameworks, not certifications */}
             <div className="pt-4 border-t border-white/8">
               <div className="flex flex-wrap items-center justify-center gap-2">
-                {["SOC 2", "GDPR", "HIPAA", "SR 11-7"].map((badge) => (
+                {["SR 11-7", "EU AI Act", "NIST AI RMF", "GDPR"].map((badge) => (
                   <div
                     key={badge}
                     className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1"
@@ -404,3 +404,4 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+            
