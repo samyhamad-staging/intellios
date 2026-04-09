@@ -1027,6 +1027,61 @@ export default function LandingPage() {
       </section>
 
       {/* ════════════════════════════════════════════════════════════════ */}
+      {/*  SECTION 7b — Who's Building This                                */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <section className="border-t border-gray-100 dark:border-white/5 py-20 sm:py-24 px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <div className="reveal text-center mb-12">
+            <h2 className="text-base font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
+              Who&apos;s Building This
+            </h2>
+            <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl font-display">
+              Built from the inside out
+            </p>
+          </div>
+
+          <div className="reveal rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-slate-800/50 p-8 sm:p-10 shadow-sm">
+            {/* Founder identity */}
+            <div className="flex items-center gap-4 mb-8">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-lg font-bold tracking-tight select-none">
+                SH
+              </div>
+              <div>
+                <p className="text-base font-semibold text-gray-900 dark:text-white">Samy Hamad</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Senior Product Manager &mdash; Fortune 500 Financial Services
+                </p>
+              </div>
+            </div>
+
+            {/* Why I built this */}
+            <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              <p>
+                Working inside a Fortune 500 financial services organization, I had a front-row seat to what happens when AI agents start scaling toward production. The capabilities were extraordinary. The governance infrastructure was not.
+              </p>
+              <p>
+                Teams were deploying agents that made consequential decisions &mdash; underwriting inputs, risk flags, customer communications &mdash; with no systematic way to validate what they were doing, track what changed between versions, or prove compliance to an examiner. The audit trail was whatever someone happened to write down. Policy enforcement was a checklist in a spreadsheet.
+              </p>
+              <p>
+                The risk is not theoretical. SR&nbsp;11-7 requires documented model validation, ongoing monitoring, and a complete governance trail for every model that touches a business decision. AI agents are models. Regulators already expect the framework to apply. Most organizations building agents today are not ready for that exam.
+              </p>
+
+              {/* Pull quote */}
+              <blockquote className="my-6 border-l-4 border-indigo-400 dark:border-indigo-500 pl-5">
+                <p className="text-base font-medium text-gray-800 dark:text-gray-200 leading-snug">
+                  &ldquo;The gap between &lsquo;agents in production&rsquo; and &lsquo;agents under governance&rsquo; is where the biggest enterprise AI failures will happen over the next five years.&rdquo;
+                </p>
+              </blockquote>
+
+              <p>
+                I built Intellios to close that gap &mdash; a governed control plane that embeds SR&nbsp;11-7 validation, continuous drift detection, and cryptographic audit trails directly into the agent lifecycle. Not bolted on after deployment. Built in from design.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 8 — ROI                                                 */}
       {/* ════════════════════════════════════════════════════════════════ */}
       <section
