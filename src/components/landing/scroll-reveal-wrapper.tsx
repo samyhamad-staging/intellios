@@ -68,10 +68,23 @@ export function ScrollRevealWrapper({ children }: ScrollRevealWrapperProps) {
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
 
+    // (c) On hash-navigation (e.g. clicking a nav anchor), IntersectionObserver
+    //     may not fire because the browser scrolls without triggering intersection
+    //     callbacks in some browsers. Wait one rAF for the scroll to settle, then
+    //     reveal anything now in viewport and re-attach for newly-visible elements.
+    const onHashChange = () => {
+      requestAnimationFrame(() => {
+        revealInViewport();
+        attachObserver();
+      });
+    };
+    window.addEventListener("hashchange", onHashChange);
+
     return () => {
       observer.disconnect();
       window.removeEventListener("load", revealInViewport);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("hashchange", onHashChange);
     };
   }, []);
 
