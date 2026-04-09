@@ -262,11 +262,32 @@ export default function LandingPage() {
           <p className="mt-6 text-lg leading-8 font-medium text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
             Embed policy enforcement, automated audit trails, and continuous compliance into every AI agent&mdash;regardless of which cloud runs it.
           </p>
-          <p className="mt-3 text-base leading-7 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-            Engineered to collapse MRM audit preparation from months to weeks. Works with AWS, Azure, and whatever comes next.
-          </p>
 
-          <div className="mt-10 flex flex-col items-center gap-3">
+          {/* ── MRM stat card — P1-2: promoted from tertiary copy ── */}
+          <div className="mt-8 flex justify-center">
+            <div className="inline-flex items-center gap-4 rounded-2xl border border-indigo-200 dark:border-indigo-500/25 bg-gradient-to-r from-indigo-50 to-violet-50/60 dark:from-indigo-950/50 dark:to-violet-950/30 px-6 py-4 text-left">
+              <div className="flex items-baseline gap-2.5">
+                <span className="text-2xl font-bold text-gray-400 dark:text-gray-600 line-through decoration-2 decoration-red-400/70">
+                  12 wks
+                </span>
+                <span className="text-lg font-light text-gray-400 dark:text-gray-500">&rarr;</span>
+                <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                  2 wks
+                </span>
+              </div>
+              <div className="h-8 w-px bg-indigo-200 dark:bg-indigo-500/20" />
+              <div>
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 leading-tight">
+                  MRM audit preparation
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                  Design target &middot; SR&nbsp;11-7
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-col items-center gap-3">
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <RequestAccessButton
                 label="Apply for Design Partnership"
