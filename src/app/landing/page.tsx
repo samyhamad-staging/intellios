@@ -1128,6 +1128,11 @@ export default function LandingPage() {
                 answer:
                   "We don\u2019t offer self-serve trials. Instead, we onboard design partners with a guided implementation that ensures governance policies are configured correctly for your regulatory environment. Apply for a design partnership to get started.",
               },
+              {
+                question: "How does Intellios compare to broader AI governance platforms?",
+                answer:
+                  "Intellios is purpose-built for AI agents in regulated industries \u2014 SR 11-7 model risk, EU AI Act high-risk systems, HIPAA covered entities. Broader platforms cover more categories (models, applications, policies) but are less deep in the regulatory frameworks our buyers operate under. For enterprises whose primary governance surface is agents in compliance-sensitive workflows, Intellios is the sharpest tool.",
+              },
             ]}
           />
         </div>
