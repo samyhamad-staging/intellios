@@ -327,6 +327,17 @@ export default function LandingPage() {
 
         </div>
 
+        {/* ── Credo bar — rules of engagement (#2) ── */}
+        <div className="mx-auto max-w-7xl border-t border-gray-200 dark:border-white/10 py-4">
+          <div className="flex items-start gap-2.5">
+            <ShieldCheck size={13} className="mt-0.5 shrink-0 text-indigo-400 dark:text-indigo-500" />
+            <p className="text-xs font-mono text-gray-400 dark:text-gray-500 leading-relaxed">
+              We sell governance and trust. Every claim on this page is a verifiable capability, a sourced stat, or a labeled goal.{" "}
+              <span className="text-gray-500 dark:text-gray-400 font-medium">Read skeptically &mdash; that&apos;s the point.</span>
+            </p>
+          </div>
+        </div>
+
         <div
           className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]"
           aria-hidden="true"
@@ -989,15 +1000,6 @@ export default function LandingPage() {
           </div>
 
           {/* Why build in the open */}
-          <div className="reveal mx-auto max-w-3xl rounded-2xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/5 p-8 sm:p-10 text-center mb-14">
-            <p className="text-lg font-medium text-gray-800 dark:text-gray-200 leading-relaxed mb-3">
-              We sell governance and trust. Our marketing should reflect both.
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-              Every claim on this site is either a verifiable product capability, a sourced third-party statistic, or clearly labeled as a goal. We think enterprises deserve that standard from their vendors &mdash; especially from a vendor asking them to trust it with AI governance.
-            </p>
-          </div>
-
           {/* Compliance frameworks — target standards, not certifications */}
           <div className="reveal mt-12">
             <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
