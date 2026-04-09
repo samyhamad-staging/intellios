@@ -1088,6 +1088,27 @@ export default function LandingPage() {
       <GatedContentCTA className="border-t border-gray-100 dark:border-white/5" />
 
       {/* ════════════════════════════════════════════════════════════════ */}
+      {/*  SECTION 8b-placeholder — Case Study / Design Partner Story      */}
+      {/*                                                                  */}
+      {/*  Insert here once a real design partner is live and has          */}
+      {/*  agreed to be cited (named or pseudonymized).                    */}
+      {/*                                                                  */}
+      {/*  Required before publishing:                                     */}
+      {/*    - Partner sign-off on all quoted numbers                      */}
+      {/*    - Every metric must be real (agents governed, audit hours     */}
+      {/*      saved, policy violations caught pre-deployment)             */}
+      {/*    - Pseudonym ("A tier-1 US bank") only if explicitly agreed    */}
+      {/*      — do not imply a relationship that has not been confirmed   */}
+      {/*                                                                  */}
+      {/*  Suggested structure:                                            */}
+      {/*    <section id="case-study"> above this FAQ section             */}
+      {/*      - Kicker: industry + role ("Tier-1 bank, Chief Risk Officer")*/}
+      {/*      - Pull quote (1–2 sentences, attributed or pseudonymized)   */}
+      {/*      - 3 metric cards: agents governed / hours saved / violations*/}
+      {/*      - 1–2 paragraph narrative with timeline                     */}
+      {/*      - CTA: "Read the full story →" or inline                   */}
+      {/*  ────────────────────────────────────────────────────────────── */}
+      {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 8b — FAQ                                                */}
       {/* ════════════════════════════════════════════════════════════════ */}
       <section className="border-t border-gray-100 dark:border-white/5 py-20 sm:py-24 px-6 lg:px-8">
