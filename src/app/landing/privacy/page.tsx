@@ -29,7 +29,7 @@ export default function PrivacyPage() {
               Introduction
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-              Intellios ("Company," "we," "us," or "our") operates the Intellios platform. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.
+              Intellios (&quot;Company,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates the Intellios platform. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.
             </p>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               Please read this Privacy Policy carefully. If you do not agree with our policies and practices, please do not use our Services. By accessing and using Intellios, you acknowledge that you have read, understood, and agree to be bound by all the terms of this Privacy Policy.

@@ -23,7 +23,7 @@ export function makeRequest(
     headers?: Record<string, string>;
   } = {}
 ): NextRequest {
-  const init: RequestInit = {
+  const init: ConstructorParameters<typeof NextRequest>[1] = {
     method,
     headers: {
       "content-type": "application/json",

@@ -95,7 +95,7 @@ export default function BlueprintsPage() {
     queryKey: queryKeys.blueprints.list(),
     queryFn: fetchBlueprints,
   });
-  const blueprints = (blueprintsRaw ?? []) as BlueprintEntry[];
+  const blueprints = useMemo(() => (blueprintsRaw ?? []) as BlueprintEntry[], [blueprintsRaw]);
   const error = queryError ? (queryError as Error).message : null;
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<StatusTab>("all");

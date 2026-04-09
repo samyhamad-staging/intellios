@@ -1027,7 +1027,7 @@ export default function LandingPage() {
               Frequently asked questions
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-              Have a question that isn't answered below? Reach out to sales@intellios.io
+              Have a question that isn&apos;t answered below? Reach out to sales@intellios.io
             </p>
           </div>
 

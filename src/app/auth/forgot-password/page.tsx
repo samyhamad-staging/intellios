@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
                 Reset your password
               </Subheading>
               <p className="mt-2 text-sm text-white/70">
-                Enter your email and we'll send you a reset link.
+                Enter your email and we&apos;ll send you a reset link.
               </p>
             </div>
 
