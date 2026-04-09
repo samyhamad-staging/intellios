@@ -10,14 +10,14 @@ export const chartColors = {
   warning:   "#d97706", // amber-600 — --color-warning
   danger:    "#dc2626", // red-600 — --color-danger
   info:      "#0284c7", // sky-600 — --color-info
-  gray:      "#94a3b8", // slate-400 — --color-text-tertiary
+  gray:      "#64748b", // slate-500 — --color-text-tertiary
   border:    "#e1e5ef", // --color-border
   muted:     "#f0f2f8", // --color-surface-muted
 } as const;
 
 export const chartFontSize = 11;
 export const chartGridColor = "#e1e5ef"; // matches --color-border
-export const chartTextColor = "#64748b"; // matches --color-text-secondary
+export const chartTextColor = "#475569"; // matches --color-text-secondary
 
 /** Standard chart margins — use these instead of per-chart custom margins */
 export const chartMargins = {
@@ -26,5 +26,4 @@ export const chartMargins = {
   /** Compact: tighter margins for small/sparkline charts */
   compact: { top: 0, right: 4, bottom: 0, left: -24 },
   /** With labels: extra left margin for Y-axis labels */
-  withLabels: { top: 8, right: 12, bottom: 8, left: 8 },
-} as const;
+  withLabels: { top: 8, right: 12, bottom: 8,

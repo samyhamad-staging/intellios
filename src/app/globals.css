@@ -133,8 +133,8 @@
 
   /* ── Text ────────────────────────────────────────────────────────────── */
   --color-text:           #0f172a; /* slate-950 */
-  --color-text-secondary: #64748b; /* slate-500 */
-  --color-text-tertiary:  #94a3b8; /* slate-400 */
+  --color-text-secondary: #475569; /* slate-600 — WCAG AA 7.58:1 vs white */
+  --color-text-tertiary:  #64748b; /* slate-500 — WCAG AA 4.76:1 vs white */
   --color-text-disabled:  #cbd5e1; /* slate-300 */
 
   /* ── Radii ───────────────────────────────────────────────────────────── */
@@ -157,7 +157,7 @@
   --primary: #4f46e5;
   --primary-foreground: #ffffff;
   --muted: #f0f2f8;
-  --muted-foreground: #64748b;
+  --muted-foreground: #475569;
   --accent: #eef2ff;
   --accent-foreground: #4f46e5;
   --destructive: #dc2626;
@@ -211,8 +211,8 @@ html.dark {
 
   /* ── Text ── */
   --color-text:          #f8fafc; /* slate-50 */
-  --color-text-secondary: #94a3b8; /* slate-400 */
-  --color-text-tertiary:  #64748b; /* slate-500 */
+  --color-text-secondary: #cbd5e1; /* slate-300 — WCAG AA 12.02:1 vs slate-900 */
+  --color-text-tertiary:  #94a3b8; /* slate-400 — WCAG AA 6.96:1 vs slate-900 */
   --color-text-disabled:  #475569; /* slate-600 */
 
   /* ── Primary brand — slightly lighter for dark bg contrast ── */
@@ -276,7 +276,7 @@ html.dark {
   --border:              #334155;
   --input:               #334155;
   --muted:               #1e293b;
-  --muted-foreground:    #94a3b8;
+  --muted-foreground:    #cbd5e1;
   --accent:              rgba(99, 102, 241, 0.10);
   --accent-foreground:   #818cf8;
   --popover:             #1e293b;

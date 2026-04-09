@@ -25,6 +25,9 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // T4: Inline field-level validation state
+  const [emailTouched, setEmailTouched] = useState(false);
+  const emailError = emailTouched && email.length > 0 && !email.includes("@") ? "Enter a valid email address" : null;
   // P2-57: Remember this device — persisted across page loads
   const [rememberDevice, setRememberDevice] = useState(false);
   useEffect(() => {
@@ -255,10 +258,15 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => setEmailTouched(true)}
                 className="border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-indigo-500/50 [&_input]:bg-transparent"
                 placeholder="you@intellios.dev"
-                aria-describedby={error ? "login-error" : undefined}
+                aria-describedby={emailError ? "email-hint" : error ? "login-error" : undefined}
+                aria-invalid={emailError ? true : undefined}
               />
+              {emailError && (
+                <p id="email-hint" className="mt-1 text-xs text-red-400">{emailError}</p>
+              )}
             </FormField>
 
             {/* SSO detection */}
@@ -404,3 +412,4 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+            

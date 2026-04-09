@@ -537,7 +537,7 @@ export default async function Home() {
       {(counts.rejected > 0 || counts.deprecated > 0) && (
         <div className="-mt-3 mb-6 flex items-center gap-3 px-1">
           {counts.rejected > 0 && (
-            <span className="text-xs font-medium text-red-500/60">{counts.rejected} Rejected</span>
+            <span className="text-xs font-medium text-red-700 dark:text-red-400">{counts.rejected} Rejected</span>
           )}
           {counts.deprecated > 0 && (
             <span className="text-xs text-text-tertiary">{counts.deprecated} Deprecated</span>

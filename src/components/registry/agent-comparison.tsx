@@ -93,7 +93,7 @@ export function AgentComparison({ agents, onClose, onRemoveAgent }: AgentCompari
             {agents.length} selected
           </span>
         </div>
-        <button onClick={onClose} className="rounded-lg p-1.5 text-text-tertiary hover:bg-surface-muted hover:text-text transition-colors">
+        <button onClick={onClose} aria-label="Close comparison" className="rounded-lg p-1.5 text-text-tertiary hover:bg-surface-muted hover:text-text transition-colors">
           <X size={16} />
         </button>
       </div>
@@ -198,7 +198,3 @@ export function AgentComparison({ agents, onClose, onRemoveAgent }: AgentCompari
             </tbody>
           </table>
         </div>
-      )}
-    </div>
-  );
-}

@@ -48,12 +48,12 @@ export function ValidationReportView({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Validation failed");
+        throw new Error(data.error ?? "Validation failed \u2014 review the violations below and update the blueprint");
       }
       const data = await res.json();
       onRevalidate(data.report as ValidationReport);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Validation failed");
+      setError(err instanceof Error ? err.message : "Validation failed \u2014 review the violations below and update the blueprint");
     } finally {
       setRevalidating(false);
     }

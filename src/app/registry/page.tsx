@@ -7,6 +7,7 @@ import { fetchAgents, fetchWorkflows } from "@/lib/query/fetchers";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { StatusBadge } from "@/components/registry/status-badge";
+import { STATUS_LABELS } from "@/lib/status-theme";
 import { Heading } from "@/components/catalyst/heading";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkeletonList } from "@/components/ui/skeleton";
@@ -40,10 +41,6 @@ type ArtifactTab = "agents" | "workflows";
 
 const ALL_AGENT_STATUSES = ["draft", "in_review", "approved", "deployed", "rejected", "deprecated"] as const;
 const ALL_WORKFLOW_STATUSES = ["draft", "in_review", "approved", "rejected", "deprecated"] as const;
-const STATUS_LABELS: Record<string, string> = {
-  draft: "Draft", in_review: "In Review", approved: "Approved",
-  deployed: "Deployed", rejected: "Rejected", deprecated: "Deprecated",
-};
 const STATUS_DESCRIPTIONS: Record<string, string> = {
   draft: "Work in progress — not yet submitted for review",
   in_review: "Submitted and awaiting human or governance review",

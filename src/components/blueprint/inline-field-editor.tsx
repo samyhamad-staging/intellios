@@ -106,7 +106,7 @@ export function InlineFieldEditor({
       await onSave(fieldPath, draft);
       setEditing(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
+      setError(err instanceof Error ? err.message : "Save failed \u2014 the change was not applied. Try again.");
     } finally {
       setSaving(false);
     }
@@ -376,6 +376,7 @@ function TagEditor({
             <button
               onClick={() => removeTag(i)}
               disabled={disabled}
+              aria-label={`Remove ${tag}`}
               className="hover:text-red-500 dark:hover:text-red-400 transition-colors"
             >
               <X size={10} />
@@ -401,6 +402,7 @@ function TagEditor({
         <button
           onClick={addTag}
           disabled={disabled || !input.trim()}
+          aria-label="Add tag"
           className="inline-flex items-center gap-0.5 rounded-md bg-violet-100 px-1.5 py-1 text-xs text-violet-700 dark:text-violet-300 hover:bg-violet-200 disabled:opacity-50 transition-colors"
         >
           <Plus size={10} />

@@ -510,7 +510,7 @@ function InviteStakeholderChip({ sessionId }: { sessionId: string }) {
             <form onSubmit={handleSend} className="p-4 space-y-3">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-xs font-semibold text-text">Invite Stakeholder</p>
-                <button type="button" onClick={() => setOpen(false)} className="text-text-tertiary hover:text-text">
+                <button type="button" onClick={() => setOpen(false)} aria-label="Close invitation form" className="text-text-tertiary hover:text-text">
                   <X size={13} />
                 </button>
               </div>

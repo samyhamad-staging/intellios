@@ -21,6 +21,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import type { ValidationReport } from "@/lib/governance/types";
+import { STATUS_LABELS as CANONICAL_STATUS_LABELS } from "@/lib/status-theme";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,11 +45,7 @@ type StatusTab = (typeof STATUS_TABS)[number];
 
 const STATUS_LABELS: Record<string, string> = {
   all: "All",
-  draft: "Draft",
-  in_review: "In Review",
-  approved: "Approved",
-  rejected: "Rejected",
-  deprecated: "Deprecated",
+  ...CANONICAL_STATUS_LABELS,
 };
 
 const STATUS_BADGE: Record<

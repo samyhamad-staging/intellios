@@ -114,7 +114,7 @@ export default function ApiKeysPage() {
           <div className="flex items-center gap-2 font-mono text-sm bg-surface border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
             <span className="flex-1 text-text truncate">{newKey.key}</span>
             <Tooltip content={copied ? "Copied" : "Copy to clipboard"}>
-              <button onClick={handleCopy} className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 rounded">
+              <button onClick={handleCopy} aria-label={copied ? "Copied" : "Copy to clipboard"} className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 rounded">
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </button>
             </Tooltip>
@@ -166,7 +166,7 @@ export default function ApiKeysPage() {
             className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
           >
             <Plus className="h-4 w-4" />
-            {creating ? "Creating..." : "Create Key"}
+            {creating ? "Creating\u2026" : "Create Key"}
           </button>
         </div>
       </section>

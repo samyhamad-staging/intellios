@@ -349,4 +349,4 @@ export const DEFAULT_ENTERPRISE_SETTINGS: EnterpriseSettings = {
   deploymentTargets: {
     agentcore: null,
   },
-};
+};

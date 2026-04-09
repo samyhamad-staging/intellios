@@ -213,6 +213,7 @@ export function StakeholderAIChat({
           <button
             type="submit"
             disabled={isLoading || !localInput.trim()}
+            aria-label="Send message"
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-white transition-colors hover:bg-violet-700 disabled:opacity-40"
           >
             <Send size={11} />

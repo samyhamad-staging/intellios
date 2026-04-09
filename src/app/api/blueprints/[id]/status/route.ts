@@ -191,6 +191,15 @@ export async function PATCH(
       const settings = await getEnterpriseSettings(blueprint.enterpriseId);
       const chain = settings.approvalChain ?? [];
 
+      // SOD check: applies to BOTH multi-step and legacy single-step approval.
+      // The creator of a blueprint must not be the same person who approves it,
+      // unless the enterprise has explicitly opted out via allowSelfApproval.
+      if (newStatus === "approved" && !settings.governance.allowSelfApproval) {
+        if (blueprint.createdBy === userEmail) {
+          return apiError(ErrorCode.FORBIDDEN, "Self-approval is not permitted (SOD requirement)");
+        }
+      }
+
       if (chain.length > 0) {
         // MULTI-STEP MODE
         const stepIndex = blueprint.currentApprovalStep;

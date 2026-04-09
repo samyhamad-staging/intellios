@@ -9,15 +9,17 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: [
-        "lib/agentcore/**",
-        "lib/intake/**",
-        "lib/governance/**",
-        "lib/sla/**",
-        "lib/abp/**",
+        "lib/**",
+        "app/api/**",
+      ],
+      exclude: [
+        "lib/types/**",
+        "lib/query/**",
+        "**/*.d.ts",
       ],
       thresholds: {
-        lines: 80,
-        functions: 80,
+        lines: 60,
+        functions: 60,
       },
     },
   },

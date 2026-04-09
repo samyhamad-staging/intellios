@@ -19,6 +19,9 @@ export function RegisterForm() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // T4: Inline email validation
+  const [emailTouched, setEmailTouched] = useState(false);
+  const emailFormatError = emailTouched && form.email.length > 0 && !form.email.includes("@") ? "Enter a valid email address" : null;
 
   function set(field: keyof typeof form) {
     return (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -201,9 +204,15 @@ export function RegisterForm() {
                 maxLength={300}
                 value={form.email}
                 onChange={set("email")}
+                onBlur={() => setEmailTouched(true)}
                 placeholder="jane@acme.com"
                 className={inputCls}
+                aria-describedby={emailFormatError ? "reg-email-hint" : undefined}
+                aria-invalid={emailFormatError ? true : undefined}
               />
+              {emailFormatError && (
+                <p id="reg-email-hint" className="mt-1 text-xs text-red-400">{emailFormatError}</p>
+              )}
             </FormField>
           </>
         )}
@@ -226,6 +235,36 @@ export function RegisterForm() {
                 autoFocus
               />
             </FormField>
+
+            {/* T4: Password strength indicator bar */}
+            {form.password.length > 0 && (() => {
+              let strength = 0;
+              if (form.password.length >= 8) strength++;
+              if (/[A-Z]/.test(form.password)) strength++;
+              if (/[0-9]/.test(form.password)) strength++;
+              if (/[^A-Za-z0-9]/.test(form.password)) strength++;
+              const labels = ["Weak", "Fair", "Good", "Strong"];
+              const colors = ["bg-red-500", "bg-amber-500", "bg-emerald-400", "bg-emerald-500"];
+              const textColors = ["text-red-400", "text-amber-400", "text-emerald-400", "text-emerald-400"];
+              const idx = Math.max(0, strength - 1);
+              return (
+                <div className="space-y-1">
+                  <div className="flex gap-1">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                          i <= idx ? colors[idx] : "bg-white/10"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className={`text-2xs font-medium ${textColors[idx]}`} aria-live="polite">
+                    {labels[idx]}
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* P2-2: Password validation checklist */}
             <div className="space-y-1.5 mb-2" aria-label="Password requirements" aria-live="polite">

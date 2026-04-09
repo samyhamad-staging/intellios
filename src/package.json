@@ -69,7 +69,5 @@
     "typescript": "^6.0.2",
     "vitest": "^4.1.2"
   },
-  "overrides": {
-    "esbuild": "^0.25.12"
-  }
-}
+  "overrides": {}
+}
