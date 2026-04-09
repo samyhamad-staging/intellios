@@ -265,9 +265,9 @@ export default function LandingPage() {
             </div>
 
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl lg:text-6xl font-display">
-              Every AI agent in your enterprise&mdash;{" "}
+              The SR&nbsp;11-7 audit trail for your AI agents{" "}
               <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
-                governed, auditable, compliant.
+                writes itself.
               </span>
             </h1>
 
