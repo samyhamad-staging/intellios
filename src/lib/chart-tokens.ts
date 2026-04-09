@@ -26,4 +26,5 @@ export const chartMargins = {
   /** Compact: tighter margins for small/sparkline charts */
   compact: { top: 0, right: 4, bottom: 0, left: -24 },
   /** With labels: extra left margin for Y-axis labels */
-  withLabels: { top: 8, right: 12, bottom: 8,
+  withLabels: { top: 8, right: 12, bottom: 8, left: 8 },
+} as const;
