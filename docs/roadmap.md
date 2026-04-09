@@ -2,7 +2,155 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-04-06 (Session 131 — Security Remediation Phase 2)
+**Last updated:** 2026-04-08 (Session 145 — Contrast Token Cleanup)
+
+---
+
+## ✓ Session 145 Complete (2026-04-08) — Contrast Token Cleanup (WCAG AA)
+
+Shifted text color scale one Tailwind step to achieve WCAG AA compliance for all text tokens. Resolves accessibility findings A-01 and A-03.
+
+**Changes:**
+- ✅ Light secondary: slate-500 → slate-600 (#475569, 7.58:1)
+- ✅ Light tertiary: slate-400 → slate-500 (#64748b, 4.76:1)
+- ✅ Dark secondary: slate-400 → slate-300 (#cbd5e1, 12.02:1)
+- ✅ Dark tertiary: slate-500 → slate-400 (#94a3b8, 6.96:1)
+- ✅ shadcn compat aliases + chart-tokens.ts synced
+- ✅ ADR-014 written
+
+**Impact:** Zero class-name changes. 1,380 usages across 103+ files inherit new values automatically via CSS custom properties.
+
+---
+
+## ✓ Session 144 Complete (2026-04-08) — SOD Enforcement Gap Fix
+
+Fixed the Separation of Duties enforcement gap discovered in Session 141. The legacy single-step approval path in `PATCH /api/blueprints/[id]/status` now enforces `createdBy ≠ approver` unless the enterprise explicitly opts out via `allowSelfApproval`.
+
+**Changes:**
+- ✅ Hoisted SOD check above approval-chain branch in status route
+- ✅ 2 new test cases + 1 modified (56 → 58 blueprint lifecycle cases)
+- ✅ ADR-013 written
+
+**Test count:** 552 + 2 = **554 total tests**
+
+**Findings resolved:**
+- ~~SOD enforcement gap: legacy single-step mode in `/status` route does not enforce creator≠approver~~ → **Fixed (ADR-013)**
+
+---
+
+## ✓ Session 143 Complete (2026-04-08) — Test Coverage Expansion Session C (PLAN COMPLETE)
+
+Final session of the 3-session test expansion plan. Intake finalization route tests + vitest config + full suite verification.
+
+**Intake Finalization Tests (WP-5) — 12 cases:**
+- ✅ POST /api/intake/sessions/[id]/finalize — 12 cases (happy path, 404, 409 already-finalized, 3 payload validation, auth, enterprise scope, audit, events, designer role)
+
+**Vitest Config:**
+- ✅ Coverage tracking expanded from 5 lib modules to `lib/**` + `app/api/**`
+- ✅ Thresholds set to 60% lines/functions (realistic for current state)
+
+**Full Verification:** 135 new cases across 4 files, all passing.
+
+**3-Session Plan Final Tally:**
+
+| Session | Cases | Routes |
+|---------|-------|--------|
+| A (141) | 56 | 5 blueprint lifecycle routes |
+| B (142) | 67 | 7 governance + 7 auth routes |
+| C (143) | 12 | 1 intake finalization route |
+| **Total** | **135** | **22 API routes** |
+
+**Test count:** 417 + 135 = **552 total tests**
+
+---
+
+## ✓ Session 142 Complete (2026-04-08) — Test Coverage Expansion Session B
+
+Governance policy + auth/identity route test suites — 67 new test cases across 13 API routes, completing Session B of the 3-session test expansion plan.
+
+**Governance Policy Tests (WP-3) — 36 cases:**
+- ✅ GET /api/governance/policies — 3 cases (list, auth, tenant scope)
+- ✅ POST /api/governance/policies — 6 cases (create, roles, validation, audit, events)
+- ✅ GET /api/governance/policies/[id] — 5 cases (fetch, 404, enterprise scope isolation)
+- ✅ PATCH /api/governance/policies/[id] — 7 cases (version append, role restrictions, transaction, events)
+- ✅ DELETE /api/governance/policies/[id] — 6 cases (delete, 404, role restrictions, events)
+- ✅ GET /api/governance/policies/[id]/dependents — 3 cases (count, 404, auth)
+- ✅ POST /api/governance/templates/[pack]/apply — 6 cases (apply, 404, duplicate 409, force mode, auth, events)
+
+**Auth & Identity Tests (WP-4) — 31 cases:**
+- ✅ POST /api/auth/register — 6 cases (registration, duplicate 409, rate limit, validation, bcrypt, gov seed)
+- ✅ POST /api/auth/forgot-password — 4 cases (send email, enumeration prevention, rate limit, SHA-256)
+- ✅ POST /api/auth/reset-password — 5 cases (valid token, expired 400, P1-SEC-001 transaction, rate limit, bcrypt)
+- ✅ POST /api/auth/invite/accept — 6 cases (accept, expired 400, duplicate 409, P1-SEC-002 transaction, rate limit, role)
+- ✅ GET /api/admin/api-keys — 2 cases (list strips keyHash, admin-only)
+- ✅ POST /api/admin/api-keys — 4 cases (create plaintext-once, admin-only, bcrypt, audit)
+- ✅ DELETE /api/admin/api-keys/[id] — 4 cases (revoke, 404, admin-only, audit)
+
+**Test count:** 464 + 67 = **531 total tests**
+**API routes with tests:** 21 (up from 8)
+
+**Remaining (Session C):**
+- 🔲 Intake finalization tests (~12 cases) + vitest config update + verification + docs
+
+---
+
+## ✓ Session 141 Complete (2026-04-08) — Test Coverage Expansion Session A
+
+Blueprint lifecycle route test suite — the highest-risk untested surface in the codebase. 56 test cases across 5 API routes, backed by 4 reusable test helper modules.
+
+**Test Infrastructure (WP-1):**
+- ✅ `mock-db.ts` — Chainable Drizzle ORM mock with configurable result functions
+- ✅ `mock-auth.ts` — requireAuth + assertEnterpriseAccess helpers
+- ✅ `fixtures.ts` — Blueprint, settings, intake session, validation report factories
+- ✅ `route-test-utils.ts` — NextRequest builder, response helpers, async params
+
+**Blueprint Lifecycle Tests (WP-2):**
+- ✅ PATCH /status — 33 cases (transitions, role enforcement, SOD, governance gate, test-pass gate, multi-step chains, deployment side-effects, audit logging)
+- ✅ POST /review — 9 cases (approve/reject/request_changes, access control, multi-step SOD)
+- ✅ POST /validate — 4 cases (happy path, persistence, 404, enterprise scope)
+- ✅ POST /deploy/agentcore — 6 cases (happy path, status gate, config gate, AWS failure, 404, scope)
+- ✅ POST /blueprints — 5 cases (generate, session checks, enterprise scope, rate limit)
+
+**Test count:** 408 existing + 56 new = **464 total tests**
+
+**Remaining (Sessions B & C):**
+- ✅ Session B: Governance policy route tests (36 cases) + auth/identity route tests (31 cases) — COMPLETE
+- ✅ Session C: Intake finalization tests (12 cases) + vitest config update + verification + docs — COMPLETE
+
+**Findings:**
+- ~~SOD enforcement gap: legacy single-step mode in `/status` route does not enforce creator≠approver~~ → **Fixed in Session 144 (ADR-013)**
+- Role naming: `designer` is authenticated but always 403'd on `in_review` transitions (only `architect` passes)
+- Truncated source files: `settings/types.ts`, `deploy-route.test.ts`, `package.json` need host-side repair
+
+---
+
+## ✓ Session 139 Complete (2026-04-07) — Autonomous UX Optimization Sprint
+
+Autonomous 6-task UX optimization sprint covering loading states, error boundaries, form validation, copy consistency, and accessibility. 23 new files, 4 modified, 2 audit documents. Zero regressions, zero new dependencies.
+
+**Loading & Error States:**
+- ✅ 12 new `loading.tsx` streaming skeleton files for critical dynamic routes
+- ✅ 9 new `error.tsx` boundary files with contextual messaging and return links
+- ✅ Empty states audited — 7/8 target pages already covered (rescoped)
+
+**Form Validation:**
+- ✅ Login page inline email validation with aria-invalid/aria-describedby
+- ✅ Register form inline email validation + 4-bar password strength indicator
+
+**Audits:**
+- ✅ Copy & Microcopy audit: 8.5/10, 4 issues found, 2 ellipsis fixes applied → `docs/audits/copy-audit-2026-04-07.md`
+- ✅ WCAG 2.2 AA accessibility audit: 7.5/10, 11 issues found, 3-phase remediation plan → `docs/audits/a11y-audit-2026-04-07.md`
+
+**Audit remediation (Session 140):**
+- ✅ A-04: `scope="col"` on Catalyst TableHeader
+- ✅ A-07: Completed truncated `prefers-reduced-motion` block in globals.css
+- ✅ A-02: Fixed `text-red-500/60` contrast → `text-red-700 dark:text-red-400`
+- ✅ A-06: Added `aria-label` to 6 icon-only buttons
+- ✅ Copy Issue 2: Consolidated duplicated STATUS_LABELS (registry + blueprints pages)
+- ✅ Copy Issue 3: Added actionable guidance to 2 terse error messages
+
+**Remaining (design decision needed):**
+- 🔲 A-01/A-03: `text-text-tertiary` contrast at small text sizes — requires decision on whether to darken the global token or do targeted swaps
 
 ---
 

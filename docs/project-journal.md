@@ -2,6 +2,90 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 145 — 2026-04-08: The One-Line Fix That Touches 1,380 Usages
+
+Sometimes the highest-leverage change is the smallest one. The A-01/A-03 accessibility findings from Session 139 flagged `text-text-tertiary` as failing WCAG AA contrast at normal text sizes. The token appeared 723 times across 103 files, plus 657 secondary-token usages. The naive fix — swapping class names file by file — would have been tedious and error-prone.
+
+The insight came from the contrast math: darkening tertiary alone to pass 4.5:1 would make it nearly identical to secondary (1.06:1 gap). The only way to maintain visual hierarchy was to shift the entire scale: secondary moves from slate-500 to slate-600, tertiary takes secondary's old slot at slate-500. Dark mode mirrors the shift in the opposite direction.
+
+The result is 4 CSS custom property changes, 2 shadcn compat updates, and 2 chart token updates. Zero component files modified. Every instance of `text-text-secondary` and `text-text-tertiary` in the codebase — 1,380 usages — inherits the new values automatically through CSS custom properties. This is the design token system working exactly as intended: semantic indirection means one change propagates everywhere.
+
+The tradeoff is that the secondary token went from "just barely AA" (4.76:1) to "comfortably AA" (7.58:1), which means all secondary text is now noticeably darker. This is a net improvement for readability, but it's a visible change across every page. If any specific element looks too heavy, the fix is to switch it from `text-text-secondary` to `text-text-tertiary` — which is now the value secondary used to be.
+
+---
+
+## Session 144 — 2026-04-08: Closing the SOD Gap
+
+Session 141's test suite did exactly what tests are supposed to do: it found a bug. The blueprint lifecycle tests revealed that the legacy single-step approval path in the status route did not enforce Separation of Duties. A blueprint creator could approve their own work by calling `PATCH /status` with `{ status: "approved" }` when no approval chain was configured — which is the default for new enterprises.
+
+The fix was surgical: hoist the SOD check (`createdBy !== userEmail` when `allowSelfApproval` is false) above the `if (chain.length > 0)` branch, so it runs regardless of whether the enterprise uses multi-step chains or legacy single-step approval. The multi-step block keeps its additional `existingApprovers` check, which is chain-specific (preventing the same person from approving at multiple steps). The two checks serve different purposes and both are needed.
+
+This is the kind of gap that would have been caught in a SOC 2 audit. The review route already enforced SOD in both modes, so any enterprise using the review workflow (which is the recommended path) was never exposed. But the status route's legacy path — which exists for programmatic/API-first workflows — was a bypass. For a platform that sells governance, that's not acceptable.
+
+ADR-013 documents the decision. The test suite now has 554 cases, with 3 explicitly testing the SOD enforcement in legacy mode: one proving the block, one proving the `allowSelfApproval` opt-out, and one proving that different-reviewer approval still works.
+
+---
+
+## Session 143 — 2026-04-08: Plan Complete — 135 Tests in 3 Sessions
+
+The 3-session test coverage expansion plan is now complete. 135 new test cases across 4 test files, covering 22 API routes. Every governance-critical path — blueprint state machine, policy CRUD, authentication flows, and intake finalization — now has explicit tests proving the expected behavior.
+
+The intake finalization tests were the simplest of the three work packages: 12 cases, all passing on first run. The route itself is clean — validate payload, check enterprise scope, mark complete, log, publish event. No transaction complexity, no multi-step chains. The most valuable tests are the three payload validation cases: they prove that a blueprint cannot be generated from an intake session that's missing its agent name, description, or tools. This is the input gate to the generation pipeline, and a bypass here would produce garbage blueprints.
+
+The vitest config change is strategically important. The previous config tracked only 5 lib modules for coverage. The new config tracks `lib/**` and `app/api/**` — essentially the entire backend. The thresholds are set at 60% (down from 80%) because the newly tracked modules include many untested routes and thin wrappers. The 60% floor prevents regression while being honest about current state. As more route tests are added in future sessions, the threshold can be raised.
+
+Looking at the full plan's execution: the original estimate was ~97 test cases (40 + 25 + 30 + 12, minus helpers), but the actual count came in at 135. This 39% overshoot is entirely due to test case discovery during validation — the multi-step approval chain in the blueprint status route alone added 16 cases beyond the estimate, and the enterprise scope isolation tests in governance and auth added another 20+. The lesson is that route-level test planning consistently underestimates because the interaction between role checks, enterprise scoping, and business logic creates a combinatorial expansion that's only visible when you read the actual code.
+
+The codebase now has 552 tests. More importantly, a due diligence reviewer can open `blueprint-lifecycle.test.ts` and see that unauthorized status transitions are blocked, governance gates are enforced, and SOD is checked in multi-step chains. They can open `governance-policies.test.ts` and see that compliance officers can't modify global policies. They can open `auth-identity.test.ts` and see that P1-SEC-001/002 transactional fixes are verified. These aren't theoretical claims in a security document — they're executable proofs.
+
+---
+
+## Session 142 — 2026-04-08: Testing the Governance Contract, Part 2
+
+Session B completed on schedule, adding 67 test cases across 13 API routes. The governance policy tests (36 cases) and auth/identity tests (31 cases) now prove that the two most critical non-blueprint surfaces — the rules that govern blueprints, and the identities that interact with them — behave correctly under test.
+
+The most interesting challenge was mock infrastructure evolution. Session A's mock-db was designed around the blueprint routes, which consistently use `db.select().from().where().limit(1)` to fetch individual records. Governance routes use a different pattern: bare `await db.select().from().where()` to fetch filtered lists, without a terminal `.limit()` call. In the mock, `where()` returned an object with `.limit()`, `.orderBy()`, and `.returning()` methods — but it wasn't itself awaitable. The fix was elegant: make `where()` return a thenable object (an object with a `.then()` method) that resolves to `selectResult()` when awaited, while still supporting `.limit()` for chains that use it. This is a pattern worth remembering — it's the mock equivalent of making an object both a Promise and a builder.
+
+The auth tests revealed a subtlety in Node.js module resolution: `import { randomUUID } from "crypto"` in route files resolves to `node:crypto` at runtime. Mocking `crypto` alone isn't sufficient — `node:crypto` must also export the same symbols. Three register tests failed on first run because the `node:crypto` mock was missing `randomUUID`. A quick diagnostic via stderr showed the exact error, and the fix was a two-line addition.
+
+The security patterns in the auth routes are well-implemented. Both `reset-password` and `invite/accept` use transactional token validation (P1-SEC-001 and P1-SEC-002 fixes), and the tests explicitly verify this by asserting `mockDb.transaction` is called. The forgot-password route's anti-enumeration pattern (always returning 200 regardless of whether the email exists) is tested by verifying that `sendEmail` is called for existing users but not for nonexistent ones, while the HTTP response is identical in both cases.
+
+The cumulative test count is now 531 across 24 test files, with 21 API routes covered. Session C remains: intake finalization tests (~12 cases), vitest config expansion, full suite verification, and documentation wrap-up. The end state of the 3-session plan is within reach.
+
+---
+
+## Session 141 — 2026-04-08: The Test Coverage Reckoning
+
+This session marks the beginning of a deliberate shift from feature building to verification. For a governance platform targeting regulated Fortune 500 companies, the absence of API route tests was the single most significant gap a technical buyer would find during due diligence. 129 API routes, zero route-level test coverage. The existing 408 tests covered utilities, security fixes, and integration smoke tests — important, but not the thing that proves the governance contract works.
+
+The approach was methodical: validate before acting. Every route file was read in full. The mock surface was mapped (20 dependency modules). The test case count was revised upward from the plan's estimate of 40 to 56 after discovering the status route's multi-step approval chain complexity — each step in the chain has its own role gate and SOD check, which multiplies the test matrix.
+
+The most valuable finding came from writing the tests themselves: the SOD enforcement in the status route's legacy single-step mode is missing. The multi-step chain correctly blocks a creator from approving their own work, but when the enterprise has no approval chain configured (the default), the status route allows it. The review route does enforce SOD in both modes. This asymmetry means there are two paths to the same outcome (approval), and only one is properly gated. This is exactly the kind of thing that tests expose — not a bug you'd find by reading the code, but a gap you'd find by writing the adversarial case and watching it pass when it shouldn't.
+
+The test infrastructure was designed for reuse. The four helper modules (mock-db, mock-auth, fixtures, route-test-utils) establish patterns that Sessions B and C will inherit directly. The `makeSettings()` fixture with deep-merge overrides is particularly useful — it lets each test case configure just the enterprise settings dimensions that matter (approval chain, SOD policy, test-pass gate) without specifying the full 270-line settings object.
+
+A practical challenge: the mounted filesystem has multiple truncated files (settings/types.ts, deploy-route.test.ts, package.json). These were either corrupted during a previous session or are a artifact of the workspace mounting mechanism. The settings types file was critical — it couldn't parse without the closing brackets — so it was repaired in-session. The others need investigation on the host machine.
+
+Sessions B and C remain on track. B tackles governance policy routes (~25 cases) and auth/identity routes (~30 cases). C completes intake finalization tests, updates the vitest coverage config to track the new route modules, and produces the verification documentation. The end state is a codebase where every governance-critical API path has at least one test proving it does what the spec says it does.
+
+---
+
+## Session 139 — 2026-04-07: The Autonomous Sprint
+
+The question this session answered was: how much useful UX work can an AI agent accomplish in a single autonomous run, with no human input beyond the initial brief?
+
+The answer: five completed tasks, one intelligently rescoped, 23 new files, and two comprehensive audit documents — all without introducing a single regression risk. The strategy of favoring additive changes (new sibling files) over modifications to existing logic was key. Every loading.tsx and error.tsx file is a new file that Next.js automatically picks up. No existing page logic was touched. This is the ideal pattern for unattended work.
+
+The most interesting finding was T3 (empty states). The plan assumed 8 pages needed empty states. After reading each page, 7 of 8 already had adequate handling — the codebase was more mature than the gap analysis suggested. Rather than forcing changes for consistency's sake, the time was redirected. This kind of adaptive scoping is exactly what autonomous work requires: the ability to recognize when a task's assumptions are wrong and pivot without waiting for a human to make the call.
+
+The copy audit (8.5/10) confirmed something the team should feel good about: the codebase already has excellent consistency in button capitalization, status labels, empty states, and glossary compliance. The issues found were minor — mixed ellipsis characters, duplicated constants, terse error messages. The accessibility audit (7.5/10) told a different story: Session 124's hardening laid a strong foundation (skip links, touch targets, semantic HTML, skeleton aria-live), but there are real gaps remaining. The missing `scope="col"` on table headers, decorative icons without `aria-hidden`, and the absence of `prefers-reduced-motion` are all genuine compliance issues that should be addressed before any formal accessibility certification.
+
+The form validation improvements (T4) are the most user-visible change: the login page now validates email format on blur, and the registration form has a visual password strength indicator. These are small touches, but they're the kind of thing that makes the difference between a prototype and a product. The strength bar complements the existing password checklist rather than replacing it — both serve different cognitive purposes.
+
+Context window limitations ended the session before all documentation could be completed in the first pass. This is a practical lesson for future autonomous runs: session documentation should be interleaved with task execution rather than batched at the end, or the context budget needs to account for it explicitly.
+
+---
+
 ## Session 132 — 2026-04-06: Closing the Loop
 
 The remediation plan from the code review had 41 findings across three timeframes. Sessions 130-131 attacked the most critical ones — race conditions, encryption, SSRF, audit logging, RLS context leaks. Session 132 is the methodical verification pass: go through every single finding in the IMMEDIATE and SHORT-TERM buckets and confirm each one is actually fixed.

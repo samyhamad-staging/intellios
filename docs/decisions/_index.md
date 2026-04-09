@@ -14,3 +14,5 @@
 | 010 | [Amazon Bedrock AgentCore integration strategy](010-agentcore-integration.md) | accepted | 2026-03-14 |
 | 011 | [AgentCore integration confidence hardening](011-agentcore-confidence-hardening.md) | accepted | 2026-03-15 |
 | 012 | [Middleware-level tenant isolation](012-middleware-tenant-isolation.md) | proposed | 2026-04-03 |
+| 013 | [SOD enforcement in legacy single-step blueprint approval](013-sod-enforcement-legacy-approval.md) | proposed | 2026-04-08 |
+| 014 | [Text contrast token scale shift for WCAG AA compliance](014-text-contrast-token-shift.md) | proposed | 2026-04-08 |

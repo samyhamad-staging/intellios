@@ -160,8 +160,8 @@ Text color palette for typography hierarchy.
 | Token | CSS Var | Hex | Usage |
 |---|---|---|---|
 | `--color-text` | `--color-text` | `#0f172a` | Primary text, headings, body copy |
-| `--color-text-secondary` | `--color-text-secondary` | `#64748b` | Secondary text, meta information, timestamps |
-| `--color-text-tertiary` | `--color-text-tertiary` | `#94a3b8` | De-emphasized text, hints, captions |
+| `--color-text-secondary` | `--color-text-secondary` | `#475569` | Secondary text, meta information, timestamps (WCAG AA 7.58:1) |
+| `--color-text-tertiary` | `--color-text-tertiary` | `#64748b` | De-emphasized text, hints, captions (WCAG AA 4.76:1) |
 | `--color-text-disabled` | `--color-text-disabled` | `#cbd5e1` | Disabled form inputs, placeholder text |
 
 ---
@@ -432,12 +432,12 @@ import { chartColors, chartFontSize, chartGridColor, chartTextColor } from "@/li
 | `chartColors.warning` | `#d97706` | `--color-warning` | Warning-level data |
 | `chartColors.danger` | `#dc2626` | `--color-danger` | Critical/error data |
 | `chartColors.info` | `#0284c7` | `--color-info` | Informational data |
-| `chartColors.gray` | `#94a3b8` | `--color-text-tertiary` | Neutral/secondary series |
+| `chartColors.gray` | `#64748b` | `--color-text-tertiary` | Neutral/secondary series |
 | `chartColors.border` | `#e1e5ef` | `--color-border` | Chart grid lines, borders |
 | `chartColors.muted` | `#f0f2f8` | `--color-surface-muted` | Muted backgrounds, disabled series |
 | `chartFontSize` | — | — | Default font size for chart labels (11px) |
 | `chartGridColor` | `#e1e5ef` | `--color-border` | Grid line color |
-| `chartTextColor` | `#64748b` | `--color-text-secondary` | Axis labels, legend text |
+| `chartTextColor` | `#475569` | `--color-text-secondary` | Axis labels, legend text |
 
 ---
 

@@ -236,8 +236,8 @@ Both components use semantic design tokens from globals.css:
 
 | Token | Value | Use |
 |-------|-------|-----|
-| `text-text-tertiary` | slate-400 | Inactive text, meta labels |
-| `text-text-secondary` | slate-500 | Secondary labels, button text |
+| `text-text-tertiary` | slate-500 | Inactive text, meta labels |
+| `text-text-secondary` | slate-600 | Secondary labels, button text |
 | `bg-primary-subtle` | indigo-100 | Active filter background |
 | `text-primary` | indigo-600 | Active filter text |
 | `bg-surface` | white | Default button background |
