@@ -245,28 +245,28 @@ export default function LandingPage() {
         </div>
 
         <div className="mx-auto max-w-3xl py-20 sm:py-28 lg:py-36 text-center">
-          <div className="reveal mb-6 flex justify-center">
+          <div className="mb-6 flex justify-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/10 px-3.5 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-400 ring-1 ring-inset ring-indigo-600/20 dark:ring-indigo-500/20">
               The Governed Control Plane for AI Agents
               <ChevronRight size={14} className="text-indigo-500 dark:text-indigo-400" />
             </div>
           </div>
 
-          <h1 className="reveal text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-6xl lg:text-7xl font-display">
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-6xl lg:text-7xl font-display">
             Every AI agent in your enterprise&mdash;{" "}
             <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
               governed, auditable, compliant.
             </span>
           </h1>
 
-          <p className="reveal mt-6 text-lg leading-8 font-medium text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
+          <p className="mt-6 text-lg leading-8 font-medium text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
             Embed policy enforcement, automated audit trails, and continuous compliance into every AI agent&mdash;regardless of which cloud runs it.
           </p>
-          <p className="reveal mt-3 text-base leading-7 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
+          <p className="mt-3 text-base leading-7 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
             Engineered to collapse MRM audit preparation from months to weeks. Works with AWS, Azure, and whatever comes next.
           </p>
 
-          <div className="reveal mt-10 flex flex-col items-center gap-3">
+          <div className="mt-10 flex flex-col items-center gap-3">
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <RequestAccessButton
                 label="Request Early Access"
@@ -285,7 +285,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="reveal mt-8 flex flex-wrap items-center justify-center gap-2">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
             {["Financial Services", "Healthcare", "Insurance", "Federal"].map((v) => (
               <span key={v} className="inline-flex items-center rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
                 {v}
@@ -294,12 +294,12 @@ export default function LandingPage() {
           </div>
 
           {/* ── Decorative agent-factory illustration ── */}
-          <div className="reveal mt-12 flex justify-center">
+          <div className="mt-12 flex justify-center">
             <HeroIllustration size="lg" className="opacity-80 dark:opacity-60" />
           </div>
 
           {/* ── Animated product showcase ── */}
-          <div className="reveal mt-6">
+          <div className="mt-6">
             <AnimatedProductShowcase />
           </div>
         </div>
