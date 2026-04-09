@@ -334,19 +334,21 @@ export default function LandingPage() {
       </section>
 
       {/* ════════════════════════════════════════════════════════════════ */}
-      {/*  SECTION 1b — Built For (Target Industries)                      */}
+      {/*  SECTION 1b — Trust Strip (Industries + Frameworks)              */}
       {/* ════════════════════════════════════════════════════════════════ */}
       <section className="py-8 border-b border-gray-100 dark:border-white/5">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <p className="text-center text-xs font-medium uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-6">
+
+          {/* Row 1 — Target industries */}
+          <p className="text-center text-xs font-medium uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-5">
             Purpose-built for regulated industries
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
             {[
               { label: "Financial Services", icon: Building2 },
-              { label: "Healthcare", icon: ShieldCheck },
-              { label: "Insurance", icon: Scale },
-              { label: "Federal & Defense", icon: Eye },
+              { label: "Healthcare",         icon: ShieldCheck },
+              { label: "Insurance",          icon: Scale },
+              { label: "Federal & Defense",  icon: Eye },
             ].map((industry) => (
               <div key={industry.label} className="flex items-center gap-2">
                 <industry.icon size={14} className="text-indigo-500 dark:text-indigo-400" />
@@ -354,6 +356,35 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+
+          {/* Divider */}
+          <div className="my-6 border-t border-gray-100 dark:border-white/5" />
+
+          {/* Row 2 — Compliance frameworks (P1-3: proof strip) */}
+          <p className="text-center text-xs font-medium uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
+            Governance architecture designed around
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {[
+              { label: "SR 11-7 / MRM", dot: "bg-indigo-500" },
+              { label: "EU AI Act",     dot: "bg-blue-500" },
+              { label: "NIST AI RMF",   dot: "bg-violet-500" },
+              { label: "GDPR",          dot: "bg-emerald-500" },
+              { label: "HIPAA",         dot: "bg-amber-500" },
+            ].map((f) => (
+              <div
+                key={f.label}
+                className="flex items-center gap-2 rounded-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-4 py-1.5"
+              >
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${f.dot}`} />
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{f.label}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-3">
+            Policy templates and validation rules map directly to these frameworks.
+          </p>
+
         </div>
       </section>
 
