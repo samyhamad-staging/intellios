@@ -10,7 +10,6 @@ import { RequestAccessButton } from "@/components/landing/request-access-button"
 import { HeroEmailCapture } from "@/components/landing/hero-email-capture";
 import { ScrollRevealWrapper } from "@/components/landing/scroll-reveal-wrapper";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
-import { HeroIllustration } from "@/components/landing/hero-illustration";
 import { AnimatedProductShowcase } from "@/components/landing/animated-product-showcase";
 import { GovernanceFlowSVG } from "@/components/landing/governance-flow-svg";
 import { MarketingNav } from "@/components/landing/marketing-nav";
@@ -253,77 +252,79 @@ export default function LandingPage() {
           </svg>
         </div>
 
-        <div className="mx-auto max-w-3xl py-20 sm:py-28 lg:py-36 text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/10 px-3.5 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-400 ring-1 ring-inset ring-indigo-600/20 dark:ring-indigo-500/20">
-              The Governed Control Plane for AI Agents
-              <ChevronRight size={14} className="text-indigo-500 dark:text-indigo-400" />
-            </div>
-          </div>
+        {/* ── P1-1: Two-column hero — text left, product right ── */}
+        <div className="mx-auto max-w-7xl py-16 sm:py-20 lg:py-24 lg:grid lg:grid-cols-[3fr_2fr] lg:gap-16 lg:items-center">
 
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-6xl lg:text-7xl font-display">
-            Every AI agent in your enterprise&mdash;{" "}
-            <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
-              governed, auditable, compliant.
-            </span>
-          </h1>
-
-          <p className="mt-6 text-lg leading-8 font-medium text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
-            Embed policy enforcement, automated audit trails, and continuous compliance into every AI agent&mdash;regardless of which cloud runs it.
-          </p>
-
-          {/* ── MRM stat card — P1-2: promoted from tertiary copy ── */}
-          <div className="mt-8 flex justify-center">
-            <div className="inline-flex items-center gap-4 rounded-2xl border border-indigo-200 dark:border-indigo-500/25 bg-gradient-to-r from-indigo-50 to-violet-50/60 dark:from-indigo-950/50 dark:to-violet-950/30 px-6 py-4 text-left">
-              <div className="flex items-baseline gap-2.5">
-                <span className="text-2xl font-bold text-gray-400 dark:text-gray-600 line-through decoration-2 decoration-red-400/70">
-                  12 wks
-                </span>
-                <span className="text-lg font-light text-gray-400 dark:text-gray-500">&rarr;</span>
-                <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                  2 wks
-                </span>
-              </div>
-              <div className="h-8 w-px bg-indigo-200 dark:bg-indigo-500/20" />
-              <div>
-                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 leading-tight">
-                  MRM audit preparation
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                  Design target &middot; SR&nbsp;11-7
-                </p>
+          {/* ── Left column — text content ── */}
+          <div className="text-center lg:text-left">
+            <div className="mb-6 flex justify-center lg:justify-start">
+              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/10 px-3.5 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-400 ring-1 ring-inset ring-indigo-600/20 dark:ring-indigo-500/20">
+                The Governed Control Plane for AI Agents
+                <ChevronRight size={14} className="text-indigo-500 dark:text-indigo-400" />
               </div>
             </div>
-          </div>
 
-          {/* ── Inline email capture — P1-4 ── */}
-          <div className="mt-8 flex flex-col items-center gap-4">
-            <HeroEmailCapture />
-            <Link
-              href="#pillars"
-              className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-            >
-              See how it works &darr;
-            </Link>
-          </div>
-
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-            {["Financial Services", "Healthcare", "Insurance", "Federal"].map((v) => (
-              <span key={v} className="inline-flex items-center rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
-                {v}
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl lg:text-6xl font-display">
+              Every AI agent in your enterprise&mdash;{" "}
+              <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+                governed, auditable, compliant.
               </span>
-            ))}
+            </h1>
+
+            <p className="mt-6 text-lg leading-8 font-medium text-gray-700 dark:text-gray-300">
+              Embed policy enforcement, automated audit trails, and continuous compliance into every AI agent&mdash;regardless of which cloud runs it.
+            </p>
+
+            {/* MRM stat card */}
+            <div className="mt-8 flex justify-center lg:justify-start">
+              <div className="inline-flex items-center gap-4 rounded-2xl border border-indigo-200 dark:border-indigo-500/25 bg-gradient-to-r from-indigo-50 to-violet-50/60 dark:from-indigo-950/50 dark:to-violet-950/30 px-6 py-4 text-left">
+                <div className="flex items-baseline gap-2.5">
+                  <span className="text-2xl font-bold text-gray-400 dark:text-gray-600 line-through decoration-2 decoration-red-400/70">
+                    12 wks
+                  </span>
+                  <span className="text-lg font-light text-gray-400 dark:text-gray-500">&rarr;</span>
+                  <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                    2 wks
+                  </span>
+                </div>
+                <div className="h-8 w-px bg-indigo-200 dark:bg-indigo-500/20" />
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 leading-tight">
+                    MRM audit preparation
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    Design target &middot; SR&nbsp;11-7
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Inline email capture */}
+            <div className="mt-8">
+              <HeroEmailCapture className="lg:mx-0" />
+              <Link
+                href="#pillars"
+                className="mt-4 inline-block text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                See how it works &darr;
+              </Link>
+            </div>
+
+            {/* Industry tags */}
+            <div className="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-2">
+              {["Financial Services", "Healthcare", "Insurance", "Federal"].map((v) => (
+                <span key={v} className="inline-flex items-center rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {v}
+                </span>
+              ))}
+            </div>
           </div>
 
-          {/* ── Decorative agent-factory illustration ── */}
-          <div className="mt-12 flex justify-center">
-            <HeroIllustration size="lg" className="opacity-80 dark:opacity-60" />
-          </div>
-
-          {/* ── Animated product showcase ── */}
-          <div className="mt-6">
+          {/* ── Right column — product showcase ── */}
+          <div className="mt-14 lg:mt-0">
             <AnimatedProductShowcase />
           </div>
+
         </div>
 
         <div
