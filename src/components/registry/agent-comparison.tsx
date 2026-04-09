@@ -198,3 +198,7 @@ export function AgentComparison({ agents, onClose, onRemoveAgent }: AgentCompari
             </tbody>
           </table>
         </div>
+      )}
+    </div>
+  );
+}
