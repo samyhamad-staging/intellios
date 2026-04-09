@@ -22,6 +22,7 @@ const FOOTER_LINKS = {
     { label: "Features", href: "/landing#pillars" },
     { label: "Use Cases", href: "/landing#personas" },
     { label: "Templates", href: "/templates" },
+    { label: "Pricing", href: "/landing/pricing" },
     { label: "ROI", href: "/landing#roi" },
   ],
   Company: [

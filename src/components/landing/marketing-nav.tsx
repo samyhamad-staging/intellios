@@ -19,7 +19,7 @@ const NAV_LINKS = [
   { label: "Use Cases", href: "/landing#personas" },
   { label: "Security", href: "/landing#why-intellios" },
   { label: "Templates", href: "/templates" },
-  { label: "ROI", href: "/landing#roi" },
+  { label: "Pricing", href: "/landing/pricing" },
 ];
 
 interface MarketingNavProps {
