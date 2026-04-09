@@ -122,7 +122,7 @@ export default function PricingPage() {
             Pricing
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400">
-            Simple, transparent pricing designed for enterprises building governed AI.
+            We&apos;re in design-partner stage. Pricing is bespoke until general availability &mdash; every engagement is scoped to your regulatory environment and agent fleet.
           </p>
         </div>
 
