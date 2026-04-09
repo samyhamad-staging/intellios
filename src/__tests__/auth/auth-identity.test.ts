@@ -118,6 +118,11 @@ const mockCreateHash = vi.fn().mockReturnValue({
   }),
 });
 vi.mock("crypto", () => ({
+  default: {
+    randomUUID: (...args: unknown[]) => mockRandomUUID(...args),
+    randomBytes: (...args: unknown[]) => mockRandomBytes(...args),
+    createHash: (...args: unknown[]) => mockCreateHash(...args),
+  },
   randomUUID: (...args: unknown[]) => mockRandomUUID(...args),
   randomBytes: (...args: unknown[]) => mockRandomBytes(...args),
   createHash: (...args: unknown[]) => mockCreateHash(...args),
