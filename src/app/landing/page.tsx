@@ -13,7 +13,6 @@ import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { HeroIllustration } from "@/components/landing/hero-illustration";
 import { AnimatedProductShowcase } from "@/components/landing/animated-product-showcase";
 import { GovernanceFlowSVG } from "@/components/landing/governance-flow-svg";
-import { GatedContentCTA } from "@/components/landing/gated-content-cta";
 import { MarketingNav } from "@/components/landing/marketing-nav";
 import { MarketingFooter } from "@/components/landing/marketing-footer";
 import {
@@ -1081,11 +1080,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* ════════════════════════════════════════════════════════════════ */}
-      {/*  SECTION 8a — Gated Content (secondary conversion path)          */}
-      {/* ════════════════════════════════════════════════════════════════ */}
-      <GatedContentCTA className="border-t border-gray-100 dark:border-white/5" />
 
       {/* ════════════════════════════════════════════════════════════════ */}
       {/*  SECTION 8b-placeholder — Case Study / Design Partner Story      */}
