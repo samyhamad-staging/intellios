@@ -7,6 +7,7 @@
 
 import Link from "next/link";
 import { RequestAccessButton } from "@/components/landing/request-access-button";
+import { HeroEmailCapture } from "@/components/landing/hero-email-capture";
 import { ScrollRevealWrapper } from "@/components/landing/scroll-reveal-wrapper";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { HeroIllustration } from "@/components/landing/hero-illustration";
@@ -287,23 +288,15 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <div className="flex items-center justify-center gap-4 flex-wrap">
-              <RequestAccessButton
-                label="Apply for Design Partnership"
-                mobileLabel="Apply for Design Partnership"
-                variant="large"
-              />
-              <Link
-                href="#pillars"
-                className="rounded-xl border border-gray-300 dark:border-gray-700 px-7 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
-              >
-                See How It Works
-              </Link>
-            </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              We respond within one business day. No commitment required.
-            </p>
+          {/* ── Inline email capture — P1-4 ── */}
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <HeroEmailCapture />
+            <Link
+              href="#pillars"
+              className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
+              See how it works &darr;
+            </Link>
           </div>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
