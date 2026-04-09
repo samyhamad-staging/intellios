@@ -123,6 +123,9 @@ const PERSONA_CARDS = [
     factSource: "Federal Reserve, SR 11-7, April 2011",
     color: "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800",
     darkColor: "dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20",
+    ctaLabel: "CROs: Apply as a design partner →",
+    ctaTier: "persona-cro",
+    ctaInitialRole: "compliance",
   },
   {
     role: "AI / ML Platform Teams",
@@ -135,6 +138,9 @@ const PERSONA_CARDS = [
       'McKinsey, "Seizing the Agentic AI Advantage," June 2025',
     color: "bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 border-violet-100 dark:border-violet-800",
     darkColor: "dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/20",
+    ctaLabel: "AI / ML teams: Apply as a design partner →",
+    ctaTier: "persona-ai-ml",
+    ctaInitialRole: "architect",
   },
   {
     role: "CIOs & CTOs",
@@ -146,6 +152,9 @@ const PERSONA_CARDS = [
     factSource: 'McKinsey, "The State of AI," March 2025',
     color: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800",
     darkColor: "dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20",
+    ctaLabel: "CIOs & CTOs: Apply as a design partner →",
+    ctaTier: "persona-cto",
+    ctaInitialRole: "engineering_lead",
   },
 ];
 
@@ -788,6 +797,22 @@ export default function LandingPage() {
                   <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 italic">
                     Source: {card.factSource}
                   </p>
+                </div>
+
+                {/* Per-persona CTA — P1-5 */}
+                <div className="mt-5">
+                  <RequestAccessButton
+                    label={card.ctaLabel}
+                    mobileLabel="Apply as a design partner →"
+                    variant="primary"
+                    className="w-full justify-center text-xs"
+                    context={{
+                      tier: card.ctaTier,
+                      initialRole: card.ctaInitialRole,
+                      heading: `Join the design partner program`,
+                      subheading: `Applying as: ${card.role}. Tell us about your use case and we'll be in touch within one business day.`,
+                    }}
+                  />
                 </div>
               </div>
             ))}

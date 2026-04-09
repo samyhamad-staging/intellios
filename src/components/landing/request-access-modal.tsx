@@ -20,6 +20,8 @@ export interface RequestAccessContext {
   heading?: string;
   /** Custom subheading override */
   subheading?: string;
+  /** Pre-select a role option by value (e.g. "compliance", "architect") */
+  initialRole?: string;
 }
 
 interface RequestAccessModalProps {
@@ -42,14 +44,14 @@ export function RequestAccessModal({ children, context }: RequestAccessModalProp
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState(context?.initialRole ?? "");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const reset = () => {
-    setEmail(""); setCompany(""); setRole(""); setMessage("");
+    setEmail(""); setCompany(""); setRole(context?.initialRole ?? ""); setMessage("");
     setSubmitting(false); setSubmitted(false); setError(null);
   };
 
