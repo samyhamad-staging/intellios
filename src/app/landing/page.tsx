@@ -269,8 +269,8 @@ export default function LandingPage() {
           <div className="mt-10 flex flex-col items-center gap-3">
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <RequestAccessButton
-                label="Request Early Access"
-                mobileLabel="Request Early Access"
+                label="Apply for Design Partnership"
+                mobileLabel="Apply for Design Partnership"
                 variant="large"
               />
               <Link
@@ -761,8 +761,8 @@ export default function LandingPage() {
           </p>
           <div className="mt-6 flex flex-col items-center gap-2">
             <RequestAccessButton
-              label="Tell Us Your Use Case"
-              mobileLabel="Tell Us Your Use Case"
+              label="Apply for Design Partnership"
+              mobileLabel="Apply for Design Partnership"
               variant="large"
             />
             <p className="text-xs text-gray-400 dark:text-gray-500">
