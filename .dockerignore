@@ -1,0 +1,13 @@
+# Keep build context small — only what the Dockerfile COPYs is needed.
+.git
+.github
+.claude
+.next
+node_modules
+src/node_modules
+src/.next
+docs
+*.md
+!README.md
+.env*
+!src/.env.example

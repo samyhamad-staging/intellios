@@ -1,0 +1,89 @@
+# Intellios — local development environment
+#
+# Prerequisites:
+#   1. Copy src/.env.example to src/.env.local
+#   2. Set ANTHROPIC_API_KEY in src/.env.local (all other vars have dev defaults)
+#
+# Usage:
+#   docker compose up          # start everything, runs migrations + seed automatically
+#   docker compose up -d       # detached
+#   docker compose down -v     # stop and wipe database volumes
+#   docker compose exec app sh # shell into the running app container
+
+services:
+  # ─── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: intellios
+      POSTGRES_USER: intellios
+      POSTGRES_PASSWORD: intellios
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U intellios -d intellios"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─── Next.js app ─────────────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    # Load developer overrides (ANTHROPIC_API_KEY, etc.) from .env.local.
+    # The file is optional — required vars without a default will cause a
+    # runtime error, but compose itself will not fail to start.
+    env_file:
+      - path: src/.env.local
+        required: false
+    environment:
+      # These override any values in .env.local so the app always reaches
+      # the Docker-internal Postgres and Redis services, not localhost.
+      DATABASE_URL: postgresql://intellios:intellios@postgres:5432/intellios
+      REDIS_URL: redis://redis:6379
+      # Sufficient for local dev — generate a real secret for any shared env.
+      AUTH_SECRET: dev-only-secret-replace-before-sharing-this-env
+      NODE_ENV: development
+    volumes:
+      # Mount source for Next.js HMR — changes on the host are reflected immediately.
+      - ./src:/app/src
+      # Preserve the container's node_modules so the host directory does not
+      # shadow the Linux-built binaries installed during `docker build`.
+      - node_modules:/app/src/node_modules
+      # Preserve the Next.js build cache across restarts.
+      - nextjs_cache:/app/src/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # On every start: push the current Drizzle schema, seed demo data (idempotent),
+    # then launch the dev server.  All three steps run from WORKDIR /app/src.
+    command: >
+      sh -c "npm run db:push &&
+             npx tsx /app/scripts/seed.ts &&
+             npm run dev"
+
+volumes:
+  postgres_data:
+  redis_data:
+  node_modules:
+  nextjs_cache:
