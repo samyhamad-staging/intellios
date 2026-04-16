@@ -2,4 +2,16 @@
 .claude/settings.local.json
 .claude/worktrees/
 
-# Next.j
+# Next.js build output (also excluded in src/.gitignore)
+.next/
+node_modules/
+
+# Scratch / working documents — not part of the codebase
+landing-page-audit-*.md
+production-readiness-review.html
+
+# Sample artifacts — PDFs are binary; use Git LFS or external storage instead
+samples/*.pdf
+
+# Temp / lock files
+.~lock.*
