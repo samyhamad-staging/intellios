@@ -2,8 +2,22 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { deliverWebhook, deliverWebhookTest } from "../deliver";
 import type { WebhookPayload } from "../types";
 import { db } from "@/lib/db";
+import { logger } from "@/lib/logger";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
+
+// Mock the logger so structured log output doesn't pollute test output
+// and we can assert on error calls in failure-path tests.
+vi.mock("@/lib/logger", () => ({
+  logger: {
+    error: vi.fn(),
+    warn:  vi.fn(),
+    info:  vi.fn(),
+    debug: vi.fn(),
+  },
+  serializeError: vi.fn((err: unknown) => err),
+  logAICall: vi.fn(),
+}));
 
 // Mock the database module
 vi.mock("@/lib/db", () => ({
@@ -25,15 +39,8 @@ vi.mock("@/lib/db", () => ({
 global.fetch = vi.fn();
 
 describe("webhook delivery module", () => {
-  let mockConsoleError: ReturnType<typeof vi.spyOn>;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    mockConsoleError = vi.spyOn(console, "error").mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    mockConsoleError.mockRestore();
   });
 
   describe("computeSignature (via deliverWebhook)", () => {
@@ -691,9 +698,9 @@ describe("webhook delivery module", () => {
         deliverWebhook(webhookId, "https://example.com/webhook", "secret", payload, null)
       ).resolves.toBeUndefined();
 
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        expect.stringContaining("[webhooks] Failed to insert delivery record"),
-        expect.any(Error)
+      expect(vi.mocked(logger.error)).toHaveBeenCalledWith(
+        "webhooks.delivery.insert.failed",
+        expect.objectContaining({ webhookId: expect.any(String) })
       );
 
       // Should not attempt fetch if insert fails
@@ -738,9 +745,9 @@ describe("webhook delivery module", () => {
         deliverWebhook(webhookId, "https://example.com/webhook", "secret", payload, null)
       ).resolves.toBeUndefined();
 
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        expect.stringContaining("[webhooks] Failed to update delivery record"),
-        expect.any(Error)
+      expect(vi.mocked(logger.error)).toHaveBeenCalledWith(
+        "webhooks.delivery.update.failed",
+        expect.objectContaining({ deliveryId: expect.any(String) })
       );
     });
 
@@ -1065,9 +1072,9 @@ describe("webhook delivery module", () => {
       const result = await deliverWebhookTest(webhookId, "https://example.com/webhook", "secret", null);
 
       expect(result.status).toBe("success");
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        expect.stringContaining("[webhooks/test] Failed to insert delivery log"),
-        expect.any(Error)
+      expect(vi.mocked(logger.error)).toHaveBeenCalledWith(
+        "webhooks.test.delivery.insert.failed",
+        expect.objectContaining({ webhookId: expect.any(String) })
       );
     });
 
@@ -1097,9 +1104,9 @@ describe("webhook delivery module", () => {
       const result = await deliverWebhookTest(webhookId, "https://example.com/webhook", "secret", null);
 
       expect(result.status).toBe("success");
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        expect.stringContaining("[webhooks/test] Failed to update delivery record"),
-        expect.any(Error)
+      expect(vi.mocked(logger.error)).toHaveBeenCalledWith(
+        "webhooks.test.delivery.update.failed",
+        expect.objectContaining({ webhookId: expect.any(String) })
       );
     });
 
