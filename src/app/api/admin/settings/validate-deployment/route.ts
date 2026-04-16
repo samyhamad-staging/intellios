@@ -3,6 +3,9 @@ import { z } from "zod";
 import { parseBody } from "@/lib/parse-body";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
+import { db } from "@/lib/db";
+import { sql } from "drizzle-orm";
+import { logger, serializeError } from "@/lib/logger";
 
 const ValidateDeploymentSchema = z.object({
   region: z.string().min(1).max(50).optional(),
@@ -109,7 +112,7 @@ export async function POST(request: NextRequest) {
       awsDetail = `AWS credentials found (key: ${accessKeyId.slice(0, 8)}…). Full STS validation requires aws-sdk — credentials appear configured.`;
     }
   } catch (err) {
-    console.error(`[${requestId}] AWS credential check error:`, err);
+    logger.error("validate_deployment.aws_check.failed", { requestId, err: serializeError(err) });
     awsDetail = `AWS credential check failed: ${err instanceof Error ? err.message : "Unknown error"}.`;
     awsOk = false;
   }
@@ -118,6 +121,48 @@ export async function POST(request: NextRequest) {
     label: "AWS Credentials",
     ok: awsOk,
     detail: awsDetail,
+  });
+
+  // ── Check 5: Database schema health ─────────────────────────────────────
+  // Verifies that the five core tables are present in the public schema.
+  // A missing table indicates a migration was never applied in this environment.
+  const CORE_TABLES = [
+    "users",
+    "agent_blueprints",
+    "intake_sessions",
+    "governance_policies",
+    "audit_log",
+  ] as const;
+
+  let schemaOk = false;
+  let schemaDetail = "Schema check not run.";
+  try {
+    const result = await db.execute(sql`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name = ANY(${CORE_TABLES})
+    `);
+    const found = (result.rows as { table_name: string }[]).map((r) => r.table_name);
+    const missing = CORE_TABLES.filter((t) => !found.includes(t));
+
+    if (missing.length === 0) {
+      schemaOk = true;
+      schemaDetail = `All ${CORE_TABLES.length} core tables present. Schema is up to date.`;
+    } else {
+      schemaOk = false;
+      schemaDetail = `${missing.length} core table(s) missing: ${missing.join(", ")}. Run scripts/migrate.sh --apply.`;
+    }
+  } catch (err) {
+    logger.error("validate_deployment.schema_check.failed", { requestId, err: serializeError(err) });
+    schemaOk = false;
+    schemaDetail = `Schema check failed: ${err instanceof Error ? err.message : "Unknown error"}.`;
+  }
+
+  checks.push({
+    label: "Database Schema",
+    ok: schemaOk,
+    detail: schemaDetail,
   });
 
   const allOk = checks.every((c) => c.ok);

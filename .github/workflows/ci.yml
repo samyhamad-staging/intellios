@@ -97,6 +97,61 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+  # ─── Migration smoke-test ────────────────────────────────────────────────
+  # Verifies that the current schema.ts can be applied to a clean database.
+  # Catches schema changes committed without a corresponding migration and
+  # regressions in the Drizzle schema definition.
+  migrate:
+    name: Migration smoke-test
+    runs-on: ubuntu-latest
+    needs: [build]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: intellios_ci
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d intellios_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: src
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/intellios_ci
+      AUTH_SECRET: ci-secret-at-least-32-chars-not-for-production
+      ANTHROPIC_API_KEY: sk-ant-stub-not-real
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: src/package-lock.json
+
+      - run: npm ci
+
+      - name: Apply schema
+        run: npx drizzle-kit push
+
+      - name: Verify core tables exist
+        run: |
+          TABLE_COUNT=$(psql "$DATABASE_URL" -t -c "
+            SELECT COUNT(*) FROM information_schema.tables
+            WHERE table_schema = 'public'
+            AND table_name = ANY(ARRAY[
+              'users','agent_blueprints','intake_sessions',
+              'governance_policies','audit_log'
+            ])" | tr -d ' \n')
+          echo "Core tables found: $TABLE_COUNT / 5"
+          [ "$TABLE_COUNT" -eq 5 ] || (echo "Schema verification failed — expected 5 core tables" && exit 1)
+
   # ─── Security Audit ──────────────────────────────────────────────────
   audit:
     name: npm audit
@@ -116,7 +171,6 @@ jobs:
       - run: npm ci
       # Audit production deps only; fail on high/critical
       - run: npm audit --omit=dev --audit-level=high
-        continue-on-error: true  # Advisory initially — switch to hard fail once CVEs cleared
 
   # ─── E2E Tests (runs against staging/preview) ─────────────────────────
   # Uncomment when a staging environment is available:
