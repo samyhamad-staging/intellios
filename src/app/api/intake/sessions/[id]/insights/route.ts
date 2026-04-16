@@ -6,6 +6,7 @@ import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { getRequestId } from "@/lib/request-id";
+import { logger, serializeError } from "@/lib/logger";
 
 /** GET /api/intake/sessions/[id]/insights — return all AI insights for a session */
 export async function GET(
@@ -37,7 +38,7 @@ export async function GET(
     return NextResponse.json({ insights });
   } catch (err) {
     const requestId = getRequestId(request);
-    console.error(`[${requestId}] GET insights failed:`, err);
+    logger.error("intake_insights.fetch.failed", { requestId, err: serializeError(err) });
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch insights");
   }
 }

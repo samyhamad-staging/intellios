@@ -8,6 +8,7 @@ import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
+import { logger, serializeError } from "@/lib/logger";
 import { randomBytes } from "crypto";
 import { sendEmail, buildInvitationEmail } from "@/lib/notifications/email";
 import { publishEvent } from "@/lib/events/publish";
@@ -138,12 +139,12 @@ export async function PATCH(
         },
       });
     } catch (auditErr) {
-      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+      logger.error("audit.write.failed", { action: "intake_insight.updated", insightId, requestId, err: serializeError(auditErr) });
     }
 
     return NextResponse.json({ insight: updated });
   } catch (err) {
-    console.error(`[${requestId}] PATCH insight failed:`, err);
+    logger.error("intake_insight.update.failed", { requestId, err: serializeError(err) });
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to update insight");
   }
 }

@@ -9,6 +9,7 @@ import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
+import { logger, serializeError } from "@/lib/logger";
 import { sendEmail, buildInvitationEmail } from "@/lib/notifications/email";
 import { publishEvent } from "@/lib/events/publish";
 
@@ -51,7 +52,7 @@ export async function GET(
     return NextResponse.json({ invitations });
   } catch (err) {
     const requestId = getRequestId(request);
-    console.error(`[${requestId}] GET invitations failed:`, err);
+    logger.error("intake_invitations.fetch.failed", { requestId, err: serializeError(err) });
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch invitations");
   }
 }
@@ -131,7 +132,7 @@ export async function POST(
         metadata: { inviteeEmail: body.inviteeEmail, domain: body.domain, raciRole: body.raciRole },
       });
     } catch (auditErr) {
-      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+      logger.error("audit.write.failed", { action: "intake_invitation.created", requestId, err: serializeError(auditErr) });
     }
 
     // Event log for pub/sub
@@ -151,7 +152,7 @@ export async function POST(
 
     return NextResponse.json({ invitation }, { status: 201 });
   } catch (err) {
-    console.error(`[${requestId}] POST invitations failed:`, err);
+    logger.error("intake_invitations.create.failed", { requestId, err: serializeError(err) });
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to create invitation");
   }
 }

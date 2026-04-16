@@ -13,6 +13,7 @@ import { getRequestId } from "@/lib/request-id";
 import { publishEvent } from "@/lib/events/publish";
 import { rateLimit } from "@/lib/rate-limit";
 import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
+import { logger, serializeError } from "@/lib/logger";
 
 /**
  * POST /api/blueprints/[id]/regenerate
@@ -92,13 +93,14 @@ export async function POST(
         : null;
 
     const policies = await loadPolicies(enterpriseId);
+    const log = logger.child({ requestId, userEmail: authSession.user.email, enterpriseId });
 
     // Re-generate the ABP via Claude
     let abp;
     try {
       abp = await generateBlueprint(intake, intakeContext, intakeClassification, source.sessionId, policies);
     } catch (err) {
-      console.error(`[${requestId}] Claude generateBlueprint failed during regeneration:`, err);
+      log.error("blueprint.regenerate.ai.failed", { blueprintId: id, err: serializeError(err) });
       return aiError(err, requestId);
     }
 
@@ -133,7 +135,7 @@ export async function POST(
         metadata: { agentId: source.agentId, agentName: name },
       });
     } catch (auditErr) {
-      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+      log.error("audit.write.failed", { action: "blueprint.regenerated", blueprintId: id, err: serializeError(auditErr) });
     }
 
     await publishEvent({
@@ -152,7 +154,7 @@ export async function POST(
 
     return NextResponse.json({ abp, validationReport, refinementCount: "0" });
   } catch (err) {
-    console.error(`[${requestId}] Failed to regenerate blueprint:`, err);
+    logger.error("blueprint.regenerate.failed", { requestId, err: serializeError(err) });
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to regenerate blueprint", undefined, requestId);
   }
 }

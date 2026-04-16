@@ -8,6 +8,7 @@ import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 import { publishEvent } from "@/lib/events/publish";
+import { logger, serializeError } from "@/lib/logger";
 
 export async function POST(
   request: NextRequest,
@@ -66,7 +67,7 @@ export async function POST(
         metadata: { agentName: payload.identity?.name ?? "" },
       });
     } catch (auditErr) {
-      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+      logger.error("audit.write.failed", { action: "intake_session.finalized", sessionId: id, requestId, err: serializeError(auditErr) });
     }
 
     await publishEvent({
@@ -85,7 +86,7 @@ export async function POST(
 
     return NextResponse.json({ session: updated, payload });
   } catch (error) {
-    console.error(`[${requestId}] Failed to finalize intake session:`, error);
+    logger.error("intake_session.finalize.failed", { requestId, err: serializeError(error) });
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to finalize session", undefined, requestId);
   }
 }

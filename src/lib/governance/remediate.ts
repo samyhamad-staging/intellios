@@ -3,11 +3,12 @@
  * Batches all violations into a single generateObject call to minimize API cost.
  */
 
-import { generateObject } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { resilientGenerateObject } from "@/lib/ai/resilient-generate";
+import { models } from "@/lib/ai/config";
 import { z } from "zod";
 import { ABP } from "@/lib/types/abp";
 import { Violation } from "./types";
+import { logger, serializeError } from "@/lib/logger";
 
 const RemediationSchema = z.object({
   suggestions: z.array(
@@ -52,8 +53,8 @@ export async function addRemediationSuggestions(
   };
 
   try {
-    const { object } = await generateObject({
-      model: anthropic("claude-haiku-4-5-20251001"),
+    const { object } = await resilientGenerateObject({
+      model: models.haiku,
       schema: RemediationSchema,
       system: `You are a governance advisor for enterprise AI agents.
 Given an Agent Blueprint Package and a list of governance violations, provide specific, actionable remediation suggestions.
@@ -75,7 +76,7 @@ For each violation, provide a specific suggestion for how to fix it.`,
 
     return enriched;
   } catch (error) {
-    console.error("Failed to generate remediation suggestions:", error);
+    logger.error("governance.remediation.failed", { err: serializeError(error) });
     // Return violations without suggestions rather than failing the whole validation
     return violations;
   }

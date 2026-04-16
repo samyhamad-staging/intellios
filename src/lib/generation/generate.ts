@@ -1,5 +1,5 @@
-import { generateObject } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { resilientGenerateObject } from "@/lib/ai/resilient-generate";
+import { models } from "@/lib/ai/config";
 import { ABPContentSchema, ABPContent, ABP } from "@/lib/types/abp";
 import { IntakePayload, IntakeContext, IntakeClassification } from "@/lib/types/intake";
 import { GovernancePolicy } from "@/lib/governance/types";
@@ -21,8 +21,8 @@ export async function generateBlueprint(
   sessionId: string,
   policies?: GovernancePolicy[]
 ): Promise<ABP> {
-  const { object: content } = await generateObject({
-    model: anthropic("claude-sonnet-4-20250514"),
+  const { object: content } = await resilientGenerateObject({
+    model: models.sonnet,
     schema: ABPContentSchema,
     system: buildGenerationSystemPrompt(policies, intakeContext ?? null, classification ?? null),
     prompt: `Generate a complete Agent Blueprint Package from this intake data:\n\n${JSON.stringify(intake, null, 2)}`,
@@ -44,8 +44,8 @@ export async function refineBlueprint(
   intake: IntakePayload,
   policies?: GovernancePolicy[]
 ): Promise<ABP> {
-  const { object: content } = await generateObject({
-    model: anthropic("claude-sonnet-4-20250514"),
+  const { object: content } = await resilientGenerateObject({
+    model: models.sonnet,
     schema: ABPContentSchema,
     system: buildGenerationSystemPrompt(policies),
     prompt: `You are refining an existing Agent Blueprint Package.

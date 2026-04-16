@@ -21,6 +21,7 @@ import { setRLSContext, clearRLSContext } from "@/lib/db/rls";
 import { getRequestId } from "@/lib/request-id";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
+import { logger, serializeError } from "@/lib/logger";
 import { z } from "zod";
 
 // Extend Vercel function timeout for AI generation (default 10s is too short)
@@ -123,7 +124,7 @@ export async function POST(
       db.update(intakeSessions)
         .set({ expertiseLevel: currentExpertiseLevel, updatedAt: new Date() })
         .where(eq(intakeSessions.id, sessionId))
-        .catch((err) => console.error("[intake/chat] Failed to save expertiseLevel:", err));
+        .catch((err) => logger.error("intake.chat.expertiseLevel.save.failed", { requestId, sessionId, err: serializeError(err) }));
     }
 
     // Fetch stakeholder contributions for this session to inject into system prompt
@@ -180,7 +181,7 @@ export async function POST(
             .set({ intakeContext: context, updatedAt: new Date() })
             .where(eq(intakeSessions.id, sessionId));
         } catch (err) {
-          console.error(`[${requestId}] Failed to persist intake context:`, err);
+          logger.error("intake.chat.context.persist.failed", { requestId, sessionId, err: serializeError(err) });
           throw new Error("Failed to save context — please try again");
         }
         currentContext = context;
@@ -284,7 +285,7 @@ export async function POST(
     });
   } catch (error) {
     await clearRLSContext().catch(() => {}); // best-effort cleanup
-    console.error(`[${requestId}] Failed to process intake chat:`, error);
+    logger.error("intake.chat.failed", { requestId, err: serializeError(error) });
     return aiError(error, requestId);
   }
 }

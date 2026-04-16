@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
+import { logger, serializeError } from "@/lib/logger";
 import {
   getNotificationsForUser,
   getUnreadCount,
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ notifications: items, unreadCount });
   } catch (err) {
-    console.error(`[${requestId}] Failed to fetch notifications:`, err);
+    logger.error("notifications.fetch.failed", { requestId, err: serializeError(err) });
     return apiError(
       ErrorCode.INTERNAL_ERROR,
       "Failed to fetch notifications",
@@ -62,7 +63,7 @@ export async function PATCH(request: NextRequest) {
     await markAllRead(authSession.user.email!);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error(`[${requestId}] Failed to mark notifications read:`, err);
+    logger.error("notifications.mark_read.failed", { requestId, err: serializeError(err) });
     return apiError(
       ErrorCode.INTERNAL_ERROR,
       "Failed to mark notifications read",

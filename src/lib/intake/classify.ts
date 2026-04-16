@@ -11,8 +11,9 @@
  * On any error, returns a safe default (medium / automation) so intake can continue.
  */
 
-import { generateObject } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { resilientGenerateObject } from "@/lib/ai/resilient-generate";
+import { models } from "@/lib/ai/config";
+import { logger, serializeError } from "@/lib/logger";
 import { z } from "zod";
 import type { IntakeContext, AgentType, IntakeRiskTier, IntakeClassification } from "@/lib/types/intake";
 import { deriveRiskTierFromContext } from "@/lib/regulatory/classifier";
@@ -61,8 +62,8 @@ export async function classifyIntake(context: IntakeContext): Promise<IntakeClas
   let rationale: string;
 
   try {
-    const result = await generateObject({
-      model: anthropic("claude-haiku-4-5-20251001"),
+    const result = await resilientGenerateObject({
+      model: models.haiku,
       system: CLASSIFICATION_SYSTEM_PROMPT,
       prompt: `Classify this agent:
 
@@ -79,7 +80,7 @@ Data sensitivity: ${context.dataSensitivity}`,
     agentType = result.object.agentType;
     rationale = result.object.rationale;
   } catch (err) {
-    console.error("[classify] Haiku agentType classification failed:", err);
+    logger.error("intake.classify.failed", { err: serializeError(err) });
     return { ...SAFE_DEFAULT, riskTier };
   }
 

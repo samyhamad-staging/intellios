@@ -4,7 +4,10 @@ import { agentBlueprints, intakeSessions, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { ALL_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import { refineBlueprint } from "@/lib/generation/generate";
+import { sanitizePromptInput } from "@/lib/generation/system-prompt";
+import { validateBlueprint } from "@/lib/governance/validator";
 import { loadPolicies } from "@/lib/governance/load-policies";
+import { logger, serializeError } from "@/lib/logger";
 import { ABP } from "@/lib/types/abp";
 import { readABP } from "@/lib/abp/read";
 import { IntakePayload } from "@/lib/types/intake";
@@ -41,7 +44,8 @@ export async function POST(
 
   try {
     const { id } = await params;
-    const { change } = body;
+    // Sanitize before using in LLM prompt — prevents prompt injection
+    const change = sanitizePromptInput(body.change.trim(), 2000);
 
     const [blueprint] = await db
       .select(ALL_BLUEPRINT_COLUMNS)
@@ -74,14 +78,24 @@ export async function POST(
     const policies = await loadPolicies(enterpriseId);
 
     // Refine via Claude
+    const log = logger.child({ requestId, userEmail: authSession.user.email, enterpriseId });
     let updatedAbp: ABP;
     try {
-      updatedAbp = await refineBlueprint(currentAbp, change.trim(), intake, policies);
+      updatedAbp = await refineBlueprint(currentAbp, change, intake, policies);
     } catch (err) {
-      console.error(`[${requestId}] Claude refineBlueprint failed:`, err);
+      log.error("blueprint.refine.ai.failed", { blueprintId: id, err: serializeError(err) });
       return aiError(err, requestId);
     }
     const newCount = String(parseInt(blueprint.refinementCount ?? "0", 10) + 1);
+
+    // Re-validate against governance policies — pass pre-loaded policies to avoid a
+    // redundant DB round-trip. Any policy drift introduced during refinement is caught here.
+    const validationReport = await validateBlueprint(
+      updatedAbp,
+      enterpriseId,
+      policies,
+      blueprint.agentId
+    );
 
     // Re-sync denormalized registry fields in case identity or tags changed
     const name = updatedAbp.identity.name ?? null;
@@ -90,7 +104,7 @@ export async function POST(
     // Persist the refined version (update-in-place for MVP)
     const [updated] = await db
       .update(agentBlueprints)
-      .set({ abp: updatedAbp, name, tags, refinementCount: newCount, updatedAt: new Date() })
+      .set({ abp: updatedAbp, name, tags, refinementCount: newCount, validationReport, updatedAt: new Date() })
       .where(eq(agentBlueprints.id, id))
       .returning();
 
@@ -114,12 +128,14 @@ export async function POST(
         metadata: {
           agentId: blueprint.agentId,
           name: blueprint.name,
-          change: change.trim().slice(0, 200),
+          change: change.slice(0, 200),
           refinementCount: newCount,
+          governanceValid: validationReport.valid,
+          violationCount: validationReport.violations.length,
         },
       });
     } catch (auditErr) {
-      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+      log.error("audit.write.failed", { action: "blueprint.refined", blueprintId: id, err: serializeError(auditErr) });
     }
 
     await publishEvent({
@@ -142,9 +158,10 @@ export async function POST(
       agentId: updated.agentId,
       abp: updatedAbp,
       refinementCount: newCount,
+      validationReport,
     });
   } catch (error) {
-    console.error(`[${requestId}] Failed to refine blueprint:`, error);
+    logger.error("blueprint.refine.failed", { requestId, err: serializeError(error) });
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to refine blueprint", undefined, requestId);
   }
 }

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { webhookDeliveries } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type { WebhookPayload } from "./types";
+import { logger, serializeError } from "@/lib/logger";
 
 const MAX_ATTEMPTS = 3;
 const RETRY_DELAYS_MS = [0, 1000, 2000];
@@ -55,7 +56,7 @@ export async function deliverWebhook(
       .returning({ id: webhookDeliveries.id });
     deliveryId = row.id;
   } catch (err) {
-    console.error(`[webhooks] Failed to insert delivery record for webhook ${webhookId}:`, err);
+    logger.error("webhooks.delivery.insert.failed", { webhookId, err: serializeError(err) });
     return;
   }
 
@@ -113,7 +114,7 @@ export async function deliverWebhook(
       })
       .where(eq(webhookDeliveries.id, deliveryId));
   } catch (err) {
-    console.error(`[webhooks] Failed to update delivery record ${deliveryId}:`, err);
+    logger.error("webhooks.delivery.update.failed", { deliveryId, err: serializeError(err) });
   }
 }
 
@@ -160,7 +161,7 @@ export async function deliverWebhookTest(
     }).returning({ id: webhookDeliveries.id });
     dbDeliveryId = row.id;
   } catch (err) {
-    console.error("[webhooks/test] Failed to insert delivery log:", err);
+    logger.error("webhooks.test.delivery.insert.failed", { webhookId, err: serializeError(err) });
   }
 
   let responseStatus: number | null = null;
@@ -201,7 +202,7 @@ export async function deliverWebhookTest(
       })
       .where(dbDeliveryId ? eq(webhookDeliveries.id, dbDeliveryId) : eq(webhookDeliveries.webhookId, webhookId));
   } catch (err) {
-    console.error("[webhooks/test] Failed to update delivery record:", err);
+    logger.error("webhooks.test.delivery.update.failed", { webhookId, err: serializeError(err) });
   }
 
   return { status: succeeded ? "success" : "failed", responseStatus, responseBody };

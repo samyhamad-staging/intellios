@@ -19,6 +19,7 @@ import { getRequestId } from "@/lib/request-id";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
 import { apiError, ErrorCode } from "@/lib/errors";
+import { logger, serializeError } from "@/lib/logger";
 import { z } from "zod";
 
 // Extend Vercel function timeout for AI generation (default 10s is too short)
@@ -149,7 +150,7 @@ Be conservative with regulatory scope — only include frameworks that are clear
 
     return NextResponse.json({ context, inferred: true });
   } catch (err) {
-    console.error(`[${requestId}] Quick-start inference failed:`, err);
+    logger.error("intake_session.quick_start.failed", { requestId, err: serializeError(err) });
     return apiError(
       ErrorCode.INTERNAL_ERROR,
       "Failed to infer context from description",

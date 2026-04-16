@@ -8,8 +8,9 @@
  * Runs fire-and-forget — errors are logged but never propagated to the caller.
  */
 
-import { generateObject } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { resilientGenerateObject } from "@/lib/ai/resilient-generate";
+import { models } from "@/lib/ai/config";
+import { logger, serializeError } from "@/lib/logger";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { intakeSessions, intakeContributions, intakeInvitations, intakeAIInsights } from "@/lib/db/schema";
@@ -120,8 +121,8 @@ Your task:
 For suggestions of type "invite", populate domain, suggestedRoleTitle with an appropriate role for that domain.
 Be specific and grounded in the actual contributions provided.`;
 
-    const { object: insights } = await generateObject({
-      model: anthropic("claude-haiku-4-5-20251001"),
+    const { object: insights } = await resilientGenerateObject({
+      model: models.haiku,
       schema: InsightSchema,
       prompt,
     });
@@ -194,7 +195,7 @@ Be specific and grounded in the actual contributions provided.`;
       });
     }
   } catch (err) {
-    console.error("[orchestrator] Failed to run for session:", sessionId, err);
+    logger.error("intake.orchestrator.failed", { sessionId, err: serializeError(err) });
   }
 }
 

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { auditLog } from "@/lib/db/schema";
+import { logger, serializeError } from "@/lib/logger";
 import { dispatch } from "@/lib/events/bus";
 import type { IntelliosEvent } from "@/lib/events/types";
 
@@ -69,6 +70,11 @@ export async function writeAuditLog(entry: AuditEntry): Promise<void> {
     });
   } catch (err) {
     // Audit log failure must never interrupt the main flow.
-    console.error("[audit] Failed to write audit log entry:", err, entry);
+    logger.error("audit.write.failed", {
+      err:        serializeError(err),
+      action:     entry.action,
+      entityType: entry.entityType,
+      entityId:   entry.entityId,
+    });
   }
 }

@@ -10,6 +10,7 @@ import { getRequestId } from "@/lib/request-id";
 import { publishEvent } from "@/lib/events/publish";
 import { parseBody } from "@/lib/parse-body";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
+import { logger, serializeError } from "@/lib/logger";
 import { z } from "zod";
 import type { ApprovalStepRecord } from "@/lib/settings/types";
 
@@ -278,7 +279,7 @@ export async function POST(
         metadata: { decision: action, notes: comment?.trim() || null },
       });
     } catch (auditErr) {
-      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+      logger.error("audit.write.failed", { requestId, action: "blueprint.reviewed", blueprintId: id, err: serializeError(auditErr) });
     }
 
     await publishEvent({
@@ -301,7 +302,7 @@ export async function POST(
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error(`[${requestId}] Failed to submit review:`, error);
+    logger.error("blueprint.review.failed", { requestId, err: serializeError(error) });
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to submit review", undefined, requestId);
   }
 }

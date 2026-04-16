@@ -10,6 +10,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
+import { logger, serializeError } from "@/lib/logger";
 
 /**
  * POST /api/blueprints/[id]/validate
@@ -70,12 +71,12 @@ export async function POST(
         },
       });
     } catch (auditErr) {
-      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
+      logger.error("audit.write.failed", { requestId, action: "blueprint.validated", blueprintId: id, err: serializeError(auditErr) });
     }
 
     return NextResponse.json({ report });
   } catch (error) {
-    console.error(`[${requestId}] Failed to validate blueprint:`, error);
+    logger.error("blueprint.validate.failed", { requestId, err: serializeError(error) });
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to run validation", undefined, requestId);
   }
 }

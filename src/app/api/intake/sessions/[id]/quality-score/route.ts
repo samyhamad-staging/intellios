@@ -6,6 +6,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
+import { logger, serializeError } from "@/lib/logger";
 
 /**
  * GET /api/intake/sessions/[id]/quality-score
@@ -63,7 +64,7 @@ export async function GET(
       },
     });
   } catch (err) {
-    console.error(`[${requestId}] Failed to fetch intake quality score:`, err);
+    logger.error("intake_session.quality_score.fetch.failed", { requestId, err: serializeError(err) });
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch quality score", undefined, requestId);
   }
 }

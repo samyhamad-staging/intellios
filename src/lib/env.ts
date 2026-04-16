@@ -16,10 +16,15 @@ const EnvSchema = z.object({
   AUTH_SECRET: z.string().min(32, {
     message: "AUTH_SECRET must be at least 32 characters",
   }),
-  // Optional — enables Bearer token auth on cron routes (recommended in production)
-  CRON_SECRET: z.string().optional(),
+  // Required in production — Bearer token auth on cron routes.
+  // Generate with: openssl rand -hex 32
+  CRON_SECRET: process.env.NODE_ENV === "production"
+    ? z.string().min(1, { message: "CRON_SECRET is required in production to protect cron endpoints" })
+    : z.string().optional(),
   // Optional — API key for external agents pushing telemetry data
   TELEMETRY_API_KEY: z.string().optional(),
+  // Optional — minimum log level emitted by src/lib/logger.ts (default: "info")
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),
   // Optional — Redis connection URL for distributed rate limiting (recommended in multi-instance deployments)
   REDIS_URL: z.string().optional(),
   // Optional — S3 bucket name for artifact caching (evidence packages, MRM reports, code exports)

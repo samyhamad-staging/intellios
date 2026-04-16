@@ -6,6 +6,7 @@ import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
 import { enterpriseScope } from "@/lib/auth/enterprise-scope";
+import { logger, serializeError } from "@/lib/logger";
 import { withTenantScopeGuarded } from "@/lib/auth/with-tenant-scope";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import type { ApprovalStepRecord } from "@/lib/settings/types";
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ blueprints: rows });
     } catch (error) {
-      console.error(`[${requestId}] Failed to fetch review queue:`, error);
+      logger.error("review_queue.fetch.failed", { requestId, err: serializeError(error) });
       return apiError(ErrorCode.INTERNAL_ERROR, "Failed to fetch review queue", undefined, requestId);
     }
   });
