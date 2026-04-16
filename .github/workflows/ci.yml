@@ -85,6 +85,7 @@ jobs:
       DATABASE_URL: postgresql://stub:stub@localhost:5432/stub
       AUTH_SECRET: ci-build-stub-secret-not-for-production
       ANTHROPIC_API_KEY: sk-ant-stub-not-real
+      CRON_SECRET: ci-cron-secret-stub-not-for-production
     steps:
       - uses: actions/checkout@v6
 
