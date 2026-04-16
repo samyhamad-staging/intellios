@@ -67,7 +67,7 @@ export async function resilientGenerateObject<SCHEMA extends FlexibleSchema<unkn
     const startMs = Date.now();
     try {
       const result = await Promise.race([
-        generateObject<T>(params),
+        generateObject(params as Parameters<typeof generateObject>[0]) as ReturnType<typeof generateObject<SCHEMA>>,
         new Promise<never>((_, reject) =>
           setTimeout(
             () => reject(new Error(`AI call timed out after ${timeoutMs}ms`)),
