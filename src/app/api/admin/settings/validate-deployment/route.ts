@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
       WHERE table_schema = 'public'
         AND table_name = ANY(${CORE_TABLES})
     `);
-    const found = (result.rows as { table_name: string }[]).map((r) => r.table_name);
+    const found = (result as unknown as { table_name: string }[]).map((r) => r.table_name);
     const missing = CORE_TABLES.filter((t) => !found.includes(t));
 
     if (missing.length === 0) {

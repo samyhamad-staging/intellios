@@ -25,7 +25,7 @@
  *   Pass `options.logContext` to attach requestId / enterpriseId / userEmail.
  */
 
-import { generateObject } from "ai";
+import { generateObject, type FlexibleSchema } from "ai";
 import { logger, logAICall, serializeError } from "@/lib/logger";
 
 // Delay between successive retries: 1 s, 2 s, 4 s
@@ -52,10 +52,10 @@ export interface ResilientGenerateOptions {
  * TypeScript note: the generic T flows from params.schema at the call site,
  * preserving full type inference on the returned `object` field.
  */
-export async function resilientGenerateObject<T>(
-  params: Parameters<typeof generateObject<T>>[0],
+export async function resilientGenerateObject<SCHEMA extends FlexibleSchema<unknown>>(
+  params: Parameters<typeof generateObject<SCHEMA>>[0],
   options?: ResilientGenerateOptions
-): Promise<Awaited<ReturnType<typeof generateObject<T>>>> {
+): Promise<Awaited<ReturnType<typeof generateObject<SCHEMA>>>> {
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const logCtx = options?.logContext ?? {};
   // Access modelId from the provider model object — LanguageModelV1 always has it.
@@ -82,8 +82,8 @@ export async function resilientGenerateObject<T>(
         logAICall({
           operation,
           modelId,
-          inputTokens:  usage.promptTokens,
-          outputTokens: usage.completionTokens,
+          inputTokens:  usage.inputTokens ?? 0,
+          outputTokens: usage.outputTokens ?? 0,
           latencyMs:    Date.now() - startMs,
           requestId:    logCtx.requestId,
           enterpriseId: logCtx.enterpriseId,
