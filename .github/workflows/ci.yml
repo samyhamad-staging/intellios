@@ -174,33 +174,41 @@ jobs:
       - run: npm audit --omit=dev --audit-level=high
 
   # ─── E2E Tests (runs against staging/preview) ─────────────────────────
-  # Uncomment when a staging environment is available:
-  #
-  # e2e:
-  #   name: E2E Tests
-  #   runs-on: ubuntu-latest
-  #   needs: [build]
-  #   defaults:
-  #     run:
-  #       working-directory: src
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #
-  #     - uses: actions/setup-node@v6
-  #       with:
-  #         node-version: ${{ env.NODE_VERSION }}
-  #         cache: npm
-  #         cache-dependency-path: src/package-lock.json
-  #
-  #     - run: npm ci
-  #     - run: npx playwright install --with-deps chromium
-  #     - run: npx playwright test
-  #       env:
-  #         PLAYWRIGHT_BASE_URL: ${{ vars.STAGING_URL }}
-  #
-  #     - uses: actions/upload-artifact@v4
-  #       if: always()
-  #       with:
-  #         name: playwright-report
-  #         path: src/playwright-report/
-  #         retention-days: 7
+  # Guarded by PLAYWRIGHT_BASE_URL — the job is always present in the workflow
+  # definition but no-ops when the variable is unset (i.e. before a staging
+  # environment exists). Once PLAYWRIGHT_BASE_URL is configured as a repo
+  # variable (Settings → Secrets and variables → Actions → Variables), this
+  # job will run automatically and should be added to the required checks list
+  # in scripts/vercel-ignore-build-step.sh and to the branch protection rules.
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    # No-op until PLAYWRIGHT_BASE_URL is set as a repo-level Actions variable.
+    if: vars.PLAYWRIGHT_BASE_URL != ''
+    defaults:
+      run:
+        working-directory: src
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: src/package-lock.json
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      - run: npx playwright test
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ vars.PLAYWRIGHT_BASE_URL }}
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: src/playwright-report/
+          retention-days: 7
