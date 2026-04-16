@@ -21,6 +21,96 @@ import { randomUUID } from "crypto";
 import type { EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 
+// ─── Login rate limiting (in-memory) ─────────────────────────────────────────
+// Distributed deployments should use Redis; this covers the single-instance case.
+//
+// Two independent mechanisms:
+//  1. Hourly rate limit  — 5 failed attempts per email per hour blocks further attempts
+//  2. Account lockout    — 10 consecutive failures locks the account for 15 minutes
+
+const RATE_LIMIT_MAX_FAILURES = 5;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+const LOCKOUT_MAX_CONSECUTIVE = 10;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
+interface LoginRecord {
+  hourlyFailures: number;
+  hourlyWindowStart: number;
+  consecutiveFailures: number;
+  lockedUntil: number | null;
+}
+
+const loginRecords = new Map<string, LoginRecord>();
+
+function getLoginRecord(email: string): LoginRecord {
+  const existing = loginRecords.get(email);
+  const now = Date.now();
+
+  if (!existing) {
+    const record: LoginRecord = {
+      hourlyFailures: 0,
+      hourlyWindowStart: now,
+      consecutiveFailures: 0,
+      lockedUntil: null,
+    };
+    loginRecords.set(email, record);
+    return record;
+  }
+
+  // Reset hourly window if it has expired
+  if (now - existing.hourlyWindowStart > RATE_LIMIT_WINDOW_MS) {
+    existing.hourlyFailures = 0;
+    existing.hourlyWindowStart = now;
+  }
+
+  return existing;
+}
+
+/**
+ * Returns the block reason if the email is currently blocked, null if allowed.
+ */
+function checkLoginAllowed(email: string): "locked" | "rate_limited" | null {
+  const record = getLoginRecord(email);
+  const now = Date.now();
+
+  // Check account lockout first
+  if (record.lockedUntil !== null && now < record.lockedUntil) {
+    return "locked";
+  }
+  if (record.lockedUntil !== null && now >= record.lockedUntil) {
+    // Lockout expired — clear it
+    record.lockedUntil = null;
+    record.consecutiveFailures = 0;
+  }
+
+  // Check hourly rate limit
+  if (record.hourlyFailures >= RATE_LIMIT_MAX_FAILURES) {
+    return "rate_limited";
+  }
+
+  return null;
+}
+
+function recordLoginFailure(email: string): void {
+  const record = getLoginRecord(email);
+  record.hourlyFailures++;
+  record.consecutiveFailures++;
+
+  if (record.consecutiveFailures >= LOCKOUT_MAX_CONSECUTIVE) {
+    record.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+  }
+}
+
+function recordLoginSuccess(email: string): void {
+  const record = loginRecords.get(email);
+  if (record) {
+    record.consecutiveFailures = 0;
+    record.lockedUntil = null;
+    // Intentionally preserve hourlyFailures — rate limit window continues
+  }
+}
+
 // ─── OIDC SSO Provider ───────────────────────────────────────────────────────
 // Only added when operator has set the platform-level env vars.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,20 +177,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        const email = credentials.email as string;
+
+        // Enforce rate limit and lockout before hitting the database
+        const blocked = checkLoginAllowed(email);
+        if (blocked !== null) return null;
+
         const user = await db.query.users.findFirst({
-          where: eq(users.email, credentials.email as string),
+          where: eq(users.email, email),
         });
 
-        if (!user) return null;
+        if (!user) {
+          // Record failure even for unknown emails to prevent user enumeration
+          // via timing differences — caller gets null either way.
+          recordLoginFailure(email);
+          return null;
+        }
         // SSO-provisioned users have a sentinel passwordHash — deny credential login.
-        if (!user.passwordHash) return null;
+        if (!user.passwordHash) {
+          recordLoginFailure(email);
+          return null;
+        }
 
         const valid = await bcrypt.compare(
           credentials.password as string,
           user.passwordHash
         );
-        if (!valid) return null;
+        if (!valid) {
+          recordLoginFailure(email);
+          return null;
+        }
 
+        recordLoginSuccess(email);
         return {
           id: user.id,
           email: user.email,
