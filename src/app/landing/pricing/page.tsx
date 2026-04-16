@@ -7,6 +7,7 @@
 import { Metadata } from "next";
 import { Check, ArrowRight } from "lucide-react";
 import { RequestAccessButton } from "@/components/landing/request-access-button";
+import { ClaimTag } from "@/components/landing/claim-tag";
 
 export const metadata: Metadata = {
   title: "Pricing — Intellios",
@@ -161,7 +162,8 @@ export default function PricingPage() {
                         className="text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5"
                       />
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {feature}
+                        {feature}{" "}
+                        <ClaimTag type="live" className="ml-0.5" />
                       </span>
                     </div>
                   ))}

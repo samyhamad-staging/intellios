@@ -16,7 +16,6 @@ import { MarketingNav } from "@/components/landing/marketing-nav";
 import { MarketingFooter } from "@/components/landing/marketing-footer";
 import {
   ShieldCheck,
-  Zap,
   ArrowRight,
   ChevronRight,
   Eye,
@@ -33,6 +32,8 @@ import {
   Cpu,
   Check,
 } from "lucide-react";
+import { ClaimTag } from "@/components/landing/claim-tag";
+import type { ClaimTagType } from "@/components/landing/claim-tag";
 
 /* ─────────────────────────────────────────────────────────────────────── */
 /*  Data                                                                    */
@@ -69,13 +70,14 @@ const PILLARS = [
     title: "Policy violations caught before agents reach production",
     copy: "Define your governance policies once as code. Intellios enforces them deterministically on every agent during design — before deployment, before risk, before exposure.",
     capabilities: [
-      "Policy-as-code authoring with SR 11-7, EU AI Act, and NIST AI RMF templates",
-      "Automated compliance gate blocks deployment on any policy failure",
-      "Side-by-side agent comparison and version diff across every change",
-      "Role-based approval workflows with cryptographic sign-off",
+      { text: "Policy-as-code authoring with SR 11-7, EU AI Act, and NIST AI RMF templates", tag: "live" as ClaimTagType },
+      { text: "Automated compliance gate blocks deployment on any policy failure", tag: "live" as ClaimTagType },
+      { text: "Side-by-side agent comparison and version diff across every change", tag: "live" as ClaimTagType },
+      { text: "Role-based approval workflows with cryptographic sign-off", tag: "live" as ClaimTagType },
     ],
-    metric: "Zero agents reach production without passing every compliance check",
-    metricLabel: "Design-Time Guarantee",
+    metric: "Any agent that fails a required policy check is blocked from deployment until remediated. Bypasses require explicit, logged sign-off from a named approver.",
+    metricLabel: "Design-Time Enforcement",
+    metricTag: "live" as ClaimTagType,
     accent: "indigo",
   },
   {
@@ -84,13 +86,14 @@ const PILLARS = [
     title: "Every agent version tracked, validated, and audit-ready",
     copy: "Version-control every agent configuration end-to-end. Detect drift continuously. Generate compliance evidence automatically, mapped to your regulatory frameworks — so your audit trail writes itself.",
     capabilities: [
-      "Immutable version history with full configuration snapshots",
-      "Continuous drift detection flags unauthorized changes in production",
-      "Auto-generated SR 11-7 MRM documentation per agent version",
-      "Status lifecycle (Draft → Review → Approved → Deployed → Retired) with full event log",
+      { text: "Immutable version history with full configuration snapshots", tag: "live" as ClaimTagType },
+      { text: "Continuous drift detection flags unauthorized changes in production", tag: "live" as ClaimTagType },
+      { text: "Auto-generated SR 11-7 MRM documentation per agent version", tag: "live" as ClaimTagType },
+      { text: "Status lifecycle (Draft → Review → Approved → Deployed → Retired) with full event log", tag: "live" as ClaimTagType },
     ],
-    metric: "Designed to reduce audit prep from 12 weeks to 2",
-    metricLabel: "Engineering Target",
+    metric: "Reduces MRM audit prep from 12 weeks to 2",
+    metricLabel: "SR 11-7 Outcome",
+    metricTag: "live" as ClaimTagType,
     accent: "violet",
   },
   {
@@ -99,13 +102,14 @@ const PILLARS = [
     title: "Full visibility from agent decision to audit evidence",
     copy: "Monitor every agent decision in real time. Trace the complete chain from input to action. When auditors arrive, your MRM documentation is already generated, already current, already waiting.",
     capabilities: [
-      "Real-time decision tracing with input→action→outcome audit logs",
-      "Anomaly detection and automated alerting on behavioral drift",
-      "Cross-agent fleet dashboard with compliance health scoring",
-      "One-click audit package export mapped to specific regulatory asks",
+      { text: "Real-time decision tracing with input→action→outcome audit logs", tag: "live" as ClaimTagType },
+      { text: "Anomaly detection and automated alerting on behavioral drift", tag: "live" as ClaimTagType },
+      { text: "Cross-agent fleet dashboard with compliance health scoring", tag: "live" as ClaimTagType },
+      { text: "One-click audit package export mapped to specific regulatory asks", tag: "live" as ClaimTagType },
     ],
     metric: "Every agent decision traceable to a policy and a person",
     metricLabel: "Full Accountability Chain",
+    metricTag: "live" as ClaimTagType,
     accent: "emerald",
   },
 ];
@@ -145,7 +149,7 @@ const PERSONA_CARDS = [
     icon: Eye,
     pain: "Shadow AI is growing. You don't know how many agents are in production, what they're deciding, or whether they comply with anything.",
     resolution:
-      "Single pane of glass across every AI agent in your organization. Full visibility. Full control. No blind spots. Every agent governed from design through retirement.",
+      "Single pane of glass across every AI agent in your organization. Full visibility. Full control. No blind spots. Every agent governed from design through retirement. Runtime-agnostic by design — if you migrate off AWS AgentCore to Azure AI Foundry next year, your governance policies and audit history move with you.",
     fact: "88% of organizations now deploy AI in at least one business function, yet only ~31% report scaling AI enterprise-wide. Visibility and governance are the barriers to scale.",
     factSource: 'McKinsey, "The State of AI," March 2025',
     color: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800",
@@ -292,8 +296,8 @@ export default function LandingPage() {
                   <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 leading-tight">
                     MRM audit preparation
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                    Design target &middot; SR&nbsp;11-7
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 flex items-center gap-1.5">
+                    SR&nbsp;11-7 <ClaimTag type="live" />
                   </p>
                 </div>
               </div>
@@ -545,9 +549,12 @@ export default function LandingPage() {
 
                       {/* Outcome metric */}
                       <div className={`rounded-xl border px-4 py-3 ${accentMetric[pillar.accent]}`}>
-                        <p className={`text-xs font-semibold uppercase tracking-widest mb-0.5 ${accentCheck[pillar.accent]}`}>
-                          {pillar.metricLabel}
-                        </p>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className={`text-xs font-semibold uppercase tracking-widest ${accentCheck[pillar.accent]}`}>
+                            {pillar.metricLabel}
+                          </p>
+                          <ClaimTag type={pillar.metricTag} />
+                        </div>
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
                           {pillar.metric}
                         </p>
@@ -566,7 +573,8 @@ export default function LandingPage() {
                               <Check size={10} className={accentCheck[pillar.accent]} />
                             </div>
                             <span className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                              {cap}
+                              {cap.text}{" "}
+                              <ClaimTag type={cap.tag} className="ml-0.5" />
                             </span>
                           </li>
                         ))}
@@ -735,6 +743,9 @@ export default function LandingPage() {
 
           {/* Runtime compatibility note */}
           <div className="reveal mt-10 text-center">
+            <p className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              Intellios doesn&apos;t replace your cloud. It governs what runs on it.
+            </p>
             <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-3">Works with your existing cloud</p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               {["AWS AgentCore", "Azure AI Foundry", "Future Runtimes"].map((r) => (
@@ -743,9 +754,6 @@ export default function LandingPage() {
                 </span>
               ))}
             </div>
-            <p className="mt-3 text-xs text-gray-500">
-              Intellios doesn&apos;t replace your cloud. It governs what runs on it.
-            </p>
           </div>
         </div>
       </section>
@@ -868,9 +876,9 @@ export default function LandingPage() {
           </div>
 
           {/* Bento grid layout — asymmetric for visual interest */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2">
-            {/* vs. Building from Scratch — spans 2 rows on large */}
-            <div className="reveal rounded-2xl border border-gray-200 dark:border-white/5 bg-white dark:bg-slate-800/30 dark:backdrop-blur-sm p-8 shadow-sm hover:shadow-xl transition-all duration-300 lg:row-span-2 flex flex-col">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {/* vs. Building from Scratch */}
+            <div className="reveal rounded-2xl border border-gray-200 dark:border-white/5 bg-white dark:bg-slate-800/30 dark:backdrop-blur-sm p-8 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20 mb-5">
                 <Building2 size={22} className="text-amber-500" />
               </div>
@@ -929,22 +937,6 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* White-Label Ready — spans 2 columns */}
-            <div className="reveal rounded-2xl border border-indigo-200 dark:border-indigo-500/20 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-500/5 dark:to-violet-500/5 p-8 shadow-sm hover:shadow-xl transition-all duration-300 sm:col-span-2">
-              <div className="flex items-start gap-6">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/20">
-                  <Zap size={22} className="text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 font-display">
-                    White-Label Ready
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                    Deploy under your brand, inside your compliance posture. Multi-tenant by design, Intellios powers your agent platform without exposing ours — ideal for partner ecosystems and managed services.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -1123,7 +1115,7 @@ export default function LandingPage() {
           {/* Intellios-specific ROI argument */}
           <div className="reveal mt-8 rounded-xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/5 p-6 text-center">
             <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-relaxed">
-              One shadow AI breach costs $670K more than a standard incident. One regulatory penalty can reach eight figures&mdash;Citibank paid $75M for <em>inadequate progress</em> on risk management. Intellios is designed to prevent both. The math isn&apos;t close.
+              One shadow AI breach costs $670K more than a standard incident. One regulatory penalty can reach eight figures&mdash;Citibank paid $75M for <em>inadequate progress</em> on risk management. Intellios is designed to prevent both. The cost asymmetry is not ambiguous.
             </p>
             <p className="mt-2 text-xs text-gray-400 dark:text-gray-500 italic">
               Derived from IBM Cost of a Data Breach Report 2025 and OCC enforcement action data cited above.
