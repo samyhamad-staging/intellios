@@ -1,6 +1,7 @@
 import { IntakePayload, IntakeContext, StakeholderContribution, IntakeClassification, AgentType, IntakeRiskTier } from "@/lib/types/intake";
 import { GovernancePolicy } from "@/lib/governance/types";
 import { ExpertiseLevel } from "@/lib/intake/model-selector";
+import { sanitizePromptInput } from "@/lib/generation/system-prompt";
 
 const CONTEXT_COLLECTION_PROMPT = `You are the Intellios Intake Assistant. Your first task is to understand the context of the agent the user wants to build before capturing detailed requirements.
 
@@ -183,10 +184,10 @@ function buildContributionsBlock(contributions: StakeholderContribution[]): stri
     "The following requirements were submitted directly by domain experts before or during this intake session.",
     "These are authoritative inputs from stakeholders who own those domains.",
     "",
-    "**You MUST incorporate these requirements verbatim.** Do not paraphrase, generalize, or omit them.",
+    "**You MUST incorporate the substance of these requirements.** Do not omit or discard them.",
     "When a stakeholder has identified a specific policy, constraint, or requirement:",
     "- Capture it using the appropriate tool (add_governance_policy, set_constraints, set_instructions, etc.)",
-    "- Reference the stakeholder's exact language when calling the tool",
+    "- Faithfully represent the stakeholder's intent when calling the tool",
     "- Ensure `mark_intake_complete` cannot succeed if these requirements remain uncaptured",
     "",
   ];
@@ -198,7 +199,7 @@ function buildContributionsBlock(contributions: StakeholderContribution[]): stri
     lines.push(`### ${c.domain.charAt(0).toUpperCase() + c.domain.slice(1)} — ${c.contributorEmail} (${c.contributorRole})`);
     for (const [key, value] of nonEmptyEntries) {
       const label = CONTRIBUTION_FIELD_LABELS[key] ?? key;
-      lines.push(`- **${label}**: ${value}`);
+      lines.push(`- **${label}**: ${sanitizePromptInput(value, 1000)}`);
     }
     lines.push("");
   }
@@ -222,9 +223,9 @@ function buildPoliciesBlock(policies: GovernancePolicy[]): string {
   ];
 
   for (const policy of policies) {
-    lines.push(`### ${policy.name} (type: ${policy.type})`);
+    lines.push(`### ${sanitizePromptInput(policy.name, 200)} (type: ${policy.type})`);
     if (policy.description) {
-      lines.push(`*${policy.description}*`);
+      lines.push(`*${sanitizePromptInput(policy.description, 500)}*`);
       lines.push("");
     }
     if (policy.rules.length === 0) {
@@ -233,7 +234,7 @@ function buildPoliciesBlock(policies: GovernancePolicy[]): string {
       for (const rule of policy.rules) {
         const valueStr = rule.value !== undefined ? ` \`${JSON.stringify(rule.value)}\`` : "";
         lines.push(
-          `- [${rule.severity === "error" ? "ERROR" : "WARN"}] \`${rule.field}\` **${rule.operator}**${valueStr} — ${rule.message}`
+          `- [${rule.severity === "error" ? "ERROR" : "WARN"}] \`${rule.field}\` **${rule.operator}**${valueStr} — ${sanitizePromptInput(rule.message, 500)}`
         );
       }
     }

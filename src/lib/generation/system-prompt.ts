@@ -1,6 +1,27 @@
 import { GovernancePolicy } from "@/lib/governance/types";
 import { IntakeContext, IntakeClassification } from "@/lib/types/intake";
 
+/**
+ * Sanitize a user-supplied string before interpolating it into an LLM prompt.
+ * Strips XML/HTML-like tags, collapses excessive newlines, strips role/instruction
+ * injection prefixes, and enforces a length cap.
+ *
+ * P4-SEC-001: Prompt injection mitigation for all user-controlled values.
+ *
+ * Strips:
+ *   - XML/HTML-like tags (<tag>)
+ *   - Instruction-like role prefixes (\nINSTRUCTION:, \nSYSTEM:, \nHuman:, \nAssistant:)
+ *     which are the canonical prompt-injection attack vectors against Claude
+ *   - Excessive blank lines (3+ → 2)
+ */
+export function sanitizePromptInput(input: string, maxLength = 500): string {
+  return input
+    .replace(/[<>]/g, "")                                                         // Strip XML/HTML-like tags
+    .replace(/\n[ \t]*(INSTRUCTION|SYSTEM|Human|Assistant)[ \t]*:/gi, "\n")       // Strip role/instruction prefixes
+    .replace(/\n{3,}/g, "\n\n")                                                   // Collapse excessive newlines
+    .slice(0, maxLength);
+}
+
 const BASE_GENERATION_PROMPT = `You are the Intellios Generation Engine. Your role is to produce a complete, production-ready Agent Blueprint Package (ABP) from enterprise intake data.
 
 ## Your Task
@@ -88,13 +109,7 @@ function buildContextClassificationBlock(
 
   const dataClassification = dataSensitivityToDataClassification(context.dataSensitivity);
 
-  // P4-SEC-001 FIX: Sanitize user-supplied context values before interpolating
-  // into the LLM prompt to prevent prompt injection attacks.
-  const sanitize = (input: string): string =>
-    input
-      .replace(/[<>]/g, "") // Strip XML/HTML-like tags
-      .replace(/\n{3,}/g, "\n\n") // Collapse excessive newlines
-      .slice(0, 500); // Limit length
+  const sanitize = (input: string): string => sanitizePromptInput(input);
 
   const sanitizeArray = (arr: string[]): string =>
     arr.map((s) => sanitize(s)).join(", ") || "none";
@@ -157,9 +172,9 @@ export function buildGenerationSystemPrompt(
   ];
 
   for (const policy of policies) {
-    lines.push(`### ${policy.name} (type: ${policy.type})`);
+    lines.push(`### ${sanitizePromptInput(policy.name, 200)} (type: ${policy.type})`);
     if (policy.description) {
-      lines.push(`*${policy.description}*`);
+      lines.push(`*${sanitizePromptInput(policy.description, 500)}*`);
       lines.push("");
     }
     if (policy.rules.length === 0) {
@@ -168,7 +183,7 @@ export function buildGenerationSystemPrompt(
       for (const rule of policy.rules) {
         const valueStr = rule.value !== undefined ? ` \`${JSON.stringify(rule.value)}\`` : "";
         const tag = rule.severity === "error" ? "[ERROR]" : "[WARN]";
-        lines.push(`- ${tag} \`${rule.field}\` must \`${rule.operator}\`${valueStr} — ${rule.message}`);
+        lines.push(`- ${tag} \`${rule.field}\` must \`${rule.operator}\`${valueStr} — ${sanitizePromptInput(rule.message, 500)}`);
       }
     }
     lines.push("");
