@@ -12,7 +12,24 @@ _None. MVP is complete._
 
 ## Medium — Nice to Resolve Early
 
-_None._
+### OQ-009 — Evidence-package PDF renderer stack
+
+**Context:** ADR-015 (2026-04-09) commits Intellios to shipping a server-side PDF renderer on `GET /api/blueprints/[id]/evidence-package.pdf` alongside the existing JSON export. The reference implementation lives at `samples/build_evidence_pdf.py` (reportlab, Python) and defines the target layout. The production renderer must live in the Next.js app (TypeScript).
+
+**Question:** Which rendering stack should the production route use?
+
+**Options:**
+1. **Node-native PDF library** — `pdf-lib` or `pdfkit`. Full programmatic control, deterministic output, small bundle impact, long-term maintenance ours. High implementation cost — every page builder, table, code block, and chip must be recreated in TypeScript.
+2. **Headless Chromium via Playwright** — reuse the existing HTML report shell at `src/app/blueprints/[id]/report/page.tsx` with a dedicated print stylesheet, print to PDF in a headless browser. Lower implementation cost (most layout already exists in React), but large deploy-size + memory footprint, cold-start latency, and a moving-target dependency.
+3. **Puppeteer** — same trade-offs as Playwright; marginally lighter but similar footprint.
+
+**Trade-offs to weigh:**
+- Vercel / serverless function size limits (headless Chromium is tight against the 250 MB limit).
+- Cold-start latency on the evidence-package export endpoint (acceptable if the result is cached to `evidence/{id}/{version}.pdf` and served on re-export).
+- Sync with the HTML report: option 2 keeps one source of truth; option 1 requires two renderers to stay in sync as `MRMReport` evolves.
+- Deterministic byte-identical output across environments (easier with option 1, brittle with headless browsers across versions).
+
+**Target resolver:** founder + whoever implements the route. Target timing: before the next design-partner pilot where the PDF will be shown as a product output rather than a sample.
 
 ---
 

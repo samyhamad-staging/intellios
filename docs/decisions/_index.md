@@ -16,3 +16,5 @@
 | 012 | [Middleware-level tenant isolation](012-middleware-tenant-isolation.md) | proposed | 2026-04-03 |
 | 013 | [SOD enforcement in legacy single-step blueprint approval](013-sod-enforcement-legacy-approval.md) | proposed | 2026-04-08 |
 | 014 | [Text contrast token scale shift for WCAG AA compliance](014-text-contrast-token-shift.md) | proposed | 2026-04-08 |
+| 015 | [PDF rendering of evidence package](015-pdf-rendering-of-evidence-package.md) | proposed | 2026-04-09 |
+| 016 | [AI resilience layer — retry, timeout, model configuration](016-ai-resilience-layer.md) | proposed | 2026-04-14 |
