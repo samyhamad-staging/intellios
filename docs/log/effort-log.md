@@ -38,6 +38,42 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 152 — 2026-04-17
+
+**H3 — Bedrock circuit breaker (ADR-023)**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-opus-4-7 |
+| Input tokens (est.) | ~240,000 |
+| Output tokens (est.) | ~18,000 |
+| Tool calls (est.) | ~80 |
+| Subagents spawned | 0 |
+| Estimated cost | ~$4.80 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 2 ("next best actions?" + "all of these" for H3+H5+H6+H4 menu) |
+| Decisions made | 1 (D-Scope: ship all four H-items across sessions 152–155, H3 first) |
+| Engagement type | Direction-setting (multiple-choice selection) |
+| Estimated time | ~1 min |
+
+### Deliverables
+
+- ADR-023 (~180 lines)
+- `src/lib/ai/circuit-breaker.ts` (~230 LOC) + 23-case test suite (all pass)
+- 10 Bedrock call sites instrumented (7 streamText + 3 generateObject/generateText) + `resilientGenerateObject` wrapper
+- `SERVICE_DEGRADED` 503 + `Retry-After` error routing
+- `/api/healthz` `bedrockCircuit` section
+- `.env.example` documentation for `AI_BREAKER_*` env vars
+- Full suite **587/587 green** (+23 from 564)
+
+---
+
 ## Session 151 — 2026-04-17
 
 **Commit-hygiene pass — ship sessions 148/149/150 as four commits on `main`**
