@@ -38,6 +38,110 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 150 — 2026-04-17
+
+**Unit tests for C2/C3 invariants — Governance block + transaction atomicity**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-opus-4-7 |
+| Input tokens (est.) | ~110,000 |
+| Output tokens (est.) | ~9,000 |
+| Tool calls (est.) | ~25 |
+| Subagents spawned | 0 |
+| Estimated cost | ~$2.30 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 2 ("what do you recommend next?" + chose recommended option) |
+| Decisions made | 1 (D-Scope: ship unit tests for C2/C3) |
+| Engagement type | Direction-setting (multiple-choice selection) |
+| Estimated time | ~1 min |
+
+### Deliverables
+- New describe block `governance enforcement (ADR-019) + transaction atomicity (ADR-021)` in `src/__tests__/blueprints/blueprint-lifecycle.test.ts` — 4 tests covering block rejection, non-admin-with-flag rejection, admin override success, and audit-insert rollback
+- Extended `@/lib/rate-limit` mock to export `enterpriseRateLimit` + `isRedisHealthy` (closes a pre-existing session-148 mock gap; unblocked 4 generate-route tests)
+- Session log 150, log index row, effort log row, project journal entry
+- **Full test suite: 564/564 passing across 24 files**
+
+---
+
+## Session 149 — 2026-04-17
+
+**Observability Floor — Slot 7 / H2 seed**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-opus-4-7 |
+| Input tokens (est.) | ~95,000 |
+| Output tokens (est.) | ~14,000 |
+| Tool calls (est.) | ~35 |
+| Subagents spawned | 0 |
+| Estimated cost | ~$2.50 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 2 ("what do you recommend next?" + chose recommended option) |
+| Decisions made | 1 (D-Scope: ship Slot 7 / H2 observability seed) |
+| Engagement type | Direction-setting (multiple-choice selection) |
+| Estimated time | ~1 min |
+
+### Deliverables
+- `src/instrumentation.ts` (new) — Next.js register() hook with structured boot log
+- `src/app/api/healthz/route.ts` (new) — public DB/Redis/Bedrock liveness probe
+- `src/lib/rate-limit.ts` — added `isRedisHealthy()` export, migrated 2 `console.error` → `logger.error`
+- 7 `console.error` → `logger.error` swaps across 5 C1–C6 routes (`blueprints/route.ts`, `deploy/agentcore/route.ts`, `refine/stream/route.ts`, `companion/chat/route.ts`, `help/chat/route.ts`)
+- ADR-022 (platform observability floor)
+- Session log 149, log index, decisions index, effort log, project journal updates
+- Typecheck clean
+
+---
+
+## Session 148 — 2026-04-17
+
+**Production-Readiness P0 Hardening (six critical items)**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-opus-4-7 |
+| Input tokens (est.) | ~320,000 |
+| Output tokens (est.) | ~55,000 |
+| Tool calls (est.) | ~90 |
+| Subagents spawned | 0 |
+| Estimated cost | ~$8.90 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 2 (review request + approve-and-proceed) |
+| Decisions made | 1 (D-Scope: execute the full Phase 4 plan carefully) |
+| Engagement type | Direction-setting + approval |
+| Estimated time | ~5 min |
+
+### Deliverables
+- Production-Readiness Review report (72/100, 30 findings classified)
+- 12 source files modified across 3 subsystems
+- 5 ADRs (017–021)
+- Session log 148 + log index update
+- Decisions index update
+- All changes typecheck clean
+
+### Note
+Sessions 146 and 147 effort entries were not backfilled in this sheet — their session logs exist (`2026-04-09_session-146.md`, `2026-04-14_session-147.md`). Effort-sheet backfill deferred.
+
+---
+
 ## Session 145 — 2026-04-08
 
 **Contrast Token Cleanup — WCAG AA Text Scale Shift**

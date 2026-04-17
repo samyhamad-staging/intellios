@@ -18,3 +18,9 @@
 | 014 | [Text contrast token scale shift for WCAG AA compliance](014-text-contrast-token-shift.md) | proposed | 2026-04-08 |
 | 015 | [PDF rendering of evidence package](015-pdf-rendering-of-evidence-package.md) | proposed | 2026-04-09 |
 | 016 | [AI resilience layer — retry, timeout, model configuration](016-ai-resilience-layer.md) | proposed | 2026-04-14 |
+| 017 | [Database connection pool externalization](017-db-pool-externalization.md) | proposed | 2026-04-17 |
+| 018 | [Hard-require SECRETS_ENCRYPTION_KEY in production](018-secrets-encryption-key-production-required.md) | proposed | 2026-04-17 |
+| 019 | [Governance violations block blueprint approval (with audited admin override)](019-governance-blocks-approval.md) | proposed | 2026-04-17 |
+| 020 | [Per-enterprise (tenant) rate limits on AI endpoints](020-per-enterprise-rate-limits.md) | proposed | 2026-04-17 |
+| 021 | [Atomic entity + audit writes via db.transaction](021-atomic-entity-audit-writes.md) | proposed | 2026-04-17 |
+| 022 | [Platform observability floor — instrumentation.ts, /api/healthz, structured-log migration](022-platform-observability-floor.md) | proposed | 2026-04-17 |
