@@ -16,8 +16,9 @@ import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 import { publishEvent } from "@/lib/events/publish";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, enterpriseRateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
+import { logger, serializeError } from "@/lib/logger";
 import { z } from "zod";
 
 // Extend Vercel function timeout for AI generation (default 10s is too short)
@@ -65,6 +66,17 @@ export async function POST(
   });
   if (rateLimitResponse) return rateLimitResponse;
 
+  // Per-enterprise ceiling (C4 / ADR-020). Shares the "generate" keyspace with
+  // /api/blueprints so refine + generate together stay under the tenant budget.
+  if (authSession.user.enterpriseId) {
+    const tenantLimitResponse = await enterpriseRateLimit(authSession.user.enterpriseId, {
+      endpoint: "generate",
+      max: 60,
+      windowMs: 60_000,
+    });
+    if (tenantLimitResponse) return tenantLimitResponse;
+  }
+
   const { data: body, error: bodyError } = await parseBody(request, StreamRefineBody);
   if (bodyError) return bodyError;
 
@@ -109,7 +121,7 @@ export async function POST(
     try {
       updatedAbp = await refineBlueprint(currentAbp, changeRequest, intake, policies);
     } catch (err) {
-      console.error(`[${requestId}] Claude refineBlueprint failed:`, err);
+      logger.error("blueprint.refine.claude.failed", { requestId, err: serializeError(err) });
       return aiError(err, requestId);
     }
 
@@ -143,6 +155,9 @@ export async function POST(
 
     const result = streamText({
       model: anthropic("claude-haiku-4-5-20251001"),
+      // Transient-error retry budget (ADR-010 / C6). Mirrors the 3-attempt
+      // envelope used by resilientGenerateObject for non-streaming calls.
+      maxRetries: 3,
       system: `You are a blueprint refinement assistant for an enterprise AI agent platform.
 A blueprint has just been updated. Your only job is to briefly confirm what was changed
 based on the user's request. Be concise: 2-3 sentences maximum.
@@ -152,7 +167,7 @@ Do not ask follow-up questions. Do not repeat the full blueprint content.`,
 
     return result.toUIMessageStreamResponse();
   } catch (err) {
-    console.error(`[${requestId}] Failed to stream refinement:`, err);
+    logger.error("blueprint.refine.stream.failed", { requestId, err: serializeError(err) });
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to refine blueprint", undefined, requestId);
   }
 }

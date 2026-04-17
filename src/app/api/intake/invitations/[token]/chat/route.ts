@@ -235,6 +235,9 @@ OUTPUT FORMAT for save_requirements:
 
     const result = streamText({
       model: anthropic("claude-haiku-4-5-20251001"),
+      // Transient-error retry budget (ADR-010 / C6). Mirrors the 3-attempt
+      // envelope used by resilientGenerateObject for non-streaming calls.
+      maxRetries: 3,
       system: systemPrompt,
       messages: modelMessages,
       tools: { save_requirements: saveRequirementsTool },

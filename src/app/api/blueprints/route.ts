@@ -11,10 +11,11 @@ import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 import { publishEvent } from "@/lib/events/publish";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, enterpriseRateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
 import { enterpriseScope } from "@/lib/auth/enterprise-scope";
 import { withTenantScopeGuarded } from "@/lib/auth/with-tenant-scope";
+import { logger, serializeError } from "@/lib/logger";
 import { z } from "zod";
 
 // Vercel Hobby plan defaults to 10s — blueprint generation needs 30-60s for Claude to
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ blueprints: rows });
     } catch (err) {
-      console.error(`[${requestId}] Failed to list blueprints:`, err);
+      logger.error("blueprint.list.failed", { requestId, err: serializeError(err) });
       return apiError(ErrorCode.INTERNAL_ERROR, "Failed to list blueprints", undefined, requestId);
     }
   });
@@ -77,6 +78,18 @@ export async function POST(request: NextRequest) {
     windowMs: 60_000,
   });
   if (rateLimitResponse) return rateLimitResponse;
+
+  // Per-enterprise ceiling (C4 / ADR-020) — prevents a single tenant from
+  // saturating Bedrock for the whole platform. Applies even when a tenant
+  // has many distinct users all under their per-user limit.
+  if (authSession.user.enterpriseId) {
+    const tenantLimitResponse = await enterpriseRateLimit(authSession.user.enterpriseId, {
+      endpoint: "generate",
+      max: 60,
+      windowMs: 60_000,
+    });
+    if (tenantLimitResponse) return tenantLimitResponse;
+  }
 
   const { data: body, error: bodyError } = await parseBody(request, GenerateBody);
   if (bodyError) return bodyError;
@@ -123,7 +136,7 @@ export async function POST(request: NextRequest) {
     try {
       abp = await generateBlueprint(intake, intakeContext, intakeClassification, sessionId, policies);
     } catch (err) {
-      console.error(`[${requestId}] Claude generateBlueprint failed:`, err);
+      logger.error("blueprint.generate.claude.failed", { requestId, err: serializeError(err) });
       return aiError(err, requestId);
     }
 
@@ -135,41 +148,48 @@ export async function POST(request: NextRequest) {
     // Pre-loaded policies are passed to avoid a second DB round-trip.
     const validationReport = await validateBlueprint(abp, enterpriseId, policies);
 
-    // Persist — agentId defaults to a new UUID (first version of a new agent)
-    const [blueprint] = await db
-      .insert(agentBlueprints)
-      .values({ sessionId, abp, name, tags, enterpriseId, validationReport, createdBy: authSession.user.email ?? null })
-      .returning();
+    // Persist — agentId defaults to a new UUID (first version of a new agent).
+    // Entity insert and audit insert share a transaction (ADR-021). If either
+    // fails the whole operation rolls back — no divergence between state and audit.
+    const blueprint = await db.transaction(async (tx) => {
+      const [bp] = await tx
+        .insert(agentBlueprints)
+        .values({ sessionId, abp, name, tags, enterpriseId, validationReport, createdBy: authSession.user.email ?? null })
+        .returning();
 
-    // Audit log
-    try {
-      await db.insert(auditLog).values({
+      await tx.insert(auditLog).values({
         actorEmail: authSession.user.email!,
         actorRole: authSession.user.role!,
         action: "blueprint.created",
         entityType: "blueprint",
-        entityId: blueprint.id,
+        entityId: bp.id,
         enterpriseId,
-        metadata: { agentId: blueprint.agentId, name: blueprint.name },
+        metadata: { agentId: bp.agentId, name: bp.name },
       });
-    } catch (auditErr) {
-      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
-    }
 
-    await publishEvent({
-      event: {
-        type: "blueprint.created",
-        payload: {
-          blueprintId: blueprint.id,
-          agentId: blueprint.agentId,
-          name: blueprint.name ?? "",
-          createdBy: authSession.user.email!,
-        },
-      },
-      actor: { email: authSession.user.email!, role: authSession.user.role },
-      entity: { type: "blueprint", id: blueprint.id },
-      enterpriseId,
+      return bp;
     });
+
+    // Event dispatch runs post-commit. Downstream handler failures must not
+    // roll back the primary operation (the state is already durable).
+    try {
+      await publishEvent({
+        event: {
+          type: "blueprint.created",
+          payload: {
+            blueprintId: blueprint.id,
+            agentId: blueprint.agentId,
+            name: blueprint.name ?? "",
+            createdBy: authSession.user.email!,
+          },
+        },
+        actor: { email: authSession.user.email!, role: authSession.user.role },
+        entity: { type: "blueprint", id: blueprint.id },
+        enterpriseId,
+      });
+    } catch (eventErr) {
+      logger.error("event.dispatch.failed", { requestId, type: "blueprint.created", err: serializeError(eventErr) });
+    }
 
     return NextResponse.json({
       id: blueprint.id,
@@ -178,7 +198,7 @@ export async function POST(request: NextRequest) {
       validationReport,
     });
   } catch (error) {
-    console.error(`[${requestId}] Failed to generate blueprint:`, error);
+    logger.error("blueprint.generate.failed", { requestId, err: serializeError(error) });
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to generate blueprint", undefined, requestId);
   }
 }

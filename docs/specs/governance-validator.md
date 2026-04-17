@@ -107,6 +107,29 @@ Four global policies seeded in migration `0002_governance_validator.sql`:
 - After refinement: validation report is cleared (stale) — user should re-validate.
 - Validation summary shown in page header (✓ passes governance / ✗ N errors).
 
+### Approval Enforcement (ADR-019)
+
+The stored `validationReport` is consulted at approval time by
+`POST /api/blueprints/[id]/review`. When `action === "approve"`:
+
+1. The route computes `errorSeverityViolations(report)` — violations with
+   `severity === "error"` on a report where `valid === false`.
+2. If any are present, the approval is rejected with `GOVERNANCE_BLOCKED` (409)
+   and a structured `details.violations` payload for the UI.
+3. Warning-severity violations are advisory and do not block approval.
+4. The check runs **before** approval-chain role and SOD checks.
+
+Admins may bypass the block with `governanceOverride: true` + a ≥20-char
+`overrideReason`. A successful override produces a distinct
+`blueprint.approved.override` audit row (in addition to the normal
+`blueprint.reviewed` audit). All audit writes share a transaction with the
+status update (ADR-021) — partial failures roll back.
+
+The block reflects the report **at the time of generation/remediation**, not
+the current policy state. If policies have been edited since the last
+validation, the UI's "Re-validate" action should be used before approval to
+refresh the stored report.
+
 ## Known Unknowns
 
 | # | Question | Blocks |

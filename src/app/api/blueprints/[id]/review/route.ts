@@ -13,6 +13,7 @@ import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import { logger, serializeError } from "@/lib/logger";
 import { z } from "zod";
 import type { ApprovalStepRecord } from "@/lib/settings/types";
+import type { ValidationReport, Violation } from "@/lib/governance/types";
 
 type ReviewAction = "approve" | "reject" | "request_changes";
 
@@ -22,10 +23,30 @@ const ACTION_STATUS: Record<ReviewAction, string> = {
   request_changes: "draft",
 };
 
-const ReviewBody = z.object({
-  action: z.enum(["approve", "reject", "request_changes"]),
-  comment: z.string().max(2000).optional(),
-});
+const ReviewBody = z
+  .object({
+    action: z.enum(["approve", "reject", "request_changes"]),
+    comment: z.string().max(2000).optional(),
+    // ADR-019 — admins may approve a blueprint that has unresolved error-severity
+    // governance violations, but only with an explicit override flag + reason.
+    // The override produces a separate high-severity audit event.
+    governanceOverride: z.boolean().optional(),
+    overrideReason: z.string().min(20).max(2000).optional(),
+  })
+  .refine(
+    (d) => !d.governanceOverride || (d.overrideReason && d.overrideReason.trim().length >= 20),
+    { message: "governanceOverride requires overrideReason (≥20 chars)", path: ["overrideReason"] }
+  );
+
+/**
+ * Extract blocking (error-severity) violations from a stored validation report.
+ * Returns an empty array when the report is missing, already valid, or has only
+ * warning-severity violations.
+ */
+function errorSeverityViolations(report: ValidationReport | null): Violation[] {
+  if (!report || report.valid) return [];
+  return report.violations.filter((v) => v.severity === "error");
+}
 
 /**
  * POST /api/blueprints/[id]/review
@@ -86,6 +107,45 @@ export async function POST(
     const userEmail = authSession.user.email!;
     const userRole = authSession.user.role!;
 
+    // ─── Governance enforcement (ADR-019) ─────────────────────────────────────
+    // An approval cannot succeed while the blueprint's stored validation report
+    // still contains error-severity violations. Admins may override with an
+    // explicit flag + justification — this produces a separate audit entry
+    // (blueprint.approved.override) in addition to the normal review audit.
+    let governanceOverrideActive = false;
+    if (action === "approve") {
+      const blockers = errorSeverityViolations(blueprint.validationReport as ValidationReport | null);
+      if (blockers.length > 0) {
+        const overrideRequested = body.governanceOverride === true;
+        if (!overrideRequested || userRole !== "admin") {
+          return apiError(
+            ErrorCode.GOVERNANCE_BLOCKED,
+            "Blueprint has unresolved error-severity governance violations. Resolve them or request changes before approving.",
+            {
+              violations: blockers.map((v) => ({
+                policyId: v.policyId,
+                policyName: v.policyName,
+                ruleId: v.ruleId,
+                field: v.field,
+                severity: v.severity,
+                message: v.message,
+                suggestion: v.suggestion,
+              })),
+              overrideAvailable: userRole === "admin",
+            }
+          );
+        }
+        governanceOverrideActive = true;
+        logger.warn("blueprint.approval.override", {
+          requestId,
+          blueprintId: id,
+          actorEmail: userEmail,
+          blockerCount: blockers.length,
+          reason: body.overrideReason,
+        });
+      }
+    }
+
     // ─── Multi-step approval chain enforcement ────────────────────────────────
     // Only applies to "approve" action — reject and request_changes bypass the chain.
     if (action === "approve") {
@@ -135,70 +195,140 @@ export async function POST(
         const reviewedAt = new Date();
 
         if (isLastStep) {
-          // Final step — transition to fully approved
-          const [updated] = await db
-            .update(agentBlueprints)
-            .set({
-              status: "approved",
-              currentApprovalStep: stepIndex,
-              approvalProgress: newProgress,
-              reviewComment: comment?.trim() || null,
-              reviewedAt,
-              reviewedBy: userEmail,
-              updatedAt: reviewedAt,
-            })
-            .where(eq(agentBlueprints.id, id))
-            .returning({ id: agentBlueprints.id, status: agentBlueprints.status, reviewComment: agentBlueprints.reviewComment, reviewedAt: agentBlueprints.reviewedAt });
+          // Final step — transition to fully approved. Update + audit (+ optional
+          // override audit) share a transaction (ADR-021). If the audit insert
+          // fails, the status flip rolls back so we never end up with an
+          // "approved" blueprint that has no corresponding review audit entry.
+          const updated = await db.transaction(async (tx) => {
+            const [row] = await tx
+              .update(agentBlueprints)
+              .set({
+                status: "approved",
+                currentApprovalStep: stepIndex,
+                approvalProgress: newProgress,
+                reviewComment: comment?.trim() || null,
+                reviewedAt,
+                reviewedBy: userEmail,
+                updatedAt: reviewedAt,
+              })
+              .where(eq(agentBlueprints.id, id))
+              .returning({ id: agentBlueprints.id, status: agentBlueprints.status, reviewComment: agentBlueprints.reviewComment, reviewedAt: agentBlueprints.reviewedAt });
 
-          await publishEvent({
-            event: {
-              type: "blueprint.reviewed",
-              payload: {
-                blueprintId: id,
+            await tx.insert(auditLog).values({
+              actorEmail: userEmail,
+              actorRole: userRole,
+              action: "blueprint.reviewed",
+              entityType: "blueprint",
+              entityId: id,
+              enterpriseId: blueprint.enterpriseId ?? null,
+              metadata: {
                 decision: "approve",
-                reviewer: userEmail,
-                comment: comment?.trim() || null,
-                agentId: id,
-                agentName: String(agentName),
-                createdBy: blueprint.createdBy ?? "",
+                notes: comment?.trim() || null,
+                step: stepIndex,
+                finalStep: true,
+                ...(governanceOverrideActive ? { governanceOverride: true } : {}),
               },
-            },
-            actor: { email: userEmail, role: userRole },
-            entity: { type: "blueprint", id },
-            enterpriseId: blueprint.enterpriseId ?? null,
+            });
+
+            if (governanceOverrideActive) {
+              await tx.insert(auditLog).values({
+                actorEmail: userEmail,
+                actorRole: userRole,
+                action: "blueprint.approved.override",
+                entityType: "blueprint",
+                entityId: id,
+                enterpriseId: blueprint.enterpriseId ?? null,
+                metadata: {
+                  reason: body.overrideReason,
+                  step: stepIndex,
+                  blockers: errorSeverityViolations(blueprint.validationReport as ValidationReport | null)
+                    .map((v) => ({ policyId: v.policyId, ruleId: v.ruleId, field: v.field, message: v.message })),
+                },
+              });
+            }
+
+            return row;
           });
+
+          // Event dispatch runs post-commit — downstream handler failures must
+          // not roll back the primary approval.
+          try {
+            await publishEvent({
+              event: {
+                type: "blueprint.reviewed",
+                payload: {
+                  blueprintId: id,
+                  decision: "approve",
+                  reviewer: userEmail,
+                  comment: comment?.trim() || null,
+                  agentId: id,
+                  agentName: String(agentName),
+                  createdBy: blueprint.createdBy ?? "",
+                },
+              },
+              actor: { email: userEmail, role: userRole },
+              entity: { type: "blueprint", id },
+              enterpriseId: blueprint.enterpriseId ?? null,
+            });
+          } catch (eventErr) {
+            logger.error("event.dispatch.failed", { requestId, type: "blueprint.reviewed", blueprintId: id, err: serializeError(eventErr) });
+          }
 
           return NextResponse.json(updated);
         } else {
-          // Non-final step — advance and stay in in_review
+          // Non-final step — advance and stay in in_review. Update + audit share
+          // a transaction (ADR-021) so the step counter never advances without
+          // a matching audit record.
           const nextStep = chain[stepIndex + 1];
-          await db
-            .update(agentBlueprints)
-            .set({
-              status: "in_review",
-              currentApprovalStep: stepIndex + 1,
-              approvalProgress: newProgress,
-              updatedAt: new Date(),
-            })
-            .where(eq(agentBlueprints.id, id));
+          await db.transaction(async (tx) => {
+            await tx
+              .update(agentBlueprints)
+              .set({
+                status: "in_review",
+                currentApprovalStep: stepIndex + 1,
+                approvalProgress: newProgress,
+                updatedAt: new Date(),
+              })
+              .where(eq(agentBlueprints.id, id));
 
-          await publishEvent({
-            event: {
-              type: "blueprint.approval_step_completed",
-              payload: {
-                blueprintId: id,
-                agentId: id,
-                agentName: String(agentName),
+            await tx.insert(auditLog).values({
+              actorEmail: userEmail,
+              actorRole: userRole,
+              action: "blueprint.approval_step_completed",
+              entityType: "blueprint",
+              entityId: id,
+              enterpriseId: blueprint.enterpriseId ?? null,
+              metadata: {
                 step: stepIndex,
                 label: activeStep.label,
-                nextApproverRole: nextStep.role,
-                nextApproverLabel: nextStep.label,
+                nextStep: stepIndex + 1,
+                nextRole: nextStep.role,
+                notes: comment?.trim() || null,
               },
-            },
-            actor: { email: userEmail, role: userRole },
-            entity: { type: "blueprint", id },
-            enterpriseId: blueprint.enterpriseId ?? null,
+            });
           });
+
+          try {
+            await publishEvent({
+              event: {
+                type: "blueprint.approval_step_completed",
+                payload: {
+                  blueprintId: id,
+                  agentId: id,
+                  agentName: String(agentName),
+                  step: stepIndex,
+                  label: activeStep.label,
+                  nextApproverRole: nextStep.role,
+                  nextApproverLabel: nextStep.label,
+                },
+              },
+              actor: { email: userEmail, role: userRole },
+              entity: { type: "blueprint", id },
+              enterpriseId: blueprint.enterpriseId ?? null,
+            });
+          } catch (eventErr) {
+            logger.error("event.dispatch.failed", { requestId, type: "blueprint.approval_step_completed", blueprintId: id, err: serializeError(eventErr) });
+          }
 
           return NextResponse.json({
             id,
@@ -257,48 +387,76 @@ export async function POST(
       }
     }
 
-    const [updated] = await db
-      .update(agentBlueprints)
-      .set(updateFields)
-      .where(eq(agentBlueprints.id, id))
-      .returning({
-        id: agentBlueprints.id,
-        status: agentBlueprints.status,
-        reviewComment: agentBlueprints.reviewComment,
-        reviewedAt: agentBlueprints.reviewedAt,
-      });
+    // Update + audit (+ optional override audit) share a transaction (ADR-021)
+    // so a successful status change is never split from its audit trail.
+    const updated = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(agentBlueprints)
+        .set(updateFields)
+        .where(eq(agentBlueprints.id, id))
+        .returning({
+          id: agentBlueprints.id,
+          status: agentBlueprints.status,
+          reviewComment: agentBlueprints.reviewComment,
+          reviewedAt: agentBlueprints.reviewedAt,
+        });
 
-    try {
-      await db.insert(auditLog).values({
-        actorEmail: authSession.user.email!,
-        actorRole: authSession.user.role!,
+      await tx.insert(auditLog).values({
+        actorEmail: userEmail,
+        actorRole: userRole,
         action: "blueprint.reviewed",
         entityType: "blueprint",
         entityId: id,
         enterpriseId: blueprint.enterpriseId ?? null,
-        metadata: { decision: action, notes: comment?.trim() || null },
-      });
-    } catch (auditErr) {
-      logger.error("audit.write.failed", { requestId, action: "blueprint.reviewed", blueprintId: id, err: serializeError(auditErr) });
-    }
-
-    await publishEvent({
-      event: {
-        type: "blueprint.reviewed",
-        payload: {
-          blueprintId: id,
+        metadata: {
           decision: action,
-          reviewer: userEmail,
-          comment: comment?.trim() || null,
-          agentId: id,
-          agentName: String(agentName),
-          createdBy: blueprint.createdBy ?? "",
+          notes: comment?.trim() || null,
+          ...(governanceOverrideActive ? { governanceOverride: true } : {}),
         },
-      },
-      actor: { email: userEmail, role: userRole },
-      entity: { type: "blueprint", id },
-      enterpriseId: blueprint.enterpriseId ?? null,
+      });
+
+      if (governanceOverrideActive) {
+        await tx.insert(auditLog).values({
+          actorEmail: userEmail,
+          actorRole: userRole,
+          action: "blueprint.approved.override",
+          entityType: "blueprint",
+          entityId: id,
+          enterpriseId: blueprint.enterpriseId ?? null,
+          metadata: {
+            reason: body.overrideReason,
+            blockers: errorSeverityViolations(blueprint.validationReport as ValidationReport | null)
+              .map((v) => ({ policyId: v.policyId, ruleId: v.ruleId, field: v.field, message: v.message })),
+          },
+        });
+      }
+
+      return row;
     });
+
+    // Event dispatch runs post-commit. Downstream failures don't roll back the
+    // primary review — the audit trail is already durable.
+    try {
+      await publishEvent({
+        event: {
+          type: "blueprint.reviewed",
+          payload: {
+            blueprintId: id,
+            decision: action,
+            reviewer: userEmail,
+            comment: comment?.trim() || null,
+            agentId: id,
+            agentName: String(agentName),
+            createdBy: blueprint.createdBy ?? "",
+          },
+        },
+        actor: { email: userEmail, role: userRole },
+        entity: { type: "blueprint", id },
+        enterpriseId: blueprint.enterpriseId ?? null,
+      });
+    } catch (eventErr) {
+      logger.error("event.dispatch.failed", { requestId, type: "blueprint.reviewed", blueprintId: id, err: serializeError(eventErr) });
+    }
 
     return NextResponse.json(updated);
   } catch (error) {

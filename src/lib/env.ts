@@ -29,6 +29,20 @@ const EnvSchema = z.object({
   REDIS_URL: z.string().optional(),
   // Optional — S3 bucket name for artifact caching (evidence packages, MRM reports, code exports)
   ARTIFACT_BUCKET: z.string().optional(),
+  // Database pool sizing (ADR-017). On serverless (Vercel Functions) each invocation gets its own
+  // pool, so 5–10 per invocation is plenty. On long-running Node (Docker/EC2) use 20–40.
+  DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(20),
+  DB_IDLE_TIMEOUT_SEC: z.coerce.number().int().min(1).max(600).default(30),
+  DB_CONNECT_TIMEOUT_SEC: z.coerce.number().int().min(1).max(60).default(10),
+  // Required in production — AES-256 key for encrypting webhook HMAC secrets at rest.
+  // Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+  SECRETS_ENCRYPTION_KEY: process.env.NODE_ENV === "production"
+    ? z
+        .string()
+        .length(64, { message: "SECRETS_ENCRYPTION_KEY must be a 64-character hex string (32 bytes)" })
+        .regex(/^[0-9a-fA-F]{64}$/, { message: "SECRETS_ENCRYPTION_KEY must be a 64-character hex string" })
+    : z.string().optional(),
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 
 function validateEnv() {

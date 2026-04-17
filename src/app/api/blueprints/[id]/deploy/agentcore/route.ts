@@ -13,6 +13,7 @@ import { readABP } from "@/lib/abp/read";
 import { deployToAgentCore } from "@/lib/agentcore/deploy";
 import type { AgentCoreDeploymentRecord } from "@/lib/agentcore/types";
 import { ALL_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
+import { logger, serializeError } from "@/lib/logger";
 
 /**
  * POST /api/blueprints/[id]/deploy/agentcore
@@ -105,7 +106,11 @@ export async function POST(
       );
     } catch (deployErr) {
       const msg = deployErr instanceof Error ? deployErr.message : String(deployErr);
-      console.error(`[${requestId}] AgentCore deploy failed for blueprint ${id}:`, deployErr);
+      logger.error("blueprint.agentcore.aws.deploy.failed", {
+        requestId,
+        blueprintId: id,
+        err: serializeError(deployErr),
+      });
       return apiError(
         ErrorCode.AGENTCORE_DEPLOY_FAILED,
         `AgentCore deployment failed: ${msg}`,
@@ -114,19 +119,23 @@ export async function POST(
       );
     }
 
-    // Update blueprint: status → deployed, record deployment target + metadata
-    await db
-      .update(agentBlueprints)
-      .set({
-        status: "deployed",
-        deploymentTarget: "agentcore",
-        deploymentMetadata: deploymentRecord as unknown as Record<string, unknown>,
-        updatedAt: new Date(),
-      })
-      .where(eq(agentBlueprints.id, id));
+    // Update blueprint + write audit atomically (ADR-021). The external AWS
+    // deploy already succeeded, so a transaction failure here means we retry;
+    // deployToAgentCore is safely idempotent on the AgentCore side (keyed by
+    // agent name), and dropping the status flip without an audit row is
+    // preferable to flipping status without one.
+    await db.transaction(async (tx) => {
+      await tx
+        .update(agentBlueprints)
+        .set({
+          status: "deployed",
+          deploymentTarget: "agentcore",
+          deploymentMetadata: deploymentRecord as unknown as Record<string, unknown>,
+          updatedAt: new Date(),
+        })
+        .where(eq(agentBlueprints.id, id));
 
-    try {
-      await db.insert(auditLog).values({
+      await tx.insert(auditLog).values({
         actorEmail: authSession.user.email!,
         actorRole: authSession.user.role!,
         action: "blueprint.deployed",
@@ -135,43 +144,50 @@ export async function POST(
         enterpriseId: blueprint.enterpriseId ?? null,
         metadata: { deploymentTarget: "agentcore", deploymentId: deploymentRecord.agentId },
       });
-    } catch (auditErr) {
-      console.error(`[${requestId}] Failed to write audit log:`, auditErr);
-    }
-
-    // Audit: deployment event — also triggers webhooks + notifications
-    await publishEvent({
-      event: {
-        type: "blueprint.agentcore_deployed",
-        payload: {
-          blueprintId: id,
-          agentId: blueprint.agentId,
-          deploymentId: deploymentRecord.agentId,
-        },
-      },
-      actor: { email: authSession.user.email!, role: authSession.user.role! },
-      entity: { type: "blueprint", id },
-      enterpriseId: blueprint.enterpriseId ?? null,
     });
+
+    // Event dispatch runs post-commit. Downstream failures don't roll back the
+    // deployment record — AgentCore side-effects are already durable.
+    try {
+      await publishEvent({
+        event: {
+          type: "blueprint.agentcore_deployed",
+          payload: {
+            blueprintId: id,
+            agentId: blueprint.agentId,
+            deploymentId: deploymentRecord.agentId,
+          },
+        },
+        actor: { email: authSession.user.email!, role: authSession.user.role! },
+        entity: { type: "blueprint", id },
+        enterpriseId: blueprint.enterpriseId ?? null,
+      });
+    } catch (eventErr) {
+      logger.error("event.dispatch.failed", { requestId, type: "blueprint.agentcore_deployed", blueprintId: id, err: serializeError(eventErr) });
+    }
 
     // Also emit a status_changed event so existing notification/webhook
     // handlers pick up the deployed transition
-    await publishEvent({
-      event: {
-        type: "blueprint.status_changed",
-        payload: {
-          blueprintId: id,
-          fromStatus: "approved",
-          toStatus: "deployed",
-          agentId: blueprint.agentId,
-          agentName: blueprint.name ?? "",
-          createdBy: blueprint.createdBy ?? "",
+    try {
+      await publishEvent({
+        event: {
+          type: "blueprint.status_changed",
+          payload: {
+            blueprintId: id,
+            fromStatus: "approved",
+            toStatus: "deployed",
+            agentId: blueprint.agentId,
+            agentName: blueprint.name ?? "",
+            createdBy: blueprint.createdBy ?? "",
+          },
         },
-      },
-      actor: { email: authSession.user.email!, role: authSession.user.role! },
-      entity: { type: "blueprint", id },
-      enterpriseId: blueprint.enterpriseId ?? null,
-    });
+        actor: { email: authSession.user.email!, role: authSession.user.role! },
+        entity: { type: "blueprint", id },
+        enterpriseId: blueprint.enterpriseId ?? null,
+      });
+    } catch (eventErr) {
+      logger.error("event.dispatch.failed", { requestId, type: "blueprint.status_changed", blueprintId: id, err: serializeError(eventErr) });
+    }
 
     return NextResponse.json(
       {
@@ -181,7 +197,7 @@ export async function POST(
       { status: 200 }
     );
   } catch (err) {
-    console.error(`[${requestId}] Unexpected error in AgentCore deploy:`, err);
+    logger.error("blueprint.agentcore.deploy.failed", { requestId, err: serializeError(err) });
     return apiError(
       ErrorCode.INTERNAL_ERROR,
       "An unexpected error occurred during deployment.",

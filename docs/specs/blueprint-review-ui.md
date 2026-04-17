@@ -67,7 +67,9 @@ Provides a human-facing interface for reviewing, approving, or requesting change
 ```typescript
 {
   action: "approve" | "reject" | "request_changes",
-  comment?: string  // required for request_changes; optional for approve/reject
+  comment?: string,           // required for request_changes; optional for approve/reject
+  governanceOverride?: boolean,  // admin-only; see Governance Enforcement below
+  overrideReason?: string,    // required when governanceOverride=true; ≥20 chars, ≤2000
 }
 ```
 
@@ -81,6 +83,39 @@ Provides a human-facing interface for reviewing, approving, or requesting change
   reviewedAt: string  // ISO timestamp
 }
 ```
+
+### Governance Enforcement (ADR-019)
+
+When `action === "approve"`, the endpoint consults the stored `validationReport`
+on the blueprint row. If that report has any `severity: "error"` violations, the
+approval is **blocked** and the endpoint returns `GOVERNANCE_BLOCKED` (HTTP 409)
+with a structured body:
+
+```typescript
+{
+  code: "GOVERNANCE_BLOCKED",
+  message: string,
+  details: {
+    violations: Array<{ policyId, policyName, ruleId, field, severity, message, suggestion }>,
+    overrideAvailable: boolean  // true only when the caller has role "admin"
+  }
+}
+```
+
+Warning-severity violations do not block. The block runs **before** approval-chain
+role/SOD checks — no role may approve past a governance block.
+
+**Override (admins only):** An approval may include `governanceOverride: true` with
+an `overrideReason` of at least 20 characters. The override succeeds only when all
+three conditions hold: caller role is `admin`, `governanceOverride` is true, and
+`overrideReason` is ≥20 chars after trimming. A successful override proceeds through
+the normal approval flow **and** produces an additional `blueprint.approved.override`
+audit row containing `{ reason, blockers }`. Both audit inserts share a transaction
+with the status update (ADR-021) — if any insert fails, the approval rolls back.
+
+The UI should render a violation-specific remediation panel on `GOVERNANCE_BLOCKED`,
+surfacing each violation's `suggestion`, and show the admin override control only
+when `details.overrideAvailable === true`.
 
 ### Status Transitions After Review
 

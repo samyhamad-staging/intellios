@@ -26,8 +26,9 @@ import { aiError } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, enterpriseRateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
+import { logger, serializeError } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { agentBlueprints, intakeSessions } from "@/lib/db/schema";
 import { loadPolicies } from "@/lib/governance/load-policies";
@@ -176,6 +177,16 @@ export async function POST(
   });
   if (rateLimitResponse) return rateLimitResponse;
 
+  // Per-enterprise ceiling (C4 / ADR-020).
+  if (authSession.user.enterpriseId) {
+    const tenantLimitResponse = await enterpriseRateLimit(authSession.user.enterpriseId, {
+      endpoint: "companion",
+      max: 240,
+      windowMs: 60_000,
+    });
+    if (tenantLimitResponse) return tenantLimitResponse;
+  }
+
   const { data: body, error: bodyError } = await parseBody(request, ChatBody);
   if (bodyError) return bodyError;
 
@@ -231,6 +242,9 @@ export async function POST(
 
     const result = streamText({
       model: anthropic("claude-haiku-4-5-20251001"),
+      // Transient-error retry budget (ADR-010 / C6). Mirrors the 3-attempt
+      // envelope used by resilientGenerateObject for non-streaming calls.
+      maxRetries: 3,
       system: systemPrompt,
       messages: modelMessages,
       maxOutputTokens: 1200,
@@ -285,7 +299,7 @@ export async function POST(
 
     return result.toUIMessageStreamResponse();
   } catch (err) {
-    console.error(`[${requestId}] Companion chat error:`, err);
+    logger.error("blueprint.companion.chat.failed", { requestId, err: serializeError(err) });
     return aiError(err, requestId);
   }
 }

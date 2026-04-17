@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger, serializeError } from "@/lib/logger";
 
 export interface RateLimitConfig {
   /** Identifier for this limit (e.g. "chat", "generate"). Combined with actorEmail to form the store key. */
@@ -73,15 +74,48 @@ function getRedis(): any | null {
       enableReadyCheck: false,
     });
     _redis!.on("error", (err: Error) => {
-      console.error("[rate-limit] Redis error — falling back to in-memory:", err.message);
+      logger.error("rate_limit.redis.error", {
+        message: err.message,
+        note: "falling back to in-memory store",
+      });
       _redis = null;
     });
   } catch (err) {
-    console.error("[rate-limit] Failed to create Redis client:", err);
+    logger.error("rate_limit.redis.init.failed", { err: serializeError(err) });
     _redis = null;
   }
 
   return _redis;
+}
+
+/**
+ * Cheap liveness probe for Redis used by /api/healthz (ADR-022).
+ *
+ * Returns:
+ *   "up"          — Redis is configured and responded to PING within timeoutMs
+ *   "fallback"    — Redis is not configured; rate limits use in-memory store
+ *   "down"        — Redis is configured but unreachable / did not PING in time
+ *
+ * Does NOT throw. The health endpoint must never crash because a probe failed.
+ */
+export async function isRedisHealthy(
+  timeoutMs = 500
+): Promise<"up" | "fallback" | "down"> {
+  const redis = getRedis();
+  if (!redis) return "fallback";
+
+  try {
+    const ping = redis.ping() as Promise<string>;
+    const result = await Promise.race([
+      ping,
+      new Promise<null>((resolve) =>
+        setTimeout(() => resolve(null), timeoutMs)
+      ),
+    ]);
+    return result === "PONG" ? "up" : "down";
+  } catch {
+    return "down";
+  }
 }
 
 async function rateLimitRedis(
@@ -179,6 +213,54 @@ export async function rateLimit(
       {
         code: "RATE_LIMITED",
         message: `Rate limit exceeded. Maximum ${max} requests per ${windowMs / 1000}s. Retry after ${retryAfterSecs}s.`,
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(retryAfterSecs) },
+      }
+    );
+  }
+
+  return null;
+}
+
+/**
+ * Per-enterprise (tenant) rate limit (ADR-020, C4).
+ *
+ * Applied in addition to the per-user `rateLimit` so a single tenant cannot
+ * saturate a shared upstream (Bedrock / Claude) for the whole platform even
+ * when many distinct users on that tenant are each under their per-user cap.
+ *
+ * Returns null when allowed, or a 429 NextResponse with the `BUDGET_EXCEEDED`
+ * error code so clients can distinguish tenant-ceiling from per-user denial.
+ */
+export async function enterpriseRateLimit(
+  enterpriseId: string,
+  config: RateLimitConfig
+): Promise<NextResponse | null> {
+  const { endpoint, max, windowMs = 60_000 } = config;
+  const key = `ratelimit:enterprise:${endpoint}:${enterpriseId}`;
+
+  let result: { allowed: boolean; retryAfterSecs?: number };
+
+  const redis = getRedis();
+  if (redis) {
+    try {
+      result = await rateLimitRedis(redis, key, max, windowMs);
+    } catch (err) {
+      console.error("[rate-limit] Redis check failed (enterprise), falling back to in-memory:", err);
+      result = rateLimitMemory(key, max, windowMs);
+    }
+  } else {
+    result = rateLimitMemory(key, max, windowMs);
+  }
+
+  if (!result.allowed) {
+    const retryAfterSecs = result.retryAfterSecs ?? 60;
+    return NextResponse.json(
+      {
+        code: "BUDGET_EXCEEDED",
+        message: `Enterprise rate limit exceeded. Maximum ${max} requests per ${windowMs / 1000}s across the tenant. Retry after ${retryAfterSecs}s.`,
       },
       {
         status: 429,

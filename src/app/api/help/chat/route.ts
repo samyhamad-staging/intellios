@@ -18,8 +18,9 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { aiError } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, enterpriseRateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
+import { logger, serializeError } from "@/lib/logger";
 import { z } from "zod";
 
 // Extend Vercel function timeout for AI generation (default 10s is too short)
@@ -193,6 +194,16 @@ export async function POST(request: NextRequest) {
   });
   if (rateLimitResponse) return rateLimitResponse;
 
+  // Per-enterprise ceiling (C4 / ADR-020).
+  if (authSession.user.enterpriseId) {
+    const tenantLimitResponse = await enterpriseRateLimit(authSession.user.enterpriseId, {
+      endpoint: "help",
+      max: 240,
+      windowMs: 60_000,
+    });
+    if (tenantLimitResponse) return tenantLimitResponse;
+  }
+
   const { data: body, error: bodyError } = await parseBody(request, ChatBody);
   if (bodyError) return bodyError;
 
@@ -208,6 +219,9 @@ export async function POST(request: NextRequest) {
 
     const result = streamText({
       model: anthropic("claude-haiku-4-5-20251001"),
+      // Transient-error retry budget (ADR-010 / C6). Mirrors the 3-attempt
+      // envelope used by resilientGenerateObject for non-streaming calls.
+      maxRetries: 3,
       system: systemPrompt,
       messages: modelMessages,
       maxOutputTokens: 800,
@@ -240,7 +254,7 @@ export async function POST(request: NextRequest) {
 
     return result.toUIMessageStreamResponse();
   } catch (err) {
-    console.error(`[${requestId}] Help chat error:`, err);
+    logger.error("help.chat.failed", { requestId, err: serializeError(err) });
     return aiError(err, requestId);
   }
 }

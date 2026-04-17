@@ -19,7 +19,7 @@ import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getEnterpriseId } from "@/lib/auth/enterprise-scope";
 import { setRLSContext, clearRLSContext } from "@/lib/db/rls";
 import { getRequestId } from "@/lib/request-id";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, enterpriseRateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
 import { logger, serializeError } from "@/lib/logger";
 import { z } from "zod";
@@ -53,6 +53,18 @@ export async function POST(
     windowMs: 60_000,
   });
   if (rateLimitResponse) return rateLimitResponse;
+
+  // Per-enterprise ceiling (C4 / ADR-020) — a single tenant cannot saturate
+  // upstream Bedrock for the platform, even when many distinct users on that
+  // tenant are each under their per-user cap.
+  if (authSession.user.enterpriseId) {
+    const tenantLimitResponse = await enterpriseRateLimit(authSession.user.enterpriseId, {
+      endpoint: "chat",
+      max: 240,
+      windowMs: 60_000,
+    });
+    if (tenantLimitResponse) return tenantLimitResponse;
+  }
 
   const { data: body, error: bodyError } = await parseBody(request, ChatBody);
   if (bodyError) return bodyError;
@@ -228,9 +240,15 @@ export async function POST(
     // and we must not hold tenant context on a pooled connection.
     await clearRLSContext();
 
-    // Stream response
+    // Stream response. maxRetries covers transient 5xx / network errors at the
+    // initial request step (matches resilientGenerateObject's 3-attempt budget
+    // used elsewhere in the codebase — see ADR-010). We deliberately do not set
+    // a global abortSignal here because tool-calling chains legitimately take
+    // tens of seconds across multiple provider round-trips; the Vercel function
+    // maxDuration (60s) is the effective ceiling for a single turn.
     const result = streamText({
       model: anthropic(selectedModel),
+      maxRetries: 3,
       system: buildIntakeSystemPrompt(
         currentPayload,
         currentContext,

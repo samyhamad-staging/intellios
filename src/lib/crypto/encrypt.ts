@@ -41,11 +41,19 @@ function getKey(): Buffer | null {
   if (encryptionKey) return encryptionKey;
 
   const hex = process.env.SECRETS_ENCRYPTION_KEY;
-  if (!hex || hex.length !== 64) {
+  if (!hex || hex.length !== 64 || !/^[0-9a-fA-F]{64}$/.test(hex)) {
+    // In production (ADR-018), the env validator rejects boot when the key is
+    // unset or malformed — this branch is unreachable there. Kept for tests
+    // and local dev, where a warning is still appropriate.
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "SECRETS_ENCRYPTION_KEY is required in production (64 hex chars). This branch should be unreachable — check env.ts validation."
+      );
+    }
     if (!keyWarningLogged) {
       console.warn(
         "[crypto] SECRETS_ENCRYPTION_KEY not set or invalid (expected 64 hex chars). " +
-          "Secrets will be stored in plaintext. Set this variable to enable encryption at rest."
+          "Secrets will be stored in plaintext for dev/test only. Production boot enforces the key via env.ts."
       );
       keyWarningLogged = true;
     }
@@ -59,7 +67,8 @@ function getKey(): Buffer | null {
 /**
  * Encrypt a plaintext secret for storage.
  * Returns the encrypted string in the format `enc:v1:<iv>:<ciphertext>:<tag>`.
- * If no encryption key is configured, returns the plaintext unchanged.
+ * In dev/test when no key is configured, returns plaintext unchanged.
+ * In production, env validation guarantees the key is set (ADR-018).
  */
 export function encryptSecret(plaintext: string): string {
   const key = getKey();

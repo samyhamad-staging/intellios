@@ -13,6 +13,13 @@ export const ErrorCode = {
   INTERNAL_ERROR: "INTERNAL_ERROR",
   AGENTCORE_NOT_CONFIGURED: "AGENTCORE_NOT_CONFIGURED",
   AGENTCORE_DEPLOY_FAILED: "AGENTCORE_DEPLOY_FAILED",
+  // ADR-019 — blueprint approval blocked by unresolved error-severity governance
+  // violations. Distinct from INVALID_STATE (which covers lifecycle-state conflicts)
+  // so the reviewer UI can render a violation-specific remediation experience.
+  GOVERNANCE_BLOCKED: "GOVERNANCE_BLOCKED",
+  // C4 — per-enterprise rate or daily-token budget exceeded. Distinct from the
+  // 429 returned by per-user rate limiting so tenants see a clear budget signal.
+  BUDGET_EXCEEDED: "BUDGET_EXCEEDED",
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -30,6 +37,8 @@ const STATUS: Record<ErrorCode, number> = {
   INTERNAL_ERROR: 500,
   AGENTCORE_NOT_CONFIGURED: 400,
   AGENTCORE_DEPLOY_FAILED: 502,
+  GOVERNANCE_BLOCKED: 409,
+  BUDGET_EXCEEDED: 429,
 };
 
 export interface ApiErrorBody {
