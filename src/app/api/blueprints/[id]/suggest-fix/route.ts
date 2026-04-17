@@ -8,6 +8,9 @@ import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import type { ABP } from "@/lib/types/abp";
 import { ALL_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
+import { CircuitOpenError, withBedrockBreaker } from "@/lib/ai/circuit-breaker";
+import { aiError } from "@/lib/errors";
+import { getRequestId } from "@/lib/request-id";
 
 // Extend Vercel function timeout for AI generation (default 10s is too short)
 export const maxDuration = 60;
@@ -113,17 +116,24 @@ Rules:
 
   let result;
   try {
-    const { text } = await generateText({
-      model: anthropic("claude-3-5-haiku-20241022"),
-      prompt,
-      maxOutputTokens: 4000,
-    });
+    // ADR-023 — wrap in Bedrock circuit breaker. Uses the non-streaming path
+    // since generateText completes before returning.
+    const MODEL_ID = "claude-3-5-haiku-20241022";
+    const { text } = await withBedrockBreaker(MODEL_ID, () =>
+      generateText({
+        model: anthropic(MODEL_ID),
+        prompt,
+        maxOutputTokens: 4000,
+      })
+    );
 
     // Extract JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("No JSON in response");
     result = JSON.parse(jsonMatch[0]);
   } catch (err) {
+    // ADR-023 — surface circuit-open as a 503 with Retry-After via aiError.
+    if (err instanceof CircuitOpenError) return aiError(err, getRequestId(request));
     console.error("[suggest-fix] AI generation failed:", err);
     return NextResponse.json({ error: "Failed to generate fix suggestion" }, { status: 500 });
   }

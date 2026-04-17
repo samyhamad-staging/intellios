@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agentBlueprints, auditLog } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { apiError, ErrorCode } from "@/lib/errors";
+import { apiError, aiError, ErrorCode } from "@/lib/errors";
+import { CircuitOpenError, withBedrockBreaker } from "@/lib/ai/circuit-breaker";
+import { getRequestId } from "@/lib/request-id";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { rateLimit } from "@/lib/rate-limit";
@@ -77,12 +79,16 @@ ${validation ? `Valid: ${validation.valid}\nViolations: ${JSON.stringify(validat
 
 Provide a concise risk brief for the reviewer. Focus on: governance gaps, tool risk, policy coverage, ownership completeness, and any validation violations.`;
 
-    const { object } = await generateObject({
-      model: anthropic("claude-haiku-4-5-20251001"),
-      schema: riskBriefSchema,
-      prompt,
-      temperature: 0.1,
-    });
+    // ADR-023 — wrap Bedrock call in circuit breaker.
+    const MODEL_ID = "claude-haiku-4-5-20251001";
+    const { object } = await withBedrockBreaker(MODEL_ID, () =>
+      generateObject({
+        model: anthropic(MODEL_ID),
+        schema: riskBriefSchema,
+        prompt,
+        temperature: 0.1,
+      })
+    );
 
     // P2-BUG-004 FIX: Add audit logging for review brief generation
     try {
@@ -101,6 +107,8 @@ Provide a concise risk brief for the reviewer. Focus on: governance gaps, tool r
 
     return NextResponse.json({ brief: object });
   } catch (err) {
+    // ADR-023 — surface circuit-open as a 503 with Retry-After via aiError.
+    if (err instanceof CircuitOpenError) return aiError(err, getRequestId(request));
     console.error("[POST /api/blueprints/[id]/review-brief]", err);
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to generate risk brief");
   }

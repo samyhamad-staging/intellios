@@ -16,6 +16,7 @@ import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { isRedisHealthy } from "@/lib/rate-limit";
+import { getBedrockCircuitState, type BedrockCircuitState } from "@/lib/ai/circuit-breaker";
 import { logger, serializeError } from "@/lib/logger";
 
 // Force Node.js runtime — the postgres.js driver used by Drizzle does not
@@ -35,6 +36,15 @@ interface HealthReport {
     db: ServiceStatus;
     redis: ServiceStatus;
     bedrock: ServiceStatus;
+  };
+  /**
+   * ADR-023 — per-model Bedrock circuit breaker snapshot. `circuitStatus` rolls
+   * up across all registered model breakers; `breakers` exposes each model's
+   * individual state so monitors can page on a specific model outage.
+   */
+  bedrockCircuit: {
+    status: BedrockCircuitState["status"];
+    breakers: BedrockCircuitState["breakers"];
   };
   checkedAt: string;
 }
@@ -85,11 +95,19 @@ export async function GET(): Promise<NextResponse> {
     isRedisHealthy(),
   ]);
   const bedrockStatus = checkBedrock();
+  // ADR-023 — roll up the per-model breaker registry. This is a pure in-memory
+  // snapshot, not a Bedrock round-trip, so it adds no latency to the probe.
+  const circuit = getBedrockCircuitState();
 
+  // A fully-open circuit (status "down") means Bedrock calls are being actively
+  // shed; we surface this as degraded alongside hard-down critical services.
+  // "degraded" (partial outage / half-open probing) does not fail the probe
+  // since the system is still making forward progress for non-affected models.
   const anyCriticalDown =
     dbStatus === "down" ||
     redisStatus === "down" ||
-    bedrockStatus === "not-configured";
+    bedrockStatus === "not-configured" ||
+    circuit.status === "down";
 
   const body: HealthReport = {
     status: anyCriticalDown ? "degraded" : "ok",
@@ -99,6 +117,10 @@ export async function GET(): Promise<NextResponse> {
       db: dbStatus,
       redis: redisStatus,
       bedrock: bedrockStatus,
+    },
+    bedrockCircuit: {
+      status: circuit.status,
+      breakers: circuit.breakers,
     },
     checkedAt: new Date().toISOString(),
   };

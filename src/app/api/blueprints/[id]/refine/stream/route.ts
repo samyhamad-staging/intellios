@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { streamText, convertToModelMessages } from "ai";
 import type { UIMessage } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
+import { CircuitOpenError, ensureCircuitClosed, recordBreakerError, recordBreakerSuccess } from "@/lib/ai/circuit-breaker";
 import { db } from "@/lib/db";
 import { agentBlueprints, intakeSessions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -153,11 +154,21 @@ export async function POST(
     // Stream a narrative explanation of the changes
     const modelMessages = await convertToModelMessages(messages);
 
+    // ADR-023 — pre-flight circuit breaker check.
+    const CHAT_MODEL_ID = "claude-haiku-4-5-20251001";
+    ensureCircuitClosed(CHAT_MODEL_ID);
+
     const result = streamText({
-      model: anthropic("claude-haiku-4-5-20251001"),
+      model: anthropic(CHAT_MODEL_ID),
       // Transient-error retry budget (ADR-010 / C6). Mirrors the 3-attempt
       // envelope used by resilientGenerateObject for non-streaming calls.
       maxRetries: 3,
+      onError: async ({ error }) => {
+        recordBreakerError(CHAT_MODEL_ID, error);
+      },
+      onFinish: async () => {
+        recordBreakerSuccess(CHAT_MODEL_ID);
+      },
       system: `You are a blueprint refinement assistant for an enterprise AI agent platform.
 A blueprint has just been updated. Your only job is to briefly confirm what was changed
 based on the user's request. Be concise: 2-3 sentences maximum.
@@ -167,6 +178,7 @@ Do not ask follow-up questions. Do not repeat the full blueprint content.`,
 
     return result.toUIMessageStreamResponse();
   } catch (err) {
+    if (err instanceof CircuitOpenError) return aiError(err, requestId);
     logger.error("blueprint.refine.stream.failed", { requestId, err: serializeError(err) });
     return apiError(ErrorCode.INTERNAL_ERROR, "Failed to refine blueprint", undefined, requestId);
   }

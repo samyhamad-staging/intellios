@@ -27,6 +27,7 @@
 
 import { generateObject, type FlexibleSchema } from "ai";
 import { logger, logAICall, serializeError } from "@/lib/logger";
+import { withBedrockBreaker } from "./circuit-breaker";
 
 // Delay between successive retries: 1 s, 2 s, 4 s
 const RETRY_DELAYS_MS = [1_000, 2_000, 4_000] as const;
@@ -66,15 +67,17 @@ export async function resilientGenerateObject<SCHEMA extends FlexibleSchema<unkn
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
     const startMs = Date.now();
     try {
-      const result = await Promise.race([
-        generateObject(params as Parameters<typeof generateObject>[0]) as ReturnType<typeof generateObject<SCHEMA>>,
-        new Promise<never>((_, reject) =>
-          setTimeout(
-            () => reject(new Error(`AI call timed out after ${timeoutMs}ms`)),
-            timeoutMs
-          )
-        ),
-      ]);
+      const result = await withBedrockBreaker(modelId, () =>
+        Promise.race([
+          generateObject(params as Parameters<typeof generateObject>[0]) as ReturnType<typeof generateObject<SCHEMA>>,
+          new Promise<never>((_, reject) =>
+            setTimeout(
+              () => reject(new Error(`AI call timed out after ${timeoutMs}ms`)),
+              timeoutMs
+            )
+          ),
+        ])
+      );
 
       // Log successful call with token usage and cost estimate
       const usage = result.usage;

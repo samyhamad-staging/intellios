@@ -15,6 +15,7 @@ import { streamText, convertToModelMessages } from "ai";
 import type { UIMessage } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
+import { ensureCircuitClosed, recordBreakerError, recordBreakerSuccess } from "@/lib/ai/circuit-breaker";
 import { db } from "@/lib/db";
 import { agentBlueprints } from "@/lib/db/schema";
 import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
@@ -101,11 +102,21 @@ export async function POST(
     const systemPrompt = buildSimulationSystemPrompt(abp);
     const modelMessages = await convertToModelMessages(messages);
 
+    // ADR-023 — pre-flight circuit breaker check.
+    const CHAT_MODEL_ID = "claude-haiku-4-5-20251001";
+    ensureCircuitClosed(CHAT_MODEL_ID);
+
     const result = streamText({
-      model: anthropic("claude-haiku-4-5-20251001"),
+      model: anthropic(CHAT_MODEL_ID),
       // Transient-error retry budget (ADR-010 / C6). Mirrors the 3-attempt
       // envelope used by resilientGenerateObject for non-streaming calls.
       maxRetries: 3,
+      onError: async ({ error }) => {
+        recordBreakerError(CHAT_MODEL_ID, error);
+      },
+      onFinish: async () => {
+        recordBreakerSuccess(CHAT_MODEL_ID);
+      },
       system: systemPrompt,
       messages: modelMessages,
       maxOutputTokens: abp.constraints?.max_tokens_per_response ?? 1024,

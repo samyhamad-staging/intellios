@@ -16,6 +16,7 @@ import { streamText, convertToModelMessages, tool, stepCountIs, zodSchema } from
 import type { UIMessage } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { aiError } from "@/lib/errors";
+import { ensureCircuitClosed, recordBreakerError, recordBreakerSuccess } from "@/lib/ai/circuit-breaker";
 import { requireAuth } from "@/lib/auth/require";
 import { getRequestId } from "@/lib/request-id";
 import { rateLimit, enterpriseRateLimit } from "@/lib/rate-limit";
@@ -217,11 +218,23 @@ export async function POST(request: NextRequest) {
 
     const modelMessages = await convertToModelMessages(messages);
 
+    // ADR-023 — pre-flight circuit breaker check. Fails fast with
+    // CircuitOpenError (→ 503 SERVICE_DEGRADED) if the breaker for this model
+    // is open. onError/onFinish feed stream outcomes back into the breaker.
+    const CHAT_MODEL_ID = "claude-haiku-4-5-20251001";
+    ensureCircuitClosed(CHAT_MODEL_ID);
+
     const result = streamText({
-      model: anthropic("claude-haiku-4-5-20251001"),
+      model: anthropic(CHAT_MODEL_ID),
       // Transient-error retry budget (ADR-010 / C6). Mirrors the 3-attempt
       // envelope used by resilientGenerateObject for non-streaming calls.
       maxRetries: 3,
+      onError: async ({ error }) => {
+        recordBreakerError(CHAT_MODEL_ID, error);
+      },
+      onFinish: async () => {
+        recordBreakerSuccess(CHAT_MODEL_ID);
+      },
       system: systemPrompt,
       messages: modelMessages,
       maxOutputTokens: 800,

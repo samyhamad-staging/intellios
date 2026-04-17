@@ -23,6 +23,7 @@ import {
 import type { UIMessage } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { aiError } from "@/lib/errors";
+import { ensureCircuitClosed, recordBreakerError, recordBreakerSuccess } from "@/lib/ai/circuit-breaker";
 import { requireAuth } from "@/lib/auth/require";
 import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
@@ -240,11 +241,21 @@ export async function POST(
     const messages = body.messages as UIMessage[];
     const modelMessages = await convertToModelMessages(messages);
 
+    // ADR-023 — pre-flight circuit breaker check. See help/chat/route.ts for pattern.
+    const CHAT_MODEL_ID = "claude-haiku-4-5-20251001";
+    ensureCircuitClosed(CHAT_MODEL_ID);
+
     const result = streamText({
-      model: anthropic("claude-haiku-4-5-20251001"),
+      model: anthropic(CHAT_MODEL_ID),
       // Transient-error retry budget (ADR-010 / C6). Mirrors the 3-attempt
       // envelope used by resilientGenerateObject for non-streaming calls.
       maxRetries: 3,
+      onError: async ({ error }) => {
+        recordBreakerError(CHAT_MODEL_ID, error);
+      },
+      onFinish: async () => {
+        recordBreakerSuccess(CHAT_MODEL_ID);
+      },
       system: systemPrompt,
       messages: modelMessages,
       maxOutputTokens: 1200,

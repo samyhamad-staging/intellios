@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { CircuitOpenError } from "./ai/circuit-breaker";
 
 export const ErrorCode = {
   BAD_REQUEST: "BAD_REQUEST",
@@ -20,6 +21,10 @@ export const ErrorCode = {
   // C4 — per-enterprise rate or daily-token budget exceeded. Distinct from the
   // 429 returned by per-user rate limiting so tenants see a clear budget signal.
   BUDGET_EXCEEDED: "BUDGET_EXCEEDED",
+  // ADR-023 — Bedrock circuit breaker is open for the requested model. Surfaced
+  // as 503 with a Retry-After hint so clients (and load balancers) can back off
+  // gracefully during sustained AI-layer outages.
+  SERVICE_DEGRADED: "SERVICE_DEGRADED",
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -39,6 +44,7 @@ const STATUS: Record<ErrorCode, number> = {
   AGENTCORE_DEPLOY_FAILED: 502,
   GOVERNANCE_BLOCKED: 409,
   BUDGET_EXCEEDED: 429,
+  SERVICE_DEGRADED: 503,
 };
 
 export interface ApiErrorBody {
@@ -52,7 +58,8 @@ export function apiError(
   code: ErrorCode,
   message: string,
   details?: unknown,
-  requestId?: string
+  requestId?: string,
+  extraHeaders?: Record<string, string>
 ): NextResponse<ApiErrorBody> {
   const body: ApiErrorBody = {
     code,
@@ -60,12 +67,32 @@ export function apiError(
     ...(requestId ? { requestId } : {}),
     ...(details ? { details } : {}),
   };
-  const headers = requestId ? { "x-request-id": requestId } : undefined;
-  return NextResponse.json(body, { status: STATUS[code], headers });
+  const headers: Record<string, string> = { ...(extraHeaders ?? {}) };
+  if (requestId) headers["x-request-id"] = requestId;
+  return NextResponse.json(body, {
+    status: STATUS[code],
+    headers: Object.keys(headers).length > 0 ? headers : undefined,
+  });
 }
 
 /** Inspect an unknown thrown value and return the appropriate AI error response. */
 export function aiError(error: unknown, requestId?: string): NextResponse<ApiErrorBody> {
+  // ADR-023 — circuit-open errors surface as 503 with Retry-After rather than 502.
+  if (error instanceof CircuitOpenError) {
+    const retryAfterSeconds = Math.max(1, Math.ceil(error.retryAfterMs / 1000));
+    return apiError(
+      ErrorCode.SERVICE_DEGRADED,
+      "AI service temporarily unavailable — circuit breaker open. Please retry shortly.",
+      {
+        modelId: error.modelId,
+        retryAfterMs: error.retryAfterMs,
+        nextProbeAt: error.nextProbeAt,
+      },
+      requestId,
+      { "Retry-After": String(retryAfterSeconds) }
+    );
+  }
+
   const message = error instanceof Error ? error.message : String(error);
 
   // Anthropic SDK surfaces rate limits as 429 status errors

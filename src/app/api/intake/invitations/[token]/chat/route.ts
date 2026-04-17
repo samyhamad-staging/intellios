@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { intakeInvitations, intakeSessions, intakeContributions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
+import { ensureCircuitClosed, recordBreakerError, recordBreakerSuccess } from "@/lib/ai/circuit-breaker";
 import { getRequestId } from "@/lib/request-id";
 import { parseBody } from "@/lib/parse-body";
 import { rateLimit } from "@/lib/rate-limit";
@@ -233,11 +234,21 @@ OUTPUT FORMAT for save_requirements:
 
     const modelMessages = await convertToModelMessages(messages);
 
+    // ADR-023 — pre-flight circuit breaker check.
+    const CHAT_MODEL_ID = "claude-haiku-4-5-20251001";
+    ensureCircuitClosed(CHAT_MODEL_ID);
+
     const result = streamText({
-      model: anthropic("claude-haiku-4-5-20251001"),
+      model: anthropic(CHAT_MODEL_ID),
       // Transient-error retry budget (ADR-010 / C6). Mirrors the 3-attempt
       // envelope used by resilientGenerateObject for non-streaming calls.
       maxRetries: 3,
+      onError: async ({ error }) => {
+        recordBreakerError(CHAT_MODEL_ID, error);
+      },
+      onFinish: async () => {
+        recordBreakerSuccess(CHAT_MODEL_ID);
+      },
       system: systemPrompt,
       messages: modelMessages,
       tools: { save_requirements: saveRequirementsTool },

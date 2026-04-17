@@ -3,6 +3,7 @@ import { streamText, convertToModelMessages, stepCountIs } from "ai";
 import type { UIMessage } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { apiError, aiError, ErrorCode } from "@/lib/errors";
+import { ensureCircuitClosed, recordBreakerError, recordBreakerSuccess } from "@/lib/ai/circuit-breaker";
 import { db } from "@/lib/db";
 import { intakeSessions, intakeMessages, intakeContributions } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
@@ -240,6 +241,10 @@ export async function POST(
     // and we must not hold tenant context on a pooled connection.
     await clearRLSContext();
 
+    // ADR-023 — pre-flight circuit breaker check. Keyed to the dynamically
+    // selected model so the breaker scope matches the provider call.
+    ensureCircuitClosed(selectedModel);
+
     // Stream response. maxRetries covers transient 5xx / network errors at the
     // initial request step (matches resilientGenerateObject's 3-attempt budget
     // used elsewhere in the codebase — see ADR-010). We deliberately do not set
@@ -249,6 +254,9 @@ export async function POST(
     const result = streamText({
       model: anthropic(selectedModel),
       maxRetries: 3,
+      onError: async ({ error }) => {
+        recordBreakerError(selectedModel, error);
+      },
       system: buildIntakeSystemPrompt(
         currentPayload,
         currentContext,
@@ -262,6 +270,9 @@ export async function POST(
       tools,
       stopWhen: stepCountIs(20),
       onFinish: async ({ text }) => {
+        // ADR-023 — record breaker success on stream completion. Must run even
+        // if the message-persist below fails, so call it first.
+        recordBreakerSuccess(selectedModel);
         if (text) {
           await db.insert(intakeMessages).values({
             sessionId,

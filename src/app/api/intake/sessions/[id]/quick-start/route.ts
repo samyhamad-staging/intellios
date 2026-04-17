@@ -18,7 +18,8 @@ import { assertEnterpriseAccess } from "@/lib/auth/enterprise";
 import { getRequestId } from "@/lib/request-id";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseBody } from "@/lib/parse-body";
-import { apiError, ErrorCode } from "@/lib/errors";
+import { apiError, aiError, ErrorCode } from "@/lib/errors";
+import { CircuitOpenError, withBedrockBreaker } from "@/lib/ai/circuit-breaker";
 import { logger, serializeError } from "@/lib/logger";
 import { z } from "zod";
 
@@ -114,9 +115,12 @@ export async function POST(
 
     const { purpose } = body;
 
+    // ADR-023 — wrap Bedrock call in circuit breaker.
+    const MODEL_ID = "claude-haiku-4-5-20251001";
     // Use Claude Haiku to infer context fields from the purpose description
-    const { object: inferred } = await generateObject({
-      model: anthropic("claude-haiku-4-5-20251001"),
+    const { object: inferred } = await withBedrockBreaker(MODEL_ID, () =>
+      generateObject({
+      model: anthropic(MODEL_ID),
       schema: InferredContextSchema,
       prompt: `You are an enterprise AI agent design assistant. Based on the following description of an agent that a user wants to build, infer the most appropriate context classification.
 
@@ -130,7 +134,8 @@ Infer:
 5. stakeholdersConsulted: Which stakeholders should ideally be consulted for this type of agent? Choose all that apply. If unsure, use ["none"]. Options: legal, compliance, security, it, business-owner, none
 
 Be conservative with regulatory scope — only include frameworks that are clearly relevant based on the description. For stakeholdersConsulted, recommend who SHOULD be consulted based on the agent's purpose and risk profile.`,
-    });
+      })
+    );
 
     // Build the full IntakeContext
     const context = {
@@ -150,6 +155,8 @@ Be conservative with regulatory scope — only include frameworks that are clear
 
     return NextResponse.json({ context, inferred: true });
   } catch (err) {
+    // ADR-023 — surface circuit-open as a 503 with Retry-After via aiError.
+    if (err instanceof CircuitOpenError) return aiError(err, requestId);
     logger.error("intake_session.quick_start.failed", { requestId, err: serializeError(err) });
     return apiError(
       ErrorCode.INTERNAL_ERROR,
