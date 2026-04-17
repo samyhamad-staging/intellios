@@ -82,7 +82,13 @@ const mockLoadPolicies = vi.fn().mockResolvedValue([]);
 vi.mock("@/lib/governance/load-policies", () => ({ loadPolicies: mockLoadPolicies }));
 
 const mockRateLimit = vi.fn().mockResolvedValue(null);
-vi.mock("@/lib/rate-limit", () => ({ rateLimit: mockRateLimit }));
+const mockEnterpriseRateLimit = vi.fn().mockResolvedValue(null);
+const mockIsRedisHealthy = vi.fn().mockResolvedValue("fallback");
+vi.mock("@/lib/rate-limit", () => ({
+  rateLimit: mockRateLimit,
+  enterpriseRateLimit: mockEnterpriseRateLimit,
+  isRedisHealthy: mockIsRedisHealthy,
+}));
 
 const mockEnterpriseScope = vi.fn().mockReturnValue(undefined);
 vi.mock("@/lib/auth/enterprise-scope", () => ({ enterpriseScope: mockEnterpriseScope }));
@@ -132,6 +138,8 @@ beforeEach(() => {
   });
   mockLoadPolicies.mockReset().mockResolvedValue([]);
   mockRateLimit.mockReset().mockResolvedValue(null);
+  mockEnterpriseRateLimit.mockReset().mockResolvedValue(null);
+  mockIsRedisHealthy.mockReset().mockResolvedValue("fallback");
   mockGetRequestId.mockReset().mockReturnValue("req-test-001");
 });
 
@@ -743,6 +751,197 @@ describe("POST /api/blueprints/[id]/review", () => {
 
       const res = await callReview(makeRequest("POST", "http://localhost:3000/api/blueprints/bp-001/review"));
       expect(res.status).toBe(403);
+    });
+  });
+
+  // ─── Governance enforcement (ADR-019) + transaction atomicity (ADR-021) ─────
+  //
+  // These tests lock in the two production-readiness invariants shipped in
+  // session 148 that were originally deferred from the lifecycle test suite:
+  //
+  //   C2 — An approval cannot succeed while the stored validation report still
+  //        contains error-severity violations, unless an admin explicitly
+  //        overrides with `governanceOverride: true` + a ≥20-char reason. The
+  //        override path emits a second audit row (`blueprint.approved.override`).
+  //
+  //   C3 — The status flip + primary audit + optional override audit share a
+  //        single `db.transaction(...)`. If any audit insert throws, the
+  //        route's outer try/catch converts the error to a 500 INTERNAL_ERROR
+  //        response and `publishEvent` is never called — the post-commit
+  //        event dispatcher cannot observe a rolled-back approval.
+  //
+  describe("governance enforcement (ADR-019) + transaction atomicity (ADR-021)", () => {
+    /** A stored validation report with one error-severity blocker. */
+    function makeBlockingReport() {
+      return {
+        valid: false,
+        policyCount: 3,
+        evaluatedPolicyIds: ["pol-gdpr", "pol-soc2", "pol-hipaa"],
+        generatedAt: "2026-04-17T00:00:00.000Z",
+        violations: [
+          {
+            policyId: "pol-gdpr",
+            policyName: "GDPR Data Minimization",
+            ruleId: "gdpr-001",
+            field: "capabilities.dataAccess.personalData",
+            operator: "!=",
+            severity: "error" as const,
+            message: "Agent must not access personal data without explicit consent",
+            suggestion: "Add consent check to dataAccess config",
+          },
+        ],
+      };
+    }
+
+    it("blocks reviewer approval when error-severity violations remain (no override)", async () => {
+      setupAuthSession({ role: "reviewer", email: "reviewer@acme.com" });
+      setupBody({ action: "approve" });
+      const bp = makeBlueprint({
+        status: "in_review",
+        createdBy: "designer@acme.com",
+        validationReport: makeBlockingReport(),
+      });
+      selectResult.mockReturnValue([bp]);
+
+      const res = await callReview(makeRequest("POST", "http://localhost:3000/api/blueprints/bp-001/review"));
+      const body = await responseJson(res);
+
+      // 409 GOVERNANCE_BLOCKED, not 403 / 422 — so clients can distinguish
+      // this from auth / state-machine failures and surface override UI.
+      expect(res.status).toBe(409);
+      expect(body.code).toBe("GOVERNANCE_BLOCKED");
+      // Violation detail is returned so the reviewer can see what to fix.
+      expect(body.details?.violations).toHaveLength(1);
+      expect(body.details?.violations[0]).toMatchObject({
+        policyId: "pol-gdpr",
+        ruleId: "gdpr-001",
+        severity: "error",
+      });
+      // Non-admins do not see the override affordance.
+      expect(body.details?.overrideAvailable).toBe(false);
+      // Short-circuit: no update, no audit, no event.
+      expect(mockDb.update).not.toHaveBeenCalled();
+      expect(mockDb.insert).not.toHaveBeenCalled();
+      expect(mockPublishEvent).not.toHaveBeenCalled();
+    });
+
+    it("blocks non-admin approval even when governanceOverride flag is sent", async () => {
+      setupAuthSession({ role: "reviewer", email: "reviewer@acme.com" });
+      setupBody({
+        action: "approve",
+        governanceOverride: true,
+        overrideReason: "I say we should ship this now regardless of policy",
+      } as { action: string; comment?: string });
+      const bp = makeBlueprint({
+        status: "in_review",
+        createdBy: "designer@acme.com",
+        validationReport: makeBlockingReport(),
+      });
+      selectResult.mockReturnValue([bp]);
+
+      const res = await callReview(makeRequest("POST", "http://localhost:3000/api/blueprints/bp-001/review"));
+      const body = await responseJson(res);
+
+      // Override is admin-only — a reviewer with the flag set is still blocked.
+      expect(res.status).toBe(409);
+      expect(body.code).toBe("GOVERNANCE_BLOCKED");
+      expect(body.details?.overrideAvailable).toBe(false);
+      expect(mockDb.update).not.toHaveBeenCalled();
+    });
+
+    it("admin override with valid reason approves and emits both audit rows", async () => {
+      setupAuthSession({ role: "admin", email: "admin@acme.com" });
+      setupBody({
+        action: "approve",
+        governanceOverride: true,
+        overrideReason: "Legal has accepted residual GDPR risk for this pilot cohort.",
+      } as { action: string; comment?: string });
+      const bp = makeBlueprint({
+        status: "in_review",
+        createdBy: "designer@acme.com",
+        validationReport: makeBlockingReport(),
+      });
+      selectResult.mockReturnValue([bp]);
+      updateResult.mockReturnValue([{
+        id: bp.id,
+        status: "approved",
+        reviewComment: null,
+        reviewedAt: new Date("2026-04-17T12:00:00.000Z"),
+      }]);
+
+      const res = await callReview(makeRequest("POST", "http://localhost:3000/api/blueprints/bp-001/review"));
+
+      expect(res.status).toBe(200);
+      // Entered the transaction exactly once.
+      expect(mockDb.transaction).toHaveBeenCalledTimes(1);
+      // Two audit inserts: blueprint.reviewed + blueprint.approved.override.
+      expect(mockDb.insert).toHaveBeenCalledTimes(2);
+      // The chained `.values(...)` mock is shared across both insert calls
+      // (mockReturnValue returns the same object each call), so its
+      // mock.calls array contains both payloads in order: [reviewed, override].
+      const insertFirstResult = (mockDb.insert as unknown as { mock: { results: Array<{ value: { values: ReturnType<typeof vi.fn> } }> } }).mock.results[0].value;
+      const reviewedValues = insertFirstResult.values.mock.calls[0][0] as Record<string, unknown>;
+      const overrideValues = insertFirstResult.values.mock.calls[1][0] as Record<string, unknown>;
+      expect(reviewedValues).toMatchObject({
+        action: "blueprint.reviewed",
+        actorEmail: "admin@acme.com",
+        actorRole: "admin",
+      });
+      expect((reviewedValues.metadata as Record<string, unknown>).governanceOverride).toBe(true);
+      expect(overrideValues).toMatchObject({
+        action: "blueprint.approved.override",
+        actorEmail: "admin@acme.com",
+        actorRole: "admin",
+        entityId: "bp-001",
+      });
+      const overrideMeta = overrideValues.metadata as { reason: string; blockers: Array<{ policyId: string }> };
+      expect(overrideMeta.reason).toContain("residual GDPR risk");
+      expect(overrideMeta.blockers).toHaveLength(1);
+      expect(overrideMeta.blockers[0].policyId).toBe("pol-gdpr");
+      // Post-commit event still fires on the happy override path.
+      expect(mockPublishEvent).toHaveBeenCalled();
+    });
+
+    it("rolls back: audit insert throws → 500 INTERNAL_ERROR, publishEvent never called", async () => {
+      setupAuthSession({ role: "reviewer", email: "reviewer@acme.com" });
+      setupBody({ action: "approve" });
+      // Clean validation report — governance check passes, we want to exercise
+      // the transaction atomicity path specifically, not the block path.
+      const bp = makeBlueprint({
+        status: "in_review",
+        createdBy: "designer@acme.com",
+        validationReport: { valid: true, policyCount: 3, evaluatedPolicyIds: [], generatedAt: "2026-04-17T00:00:00.000Z", violations: [] },
+      });
+      selectResult.mockReturnValue([bp]);
+      updateResult.mockReturnValue([{
+        id: bp.id,
+        status: "approved",
+        reviewComment: null,
+        reviewedAt: new Date(),
+      }]);
+
+      // Force the audit insert inside the transaction to throw. The route
+      // wraps `db.transaction` in an outer try/catch that converts any
+      // throw to a 500 response. `publishEvent` runs AFTER the transaction
+      // resolves, so a thrown insert must prevent it entirely.
+      (mockDb.insert as unknown as ReturnType<typeof vi.fn>).mockImplementationOnce(() => ({
+        values: () => {
+          throw new Error("simulated audit write failure");
+        },
+      }));
+
+      const res = await callReview(makeRequest("POST", "http://localhost:3000/api/blueprints/bp-001/review"));
+      const body = await responseJson(res);
+
+      expect(res.status).toBe(500);
+      expect(body.code).toBe("INTERNAL_ERROR");
+      // Transaction was entered (ADR-021: status flip + audit are bundled).
+      expect(mockDb.transaction).toHaveBeenCalled();
+      // Critical: post-commit event dispatch must never observe a
+      // rolled-back transaction. If publishEvent fires here, downstream
+      // consumers (webhooks, email, audit mirrors) would be told a
+      // blueprint was approved that has no durable audit record.
+      expect(mockPublishEvent).not.toHaveBeenCalled();
     });
   });
 });
