@@ -38,6 +38,44 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 155 — 2026-04-18
+
+**H4 — Outbound webhook retry + DLQ + replay (ADR-026)** — PRR arc closed.
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-opus-4-7 |
+| Input tokens (est.) | ~310,000 |
+| Output tokens (est.) | ~22,000 |
+| Tool calls (est.) | ~110 |
+| Subagents spawned | 0 |
+| Estimated cost | ~$6.30 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 1 ("Proceed with #1" — continuing the session-152 arc) |
+| Decisions made | 0 (session ran on the standing arc from session 152) |
+| Engagement type | None — autonomous session, final beat of the pre-committed arc |
+| Estimated time | ~0 min |
+
+### Deliverables
+
+- ADR-026 (~200 lines) documenting schedule table, error classification, cron route, migration 0040, replay endpoint, and queue-broker rejection rationale
+- Migration `0040_webhook_retry_state.sql` — 3 columns (`next_attempt_at`, `max_attempts`, `error_class`) + partial index `WHERE status='pending'`
+- `src/lib/webhooks/backoff.ts` — `BACKOFF_SCHEDULE_MS`, `nextBackoffMs`, `classifyError`, `isRetryable`, jitter constants
+- `src/lib/webhooks/deliver.ts` refactored into `performAttempt` + `recordAttempt` + `markWebhookInactive` seams
+- `GET /api/cron/webhook-retries` route + `* * * * *` entry in `src/vercel.json`, wrapped in `runCronBatch` from ADR-024
+- `POST /api/admin/webhooks/deliveries/[id]/replay` endpoint with enterprise scope, inactive-webhook guard, audit event `webhook.delivery.replayed`
+- New 32-case `backoff.test.ts`, 9-case cron route suite, 8-case replay route suite; modified `deliver.test.ts` with 4 ADR-026 tests
+- Full suite **711/711 green** (+50 from 661), 30 test files (was 27)
+- Typecheck: 7 pre-existing errors unchanged, zero new
+
+---
+
 ## Session 154 — 2026-04-18
 
 **H6 — Intake prompt-injection defense (ADR-025)**
