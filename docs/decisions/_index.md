@@ -26,3 +26,4 @@
 | 022 | [Platform observability floor — instrumentation.ts, /api/healthz, structured-log migration](022-platform-observability-floor.md) | proposed | 2026-04-17 |
 | 023 | [Bedrock circuit breaker — per-model in-memory state machine with sliding-window failure threshold and exponential cooldown backoff](023-bedrock-circuit-breaker.md) | proposed | 2026-04-17 |
 | 024 | [Cron batch runner — DB-backed time-budget guard, per-item failure isolation, and priority-reorder on recent failures](024-cron-batch-runner.md) | proposed | 2026-04-18 |
+| 025 | [Intake prompt injection defense — three-layer sanitization with delimited untrusted-input blocks](025-intake-prompt-sanitization.md) | proposed | 2026-04-18 |

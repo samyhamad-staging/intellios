@@ -38,6 +38,43 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 154 — 2026-04-18
+
+**H6 — Intake prompt-injection defense (ADR-025)**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-opus-4-7 |
+| Input tokens (est.) | ~220,000 |
+| Output tokens (est.) | ~16,000 |
+| Tool calls (est.) | ~60 |
+| Subagents spawned | 0 |
+| Estimated cost | ~$4.50 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 1 ("Yes please" — confirming H6 as next per the standing arc) |
+| Decisions made | 0 (session ran on the standing arc from session 152) |
+| Engagement type | None — autonomous session on the pre-committed arc |
+| Estimated time | ~0 min |
+
+### Deliverables
+
+- ADR-025 (~170 lines) documenting three-layer defense, per-call-site wiring plan, generation-vs-intake trust-model rationale
+- `src/lib/intake/sanitize.ts` — `sanitizeUserContent` / `wrapUntrusted` / `UntrustedKind` (8 kinds with per-kind default length caps)
+- Hardened `sanitizePromptInput` in `lib/generation/system-prompt.ts` — unicode normalization, special-token blocklist, role-prefix anywhere, common-phrase coverage
+- Security directive added to `BASE_PROMPT` + `CONTEXT_COLLECTION_PROMPT` in `lib/intake/system-prompt.ts`
+- Wired `wrapUntrusted` through 3 intake surfaces: `agentPurpose` (was raw), contribution identity/labels/values, policy strings
+- 61-case fuzz suite `src/lib/intake/__tests__/sanitize.test.ts`
+- Full suite **661/661 green** (+61 from 600), 27 test files
+- Typecheck: 7 pre-existing errors, zero new
+
+---
+
 ## Session 153 — 2026-04-18
 
 **H5 — Cron partial-completion handling (ADR-024)**
