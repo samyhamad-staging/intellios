@@ -38,6 +38,42 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 153 — 2026-04-18
+
+**H5 — Cron partial-completion handling (ADR-024)**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-opus-4-7 |
+| Input tokens (est.) | ~280,000 |
+| Output tokens (est.) | ~19,000 |
+| Tool calls (est.) | ~95 |
+| Subagents spawned | 0 |
+| Estimated cost | ~$5.25 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 1 ("Please proceed as you recommend" — continuation under the session-152 H3→H5→H6→H4 arc) |
+| Decisions made | 0 (session ran on the standing arc from session 152) |
+| Engagement type | None — autonomous session on the pre-committed arc |
+| Estimated time | ~0 min |
+
+### Deliverables
+
+- ADR-024 (~200 lines)
+- Migration `0039_cron_runs.sql` + two new Drizzle tables (`cronRuns`, `cronItemFailures`) + three indexes + FK cascade
+- `src/lib/cron/batch-runner.ts` (~230 LOC) exposing `runCronBatch`, `recentFailedItemIds`, `prioritizeFailed` + 13-case test suite
+- 6 cron call sites wired (4 routes + 2 inner telemetry helpers); `review-reminders` gained per-item isolation it previously lacked
+- `.env.example` documentation for `CRON_BUDGET_MS`
+- Full suite **600/600 green** (+13 from 587)
+- Typecheck clean on all new code (7 pre-existing errors in `blueprint-lifecycle.test.ts` unchanged since session 150)
+
+---
+
 ## Session 152 — 2026-04-17
 
 **H3 — Bedrock circuit breaker (ADR-023)**

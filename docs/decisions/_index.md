@@ -25,3 +25,4 @@
 | 021 | [Atomic entity + audit writes via db.transaction](021-atomic-entity-audit-writes.md) | proposed | 2026-04-17 |
 | 022 | [Platform observability floor — instrumentation.ts, /api/healthz, structured-log migration](022-platform-observability-floor.md) | proposed | 2026-04-17 |
 | 023 | [Bedrock circuit breaker — per-model in-memory state machine with sliding-window failure threshold and exponential cooldown backoff](023-bedrock-circuit-breaker.md) | proposed | 2026-04-17 |
+| 024 | [Cron batch runner — DB-backed time-budget guard, per-item failure isolation, and priority-reorder on recent failures](024-cron-batch-runner.md) | proposed | 2026-04-18 |
