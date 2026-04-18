@@ -330,7 +330,7 @@ describe("webhook delivery module", () => {
       expect(updateData.attempts).toBe(1);
     });
 
-    it("updates record to failed after 3 failed attempts (500 response)", async () => {
+    it("ADR-026: schedules retry on 5xx (status='pending', attempts=1, next_attempt_at set)", async () => {
       const webhookId = randomUUID();
       const deliveryId = randomUUID();
       const payload: WebhookPayload = {
@@ -351,7 +351,6 @@ describe("webhook delivery module", () => {
         }),
       } as any);
 
-      // All attempts return 500
       vi.mocked(global.fetch).mockResolvedValue({
         ok: false,
         status: 500,
@@ -368,14 +367,22 @@ describe("webhook delivery module", () => {
         }),
       } as any);
 
+      const before = Date.now();
       await deliverWebhook(webhookId, "https://example.com/webhook", "secret", payload, null);
 
-      expect(updateData.status).toBe("failed");
+      // Single inline attempt, retryable class → leave pending for the cron.
+      expect(vi.mocked(global.fetch)).toHaveBeenCalledTimes(1);
+      expect(updateData.status).toBe("pending");
       expect(updateData.responseStatus).toBe(500);
-      expect(updateData.attempts).toBe(3);
+      expect(updateData.attempts).toBe(1);
+      expect(updateData.errorClass).toBe("http_5xx");
+      // First retry delay is 60s ± 20% jitter → somewhere in [48s, 72s] from now.
+      const deltaMs = (updateData.nextAttemptAt as Date).getTime() - before;
+      expect(deltaMs).toBeGreaterThanOrEqual(48_000);
+      expect(deltaMs).toBeLessThanOrEqual(75_000);
     });
 
-    it("updates record to failed after network error and retries", async () => {
+    it("ADR-026: schedules retry on network error with errorClass='network'", async () => {
       const webhookId = randomUUID();
       const deliveryId = randomUUID();
       const payload: WebhookPayload = {
@@ -396,8 +403,7 @@ describe("webhook delivery module", () => {
         }),
       } as any);
 
-      // All attempts throw network error
-      vi.mocked(global.fetch).mockRejectedValue(new Error("Network error"));
+      vi.mocked(global.fetch).mockRejectedValue(new Error("ECONNREFUSED"));
 
       let updateData: any = null;
       vi.mocked(db.update).mockReturnValue({
@@ -411,9 +417,12 @@ describe("webhook delivery module", () => {
 
       await deliverWebhook(webhookId, "https://example.com/webhook", "secret", payload, null);
 
-      expect(updateData.status).toBe("failed");
+      expect(vi.mocked(global.fetch)).toHaveBeenCalledTimes(1);
+      expect(updateData.status).toBe("pending");
       expect(updateData.responseStatus).toBeNull();
-      expect(updateData.attempts).toBe(3);
+      expect(updateData.attempts).toBe(1);
+      expect(updateData.errorClass).toBe("network");
+      expect(updateData.nextAttemptAt).toBeInstanceOf(Date);
     });
 
     it("stops retrying on first successful response (2xx)", async () => {
@@ -751,7 +760,7 @@ describe("webhook delivery module", () => {
       );
     });
 
-    it("tracks actualAttempts correctly when retrying", async () => {
+    it("ADR-026: non-retryable 4xx (404) goes straight to DLQ on first attempt", async () => {
       const webhookId = randomUUID();
       const deliveryId = randomUUID();
       const payload: WebhookPayload = {
@@ -772,23 +781,11 @@ describe("webhook delivery module", () => {
         }),
       } as any);
 
-      let fetchAttempts = 0;
-      vi.mocked(global.fetch).mockImplementation(() => {
-        fetchAttempts++;
-        // Fail first two attempts, succeed on third
-        if (fetchAttempts < 3) {
-          return Promise.resolve({
-            ok: false,
-            status: 500,
-            text: vi.fn().mockResolvedValue(""),
-          } as any);
-        }
-        return Promise.resolve({
-          ok: true,
-          status: 200,
-          text: vi.fn().mockResolvedValue(""),
-        } as any);
-      });
+      vi.mocked(global.fetch).mockResolvedValue({
+        ok: false,
+        status: 404,
+        text: vi.fn().mockResolvedValue("Not Found"),
+      } as any);
 
       let updateData: any = null;
       vi.mocked(db.update).mockReturnValue({
@@ -802,8 +799,57 @@ describe("webhook delivery module", () => {
 
       await deliverWebhook(webhookId, "https://example.com/webhook", "secret", payload, null);
 
-      expect(updateData.attempts).toBe(3);
-      expect(updateData.status).toBe("success");
+      // Non-retryable 4xx should NOT reschedule — straight to DLQ.
+      expect(vi.mocked(global.fetch)).toHaveBeenCalledTimes(1);
+      expect(updateData.status).toBe("dlq");
+      expect(updateData.responseStatus).toBe(404);
+      expect(updateData.errorClass).toBe("http_4xx");
+      expect(updateData.nextAttemptAt).toBeNull();
+    });
+
+    it("ADR-026: 429 (Too Many Requests) is retryable despite being 4xx", async () => {
+      const webhookId = randomUUID();
+      const deliveryId = randomUUID();
+      const payload: WebhookPayload = {
+        id: randomUUID(),
+        event: "blueprint.created",
+        timestamp: "2026-04-06T12:00:00Z",
+        enterpriseId: null,
+        actor: { email: "user@example.com", role: "admin" },
+        entity: { type: "blueprint", id: randomUUID() },
+        fromState: null,
+        toState: null,
+        metadata: null,
+      };
+
+      vi.mocked(db.insert).mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ id: deliveryId }]),
+        }),
+      } as any);
+
+      vi.mocked(global.fetch).mockResolvedValue({
+        ok: false,
+        status: 429,
+        text: vi.fn().mockResolvedValue("Too Many Requests"),
+      } as any);
+
+      let updateData: any = null;
+      vi.mocked(db.update).mockReturnValue({
+        set: vi.fn().mockImplementation((val) => {
+          updateData = val;
+          return {
+            where: vi.fn().mockResolvedValue(undefined),
+          };
+        }),
+      } as any);
+
+      await deliverWebhook(webhookId, "https://example.com/webhook", "secret", payload, null);
+
+      expect(updateData.status).toBe("pending");
+      expect(updateData.responseStatus).toBe(429);
+      expect(updateData.errorClass).toBe("http_4xx"); // class name reflects status range
+      expect(updateData.nextAttemptAt).toBeInstanceOf(Date);
     });
   });
 

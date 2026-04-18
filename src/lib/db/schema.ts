@@ -309,10 +309,13 @@ export const webhookDeliveries = pgTable(
     enterpriseId:    text("enterprise_id"),
     eventType:       text("event_type").notNull(),
     payload:         jsonb("payload").notNull(),
-    status:          text("status").notNull().default("pending"), // pending | success | failed
+    status:          text("status").notNull().default("pending"), // pending | success | failed | dlq
     responseStatus:  integer("response_status"),
     responseBody:    text("response_body"),  // first 500 chars of last response body
     attempts:        integer("attempts").notNull().default(0),
+    maxAttempts:     integer("max_attempts").notNull().default(7),   // ADR-026: 1 inline + 6 scheduled
+    nextAttemptAt:   timestamp("next_attempt_at", { withTimezone: true }), // when retry cron should pick this up
+    errorClass:      text("error_class"), // network | timeout | http_5xx | http_4xx | webhook_inactive
     lastAttemptedAt: timestamp("last_attempted_at", { withTimezone: true }),
     createdAt:       timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
