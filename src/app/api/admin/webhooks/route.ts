@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db";
-import { webhooks, auditLog } from "@/lib/db/schema";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { webhooks, webhookDeliveries, auditLog } from "@/lib/db/schema";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { parseBody } from "@/lib/parse-body";
@@ -50,6 +50,10 @@ export async function GET(request: NextRequest) {
       ? eq(webhooks.enterpriseId, enterpriseId)
       : isNull(webhooks.enterpriseId);
 
+    // ADR-026: each row includes a `dlqCount` so the UI can badge webhooks
+    // that have accumulated dead-lettered deliveries. Expressed as a
+    // correlated subquery rather than a join+group-by so each webhook row is
+    // still 1:1 with a source-row and ordering stays stable.
     const rows = await db
       .select({
         id: webhooks.id,
@@ -61,6 +65,12 @@ export async function GET(request: NextRequest) {
         createdBy: webhooks.createdBy,
         createdAt: webhooks.createdAt,
         updatedAt: webhooks.updatedAt,
+        dlqCount: sql<number>`(
+          SELECT COUNT(*)::int
+          FROM ${webhookDeliveries}
+          WHERE ${webhookDeliveries.webhookId} = ${webhooks.id}
+            AND ${webhookDeliveries.status} = 'dlq'
+        )`.as("dlq_count"),
       })
       .from(webhooks)
       .where(enterpriseCondition)

@@ -26,17 +26,28 @@ interface WebhookRecord {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  /** ADR-026: count of deliveries currently in the DLQ for this webhook. */
+  dlqCount: number;
 }
+
+type DeliveryStatus = "pending" | "success" | "failed" | "dlq";
 
 interface DeliveryRecord {
   id: string;
   eventType: string;
-  status: "pending" | "success" | "failed";
+  status: DeliveryStatus;
   responseStatus: number | null;
   attempts: number;
+  /** ADR-026: `network` | `timeout` | `http_5xx` | `http_4xx` | `webhook_inactive` | null. */
+  errorClass: string | null;
+  /** ADR-026: when the next scheduled retry will fire. Null for terminal states. */
+  nextAttemptAt: string | null;
   lastAttemptedAt: string | null;
   createdAt: string;
 }
+
+/** Delivery-log status filter used by the per-webhook card. */
+type DeliveryFilter = "all" | "pending" | "dlq";
 
 interface WebhookDetail extends WebhookRecord {
   deliveries: DeliveryRecord[];
@@ -89,15 +100,43 @@ function formatRelative(iso: string) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+/** Format a future ISO timestamp as "2h", "35m", "3d" — used for nextAttemptAt. */
+function formatInterval(iso: string) {
+  const diff = new Date(iso).getTime() - Date.now();
+  if (diff <= 0) return "soon";
+  const mins = Math.round(diff / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  return `${Math.round(hrs / 24)}d`;
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-// P2-552: Enhanced delivery row with color-coded status + retry context
-function DeliveryRow({ d }: { d: DeliveryRecord }) {
+// P2-552 + ADR-026: delivery row with status badge, retry context (errorClass,
+// nextAttemptAt), and admin replay action for dlq/failed/success rows.
+function DeliveryRow({
+  d,
+  onReplay,
+  replaying,
+}: {
+  d: DeliveryRecord;
+  onReplay: (deliveryId: string) => void;
+  replaying: boolean;
+}) {
   const statusBadge =
     d.status === "success" ? (
       <span className="inline-flex items-center gap-1 rounded-full bg-green-50 dark:bg-emerald-950/30 px-2 py-0.5 text-xs font-semibold text-green-700 dark:text-emerald-300">
         <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
         success
+      </span>
+    ) : d.status === "dlq" ? (
+      <span
+        className="inline-flex items-center gap-1 rounded-full bg-red-100 dark:bg-red-950/50 px-2 py-0.5 text-xs font-semibold text-red-800 dark:text-red-200 ring-1 ring-red-300 dark:ring-red-800"
+        title="Dead-lettered — all retry attempts exhausted"
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
+        dlq
       </span>
     ) : d.status === "failed" ? (
       <span className="inline-flex items-center gap-1 rounded-full bg-red-50 dark:bg-red-950/30 px-2 py-0.5 text-xs font-semibold text-red-700 dark:text-red-300">
@@ -117,48 +156,102 @@ function DeliveryRow({ d }: { d: DeliveryRecord }) {
     : d.responseStatus >= 400 ? "text-red-600 dark:text-red-400 font-medium"
     : "text-text-secondary";
 
+  // Replay is meaningful for terminal or successful states; pending rows are
+  // already scheduled, so offering "replay" there would be confusing (the row
+  // is not stuck — it's waiting).
+  const canReplay = d.status === "dlq" || d.status === "failed" || d.status === "success";
+
+  // Pending rows show `nextAttemptAt` ("in 2h"); everything else shows
+  // `lastAttemptedAt` ("3m ago"). Keeps the same column width but switches
+  // semantics based on what the admin actually wants to see.
+  const whenCell =
+    d.status === "pending" && d.nextAttemptAt ? (
+      <span className="text-amber-700 dark:text-amber-300" title={`Next attempt: ${formatDate(d.nextAttemptAt)}`}>
+        in {formatInterval(d.nextAttemptAt)}
+      </span>
+    ) : d.lastAttemptedAt ? (
+      <span title={`Last attempt: ${formatDate(d.lastAttemptedAt)}`}>
+        {formatRelative(d.lastAttemptedAt)}
+      </span>
+    ) : "—";
+
   return (
-    <TableRow className={d.status === "failed" ? "bg-red-50 dark:bg-red-950/30" : undefined}>
+    <TableRow className={
+      d.status === "dlq"
+        ? "bg-red-50 dark:bg-red-950/40"
+        : d.status === "failed"
+        ? "bg-red-50/60 dark:bg-red-950/20"
+        : undefined
+    }>
       <TableCell className="text-text-secondary whitespace-nowrap" title={formatDate(d.createdAt)}>
         {formatRelative(d.createdAt)}
       </TableCell>
       <TableCell className="font-mono text-xs text-text">{d.eventType}</TableCell>
       <TableCell>{statusBadge}</TableCell>
       <TableCell className={httpColor}>
-        {d.responseStatus ?? "—"}
+        <div className="flex flex-col">
+          <span>{d.responseStatus ?? "—"}</span>
+          {d.errorClass && (
+            <span className="text-[10px] font-mono text-text-tertiary font-normal" title="ADR-026 error class">
+              {d.errorClass}
+            </span>
+          )}
+        </div>
       </TableCell>
       <TableCell className="text-text-secondary">{d.attempts}</TableCell>
       <TableCell className="text-text-tertiary text-xs whitespace-nowrap">
-        {d.lastAttemptedAt ? (
-          <span title={`Last attempt: ${formatDate(d.lastAttemptedAt)}`}>
-            {formatRelative(d.lastAttemptedAt)}
-          </span>
-        ) : "—"}
+        {whenCell}
+      </TableCell>
+      <TableCell className="text-right">
+        {canReplay ? (
+          <button
+            onClick={() => onReplay(d.id)}
+            disabled={replaying}
+            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 hover:underline disabled:opacity-40 disabled:no-underline"
+            title="Reset this delivery to pending and schedule a fresh retry"
+          >
+            {replaying ? "Replaying…" : "Replay"}
+          </button>
+        ) : (
+          <span className="text-xs text-text-tertiary">—</span>
+        )}
       </TableCell>
     </TableRow>
   );
 }
 
-// P2-552: Delivery log summary header
-function DeliveryLogHeader({ deliveries, onRefresh, loading }: {
+// P2-552 + ADR-026: delivery log summary header with status counts, filter
+// tabs (All / Pending / DLQ), CSV export, and refresh.
+function DeliveryLogHeader({
+  deliveries,
+  filter,
+  onFilterChange,
+  onRefresh,
+  loading,
+}: {
   deliveries: DeliveryRecord[];
+  filter: DeliveryFilter;
+  onFilterChange: (f: DeliveryFilter) => void;
   onRefresh: () => void;
   loading: boolean;
 }) {
   const success = deliveries.filter((d) => d.status === "success").length;
   const failed = deliveries.filter((d) => d.status === "failed").length;
   const pending = deliveries.filter((d) => d.status === "pending").length;
+  const dlq = deliveries.filter((d) => d.status === "dlq").length;
 
   function exportCsv() {
     const rows = [
-      ["when", "event", "status", "http_status", "attempts", "last_attempt"],
+      ["when", "event", "status", "http_status", "error_class", "attempts", "last_attempt", "next_attempt"],
       ...deliveries.map((d) => [
         d.createdAt,
         d.eventType,
         d.status,
         d.responseStatus ?? "",
+        d.errorClass ?? "",
         d.attempts,
         d.lastAttemptedAt ?? "",
+        d.nextAttemptAt ?? "",
       ]),
     ];
     const csv = rows.map((r) => r.join(",")).join("\n");
@@ -166,20 +259,37 @@ function DeliveryLogHeader({ deliveries, onRefresh, loading }: {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `webhook-deliveries.csv`;
+    a.download = `webhook-deliveries-${filter}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
   }
 
+  const tab = (value: DeliveryFilter, label: string) => (
+    <button
+      onClick={() => onFilterChange(value)}
+      className={`px-2 py-0.5 rounded text-xs transition-colors ${
+        filter === value
+          ? "bg-text text-white"
+          : "text-text-secondary hover:bg-surface-muted"
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
-    <div className="mb-2 flex items-center justify-between">
+    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
       <div className="flex items-center gap-3 text-xs">
-        <span className="text-text-secondary">{deliveries.length} deliveries</span>
-        {success > 0 && <span className="text-green-700 dark:text-emerald-300 font-medium">✓ {success} success</span>}
-        {failed > 0 && <span className="text-red-600 dark:text-red-400 font-medium">✗ {failed} failed</span>}
-        {pending > 0 && <span className="text-amber-600 dark:text-amber-400">{pending} pending</span>}
+        <div className="flex items-center gap-1 rounded border border-border-subtle bg-surface-raised p-0.5">
+          {tab("all", "All")}
+          {tab("pending", `Pending${pending > 0 ? ` (${pending})` : ""}`)}
+          {tab("dlq", `DLQ${dlq > 0 ? ` (${dlq})` : ""}`)}
+        </div>
+        <span className="text-text-secondary">{deliveries.length} shown</span>
+        {success > 0 && <span className="text-green-700 dark:text-emerald-300 font-medium">✓ {success}</span>}
+        {failed > 0 && <span className="text-red-600 dark:text-red-400 font-medium">✗ {failed}</span>}
       </div>
       <div className="flex items-center gap-2">
         {deliveries.length > 0 && (
@@ -205,24 +315,28 @@ function WebhookCard({
   onDelete,
   onTest,
   onRotateSecret,
-  onRefreshDeliveries,
+  onDlqCountChanged,
 }: {
   wh: WebhookRecord;
   onToggleActive: (id: string, active: boolean) => void;
   onDelete: (id: string) => void;
   onTest: (id: string) => void;
   onRotateSecret: (id: string) => void;
-  onRefreshDeliveries: (id: string) => void;
+  /** Called after a replay so the parent can refresh the list-level dlqCount. */
+  onDlqCountChanged: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [deliveries, setDeliveries] = useState<DeliveryRecord[]>([]);
   const [loadingDeliveries, setLoadingDeliveries] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [filter, setFilter] = useState<DeliveryFilter>("all");
+  const [replayingId, setReplayingId] = useState<string | null>(null);
 
-  const fetchDeliveries = useCallback(async () => {
+  const fetchDeliveries = useCallback(async (nextFilter: DeliveryFilter = filter) => {
     setLoadingDeliveries(true);
     try {
-      const res = await fetch(`/api/admin/webhooks/${wh.id}`);
+      const qs = nextFilter === "all" ? "" : `?status=${nextFilter}`;
+      const res = await fetch(`/api/admin/webhooks/${wh.id}${qs}`);
       if (res.ok) {
         const data = await res.json();
         setDeliveries(data.deliveries ?? []);
@@ -230,13 +344,53 @@ function WebhookCard({
     } finally {
       setLoadingDeliveries(false);
     }
-  }, [wh.id]);
+  }, [wh.id, filter]);
+
+  const handleFilterChange = useCallback(async (next: DeliveryFilter) => {
+    setFilter(next);
+    await fetchDeliveries(next);
+  }, [fetchDeliveries]);
+
+  // ADR-026 admin replay: reset the delivery to pending and schedule a fresh
+  // retry. 422 surfaces the inactive-webhook guard to the operator rather than
+  // letting the replay round-trip into a DLQ entry with errorClass=webhook_inactive.
+  const handleReplay = useCallback(async (deliveryId: string) => {
+    setReplayingId(deliveryId);
+    try {
+      const res = await fetch(
+        `/api/admin/webhooks/deliveries/${deliveryId}/replay`,
+        { method: "POST" }
+      );
+      if (res.ok) {
+        toast.success("Delivery reset to pending — retry scheduled.");
+        await fetchDeliveries();
+        onDlqCountChanged();
+      } else if (res.status === 422) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.message ?? "Reactivate the webhook before replaying.");
+      } else {
+        toast.error("Replay failed.");
+      }
+    } catch {
+      toast.error("Replay failed.");
+    } finally {
+      setReplayingId(null);
+    }
+  }, [fetchDeliveries, onDlqCountChanged]);
 
   const handleExpandDeliveries = useCallback(async () => {
     if (!expanded) {
       await fetchDeliveries();
     }
     setExpanded((v) => !v);
+  }, [expanded, fetchDeliveries]);
+
+  const openDlqView = useCallback(async () => {
+    if (!expanded) {
+      setExpanded(true);
+    }
+    setFilter("dlq");
+    await fetchDeliveries("dlq");
   }, [expanded, fetchDeliveries]);
 
   return (
@@ -254,6 +408,17 @@ function WebhookCard({
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* ADR-026: DLQ count chip — only renders when non-zero. Clicking it
+              expands the delivery log and applies the DLQ filter. */}
+          {wh.dlqCount > 0 && (
+            <button
+              onClick={() => void openDlqView()}
+              className="text-xs px-2 py-1 rounded bg-red-100 dark:bg-red-950/50 text-red-800 dark:text-red-200 ring-1 ring-red-300 dark:ring-red-800 hover:bg-red-200 dark:hover:bg-red-900/60 font-medium"
+              title="View dead-lettered deliveries for this webhook"
+            >
+              {wh.dlqCount} in DLQ
+            </button>
+          )}
           {/* Active toggle */}
           <button
             onClick={() => onToggleActive(wh.id, !wh.active)}
@@ -311,40 +476,48 @@ function WebhookCard({
         </button>
       </div>
 
-      {/* P2-552: Delivery log — enhanced with summary header, CSV export, refresh */}
+      {/* P2-552 + ADR-026: delivery log — filter tabs, DLQ visibility, replay */}
       {expanded && (
         <div className="border-t border-border-subtle px-4 py-3">
+          <DeliveryLogHeader
+            deliveries={deliveries}
+            filter={filter}
+            onFilterChange={(f) => void handleFilterChange(f)}
+            onRefresh={() => void fetchDeliveries()}
+            loading={loadingDeliveries}
+          />
           {loadingDeliveries ? (
             <p className="text-xs text-text-tertiary">Loading deliveries…</p>
+          ) : deliveries.length === 0 ? (
+            <p className="text-xs text-text-tertiary">
+              {filter === "dlq" ? "No dead-lettered deliveries."
+                : filter === "pending" ? "No pending deliveries."
+                : "No deliveries yet."}
+            </p>
           ) : (
-            <>
-              <DeliveryLogHeader
-                deliveries={deliveries}
-                onRefresh={fetchDeliveries}
-                loading={loadingDeliveries}
-              />
-              {deliveries.length === 0 ? (
-                <p className="text-xs text-text-tertiary">No deliveries yet.</p>
-              ) : (
-                <Table dense>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeader>When</TableHeader>
-                      <TableHeader>Event</TableHeader>
-                      <TableHeader>Status</TableHeader>
-                      <TableHeader>HTTP</TableHeader>
-                      <TableHeader>Attempts</TableHeader>
-                      <TableHeader>Last attempt</TableHeader>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {deliveries.map((d) => (
-                      <DeliveryRow key={d.id} d={d} />
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </>
+            <Table dense>
+              <TableHead>
+                <TableRow>
+                  <TableHeader>When</TableHeader>
+                  <TableHeader>Event</TableHeader>
+                  <TableHeader>Status</TableHeader>
+                  <TableHeader>HTTP</TableHeader>
+                  <TableHeader>Attempts</TableHeader>
+                  <TableHeader>Last/Next</TableHeader>
+                  <TableHeader>Actions</TableHeader>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {deliveries.map((d) => (
+                  <DeliveryRow
+                    key={d.id}
+                    d={d}
+                    onReplay={(deliveryId) => void handleReplay(deliveryId)}
+                    replaying={replayingId === d.id}
+                  />
+                ))}
+              </TableBody>
+            </Table>
           )}
         </div>
       )}
@@ -725,7 +898,7 @@ export default function AdminWebhooksPage() {
                 onDelete={handleDelete}
                 onTest={handleTest}
                 onRotateSecret={handleRotateSecret}
-                onRefreshDeliveries={() => {}}
+                onDlqCountChanged={() => void loadWebhooks()}
               />
             ))}
           </div>

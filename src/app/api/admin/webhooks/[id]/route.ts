@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { webhooks, webhookDeliveries } from "@/lib/db/schema";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, type SQL } from "drizzle-orm";
 import { apiError, ErrorCode } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth/require";
 import { parseBody } from "@/lib/parse-body";
@@ -56,7 +56,15 @@ async function loadWebhook(id: string, enterpriseId: string | null) {
 // ─── GET /api/admin/webhooks/[id] ─────────────────────────────────────────────
 
 /**
- * Fetch a single webhook (no secret) + last 20 deliveries.
+ * Fetch a single webhook (no secret) + its recent deliveries.
+ *
+ * Query params:
+ *   ?status=pending|success|failed|dlq — filter delivery rows.
+ *     Default (no filter): last 20 deliveries regardless of status.
+ *     `dlq` filter widens the limit to 50 for investigation.
+ *
+ * Deliveries include ADR-026 fields `errorClass` and `nextAttemptAt` so the
+ * admin UI can surface the retry context without a second fetch.
  */
 export async function GET(
   request: NextRequest,
@@ -74,7 +82,22 @@ export async function GET(
       return apiError(ErrorCode.NOT_FOUND, "Webhook not found", undefined, requestId);
     }
 
-    // Fetch last 20 deliveries
+    // Optional ?status= filter (pending|success|failed|dlq). ADR-026 — admins
+    // investigating the DLQ want a focused view, not the last 20 deliveries
+    // regardless of state. DLQ filter widens the limit to 50 because the
+    // signal is rare-but-important and context matters.
+    const statusParam = request.nextUrl.searchParams.get("status");
+    const allowedStatuses = new Set(["pending", "success", "failed", "dlq"]);
+    const statusFilter = statusParam && allowedStatuses.has(statusParam) ? statusParam : null;
+    const limit = statusFilter === "dlq" ? 50 : 20;
+
+    const whereClause: SQL = statusFilter
+      ? and(
+          eq(webhookDeliveries.webhookId, id),
+          eq(webhookDeliveries.status, statusFilter)
+        )!
+      : eq(webhookDeliveries.webhookId, id);
+
     const deliveries = await db
       .select({
         id: webhookDeliveries.id,
@@ -82,13 +105,15 @@ export async function GET(
         status: webhookDeliveries.status,
         responseStatus: webhookDeliveries.responseStatus,
         attempts: webhookDeliveries.attempts,
+        errorClass: webhookDeliveries.errorClass,
+        nextAttemptAt: webhookDeliveries.nextAttemptAt,
         lastAttemptedAt: webhookDeliveries.lastAttemptedAt,
         createdAt: webhookDeliveries.createdAt,
       })
       .from(webhookDeliveries)
-      .where(eq(webhookDeliveries.webhookId, id))
+      .where(whereClause)
       .orderBy(desc(webhookDeliveries.createdAt))
-      .limit(20);
+      .limit(limit);
 
     // Return webhook without secret
     const { secret: _omit, ...webhookWithoutSecret } = wh;
