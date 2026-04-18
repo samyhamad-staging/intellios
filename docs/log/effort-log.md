@@ -38,6 +38,42 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 156 — 2026-04-18
+
+**Admin DLQ UI — wiring ADR-026 into the webhooks page.**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-opus-4-7 |
+| Input tokens (est.) | ~280,000 |
+| Output tokens (est.) | ~18,000 |
+| Tool calls (est.) | ~90 |
+| Subagents spawned | 0 |
+| Estimated cost | ~$5.60 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 2 (menu pick "Ship DLQ admin UI (Recommended)"; one tool-load ack) |
+| Decisions made | 1 (scope pick from 4-option menu) |
+| Engagement type | Menu-driven direction, autonomous execution |
+| Estimated time | ~1 min |
+
+### Deliverables
+
+- `GET /api/admin/webhooks` correlated-subquery `dlqCount` per row
+- `GET /api/admin/webhooks/[id]` `?status=` filter + `errorClass`/`nextAttemptAt` fields + 20→50 limit widen for `dlq`
+- `src/app/admin/webhooks/page.tsx` — DLQ chip + `openDlqView()` linked action + `formatInterval` + dlq status badge + filter tabs + Replay button + expanded CSV export (770 → 943 lines)
+- New 5-case list-endpoint test suite
+- New 9-case detail-endpoint test suite
+- Full suite **725/725 green** (+14 from 711), 32 files (was 30)
+- Typecheck: zero new errors (7 pre-existing in `blueprint-lifecycle.test.ts` remain)
+
+---
+
 ## Session 155 — 2026-04-18
 
 **H4 — Outbound webhook retry + DLQ + replay (ADR-026)** — PRR arc closed.
