@@ -7,6 +7,9 @@ import { getComplianceOfficerEmails } from "@/lib/notifications/recipients";
 import { sendEmail, buildNotificationEmail } from "@/lib/notifications/email";
 import { publishEvent } from "@/lib/events/publish";
 import { ALL_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
+import { runCronBatch, recentFailedItemIds, prioritizeFailed } from "@/lib/cron/batch-runner";
+
+const JOB_NAME = "review-reminders";
 
 /**
  * GET /api/cron/review-reminders
@@ -52,16 +55,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
 
-  let processed = 0;
+  // ADR-024 — prioritize blueprints where reminder delivery previously failed.
+  const failedIds = await recentFailedItemIds(JOB_NAME);
+  const ordered = prioritizeFailed(candidates, (b) => b.id, failedIds);
+
+  // Counts how many reminders were actually sent across the whole batch.
   let sent = 0;
 
-  for (const blueprint of candidates) {
-    processed++;
-
+  const processReminder = async (blueprint: typeof candidates[number]) => {
     const nextReviewDue = blueprint.nextReviewDue!;
     const lastReminderSentAt = blueprint.lastReminderSentAt ?? null;
 
-    // Check each threshold window
+    // Check each threshold window; only one reminder fires per blueprint per run.
     for (const days of thresholds) {
       const windowStart = new Date(nextReviewDue.getTime() - days * 24 * 60 * 60 * 1000);
       const windowEnd = new Date(windowStart.getTime() + 24 * 60 * 60 * 1000); // 1-day window
@@ -69,12 +74,12 @@ export async function GET(request: NextRequest) {
       if (now >= windowStart && now <= windowEnd) {
         // Check not already sent recently (within 6 days)
         if (lastReminderSentAt && (now.getTime() - lastReminderSentAt.getTime()) < 6 * 24 * 60 * 60 * 1000) {
-          break; // already sent for this threshold
+          return; // already sent for this threshold — success, nothing to do.
         }
 
         // Fetch compliance officers for this enterprise
         const recipients = await getComplianceOfficerEmails(blueprint.enterpriseId);
-        if (recipients.length === 0) break;
+        if (recipients.length === 0) return;
 
         const agentName = blueprint.name ?? "Agent";
         const daysUntil = Math.ceil(
@@ -120,10 +125,24 @@ export async function GET(request: NextRequest) {
         });
 
         sent++;
-        break; // only send one reminder per run per blueprint
+        return; // only send one reminder per run per blueprint
       }
     }
-  }
+  };
 
-  return NextResponse.json({ processed, sent });
+  const result = await runCronBatch({
+    jobName: JOB_NAME,
+    items: ordered,
+    itemId: (b) => b.id,
+    handler: processReminder,
+  });
+
+  return NextResponse.json({
+    processed: result.succeeded,
+    sent,
+    failed: result.failed,
+    skipped: result.skipped,
+    budgetExhausted: result.budgetExhausted,
+    durationMs: result.durationMs,
+  });
 }

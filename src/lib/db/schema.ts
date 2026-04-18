@@ -825,3 +825,43 @@ export const workflowTemplates = pgTable(
     index("idx_wf_templates_enterprise").on(t.enterpriseId),
   ]
 );
+
+// ─── Cron runs ───────────────────────────────────────────────────────────────
+// ADR-024 / H5: per-run + per-failure tracking for the cron batch runner.
+
+export const cronRuns = pgTable(
+  "cron_runs",
+  {
+    id:              uuid("id").primaryKey().defaultRandom(),
+    jobName:         text("job_name").notNull(),
+    startedAt:       timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    finishedAt:      timestamp("finished_at", { withTimezone: true }),
+    totalItems:      integer("total_items").notNull().default(0),
+    succeeded:       integer("succeeded").notNull().default(0),
+    failed:          integer("failed").notNull().default(0),
+    skipped:         integer("skipped").notNull().default(0),
+    budgetExhausted: boolean("budget_exhausted").notNull().default(false),
+    errorSummary:    jsonb("error_summary"),
+  },
+  (t) => [
+    index("cron_runs_job_name_started_at_idx").on(t.jobName, t.startedAt),
+  ]
+);
+
+export const cronItemFailures = pgTable(
+  "cron_item_failures",
+  {
+    id:           uuid("id").primaryKey().defaultRandom(),
+    runId:        uuid("run_id").notNull().references(() => cronRuns.id, { onDelete: "cascade" }),
+    jobName:      text("job_name").notNull(),
+    itemId:       text("item_id").notNull(),
+    errorMessage: text("error_message").notNull(),
+    errorStack:   text("error_stack"),
+    failedAt:     timestamp("failed_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("cron_item_failures_job_item_failed_at_idx")
+      .on(t.jobName, t.itemId, t.failedAt),
+    index("cron_item_failures_run_id_idx").on(t.runId),
+  ]
+);

@@ -14,6 +14,9 @@ import { and, eq, gt, sql, isNull } from "drizzle-orm";
 import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
 import { publishEvent } from "@/lib/events/publish";
 import { createNotification } from "@/lib/notifications/store";
+import { runCronBatch, recentFailedItemIds, prioritizeFailed } from "@/lib/cron/batch-runner";
+
+const JOB_NAME = "alert-check";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -123,6 +126,10 @@ export async function evaluateThresholds(
 export async function checkAndFireAlerts(enterpriseId: string | null): Promise<{
   checked: number;
   breached: number;
+  failed: number;
+  skipped: number;
+  budgetExhausted: boolean;
+  durationMs: number;
 }> {
   // Load all deployed agents for the enterprise
   const deployedFilter = enterpriseId
@@ -133,10 +140,7 @@ export async function checkAndFireAlerts(enterpriseId: string | null): Promise<{
     .from(agentBlueprints)
     .where(and(eq(agentBlueprints.status, "deployed"), deployedFilter));
 
-  let checked = 0;
-  let breached = 0;
-
-  // Load compliance officer emails for notifications
+  // Load compliance officer emails for notifications (shared across all agents)
   const notifyRoles = ["compliance_officer", "admin"];
   const recipients = await db.query.users.findMany({
     where: (u, { and, eq, inArray, or, isNull }) =>
@@ -149,7 +153,16 @@ export async function checkAndFireAlerts(enterpriseId: string | null): Promise<{
   });
   const recipientEmails = recipients.map((u) => u.email);
 
-  for (const agent of deployed) {
+  // ADR-024 — prioritize agents whose threshold evaluation failed recently so
+  // broken-telemetry agents don't silently skip an alert cycle.
+  const failedIds = await recentFailedItemIds(JOB_NAME);
+  const ordered = prioritizeFailed(deployed, (a) => a.agentId, failedIds);
+
+  // Counters outside the handler for inclusion in the response.
+  let checked = 0;
+  let breached = 0;
+
+  const evaluateAgent = async (agent: typeof deployed[number]) => {
     const results = await evaluateThresholds(agent.agentId);
     checked += results.length;
 
@@ -194,9 +207,23 @@ export async function checkAndFireAlerts(enterpriseId: string | null): Promise<{
         });
       }
     }
-  }
+  };
 
-  return { checked, breached };
+  const result = await runCronBatch({
+    jobName: JOB_NAME,
+    items: ordered,
+    itemId: (a) => a.agentId,
+    handler: evaluateAgent,
+  });
+
+  return {
+    checked,
+    breached,
+    failed: result.failed,
+    skipped: result.skipped,
+    budgetExhausted: result.budgetExhausted,
+    durationMs: result.durationMs,
+  };
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

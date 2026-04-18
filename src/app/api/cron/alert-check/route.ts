@@ -22,7 +22,14 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await checkAndFireAlerts(enterpriseId);
-    return NextResponse.json({ checked: result.checked, breached: result.breached });
+    return NextResponse.json({
+      checked: result.checked,
+      breached: result.breached,
+      failed: result.failed,
+      skipped: result.skipped,
+      budgetExhausted: result.budgetExhausted,
+      durationMs: result.durationMs,
+    });
   } catch (err) {
     console.error("[cron/alert-check] Unexpected error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

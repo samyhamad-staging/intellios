@@ -22,6 +22,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       synced: result.synced,
       errors: result.errors,
+      skipped: result.skipped,
+      budgetExhausted: result.budgetExhausted,
+      durationMs: result.durationMs,
       detail: result.detail,
     });
   } catch (err) {

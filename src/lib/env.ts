@@ -43,6 +43,10 @@ const EnvSchema = z.object({
         .regex(/^[0-9a-fA-F]{64}$/, { message: "SECRETS_ENCRYPTION_KEY must be a 64-character hex string" })
     : z.string().optional(),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  // Cron batch-runner time budget (ADR-024). Default leaves ~10s headroom under
+  // Vercel's 60s function cap. Override per-environment if a run's per-item cost
+  // is structurally higher or the function cap differs.
+  CRON_BUDGET_MS: z.coerce.number().int().min(1000).max(600000).default(50000),
 });
 
 function validateEnv() {

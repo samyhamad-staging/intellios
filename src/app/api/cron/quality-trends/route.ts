@@ -29,6 +29,9 @@ import { and, desc, eq, gte, inArray, isNull, or, sql } from "drizzle-orm";
 import { createNotification } from "@/lib/notifications/store";
 import { publishEvent } from "@/lib/events/publish";
 import { SAFE_BLUEPRINT_COLUMNS } from "@/lib/db/safe-columns";
+import { runCronBatch, recentFailedItemIds, prioritizeFailed } from "@/lib/cron/batch-runner";
+
+const JOB_NAME = "quality-trends";
 
 const WINDOW_DAYS  = 7;   // one week
 const REGRESSION_THRESHOLD = 15; // points below design score to trigger alert
@@ -120,109 +123,124 @@ export async function POST(request: NextRequest) {
         )
       );
 
-    let snapshots = 0;
+    // ADR-024 — prioritize recently-failed agents so broken telemetry or
+    // stale quality-score rows get another attempt on this run.
+    const failedIds = await recentFailedItemIds(JOB_NAME);
+    const ordered = prioritizeFailed(deployed, (a) => a.agentId, failedIds);
+
+    // Regression counter lives outside the handler so we can include it in
+    // the response alongside the batch-runner summary.
     let regressions = 0;
 
-    for (const agent of deployed) {
-      try {
-        // Design-time quality score (latest)
-        const latestQuality = await db.query.blueprintQualityScores.findFirst({
-          where: (t, { eq: _eq }) => _eq(t.blueprintId, agent.id),
-          orderBy: (t, { desc: d }) => [d(t.evaluatedAt)],
-          columns: { overallScore: true },
-        });
+    const snapshotAgent = async (agent: typeof deployed[number]) => {
+      // Design-time quality score (latest)
+      const latestQuality = await db.query.blueprintQualityScores.findFirst({
+        where: (t, { eq: _eq }) => _eq(t.blueprintId, agent.id),
+        orderBy: (t, { desc: d }) => [d(t.evaluatedAt)],
+        columns: { overallScore: true },
+      });
 
-        const designScore = latestQuality?.overallScore
-          ? parseFloat(latestQuality.overallScore)
-          : null;
+      const designScore = latestQuality?.overallScore
+        ? parseFloat(latestQuality.overallScore)
+        : null;
 
-        // Production quality metrics for this week
-        const metrics = await computeWeeklyMetrics(agent.agentId);
+      // Production quality metrics for this week
+      const metrics = await computeWeeklyMetrics(agent.agentId);
 
-        // Upsert snapshot (ON CONFLICT on the unique index)
-        await db
-          .insert(qualityTrends)
-          .values({
-            agentId:             agent.agentId,
-            enterpriseId:        agent.enterpriseId,
-            weekStart,
+      // Upsert snapshot (ON CONFLICT on the unique index)
+      await db
+        .insert(qualityTrends)
+        .values({
+          agentId:             agent.agentId,
+          enterpriseId:        agent.enterpriseId,
+          weekStart,
+          designScore:         designScore ?? undefined,
+          productionScore:     metrics.productionScore,
+          policyAdherenceRate: metrics.policyAdherenceRate,
+        })
+        .onConflictDoUpdate({
+          target:  [qualityTrends.agentId, qualityTrends.weekStart],
+          set:     {
             designScore:         designScore ?? undefined,
             productionScore:     metrics.productionScore,
             policyAdherenceRate: metrics.policyAdherenceRate,
-          })
-          .onConflictDoUpdate({
-            target:  [qualityTrends.agentId, qualityTrends.weekStart],
-            set:     {
-              designScore:         designScore ?? undefined,
-              productionScore:     metrics.productionScore,
-              policyAdherenceRate: metrics.policyAdherenceRate,
-            },
-          });
+          },
+        });
 
-        snapshots++;
+      // ── Regression detection ─────────────────────────────────────────────
+      // Alert when production score drops > REGRESSION_THRESHOLD below design score.
+      if (designScore !== null && (designScore - metrics.productionScore) > REGRESSION_THRESHOLD) {
+        regressions++;
+        const gap       = Math.round(designScore - metrics.productionScore);
+        const agentName = agent.name ?? agent.agentId;
+        const link      = `/registry/${agent.agentId}?tab=quality`;
 
-        // ── Regression detection ─────────────────────────────────────────────
-        // Alert when production score drops > REGRESSION_THRESHOLD below design score.
-        if (designScore !== null && (designScore - metrics.productionScore) > REGRESSION_THRESHOLD) {
-          regressions++;
-          const gap       = Math.round(designScore - metrics.productionScore);
-          const agentName = agent.name ?? agent.agentId;
-          const link      = `/registry/${agent.agentId}?tab=quality`;
+        // Notify admin + compliance_officer
+        const recipientRows = await db
+          .select({ email: users.email })
+          .from(users)
+          .where(
+            and(
+              inArray(users.role, ["admin", "compliance_officer"]),
+              agent.enterpriseId
+                ? or(eq(users.enterpriseId, agent.enterpriseId), isNull(users.enterpriseId))
+                : isNull(users.enterpriseId)
+            )
+          );
 
-          // Notify admin + compliance_officer
-          const recipientRows = await db
-            .select({ email: users.email })
-            .from(users)
-            .where(
-              and(
-                inArray(users.role, ["admin", "compliance_officer"]),
-                agent.enterpriseId
-                  ? or(eq(users.enterpriseId, agent.enterpriseId), isNull(users.enterpriseId))
-                  : isNull(users.enterpriseId)
-              )
-            );
+        const title   = `Quality regression: ${agentName}`;
+        const message = `${agentName} production quality (${metrics.productionScore}/100) is ${gap} points below its design-time score (${Math.round(designScore)}/100). Review the Quality tab for details.`;
 
-          const title   = `Quality regression: ${agentName}`;
-          const message = `${agentName} production quality (${metrics.productionScore}/100) is ${gap} points below its design-time score (${Math.round(designScore)}/100). Review the Quality tab for details.`;
-
-          for (const { email } of recipientRows) {
-            void createNotification({
-              recipientEmail: email,
-              enterpriseId:   agent.enterpriseId,
-              type:           "quality.regression",
-              title,
-              message,
-              entityType:     "blueprint",
-              entityId:       agent.id,
-              link,
-            });
-          }
-
-          // Webhook event
-          void publishEvent({
-            event: {
-              type: "blueprint.quality_regression",
-              payload: {
-                agentId:         agent.agentId,
-                blueprintId:     agent.id,
-                agentName,
-                designScore:     Math.round(designScore),
-                productionScore: metrics.productionScore,
-                gap,
-                weekStart,
-              },
-            },
-            actor:        { email: "system@intellios", role: "system" },
-            entity:       { type: "blueprint", id: agent.id },
-            enterpriseId: agent.enterpriseId ?? null,
+        for (const { email } of recipientRows) {
+          void createNotification({
+            recipientEmail: email,
+            enterpriseId:   agent.enterpriseId,
+            type:           "quality.regression",
+            title,
+            message,
+            entityType:     "blueprint",
+            entityId:       agent.id,
+            link,
           });
         }
-      } catch (agentErr) {
-        console.error("[quality-trends] Failed to snapshot agent:", agent.agentId, agentErr);
-      }
-    }
 
-    return NextResponse.json({ weekStart, snapshots, regressions });
+        // Webhook event
+        void publishEvent({
+          event: {
+            type: "blueprint.quality_regression",
+            payload: {
+              agentId:         agent.agentId,
+              blueprintId:     agent.id,
+              agentName,
+              designScore:     Math.round(designScore),
+              productionScore: metrics.productionScore,
+              gap,
+              weekStart,
+            },
+          },
+          actor:        { email: "system@intellios", role: "system" },
+          entity:       { type: "blueprint", id: agent.id },
+          enterpriseId: agent.enterpriseId ?? null,
+        });
+      }
+    };
+
+    const result = await runCronBatch({
+      jobName: JOB_NAME,
+      items: ordered,
+      itemId: (a) => a.agentId,
+      handler: snapshotAgent,
+    });
+
+    return NextResponse.json({
+      weekStart,
+      snapshots: result.succeeded,
+      regressions,
+      failed: result.failed,
+      skipped: result.skipped,
+      budgetExhausted: result.budgetExhausted,
+      durationMs: result.durationMs,
+    });
   } catch (err) {
     console.error("[quality-trends] Cron job failed:", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
