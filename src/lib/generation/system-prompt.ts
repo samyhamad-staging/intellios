@@ -3,22 +3,49 @@ import { IntakeContext, IntakeClassification } from "@/lib/types/intake";
 
 /**
  * Sanitize a user-supplied string before interpolating it into an LLM prompt.
- * Strips XML/HTML-like tags, collapses excessive newlines, strips role/instruction
- * injection prefixes, and enforces a length cap.
+ * Defense layer 1 of 3 (see ADR-025): scalar stripping of known injection
+ * markers, XML/HTML-like tags, role prefixes, common phrases, unicode tricks,
+ * and excessive newlines — plus a length cap.
  *
  * P4-SEC-001: Prompt injection mitigation for all user-controlled values.
  *
  * Strips:
- *   - XML/HTML-like tags (<tag>)
- *   - Instruction-like role prefixes (\nINSTRUCTION:, \nSYSTEM:, \nHuman:, \nAssistant:)
- *     which are the canonical prompt-injection attack vectors against Claude
+ *   - Zero-width characters (U+200B–U+200F, U+FEFF) and fullwidth angle brackets (＜＞)
+ *   - Well-known special tokens: <|im_start|>, <|im_end|>, <|endoftext|>, [INST], [/INST]
+ *   - Markdown role markers: ### Instruction / System / User / Assistant
+ *   - XML/HTML-like angle brackets (<tag>)
+ *   - Role/instruction prefixes (INSTRUCTION:, SYSTEM:, Human:, Assistant:) anywhere
+ *     in the input (not just after \n — previously was a gap)
+ *   - Common injection phrases: "ignore previous instructions", "disregard your
+ *     instructions", "you are now", "new system prompt", "end of instructions"
  *   - Excessive blank lines (3+ → 2)
+ *
+ * Used by 9 call sites across generation, intake, and the blueprint refine route.
+ * Intake surfaces layer this under a delimited `<untrusted_user_input>` wrapper
+ * (see `src/lib/intake/sanitize.ts`). Generation stays on this primitive alone
+ * because it runs after human blueprint review (ADR-025 trust-model rationale).
  */
 export function sanitizePromptInput(input: string, maxLength = 500): string {
   return input
-    .replace(/[<>]/g, "")                                                         // Strip XML/HTML-like tags
-    .replace(/\n[ \t]*(INSTRUCTION|SYSTEM|Human|Assistant)[ \t]*:/gi, "\n")       // Strip role/instruction prefixes
-    .replace(/\n{3,}/g, "\n\n")                                                   // Collapse excessive newlines
+    // --- Unicode normalization ---
+    .replace(/[\u200B-\u200F\uFEFF]/g, "")                                        // Zero-width chars
+    .replace(/[＜＞]/g, "")                                                        // Fullwidth angle brackets
+    // --- Well-known injection tokens (order: before generic <> strip) ---
+    .replace(/<\|\s*(im_start|im_end|endoftext)\s*\|>/gi, "")                     // Claude/OpenAI special tokens
+    .replace(/\[\s*\/?\s*INST\s*\]/gi, "")                                        // Llama-style tokens
+    .replace(/#{2,}\s*(Instruction|System|User|Assistant)\s*:?/gi, "")            // Markdown role markers
+    // --- Generic XML/HTML stripping ---
+    .replace(/[<>]/g, "")
+    // --- Role/instruction prefixes anywhere (previously only after \n) ---
+    .replace(/(^|[\n.!?;])[ \t]*(INSTRUCTION|SYSTEM|Human|Assistant)[ \t]*:/gi, "$1")
+    // --- Common injection phrases ---
+    .replace(/\bignore\s+(?:all\s+)?(?:previous|prior|above|earlier)\s+(?:instructions?|prompts?|directives?|messages?)\b/gi, "")
+    .replace(/\bdisregard\s+(?:your|the|all|previous|prior)\s+(?:instructions?|prompts?|directives?)\b/gi, "")
+    .replace(/\byou are now\b/gi, "")
+    .replace(/\bnew\s+system\s+prompt\b/gi, "")
+    .replace(/\bend\s+of\s+(?:instructions?|prompt|system)\b/gi, "")
+    // --- Whitespace normalization + length cap ---
+    .replace(/\n{3,}/g, "\n\n")
     .slice(0, maxLength);
 }
 
