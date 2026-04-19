@@ -62,10 +62,12 @@ REQUIRED_CHECKS=(
 log() { echo "[ignore-build] $*" >&2; }
 
 # ── Gate 1: Path filter ──────────────────────────────────────────────────────
-# Skip if src/ is unchanged relative to the previous commit.
-# On the very first commit (no parent) always proceed.
-if git rev-parse HEAD~1 &>/dev/null; then
-  if git diff HEAD~1 --quiet -- src/; then
+# Skip if src/ is unchanged relative to the previous commit. Vercel invokes
+# this script from the configured Root Directory (src/), so we resolve paths
+# from the repo root to avoid the src/ filter becoming src/src/.
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+if git -C "$REPO_ROOT" rev-parse HEAD~1 &>/dev/null; then
+  if git -C "$REPO_ROOT" diff HEAD~1 --quiet -- src/; then
     log "No changes in src/ — skipping build."
     exit 0
   fi
