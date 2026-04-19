@@ -1,5 +1,5 @@
 {
-  "ignoreCommand": "bash scripts/vercel-ignore-build-step.sh",
+  "ignoreCommand": "bash ../scripts/vercel-ignore-build-step.sh",
   "crons": [
     {
       "path": "/api/cron/review-reminders",
