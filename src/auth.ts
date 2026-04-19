@@ -17,7 +17,6 @@ import { db } from "@/lib/db";
 import { users, enterpriseSettings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { randomUUID } from "crypto";
 import type { EnterpriseSettings } from "@/lib/settings/types";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 
@@ -271,7 +270,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             : "viewer";
 
           // Use a random password so SSO users can't log in via credentials
-          const passwordHash = await bcrypt.hash(`sso-${randomUUID()}`, 10);
+          // Web Crypto `crypto.randomUUID()` is Edge-Runtime compatible and
+          // available globally in Node 18+; avoids importing the `crypto`
+          // Node module into the Edge Middleware bundle (see build warnings
+          // in dpl_9GbZia5e on 2026-04-19).
+          const passwordHash = await bcrypt.hash(`sso-${crypto.randomUUID()}`, 10);
 
           const [newUser] = await db
             .insert(users)
