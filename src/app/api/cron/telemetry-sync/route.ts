@@ -3,16 +3,18 @@ import { requireCronAuth } from "@/lib/auth/cron-auth";
 import { syncAllAgentCoreTelemetry } from "@/lib/telemetry/sync";
 
 /**
- * POST /api/cron/telemetry-sync
+ * GET /api/cron/telemetry-sync
  *
  * Scheduled job that pulls CloudWatch metrics for all deployed AgentCore agents
  * and inserts them into `agentTelemetry` with source = 'cloudwatch'.
  *
- * Recommended schedule: every hour via Vercel Cron or an external scheduler.
+ * Schedule: hourly via Vercel Cron (see `vercel.json`). Vercel Crons invoke
+ * scheduled paths as GET — this handler must export GET, not POST, to match
+ * the dispatch method (sibling cron routes do the same).
  *
  * Security: mandatory Bearer token via CRON_SECRET env var.
  */
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   const cronError = requireCronAuth(request);
   if (cronError) return cronError;
 

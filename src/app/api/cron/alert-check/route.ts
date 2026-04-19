@@ -3,17 +3,19 @@ import { requireCronAuth } from "@/lib/auth/cron-auth";
 import { checkAndFireAlerts } from "@/lib/telemetry/alerts";
 
 /**
- * POST /api/cron/alert-check
+ * GET /api/cron/alert-check
  *
  * Evaluates all configured alert thresholds for every deployed agent and fires
  * notifications + events for any breached thresholds.
  *
- * Recommended schedule: every 15 minutes via Vercel Cron or external scheduler.
+ * Schedule: daily via Vercel Cron (see `vercel.json`). Vercel Crons invoke
+ * scheduled paths as GET — this handler must export GET, not POST, to match
+ * the dispatch method (sibling cron routes do the same).
  *
  * Security: mandatory Bearer token via CRON_SECRET env var.
  * Query param `enterpriseId` scopes the check to a single enterprise (optional).
  */
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   const cronError = requireCronAuth(request);
   if (cronError) return cronError;
 
