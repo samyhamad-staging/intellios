@@ -38,6 +38,53 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 157 — 2026-04-18
+
+**Runtime-execution + retirement closure — invokeAgent adapter, Test Console UI, retireFromAgentCore, ADR-027, demo runbook.**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-opus-4-7 |
+| Input tokens (est.) | ~340,000 |
+| Output tokens (est.) | ~24,000 |
+| Tool calls (est.) | ~120 |
+| Subagents spawned | 0 |
+| Estimated cost | ~$6.90 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 2 (strategic-analysis request + "proceed with recommendations") |
+| Decisions made | 1 (D-Scope — approve recommended P0 path) |
+| Engagement type | Menu-driven direction, autonomous execution |
+| Estimated time | ~2 min |
+
+### Deliverables
+
+- ADR-027 — Test Console as governed test harness (six guardrails)
+- `src/lib/agentcore/invoke.ts` — `invokeAgent()` adapter over `BedrockAgentRuntimeClient.InvokeAgentCommand`, returns `AsyncIterable<string>`
+- `src/lib/agentcore/deploy.ts` — added `retireFromAgentCore(deployment, actor)` issuing `DeleteAgentCommand` + poll to 404 / 30s timeout; idempotent on `ResourceNotFoundException`
+- `src/lib/agentcore/types.ts` — `AgentCoreRetirementRecord` + optional `retirement` field on `AgentCoreDeploymentRecord`
+- `src/lib/errors.ts` — `AGENT_NOT_DEPLOYED` (409) + `AGENTCORE_INVOKE_FAILED` (502)
+- `src/app/api/registry/[agentId]/invoke/route.ts` — streaming POST route, reviewer/compliance_officer/admin only, 10/min per-actor rate limit, prompt-hash audit, `[error:CODE]` in-stream markers
+- `src/app/registry/[agentId]/test/page.tsx` — Test Console client page (Catalyst + ui/badge, client-only sessionId via `crypto.randomUUID()`, "Test harness — not a production runtime" banner)
+- `src/app/api/blueprints/[id]/status/route.ts` — hooked `retireFromAgentCore()` into the `deprecated` transition (best-effort, never blocks status change)
+- `src/package.json` — added `@aws-sdk/client-bedrock-agent-runtime ^3.1024.0`
+- `docs/demo/lifecycle-demo.md` — 8-stage Retail Bank Customer-FAQ walkthrough with per-stage fallback paths + troubleshooting matrix
+- Typecheck: zero new errors (7 pre-existing in `blueprint-lifecycle.test.ts` remain)
+
+### Deferred to session 158+
+
+- One-time live AWS smoke deploy (sandbox creds out of reach here)
+- `scripts/seed-demo.ts` (Retail Bank demo enterprise + ABP fixture)
+- Demo rehearsal + screen recording
+- OQ on RETURN_CONTROL tool-mock service
+
+---
+
 ## Session 156 — 2026-04-18
 
 **Admin DLQ UI — wiring ADR-026 into the webhooks page.**

@@ -2,7 +2,30 @@
 
 **Vision:** The governed control plane for enterprise AI agents — own design, governance, lifecycle, and observability. Execution happens on cloud provider runtimes. The value is the governance wrapper, not the compute.
 
-**Last updated:** 2026-04-08 (Session 145 — Contrast Token Cleanup)
+**Last updated:** 2026-04-18 (Session 157 — Lifecycle Closure: invokeAgent + Test Console + retirement + ADR-027)
+
+---
+
+## Phase 3 — Lifecycle Closure (Session 157 complete; Session 158 pending live smoke)
+
+**Goal:** close the two gaps blocking a credible end-to-end 8-stage lifecycle demo against real AWS AgentCore — runtime execution and retirement. Preserve the "governed control plane, not a runtime" positioning by framing the new invocation surface as a *test harness* (ADR-027).
+
+### ✓ Session 157 (2026-04-18) — Runtime-execution + retirement closure
+
+- `src/lib/agentcore/invoke.ts` — `invokeAgent()` adapter over `BedrockAgentRuntimeClient.InvokeAgentCommand`, returning `AsyncIterable<string>` of response chunks. RETURN_CONTROL rendered as synthetic `[tool call simulated — invoked: X]` marker (no real tool execution per ADR-027 guardrail).
+- `POST /api/registry/[agentId]/invoke` — streaming route, reviewer/compliance_officer/admin only, 10/min per-actor rate limit, prompt-hash (SHA256-16) audit row, in-stream `[error:CODE]` markers on failure.
+- `/registry/[agentId]/test` — Test Console page (Catalyst primitives + `ui/badge`), client-only `crypto.randomUUID()` sessionId, "Test harness — not a production runtime" banner, invokability gate on `status === "deployed" && deploymentTarget === "agentcore"`.
+- `src/lib/agentcore/deploy.ts` — `retireFromAgentCore(deployment, actor)` issuing `DeleteAgentCommand` + poll-to-404 / 30s timeout; idempotent on `ResourceNotFoundException`. Hooked into `PATCH /api/blueprints/[id]/status` on the `deprecated` transition (best-effort, never blocks status change).
+- **ADR-027** — Test Console as governed test harness (six guardrails: reviewer+ gate, rate limit, no server-side transcript, audit every invoke, no RETURN_CONTROL execution, explicit UI framing).
+- `docs/demo/lifecycle-demo.md` — 8-stage Retail Bank Customer-FAQ walkthrough with per-stage fallback paths + troubleshooting matrix.
+- Zero new typecheck errors; test suite unchanged (invokeAgent adapter is thin enough that a mock-only test would test SDK wiring, not product behavior — real confidence signal is the session-158 live smoke).
+
+### ⋯ Session 158 (pending) — Live AWS smoke + demo rehearsal
+
+- One-time live smoke deploy against a sandbox AWS account with a Bedrock execution role — validates `deploy.ts` + `translate.ts` + `invoke.ts` + `retireFromAgentCore` against the real Bedrock API contract end-to-end.
+- `scripts/seed-demo.ts` — Retail Bank demo enterprise + ABP fixture (leverage existing template system rather than hand-rolling).
+- Demo rehearsal + screen recording once live smoke is green.
+- Resolve OQ-010 (RETURN_CONTROL tool-mock service — build/defer/publish-as-cookbook).
 
 ---
 
