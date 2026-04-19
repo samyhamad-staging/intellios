@@ -41,7 +41,7 @@ export async function register(): Promise<void> {
       // without needing to SSH into a running container.
       dbPoolMax: process.env.DB_POOL_MAX ?? "20 (default)",
       logLevel: process.env.LOG_LEVEL ?? "info (default)",
-      pid: typeof process !== "undefined" && "pid" in process ? process.pid : null,
+      pid: (process as unknown as Record<string, unknown>)["pid"] ?? null,
       bootedAt: new Date().toISOString(),
     });
   } catch {

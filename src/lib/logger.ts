@@ -64,16 +64,14 @@ function emit(level: LogLevel, msg: string, fields?: Fields): void {
     ...fields,
   };
 
-  const line = JSON.stringify(entry) + "\n";
-  // warn/error go to stderr so they're captured separately by most platforms.
-  // Edge Runtime lacks process.stderr/stdout, so fall back to console there.
-  const isEdge = typeof process === "undefined" || !process.stderr;
+  const line = JSON.stringify(entry);
+  // warn/error -> stderr, info/debug -> stdout. Using console.* (not
+  // process.stderr/stdout) keeps this compatible with the Edge Runtime,
+  // where Node stream globals are unavailable.
   if (level === "error" || level === "warn") {
-    if (isEdge) console.error(line.trimEnd());
-    else process.stderr.write(line);
+    console.error(line);
   } else {
-    if (isEdge) console.log(line.trimEnd());
-    else process.stdout.write(line);
+    console.log(line);
   }
 }
 
