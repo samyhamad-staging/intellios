@@ -151,6 +151,6 @@ Intellios is the *governed control plane*, not the runtime. The Test Console (st
 ## Session 158+ Open Items
 
 - One-time live AWS smoke deploy (validates `deploy.ts` + `translate.ts` + `invoke.ts` + `retireFromAgentCore()` end-to-end against the real Bedrock API contract).
-- `scripts/seed-demo.ts` — Retail Bank Customer-FAQ demo enterprise + ABP fixture.
+- ✅ `scripts/seed-demo.ts` (shim) → `src/lib/db/seed-retail-bank.ts` (logic) — Retail Bank Customer-FAQ demo enterprise, 3 personas, 3 governance policies, single-step approval chain. Pending: seed `executionRoleArn` for the sandbox Bedrock role.
 - Demo rehearsal + screen recording (`docs/demo/lifecycle-demo.md` is the runbook).
 - OQ-010 resolution — RETURN_CONTROL tool-mock service.

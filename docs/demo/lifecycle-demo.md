@@ -16,10 +16,27 @@ This runbook walks through all 8 lifecycle stages end-to-end. Every stage is **r
 
 ## Stage 0 — Setup (pre-demo, not shown on screen)
 
-- Open browser to `https://demo.intellios.ai/intake`.
+- Pre-load the `retail-bank-demo` enterprise:
+
+  ```bash
+  npx tsx scripts/seed-demo.ts
+  ```
+
+  This is idempotent. It seeds the `retail-bank-demo` enterprise, three personas (Marta as architect, Rafael as reviewer, Ed as admin), a single-step approval chain, and three governance policies (Customer-Facing Safety, GLBA Privacy, SR 11-7 Lite). See `src/lib/db/seed-retail-bank.ts` for the full contents.
+
+- Set the Bedrock execution-role ARN on the seeded enterprise (the seed script leaves it as `null`):
+
+  ```sql
+  UPDATE enterprise_settings
+  SET settings = jsonb_set(settings, '{deploymentTargets,agentcore,executionRoleArn}', '"arn:aws:iam::<ACCOUNT_ID>:role/<BedrockExecRole>"')
+  WHERE enterprise_id = 'retail-bank-demo';
+  ```
+
+  Without this, Stage 5 will 400 with `target not configured`.
+
+- Open browser to `https://demo.intellios.ai/intake` and sign in as `marta@retailbank.demo` / `Marta1234!`.
 - Confirm `GET /api/healthz` returns 200 and `bedrockCircuit.status === "closed"`.
 - Confirm sandbox AWS credentials are mounted: `aws bedrock-agent list-agents --region us-east-1` returns without error.
-- Pre-load the demo enterprise with one approval-chain step and no test-before-approval requirement.
 
 **Fallback:** if `/api/healthz` is not 200, switch to the rehearsal capture video. Do **not** attempt the live path.
 
@@ -180,5 +197,6 @@ Before running this demo against prospects, the following must be green:
 - [ ] Test Console invoke returns a response within 5s on the smoke-deploy agent.
 - [ ] Retirement removes the smoke-deploy agent successfully; badge shows `retired`.
 - [ ] CloudWatch dashboard renders at least one invocation from the smoke run.
-- [ ] Demo enterprise + approval-chain seed script (`scripts/seed-demo.ts`) is deterministic across fresh database runs.
+- [x] Demo enterprise + approval-chain seed script (`scripts/seed-demo.ts` → `src/lib/db/seed-retail-bank.ts`) is deterministic across fresh database runs.
+- [ ] Seeded `executionRoleArn` on `retail-bank-demo` enterprise is live against the sandbox AWS account.
 - [ ] Pre-recorded capture of the happy path exists as fallback (screen recording of a successful rehearsal).

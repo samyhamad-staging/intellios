@@ -23,7 +23,7 @@
 ### ⋯ Session 158 (pending) — Live AWS smoke + demo rehearsal
 
 - One-time live smoke deploy against a sandbox AWS account with a Bedrock execution role — validates `deploy.ts` + `translate.ts` + `invoke.ts` + `retireFromAgentCore` against the real Bedrock API contract end-to-end.
-- `scripts/seed-demo.ts` — Retail Bank demo enterprise + ABP fixture (leverage existing template system rather than hand-rolling).
+- ✅ `scripts/seed-demo.ts` — Retail Bank demo enterprise + 3 personas + 3 policies (session 158 bootstrap; shim at `scripts/seed-demo.ts`, logic at `src/lib/db/seed-retail-bank.ts`). Still pending: seed the `executionRoleArn` for the sandbox Bedrock role.
 - Demo rehearsal + screen recording once live smoke is green.
 - Resolve OQ-010 (RETURN_CONTROL tool-mock service — build/defer/publish-as-cookbook).
 
