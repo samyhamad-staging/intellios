@@ -30,7 +30,10 @@ import {
 
 import type { ABP } from "@/lib/types/abp";
 import type { AgentCoreConfig } from "@/lib/settings/types";
-import type { AgentCoreDeploymentRecord } from "./types";
+import type {
+  AgentCoreDeploymentRecord,
+  AgentCoreRetirementRecord,
+} from "./types";
 import { translateAbpToBedrockAgent } from "./translate";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -226,6 +229,117 @@ export async function deployToAgentCore(
     foundationModel: config.foundationModel,
     deployedAt: new Date().toISOString(),
     deployedBy: actor.email,
+  };
+}
+
+// ─── Retirement (ADR-027 companion — deprecation side of lifecycle) ──────────
+
+interface RetireActor {
+  email: string;
+}
+
+const RETIRE_POLL_INTERVAL_MS = 500;
+const RETIRE_POLL_MAX_ATTEMPTS = 60; // 30 seconds total
+
+/**
+ * Retire a previously-deployed AgentCore agent by calling DeleteAgent on the
+ * live Bedrock resource. Idempotent: a ResourceNotFoundException is treated
+ * as success (agent already gone).
+ *
+ * This is called best-effort from the PATCH /api/blueprints/[id]/status route
+ * on the `deprecated` transition. A retirement failure logs but never blocks
+ * deprecation — governance/audit semantics of deprecation must survive a
+ * Bedrock outage, and operators can reconcile the AWS side manually using
+ * the `deployment.agentId` preserved on the blueprint record.
+ *
+ * @param deployment - The existing deployment record (source of agentId + region)
+ * @param actor      - The authenticated user triggering the retirement
+ * @returns          AgentCoreRetirementRecord to be merged into deploymentMetadata
+ */
+export async function retireFromAgentCore(
+  deployment: AgentCoreDeploymentRecord,
+  actor: RetireActor
+): Promise<AgentCoreRetirementRecord> {
+  const now = () => new Date().toISOString();
+
+  if (!deployment.agentId || !deployment.region) {
+    return {
+      target: "agentcore",
+      agentId: deployment.agentId ?? "",
+      retiredAt: now(),
+      retiredBy: actor.email,
+      deleted: false,
+      error: "Deployment record missing agentId or region — nothing to retire.",
+    };
+  }
+
+  const client = new BedrockAgentClient({ region: deployment.region });
+
+  // ── Step 1: Issue DeleteAgent ───────────────────────────────────────────────
+  try {
+    await client.send(
+      new DeleteAgentCommand({
+        agentId: deployment.agentId,
+        skipResourceInUseCheck: true,
+      })
+    );
+  } catch (err) {
+    const awsName = (err as { name?: string } | undefined)?.name;
+    // Idempotent: agent is already gone
+    if (awsName === "ResourceNotFoundException") {
+      return {
+        target: "agentcore",
+        agentId: deployment.agentId,
+        retiredAt: now(),
+        retiredBy: actor.email,
+        deleted: true,
+      };
+    }
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      target: "agentcore",
+      agentId: deployment.agentId,
+      retiredAt: now(),
+      retiredBy: actor.email,
+      deleted: false,
+      error: `DeleteAgent failed: ${msg}`,
+    };
+  }
+
+  // ── Step 2: Poll until the agent is gone ────────────────────────────────────
+  // Bedrock DeleteAgent is async; the resource is in DELETING for a brief
+  // window before it disappears. We poll GetAgent until it 404s (or 30s).
+  for (let attempt = 0; attempt < RETIRE_POLL_MAX_ATTEMPTS; attempt++) {
+    await sleep(RETIRE_POLL_INTERVAL_MS);
+    try {
+      await client.send(new GetAgentCommand({ agentId: deployment.agentId }));
+      // Still exists — keep polling
+    } catch (err) {
+      const awsName = (err as { name?: string } | undefined)?.name;
+      if (awsName === "ResourceNotFoundException") {
+        return {
+          target: "agentcore",
+          agentId: deployment.agentId,
+          retiredAt: now(),
+          retiredBy: actor.email,
+          deleted: true,
+        };
+      }
+      // Transient GetAgent errors — keep polling until timeout
+    }
+  }
+
+  // Timeout — DeleteAgent was accepted but the agent is still visible.
+  // Surface as a non-blocking retirement warning.
+  return {
+    target: "agentcore",
+    agentId: deployment.agentId,
+    retiredAt: now(),
+    retiredBy: actor.email,
+    deleted: false,
+    error: `DeleteAgent accepted but agent still visible after ${
+      (RETIRE_POLL_MAX_ATTEMPTS * RETIRE_POLL_INTERVAL_MS) / 1000
+    }s — AWS cleanup is still in progress; reconcile manually if it does not resolve.`,
   };
 }
 

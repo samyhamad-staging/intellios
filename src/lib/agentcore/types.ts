@@ -134,8 +134,31 @@ export interface AgentCoreExportManifest {
 // ─── Direct deployment result (Phase 2) ──────────────────────────────────────
 
 /**
+ * Retirement evidence — written alongside the deployment record when a
+ * deployed blueprint transitions to `deprecated` and retireFromAgentCore()
+ * successfully deletes the Bedrock agent.
+ */
+export interface AgentCoreRetirementRecord {
+  target: "agentcore";
+  agentId: string;
+  retiredAt: string;
+  retiredBy: string;
+  /**
+   * `true` if the AWS DeleteAgent call succeeded (or the agent was already
+   * absent). `false` if retirement was attempted but failed — operators
+   * must reconcile manually. Deprecation is not blocked by retirement failure.
+   */
+  deleted: boolean;
+  /** Error message if retirement failed; undefined on success. */
+  error?: string;
+}
+
+/**
  * The result of a successful POST /api/blueprints/[id]/deploy/agentcore call.
  * Stored in agentBlueprints.deploymentMetadata.
+ *
+ * `retirement` is populated later, when the blueprint is deprecated and
+ * retireFromAgentCore() is invoked. It is absent on fresh deployments.
  */
 export interface AgentCoreDeploymentRecord {
   target: "agentcore";
@@ -146,4 +169,6 @@ export interface AgentCoreDeploymentRecord {
   foundationModel: string;
   deployedAt: string;
   deployedBy: string;
+  /** Populated by retireFromAgentCore() when the blueprint is deprecated. */
+  retirement?: AgentCoreRetirementRecord;
 }

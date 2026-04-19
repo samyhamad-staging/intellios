@@ -15,6 +15,9 @@ import { checkDeploymentHealth } from "@/lib/monitoring/health";
 import { getEnterpriseSettings } from "@/lib/settings/get-settings";
 import { z } from "zod";
 import type { ApprovalStepRecord } from "@/lib/settings/types";
+import { retireFromAgentCore } from "@/lib/agentcore/deploy";
+import type { AgentCoreDeploymentRecord } from "@/lib/agentcore/types";
+import { logger, serializeError } from "@/lib/logger";
 
 type Status = "draft" | "in_review" | "approved" | "rejected" | "deprecated" | "deployed" | "suspended";
 
@@ -425,6 +428,97 @@ export async function PATCH(
       entity: { type: "blueprint", id },
       enterpriseId: blueprint.enterpriseId ?? null,
     });
+
+    // ── Retirement (ADR-027 companion): deprecate → retire the live AgentCore agent ──
+    // Best-effort. Deprecation must not be blocked by a Bedrock outage; the
+    // status change + audit row are already committed. If retirement fails the
+    // operator can reconcile manually via the preserved deployment.agentId.
+    if (
+      newStatus === "deprecated" &&
+      blueprint.deploymentTarget === "agentcore"
+    ) {
+      const deployment =
+        blueprint.deploymentMetadata as unknown as AgentCoreDeploymentRecord | null;
+
+      if (deployment?.agentId && deployment.region) {
+        try {
+          const retirement = await retireFromAgentCore(deployment, {
+            email: userEmail,
+          });
+
+          // Merge retirement evidence into the deployment blob so it survives
+          // on the blueprint record for audit + demo purposes.
+          const nextMetadata: AgentCoreDeploymentRecord = {
+            ...deployment,
+            retirement,
+          };
+
+          await db
+            .update(agentBlueprints)
+            .set({
+              deploymentMetadata: nextMetadata as unknown as Record<string, unknown>,
+              updatedAt: new Date(),
+            })
+            .where(eq(agentBlueprints.id, id));
+
+          // Audit + event for the retirement side-effect.
+          try {
+            await db.insert(auditLog).values({
+              actorEmail: userEmail,
+              actorRole: userRole,
+              action: retirement.deleted
+                ? "blueprint.agentcore_retired"
+                : "blueprint.agentcore_retire_failed",
+              entityType: "blueprint",
+              entityId: id,
+              enterpriseId: blueprint.enterpriseId ?? null,
+              metadata: {
+                bedrockAgentId: retirement.agentId,
+                deleted: retirement.deleted,
+                ...(retirement.error ? { error: retirement.error } : {}),
+              },
+            });
+          } catch (auditErr) {
+            logger.error("audit.write.failed", {
+              requestId,
+              action: "blueprint.agentcore_retired",
+              err: serializeError(auditErr),
+            });
+          }
+
+          void publishEvent({
+            event: {
+              type: retirement.deleted
+                ? "blueprint.agentcore_retired"
+                : "blueprint.agentcore_retire_failed",
+              payload: {
+                blueprintId: id,
+                bedrockAgentId: retirement.agentId,
+                deleted: retirement.deleted,
+              },
+            },
+            actor: { email: userEmail, role: userRole },
+            entity: { type: "blueprint", id },
+            enterpriseId: blueprint.enterpriseId ?? null,
+          }).catch((eventErr) => {
+            logger.error("event.dispatch.failed", {
+              requestId,
+              type: "blueprint.agentcore_retired",
+              err: serializeError(eventErr),
+            });
+          });
+        } catch (retireErr) {
+          // retireFromAgentCore returns a structured failure record; a throw
+          // here is unexpected. Log and continue — deprecation is already
+          // committed.
+          logger.error("blueprint.agentcore.retire.failed", {
+            requestId,
+            blueprintId: id,
+            err: serializeError(retireErr),
+          });
+        }
+      }
+    }
 
     // On deployment: create initial governance health record (fire-and-forget, does not block response).
     // Uses evaluatePolicies() — pure rule engine, no AI cost.
