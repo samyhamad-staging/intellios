@@ -804,7 +804,7 @@ describe("POST /api/blueprints/[id]/review", () => {
       selectResult.mockReturnValue([bp]);
 
       const res = await callReview(makeRequest("POST", "http://localhost:3000/api/blueprints/bp-001/review"));
-      const body = await responseJson(res);
+      const body = (await responseJson(res)) as { code: string; details?: { violations: Array<Record<string, unknown>>; overrideAvailable: boolean } };
 
       // 409 GOVERNANCE_BLOCKED, not 403 / 422 — so clients can distinguish
       // this from auth / state-machine failures and surface override UI.
@@ -840,7 +840,7 @@ describe("POST /api/blueprints/[id]/review", () => {
       selectResult.mockReturnValue([bp]);
 
       const res = await callReview(makeRequest("POST", "http://localhost:3000/api/blueprints/bp-001/review"));
-      const body = await responseJson(res);
+      const body = (await responseJson(res)) as { code: string; details?: { overrideAvailable: boolean } };
 
       // Override is admin-only — a reviewer with the flag set is still blocked.
       expect(res.status).toBe(409);
@@ -931,7 +931,7 @@ describe("POST /api/blueprints/[id]/review", () => {
       }));
 
       const res = await callReview(makeRequest("POST", "http://localhost:3000/api/blueprints/bp-001/review"));
-      const body = await responseJson(res);
+      const body = (await responseJson(res)) as { code: string };
 
       expect(res.status).toBe(500);
       expect(body.code).toBe("INTERNAL_ERROR");
