@@ -95,6 +95,37 @@ export type IntelliosEvent =
       payload: { blueprintId: string; agentId: string; deploymentId: string | null };
     }
   | {
+      // Session 157 — Test Console reviewer-scoped invocation (ADR-027).
+      // No transcript is persisted — the prompt is hashed and the sessionId is
+      // client-generated.
+      type: "blueprint.test_invoked";
+      payload: {
+        blueprintId: string;
+        agentId: string;
+        bedrockAgentId: string;
+        sessionId: string;
+        promptHash: string;
+      };
+    }
+  | {
+      // Session 157 — successful AgentCore retirement (DeleteAgent) on deprecation.
+      type: "blueprint.agentcore_retired";
+      payload: {
+        blueprintId: string;
+        bedrockAgentId: string;
+        deleted: boolean;
+      };
+    }
+  | {
+      // Session 157 — retirement attempt failed (best-effort; deprecation still proceeded).
+      type: "blueprint.agentcore_retire_failed";
+      payload: {
+        blueprintId: string;
+        bedrockAgentId: string;
+        deleted: boolean;
+      };
+    }
+  | {
       type: "blueprint.compliance_exported";
       payload: { blueprintId: string; agentId: string };
     }

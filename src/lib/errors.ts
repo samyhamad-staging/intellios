@@ -14,6 +14,15 @@ export const ErrorCode = {
   INTERNAL_ERROR: "INTERNAL_ERROR",
   AGENTCORE_NOT_CONFIGURED: "AGENTCORE_NOT_CONFIGURED",
   AGENTCORE_DEPLOY_FAILED: "AGENTCORE_DEPLOY_FAILED",
+  // ADR-027 — Test Console invocation attempted on a blueprint that is not
+  // currently in the `deployed` state, or whose deployment record is missing
+  // AgentCore identifiers. Returned as 409 to distinguish "state problem"
+  // from "runtime problem" (AGENTCORE_INVOKE_FAILED, 502).
+  AGENT_NOT_DEPLOYED: "AGENT_NOT_DEPLOYED",
+  // ADR-027 — live InvokeAgent call against Bedrock failed (network, 5xx,
+  // stream error). Returned as 502 — upstream runtime failure, not an
+  // Intellios-side state or config issue.
+  AGENTCORE_INVOKE_FAILED: "AGENTCORE_INVOKE_FAILED",
   // ADR-019 — blueprint approval blocked by unresolved error-severity governance
   // violations. Distinct from INVALID_STATE (which covers lifecycle-state conflicts)
   // so the reviewer UI can render a violation-specific remediation experience.
@@ -42,6 +51,8 @@ const STATUS: Record<ErrorCode, number> = {
   INTERNAL_ERROR: 500,
   AGENTCORE_NOT_CONFIGURED: 400,
   AGENTCORE_DEPLOY_FAILED: 502,
+  AGENT_NOT_DEPLOYED: 409,
+  AGENTCORE_INVOKE_FAILED: 502,
   GOVERNANCE_BLOCKED: 409,
   BUDGET_EXCEEDED: 429,
   SERVICE_DEGRADED: 503,
