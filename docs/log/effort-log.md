@@ -40,27 +40,27 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ## Session 157 — 2026-04-18
 
-**Runtime-execution + retirement closure — invokeAgent adapter, Test Console UI, retireFromAgentCore, ADR-027, demo runbook.**
+**Runtime-execution + retirement closure — invokeAgent adapter, Test Console UI, retireFromAgentCore, ADR-027, demo runbook + Retail Bank seed.**
 
 ### Claude Effort
 
 | Metric | Value |
 |---|---|
 | Model | claude-opus-4-7 |
-| Input tokens (est.) | ~340,000 |
-| Output tokens (est.) | ~24,000 |
-| Tool calls (est.) | ~120 |
+| Input tokens (est.) | ~430,000 (includes continuation-after-compaction) |
+| Output tokens (est.) | ~32,000 |
+| Tool calls (est.) | ~160 |
 | Subagents spawned | 0 |
-| Estimated cost | ~$6.90 |
+| Estimated cost | ~$8.70 |
 
 ### Samy Effort
 
 | Metric | Value |
 |---|---|
-| Messages sent | 2 (strategic-analysis request + "proceed with recommendations") |
-| Decisions made | 1 (D-Scope — approve recommended P0 path) |
-| Engagement type | Menu-driven direction, autonomous execution |
-| Estimated time | ~2 min |
+| Messages sent | 4 (strategic-analysis request + "proceed" + post-compaction "proceed with recommendation" + "please proceed") |
+| Decisions made | 2 (D-Scope — approve P0 path; D-Scope — approve commit+seed follow-up) |
+| Engagement type | Menu-driven direction, autonomous execution across a context-compaction boundary |
+| Estimated time | ~3 min |
 
 ### Deliverables
 
@@ -76,12 +76,18 @@ Tracks resource consumption per session for post-project cost estimation.
 - `docs/demo/lifecycle-demo.md` — 8-stage Retail Bank Customer-FAQ walkthrough with per-stage fallback paths + troubleshooting matrix
 - Typecheck: zero new errors (7 pre-existing in `blueprint-lifecycle.test.ts` remain)
 
+### Continuation deliverables (post-compaction, same calendar day)
+
+- Landed session 157 on `main` as 3 conventional commits via the plumbing workaround (the `.git/index.lock` filesystem quirk from the 2026-04-04 memory recurred; the documented recipe worked unchanged).
+- `src/lib/db/seed-retail-bank.ts` — idempotent seed for `retail-bank-demo` enterprise + 3 persona users + 3 governance policies + single-step approval chain.
+- `scripts/seed-demo.ts` — thin shim matching `scripts/seed.ts` pattern.
+- Stage 0 of `docs/demo/lifecycle-demo.md` rewritten with the exact seed command + the `UPDATE` for `executionRoleArn`.
+
 ### Deferred to session 158+
 
 - One-time live AWS smoke deploy (sandbox creds out of reach here)
-- `scripts/seed-demo.ts` (Retail Bank demo enterprise + ABP fixture)
-- Demo rehearsal + screen recording
-- OQ on RETURN_CONTROL tool-mock service
+- Demo rehearsal + screen recording (blocked by smoke deploy)
+- OQ-010 resolution on RETURN_CONTROL tool-mock service
 
 ---
 
