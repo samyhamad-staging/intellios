@@ -29,7 +29,7 @@ export default function TermsPage() {
               Acceptance of Terms
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-              These Terms of Service ("Terms") constitute a binding agreement between you (either an individual or organization) and Intellios ("Company," "we," "us," or "our") regarding your use of the Intellios platform and related services.
+              These Terms of Service (&ldquo;Terms&rdquo;) constitute a binding agreement between you (either an individual or organization) and Intellios (&ldquo;Company,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) regarding your use of the Intellios platform and related services.
             </p>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               By accessing or using Intellios, you acknowledge that you have read, understood, and agree to be bound by these Terms. If you do not agree, you may not use the Services. We reserve the right to update these Terms at any time, and your continued use constitutes acceptance of modifications.
