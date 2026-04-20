@@ -91,6 +91,50 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 159 — 2026-04-20
+
+**Vercel `ignoreCommand` Gate 1 fix — diff against `VERCEL_GIT_PREVIOUS_SHA`, not `HEAD~1` — ending the bundled-push false-skip bug that forced three version-bump workaround commits.**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-opus-4-7 |
+| Input tokens (est.) | ~180,000 (includes one mid-session context compaction) |
+| Output tokens (est.) | ~14,000 |
+| Tool calls (est.) | ~70 |
+| Subagents spawned | 0 |
+| Estimated cost | ~$3.75 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 2 ("Validate whether these tasks remain outstanding"; "Proceed with A. Proceed carefully and diligently…") |
+| Decisions made | 1 (D-Scope — picked A from the primary-options menu) |
+| Engagement type | Menu-driven direction, autonomous execution with explicit rigor hint |
+| Estimated time | ~1 min |
+
+### Deliverables
+
+- `scripts/vercel-ignore-build-step.sh` — baseline resolution replaced: `VERCEL_GIT_PREVIOUS_SHA` → `HEAD~1` → first-commit precedence chain, with targeted `git fetch --depth=200 origin $SHA` for shallow-clone recovery, baseline-decision logging on every invocation, and CRLF→LF normalization on this file
+- `docs/decisions/028-vercel-ignore-baseline-previous-deploy.md` — ADR with three prior workaround SHAs named, three rejected alternatives, and CRLF-caveat follow-ups
+- `docs/decisions/_index.md` — ADR-028 row (proposed)
+- `docs/log/2026-04-20_session-159.md` — session log (8 actions, 6-scenario synthetic harness, commit verification)
+- `docs/log/_index.md` — session 159 row + session 158 row (gap-check recovery for the 158 deferred-at-close index write)
+- Commit `b8471c5` on `main` via plumbing workaround (5 files, 162 insertions / 14 deletions)
+- Synthetic-repo validation harness — 6/6 scenarios pass (bundled push, docs-only, src-only, env-unset, unreachable-SHA, first-commit)
+- `bash -n` clean after LF normalization
+
+### Deferred to session 160+
+
+- Session 158's `/api/cron/webhook-retries` defensive top-level try/catch (observability polish — loop is healthy)
+- Session 158's `docs/log/effort-log.md` + `docs/project-journal.md` entries (158 remains unlogged in these files)
+- Broader `docs/` CRLF normalization pass (~65 files on working tree, untouched this session)
+- Regression-test wrapper around the 6-scenario harness (`scripts/test-vercel-ignore-build-step.sh`) — cheap to add when next regression lands
+
+---
+
 ## Session 156 — 2026-04-18
 
 **Admin DLQ UI — wiring ADR-026 into the webhooks page.**
