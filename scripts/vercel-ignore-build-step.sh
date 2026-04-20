@@ -11,9 +11,25 @@
 # This script implements two sequential gates:
 #
 # Gate 1 — Path filter
-#   If no files in src/ changed since the previous commit, skip the build.
-#   This matches the previous behaviour and avoids spending build minutes on
-#   docs-only or tooling changes.
+#   If no files in src/ changed since the last successfully deployed commit,
+#   skip the build. This avoids spending build minutes on docs-only or tooling
+#   changes.
+#
+#   Baseline precedence (first reachable wins):
+#     1. $VERCEL_GIT_PREVIOUS_SHA — the SHA of the previous successful
+#        production deploy for this branch. Vercel sets this at build time.
+#        Using this baseline means "diff every commit since the last deploy",
+#        which is correct for bundled pushes. If the SHA is not in the local
+#        shallow clone, the script attempts a targeted `git fetch`.
+#     2. HEAD~1 — single-commit diff. Used when VERCEL_GIT_PREVIOUS_SHA is
+#        absent (local run, first deploy) or unreachable after fetch.
+#     3. First-commit — if HEAD~1 does not exist, fall through to Gate 2.
+#
+#   History of this logic: earlier versions diffed HEAD~1 only, which is
+#   blind to src/ changes in non-HEAD commits of a bundled push (e.g. a
+#   push of [src-fix, docs-only-HEAD] would skip the build because HEAD~1
+#   → HEAD touched only docs). That bug forced three version-bump
+#   workaround commits. See ADR-028.
 #
 # Gate 2 — CI status check
 #   If src/ did change, query the GitHub Checks API to confirm all required
@@ -38,9 +54,10 @@
 # Usage in vercel.json:
 #   "ignoreCommand": "bash scripts/vercel-ignore-build-step.sh"
 #
-# To test locally:
-#   GITHUB_TOKEN=ghp_xxx GITHUB_OWNER=samyhamad-staging GITHUB_REPO=intellios \
+# To test locally (simulates Vercel's env):
+#   VERCEL_GIT_PREVIOUS_SHA=$(git rev-parse HEAD~3) \
 #     VERCEL_GIT_COMMIT_SHA=$(git rev-parse HEAD) \
+#     GITHUB_TOKEN=ghp_xxx GITHUB_OWNER=samyhamad-staging GITHUB_REPO=intellios \
 #     bash scripts/vercel-ignore-build-step.sh; echo "exit: $?"
 # =============================================================================
 
@@ -62,18 +79,44 @@ REQUIRED_CHECKS=(
 log() { echo "[ignore-build] $*" >&2; }
 
 # ── Gate 1: Path filter ──────────────────────────────────────────────────────
-# Skip if src/ is unchanged relative to the previous commit. Vercel invokes
-# this script from the configured Root Directory (src/), so we resolve paths
-# from the repo root to avoid the src/ filter becoming src/src/.
+# Skip if src/ is unchanged relative to the last successfully deployed commit.
+# Vercel invokes this script from the configured Root Directory (src/), so we
+# resolve paths from the repo root to avoid the src/ filter becoming src/src/.
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-if git -C "$REPO_ROOT" rev-parse HEAD~1 &>/dev/null; then
-  if git -C "$REPO_ROOT" diff HEAD~1 --quiet -- src/; then
-    log "No changes in src/ — skipping build."
+
+# Resolve the diff baseline. See header docstring for precedence rationale.
+BASELINE=""
+if [[ -n "${VERCEL_GIT_PREVIOUS_SHA:-}" ]]; then
+  PREV_SHA="$VERCEL_GIT_PREVIOUS_SHA"
+  if ! git -C "$REPO_ROOT" cat-file -e "${PREV_SHA}^{commit}" 2>/dev/null; then
+    # Shallow clone: the previous deploy's SHA may not be locally reachable.
+    # Attempt a targeted fetch. Silence failure — we fall back to HEAD~1.
+    log "Previous-deploy SHA ${PREV_SHA:0:8} not in local history; fetching..."
+    git -C "$REPO_ROOT" fetch --quiet --no-tags --depth=200 origin "$PREV_SHA" 2>/dev/null || true
+  fi
+  if git -C "$REPO_ROOT" cat-file -e "${PREV_SHA}^{commit}" 2>/dev/null; then
+    BASELINE="$PREV_SHA"
+    log "Baseline: VERCEL_GIT_PREVIOUS_SHA (${BASELINE:0:8})."
+  else
+    log "VERCEL_GIT_PREVIOUS_SHA=${PREV_SHA:0:8} unreachable after fetch; falling back to HEAD~1."
+  fi
+fi
+
+if [[ -z "$BASELINE" ]]; then
+  if git -C "$REPO_ROOT" rev-parse HEAD~1 &>/dev/null; then
+    BASELINE="HEAD~1"
+    log "Baseline: HEAD~1 (VERCEL_GIT_PREVIOUS_SHA not set or unreachable)."
+  else
+    log "First commit — no parent to diff against, proceeding to build."
+  fi
+fi
+
+if [[ -n "$BASELINE" ]]; then
+  if git -C "$REPO_ROOT" diff --quiet "$BASELINE" HEAD -- src/; then
+    log "No changes in src/ since $BASELINE — skipping build."
     exit 0
   fi
-  log "Changes detected in src/ — checking CI status."
-else
-  log "First commit — no parent to diff against, proceeding to build."
+  log "Changes detected in src/ since $BASELINE — checking CI status."
 fi
 
 # ── Gate 2: CI status ────────────────────────────────────────────────────────

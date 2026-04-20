@@ -29,3 +29,4 @@
 | 025 | [Intake prompt injection defense — three-layer sanitization with delimited untrusted-input blocks](025-intake-prompt-sanitization.md) | proposed | 2026-04-18 |
 | 026 | [Outbound webhook retry with scheduled backoff, DLQ terminus, and admin replay](026-webhook-retry-dlq.md) | proposed | 2026-04-18 |
 | 027 | [Test Console as governed test harness — reviewer-scoped, rate-limited, audit-logged invocation of deployed AgentCore agents (NOT a runtime)](027-test-console-as-governed-test-harness.md) | proposed | 2026-04-18 |
+| 028 | [Vercel ignoreCommand Gate 1 — diff against VERCEL_GIT_PREVIOUS_SHA, not HEAD~1, to handle bundled pushes](028-vercel-ignore-baseline-previous-deploy.md) | proposed | 2026-04-20 |
