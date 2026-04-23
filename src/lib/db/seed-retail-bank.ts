@@ -150,7 +150,7 @@ async function seedEnterpriseSettings(): Promise<void> {
           // Operator must fill in before live demo:
           // executionRoleArn: "arn:aws:iam::<ACCOUNT_ID>:role/<BedrockExecRole>"
           executionRoleArn: null,
-          foundationModel: "anthropic.claude-haiku-3-5-v1:0",
+          foundationModel: "anthropic.claude-3-5-haiku-20241022-v1:0",
         },
       },
     },
