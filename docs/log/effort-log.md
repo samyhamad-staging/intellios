@@ -38,6 +38,39 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 164 — 2026-04-23
+
+**Live AWS Smoke & Demo Rehearsal (Work Stream A complete; Work Stream B pending operator).**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Session opening + gap check | `_index.md` read, `git log`, Jira/Confluence preflight | ~8k in / ~1k out |
+| Bedrock model ID pre-flight | `aws bedrock list-foundation-models` + verification; Haiku ID bug found and fixed | ~10k in / ~2k out |
+| `provision-bedrock-sandbox.sh` creation + 3 runtime fixes | Em-dash IAM error, `iam:TagRole` denied, `iam:PutRolePolicy` denied fallback | ~30k in / ~8k out |
+| Seed script updates | `seed-demo.ts` env loader + `seed-retail-bank.ts` ARN upsert + idempotent rewrite | ~12k in / ~3k out |
+| Schema drift diagnosis + fix | `scoped_agent_ids` missing; migration 0038 applied directly; seed re-run | ~10k in / ~2k out |
+| DB verification | ARN + foundationModel confirmed in `enterprise_settings` | ~3k in / ~0.5k out |
+| OQ-010 resolution | Option 2 selected; `open-questions.md` updated | ~4k in / ~1k out |
+| Documentation | Session log, project journal, effort log, roadmap (deferred until smoke complete) | ~15k in / ~5k out |
+| **Session total (est.)** | | **~92k in / ~22.5k out** |
+
+**Estimated session cost:** Sonnet 4.6 ~92k in × $3/1M + ~22.5k out × $15/1M = **$0.28 + $0.34 = ~$0.62**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Full session-164 prompt (very long) — context, Work Streams A+B, OQ-010, close-out requirements | D-Process | Set entire session scope |
+| 2 | Approved provisioning plan with 3 flags: Haiku ID blocker, Watch-item 1 (app-side creds), Watch-item 2 (inline policy) | D-Correct | Flag saved a demo-breaking bug |
+| 3 | "Approved, use us-east-1" | D-Approve | Confirmed region for provisioning |
+
+**Totals:** 3 messages · 1 D-Process · 1 D-Correct · 1 D-Approve · ~0.5h estimated time. Classic infrastructure session — one blocker flag from Samy caught the most consequential bug (wrong model ID).
+
+---
+
 ## Session 163 — 2026-04-23
 
 **Closeout addendum — session 162 post-delivery fixup + evidence surface reconciliation.**

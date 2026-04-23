@@ -33,24 +33,6 @@ _None. MVP is complete._
 
 ---
 
-### OQ-010 — RETURN_CONTROL tool-mock service for Test Console
-
-**Context:** ADR-027 (2026-04-18) ships the Test Console as a governed *test* harness, not a runtime. One guardrail of that framing is that `RETURN_CONTROL` responses from Bedrock (where the agent asks the caller to execute a tool and return the result) are rendered as a synthetic `[tool call simulated — invoked: X]` chunk rather than actually invoking the tool. That is correct for positioning, but it makes end-to-end tool exercises in Test Console structurally impossible — a reviewer can confirm the agent *wants* to call a tool, but cannot see what the agent does *after* the tool returns data.
-
-**Question:** Should Intellios ship a built-in "tool mock service" — a small stub HTTP endpoint per tool name declared in the ABP, returning canned or fixture-driven responses — so that Test Console can complete a full reasoning loop including tool round-trips?
-
-**Options:**
-1. **Ship a tool-mock service.** Per-ABP fixture file (`tool-mocks/{agentId}.json`) keyed by tool name, returning deterministic JSON. Test Console invocation loop feeds the mock response back into `InvokeAgent` via the same `sessionId`. Pros: demo becomes visceral — reviewers see the whole loop. Cons: blurs the "not a runtime" positioning; non-trivial implementation cost (fixture format, UI for setting fixtures, schema validation against ABP `tools[]`); the fixtures themselves become an additional surface that can drift from production tool contracts.
-2. **Ship nothing; keep the synthetic marker.** Tool exercises happen in the enterprise's own runtime (AgentCore with real action-group endpoints), not in Test Console. Reviewers sign off on the *intent* to call a tool; post-deploy evidence of the actual call lives in CloudWatch traces. Pros: preserves positioning cleanly; zero additional surface. Cons: demo feels incomplete — the control-plane story ends mid-loop.
-3. **Defer to enterprise.** Publish a "tool mock example" as a separate GitHub project or cookbook; Test Console stays synthetic-marker-only. Pros: lets the pattern evolve with enterprise feedback; no product-surface risk. Cons: harder to demo until enterprises build their own.
-
-**Trade-offs to weigh:**
-- How much of the lifecycle demo's impact depends on the full tool round-trip vs. the governance story? (Bias says: governance story carries — tool-call intent is enough for reviewers.)
-- What's the failure mode if a mock fixture diverges from the production action-group contract? (The mock gets stale; reviewers approve behavior that doesn't match production. Guardrail: fixtures must be marked "FOR TEST CONSOLE ONLY" and never influence governance/approval artifacts.)
-- Is this really a Test Console problem or a `/docs/specs/blueprint-test-harness.md` (ADR-007) problem? ADR-007 defines a richer test harness concept that may be the right home for tool mocks.
-
-**Target resolver:** founder + whoever runs the first design-partner demo. Target timing: resolve before session 160, ideally in the post-session-158-rehearsal retrospective.
-
 ---
 
 ## Resolved
@@ -67,6 +49,7 @@ _None. MVP is complete._
 | — | Frontend framework | Next.js App Router (ADR-004) | 2026-03-12 |
 | — | ORM | Drizzle (ADR-004) | 2026-03-12 |
 | — | AI SDK | Vercel AI SDK v5 (ADR-004) | 2026-03-12 |
+| OQ-010 | RETURN_CONTROL tool-mock service for Test Console | Keep synthetic marker (option 2). ADR-027 establishes the synthetic marker as canonical — building a mock service would blur the "governed test harness, not a runtime" positioning for non-trivial cost. Enterprises needing full tool round-trips should use real action-group endpoints outside Test Console. | 2026-04-23 |
 | OQ-007 | ABP schema evolution strategy | Migrate-on-read via `readABP()` + `migrateABP()` + `detectVersion()` (H1-3). Old ABPs transparently upgraded when read. No forced migration. Registry owns migration. | 2026-04-01 |
 | OQ-005 | Agent Registry: table relationship, version model, uniqueness | `agent_blueprints` is the registry. Separate rows per version. `agent_id` UUID is the logical agent key (uniqueness by UUID, not name). See agent-registry.md Implementation. | 2026-03-12 |
 | OQ-001 | Governance policy expression language | Structured `{ field, operator, value, severity, message }` rules. 11 operators. `condition` field dropped. Policy schema advances to v1.1.0. See ADR-005. | 2026-03-12 |
