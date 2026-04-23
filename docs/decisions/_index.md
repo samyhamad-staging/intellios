@@ -13,21 +13,21 @@
 | 009 | [Outbound webhook integration](009-webhook-integration.md) | accepted | 2026-03-14 |
 | 010 | [Amazon Bedrock AgentCore integration strategy](010-agentcore-integration.md) | accepted | 2026-03-14 |
 | 011 | [AgentCore integration confidence hardening](011-agentcore-confidence-hardening.md) | accepted | 2026-03-15 |
-| 012 | [Middleware-level tenant isolation](012-middleware-tenant-isolation.md) | proposed | 2026-04-03 |
-| 013 | [SOD enforcement in legacy single-step blueprint approval](013-sod-enforcement-legacy-approval.md) | proposed | 2026-04-08 |
-| 014 | [Text contrast token scale shift for WCAG AA compliance](014-text-contrast-token-shift.md) | proposed | 2026-04-08 |
+| 012 | [Middleware-level tenant isolation](012-middleware-tenant-isolation.md) | accepted | 2026-04-03 |
+| 013 | [SOD enforcement in legacy single-step blueprint approval](013-sod-enforcement-legacy-approval.md) | accepted | 2026-04-08 |
+| 014 | [Text contrast token scale shift for WCAG AA compliance](014-text-contrast-token-shift.md) | accepted | 2026-04-08 |
 | 015 | [PDF rendering of evidence package](015-pdf-rendering-of-evidence-package.md) | proposed | 2026-04-09 |
-| 016 | [AI resilience layer — retry, timeout, model configuration](016-ai-resilience-layer.md) | proposed | 2026-04-14 |
-| 017 | [Database connection pool externalization](017-db-pool-externalization.md) | proposed | 2026-04-17 |
+| 016 | [AI resilience layer — retry, timeout, model configuration](016-ai-resilience-layer.md) | accepted | 2026-04-14 |
+| 017 | [Database connection pool externalization](017-db-pool-externalization.md) | accepted | 2026-04-17 |
 | 018 | [Hard-require SECRETS_ENCRYPTION_KEY in production](018-secrets-encryption-key-production-required.md) | accepted | 2026-04-17 |
-| 019 | [Governance violations block blueprint approval (with audited admin override)](019-governance-blocks-approval.md) | proposed | 2026-04-17 |
-| 020 | [Per-enterprise (tenant) rate limits on AI endpoints](020-per-enterprise-rate-limits.md) | proposed | 2026-04-17 |
-| 021 | [Atomic entity + audit writes via db.transaction](021-atomic-entity-audit-writes.md) | proposed | 2026-04-17 |
-| 022 | [Platform observability floor — instrumentation.ts, /api/healthz, structured-log migration](022-platform-observability-floor.md) | proposed | 2026-04-17 |
-| 023 | [Bedrock circuit breaker — per-model in-memory state machine with sliding-window failure threshold and exponential cooldown backoff](023-bedrock-circuit-breaker.md) | proposed | 2026-04-17 |
-| 024 | [Cron batch runner — DB-backed time-budget guard, per-item failure isolation, and priority-reorder on recent failures](024-cron-batch-runner.md) | proposed | 2026-04-18 |
-| 025 | [Intake prompt injection defense — three-layer sanitization with delimited untrusted-input blocks](025-intake-prompt-sanitization.md) | proposed | 2026-04-18 |
-| 026 | [Outbound webhook retry with scheduled backoff, DLQ terminus, and admin replay](026-webhook-retry-dlq.md) | proposed | 2026-04-18 |
-| 027 | [Test Console as governed test harness — reviewer-scoped, rate-limited, audit-logged invocation of deployed AgentCore agents (NOT a runtime)](027-test-console-as-governed-test-harness.md) | proposed | 2026-04-18 |
-| 028 | [Vercel ignoreCommand Gate 1 — diff against VERCEL_GIT_PREVIOUS_SHA, not HEAD~1, to handle bundled pushes](028-vercel-ignore-baseline-previous-deploy.md) | proposed | 2026-04-20 |
+| 019 | [Governance violations block blueprint approval (with audited admin override)](019-governance-blocks-approval.md) | accepted | 2026-04-17 |
+| 020 | [Per-enterprise (tenant) rate limits on AI endpoints](020-per-enterprise-rate-limits.md) | accepted | 2026-04-17 |
+| 021 | [Atomic entity + audit writes via db.transaction](021-atomic-entity-audit-writes.md) | accepted | 2026-04-17 |
+| 022 | [Platform observability floor — instrumentation.ts, /api/healthz, structured-log migration](022-platform-observability-floor.md) | accepted | 2026-04-17 |
+| 023 | [Bedrock circuit breaker — per-model in-memory state machine with sliding-window failure threshold and exponential cooldown backoff](023-bedrock-circuit-breaker.md) | accepted | 2026-04-17 |
+| 024 | [Cron batch runner — DB-backed time-budget guard, per-item failure isolation, and priority-reorder on recent failures](024-cron-batch-runner.md) | accepted | 2026-04-18 |
+| 025 | [Intake prompt injection defense — three-layer sanitization with delimited untrusted-input blocks](025-intake-prompt-sanitization.md) | accepted | 2026-04-18 |
+| 026 | [Outbound webhook retry with scheduled backoff, DLQ terminus, and admin replay](026-webhook-retry-dlq.md) | accepted | 2026-04-18 |
+| 027 | [Test Console as governed test harness — reviewer-scoped, rate-limited, audit-logged invocation of deployed AgentCore agents (NOT a runtime)](027-test-console-as-governed-test-harness.md) | accepted | 2026-04-18 |
+| 028 | [Vercel ignoreCommand Gate 1 — diff against VERCEL_GIT_PREVIOUS_SHA, not HEAD~1, to handle bundled pushes](028-vercel-ignore-baseline-previous-deploy.md) | accepted | 2026-04-20 |
 | 029 | [Jira and Confluence as mandatory evidence surfaces](029-jira-confluence-evidence-mandate.md) | accepted | 2026-04-23 |
