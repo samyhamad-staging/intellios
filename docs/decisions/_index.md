@@ -31,3 +31,5 @@
 | 027 | [Test Console as governed test harness — reviewer-scoped, rate-limited, audit-logged invocation of deployed AgentCore agents (NOT a runtime)](027-test-console-as-governed-test-harness.md) | accepted | 2026-04-18 |
 | 028 | [Vercel ignoreCommand Gate 1 — diff against VERCEL_GIT_PREVIOUS_SHA, not HEAD~1, to handle bundled pushes](028-vercel-ignore-baseline-previous-deploy.md) | accepted | 2026-04-20 |
 | 029 | [Jira and Confluence as mandatory evidence surfaces](029-jira-confluence-evidence-mandate.md) | accepted | 2026-04-23 |
+| 030 | *(reserved)* | — | — |
+| 031 | [Sandbox vs. customer-account IAM posture for Bedrock execution role provisioning](031-sandbox-vs-customer-iam-posture.md) | accepted | 2026-04-23 |

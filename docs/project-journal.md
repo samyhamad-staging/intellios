@@ -2,6 +2,22 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 165 — 2026-04-23: Naming the Posture
+
+Session 165 is the shortest kind of productive session: one where the output is mostly words on a page, the words are precise, and the precision closes a class of future ambiguity rather than just resolving an immediate one.
+
+The concrete trigger was a permission denial. In session 164, the provisioner script attempted to attach a minimum-necessary inline policy to `IntelliosBedrockAgentExecRole` via `iam:PutRolePolicy`. The automation IAM user didn't hold that permission. The script fell back to `AmazonBedrockFullAccess`. The session 164 log documented this as "sandbox fallback." But "fallback" implies something went wrong. The question ADR-031 answers is: did it?
+
+The answer is no — not in a sandbox. And yes — in a customer account. Those are two different contexts, and treating the distinction as a single failure mode produces a script that can't serve either context well. Defaulting to the scoped policy breaks sandbox ergonomics (a solo founder would have to procure `iam:PutRolePolicy` before their first provisioning run — a non-obvious prerequisite that adds friction to the single most important "does this work?" moment). Defaulting to the permissive policy breaks customer security reviews (enterprise procurement teams will reject `AmazonBedrockFullAccess` on a role they can inspect; Intellios is selling governance discipline and its own provisioning must model that discipline). Neither default is universally right because the contexts are genuinely different.
+
+ADR-031 formalizes that difference as a design decision rather than treating it as a bug to fix. Two postures, explicit opt-in for the more restrictive one, document both and script both. The `--scoped` flag will be a conscious choice that a provisioner makes when standing up a customer environment. The default will remain sandbox. The artifacts that matter — the trust policy, the scoped policy JSON, the pre-flight permission list — are now version-controlled alongside everything else.
+
+The three Stories created this session (SCRUM-27, SCRUM-28, SCRUM-29) are cleanup from session 164's smoke run. SCRUM-27 is the most dangerous of the three: `translate.ts` `DEFAULT_FOUNDATION_MODEL` references a Sonnet model ID that doesn't exist in us-east-1. `CreateAgent` would succeed — the Bedrock API accepts arbitrary model IDs at creation time — but `InvokeAgent` would fail with a service error. This is exactly the class of bug that is hardest to catch in a rehearsal: the happy path runs until the moment it matters. SCRUM-28 and SCRUM-29 are less urgent — a dev-DB drift that's locally contained, and a provisioner enhancement that can wait for customer onboarding prep. But all three are captured now, before the pressure of a real demo obscures them.
+
+The meta-lesson from this session is about the difference between documenting what happened and designing what should happen. Session 164 documented the `AmazonBedrockFullAccess` fallback as an observation. Session 165 turned it into a decision. That's the work ADRs are for: taking something that happened for a reason, naming the reason explicitly, and turning it into a rule that applies to all future instances of the same situation. The permission-denied event in session 164 will not recur as a surprise. It will recur as a deliberate choice or not at all.
+
+---
+
 ## Session 164 — 2026-04-23: The Sandbox Gets Real
 
 Session 164 is the one where Intellios stopped being a governance layer that governed hypothetical agents and started being a governance layer that governed a real one. The infrastructure work that had been deferred since session 157 — provision a Bedrock execution IAM role, wire the ARN into the seed, run the 8-stage lifecycle — finally executed. The full live path is not yet green (the app must be started manually by Samy to complete Stages 1–8), but the prerequisites are unambiguously in place for the first time.

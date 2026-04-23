@@ -77,6 +77,9 @@ import { Sidebar, SidebarItem, SidebarSection, SidebarLabel } from '@/components
 - Always use terms exactly as defined in `docs/glossary.md`.
 - If you encounter an undefined term, add it to the glossary before using it.
 
+### Infra Scripts Are Node-First
+Shell scripts in `scripts/` that require JSON parsing, HTTP calls, or any non-trivial logic should use Node (available cross-platform on Windows + Linux + Mac) rather than Python (not reliably installed on Windows dev machines). Bash + AWS CLI + `node -e` is the canonical shape for provisioner scripts.
+
 ### Before Creating or Modifying Components
 1. Check `docs/specs/` for an existing specification.
 2. Check `docs/schemas/` for existing schema definitions.

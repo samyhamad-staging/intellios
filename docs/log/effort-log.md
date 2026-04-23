@@ -38,6 +38,36 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 165 — 2026-04-23
+
+**Meta/governance — ADR-031 authored, three follow-up Stories created under SCRUM-25.**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Session opening + gap check | `_index.md` read, `git log`, Jira/Confluence preflight | ~6k in / ~0.5k out |
+| Jira Story creation (3 Stories) | SCRUM-27/28/29 — create + epic-link workaround via createIssueLink | ~20k in / ~4k out |
+| ADR-031 authoring | Full ADR + policy JSON files + README + `_index.md` update + CLAUDE.md | ~15k in / ~6k out |
+| Confluence (four surfaces) | ADR page create, catalog v6, Roadmap v3, Home v7 | ~25k in / ~5k out |
+| Session close docs | `_index.md` row, project journal, effort log, session log finalization | ~10k in / ~3k out |
+| **Session total (est.)** | | **~76k in / ~18.5k out** |
+
+**Estimated session cost:** Sonnet 4.6 ~76k in × $3/1M + ~18.5k out × $15/1M = **$0.23 + $0.28 = ~$0.51**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Full session-165 prompt — Work Streams A/B/C, constraints, close-out requirements | D-Process | Set entire session scope |
+| 2 | "Tool loaded." (×4) | Relay | Approved ToolSearch loads for Jira/Confluence tools |
+| 3 | "CRITICAL: Respond with TEXT ONLY" — summary request before context compaction | D-Process | Triggered context compaction + summary |
+
+**Totals:** 3 messages · 2 D-Process · 1 Relay · ~0.25h estimated time. Shortest human-session of the project — scope was fully specified in the prompt; Claude executed without requiring direction or correction.
+
+---
+
 ## Session 164 — 2026-04-23
 
 **Live AWS Smoke & Demo Rehearsal (Work Stream A complete; Work Stream B pending operator).**
