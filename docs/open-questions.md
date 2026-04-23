@@ -12,6 +12,35 @@ _None. MVP is complete._
 
 ## Medium — Nice to Resolve Early
 
+### OQ-012 — AWS Agent Registry overlap with Intellios lifecycle management
+
+**Context:** AWS Agent Registry (Preview, April 9, 2026) ships a governed catalog with draft→pending→approved lifecycle workflow, CloudTrail audit trails, IAM/OAuth access control, versioning, and deprecation. AWS claims it "tracks agents across their entire lifecycle, from initial development through deployment to eventual retirement." First documented in AgentCore Watch 2026-04 (`docs/strategy/agentcore-watch/2026-04.md`). Overlap assessment: axis (c) ~20% — at threshold.
+
+**Question:** Does AWS Agent Registry's approval workflow + lifecycle tracking represent a competitive threat to Intellios's Agent Registry subsystem and Blueprint Review UI, or does the depth gap (SOD enforcement, multi-step approval chains, evidence package, 8-stage lifecycle arc, design-time governance) preserve sufficient differentiation to continue positioning Intellios as the governed control plane above the registry layer?
+
+**Options:**
+1. **Complementary framing** — Position AWS Agent Registry as the *catalog/discovery* layer (what exists) and Intellios as the *governance/lifecycle* layer (how it gets there and what evidence it leaves). Intellios wraps or ingests AWS Registry records rather than competing with them.
+2. **Depth differentiation** — Emphasize the features AWS doesn't have: SOD, multi-step approval, evidence package, design-time blueprint governance. Accept that the surface areas overlap but argue the depth does not.
+3. **Strategic concern** — AWS Registry is in Preview; its GA feature set may add the depth gaps. Treat this as a leading indicator of full lifecycle management competition and accelerate the evidence package (ADR-015) as the most defensible differentiator.
+
+**Owner:** Architect.  
+**Review date:** 2026-05-23 (or after AWS Agent Registry GA announcement, whichever comes first).
+
+---
+
+### OQ-011 — AgentCore Policy/Evaluations overlap with Intellios's Governance Validator
+
+**Context:** AgentCore Policy (GA March 3, 2026) provides Cedar/natural-language policy authoring, runtime tool-call interception, RBAC via OAuth JWT, and Evaluations (pre-deployment quality scoring: correctness, helpfulness, tool selection accuracy, safety, goal success). First documented in AgentCore Watch 2026-04 (`docs/strategy/agentcore-watch/2026-04.md`). Overlap assessment: axis (b) ~25% — above 20% material threshold.
+
+**Question:** Does AgentCore Policy's Evaluations feature (pre-deployment quality testing) materially subsume Intellios's Governance Validator differentiator, or do the layer distinctions (Intellios validates policy compliance at blueprint design time; AgentCore Policy enforces tool access at runtime; Evaluations scores quality, not policy conformance) preserve the differentiation?
+
+**Specifically:** (a) Should Intellios explicitly position its governance as *complementary* to AgentCore Policy (governance happens before deployment in Intellios; tool-access enforcement happens at runtime in AgentCore)? (b) Does the runtime-vs-design-time distinction actually resonate with enterprise buyers, or do they perceive it as duplication? (c) Is "cross-runtime governance" (Intellios works on any runtime, not just AgentCore) the more durable framing?
+
+**Owner:** Architect.  
+**Review date:** 2026-05-23.
+
+---
+
 ### OQ-009 — Evidence-package PDF renderer stack
 
 **Context:** ADR-015 (2026-04-09) commits Intellios to shipping a server-side PDF renderer on `GET /api/blueprints/[id]/evidence-package.pdf` alongside the existing JSON export. The reference implementation lives at `samples/build_evidence_pdf.py` (reportlab, Python) and defines the target layout. The production renderer must live in the Next.js app (TypeScript).
