@@ -1,7 +1,8 @@
 # ADR-018: Hard-Require SECRETS_ENCRYPTION_KEY in Production
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-17
+**Accepted:** 2026-04-23
 **Supersedes:** (none)
 
 ## Context

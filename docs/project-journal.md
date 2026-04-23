@@ -2,6 +2,38 @@
 
 A narrative record of how this project has evolved over time. Written retrospectively at the end of each session to capture strategic context, reasoning, and the arc of development — things that are not visible from code commits or action logs alone.
 
+## Session 161 — 2026-04-23: The Governance Layer, And Its First Audit
+
+This was a two-phase session and the shape of both phases was the same: decide the rule, then immediately run the rule on something real. Phase one built the governance layer that had been conspicuously absent up to this point — Jira was empty, Confluence was a thin placeholder, CLAUDE.md required eight kinds of repo-internal documentation updates but said nothing about either of the two surfaces Samy actually checks most often. Phase two dogfooded that new layer against the smallest implementation story in the backlog, SCRUM-8 / ADR-018, precisely so the rule's failure modes would show up cheap before it was applied to heavier work.
+
+The governance bootstrap moved quickly because the structure had been implicit for weeks and just needed to be written down. The Jira Playbook (Confluence page 2752514) had already been the authoritative reference for label taxonomy — `sys:*` for subsystem, `concern:*` for cross-cutting, `adr-NNN` to trace decisions into implementation, `hardening:hN` for the 10-item production-readiness arc — but it was a reference document, not a commitment. Nothing forced a session to use it. The SCRUM project existed but had no issues. The Confluence Intellios space existed but had drifted from being a mirror of the repo to being a skeleton with most pages stale. The decision of the session was to promote the Playbook's conventions from "optional reference" to "mandatory checklist item" by adding them to CLAUDE.md's "Documentation Updates — MANDATORY" section as items 9 (Jira) and 10 (Confluence), alongside the existing 8 repo-internal artifacts. The closing-commit rule was extended in the same stroke: do not close a session without the Jira comment and any Confluence mirrors in place.
+
+The actual backlog construction — six Epics, seventeen Stories, cross-ADR issue links — took a single arc of sustained MCP calls with one payload-size gotcha to navigate (a memory entry written two hours earlier warned exactly about this: `searchJiraIssuesUsingJql` returns full description + issuelinks for every node, so a wide filter blows the context window; narrow by epic or label). Confluence got the same treatment: six sections mirroring the repo's top-level documentation folders, 29 ADR child pages for the catalog, a Jira Playbook page, a Roadmap & Status page. The asymmetry is worth naming — Samy does most of his status checks in Jira and Confluence, not in the repo, so drift between the two was silently blinding him to work that was in fact complete. ADR-029 exists to close that blinding. ADR-029 was authored, mirrored to Confluence, promoted to accepted, and wired into CLAUDE.md all in the same session — the meta/governance exemption in item 9 was explicit precisely so this kind of rule-authoring work could happen without bootstrapping a recursive "create a Story to author the ADR that excuses this Story from needing a Story" paradox.
+
+The SCRUM-8 dogfood then did something the governance layer was supposed to prevent: it surfaced drift. The recon step — Step Zero of ADR-029's new loop — pulled `git log` against `src/lib/env.ts` and `src/lib/crypto/encrypt.ts` and found that commit `9de4f8f` on `2026-04-17` (session 148) had already shipped the full ADR-018 implementation six days earlier. The Zod schema with the prod-required 64-hex-char regex guard was there. The `getKey()` defensive throw for `NODE_ENV=production` was there. The `.env.example` documentation with the `randomBytes(32).toString('hex')` generator was there. What wasn't there was the rest of the evidence trail: ADR-018's status was still `proposed` in both the repo file and Confluence; no Jira Story existed to track the work (SCRUM-8 was only created this session); and there was no test specifically asserting that the env schema would reject prod boot without the key. The implementation was done. The paperwork had lapsed. This is exactly the drift ADR-029 was designed to prevent, and the fact that the very first dogfood caught a real instance of it is the tightest possible proof that the rule was worth writing.
+
+The correction was cheap once found. Session 161 added `src/__tests__/security/env-schema.test.ts` — six cases covering prod-rejects-unset, prod-rejects-short, prod-rejects-non-hex, prod-accepts-valid, dev-accepts-unset, test-accepts-unset — using `vi.stubEnv` + `vi.resetModules` so each case gets a fresh module load against a new env shape. Vitest itself refused to run under the sandbox (a `Bus error (core dumped)` on worker spawn that persists across pool-mode and memory-limit tweaks), so validation fell back to a standalone node script replicating the same assertions against a locally-constructed copy of the schema; 6/6 passed, typecheck clean on the new file, real vitest execution deferred to Samy's machine. ADR-018 was then flipped to `accepted` across all four surfaces — the repo ADR file got an `Accepted: 2026-04-23` line, the repo `_index.md` got the status cell updated, the Confluence ADR page got the same edits plus an Implementation section noting commit `9de4f8f` and this session's test-commit, and the Confluence ADR catalog got the row updated. SCRUM-8 was transitioned Idea → In Progress → Done with a closing comment citing both commits. The three-way trace that ADR-029 promised — ADR file → Jira Story → Confluence page, any two reconstructing the third — was now intact for ADR-018.
+
+The second-order lesson of the session is worth saving. The governance rule works — first application, first drift caught, first correction applied. But the drift it caught was three weeks old. That means every ADR from 012 through 028 is a candidate for the same audit: is the implementation shipped? Is the Jira Story closed? Is the Confluence page in sync? Is the ADR status `accepted` or still `proposed`? Fifteen of those seventeen ADRs are currently `proposed` despite the hardening commits being in production. A future session could productively burn a single sitting running the same retroactive-closure pass across all of them, one Story at a time, and promote the entire H1–H10 bundle to `accepted` at once. That would be a well-shaped governance session — ADR-029 exempts it from needing a Story, the work is repetitive and low-risk, and the outcome is that Samy's Jira board and Confluence catalog finally reflect what production has been running for three weeks. Worth queueing for next.
+
+---
+
+## Session 158 — 2026-04-19: The 500 Every Minute
+
+The session opened on a cadence Intellios hadn't seen before: production was actively broken. Vercel's runtime logs showed `/api/cron/webhook-retries` returning a 500 on every minute tick for the previous 40+ minutes. Two other cron routes — `telemetry-sync` and `alert-check` — were failing with 405 Method Not Allowed on their daily dispatches. A third, smaller item lurked underneath: `src/auth.ts` pulled Node's `crypto` module into the Edge Middleware bundle on every deploy, a warning that doesn't break anything but clutters build output and signals a real Edge-incompatibility that would surface the moment the SSO code path was exercised. Three symptoms, three root causes, three fixes — and the session's discipline was refusing to treat the small one (Edge `crypto`) as "not worth the interrupt" just because the big one (webhook-retries loop) was more visible. Small repairs that are cheap today compound into expensive mysteries later; fixing all three in one pass is the right choice when each fits.
+
+The webhook-retries diagnosis was the session's centerpiece and a good demonstration of reading logs like a compiler error. The route writes a specific log line — `cron.webhook-retries.query_failed` — when its top-level SELECT throws. Every failing tick emitted that line, which localized the blast radius to the query itself rather than anything downstream in `runCronBatch` or `processDelivery`. The serialized error payload contained the column names `next_attempt_at` and `max_attempts`, both of which were added by migration `0040_webhook_retry_state.sql`. A keyword search for the PG error codes that would accompany a missing-column error — `42703`, `42P01`, `PostgresError` — found no matches, but that absence is display truncation in Vercel's log viewer, not counter-evidence. The evidence-triangulation produced a clean conclusion: **migration 0040 has not been applied to production**, and probably 0039 hasn't either (it ships the `cron_runs` + `cron_item_failures` tables that `runCronBatch` depends on, so the moment the top-level query would succeed the second-layer insert would start failing). The fix was not a code fix — it was a migration fix, which the sandbox can't execute because it has no production DB credentials. That became one of the session's two handoff items.
+
+The 405 on telemetry-sync and alert-check was a smaller puzzle with a sharper lesson. Both routes exported `POST` only. Vercel Cron dispatches scheduled paths as `GET`. The sibling cron routes — `webhook-retries`, `governance-drift`, `quality-trends`, `portfolio-snapshot`, `review-reminders` — all export `GET`. The two failing routes were the exceptions, not the rule, which means the first version of each was written against the wrong mental model of the cron contract and shipped without the runtime ever exercising it (daily cadence means ~30 days of silent 405s before the pattern became visible to anyone). The fix was a one-line rename per file plus a docstring that calls out the contract explicitly, so the next person who writes a cron route doesn't repeat the mistake. The third fix, `auth.ts` swapping `import { randomUUID } from "crypto"` for the Web Crypto global `crypto.randomUUID()`, is the same shape of lesson: Edge Runtime compatibility isn't something that shows up in the common path; it shows up on the uncommon path (SSO signup), and if the build warning gets ignored the failure mode is "works in dev, silently degraded on the first SSO sign-in attempt in production." Dropping the Node-only import and using the Web Crypto global was three lines of diff.
+
+The commit flow hit the same lock-file filesystem restriction documented in the 2026-04-04 memory (`.git/index.lock` undeletable on this mount). The plumbing workaround — `cp .git/index /tmp/alt-index`, `GIT_INDEX_FILE=… git add …`, `write-tree`, `commit-tree -p HEAD`, direct write to `.git/refs/heads/main`, restore the real index — worked unchanged. Two conventional commits landed: `da3e14b` (auth Edge crypto) and `1539d86` (cron POST→GET). The session log itself landed as `1f51d1a`. At session close, local `main` was 3 ahead of `origin/main` (the last session-157 version-bump was already live at `584b252`). Pushing the commits and applying the migrations required Samy's own machine — two deferred actions that executed out-of-band between sessions via a Claude Code prompt. On the cron tick at 22:08:37 UTC 2026-04-19, the webhook-retries endpoint flipped from 500 to 200 with the migration applied. The loop that had been failing for over an hour was healthy on the next tick after the fix landed. That timing — a flat 500 baseline for 40+ minutes, then a clean transition to 200 on the exact tick after `drizzle-kit migrate` — is the kind of observable-from-logs recovery signature that confirms the diagnosis was correct.
+
+The bundled-push Gate 1 bug made its fifth and final appearance in this session and is worth noting as a precursor to ADR-028. The push that landed `da3e14b` + `1539d86` used a docs-only tip commit (`1f51d1a`, the session-158 log), which meant Vercel's `ignoreCommand` Gate 1 diffed `HEAD~1..HEAD` and saw only `docs/` changes — it skipped the deploy. To force the production deploy of the two `src/` fixes, commit `4bf1bb5` bumped `src/package.json` version `0.1.1 → 0.1.2`. That version bump has no release meaning; it exists only to force the Gate 1 diff to proceed. This was the third time the workaround had been used in ten days. Its commit message included an explicit follow-up note — "teach Gate 1 to diff against the last deployed SHA (e.g. VERCEL_GIT_PREVIOUS_SHA) so bundled pushes with a docs-only HEAD do not silently skip real src/ changes behind them" — which became the scope of session 159 and the shape of ADR-028. A pattern that needs three workaround commits to keep working is a pattern that needs an ADR.
+
+The session was a triage session, not a feature session, and the difference matters for how leverage works. The time spent was largely diagnostic: reading logs, correlating symptoms to code paths, isolating a single root cause from a cloud of possible ones, and producing a clean commit per actual fix rather than a bundled "fix production" commit that bundles the audit trail. Samy's engagement was two "proceed with the next best action" messages, both after the agent had already produced a short analysis of the options. The agent-owned sequencing was: read logs, localize, produce a shortlist of candidate root causes, rank by evidence strength, pick the highest-confidence candidate, commit a fix, verify the commit landed, move on. The discipline that made this work is the same discipline the project has been building since session 001 — ADR-backed decisions, per-commit conventional messages, session logs that record the reasoning not just the outcome, verification steps that come before rather than after the commit. None of those are optional when production is on fire. They are what makes the fix reviewable when the fire is out.
+
+---
+
 ## Session 159 — 2026-04-20: The Deploy Gate Was Punishing Correct Behaviour
 
 The bug this session fixed was small in code and large in meaning. `scripts/vercel-ignore-build-step.sh` diffed `HEAD~1..HEAD` to decide whether any `src/` files had changed since "the last thing." When pushes were single-commit, "the last thing" and "the previous deploy" were synonyms and the filter was right. When pushes bundled multiple commits with a docs-only tip — which is what linear commit hygiene produces when the session closes with a log write — the synonyms diverged and the filter was silently wrong. The deploy pipeline skipped. The `src/` change that mattered never shipped. The recovery path each time was to push a one-line version bump to re-trigger the filter. Three times in ten days (`584b252` for `27ce5dd`; `4bf1bb5` for `da3e14b` + `1539d86`; and the bundled push this session would have hit next). The `src/package.json` version churned from `0.1.0` to `0.1.2` for no release reason, just to dodge a dumb diff. The shape of the bug is what made it worth an ADR: a deploy gate that systematically punishes the developers who follow the team's commit-hygiene convention. Rewarding a bad habit by accident is one thing; punishing a good habit by design is the kind of thing that quietly erodes the habit over time.
@@ -2231,78 +2263,4 @@ Intellios started with a clear product vision: enterprises need a way to create,
 
 The first session was not about writing application code. It was about establishing the foundation that everything else would be built on: a knowledge management system, a canonical artifact definition (the ABP), and a shared vocabulary.
 
-### How the Knowledge System Was Designed
-
-The first architectural decision was where to keep project knowledge. Three options were evaluated:
-
-- **External wiki** (Notion, Confluence): Good for human reading, but not version-controlled with the code; divergence is inevitable; no first-class Git integration.
-- **Database-backed system**: Queryable and programmable, but requires infrastructure before anything else exists; excessive for the current scale; harder to review in pull requests.
-- **Git-native structured docs** (chosen): Markdown + JSON Schema files in the repository. Every change is a commit. Docs and code are always at the same revision. Claude can read and write them with the same tools used for code.
-
-This choice shaped the entire project's working style. Claude operates primarily by reading `CLAUDE.md` at the start of each session to re-establish context, then reading relevant specs and ADRs before taking action. The human reviewer (Samy) approves decisions recorded as ADRs.
-
-### Defining the Agent Blueprint Package
-
-The ABP is the central artifact of Intellios. Getting its schema right early was critical because every other subsystem either produces or consumes it. The v1.0.0 schema established the following sections:
-
-- **`identity`**: What the agent is (name, description, persona, branding)
-- **`capabilities`**: What the agent can do (tools, instructions, knowledge sources)
-- **`constraints`**: What the agent is limited to (domains, denied actions, rate limits)
-- **`governance`**: How the agent is governed (policies, audit config)
-
-A key design principle: the schema separates **content** (what Claude generates) from **metadata** (what the system assigns — ID, version, timestamps, status). This prevents Claude from hallucinating system-assigned values during generation.
-
-### The 15 Open Questions
-
-After the initial knowledge system was established, 15 open questions had been identified across all 5 component specs. Samy answered all 15 in a single session exchange — the highest-value input of the entire session. The decisions included:
-
-- Intake method: conversational UI (not form-based)
-- Generation method: Claude API call with structured output (not template-based)
-- Storage: PostgreSQL (not NoSQL — relational consistency matters for policy enforcement)
-- Versioning: semantic versioning for ABP revisions
-- Governance: synchronous validation for MVP (async deferred)
-
-These 15 answers were recorded as ADR-002 (technology stack) and ADR-003 (component behavior).
-
-### Building the Intake Engine
-
-With the foundation established, the Intake Engine was the first component implemented. The key architectural insight was using **Claude tool use for incremental payload construction** rather than processing a single user description at the end of the conversation.
-
-Each tool maps to an ABP schema section. As the user describes their agent in natural language, Claude calls tools (`set_agent_identity`, `add_tool`, `set_constraints`, etc.) to build the payload progressively. This means:
-1. The user sees immediate feedback as sections are captured
-2. The payload is always in a valid, partially-complete state
-3. The intake can be resumed or inspected at any point
-
-The Vercel AI SDK v5 was chosen for streaming. This turned out to be a significant implementation challenge — v5 had a completely redesigned API from v4, and ~12 different breaking changes had to be resolved. The key API differences: `UIMessage` instead of `Message`, `useChat` with `DefaultChatTransport`, `sendMessage` instead of `append`, `convertToModelMessages` for message format conversion, `stepCountIs` for loop termination.
-
-A critical race condition was discovered during code review: when Claude calls multiple tools in a single step (which it frequently does), the tool handlers execute in parallel and race to update the `intake_payload` JSONB column. This was fixed by serializing all payload updates through a promise queue — each update waits for the previous one to complete before reading and writing state.
-
-### Building the Generation Engine
-
-The Generation Engine converts a completed intake payload into a full ABP. Three generation approaches were considered:
-
-- **Tool use**: Claude calls tools to populate each ABP section incrementally. Flexible, but complex to orchestrate and harder to ensure completeness.
-- **`generateObject` with Zod schema** (chosen): SDK-level schema enforcement. Claude generates the entire content section in one call. Type-safe, no JSON parsing fragility, schema violations are caught by the SDK.
-- **Streaming text + JSON parse**: Simple to implement, but parsing failures are silent and schema drift is hard to catch.
-
-`generateObject` was selected because it enforces correctness at the framework level, not the application level. The schema is the validation — there's no separate validation pass needed.
-
-Refinement uses a full-regeneration pattern: the current ABP, original intake, and requested change are all passed to Claude, which produces a new complete ABP. This is simpler than targeted patching and produces more coherent results (changes can cascade through all sections when appropriate).
-
-### Effort Profile
-
-This session demonstrated the leverage model that Intellios is designed to exemplify: **13 messages from Samy produced 2 fully implemented MVP components, 50+ files, and a complete knowledge system**. The majority of Samy's effort was 15 high-value decisions in a single exchange. Claude's implementation effort was approximately ~143K input / ~79K output tokens (~$2.20 estimated cost).
-
-### What Remains
-
-At the end of Session 001, the Intake Engine and Generation Engine are complete. Three MVP components remain:
-
-- **Governance Validator** — most complex: requires a policy expression language (currently unspecified), rule evaluation engine, and violation reporting
-- **Agent Registry** — most straightforward: CRUD with versioning, lifecycle state machine, search
-- **Blueprint Review UI** — depends on both Governance Validator (to display validation results) and Agent Registry (to fetch ABPs)
-
-The most significant unresolved architectural question is the governance policy expression language: how are policy rules expressed in a way that is both machine-evaluable and human-readable? This blocks the Governance Validator implementation.
-
----
-
-*Add new entries at the top of this file (most recent first) after updating this section title and date.*
+### How the Knowledge System Was Desig

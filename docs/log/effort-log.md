@@ -38,6 +38,55 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 161 — 2026-04-23
+
+**Governance bootstrap + first ADR-029 dogfood — Jira backlog creation, Confluence space mirror, ADR-029 authoring + acceptance, retroactive closure on SCRUM-8 / ADR-018.**
+
+### Claude Effort
+
+| Metric | Value |
+|---|---|
+| Model | claude-opus-4-7 |
+| Input tokens (est.) | ~210,000 (spans a context-compaction boundary) |
+| Output tokens (est.) | ~28,000 |
+| Tool calls (est.) | ~120 (heavy Jira + Confluence MCP traffic) |
+| Subagents spawned | 0 |
+| Estimated cost | ~$5.25 |
+
+### Samy Effort
+
+| Metric | Value |
+|---|---|
+| Messages sent | 6 (2 × tool-load acks; "What do you recommend for next best actions"; "Is all Intellios work from now on will have supporting evidence in Jira and Confluence as well?"; "Carefully validate and proceed"; "accept ADR-029"; "Please proceed carefully and diligently") |
+| Decisions made | 3 (D-Arch — codify Jira+Confluence as mandatory evidence surfaces via ADR-029; D-Approve — accept ADR-029 same-session; D-Scope — approve SCRUM-8 as first dogfood pick) |
+| Engagement type | Policy-setting conversation followed by menu-driven execution; rare two-layer governance decision (mandate the rule, then dogfood it) |
+| Estimated time | ~6 min |
+
+### Deliverables (governance bootstrap)
+
+- Jira Playbook on Confluence (page 2752514) — label taxonomy (`sys:*`, `concern:*`, `adr-NNN`, `oq-NNN`, `hardening:hN`), description template, H1–H10 → ADR map, JQL cheat sheet
+- SCRUM project backlog: 6 Epics (SCRUM-1..6) + 17 Stories (SCRUM-7..23) with cross-ADR issue links
+- Intellios Confluence space restructured to mirror repo: Architecture (6), Subsystems (6), Schemas (3), API Reference, Guides (4), ADR catalog (29), Roadmap & Status, How Intellios Was Built, Glossary, Open Questions
+- `docs/decisions/029-jira-confluence-evidence-mandate.md` — authored and accepted same-session (meta/governance exemption)
+- `CLAUDE.md` — items 9 (Jira) + 10 (Confluence) added to "Documentation Updates — MANDATORY" checklist; closing-rule extension; links ADR-029
+- `docs/decisions/_index.md` — row 029 (accepted)
+- Confluence ADR-029 page (2949121) + ADR catalog update (1540097 v3)
+- Intellios Home "Last sync" bumped
+
+### Deliverables (SCRUM-8 retroactive closure — first ADR-029 dogfood)
+
+- Recon confirmed ADR-018 implementation already landed in commit `9de4f8f` (session 148): `src/lib/env.ts` Zod prod-required guard + `src/lib/crypto/encrypt.ts` defensive throw + `.env.example` documentation — all in place, just never formally closed out
+- `src/__tests__/security/env-schema.test.ts` — new 6-case suite asserting prod boot rejects unset/short/non-hex keys and accepts valid key; dev and test boot without the key. Validated via a standalone node script (6/6 pass) since vitest workers hit a sandbox bus error; typecheck clean on the new file
+- ADR-018 flipped `proposed → accepted` across four surfaces: repo ADR file (Accepted 2026-04-23 line), `docs/decisions/_index.md`, Confluence page 884777 (v2, with added Implementation section), Confluence ADR catalog (v4)
+- SCRUM-8 transitioned Idea → In Progress → Done with closing comment citing commit `9de4f8f` + this session's test commit
+
+### Notes / deferred
+
+- Vitest run deferred to Samy's machine — the sandbox's memory constraints produce a `Bus error (core dumped)` on vitest worker spawn even with memory flags. Standalone equivalent-logic script confirms all 6 assertions pass.
+- Session 160's effort-log + journal backfill of sessions 158/160 is still incomplete; out of scope for this session.
+
+---
+
 ## Session 157 — 2026-04-18
 
 **Runtime-execution + retirement closure — invokeAgent adapter, Test Console UI, retireFromAgentCore, ADR-027, demo runbook + Retail Bank seed.**
@@ -4306,103 +4355,4 @@ Note: session resumed from compaction summary with significant prior context car
 |---|---|---|---|
 | 1 | "Can the help chat evolve to become a productive and helpful copilot for any role?" | D-Arch | Defined the upgrade direction |
 | 2 | Approved Phase 47 plan | D-Approve | Multi-turn + useChat + MessageBubble |
-| 3 | Screenshot + "Is the copilot able to assist me in creating an agent?" | D-Correct | Surfaced role-awareness bug |
-| 4 | "yes I would like it to be action capable" | D-Arch | Defined action navigation feature |
-| 5 | Screenshot with red circle on Recent Activity | D-Correct | Requested layout redesign |
-
-**Totals:** 5 messages · 2 D-Arch · 1 D-Approve · 2 D-Correct · ~15 min
-
----
-
-## Session 054 — 2026-03-16
-
-### Claude Effort
-
-| Item | Detail | Est. tokens |
-|---|---|---|
-| Model | claude-sonnet-4-6 | — |
-| Context restore | Read chat route, sidebar, require.ts, rate-limit.ts as pattern reference | ~25k in / ~0.3k out |
-| `src/app/api/help/ask/route.ts` | New streaming endpoint, `buildHelpSystemPrompt()`, rate limit wiring | ~5k in / ~1.5k out |
-| `src/components/help/help-panel.tsx` | New client component — SUGGESTED_QUESTIONS map, getSuggestions, streaming, overlay UI | ~5k in / ~2k out |
-| `src/components/nav/sidebar.tsx` | Import + render HelpPanel in footer | ~3k in / ~0.3k out |
-| TypeScript check | `tsc --noEmit` — 0 production errors | ~3k in / ~0.3k out |
-| Documentation | Session log 054, _index, roadmap, effort log, project journal | ~12k in / ~3k out |
-| **Session total (est.)** | | **~53k in / ~7.5k out** |
-
-**Estimated session cost:** Sonnet ~53k in × $3/1M + ~7.5k out × $15/1M = **$0.16 + $0.11 = ~$0.27**
-
-### Samy Effort
-
-| # | Message / Decision | Type | Notes |
-|---|---|---|---|
-| 1 | UX help system planning prompt: "Carefully think and plan the ux through which roles can find answers" | D-Arch | Defined the entire help infrastructure direction |
-| 2 | Approved Phase 46 plan | D-Approve | — |
-| 3 | "Continue from where you left off" / "execute plan" | D-Approve | — |
-
-**Totals:** 3 messages · 3 decisions · ~5 min
-
----
-
-## Session 053 — 2026-03-16
-
-### Claude Effort
-
-| Item | Detail | Est. tokens |
-|---|---|---|
-| Model | claude-sonnet-4-6 | — |
-| Context restore | Read handler.ts, regenerate/route.ts (from prior session context via summary) | ~30k in / ~0.5k out |
-| Fix EventType union | Added `\| "blueprint.regenerated"` to `src/lib/events/types.ts` | ~2k in / ~0.2k out |
-| TypeScript check | `tsc --noEmit` — 0 production errors | ~3k in / ~0.3k out |
-| Browser verification | Pipeline Board → Blueprint Studio → Regenerate button + confirm state | ~5k in / ~0.5k out |
-| Documentation | Session log 053, _index, roadmap, effort log, project journal | ~8k in / ~3k out |
-| **Session total (est.)** | | **~48k in / ~4.5k out** |
-
-**Estimated session cost:** Sonnet ~48k in × $3/1M + ~4.5k out × $15/1M = **$0.14 + $0.07 = ~$0.21**
-
-### Samy Effort
-
-| # | Message / Decision | Type | Notes |
-|---|---|---|---|
-| 1 | (Session resumed mid-task from prior context; no new decisions required) | — | Fully autonomous completion |
-
-**Totals:** 0 active messages · 0 decisions · ~1 min
-
----
-
-```
-## Session NNN — YYYY-MM-DD
-
-### Claude Effort
-
-| Item | Detail | Est. tokens |
-|---|---|---|
-| Model | | — |
-| [work item] | | ~Xk in / ~Xk out |
-| **Session total (est.)** | | **~Xk in / ~Xk out** |
-
-**Estimated session cost:** ~$X.XX
-
-### Samy Effort
-
-| # | Message / Decision | Type | Notes |
-|---|---|---|---|
-
-**Totals:** X messages · X decisions · ~X hrs
-```
-
----
-
-## Session 117 — 2026-04-04
-
-**Focus:** QA Remediation Sprint (second session) — remaining 30 findings
-
-| Metric | Value |
-|---|---|
-| Session date | 2026-04-04 |
-| Session type | QA remediation |
-| Findings addressed | 30 (W-02 through M-13) |
-| Files modified | 15 |
-| New files | 1 (session log) |
-| Migrations | 0 |
-| New dependencies | 0 |
-
+| 3 | Screenshot + "Is the copilot able to assis

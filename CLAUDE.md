@@ -113,8 +113,10 @@ After every implementation task:
 6. **ADRs** — record new significant technical decisions as ADR files before or alongside implementation.
 7. **Open questions** — update `docs/open-questions.md`: add new questions discovered during implementation; mark questions resolved (with reference to the resolving decision or ADR).
 8. **Project journal** — append a narrative entry to `docs/project-journal.md` at the end of each session capturing the strategic context, key decisions made, and why they were made.
+9. **Jira** — implementation work is tied to a SCRUM Story. At session start, identify or create the Story, transition it to **In Progress**, and record its key in the session-log front-matter. During the session, tick off acceptance-criteria checkboxes as they complete. At session close, post a Story comment with a one-paragraph summary and the commit SHA(s), then transition to **Done** if fully shipped. When an ADR is accepted, add a confirming comment to its linked Story. When new scope surfaces, create a Story under the correct Epic with `sys:*`, `concern:*`, and `adr-NNN` labels per the [Jira Playbook](https://samyhamad.atlassian.net/wiki/spaces/INTELLIOS/pages/2752514). Meta/governance sessions (CLAUDE.md edits, ADR authoring, documentation-only work) use the ADR + session log as sufficient evidence and do not require a Story.
+10. **Confluence** — the [Intellios space](https://samyhamad.atlassian.net/wiki/spaces/INTELLIOS) mirrors the repo for human browsing. When a repo doc changes during a session (spec, ADR status, roadmap, journal entry), update the corresponding Confluence page in the same session — the repo commit and the Confluence edit belong together. New ADRs get a new child page under the ADR index; accepted ADRs have their status flipped on the page. Bump the Intellios Home "Last sync" line at session close.
 
-Do not commit code without committing the corresponding documentation update in the same commit or an immediately following one.
+Do not commit code without committing the corresponding documentation update in the same commit or an immediately following one. Do not close a session without the Jira comment and any Confluence mirrors in place. The policy for these additions is recorded in [ADR-029](docs/decisions/029-jira-confluence-evidence-mandate.md).
 
 ## Key Subsystems
 

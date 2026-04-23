@@ -19,7 +19,7 @@
 | 015 | [PDF rendering of evidence package](015-pdf-rendering-of-evidence-package.md) | proposed | 2026-04-09 |
 | 016 | [AI resilience layer — retry, timeout, model configuration](016-ai-resilience-layer.md) | proposed | 2026-04-14 |
 | 017 | [Database connection pool externalization](017-db-pool-externalization.md) | proposed | 2026-04-17 |
-| 018 | [Hard-require SECRETS_ENCRYPTION_KEY in production](018-secrets-encryption-key-production-required.md) | proposed | 2026-04-17 |
+| 018 | [Hard-require SECRETS_ENCRYPTION_KEY in production](018-secrets-encryption-key-production-required.md) | accepted | 2026-04-17 |
 | 019 | [Governance violations block blueprint approval (with audited admin override)](019-governance-blocks-approval.md) | proposed | 2026-04-17 |
 | 020 | [Per-enterprise (tenant) rate limits on AI endpoints](020-per-enterprise-rate-limits.md) | proposed | 2026-04-17 |
 | 021 | [Atomic entity + audit writes via db.transaction](021-atomic-entity-audit-writes.md) | proposed | 2026-04-17 |
@@ -30,3 +30,4 @@
 | 026 | [Outbound webhook retry with scheduled backoff, DLQ terminus, and admin replay](026-webhook-retry-dlq.md) | proposed | 2026-04-18 |
 | 027 | [Test Console as governed test harness — reviewer-scoped, rate-limited, audit-logged invocation of deployed AgentCore agents (NOT a runtime)](027-test-console-as-governed-test-harness.md) | proposed | 2026-04-18 |
 | 028 | [Vercel ignoreCommand Gate 1 — diff against VERCEL_GIT_PREVIOUS_SHA, not HEAD~1, to handle bundled pushes](028-vercel-ignore-baseline-previous-deploy.md) | proposed | 2026-04-20 |
+| 029 | [Jira and Confluence as mandatory evidence surfaces](029-jira-confluence-evidence-mandate.md) | accepted | 2026-04-23 |
