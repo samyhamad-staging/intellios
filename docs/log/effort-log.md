@@ -38,6 +38,40 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 166 — 2026-04-23
+
+**Live 8-stage Retail Bank lifecycle walkthrough against real AWS Bedrock + real PostgreSQL (SCRUM-26).**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Infrastructure debugging | Port conflict, font files, Turbopack @react-aria, PowerShell vs WSL, ANTHROPIC_API_KEY env precedence | ~30k in / ~5k out |
+| Bug diagnosis + fixes | translate.ts name sanitization, deploy.ts CREATING race, next.config.ts Windows backslash | ~20k in / ~5k out |
+| Auth flow debugging | Cookie capture, CSRF extraction, correct email format (@intellios.dev) | ~15k in / ~3k out |
+| 8-stage walkthrough execution | Intake → generation → validation → review → 3-step approval → deploy → invoke → retire | ~25k in / ~5k out |
+| AWS verification | Direct SDK calls to confirm SBVVOLDT3S PREPARED and deleted | ~5k in / ~1k out |
+| Session log + _index.md + effort log | | ~8k in / ~5k out |
+| **Session total (est.)** | Two context windows + continuation | **~103k in / ~24k out** |
+
+**Estimated session cost:** Sonnet 4.6 ~103k in × $3/1M + ~24k out × $15/1M = **$0.31 + $0.36 = ~$0.67**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | "Resume" (×multiple) | Relay | Resumed after tool call interruptions and context reset |
+| 2 | Docker Desktop screenshots | D-Approve | Confirmed infra running |
+| 3 | PowerShell `npm run dev` execution | D-Approve | Executed server start commands on host |
+| 4 | "ready" | Relay | Confirmed server up |
+| 5 | "give me the code" | D-Process | Requested paste-ready npm command after server restart |
+| 6 | "Why is this taking too long?" | D-Correct | Flagged stuck loop during server startup |
+
+**Totals:** ~8 messages · 2 D-Process · 2 D-Approve · 2 D-Correct · 2 Relay · ~1.5h estimated time. Heavy operator involvement required — Docker, PowerShell, and Windows-specific infrastructure required hands-on execution.
+
+---
+
 ## Session 167 — 2026-04-23
 
 **Meta/governance — First monthly AgentCore Watch review. Branch: `session-167-agentcore-watch`.**
