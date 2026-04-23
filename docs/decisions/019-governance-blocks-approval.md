@@ -1,6 +1,6 @@
 # ADR-019: Governance Violations Block Blueprint Approval (with Audited Admin Override)
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-17
 **Supersedes:** (none)
 

@@ -1,6 +1,6 @@
 # ADR-016: AI Resilience Layer — Retry, Timeout, and Model Configuration
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-14
 **Supersedes:** (none)
 

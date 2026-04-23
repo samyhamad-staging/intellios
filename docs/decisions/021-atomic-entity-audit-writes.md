@@ -1,6 +1,6 @@
 # ADR-021: Atomic Entity + Audit Writes via `db.transaction`
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-17
 **Supersedes:** (none)
 

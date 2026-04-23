@@ -1,6 +1,6 @@
 # ADR-027: Test Console as a governed test harness (not a runtime)
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-18
 **Supersedes:** extends ADR-010 (ABP → Bedrock translation); extends session-156 Phase 2 deploy work.
 

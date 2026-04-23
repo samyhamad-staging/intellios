@@ -1,6 +1,6 @@
 # ADR-023: Bedrock Circuit Breaker
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-17
 **Supersedes:** (none) — extends ADR-016 (AI Resilience Layer)
 

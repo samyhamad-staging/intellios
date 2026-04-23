@@ -1,6 +1,6 @@
 # ADR-020: Per-Enterprise (Tenant) Rate Limits on AI Endpoints
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-17
 **Supersedes:** (none)
 

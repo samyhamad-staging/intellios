@@ -1,6 +1,6 @@
 # ADR-028: Vercel ignoreCommand Gate 1 — diff against last successful deploy, not HEAD~1
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-20
 **Supersedes:** none; refines `scripts/vercel-ignore-build-step.sh` (introduced pre-session-151; patched by session 151 for root-dir resolution; extended session 155 for Gate 2 CI-status checks).
 

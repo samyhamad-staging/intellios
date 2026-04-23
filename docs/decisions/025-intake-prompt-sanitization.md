@@ -1,6 +1,6 @@
 # ADR-025: Intake prompt injection defense — three-layer sanitization with delimited untrusted-input blocks
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-18
 **Supersedes:** none
 

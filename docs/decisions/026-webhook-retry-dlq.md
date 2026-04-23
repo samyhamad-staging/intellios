@@ -1,6 +1,6 @@
 # ADR-026: Webhook retry schedule, dead-letter queue, and admin replay
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-18
 **Supersedes:** extends ADR-009 (outbound webhook integration)
 

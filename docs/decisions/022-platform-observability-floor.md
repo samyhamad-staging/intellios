@@ -1,6 +1,6 @@
 # ADR-022: Platform observability floor — instrumentation.ts, /api/healthz, structured-log migration
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-17
 **Supersedes:** (none)
 **Related:** ADR-017 (DB pool externalization), ADR-019 (governance block), ADR-020 (per-enterprise rate limits), ADR-021 (atomic entity + audit writes)

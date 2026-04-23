@@ -38,6 +38,40 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 162 — 2026-04-23
+
+**Retroactive ADR status audit — sweep ADR-012..028 for shipped-but-proposed drift (SCRUM-24, second ADR-029 dogfood).**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-opus-4-6 | — |
+| Session scaffolding | SCRUM-24 creation under SCRUM-3, Confluence methodology page v1 (3342337), SCRUM-24 transition to In Progress, session log open | ~20k in / ~6k out |
+| Per-ADR diagnostic pass (16 ADRs) | Full read of each ADR + `grep`/`git log` against `src/` for named artifacts; classify Shipped / Not shipped; findings table | ~120k in / ~4k out |
+| Repo ADR status flips (15 files) | `Edit` flipping `Status: proposed` → `Status: accepted`; ADR-024 also corrects migration filename `0032 → 0039` | ~25k in / ~2k out |
+| `docs/decisions/_index.md` 15-row flip | 15 catalog rows updated `proposed` → `accepted` | ~2k in / ~0.2k out |
+| 15 Confluence ADR page updates | One PUT per page, uniform version message referencing ADR-029 sweep | ~45k in / ~3k out |
+| Confluence ADR catalog (1540097) v5 | 15 status cells flipped in catalog table | ~8k in / ~1k out |
+| Confluence methodology page (3342337) v2 | Populate findings table, outcomes section, repeat-cadence section; status flipped to "complete" | ~6k in / ~2k out |
+| 16 Jira retro-comments + 15 transitions | SCRUM-7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22 (+ SCRUM-8 confirming comment); one SCRUM-11 503 retry | ~30k in / ~8k out |
+| Commit via git-lock workaround | `GIT_INDEX_FILE=/tmp/gitindex` + plumbing (`hash-object`, `update-index`, `write-tree`, `commit-tree`, ref-file write) | ~10k in / ~0.8k out |
+| Session close docs | Session log finalization, project journal entry, effort log entry, SCRUM-24 closure comment + transition to Done | ~12k in / ~6k out |
+| **Session total (est.)** | | **~278k in / ~33k out** |
+
+**Estimated session cost:** Opus ~278k in × $15/1M + ~33k out × $75/1M = **$4.17 + $2.48 = ~$6.65**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Directed "both (b) + batched" — deep diagnostic pass first, then batched execution after sign-off | D-Process | Set the shape of the sweep |
+| 2 | "1. as you recommended  2. as you recommended" | D-Approve | Approved flipping ADR-013 in main batch + bundling ADR-024 migration filename fix into flip commit |
+
+**Totals:** 2 messages · 1 D-Process · 1 D-Approve · classic Samy menu-driven governance-session pattern
+
+---
+
 ## Session 161 — 2026-04-23
 
 **Governance bootstrap + first ADR-029 dogfood — Jira backlog creation, Confluence space mirror, ADR-029 authoring + acceptance, retroactive closure on SCRUM-8 / ADR-018.**
@@ -4353,6 +4387,4 @@ Note: session resumed from compaction summary with significant prior context car
 
 | # | Message / Decision | Type | Notes |
 |---|---|---|---|
-| 1 | "Can the help chat evolve to become a productive and helpful copilot for any role?" | D-Arch | Defined the upgrade direction |
-| 2 | Approved Phase 47 plan | D-Approve | Multi-turn + useChat + MessageBubble |
-| 3 | Screenshot + "Is the copilot able to assis
+| 1 | "Can the help chat evolve to become a productive and helpful copil

@@ -1,6 +1,6 @@
 # ADR-012: Middleware-Level Tenant Isolation
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-03
 **Supersedes:** (none — extends the existing query-level isolation)
 

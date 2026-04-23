@@ -1,6 +1,6 @@
 # ADR-017: Database Connection Pool Externalization
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-17
 **Supersedes:** (none)
 

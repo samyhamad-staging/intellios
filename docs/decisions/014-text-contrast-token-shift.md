@@ -1,6 +1,6 @@
 # ADR-014: Text contrast token scale shift for WCAG AA compliance
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-08
 **Supersedes:** (none)
 

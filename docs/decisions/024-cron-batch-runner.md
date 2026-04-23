@@ -1,6 +1,6 @@
 # ADR-024: Cron batch runner — per-item isolation, time-budget, partial-completion via run + failure log tables
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-18
 **Supersedes:** none
 
@@ -56,7 +56,7 @@ recentFailedItemIds(jobName: string, sinceHours?: number): Promise<Set<string>>
 
 Routes can use this to sort previously-failed items to the front of `items` before calling `runCronBatch`, so unresolved failures get another attempt (and surface into observability) rather than being buried by ordering luck.
 
-### State tables (migration `0032_cron_runs.sql`)
+### State tables (migration `0039_cron_runs.sql`)
 
 | Table | Purpose |
 |---|---|

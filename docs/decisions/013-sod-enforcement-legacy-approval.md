@@ -1,6 +1,6 @@
 # ADR-013: SOD enforcement in legacy single-step blueprint approval
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-08
 **Supersedes:** (none)
 
