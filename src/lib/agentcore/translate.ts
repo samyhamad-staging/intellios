@@ -133,9 +133,12 @@ export function translateAbpToBedrockAgent(
   } = options;
 
   // ── Agent name ──────────────────────────────────────────────────────────────
-  // Bedrock allows max 100 chars: [0-9a-zA-Z-_ ]
-  const rawName = abp.identity.name || "Unnamed Agent";
-  const agentName = truncate(rawName.replace(/[^0-9a-zA-Z\-_ ]/g, "_"), 100);
+  // Bedrock pattern: ([0-9a-zA-Z][_-]?){1,100} — no spaces allowed
+  const rawName = abp.identity.name || "Unnamed-Agent";
+  const agentName = truncate(
+    rawName.replace(/\s+/g, "-").replace(/[^0-9a-zA-Z_-]/g, "_").replace(/[-_]{2,}/g, "-"),
+    100
+  );
 
   // ── Description ─────────────────────────────────────────────────────────────
   const description = abp.identity.description

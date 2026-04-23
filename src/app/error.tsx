@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Heading } from "@/components/catalyst";
 
 interface ErrorPageProps {
   error: Error & { digest?: string };
@@ -31,9 +30,9 @@ export default function GlobalError({ error, reset }: ErrorPageProps) {
           Error
         </p>
 
-        <Heading level={1} className="mb-3">
+        <h1 className="mb-3 text-2xl font-bold text-text">
           Something went wrong
-        </Heading>
+        </h1>
 
         <p className="mb-2 text-sm text-text-secondary leading-relaxed">
           An unexpected error occurred. This has been logged automatically.

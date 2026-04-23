@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Heading } from "@/components/catalyst";
 
 export default function NotFound() {
   return (
@@ -18,9 +17,9 @@ export default function NotFound() {
           404
         </p>
 
-        <Heading level={1} className="mb-3">
+        <h1 className="mb-3 text-2xl font-bold text-text">
           Page not found
-        </Heading>
+        </h1>
 
         <p className="mb-8 text-sm text-text-secondary leading-relaxed">
           The page you&apos;re looking for doesn&apos;t exist or has been moved.

@@ -139,6 +139,20 @@ export async function deployToAgentCore(
     );
   }
 
+  // ── Step 1b: Wait for agent to leave CREATING state ────────────────────────
+  // CreateAgentActionGroup is rejected while the agent status is CREATING.
+  // Poll until NOT_PREPARED before proceeding.
+  for (let attempt = 0; attempt < 40; attempt++) {
+    await sleep(500);
+    try {
+      const getResult = await client.send(new GetAgentCommand({ agentId }));
+      const status = getResult.agent?.agentStatus;
+      if (status !== "CREATING") break;
+    } catch {
+      // Transient error — keep waiting
+    }
+  }
+
   // ── Step 2: Create action groups (one per tool) ─────────────────────────────
   // Failure here rolls back by deleting the newly created agent.
   try {

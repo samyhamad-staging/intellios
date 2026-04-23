@@ -1,23 +1,8 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { auth, signOut } from "@/auth";
 import { Analytics } from "@vercel/analytics/next";
-
-const geistSans = localFont({
-  src: "../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2",
-  variable: "--font-sans",
-  display: "swap",
-  weight: "100 900",
-});
-
-const geistMono = localFont({
-  src: "../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2",
-  variable: "--font-mono",
-  display: "swap",
-  weight: "100 900",
-});
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -76,7 +61,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${plusJakarta.variable}`}>
+    <html lang="en" className={`${plusJakarta.variable}`}>
       {/*
         Anti-flash script — runs synchronously before React hydrates.
         Reads theme preference from localStorage and falls back to system
