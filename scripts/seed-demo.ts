@@ -21,7 +21,23 @@
  */
 
 import { execSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+
+// Load src/.env.local so BEDROCK_EXECUTION_ROLE_ARN (written by
+// scripts/provision-bedrock-sandbox.sh) is available to the seed sub-scripts.
+const envLocalPath = path.resolve(__dirname, "..", "src", ".env.local");
+if (existsSync(envLocalPath)) {
+  for (const line of readFileSync(envLocalPath, "utf8").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eqIdx = trimmed.indexOf("=");
+    if (eqIdx < 0) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, "");
+    if (!(key in process.env)) process.env[key] = val;
+  }
+}
 
 // __dirname resolves to scripts/, so the path math is stable regardless of CWD.
 const srcDir = path.resolve(__dirname, "..", "src");

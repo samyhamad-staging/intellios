@@ -111,52 +111,76 @@ async function seedUsers(): Promise<void> {
   }
 }
 
+// Read the Bedrock execution role ARN provisioned by scripts/provision-bedrock-sandbox.sh.
+// Written to src/.env.local as BEDROCK_EXECUTION_ROLE_ARN — gitignored, never committed.
+const EXECUTION_ROLE_ARN = process.env.BEDROCK_EXECUTION_ROLE_ARN ?? null;
+
 async function seedEnterpriseSettings(): Promise<void> {
   console.log("\nStep 2/3 — Enterprise settings (single-step approval, agentcore enabled)");
+
+  const BASE_SETTINGS = {
+    sla: { reviewWarningHours: 24, reviewBreachHours: 48 },
+    governance: {
+      requireTestsBeforeApproval: false,
+    },
+    approvalChain: [{ role: "reviewer", label: "Chief Risk Officer" }],
+    notifications: { emailEnabled: false },
+    awareness: {
+      qualityIndexThreshold: 70,
+      validityRateThreshold: 0.8,
+      reviewQueueThreshold: 5,
+    },
+    deploymentTargets: {
+      agentcore: {
+        enabled: true,
+        region: "us-east-1",
+        executionRoleArn: EXECUTION_ROLE_ARN,
+        foundationModel: "anthropic.claude-3-5-haiku-20241022-v1:0",
+      },
+    },
+  };
+
   const existing = await db.query.enterpriseSettings.findFirst({
     where: eq(enterpriseSettings.enterpriseId, ENTERPRISE),
   });
-  if (existing) {
-    logSkip("enterprise_settings (already exists)");
+
+  if (!existing) {
+    await db.insert(enterpriseSettings).values({
+      enterpriseId: ENTERPRISE,
+      settings: BASE_SETTINGS,
+      updatedBy: "ed@retailbank.demo",
+    });
+    logAdd(`enterprise_settings (executionRoleArn: ${EXECUTION_ROLE_ARN ?? "null — set BEDROCK_EXECUTION_ROLE_ARN"})`);
     return;
   }
-  await db.insert(enterpriseSettings).values({
-    enterpriseId: ENTERPRISE,
-    settings: {
-      sla: { reviewWarningHours: 24, reviewBreachHours: 48 },
-      governance: {
-        // Runbook stage 0 prereq: "no test-before-approval requirement"
-        requireTestsBeforeApproval: false,
-      },
-      approvalChain: [
-        // Runbook stage 4: a single reviewer approves; SOD (ADR-013) still
-        // applies, so Marta (creator) cannot approve her own blueprint.
-        { role: "reviewer", label: "Chief Risk Officer" },
-      ],
-      notifications: { emailEnabled: false },
-      awareness: {
-        qualityIndexThreshold: 70,
-        validityRateThreshold: 0.8,
-        reviewQueueThreshold: 5,
-      },
-      // Runbook stage 5 prereq: deployment target must be enabled. The
-      // operator fills in concrete IAM role after running the session-158
-      // smoke deploy (we leave the structure in place so the deploy button
-      // doesn't 400 with "target not configured").
+
+  // Enterprise already exists — patch executionRoleArn if env var is set and the
+  // stored value is null or differs. Leaves all other settings untouched.
+  const currentArn = (existing.settings as Record<string, unknown> & {
+    deploymentTargets?: { agentcore?: { executionRoleArn?: string | null } };
+  })?.deploymentTargets?.agentcore?.executionRoleArn ?? null;
+
+  if (EXECUTION_ROLE_ARN && currentArn !== EXECUTION_ROLE_ARN) {
+    const merged = {
+      ...(existing.settings as object),
       deploymentTargets: {
+        ...((existing.settings as { deploymentTargets?: object }).deploymentTargets ?? {}),
         agentcore: {
-          enabled: true,
-          region: "us-east-1",
-          // Operator must fill in before live demo:
-          // executionRoleArn: "arn:aws:iam::<ACCOUNT_ID>:role/<BedrockExecRole>"
-          executionRoleArn: null,
-          foundationModel: "anthropic.claude-3-5-haiku-20241022-v1:0",
+          ...((existing.settings as { deploymentTargets?: { agentcore?: object } }).deploymentTargets?.agentcore ?? {}),
+          executionRoleArn: EXECUTION_ROLE_ARN,
         },
       },
-    },
-    updatedBy: "ed@retailbank.demo",
-  });
-  logAdd("enterprise_settings");
+    };
+    await db
+      .update(enterpriseSettings)
+      .set({ settings: merged, updatedBy: "ed@retailbank.demo" })
+      .where(eq(enterpriseSettings.enterpriseId, ENTERPRISE));
+    logAdd(`enterprise_settings updated executionRoleArn → ${EXECUTION_ROLE_ARN}`);
+  } else if (!EXECUTION_ROLE_ARN) {
+    logSkip(`enterprise_settings (BEDROCK_EXECUTION_ROLE_ARN not set — executionRoleArn unchanged: ${currentArn ?? "null"})`);
+  } else {
+    logSkip(`enterprise_settings (executionRoleArn already correct: ${currentArn})`);
+  }
 }
 
 async function seedPolicies(): Promise<void> {
