@@ -38,6 +38,43 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 163 — 2026-04-23
+
+**Closeout addendum — session 162 post-delivery fixup + evidence surface reconciliation.**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-opus-4-7 | — |
+| Session opening audit | Sandbox `git status` + `git log origin/main..HEAD` + per-file CRLF count + untracked-file inspection | ~8k in / ~2k out |
+| Handoff prompt drafting | `claude-code-prompt-2026-04-23.md` — 5 tasks with stop-and-ask gates, modeled on session-158 precedent | ~6k in / ~3k out |
+| Live advisory loop | Iterative back-and-forth with Claude Code on T2 (274-line diff triage, DATABASE_URL count reconciliation, settings.local.json untrack strategy) | ~25k in / ~5k out |
+| Plumbing-omission diagnosis | Independent sandbox verification of `dd12b6c` content vs. working tree; root-cause naming of git-lock workflow's silent-omission failure mode | ~12k in / ~3k out |
+| Fixup commit advisory | Exact commit-message drafting for `aeab367`; instructions on the retract + scratch-file cleanup tasks | ~8k in / ~2k out |
+| Memory update | `git_lock_file_workaround.md` — explicit-staging rule + pre-flight check | ~3k in / ~0.5k out |
+| ADR-029 self-audit | Jira SCRUM-24 + Confluence Home page current-state fetch; gap analysis; compliance verdict | ~10k in / ~2k out |
+| Session close docs | Session 163 log, `_index.md` row, project-journal entry, effort-log entry, SCRUM-24 follow-up comment, Home page v5, commit via plumbing workflow | ~20k in / ~8k out |
+| **Session total (est.)** | | **~92k in / ~25.5k out** |
+
+**Estimated session cost:** Opus ~92k in × $15/1M + ~25.5k out × $75/1M = **$1.38 + $1.91 = ~$3.29**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | "Any outstanding commits?" | D-Probe | The load-bearing question — triggered the entire arc |
+| 2 | "Create paste-ready prompt for Claude Code" | D-Process | Requested the handoff artifact |
+| 3 | Multiple relays of Claude Code output throughout T1–T5 execution | Relay | Live cross-sandbox coordination |
+| 4 | Approved `git rm --cached` strategy after DATABASE_URL count reconciled to 4 | D-Approve | Unblocked Step A |
+| 5 | Approved fixup commit after verifying plumbing omission from independent source | D-Approve | Authorized `aeab367` |
+| 6 | "Is this work represented in Jira and Confluence? Investigate how these tools were involved and evaluate against the rules we established for the objective we have" | D-Process | Triggered the ADR-029 self-audit + this gap-closing pass |
+| 7 | "yes please" | D-Approve | Approved executing the recommended close-the-loop actions |
+
+**Totals:** 7 messages · 1 D-Probe · 2 D-Process · 2 D-Approve · 2 Relay · classic Samy vigilance pattern — one probe question opens a half-session of real work that wasn't in the plan
+
+---
+
 ## Session 162 — 2026-04-23
 
 **Retroactive ADR status audit — sweep ADR-012..028 for shipped-but-proposed drift (SCRUM-24, second ADR-029 dogfood).**
