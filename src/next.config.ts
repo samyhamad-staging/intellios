@@ -45,16 +45,19 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.resolve(__dirname, ".."),
   turbopack: {
     root: path.resolve(__dirname, ".."),
-    resolveAlias: {
-      // @react-aria packages expose a non-standard "source" export condition
-      // that points to uncompiled TypeScript. Turbopack picks it up first,
-      // causing Module-not-found errors. Pin to the compiled CJS output.
-      // Use forward slashes — Turbopack on Windows rejects backslash paths from path.resolve().
-      "@react-aria/interactions": path.resolve(__dirname, "node_modules/@react-aria/interactions/dist/main.js").replace(/\\/g, "/"),
-      "@react-aria/focus": path.resolve(__dirname, "node_modules/@react-aria/focus/dist/main.js").replace(/\\/g, "/"),
-      "@react-aria/utils": path.resolve(__dirname, "node_modules/@react-aria/utils/dist/main.js").replace(/\\/g, "/"),
-      "@react-aria/ssr": path.resolve(__dirname, "node_modules/@react-aria/ssr/dist/main.js").replace(/\\/g, "/"),
-    },
+    // Windows only: pin @react-aria/* to compiled CJS output.
+    // On Linux/macOS, path.resolve() returns a POSIX path starting with '/',
+    // which Turbopack misreads as a server-relative URL — production breaks.
+    // On Linux the @react-aria source-condition issue does not occur (verified
+    // against dd12b6c: last READY build had no resolveAlias and built clean).
+    ...(process.platform === "win32" ? {
+      resolveAlias: {
+        "@react-aria/interactions": path.resolve(__dirname, "node_modules/@react-aria/interactions/dist/main.js").replace(/\\/g, "/"),
+        "@react-aria/focus": path.resolve(__dirname, "node_modules/@react-aria/focus/dist/main.js").replace(/\\/g, "/"),
+        "@react-aria/utils": path.resolve(__dirname, "node_modules/@react-aria/utils/dist/main.js").replace(/\\/g, "/"),
+        "@react-aria/ssr": path.resolve(__dirname, "node_modules/@react-aria/ssr/dist/main.js").replace(/\\/g, "/"),
+      },
+    } : {}),
   },
   async headers() {
     return [
