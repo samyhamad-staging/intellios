@@ -891,3 +891,33 @@ This memo was written to be converted directly into Jira and Confluence. To oper
 8. **Quarterly re-read.** Re-open this memo at the end of Phase A, end of Phase B, and end of Phase C. Update what the evidence has changed. Preserve the original as a versioned artifact.
 
 The memo is itself subject to ADR-029's four-surface discipline: once accepted, it should exist in repo, in Confluence, and be linked from the Project Journal and a Jira Initiative.
+
+---
+
+## Addendum — 2026-04-23: Session 167 Reweighting
+
+**Trigger.** The first monthly AgentCore Watch review (Session 167, Epic 2.3.1) produced OQ-011 and OQ-012, documenting cumulative native-feature overlap on two distinct axes simultaneously: axis (b) policy-based governance ~25% (AgentCore Policy GA March 3, Evaluations pre-deployment testing) and axis (c) lifecycle management ~20% (AWS Agent Registry Preview April 9 — draft→approved workflow, CloudTrail audit, lifecycle tracking). Both axes crossed or reached the 20% material threshold in the same review window. The AgentCore Watch mechanism prescribed by assumption A10 and Epic 2.3.1 proved non-theater on its first run.
+
+**Two-axis squeeze framing.** A single-axis competitive squeeze is a race — ship faster in the relevant lane and maintain distance. A two-axis squeeze is structurally different. Intellios does not have more absolute velocity than AWS and will not acquire it. The defensible response is not velocity; it is differentiation. Specifically: identify the ground that neither AWS axis covers and hold it through execution. The differentiators that remain intact — cross-runtime governance, design-time policy enforcement, separation-of-duties, multi-step approval chains, audited evidence artifacts — are real, but only the last one (evidence artifacts) has no AWS native analog in either axis's current feature set.
+
+**Decision.** Within Phase A (Wedge Close), Epic 1.2 (Evidence Package Renderer / ADR-015, Jira: SCRUM-38) is reweighted above Story 1.1.4 (demo video recording, to be created as SCRUM-30 when SCRUM-33 IAM gap closes). Both remain in Phase A scope; this is a relative-priority reordering, not a scope addition or reduction. SCRUM-25 (Epic 1.1 — Live AWS Smoke) scope is unchanged.
+
+**Revised Phase A priority ordering within the Wedge Close:**
+
+| Priority | Item | Jira | Notes |
+|---|---|---|---|
+| P0 | 1.1.1 Provision sandbox AWS account + Bedrock execution role | SCRUM-26 sub-work | Done (Session 164, 166) |
+| P0 | 1.1.2 Live smoke deploy against sandbox | SCRUM-26 | 7/8 PASS (Session 166) |
+| P0 | 1.1.3 Retail Bank demo rehearsal | SCRUM-26 sub-work | Preconditions met |
+| **P0** | **1.2.1 Implement `src/lib/evidence/` PDF renderer** | **SCRUM-39** | **Reweighted above demo video** |
+| **P0** | **1.2.2 `GET /api/blueprints/[id]/evidence-package.pdf` route** | **SCRUM-40** | **Reweighted above demo video** |
+| **P0** | **1.2.4 Promote ADR-015 to accepted (four surfaces)** | **SCRUM-42** | **Same session as 1.2.1** |
+| P0 | 1.1.4 Demo video recording (5–8 min) | SCRUM-30 (pending SCRUM-33) | After evidence package |
+| P1 | 1.2.3 UI "Download Evidence Package" button | SCRUM-41 | Design-partner milestone |
+| P1 | 1.1.5 Resolve OQ-010 (RETURN_CONTROL) | — | Already resolved (ADR-027) |
+
+**Additional validation from Session 169.** The Session 166 live walkthrough produced 7/8 PASS against real AWS Bedrock — a real agent was created, deployed, and retired with `ResourceNotFoundException` confirmed. This walkthrough result independently strengthens the reweighting argument: "the evidence package matters more than the demo video" was speculative before the walkthrough and is grounded after it. A product that demonstrably works end-to-end is the product whose governance artifacts will be scrutinized by enterprise compliance teams. The evidence package's value scales with the reality of the product behind it.
+
+**What stays open.** OQ-011 and OQ-012 remain open — they are not resolved by this reweighting. The reweighting is a within-Phase-A tactical adjustment, not a strategic response to the squeeze. The strategic response — whether to author a Platform Risk Response ADR, how to position Intellios relative to AWS Agent Registry GA — is the subject of the next review trigger: 2026-05-23, or earlier on a material AWS announcement (Agent Registry GA, or any "evidence/compliance report" feature in Bedrock Agents).
+
+**Next review.** If the May 2026 review confirms the two-axis squeeze direction is sustained, consider authoring the "Platform Risk Response ADR" that Session 167 flagged as recommended but deferred. That ADR was not authored here — this addendum is strategic-decision evidence; a dedicated strategic session is the correct venue for a new ADR.
