@@ -9,6 +9,7 @@ node_modules/
 # Scratch / working documents — not part of the codebase
 landing-page-audit-*.md
 production-readiness-review.html
+claude-code-prompt*.md
 
 # Sample artifacts — PDFs are binary; use Git LFS or external storage instead
 samples/*.pdf
