@@ -4830,3 +4830,31 @@ Note: session resumed from compaction summary with significant prior context car
 | 6 | Resume directive after compaction | D-Gate | Kept session moving through context boundary |
 
 **Decision flavor.** Medium-engagement session with pre-loaded failure-mode instructions. The session prompt anticipated the CLI-denied IAM apply and specified the Console fallback + smoke check in advance, which reduced mid-session back-and-forth. The compaction-and-resume midway (context size) was handled cleanly. The poisoned-pill finding on `DEFAULT_FOUNDATION_MODEL` was entirely surfaced by Claude during Stage 7 diagnosis, not directed from Samy's side — an instance of the evidence surfaces working as designed.
+
+---
+
+## Session 171-pre — 2026-04-24
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Gap check + file reads | git state, ADR-015, evidence-package route, export/compliance route, registry/blueprint UI pages, download-evidence-button, samples/ | ~40k in / ~1k out |
+| src/ verification | Glob of api/blueprints, api/registry, registry/[agentId]/page.tsx grep, blueprint/[id]/page.tsx grep, mrm/ directory | ~15k in / ~1k out |
+| Session log | Full session-171-pre log written (Action 1–5, proposals, deferred items, four-surface check) | ~10k in / ~8k out |
+| Memo addendum #2 | Addendum appended to `docs/strategy/2026-04-23_strategic-direction-memo.md` | ~8k in / ~5k out |
+| Journal entry | "The Evidence Package Was Shipped The Whole Time" prepended to `docs/project-journal.md` | ~8k in / ~3k out |
+| Effort log + _index.md | Two index surfaces updated | ~5k in / ~1k out |
+| **Session total (est.)** | | **~86k in / ~19k out** |
+
+**Estimated session cost:** Sonnet 4.6 ~86k in × $3/1M + ~19k out × $15/1M = **$0.26 + $0.29 = ~$0.55**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Session 171-pre prompt — 5-step procedure, shipped artifacts context, Story proposals, constraints | D-Process | Full session framing with explicit gate: no Jira writes until proposals approved |
+| 2 | Story proposal approval (pending) | D-Approve | Samy reviews SCRUM-39/40/41/42 + new Story proposals |
+
+**Decision flavor.** Low-engagement documentation session initiated by a validation check. Samy's primary input is approving the Jira Story dispositions before they are applied.
