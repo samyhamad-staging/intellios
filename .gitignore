@@ -14,5 +14,4 @@ claude-code-prompt*.md
 # Sample artifacts — PDFs are binary; use Git LFS or external storage instead
 samples/*.pdf
 
-# Temp / lock files
-.~lock.*
+# Temp

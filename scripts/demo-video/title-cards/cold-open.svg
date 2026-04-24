@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Intellios Demo Video. Cold-open Title Card (Session 171 scaffold).
+  1920x1080. Self-contained. No external asset references.
+  Palette from src/app/globals.css:
+    color-primary       #6366f1  (indigo-500, Intellios brand)
+    color-primary-hover #4f46e5  (indigo-600)
+    dark background     #0f172a  (slate-900)
+  Fonts: system stack (Intellios ships Geist Sans; fallback chain covers YouTube render).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <!-- Subtle indigo→slate gradient — not flat, not noisy -->
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#0f172a"/>
+      <stop offset="55%" stop-color="#111c37"/>
+      <stop offset="100%" stop-color="#1e2242"/>
+    </linearGradient>
+    <!-- Primary indigo accent glow -->
+    <radialGradient id="accentGlow" cx="0.1" cy="0.15" r="0.5">
+      <stop offset="0%"   stop-color="#6366f1" stop-opacity="0.18"/>
+      <stop offset="60%"  stop-color="#6366f1" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0.00"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1920" height="1080" fill="url(#bgGradient)"/>
+  <rect width="1920" height="1080" fill="url(#accentGlow)"/>
+
+  <!-- Wordmark — top-left, 80px from edges -->
+  <g transform="translate(80, 72)">
+    <!-- Logo mark: diamond-on-bar — Intellios brand primitive -->
+    <g transform="translate(0, 4)">
+      <rect x="0" y="14" width="36" height="8" fill="#6366f1" rx="1"/>
+      <rect x="14" y="0" width="8" height="36" fill="#6366f1" rx="1"/>
+    </g>
+    <text x="56" y="30" fill="#e2e8f0" font-family="'Geist','Inter','Helvetica Neue',Arial,sans-serif" font-size="28" font-weight="600" letter-spacing="-0.5">Intellios</text>
+  </g>
+
+  <!-- Thin accent line under wordmark -->
+  <rect x="80" y="130" width="180" height="2" fill="#6366f1" opacity="0.6"/>
+
+  <!-- Headline — centered, generous line-height, max-width-enforced by line-breaks -->
+  <g text-anchor="middle" font-family="'Geist','Inter','Helvetica Neue',Arial,sans-serif">
+    <text x="960" y="470" fill="#f8fafc" font-size="92" font-weight="600" letter-spacing="-2.5">Governed Control Plane</text>
+    <text x="960" y="582" fill="#f8fafc" font-size="92" font-weight="600" letter-spacing="-2.5">for Enterprise AI Agents</text>
+
+    <!-- Subtitle — lighter weight, indigo accent color for emphasis -->
+    <text x="960" y="690" fill="#94a3b8" font-size="36" font-weight="400" letter-spacing="-0.3">Design, govern, and retire AI agents with full audit —</text>
+    <text x="960" y="742" fill="#94a3b8" font-size="36" font-weight="400" letter-spacing="-0.3">runtime on your cloud.</text>
+  </g>
+
+  <!-- Bottom indigo bar — brand mark, 4px tall -->
+  <rect x="0" y="1076" width="1920" height="4" fill="#6366f1"/>
+
+  <!-- Corner tag — subtle "real AWS Bedrock" framing dot-pair, bottom-right -->
+  <g transform="translate(1840, 1000)" text-anchor="end" font-family="'Geist','Inter','Helvetica Neue',Arial,sans-serif">
+    <circle cx="-12" cy="-8" r="4" fill="#10b981"/>
+    <text x="-24" y="-4" fill="#94a3b8" font-size="22" font-weight="400">Live AWS Bedrock walkthrough</text>
+  </g>
+</svg>

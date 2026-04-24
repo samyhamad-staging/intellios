@@ -1,0 +1,5 @@
+# This file is intentionally empty.
+# It exists to keep scripts/demo-video/output/ under version control while
+# .gitignore excludes everything else inside the directory. Session 172 writes
+# narration.mp3, walkthrough.webm, intermediate clips, and demo-v1.mp4 here;
+# none of those binaries are tracked.

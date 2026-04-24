@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Intellios Demo Video — Outro Title Card (Session 171 scaffold)
+  1920×1080 — self-contained — no external asset references.
+  Purpose: "Coming next release" framing applies ONLY to ADR-015 PDF renderer.
+  The evidence package JSON export is SHIPPED today — do not soften this.
+  Palette matches cold-open.svg for visual continuity.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#0f172a"/>
+      <stop offset="55%" stop-color="#111c37"/>
+      <stop offset="100%" stop-color="#1e2242"/>
+    </linearGradient>
+    <radialGradient id="accentGlow" cx="0.9" cy="0.85" r="0.55">
+      <stop offset="0%"   stop-color="#4f46e5" stop-opacity="0.20"/>
+      <stop offset="60%"  stop-color="#4f46e5" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#4f46e5" stop-opacity="0.00"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1920" height="1080" fill="url(#bgGradient)"/>
+  <rect width="1920" height="1080" fill="url(#accentGlow)"/>
+
+  <!-- Top accent bar -->
+  <rect x="0" y="0" width="1920" height="4" fill="#6366f1"/>
+
+  <!-- "Coming next" kicker — small, above headline -->
+  <g text-anchor="middle" font-family="'Geist','Inter','Helvetica Neue',Arial,sans-serif">
+    <text x="960" y="340" fill="#6366f1" font-size="24" font-weight="600" letter-spacing="4">COMING IN THE NEXT RELEASE</text>
+  </g>
+
+  <!-- Headline — ADR-015 PDF renderer -->
+  <g text-anchor="middle" font-family="'Geist','Inter','Helvetica Neue',Arial,sans-serif">
+    <text x="960" y="460" fill="#f8fafc" font-size="80" font-weight="600" letter-spacing="-2">Evidence Package</text>
+    <text x="960" y="558" fill="#f8fafc" font-size="80" font-weight="600" letter-spacing="-2">PDF Rendering</text>
+    <text x="960" y="615" fill="#64748b" font-size="28" font-weight="500" letter-spacing="1">(ADR-015)</text>
+  </g>
+
+  <!-- Divider -->
+  <rect x="760" y="685" width="400" height="2" fill="#334155"/>
+
+  <!-- Today vs Next — two-column framing -->
+  <g font-family="'Geist','Inter','Helvetica Neue',Arial,sans-serif">
+    <!-- Today column -->
+    <g transform="translate(480, 760)">
+      <text x="0" y="0" fill="#10b981" font-size="20" font-weight="600" letter-spacing="3">SHIPPED TODAY</text>
+      <text x="0" y="48" fill="#e2e8f0" font-size="30" font-weight="400">JSON export</text>
+      <text x="0" y="86" fill="#94a3b8" font-size="24" font-weight="400">14-section MRM report</text>
+    </g>
+    <!-- Next column -->
+    <g transform="translate(1060, 760)">
+      <text x="0" y="0" fill="#6366f1" font-size="20" font-weight="600" letter-spacing="3">NEXT RELEASE</text>
+      <text x="0" y="48" fill="#e2e8f0" font-size="30" font-weight="400">Deterministic PDF</text>
+      <text x="0" y="86" fill="#94a3b8" font-size="24" font-weight="400">For regulatory submission</text>
+    </g>
+  </g>
+
+  <!-- Wordmark — bottom, centered -->
+  <g transform="translate(960, 1000)" text-anchor="middle" font-family="'Geist','Inter','Helvetica Neue',Arial,sans-serif">
+    <g transform="translate(-52, -24)">
+      <rect x="0" y="14" width="36" height="8" fill="#6366f1" rx="1"/>
+      <rect x="14" y="0" width="8" height="36" fill="#6366f1" rx="1"/>
+    </g>
+    <text x="4" y="0" fill="#e2e8f0" font-size="32" font-weight="600" letter-spacing="-0.5">Intellios</text>
+  </g>
+
+  <!-- Bottom accent bar -->
+  <rect x="0" y="1076" width="1920" height="4" fill="#6366f1"/>
+</svg>
