@@ -72,6 +72,38 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 166 Post-Close Audit — 2026-04-23
+
+**Meta/governance — Jira state audit + retroactive Story filing. ADR-029 exemption applied.**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Session setup + gap check | `_index.md` read, session 166 log read, strategic memo read, git status | ~25k in / ~1k out |
+| Step 1 — four Jira reads + grep | SCRUM-26, SCRUM-27, bugfix search, SCRUM-30 fetch; `translate.ts` model ID grep | ~15k in / ~2k out |
+| Findings presentation + confirmation | Step 1 findings formatted for Samy review | ~5k in / ~3k out |
+| Step 2 — Jira writes (6 operations) | SCRUM-30/31/32/33 create + close, SCRUM-26 comment + AC edit, SCRUM-27 comment | ~20k in / ~4k out |
+| Step 3 — session 166 log amendment | Append audit amendment block to existing log | ~3k in / ~1k out |
+| Step 4 — Confluence sync | Roadmap & Status v4, Intellios Home v8 | ~20k in / ~5k out |
+| Step 5 — repo files + commit | Audit session log, _index.md, effort log, commit | ~8k in / ~4k out |
+| **Session total (est.)** | | **~96k in / ~20k out** |
+
+**Estimated session cost:** Sonnet 4.6 ~96k in × $3/1M + ~20k out × $15/1M = **$0.29 + $0.30 = ~$0.59**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Full audit-session prompt — four ambiguities, five-step procedure, gate constraints | D-Process | Set entire session scope with classification options and write constraints |
+| 2 | "Tool loaded." (×3) | Relay | Approved ToolSearch loads |
+| 3 | "Proceed with Step 2 writes..." — full correction spec | D-Approve | Confirmed all Step 1 findings; specified exact comment text and Story details |
+
+**Totals:** 3 messages · 1 D-Process · 1 D-Approve · 1 Relay · ~0.25h estimated time. Tightly specified session — confirmation required at Step 1 gate per protocol; no direction required otherwise.
+
+---
+
 ## Session 167 — 2026-04-23
 
 **Meta/governance — First monthly AgentCore Watch review. Branch: `session-167-agentcore-watch`.**
