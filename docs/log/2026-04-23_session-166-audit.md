@@ -174,3 +174,13 @@ Session 168 can launch without inheriting unresolved discipline lapses.
 |---|---|---|
 | Claude (AI) | Four Jira reads, six Jira writes, grep, session 166 log amendment, Confluence sync, repo files, commit | ~2h |
 | Samy (human) | Step 1 findings review + confirmation to proceed | ~0.25h |
+
+---
+
+## Addendum — 2026-04-23 (strategic memo retroactive commit)
+
+During the post-audit push verification, `git status` revealed that `docs/strategy/2026-04-23_strategic-direction-memo.md` was untracked despite being the anchor document referenced by Step 0 read lists in Sessions 164, 165, 167, and 168. The memo was committed retroactively in SHA `0a5c1bc` before the push.
+
+The specific miss: this audit's four queries were scoped to Session 166's direct artifacts (Jira Stories, bugfix commits, session log text). They did not ask whether every document the audited sessions read from was itself tracked in git. The strategic memo was named in Step 0 read lists across multiple sessions — it appeared in the audit's inputs, not its outputs, so it was never examined for trackedness.
+
+The specific prevention: future post-close audits that reference a strategic artifact by filename should add an explicit query — run `git ls-files docs/strategy/<filename>` (or the relevant path) and confirm it returns the file. An empty result means the document is being used as an authority but is invisible to the audit trail. That is a gap, not a minor hygiene issue: if the file is ever edited or deleted locally, no git history exists to reconstruct its content at the time the referencing sessions ran.
