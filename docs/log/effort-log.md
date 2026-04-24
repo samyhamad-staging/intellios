@@ -4858,3 +4858,43 @@ Note: session resumed from compaction summary with significant prior context car
 | 2 | Story proposal approval (pending) | D-Approve | Samy reviews SCRUM-39/40/41/42 + new Story proposals |
 
 **Decision flavor.** Low-engagement documentation session initiated by a validation check. Samy's primary input is approving the Jira Story dispositions before they are applied.
+
+
+---
+
+## Session 171 — 2026-04-24
+
+**Implementation — Demo video pipeline scaffolding (SCRUM-43 advances, stays at Idea).**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-opus-4-6 | — |
+| Gap check + tooling inventory | git state triage (stale-disk finding), Node/npm/Playwright/FFmpeg/TTS-key probes, `.env.local` audit, stale `node_modules` corruption diagnosis | ~15k in / ~2k out |
+| Context reads | Session 170 log (320 lines), session 171-pre log, lifecycle-demo.md runbook, seed-retail-bank.ts, project journal most-recent entries, globals.css palette, blueprint detail + registry detail UI grep | ~40k in / ~1k out |
+| `narration.md` authoring | 1,237-word 8-stage timed script + timing validation table + scenario details + maintenance notes | ~20k in / ~10k out |
+| `walkthrough.spec.ts` authoring | Single-test 8-step Playwright skeleton, 1920x1080 video, env-driven credentials, human-pace clicks, persona-switch helpers, outro download capture | ~15k in / ~9k out |
+| Syntactic verification | `ts.createSourceFile` parse (0 errors) + programmatic `getSyntacticDiagnostics` / `getSemanticDiagnostics` isolation (filesystem-corruption triage) | ~5k in / ~1k out |
+| `ffmpeg-compose.sh` authoring | Reference composition pipeline: SVG→PNG, PNG+silence clips, webm transcode, demuxer concat, narration overlay, final re-encode | ~8k in / ~5k out |
+| Title-card SVGs | cold-open.svg + outro.svg (1920x1080, palette-aligned, two-column Today/Next framing, XML well-formed) + trailing-NULL-byte scrub on cold-open | ~8k in / ~4k out |
+| `README.md` | Pipeline overview, prereqs, Session 172 commands, re-run workflow, limitations, cost/run, scaffolding-state disclosure | ~5k in / ~4k out |
+| Session log | Full session log with tooling inventory, step-by-step record, three findings, documentation-updates checklist, commit plan, gate-at-close | ~8k in / ~6k out |
+| Journal entry + effort log + _index.md | Three index surfaces | ~5k in / ~3k out |
+| Filesystem-truncation recovery | Disk-edit of `effort-log.md` and `project-journal.md` silently truncated files mid-edit (same mount corruption class as Session 171's stale-`node_modules` and working-tree desync). Rebuilt both files from HEAD content + bash-appended Session 171 entries; amended commit 8ef62b4 | ~5k in / ~2k out |
+| **Session total (est.)** | | **~134k in / ~47k out** |
+
+**Estimated session cost:** Opus 4.6 ~134k in × $15/1M + ~47k out × $75/1M = **$2.01 + $3.53 = ~$5.54**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Session 171 prompt — 7-step scaffolding procedure, 5 pre-made decisions, constraints, gate-at-close | D-Process | Fully specified session; no mid-session direction required |
+| 2 | Continue directive (re-prompt) | Relay | Context boundary recovery |
+
+**Totals:** 2 messages · 1 D-Process · 1 Relay · ~0.3h estimated time.
+
+**Decision flavor.** Pre-specified scaffolding session. Samy's role is to approve the produced scaffold at session close; Session 172 is where capture-operator judgment calls surface (TTS provider selection, retry pattern for Stage 6/7 capture failures, playwright.config tuning). Session 171 produced a reviewable deliverable with explicit Session 172 prereqs so Samy's Session 172 launch decision is de-risked.
+
+**Ops note — filesystem truncation class.** Three distinct manifestations of the same sandbox-mount corruption surfaced in this session: (1) stale `node_modules/@types/node/assert.d.ts` with trailing NULL bytes blocking `tsc`; (2) stale working-tree files vs. HEAD (75 files showing as modified at Step 0); (3) **silent truncation on Edit** — `docs/log/effort-log.md` and `docs/project-journal.md` were cut short when written back via the Edit tool, leaving audit-trail regressions in the first draft of commit 8ef62b4. Mitigation: rebuilt both files from `git show HEAD:` content and appended Session 171 entries via heredoc redirection (avoiding the Edit path that triggers the truncation), then amended the commit. Class is an environment artifact, not a code bug; Samy's Windows machine is not affected.
