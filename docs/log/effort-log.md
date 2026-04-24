@@ -4789,3 +4789,44 @@ Note: session resumed from compaction summary with significant prior context car
 | 6 | Session 169 close-out scope directive | D-Process | Defined full ADR-029 close-out scope including SCRUM-36 split |
 
 **Decision flavor.** High-engagement session — six direction-setting messages across a multi-hour arc. Samy caught two workaround uses in flight (Gate 1, Linux regression), made all scope calls, and authored the SCRUM-36 split decision (don't carry long-term work inside a Done Story). The pattern: Claude diagnosing and executing; Samy gatekeeping escalation decisions.
+
+## Session 170 — 2026-04-23
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-opus-4-7 | — |
+| Gap check + session setup | Session 170 log scaffold + session 166 / ADR-027 / invoke.ts reads | ~20k in / ~2k out |
+| IAM diagnosis | Credentials-loading trace + policy audit via Node SDK | ~10k in / ~1k out |
+| IAM policy drafting + smoke check | Policy JSON drafted; CLI apply (expected denial); Node SDK probe with bogus agentId | ~8k in / ~1k out |
+| App prerequisite check | Docker status, auth cookies captured for reviewer/officer/admin | ~5k in / ~1k out |
+| Stages 1–6 walkthrough | Intake → quick-start → chat → blueprint → validate → submit → 3-step review → deploy via curl | ~20k in / ~4k out |
+| Stage 7 first attempt + diagnosis | Invoke failure with ARN-not-found; raw SDK reproduction; agent/alias status checks; direct-invoke probing revealing LEGACY access revocation | ~15k in / ~3k out |
+| Stage 7 fix + re-run | `UpdateAgent` + `PrepareAgent` on GERFBTGJXI to claude-haiku-4-5 ACTIVE profile; re-invoke via curl; streaming response captured | ~10k in / ~2k out |
+| ADR-027 audit verification | audit_log query; 6-guardrail confirmation | ~5k in / ~1k out |
+| Stage 8 retirement | PATCH /status → deprecated; GetAgent → ResourceNotFoundException verification | ~3k in / ~1k out |
+| Session 166 log amendment | "Stage 7 Amendment" section with re-run + legacy-model finding | ~4k in / ~2k out |
+| SCRUM-26 closure | Description edit (ACs c+f ticked), closure comment, transition to Done | ~6k in / ~2k out |
+| SCRUM-33 closure | Description edit (all ACs ticked), closure comment, transition to Done | ~5k in / ~2k out |
+| SCRUM-43 creation | Demo video Story with dependencies on Epic 1.2 + SCRUM-27 | ~4k in / ~2k out |
+| SCRUM-27 scope comment | Legacy-model revocation finding + poisoned-pill analysis | ~3k in / ~1k out |
+| Session log | Full session 170 log written | ~8k in / ~6k out |
+| Project journal entry | "The First Green Walkthrough" narrative appended | ~5k in / ~3k out |
+| Effort log + _index.md | Two index surfaces updated | ~5k in / ~2k out |
+| **Session total (est.)** | | **~136k in / ~36k out** |
+
+**Estimated session cost:** Opus 4.7 ~136k in × $15/1M + ~36k out × $75/1M = **$2.04 + $2.70 = ~$4.74**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Initial session prompt — 10-step plan with SCRUM-33 close, Stage 7 re-validate, SCRUM-26 Done, demo-video Story | D-Process | Full session framing including explicit EXPECTED FAILURE MODE instructions for CLI IAM apply |
+| 2 | "Approved. Apply the IAM policy." + fallback instructions | D-Approve | Authorized policy text; pre-instructed halt-and-Console pattern on AccessDenied |
+| 3 | "proceed" after applying inline policy via AWS Console | D-Approve | Manual Console apply (pattern from session 164) |
+| 4 | Server restart + CSRF sanity-check instruction | D-Process | Directed the dev-server restart branch logic |
+| 5 | Model switch to claude-opus-4-7 mid-session | D-Process | Shifted to Opus for closing documentation work |
+| 6 | Resume directive after compaction | D-Gate | Kept session moving through context boundary |
+
+**Decision flavor.** Medium-engagement session with pre-loaded failure-mode instructions. The session prompt anticipated the CLI-denied IAM apply and specified the Console fallback + smoke check in advance, which reduced mid-session back-and-forth. The compaction-and-resume midway (context size) was handled cleanly. The poisoned-pill finding on `DEFAULT_FOUNDATION_MODEL` was entirely surfaced by Claude during Stage 7 diagnosis, not directed from Samy's side — an instance of the evidence surfaces working as designed.
