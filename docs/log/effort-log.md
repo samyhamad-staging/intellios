@@ -4718,3 +4718,42 @@ Note: session resumed from compaction summary with significant prior context car
 | 2 | "1. as you recommended  2. as you recommended" | D-Approve | Approved flipping ADR-013 in main batch (no carve-out) + bundling ADR-024 migration filename fix into flip commit |
 
 **Decision flavor.** Two-message session. Direction-setting + approval. Classic Samy collaboration pattern for a governance-heavy session: menu + autonomous execution with ADR discipline.
+
+---
+
+## Session 169 — 2026-04-23
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Gap check + session setup | `git status`, `git log`, `_index.md` read, session 166 audit + session 168 reads | ~15k in / ~1k out |
+| Dirty-state triage | Three-item analysis: memo, package-lock, scratch file; decisions + three commits | ~10k in / ~2k out |
+| Session 166 audit addendum | Root-cause write-up + prevention rule appended to `2026-04-23_session-166-audit.md`; commit | ~5k in / ~2k out |
+| Push + Gate 1 diagnosis | Build log read, shallow-clone gap analysis, SCRUM-34 creation | ~10k in / ~3k out |
+| Version bump commit | `package.json` + `package-lock.json` edit, commit, second push | ~5k in / ~1k out |
+| Linux regression diagnosis | Build log analysis, `next.config.ts` read, root-cause identification, fix proposal | ~10k in / ~3k out |
+| SCRUM-35 filing + fix application | Story creation, `next.config.ts` edit, `c6308a3` commit, third push | ~8k in / ~2k out |
+| Vercel monitoring + READY confirmation | Deployment list fetch + state verification | ~5k in / ~1k out |
+| SCRUM-35 closure (comment + transition) | Comment 10159 posted, Done transition | ~5k in / ~1k out |
+| SCRUM-36 + SCRUM-37 creation | Two Story filings with full descriptions | ~6k in / ~2k out |
+| Session log | Full 169 session log written | ~10k in / ~8k out |
+| Project journal entry | Four-lesson narrative appended | ~8k in / ~4k out |
+| Effort log + _index.md + Confluence | Three documentation surfaces updated | ~10k in / ~3k out |
+| **Session total (est.)** | | **~107k in / ~33k out** |
+
+**Estimated session cost:** Sonnet ~107k in × $3/1M + ~33k out × $15/1M = **$0.32 + $0.50 = ~$0.82**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Initial push directive + five-step verification plan | D-Process | Framed the session as "push is not a session" |
+| 2 | "Halt was correct. Do NOT push yet." — directed Work Items 1–5 after memo finding | D-Gate | Converted sequence to full session |
+| 3 | Directed execution order for dirty-state resolutions (a/b/c decisions on three items) | D-Approve | Set commit order and gitignore glob pattern |
+| 4 | "Option 1: version bump to force Gate 1. File a Story for Option 2" — after CANCELED build | D-Process | Authorized third workaround use; commissioned SCRUM-34 |
+| 5 | "Apply the fix. Two small adjustments" — SCRUM-35 label correction + Story-first order | D-Approve | Adjusted labels (dropped `adr-028`); set execution order |
+| 6 | Session 169 close-out scope directive | D-Process | Defined full ADR-029 close-out scope including SCRUM-36 split |
+
+**Decision flavor.** High-engagement session — six direction-setting messages across a multi-hour arc. Samy caught two workaround uses in flight (Gate 1, Linux regression), made all scope calls, and authored the SCRUM-36 split decision (don't carry long-term work inside a Done Story). The pattern: Claude diagnosing and executing; Samy gatekeeping escalation decisions.
