@@ -38,6 +38,38 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 168-resumed — 2026-04-23
+
+**Meta/governance — Strategic reweighting; Epic 1.2 Jira scaffolding. ADR-029 §9 exemption applied.**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-sonnet-4-6 | — |
+| Session setup + context reading | 8 files read (session logs 167/169, open-questions, strategic memo, ADR-015, journal, effort log, _index.md) | ~35k in / ~0.5k out |
+| Pre-push verification + Vercel check | git status/log/stat, Vercel deployments fetch + build logs | ~10k in / ~1k out |
+| Journal entry authoring | "The Two-Axis Squeeze" — 4 paragraphs | ~5k in / ~3k out |
+| Strategic memo addendum | Trigger, analysis, decision, revised P0 table, validation, next review | ~8k in / ~4k out |
+| Jira: Epic + 4 Stories + SCRUM-25 comment | SCRUM-38 Epic, SCRUM-39/40/41/42 Stories, comment 10160 | ~15k in / ~4k out |
+| Confluence: Roadmap & Status v6 | Full page rewrite with Session 168-resumed section + "What Is Shipping Next" update | ~12k in / ~8k out |
+| Confluence: Home v10 | Updated status blurb, SCRUM-38 row, component dashboard, Last sync | ~10k in / ~5k out |
+| Session log, _index.md, effort log | | ~8k in / ~5k out |
+| **Session total (est.)** | | **~103k in / ~30.5k out** |
+
+**Estimated session cost:** Sonnet 4.6 ~103k in × $3/1M + ~30.5k out × $15/1M = **$0.31 + $0.46 = ~$0.77**
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Full session-168-resumed prompt — context, 5-step procedure, constraints, gate | D-Process | Set entire session scope with explicit Jira/Confluence targets |
+| 2 | "Tool loaded." (×5) | Relay | Approved ToolSearch loads for Jira/Confluence/Vercel tools |
+
+**Totals:** 7 messages · 1 D-Process · 6 Relay · ~0.2h estimated time. Fully specified session — no direction or correction required during execution.
+
+---
+
 ## Session 166 — 2026-04-23
 
 **Live 8-stage Retail Bank lifecycle walkthrough against real AWS Bedrock + real PostgreSQL (SCRUM-26).**
