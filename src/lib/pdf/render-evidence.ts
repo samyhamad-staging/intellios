@@ -108,7 +108,7 @@ async function resolveChromiumLaunchInputs(
     return {
       executablePath,
       args: chromium.args,
-      headless: chromium.headless,
+      headless: !!chromium.headless,
     };
   }
 
