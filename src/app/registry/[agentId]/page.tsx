@@ -28,6 +28,7 @@ import { SkeletonList } from "@/components/ui/skeleton";
 import { DEFAULT_ENTERPRISE_SETTINGS } from "@/lib/settings/types";
 import type { TestCase, TestRun } from "@/lib/testing/types";
 import DownloadEvidenceButton from "@/components/mrm/download-evidence-button";
+import DownloadEvidencePDFButton from "@/components/mrm/download-evidence-pdf-button";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 import { FormField } from "@/components/ui/form-field";
 import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/catalyst/description-list";
@@ -1269,13 +1270,19 @@ export default function AgentDetailPage({
                 <div>
                   <p className="text-xs font-semibold text-text">Export Evidence Package</p>
                   <p className="text-xs text-text-tertiary mt-0.5">
-                    Download a structured JSON bundle for audit, regulatory submission, or internal review.
+                    Download an audit-quality PDF for regulators or a structured JSON bundle for machine consumption.
                   </p>
                 </div>
-                <DownloadEvidenceButton
-                  blueprintId={latest.id}
-                  enabled={true}
-                />
+                <div className="flex items-center gap-2">
+                  <DownloadEvidencePDFButton
+                    blueprintId={latest.id}
+                    enabled={true}
+                  />
+                  <DownloadEvidenceButton
+                    blueprintId={latest.id}
+                    enabled={true}
+                  />
+                </div>
               </div>
             )}
             {/* W3-02: Evidence Summary — quality scorecard + test evidence inline (no JSON download needed) */}

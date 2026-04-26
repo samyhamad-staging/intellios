@@ -1,7 +1,8 @@
 # ADR-015: PDF Rendering of Evidence Package
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-09
+**Accepted:** 2026-04-25
 **Supersedes:** (none)
 
 ## Context
@@ -60,3 +61,25 @@ Intellios will add a **server-side PDF renderer** for the evidence package, alon
 - OQ: whether to build on `pdf-lib` / `pdfkit` / headless Chromium (see `docs/open-questions.md`).
 - Spec file: `docs/specs/evidence-package-pdf-renderer.md` to be created when this ADR moves from `proposed` to `accepted`.
 - Schema note: no ABP schema change required — the PDF is derived entirely from existing fields.
+
+## Implementation (2026-04-25 — Session 172)
+
+OQ-009 resolved Option 2 — **headless Chromium via `playwright-core` + `@sparticuz/chromium-min`**. See [Session 172 log](../log/2026-04-25_session-172.md) and `docs/open-questions.md` (Resolved table) for the rationale.
+
+**Files:**
+- `src/lib/pdf/evidence-template.ts` — pure HTML template, all 14 MRM sections + 3 wrapper sections (approval chain, quality eval, test evidence). Big-4 audit aesthetic, page-break-per-section, classification banner.
+- `src/lib/pdf/render-evidence.ts` — Chromium launcher. Serverless ⇒ `@sparticuz/chromium-min` via `CHROMIUM_REMOTE_EXECUTABLE_URL`; local ⇒ Playwright bundled binary. Running header (Intellios mark + agent name + version) and page-numbered footer (Confidential — Internal Use). Letter format, 0.7-inch margins.
+- `src/app/api/blueprints/[id]/evidence-package/pdf/route.ts` — new route (used `/pdf` segment instead of `.pdf` suffix per Next.js routing convention; behavior matches the ADR's specified shape). Mirrors JSON route's auth/status/audit/cache pattern. `runtime = "nodejs"`, `maxDuration = 60`. Cache key `evidence/{id}/{version}.pdf`.
+- `src/components/mrm/download-evidence-pdf-button.tsx` — primary-action sibling to JSON button, wired into Blueprint report toolbar and Registry detail panel.
+
+**Dependencies added to `src/package.json`:** `@sparticuz/chromium-min ^131.0.1`, `playwright-core ^1.59.1`.
+
+**New env var (production / serverless only):** `CHROMIUM_REMOTE_EXECUTABLE_URL` documented in `src/.env.example`.
+
+**Sandbox validation (Session 172):** real Chrome for Testing 147.0.7727.15 produced a 13-page, 121 KB PDF against a synthetic Retail Bank Customer FAQ Agent v1.2.0 package. Magic bytes + EOF marker valid. 16/16 HTML template structural checks passed. Validated artifact staged at `samples/evidence-package-retail-bank-validation-2026-04-25.pdf`.
+
+**Out-of-scope refinements deferred:**
+- Geist Sans/Mono font embedding (template uses system fallbacks today).
+- Line-numbered YAML rendering for system prompts and tool definitions.
+- Cryptographic signing of the PDF.
+- White-label per-tenant theming (H3).

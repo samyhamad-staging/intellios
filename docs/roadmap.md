@@ -20,6 +20,20 @@
 - `docs/demo/lifecycle-demo.md` — 8-stage Retail Bank Customer-FAQ walkthrough with per-stage fallback paths + troubleshooting matrix.
 - Zero new typecheck errors; test suite unchanged (invokeAgent adapter is thin enough that a mock-only test would test SDK wiring, not product behavior — real confidence signal is the session-158 live smoke).
 
+### ⋯ Session 172 (2026-04-25) — Epic 1.2 PDF Renderer kickoff (pre-validation)
+
+- ✅ OQ-009 resolved Option 2 — headless Chromium via `playwright-core` + `@sparticuz/chromium-min` (see `docs/open-questions.md`).
+- ✅ `src/lib/pdf/evidence-template.ts` — full HTML template, 14 MRM sections + 3 wrapper sections.
+- ✅ `src/lib/pdf/render-evidence.ts` — Chromium launcher with serverless / local fallback.
+- ✅ `src/app/api/blueprints/[id]/evidence-package/pdf/route.ts` — new route, mirrors JSON route's auth/status/audit/S3 pattern.
+- ✅ `src/components/mrm/download-evidence-pdf-button.tsx` — primary action sibling to JSON button; wired into Blueprint report toolbar and Registry detail panel.
+- ✅ `src/package.json` adds `@sparticuz/chromium-min ^131.0.1` and `playwright-core ^1.59.1`.
+- ✅ `src/.env.example` documents `CHROMIUM_REMOTE_EXECUTABLE_URL`.
+- ⏸ ADR-015 stays `proposed` — pending live render on Samy's dev machine + Vercel.
+- 🔲 Next session: `npm install`, host the slim Chromium binary at a public URL, render the Retail Bank blueprint (`ed34ef1a`), visually compare to `samples/evidence-package-claims-triage-agent-v2.1-2026-04-09.pdf`, transition SCRUM-38 / SCRUM-42 in Jira, four-surface flip ADR-015, Confluence sync.
+
+---
+
 ### ⋯ Session 158 (pending) — Live AWS smoke + demo rehearsal
 
 - One-time live smoke deploy against a sandbox AWS account with a Bedrock execution role — validates `deploy.ts` + `translate.ts` + `invoke.ts` + `retireFromAgentCore` against the real Bedrock API contract end-to-end.

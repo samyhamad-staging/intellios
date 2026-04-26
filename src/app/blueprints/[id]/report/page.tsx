@@ -13,6 +13,7 @@ import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { SectionHeading } from "@/components/ui/section-heading";
 import PrintButton from "@/components/mrm/print-button";
 import DownloadEvidenceButton from "@/components/mrm/download-evidence-button";
+import DownloadEvidencePDFButton from "@/components/mrm/download-evidence-pdf-button";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/table";
 import { assessAllFrameworks } from "@/lib/regulatory/classifier";
 import type { RegulatoryAssessment } from "@/lib/regulatory/frameworks";
@@ -246,6 +247,10 @@ function ReportDocument({
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-text-tertiary">Generated {fmt(r.generatedAt)}</span>
+            <DownloadEvidencePDFButton
+              blueprintId={blueprintId}
+              enabled={r.cover.currentStatus === "approved" || r.cover.currentStatus === "deployed"}
+            />
             <DownloadEvidenceButton
               blueprintId={blueprintId}
               enabled={r.cover.currentStatus === "approved" || r.cover.currentStatus === "deployed"}

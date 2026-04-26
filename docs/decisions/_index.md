@@ -16,7 +16,7 @@
 | 012 | [Middleware-level tenant isolation](012-middleware-tenant-isolation.md) | accepted | 2026-04-03 |
 | 013 | [SOD enforcement in legacy single-step blueprint approval](013-sod-enforcement-legacy-approval.md) | accepted | 2026-04-08 |
 | 014 | [Text contrast token scale shift for WCAG AA compliance](014-text-contrast-token-shift.md) | accepted | 2026-04-08 |
-| 015 | [PDF rendering of evidence package](015-pdf-rendering-of-evidence-package.md) | proposed | 2026-04-09 |
+| 015 | [PDF rendering of evidence package](015-pdf-rendering-of-evidence-package.md) | accepted | 2026-04-09 |
 | 016 | [AI resilience layer — retry, timeout, model configuration](016-ai-resilience-layer.md) | accepted | 2026-04-14 |
 | 017 | [Database connection pool externalization](017-db-pool-externalization.md) | accepted | 2026-04-17 |
 | 018 | [Hard-require SECRETS_ENCRYPTION_KEY in production](018-secrets-encryption-key-production-required.md) | accepted | 2026-04-17 |

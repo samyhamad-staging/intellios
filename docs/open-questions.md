@@ -41,27 +41,6 @@ _None. MVP is complete._
 
 ---
 
-### OQ-009 — Evidence-package PDF renderer stack
-
-**Context:** ADR-015 (2026-04-09) commits Intellios to shipping a server-side PDF renderer on `GET /api/blueprints/[id]/evidence-package.pdf` alongside the existing JSON export. The reference implementation lives at `samples/build_evidence_pdf.py` (reportlab, Python) and defines the target layout. The production renderer must live in the Next.js app (TypeScript).
-
-**Question:** Which rendering stack should the production route use?
-
-**Options:**
-1. **Node-native PDF library** — `pdf-lib` or `pdfkit`. Full programmatic control, deterministic output, small bundle impact, long-term maintenance ours. High implementation cost — every page builder, table, code block, and chip must be recreated in TypeScript.
-2. **Headless Chromium via Playwright** — reuse the existing HTML report shell at `src/app/blueprints/[id]/report/page.tsx` with a dedicated print stylesheet, print to PDF in a headless browser. Lower implementation cost (most layout already exists in React), but large deploy-size + memory footprint, cold-start latency, and a moving-target dependency.
-3. **Puppeteer** — same trade-offs as Playwright; marginally lighter but similar footprint.
-
-**Trade-offs to weigh:**
-- Vercel / serverless function size limits (headless Chromium is tight against the 250 MB limit).
-- Cold-start latency on the evidence-package export endpoint (acceptable if the result is cached to `evidence/{id}/{version}.pdf` and served on re-export).
-- Sync with the HTML report: option 2 keeps one source of truth; option 1 requires two renderers to stay in sync as `MRMReport` evolves.
-- Deterministic byte-identical output across environments (easier with option 1, brittle with headless browsers across versions).
-
-**Target resolver:** founder + whoever implements the route. Target timing: before the next design-partner pilot where the PDF will be shown as a product output rather than a sample.
-
----
-
 ---
 
 ## Resolved
@@ -78,6 +57,7 @@ _None. MVP is complete._
 | — | Frontend framework | Next.js App Router (ADR-004) | 2026-03-12 |
 | — | ORM | Drizzle (ADR-004) | 2026-03-12 |
 | — | AI SDK | Vercel AI SDK v5 (ADR-004) | 2026-03-12 |
+| OQ-009 | Evidence-package PDF renderer stack | **Option 2 — Headless Chromium via `playwright-core` + `@sparticuz/chromium-min`.** Reuses the existing HTML report shell at `src/app/blueprints/[id]/report/page.tsx` (1,230 lines, Tailwind `print:` variants integrated). `@sparticuz/chromium-min` keeps the function under Vercel's 250MB limit by loading a slim binary from a hosted URL on cold start. Determinism risk mitigated by S3 caching at `evidence/{id}/{version}.pdf` (write-once, render-once-per-version). Reversibility: route auth/status/S3/audit logic is renderer-agnostic; switching to pdf-lib later changes only `renderEvidencePDF()`. See ADR-015 + [Session 172 log](log/2026-04-25_session-172.md). | 2026-04-25 |
 | OQ-010 | RETURN_CONTROL tool-mock service for Test Console | Keep synthetic marker (option 2). ADR-027 establishes the synthetic marker as canonical — building a mock service would blur the "governed test harness, not a runtime" positioning for non-trivial cost. Enterprises needing full tool round-trips should use real action-group endpoints outside Test Console. | 2026-04-23 |
 | OQ-007 | ABP schema evolution strategy | Migrate-on-read via `readABP()` + `migrateABP()` + `detectVersion()` (H1-3). Old ABPs transparently upgraded when read. No forced migration. Registry owns migration. | 2026-04-01 |
 | OQ-005 | Agent Registry: table relationship, version model, uniqueness | `agent_blueprints` is the registry. Separate rows per version. `agent_id` UUID is the logical agent key (uniqueness by UUID, not name). See agent-registry.md Implementation. | 2026-03-12 |
