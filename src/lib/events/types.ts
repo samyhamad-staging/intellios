@@ -157,7 +157,14 @@ export type IntelliosEvent =
     }
   | {
       type: "blueprint.evidence_package_exported";
-      payload: { blueprintId: string; agentId: string };
+      payload: {
+        blueprintId: string;
+        agentId: string;
+        /** "json" or "pdf" — added 2026-04-25 (Session 172, ADR-015 PDF renderer). Optional for back-compat with pre-PDF emitters. */
+        format?: "json" | "pdf";
+        /** true if served from S3 cache; false when the PDF was rendered for this request. */
+        cached?: boolean;
+      };
     }
   | {
       type: "blueprint.periodic_review_scheduled";
