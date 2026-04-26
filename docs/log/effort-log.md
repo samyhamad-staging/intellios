@@ -82,6 +82,26 @@ Tracks resource consumption per session for post-project cost estimation.
 
 **Totals:** 12 messages · 4 D-Direction · 1 D-Process · 2 D-Correct · 2 D-Approval · 1 Q-Concept · 2 Relay · ~1.5h estimated time. Strategic conversation was the dominant load early; once direction settled, Claude executed largely autonomously.
 
+### Close-out (appended)
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Production failure diagnosis × 2 | Pulled Vercel deploy state + build logs for two failed builds; identified type errors and proposed fixes | ~6k in / ~3k out |
+| Hotfix scripts | `scripts/push-session-172-fix.sh` for Samy/Claude Code to push from his machine | ~2k in / ~2k out |
+| Done-state Jira transitions + closing comments | SCRUM-40 / SCRUM-42 / SCRUM-38 → Done with implementing chain documented | ~5k in / ~5k out |
+| Confluence Done sync | Intellios Home v15 with full Done state, Last sync bumped | ~6k in / ~6k out |
+| Demo video outro revisions | `outro.svg` + `narration.md` updated to "shipped today, two artifacts" framing | ~4k in / ~2k out |
+| One-pager draft | `docs/marketing/one-pager.md` — Phase A asset for design-partner outreach | ~2k in / ~3k out |
+| Close-out documentation surfaces | Session log appendix, this effort-log update, _index marker, roadmap status flip, journal | ~5k in / ~6k out |
+| **Close-out total (est.)** | | **~30k in / ~27k out** |
+
+**Close-out estimated cost:** ~30k in × $3/1M + ~27k out × $15/1M = **$0.09 + $0.41 = ~$0.50**.
+
+**Session 172 grand total cost (est.):** ~$1.19 (initial) + ~$0.50 (close-out) = **~$1.69**.
+
+**Samy effort (close-out):** 3 messages · ~10 min (paste SHAs, run hotfix script, light review).
+**Claude Code effort (close-out):** ~20 min (3 pushes, 2 deploy waits, type-error analysis on second failure, brief reporting).
+
 ---
 
 ## Session 168-resumed — 2026-04-23

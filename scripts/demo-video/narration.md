@@ -130,9 +130,9 @@ Pronounce `AgentCore` as "AgentCore" (one word). `ABP` spelled out: "A-B-P". `SO
 
 **NARRATION** (~120 words, ~50s):
 
-> Every enterprise compliance conversation starts with one question: show me the evidence. [beat] Intellios ships that evidence today. [pause] One click, one export. A structured package containing the full Model Risk Management report — fourteen sections — the complete approval chain, every validation finding, the full audit log, and the deployment record. Every lifecycle event you just watched, captured. [beat] This is shipped, in production, working right now. [pause] Coming in the next release: the same evidence, rendered as a deterministic, Big-Four-style P-D-F — audit-grade typography, for regulatory submission. The JSON is the machine-readable artifact. The P-D-F is the signature-ready one. [beat] That is the differentiator, grounded in what is shipped today. [beat] Intellios.
+> Every enterprise compliance conversation starts with one question: show me the evidence. [beat] Intellios ships that evidence today. [pause] One click, two artifacts. A structured J-S-O-N package containing the full Model Risk Management report — fourteen sections — the complete approval chain, every validation finding, the full audit log, and the deployment record. And a deterministic, Big-Four-style P-D-F rendered server-side — audit-grade typography, signature-ready, for regulatory submission. Every lifecycle event you just watched, captured in both formats. [beat] Both shipped, in production, working right now. [pause] The J-S-O-N is the machine-readable artifact. The P-D-F is the signature-ready one. Both come from the same canonical source — the J-S-O-N is authoritative, the P-D-F is its rendering. [beat] That is the differentiator no cloud-native AI runtime produces, grounded in what is shipped today. [beat] Intellios.
 
-**On-screen at end:** `scripts/demo-video/title-cards/outro.svg` — "Coming next: Evidence Package PDF Rendering (ADR-015)" / "Today: JSON export, 14-section MRM report. Next: deterministic PDF for regulatory submission."
+**On-screen at end:** `scripts/demo-video/title-cards/outro.svg` — "SHIPPED TODAY · Audit-Quality Evidence Package (ADR-015 · Accepted)" / "JSON export — 14-section MRM report — machine-readable, archival" / "PDF export — Big-Four audit aesthetic — signature-ready, deterministic"
 
 ---
 
@@ -187,7 +187,7 @@ Estimated durations based on 145 words/minute TTS cadence + UI action overhead. 
 
 **Stage additions or re-ordering** require revision of the timing table AND re-validation that total falls 8:30–9:30. Do not ship a demo video with a broken time budget.
 
-**"Coming next release" language** applies only to the PDF renderer (ADR-015 / SCRUM-40). Everything else visible in the video is shipped today — do not soften that claim.
+**Both evidence-package formats are shipped (Session 172, 2026-04-25, production SHA `c339f0a`).** The original "coming next release" framing for the PDF renderer is obsolete — both JSON and PDF are live. Do not introduce "next release" language for either format. Future deferred polish (Geist font embedding, line-numbered YAML, cryptographic signing, white-label theming) is genuinely future work, but does not belong in this demo's outro — the demo lands on what's shipped, not what's deferred.
 
 **Persona assignments:** Marta 1–4 (architect — intake through submit), Rafael 5–7 (reviewer — approve, deploy, invoke), Ed at Stage 8 (admin — deprecate, because the UI `LifecycleControls` component renders only when `currentUser.role === "admin"`). The three-persona split reinforces the separation-of-duties narrative organically. If UI permissions change, update both this file and the Playwright script in the same commit.
 

@@ -20,7 +20,7 @@
 - `docs/demo/lifecycle-demo.md` — 8-stage Retail Bank Customer-FAQ walkthrough with per-stage fallback paths + troubleshooting matrix.
 - Zero new typecheck errors; test suite unchanged (invokeAgent adapter is thin enough that a mock-only test would test SDK wiring, not product behavior — real confidence signal is the session-158 live smoke).
 
-### ⋯ Session 172 (2026-04-25) — Epic 1.2 PDF Renderer kickoff (pre-validation)
+### ✓ Session 172 (2026-04-25) — Epic 1.2 PDF Renderer SHIPPED (production READY at `c339f0a`)
 
 - ✅ OQ-009 resolved Option 2 — headless Chromium via `playwright-core` + `@sparticuz/chromium-min` (see `docs/open-questions.md`).
 - ✅ `src/lib/pdf/evidence-template.ts` — full HTML template, 14 MRM sections + 3 wrapper sections.
@@ -29,7 +29,12 @@
 - ✅ `src/components/mrm/download-evidence-pdf-button.tsx` — primary action sibling to JSON button; wired into Blueprint report toolbar and Registry detail panel.
 - ✅ `src/package.json` adds `@sparticuz/chromium-min ^131.0.1` and `playwright-core ^1.59.1`.
 - ✅ `src/.env.example` documents `CHROMIUM_REMOTE_EXECUTABLE_URL`.
-- ⏸ ADR-015 stays `proposed` — pending live render on Samy's dev machine + Vercel.
+- ✅ ADR-015 promoted to `accepted` across four surfaces (repo + Confluence) in close-out.
+- ✅ Production READY at `c339f0a` after a three-commit chain: `2abbef0` (initial; built ERROR), `89bd02c` (events type fix; built ERROR), `c339f0a` (chromium boolean coercion; built READY).
+- ✅ SCRUM-40 / SCRUM-42 / SCRUM-38 all transitioned to Done with closing comments citing the implementing chain.
+- ✅ Demo video outro revised — Session 171's "coming next release" framing replaced with "shipped today, two artifacts" (`scripts/demo-video/title-cards/outro.svg` + `scripts/demo-video/narration.md`).
+- ✅ Phase A one-pager drafted: `docs/marketing/one-pager.md` — what Intellios is, isn't, replaces, complements.
+- ⏸ ADR-015 stays `proposed` — pending live render on Samy's dev machine + Vercel. **(Superseded — flipped to accepted in close-out.)**
 - 🔲 Next session: `npm install`, host the slim Chromium binary at a public URL, render the Retail Bank blueprint (`ed34ef1a`), visually compare to `samples/evidence-package-claims-triage-agent-v2.1-2026-04-09.pdf`, transition SCRUM-38 / SCRUM-42 in Jira, four-surface flip ADR-015, Confluence sync.
 
 ---
