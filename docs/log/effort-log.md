@@ -38,6 +38,39 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 174 — 2026-04-26
+
+**Operational preflight + Path B decision for the PDF-renderer runtime smoke. Bucket-not-found surfaced; SCRUM-47 filed for Path A migration; live render deferred to Session 175.**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-opus-4-7 | — |
+| Orientation | Read Session 173 log + runbook + recent diff for triage context | ~10k in / ~2k out |
+| Step 0 gap check + dirty-tree triage | `git diff --stat`, `git status`, classify each cluster | ~3k in / ~1k out |
+| Triage commits + push | Commit A (Session 173 docs), Commit B (gitignore demo-video), delete three untracked push helpers, push to origin | ~5k in / ~3k out |
+| AWS preflight | `aws sts get-caller-identity` + `aws s3api head-bucket` + `aws s3api get-bucket-location`; record results | ~1k in / ~0.5k out |
+| SCRUM-47 authoring | Full Story description with ADR prerequisite, IAM grant precedent, BucketOwnerEnforced recommendation, AC | ~3k in / ~3k out |
+| Session 174 log skeleton + final close-out | This log file | ~6k in / ~7k out |
+| `_index.md` row + effort-log block + journal entry | Reframed close-out per Samy's "preflight + decision, not smoke complete" guidance | ~3k in / ~2k out |
+| **Session total (est.)** | | **~31k in / ~18.5k out** |
+
+**Estimated session cost:** Opus 4.7 ~31k in × $15/1M + ~18.5k out × $75/1M = **$0.47 + $1.39 = ~$1.86**.
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Initial Session 174 kickoff prompt with ranked execution instructions | D-Direction | Detailed step-by-step including triage rules, runbook walk, close-out constraints |
+| 2 | "Triage looks right. Answers below — proceed in this order." (prerequisites + commit shape + scratch-script disposition) | D-Approval | Authorized commit sequence; supplied bucket name; deferred Vercel work to manual paste |
+| 3 | "Skip the grep — I already know... Decision: switch to Path B for the smoke." | D-Approval | Authorized Path B fallback per runbook; named SCRUM-47 scope |
+| 4 | "I'm not going to do the Vercel paste + render this session. Close Session 174 as preflight + decision." | D-Approval | Reframed session outcome; specified the surfaces to NOT touch |
+
+**Totals:** 4 messages · 1 D-Direction · 3 D-Approval · ~5 min on Samy's side. Partial — no manual dashboard work this session. Session 175 adds another ~15–30 min on his side for the live render + Phase 4 walk.
+
+---
+
 ## Session 173 — 2026-04-26
 
 **Operational prep — runbook + publisher script for the PDF-renderer runtime smoke. ADR-029 §9 exemption (operational documentation).**
