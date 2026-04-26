@@ -38,6 +38,35 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 173 — 2026-04-26
+
+**Operational prep — runbook + publisher script for the PDF-renderer runtime smoke. ADR-029 §9 exemption (operational documentation).**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-opus-4-7 | — |
+| Orientation | Read CLAUDE.md, MEMORY, open-questions, log _index, roadmap, Session 172 log, render-evidence.ts, .env.example, runbook style sample, S3 helper | ~30k in / ~3k out |
+| Step 0 gap-check (subagent) | Bash `git log` + `git status` via subagent; ~200 word report | ~3k in / ~0.5k out |
+| Runbook authoring | `docs/runbooks/pdf-renderer-smoke.md` — five phases, failure-mode matrix, rollback notes | ~3k in / ~5k out |
+| Publisher script authoring | `scripts/publish-chromium-pack.sh` — version-pin check, download, SHA-256, S3 upload, anonymous-read verify, BucketOwnerEnforced fallback | ~2k in / ~3k out |
+| Session log + _index update + this entry | | ~5k in / ~4k out |
+| **Session total (est.)** | | **~43k in / ~15.5k out** |
+
+**Estimated session cost:** Opus 4.7 ~43k in × $15/1M + ~15.5k out × $75/1M = **$0.65 + $1.16 = ~$1.81**.
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | "What are the next best actions? or the next body of work or the next session" | D-Direction | Asked for ranked menu |
+| 2 | "Please proceed with your recommendation" | D-Approval | Authorized autonomous execution on Path 1 (runtime-smoke prep) |
+
+**Totals:** 2 messages · 1 D-Direction · 1 D-Approval · ~5 min on Samy's side. Pure menu-driven kickoff per the standard collaboration pattern; smoke execution in next session adds another ~15–30 min on his side.
+
+---
+
 ## Session 172 — 2026-04-25
 
 **Epic 1.2 — Evidence Package PDF Renderer (kickoff + implementation; pre-validation).**
