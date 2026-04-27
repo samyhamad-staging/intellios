@@ -38,6 +38,46 @@ Tracks resource consumption per session for post-project cost estimation.
 
 ---
 
+## Session 175 — 2026-04-26
+
+**Partial PDF-renderer smoke. Production HTTP path abandoned mid-session (no operator credentials); pivoted to local renderer call. Renderer code path validated; production HTTP route + chromium-min remote-binary fetch + empty-state visual review deferred. Five follow-up Stories filed.**
+
+### Claude Effort
+
+| Item | Detail | Est. tokens |
+|---|---|---|
+| Model | claude-opus-4-7 | — |
+| Orientation | Read Session 174 log, runbook, log index head | ~12k in / ~3k out |
+| Step 0 gap check + Session 175 log skeleton | `git log -5 --oneline`, `git status`, write skeleton with Phase 2/3/4 stubs | ~3k in / ~3k out |
+| Pushback on operator-action delegation | Two rounds clarifying that Vercel paste + logged-in browser render are Samy's hands; surfaced cookie-export fallback as an option | ~5k in / ~2k out |
+| Discovery for local pivot | Renderer signature, route payload assembly, DB driver, env shape, playwright binary location, pdftotext/pdfinfo/pdftocairo availability, blueprint inventory | ~10k in / ~2k out |
+| Smoke harness + iteration | Wrote `src/__smoke__/render-evidence.ts`, three runs (env-loader cycle, tsx-shim discovery, candidate-walk for malformed UUIDs), green render | ~12k in / ~6k out |
+| Structural-fidelity checks | `pdftotext` extraction, page-count via form-feed counting, frame-string greps, audit-row inspection | ~4k in / ~2k out |
+| Session 175 log body | Hard-pivot section, Phase 3 capture table, Phase 4 structural verdict, surprises, deferred section, follow-up drafts | ~6k in / ~10k out |
+| Story filing × 5 | Authored full descriptions with AC + labels + priorities; filed via Jira MCP; created six issue links | ~6k in / ~6k out |
+| `_index.md` row + effort-log block + journal entry + close-out updates | This block + journal narrative + index row + log close-out | ~4k in / ~5k out |
+| Phase 4 verdict folded in + page-count correction (14→13) + 6th Story (SCRUM-53) | Samy returned GREEN with U+FFFD finding; filed SCRUM-53 + 2 issue links; corrected page count across log + index + journal | ~3k in / ~3k out |
+| **Session total (est.)** | | **~65k in / ~42k out** |
+
+**Estimated session cost:** Opus 4.7 ~65k in × $15/1M + ~42k out × $75/1M = **$0.98 + $3.15 = ~$4.13**.
+
+The cost-per-session jumped relative to Session 174 because of the mid-session pivot — the original plan was a clean 30-min Vercel-paste-and-render, but the auth gap forced a from-scratch local-smoke design (script authoring, three iterative runs, structural checks, candidate-walk for malformed UUIDs). The pivot was the right call; the cost is the cost of converting a blocked session into a delivered session instead of halting.
+
+### Samy Effort
+
+| # | Message / Decision | Type | Notes |
+|---|---|---|---|
+| 1 | Initial Session 175 kickoff prompt with full execution plan and capture list | D-Direction | Detailed step-by-step including the page-count-vs-fidelity-bug warning |
+| 2 | "Go execute — paste the env var, force-redeploy, wait for green, render with DevTools open." | D-Direction (revised) | Misdelegated operator actions; pushback prompted clarification |
+| 3 | "Confirmed — 'I paste' / 'I render and capture' refers to Samy, not you. Stand by." | D-Approval | Acknowledged pushback; clarified Samy's hands |
+| 4 | "Hard pivot — local renderer smoke that bypasses auth entirely." | D-Direction | Reframed session scope; provided 10-step local-smoke plan |
+| 5 | Triage of partial-smoke report + decisions on each yellow flag, Story scoping, surfaces locked, commit shape | D-Approval + D-Direction | Structured triage; authorized Story filing; named the journal theme |
+| 6 | Phase 4 verdict GREEN with U+FFFD finding; page-count correction 14→13; authorize close-out commit | D-Approval | Filed SCRUM-53 for the U+FFFD finding before commit; corrections applied across log/index/journal |
+
+**Totals:** 6 messages · 2 D-Direction · 4 D-Approval · ~30 min on Samy's side (including the planner-side `pdftocairo` extraction + visual review). Mid-session pivot added Direction-mass relative to Session 174's Approval-only profile.
+
+---
+
 ## Session 174 — 2026-04-26
 
 **Operational preflight + Path B decision for the PDF-renderer runtime smoke. Bucket-not-found surfaced; SCRUM-47 filed for Path A migration; live render deferred to Session 175.**

@@ -1,0 +1,20 @@
+{"ts":"2026-04-27T00:10:06.134Z","level":"info","msg":"db.pool.init","max":20,"idleTimeoutSec":30,"connectTimeoutSec":10}
+[smoke] picked blueprint 20000000-0000-0000-0000-000000000003 (Loan Application Assistant, status=approved, version=1.0.0)
+[smoke] FAILED
+ZodError: [
+  {
+    "origin": "string",
+    "code": "invalid_format",
+    "format": "uuid",
+    "pattern": "/^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/",
+    "path": [
+      "metadata",
+      "id"
+    ],
+    "message": "Invalid UUID"
+  }
+]
+    at readABP (C:\Users\samyh\Intellios\src\lib\abp\read.ts:35:20)
+    at assembleMRMReport (C:\Users\samyh\Intellios\src\lib\mrm\report.ts:76:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async main (C:\Users\samyh\Intellios\src\__smoke__\render-evidence.ts:68:21)

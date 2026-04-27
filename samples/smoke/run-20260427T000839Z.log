@@ -1,0 +1,24 @@
+C:\Users\samyh\Intellios\src\lib\env.ts:59
+    throw new Error(
+          ^
+
+
+Error: Missing or invalid environment variables:
+  • DATABASE_URL: Invalid input: expected string, received undefined
+  • ANTHROPIC_API_KEY: Too small: expected string to have >=1 characters
+  • ANTHROPIC_API_KEY: ANTHROPIC_API_KEY must start with 'sk-ant-'
+  • AUTH_SECRET: Invalid input: expected string, received undefined
+
+Copy .env.example to .env.local and set the required values.
+    at validateEnv (C:\Users\samyh\Intellios\src\lib\env.ts:59:11)
+    at <anonymous> (C:\Users\samyh\Intellios\src\lib\env.ts:67:20)
+    at Object.<anonymous> (C:\Users\samyh\Intellios\src\lib\env.ts:67:32)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object.transformer (C:\Users\samyh\Intellios\src\node_modules\tsx\dist\register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+
+Node.js v22.15.1

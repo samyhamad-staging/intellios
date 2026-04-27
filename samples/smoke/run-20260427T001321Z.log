@@ -1,0 +1,33 @@
+{"ts":"2026-04-27T00:13:27.328Z","level":"info","msg":"db.pool.init","max":20,"idleTimeoutSec":30,"connectTimeoutSec":10}
+[smoke] picked blueprint ed34ef1a-a337-4671-b8a2-6ccb3dd1c787 (Retail-Bank-FAQ-Agent, status=deprecated, version=1.0.0)
+[smoke] mrm assembled (? sections)
+[smoke] payload built — approval steps=3, quality=null, test runs=0
+[smoke] render ok — 157171 bytes in 12514ms
+[smoke] wrote C:\Users\samyh\Intellios\samples\smoke\evidence-package-local-ed34ef1a-2026-04-27T00-13-40-553Z.pdf
+[smoke] audit row written
+{
+  "ok": true,
+  "blueprint": {
+    "id": "ed34ef1a-a337-4671-b8a2-6ccb3dd1c787",
+    "agentId": "6253bb39-a27a-400e-adfb-44c20b0a614f",
+    "name": "Retail-Bank-FAQ-Agent",
+    "status": "deprecated",
+    "version": "1.0.0",
+    "enterpriseId": "acme-financial"
+  },
+  "payload": {
+    "approvalSteps": 3,
+    "qualityScorePresent": false,
+    "testRunCount": 0,
+    "mrmSectionCount": null
+  },
+  "render": {
+    "bytes": 157171,
+    "ms": 12514
+  },
+  "output": {
+    "path": "C:\\Users\\samyh\\Intellios\\samples\\smoke\\evidence-package-local-ed34ef1a-2026-04-27T00-13-40-553Z.pdf",
+    "productionFilename": "evidence-package-retail-bank-faq-agent-v1.0.0-2026-04-27.pdf"
+  },
+  "elapsedMs": 12720
+}
