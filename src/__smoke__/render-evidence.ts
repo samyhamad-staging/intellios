@@ -100,7 +100,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.error(`[smoke] mrm assembled (${mrmReport.sections?.length ?? "?"} sections)`);
+  console.error(`[smoke] mrm assembled`);
 
   // ── 3. Approval chain + quality + test runs (mirror of route.ts) ─────
   const approvalProgress = (blueprint.approvalProgress as ApprovalStepRecord[]) ?? [];
